@@ -1,0 +1,130 @@
+---
+import { getLangFromUrl, useTranslations, type Language } from '../i18n';
+
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+
+const steps = [
+  { key: 'discovery', icon: '💬' },
+  { key: 'architecture', icon: '📐' },
+  { key: 'development', icon: '⚡' },
+  { key: 'review', icon: '👁️' },
+  { key: 'deployment', icon: '🚀' }
+] as const;
+---
+
+<section id="process" class="process">
+  <div class="container">
+    <div class="section-header">
+      <h2>{t('process').title}</h2>
+      <p>{t('process').subtitle}</p>
+    </div>
+    
+    <div class="process-timeline">
+      {steps.map((step, index) => (
+        <div class="process-step">
+          <div class="step-icon">{step.icon}</div>
+          <div class="step-content">
+            <span class="step-number">{(index + 1).toString().padStart(2, '0')}</span>
+            <h3>{t('process').steps[step.key]}</h3>
+          </div>
+          {index < steps.length - 1 && <div class="step-connector"></div>}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .process {
+    background: var(--bg-secondary);
+  }
+  
+  .process-timeline {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    position: relative;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  
+  .process-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+    position: relative;
+  }
+  
+  .step-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border: 2px solid var(--accent-primary);
+    border-radius: 50%;
+    font-size: 1.5rem;
+    margin-bottom: var(--space-md);
+    position: relative;
+    z-index: 2;
+  }
+  
+  .step-content {
+    max-width: 140px;
+  }
+  
+  .step-number {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-bottom: var(--space-xs);
+    display: block;
+  }
+  
+  .step-content h3 {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  
+  .step-connector {
+    position: absolute;
+    top: 32px;
+    left: calc(50% + 40px);
+    width: calc(100% - 48px);
+    height: 2px;
+    background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+    opacity: 0.3;
+  }
+  
+  @media (max-width: 768px) {
+    .process-timeline {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-md);
+    }
+    
+    .process-step {
+      flex-direction: row;
+      text-align: left;
+      gap: var(--space-md);
+    }
+    
+    .step-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 1.25rem;
+      margin-bottom: 0;
+      flex-shrink: 0;
+    }
+    
+    .step-connector {
+      display: none;
+    }
+  }
+</style>
