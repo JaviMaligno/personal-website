@@ -4,34 +4,41 @@ import { getLangFromUrl, useTranslations, type Language } from '../i18n';
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
 
+// Projects with category mapping to service types
 const projects = [
   {
     key: 'devopsAgent' as const,
+    category: 'agentPipelines',
     tags: ['TypeScript', 'Multi-Agent', 'GitHub API'],
     github: 'https://github.com/javieraguilarmartin/oss-agent'
   },
   {
     key: 'complianceClassifier' as const,
+    category: 'compliance',
     tags: ['Python', 'LangChain', 'Risk Assessment'],
     github: null
   },
   {
     key: 'dataSourceAutomator' as const,
+    category: 'agentPipelines',
     tags: ['Python', 'Multi-Agent', 'HITL'],
     github: null
   },
   {
     key: 'mcpGallery' as const,
+    category: 'mcp',
     tags: ['TypeScript', 'Python', 'MCP'],
     github: 'https://github.com/javieraguilarmartin'
   },
   {
     key: 'applicationAutomator' as const,
+    category: 'agentPipelines',
     tags: ['Python', 'Automation', 'Email'],
     github: null
   },
   {
     key: 'medicalDocParser' as const,
+    category: 'compliance',
     tags: ['Python', 'NLP', 'ICD-10'],
     github: null
   }
@@ -47,7 +54,7 @@ const projects = [
     
     <div class="grid grid-2">
       {projects.map((project) => (
-        <div class="card project-card">
+        <div class="card project-card" data-category={project.category}>
           <h3>{t('projects')[project.key].title}</h3>
           <p>{t('projects')[project.key].description}</p>
           
@@ -58,7 +65,15 @@ const projects = [
           </div>
           
           <div class="project-actions">
-            <a href="#contact" class="btn btn-primary btn-sm">{t('cta').requestDemo}</a>
+            <a 
+              href={`#contact?project=${project.key}&category=${project.category}`}
+              class="btn btn-primary btn-sm project-demo-btn"
+              data-project={project.key}
+              data-project-title={t('projects')[project.key].title}
+              data-category={project.category}
+            >
+              {t('cta').requestDemo}
+            </a>
             {project.github && (
               <a href={project.github} target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
                 GitHub
@@ -70,6 +85,25 @@ const projects = [
     </div>
   </div>
 </section>
+
+<script>
+  // Handle project demo button clicks to pre-fill contact form
+  document.querySelectorAll('.project-demo-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLElement;
+      const projectKey = target.dataset.project;
+      const projectTitle = target.dataset.projectTitle;
+      const category = target.dataset.category;
+      
+      // Store in sessionStorage for the contact form to read
+      sessionStorage.setItem('demoRequest', JSON.stringify({
+        project: projectKey,
+        projectTitle: projectTitle,
+        category: category
+      }));
+    });
+  });
+</script>
 
 <style>
   .project-card {

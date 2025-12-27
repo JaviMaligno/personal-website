@@ -12,6 +12,12 @@ const t = useTranslations(lang);
         <h2>{t('contact').title}</h2>
         <p>{t('contact').subtitle}</p>
         
+        <!-- Project context banner (hidden by default, shown when coming from a project) -->
+        <div id="project-context" class="project-context" style="display: none;">
+          <span class="context-label">{lang === 'es' ? 'Proyecto seleccionado:' : 'Selected project:'}</span>
+          <span id="project-context-name" class="context-name"></span>
+        </div>
+        
         <div class="labs-badge">
           <span class="labs-title">{t('labs').title}</span>
           <span class="labs-subtitle">{t('labs').subtitle}</span>
@@ -49,6 +55,9 @@ const t = useTranslations(lang);
           </select>
         </div>
         
+        <!-- Hidden field for specific project -->
+        <input type="hidden" id="project" name="project" value="" />
+        
         <div class="form-group">
           <label for="message">{t('contact').form.message}</label>
           <textarea id="message" name="message" rows="4" required></textarea>
@@ -63,6 +72,58 @@ const t = useTranslations(lang);
     </div>
   </div>
 </section>
+
+<script>
+  // Check for project context from Projects section
+  document.addEventListener('DOMContentLoaded', () => {
+    const checkDemoRequest = () => {
+      const demoRequest = sessionStorage.getItem('demoRequest');
+      if (demoRequest) {
+        try {
+          const data = JSON.parse(demoRequest);
+          
+          // Pre-select the category
+          const interestSelect = document.getElementById('interest') as HTMLSelectElement;
+          if (interestSelect && data.category) {
+            interestSelect.value = data.category;
+          }
+          
+          // Set the hidden project field
+          const projectInput = document.getElementById('project') as HTMLInputElement;
+          if (projectInput && data.project) {
+            projectInput.value = data.project;
+          }
+          
+          // Show project context banner
+          const contextBanner = document.getElementById('project-context');
+          const contextName = document.getElementById('project-context-name');
+          if (contextBanner && contextName && data.projectTitle) {
+            contextName.textContent = data.projectTitle;
+            contextBanner.style.display = 'flex';
+          }
+          
+          // Pre-fill message with project reference
+          const messageField = document.getElementById('message') as HTMLTextAreaElement;
+          if (messageField && data.projectTitle && !messageField.value) {
+            const lang = document.documentElement.lang;
+            messageField.placeholder = lang === 'es' 
+              ? `Me interesa una demo de "${data.projectTitle}"...`
+              : `I'm interested in a demo of "${data.projectTitle}"...`;
+          }
+          
+          // Clear after reading
+          sessionStorage.removeItem('demoRequest');
+        } catch (e) {
+          console.error('Error parsing demo request:', e);
+        }
+      }
+    };
+    
+    // Check immediately and also after hash change
+    checkDemoRequest();
+    window.addEventListener('hashchange', checkDemoRequest);
+  });
+</script>
 
 <style>
   .contact {
@@ -82,7 +143,27 @@ const t = useTranslations(lang);
   
   .contact-info p {
     font-size: 1.125rem;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
+  }
+  
+  .project-context {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--accent-gradient);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-lg);
+  }
+  
+  .context-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .context-name {
+    font-weight: 600;
+    color: white;
   }
   
   .labs-badge {
