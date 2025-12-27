@@ -3,6 +3,24 @@ import { getLangFromUrl, useTranslations, type Language } from '../i18n';
 
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
+
+// Project to category mapping (must match Projects.astro)
+const projectCategories: Record<string, string> = {
+  devopsAgent: 'agentPipelines',
+  dataSourceAutomator: 'agentPipelines',
+  applicationAutomator: 'agentPipelines',
+  complianceClassifier: 'compliance',
+  medicalDocParser: 'compliance',
+  mcpGallery: 'mcp'
+};
+
+// Projects by category for filtering
+const projectsByCategory: Record<string, string[]> = {
+  agentPipelines: ['devopsAgent', 'dataSourceAutomator', 'applicationAutomator'],
+  compliance: ['complianceClassifier', 'medicalDocParser'],
+  mcp: ['mcpGallery'],
+  custom: []
+};
 ---
 
 <section id="contact" class="contact">
@@ -11,13 +29,6 @@ const t = useTranslations(lang);
       <div class="contact-info">
         <h2>{t('contact').title}</h2>
         <p>{t('contact').subtitle}</p>
-        
-        <!-- Project context banner (hidden by default) -->
-        <div id="project-context" class="project-context">
-          <span class="context-label">{lang === 'es' ? 'Proyecto seleccionado:' : 'Selected project:'}</span>
-          <span id="project-context-name" class="context-name"></span>
-          <button type="button" id="clear-project" class="clear-btn" aria-label="Clear">×</button>
-        </div>
         
         <div class="labs-badge">
           <span class="labs-title">{t('labs').title}</span>
@@ -45,19 +56,32 @@ const t = useTranslations(lang);
           <input type="text" id="company" name="company" />
         </div>
         
-        <div class="form-group">
-          <label for="interest">{t('contact').form.interest}</label>
-          <select id="interest" name="interest" required>
-            <option value="">{t('contact').form.interest}</option>
-            <option value="agentPipelines">{t('contact').form.interests.agentPipelines}</option>
-            <option value="mcp">{t('contact').form.interests.mcp}</option>
-            <option value="compliance">{t('contact').form.interests.compliance}</option>
-            <option value="custom">{t('contact').form.interests.custom}</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="category">{t('contact').form.category}</label>
+            <select id="category" name="category" required>
+              <option value="">{t('contact').form.categories.placeholder}</option>
+              <option value="agentPipelines">{t('contact').form.categories.agentPipelines}</option>
+              <option value="mcp">{t('contact').form.categories.mcp}</option>
+              <option value="compliance">{t('contact').form.categories.compliance}</option>
+              <option value="custom">{t('contact').form.categories.custom}</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="project">{t('contact').form.project}</label>
+            <select id="project" name="project">
+              <option value="">{t('contact').form.projects.placeholder}</option>
+              <option value="none">{t('contact').form.projects.none}</option>
+              <option value="devopsAgent" data-category="agentPipelines">{t('contact').form.projects.devopsAgent}</option>
+              <option value="dataSourceAutomator" data-category="agentPipelines">{t('contact').form.projects.dataSourceAutomator}</option>
+              <option value="applicationAutomator" data-category="agentPipelines">{t('contact').form.projects.applicationAutomator}</option>
+              <option value="complianceClassifier" data-category="compliance">{t('contact').form.projects.complianceClassifier}</option>
+              <option value="medicalDocParser" data-category="compliance">{t('contact').form.projects.medicalDocParser}</option>
+              <option value="mcpGallery" data-category="mcp">{t('contact').form.projects.mcpGallery}</option>
+            </select>
+          </div>
         </div>
-        
-        <!-- Hidden field for specific project -->
-        <input type="hidden" id="project" name="project" value="" />
         
         <div class="form-group">
           <label for="message">{t('contact').form.message}</label>
@@ -74,21 +98,43 @@ const t = useTranslations(lang);
   </div>
 </section>
 
-<script>
-  // Clear project selection
+<script define:vars={{ projectCategories, projectsByCategory }}>
   document.addEventListener('DOMContentLoaded', () => {
-    const clearBtn = document.getElementById('clear-project');
-    const contextBanner = document.getElementById('project-context');
-    const projectInput = document.getElementById('project') as HTMLInputElement;
-    const interestSelect = document.getElementById('interest') as HTMLSelectElement;
+    const categorySelect = document.getElementById('category');
+    const projectSelect = document.getElementById('project');
     
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        if (contextBanner) contextBanner.style.display = 'none';
-        if (projectInput) projectInput.value = '';
-        if (interestSelect) interestSelect.value = '';
+    if (!categorySelect || !projectSelect) return;
+    
+    // When category changes, filter projects
+    categorySelect.addEventListener('change', () => {
+      const selectedCategory = categorySelect.value;
+      const options = projectSelect.querySelectorAll('option[data-category]');
+      
+      options.forEach(option => {
+        const optionCategory = option.getAttribute('data-category');
+        if (!selectedCategory || optionCategory === selectedCategory) {
+          option.style.display = '';
+        } else {
+          option.style.display = 'none';
+        }
       });
-    }
+      
+      // Reset project if current selection doesn't match category
+      const currentProject = projectSelect.value;
+      if (currentProject && currentProject !== 'none' && projectCategories[currentProject] !== selectedCategory) {
+        projectSelect.value = '';
+      }
+    });
+    
+    // When project changes, auto-fill category
+    projectSelect.addEventListener('change', () => {
+      const selectedProject = projectSelect.value;
+      if (selectedProject && selectedProject !== 'none' && projectCategories[selectedProject]) {
+        categorySelect.value = projectCategories[selectedProject];
+        // Trigger change event to update filter
+        categorySelect.dispatchEvent(new Event('change'));
+      }
+    });
   });
 </script>
 
@@ -111,41 +157,6 @@ const t = useTranslations(lang);
   .contact-info p {
     font-size: 1.125rem;
     margin-bottom: var(--space-lg);
-  }
-  
-  .project-context {
-    display: none;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--accent-gradient);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--space-lg);
-  }
-  
-  .context-label {
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.8);
-  }
-  
-  .context-name {
-    font-weight: 600;
-    color: white;
-    flex-grow: 1;
-  }
-  
-  .clear-btn {
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 1.25rem;
-    cursor: pointer;
-    padding: 0 0.25rem;
-    line-height: 1;
-  }
-  
-  .clear-btn:hover {
-    color: white;
   }
   
   .labs-badge {
@@ -181,6 +192,12 @@ const t = useTranslations(lang);
   
   .form-group {
     margin-bottom: var(--space-md);
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
   }
   
   .form-group label {
@@ -235,6 +252,10 @@ const t = useTranslations(lang);
     .contact-wrapper {
       grid-template-columns: 1fr;
       gap: var(--space-xl);
+    }
+    
+    .form-row {
+      grid-template-columns: 1fr;
     }
   }
 </style>
