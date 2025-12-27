@@ -8,16 +8,19 @@ Built a professional one-pager website for **Javier Aguilar** as AI Agent Archit
 - ✅ Dark theme with glassmorphism effects
 - ✅ Bilingual support (EN/ES)
 - ✅ Hero, Services, Projects, Process, Contact sections
-- ✅ Mobile-responsive design
+- ✅ Clean vertical form layout with category filtering
+- ✅ Individual MCP project showcase
+- ✅ Architecture Showcase with interactive Mermaid diagram
+- ✅ SEO optimized (Sitemap + Robots.txt)
 - ✅ Deployed to Vercel
 
 ---
 
-## 🚀 Production URLs
+## 🚀 Deployment
 
-| Platform | URL |
-|----------|-----|
-| **Live Site** | https://personal-website-lime-one-42.vercel.app |
+### Production URLs
+
+- **Main**: https://personal-website-lime-one-42.vercel.app
 | **GitHub** | https://github.com/JaviMaligno/personal-website |
 
 ---
