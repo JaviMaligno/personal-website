@@ -1,0 +1,87 @@
+export interface Project {
+  slug: string;
+  key: string;
+  category: 'agentPipelines' | 'mcp' | 'compliance';
+  tags: string[];
+  github: string | null;
+  hasDiagram: boolean;
+}
+
+export const projects: Project[] = [
+  {
+    slug: 'devops-agent',
+    key: 'devopsAgent',
+    category: 'agentPipelines',
+    tags: ['TypeScript', 'Multi-Agent', 'GitHub API'],
+    github: 'https://github.com/JaviMaligno/oss-agent',
+    hasDiagram: false
+  },
+  {
+    slug: 'compliance-classifier',
+    key: 'complianceClassifier',
+    category: 'compliance',
+    tags: ['Python', 'LangChain', 'Risk Assessment'],
+    github: null,
+    hasDiagram: false
+  },
+  {
+    slug: 'data-source-automator',
+    key: 'dataSourceAutomator',
+    category: 'agentPipelines',
+    tags: ['Python', 'Multi-Agent', 'HITL'],
+    github: null,
+    hasDiagram: true
+  },
+  {
+    slug: 'mcp-bitbucket',
+    key: 'mcpBitbucket',
+    category: 'mcp',
+    tags: ['TypeScript', 'Python', 'Bitbucket API'],
+    github: 'https://github.com/JaviMaligno/mcp-server-bitbucket',
+    hasDiagram: false
+  },
+  {
+    slug: 'mcp-postgres',
+    key: 'mcpPostgres',
+    category: 'mcp',
+    tags: ['Python', 'PostgreSQL', 'Docker'],
+    github: 'https://github.com/JaviMaligno/postgres_mcp',
+    hasDiagram: false
+  },
+  {
+    slug: 'mcp-langfuse',
+    key: 'mcpLangfuse',
+    category: 'mcp',
+    tags: ['Python', 'Langfuse', 'Observability'],
+    github: 'https://github.com/JaviMaligno/langfuse-mcp-server',
+    hasDiagram: false
+  },
+  {
+    slug: 'application-automator',
+    key: 'applicationAutomator',
+    category: 'agentPipelines',
+    tags: ['Python', 'Automation', 'Email'],
+    github: null,
+    hasDiagram: false
+  },
+  {
+    slug: 'medical-doc-parser',
+    key: 'medicalDocParser',
+    category: 'compliance',
+    tags: ['Python', 'NLP', 'ICD-10'],
+    github: null,
+    hasDiagram: false
+  }
+];
+
+export function getProjectBySlug(slug: string): Project | undefined {
+  return projects.find(p => p.slug === slug);
+}
+
+export function getProjectByKey(key: string): Project | undefined {
+  return projects.find(p => p.key === key);
+}
+
+export function getAllProjectSlugs(): string[] {
+  return projects.map(p => p.slug);
+}

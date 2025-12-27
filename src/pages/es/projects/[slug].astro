@@ -1,0 +1,28 @@
+---
+import ProjectLayout from '../../../layouts/ProjectLayout.astro';
+import ProjectDetail from '../../../components/ProjectDetail.astro';
+import { projects, type Project } from '../../../data/projects';
+import { useTranslations } from '../../../i18n';
+
+export function getStaticPaths() {
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { project }
+  }));
+}
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const t = useTranslations('es');
+
+const projectTranslations = t('projects')[project.key as keyof ReturnType<typeof t>['projects']];
+const title = `${projectTranslations.title} - Javier Aguilar`;
+const description = projectTranslations.description;
+---
+
+<ProjectLayout title={title} description={description}>
+  <ProjectDetail project={project} />
+</ProjectLayout>

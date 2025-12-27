@@ -1,0 +1,134 @@
+---
+import { getLangFromUrl, useTranslations, type Language } from '../i18n';
+import { getDiagram } from '../diagrams';
+
+interface Props {
+  projectKey: string;
+}
+
+const { projectKey } = Astro.props;
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+
+const diagram = getDiagram(projectKey);
+
+// Get architecture translations for diagram labels
+const archTranslations = t('architecture');
+---
+
+{diagram && (
+  <div class="diagram-container">
+    <div class="mermaid">
+      {diagram.getMermaidCode(archTranslations)}
+    </div>
+
+    <div class="diagram-legend">
+      {diagram.legend.map((item) => (
+        <div class="legend-item">
+          <span
+            class="legend-dot"
+            style={`background: ${item.color}; border-color: ${item.borderColor}`}
+          ></span>
+          <span>{t('projectDetails').legendLabels[item.key]}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+<script>
+  import mermaid from 'mermaid';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      securityLevel: 'loose',
+      fontFamily: 'Inter, sans-serif',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis'
+      }
+    });
+  });
+</script>
+
+<style>
+  .diagram-container {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .diagram-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .mermaid {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--space-lg);
+    z-index: 1;
+  }
+
+  :global(.mermaid svg) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .diagram-legend {
+    display: flex;
+    gap: var(--space-xl);
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--glass-border);
+    z-index: 1;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid;
+  }
+
+  @media (max-width: 768px) {
+    .diagram-container {
+      padding: var(--space-md);
+      overflow-x: auto;
+    }
+
+    .mermaid {
+      min-width: 600px;
+    }
+
+    .diagram-legend {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: var(--space-md);
+    }
+  }
+</style>

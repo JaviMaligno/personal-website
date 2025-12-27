@@ -1,67 +1,16 @@
 ---
-import { getLangFromUrl, useTranslations, type Language } from '../i18n';
+import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../i18n';
+import { projects } from '../data/projects';
 
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
 
 // Category labels for display
-const categoryLabels = {
+const categoryLabels: Record<string, string> = {
   agentPipelines: lang === 'es' ? 'Pipelines IA' : 'AI Pipelines',
   mcp: 'MCP',
   compliance: lang === 'es' ? 'Cumplimiento' : 'Compliance'
 };
-
-// Projects with category mapping to service types
-const projects = [
-  {
-    key: 'devopsAgent' as const,
-    category: 'agentPipelines' as keyof typeof categoryLabels,
-    tags: ['TypeScript', 'Multi-Agent', 'GitHub API'],
-    github: 'https://github.com/JaviMaligno/oss-agent'
-  },
-  {
-    key: 'complianceClassifier' as const,
-    category: 'compliance' as keyof typeof categoryLabels,
-    tags: ['Python', 'LangChain', 'Risk Assessment'],
-    github: null
-  },
-  {
-    key: 'dataSourceAutomator' as const,
-    category: 'agentPipelines' as keyof typeof categoryLabels,
-    tags: ['Python', 'Multi-Agent', 'HITL'],
-    github: null
-  },
-  {
-    key: 'mcpBitbucket' as const,
-    category: 'mcp' as keyof typeof categoryLabels,
-    tags: ['TypeScript', 'Python', 'Bitbucket API'],
-    github: 'https://github.com/JaviMaligno/mcp-server-bitbucket'
-  },
-  {
-    key: 'mcpPostgres' as const,
-    category: 'mcp' as keyof typeof categoryLabels,
-    tags: ['Python', 'PostgreSQL', 'Docker'],
-    github: 'https://github.com/JaviMaligno/postgres_mcp'
-  },
-  {
-    key: 'mcpLangfuse' as const,
-    category: 'mcp' as keyof typeof categoryLabels,
-    tags: ['Python', 'Langfuse', 'Observability'],
-    github: 'https://github.com/JaviMaligno/langfuse-mcp-server'
-  },
-  {
-    key: 'applicationAutomator' as const,
-    category: 'agentPipelines' as keyof typeof categoryLabels,
-    tags: ['Python', 'Automation', 'Email'],
-    github: null
-  },
-  {
-    key: 'medicalDocParser' as const,
-    category: 'compliance' as keyof typeof categoryLabels,
-    tags: ['Python', 'NLP', 'ICD-10'],
-    github: null
-  }
-];
 ---
 
 <section id="projects" class="projects">
@@ -89,14 +38,12 @@ const projects = [
           </div>
           
           <div class="project-actions">
-            <button 
-              type="button"
-              class="btn btn-primary btn-sm project-demo-btn"
-              data-project={project.key}
-              data-category={project.category}
+            <a
+              href={`${getLocalizedPath('/', lang)}projects/${project.slug}`}
+              class="btn btn-primary btn-sm"
             >
-              {t('cta').requestDemo}
-            </button>
+              {t('projectDetails').viewDetails}
+            </a>
             {project.github && (
               <a href={project.github} target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
                 GitHub
@@ -109,39 +56,6 @@ const projects = [
   </div>
 </section>
 
-<script>
-  // Handle project demo button clicks
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.project-demo-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const target = e.currentTarget as HTMLElement;
-        const projectKey = target.dataset.project || '';
-        const category = target.dataset.category || '';
-        
-        // Pre-fill the category dropdown
-        const categorySelect = document.getElementById('category') as HTMLSelectElement;
-        if (categorySelect) {
-          categorySelect.value = category;
-          // Trigger change to filter projects
-          categorySelect.dispatchEvent(new Event('change'));
-        }
-        
-        // Pre-fill the project dropdown
-        const projectSelect = document.getElementById('project') as HTMLSelectElement;
-        if (projectSelect) {
-          projectSelect.value = projectKey;
-        }
-        
-        // Scroll to contact
-        const contactSection = document.getElementById('contact');
-        if (contactSection) {
-          contactSection.scrollIntoView({ behavior: 'smooth' });
-        }
-      });
-    });
-  });
-</script>
 
 <style>
   .project-card {

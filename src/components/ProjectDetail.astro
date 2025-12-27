@@ -1,0 +1,261 @@
+---
+import type { Project } from '../data/projects';
+import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../i18n';
+import MermaidDiagram from './MermaidDiagram.astro';
+import TechStack from './TechStack.astro';
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+
+// Category labels for display
+const categoryLabels: Record<string, string> = {
+  agentPipelines: lang === 'es' ? 'Pipelines IA' : 'AI Pipelines',
+  mcp: 'MCP',
+  compliance: lang === 'es' ? 'Cumplimiento' : 'Compliance'
+};
+
+const projectTranslations = t('projects')[project.key as keyof ReturnType<typeof t>['projects']];
+const detailTranslations = t('projectDetails')[project.key as keyof ReturnType<typeof t>['projectDetails']];
+---
+
+<article class="project-detail">
+  <header class="project-header">
+    <a href={`${getLocalizedPath('/', lang)}#projects`} class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      {t('projectDetails').backToProjects}
+    </a>
+
+    <span class="category-badge" data-category={project.category}>
+      {categoryLabels[project.category]}
+    </span>
+
+    <h1>{projectTranslations.title}</h1>
+    <p class="subtitle">{projectTranslations.description}</p>
+  </header>
+
+  <section class="content-section">
+    <h2>{t('projectDetails').problem}</h2>
+    <p>{detailTranslations.problem}</p>
+  </section>
+
+  <section class="content-section">
+    <h2>{t('projectDetails').solution}</h2>
+    <p>{detailTranslations.solution}</p>
+  </section>
+
+  {project.hasDiagram && (
+    <section class="content-section architecture-section">
+      <h2>{t('projectDetails').architecture}</h2>
+      <MermaidDiagram projectKey={project.key} />
+    </section>
+  )}
+
+  <section class="content-section">
+    <h2>{t('projectDetails').techStack}</h2>
+    <TechStack tags={project.tags} />
+  </section>
+
+  <section class="content-section">
+    <h2>{t('projectDetails').outcomes}</h2>
+    <ul class="outcomes-list">
+      {detailTranslations.outcomes.map((outcome: string) => (
+        <li>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          {outcome}
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <footer class="project-actions">
+    {project.github && (
+      <a href={project.github} target="_blank" rel="noopener" class="btn btn-secondary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        {t('projectDetails').viewSource}
+      </a>
+    )}
+    <a href={`${getLocalizedPath('/', lang)}#contact`} class="btn btn-primary">
+      {t('projectDetails').requestDemo}
+    </a>
+  </footer>
+</article>
+
+<style>
+  .project-detail {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .project-header {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-lg);
+    transition: color var(--transition-fast);
+  }
+
+  .back-link:hover {
+    color: var(--accent-primary);
+  }
+
+  .category-badge {
+    display: inline-block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    margin-bottom: var(--space-md);
+  }
+
+  .category-badge[data-category="agentPipelines"] {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.3);
+    color: #818cf8;
+  }
+
+  .category-badge[data-category="mcp"] {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+  }
+
+  .category-badge[data-category="compliance"] {
+    background: rgba(251, 146, 60, 0.15);
+    border-color: rgba(251, 146, 60, 0.3);
+    color: #fb923c;
+  }
+
+  .project-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .content-section {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .content-section h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .content-section h2::before {
+    content: '';
+    width: 4px;
+    height: 1.25rem;
+    background: var(--accent-gradient);
+    border-radius: 2px;
+  }
+
+  .content-section p {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+  }
+
+  .architecture-section {
+    background: linear-gradient(to bottom, var(--bg-secondary), var(--bg-primary));
+    margin-left: calc(-1 * var(--space-xl));
+    margin-right: calc(-1 * var(--space-xl));
+    padding: var(--space-xl);
+    border-radius: var(--radius-xl);
+  }
+
+  .outcomes-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .outcomes-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .outcomes-list svg {
+    flex-shrink: 0;
+    color: var(--accent-primary);
+    margin-top: 2px;
+  }
+
+  .project-actions {
+    display: flex;
+    gap: var(--space-md);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .project-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  @media (max-width: 768px) {
+    .project-header h1 {
+      font-size: 1.75rem;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+    }
+
+    .architecture-section {
+      margin-left: calc(-1 * var(--space-md));
+      margin-right: calc(-1 * var(--space-md));
+      padding: var(--space-md);
+    }
+
+    .project-actions {
+      flex-direction: column;
+    }
+
+    .project-actions .btn {
+      justify-content: center;
+    }
+  }
+</style>
