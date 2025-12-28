@@ -4,25 +4,8 @@ import { getLangFromUrl, useTranslations, type Language } from '../i18n';
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
 
-// Project to category mapping (must match Projects.astro)
-const projectCategories: Record<string, string> = {
-  devopsAgent: 'agentPipelines',
-  dataSourceAutomator: 'agentPipelines',
-  applicationAutomator: 'agentPipelines',
-  complianceClassifier: 'compliance',
-  medicalDocParser: 'compliance',
-  mcpBitbucket: 'mcp',
-  mcpPostgres: 'mcp',
-  mcpLangfuse: 'mcp'
-};
-
-// Projects by category for filtering
-const projectsByCategory: Record<string, string[]> = {
-  agentPipelines: ['devopsAgent', 'dataSourceAutomator', 'applicationAutomator'],
-  compliance: ['complianceClassifier', 'medicalDocParser'],
-  mcp: ['mcpBitbucket', 'mcpPostgres', 'mcpLangfuse'],
-  custom: []
-};
+// Calendly URL with styling parameters
+const calendlyUrl = 'https://calendly.com/javiecija96/discovery-call?hide_landing_page_details=1&hide_gdpr_banner=1&primary_color=6366f1';
 ---
 
 <section id="contact" class="contact">
@@ -30,137 +13,62 @@ const projectsByCategory: Record<string, string[]> = {
     <div class="contact-wrapper">
       <div class="contact-info">
         <h2>{t('contact').title}</h2>
-        <p>{t('contact').subtitle}</p>
-        
+        <p class="subtitle">{t('contact').subtitle}</p>
+
         <div class="labs-badge">
           <span class="labs-title">{t('labs').title}</span>
           <span class="labs-subtitle">{t('labs').subtitle}</span>
         </div>
+
+        <div class="email-alternative">
+          <span>{t('contact').emailAlternative}</span>
+          <a href={`mailto:${t('contact').email}`}>{t('contact').email}</a>
+        </div>
       </div>
-      
-      <form 
-        class="contact-form"
-        action="https://formspree.io/f/maqyoqeg"
-        method="POST"
-      >
-        <div class="form-group">
-          <label for="name">{t('contact').form.name}</label>
-          <input type="text" id="name" name="name" required />
-        </div>
-        
-        <div class="form-group">
-          <label for="email">{t('contact').form.email}</label>
-          <input type="email" id="email" name="email" required />
-        </div>
-        
-        <div class="form-group">
-          <label for="company">{t('contact').form.company}</label>
-          <input type="text" id="company" name="company" />
-        </div>
-        
-        <div class="form-group">
-          <label for="category">{t('contact').form.category}</label>
-          <select id="category" name="category" required>
-            <option value="">{t('contact').form.categories.placeholder}</option>
-            <option value="agentPipelines">{t('contact').form.categories.agentPipelines}</option>
-            <option value="mcp">{t('contact').form.categories.mcp}</option>
-            <option value="compliance">{t('contact').form.categories.compliance}</option>
-            <option value="custom">{t('contact').form.categories.custom}</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="project">{t('contact').form.project}</label>
-          <select id="project" name="project">
-            <option value="">{t('contact').form.projects.placeholder}</option>
-            <option value="none">{t('contact').form.projects.none}</option>
-            <option value="devopsAgent" data-category="agentPipelines">{t('contact').form.projects.devopsAgent}</option>
-            <option value="dataSourceAutomator" data-category="agentPipelines">{t('contact').form.projects.dataSourceAutomator}</option>
-            <option value="applicationAutomator" data-category="agentPipelines">{t('contact').form.projects.applicationAutomator}</option>
-            <option value="complianceClassifier" data-category="compliance">{t('contact').form.projects.complianceClassifier}</option>
-            <option value="medicalDocParser" data-category="compliance">{t('contact').form.projects.medicalDocParser}</option>
-            <option value="mcpBitbucket" data-category="mcp">{t('contact').form.projects.mcpBitbucket}</option>
-            <option value="mcpPostgres" data-category="mcp">{t('contact').form.projects.mcpPostgres}</option>
-            <option value="mcpLangfuse" data-category="mcp">{t('contact').form.projects.mcpLangfuse}</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="message">{t('contact').form.message}</label>
-          <textarea id="message" name="message" rows="4" required></textarea>
-        </div>
-        
-        <input type="hidden" name="_language" value={lang} />
-        
-        <button type="submit" class="btn btn-primary btn-full">
-          {t('contact').form.submit}
-        </button>
-      </form>
+
+      <div class="calendly-container">
+        <!-- Calendly inline widget -->
+        <div
+          class="calendly-inline-widget"
+          data-url={calendlyUrl}
+        ></div>
+
+        <!-- Fallback button for when embed doesn't load -->
+        <noscript>
+          <a href={calendlyUrl} target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+            {t('contact').bookCall}
+          </a>
+        </noscript>
+      </div>
     </div>
   </div>
 </section>
 
-<script define:vars={{ projectCategories, projectsByCategory }}>
-  document.addEventListener('DOMContentLoaded', () => {
-    const categorySelect = document.getElementById('category');
-    const projectSelect = document.getElementById('project');
-    
-    if (!categorySelect || !projectSelect) return;
-    
-    // When category changes, filter projects
-    categorySelect.addEventListener('change', () => {
-      const selectedCategory = categorySelect.value;
-      const options = projectSelect.querySelectorAll('option[data-category]');
-      
-      options.forEach(option => {
-        const optionCategory = option.getAttribute('data-category');
-        if (!selectedCategory || optionCategory === selectedCategory) {
-          option.style.display = '';
-        } else {
-          option.style.display = 'none';
-        }
-      });
-      
-      // Reset project if current selection doesn't match category
-      const currentProject = projectSelect.value;
-      if (currentProject && currentProject !== 'none' && projectCategories[currentProject] !== selectedCategory) {
-        projectSelect.value = '';
-      }
-    });
-    
-    // When project changes, auto-fill category
-    projectSelect.addEventListener('change', () => {
-      const selectedProject = projectSelect.value;
-      if (selectedProject && selectedProject !== 'none' && projectCategories[selectedProject]) {
-        categorySelect.value = projectCategories[selectedProject];
-        // Trigger change event to update filter
-        categorySelect.dispatchEvent(new Event('change'));
-      }
-    });
-  });
-</script>
+<!-- Calendly widget script -->
+<script is:inline src="https://assets.calendly.com/assets/external/widget.js" async></script>
 
 <style>
   .contact {
     padding: var(--space-3xl) 0;
   }
-  
+
   .contact-wrapper {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-3xl);
     align-items: start;
   }
-  
+
   .contact-info h2 {
     margin-bottom: var(--space-md);
   }
-  
-  .contact-info p {
+
+  .contact-info .subtitle {
     font-size: 1.125rem;
-    margin-bottom: var(--space-lg);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xl);
   }
-  
+
   .labs-badge {
     display: inline-flex;
     flex-direction: column;
@@ -168,8 +76,9 @@ const projectsByCategory: Record<string, string[]> = {
     background: var(--bg-card);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
+    margin-bottom: var(--space-xl);
   }
-  
+
   .labs-title {
     font-size: 1.25rem;
     font-weight: 600;
@@ -178,76 +87,66 @@ const projectsByCategory: Record<string, string[]> = {
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
+
   .labs-subtitle {
     font-size: 0.875rem;
     color: var(--text-muted);
     font-style: italic;
   }
-  
-  .contact-form {
+
+  .email-alternative {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .email-alternative span {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .email-alternative a {
+    font-size: 1rem;
+    color: var(--accent-primary);
+    font-weight: 500;
+  }
+
+  .email-alternative a:hover {
+    text-decoration: underline;
+  }
+
+  .calendly-container {
     background: var(--bg-card);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    padding: var(--space-xl);
+    overflow: hidden;
+    min-height: 630px;
   }
-  
-  .form-group {
-    margin-bottom: var(--space-md);
+
+  .calendly-inline-widget {
+    min-width: 100%;
+    height: 630px;
   }
-  
-  .form-group label {
+
+  .btn-lg {
     display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: var(--space-xs);
+    text-align: center;
+    padding: var(--space-md) var(--space-xl);
+    margin: var(--space-xl);
   }
-  
-  .form-group input,
-  .form-group select,
-  .form-group textarea {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    font-family: inherit;
-    color: var(--text-primary);
-    background: var(--bg-primary);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    transition: border-color var(--transition-fast);
-  }
-  
-  .form-group input:focus,
-  .form-group select:focus,
-  .form-group textarea:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-  }
-  
-  .form-group select {
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    padding-right: 2.5rem;
-  }
-  
-  .form-group textarea {
-    resize: vertical;
-    min-height: 100px;
-  }
-  
-  .btn-full {
-    width: 100%;
-    margin-top: var(--space-sm);
-  }
-  
+
   @media (max-width: 768px) {
     .contact-wrapper {
       grid-template-columns: 1fr;
       gap: var(--space-xl);
+    }
+
+    .calendly-container {
+      min-height: 700px;
+    }
+
+    .calendly-inline-widget {
+      height: 700px;
     }
   }
 </style>

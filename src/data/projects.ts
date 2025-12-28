@@ -14,7 +14,7 @@ export const projects: Project[] = [
     category: 'agentPipelines',
     tags: ['TypeScript', 'Multi-Agent', 'GitHub API'],
     github: 'https://github.com/JaviMaligno/oss-agent',
-    hasDiagram: false
+    hasDiagram: true
   },
   {
     slug: 'compliance-classifier',
@@ -22,7 +22,7 @@ export const projects: Project[] = [
     category: 'compliance',
     tags: ['Python', 'LangChain', 'Risk Assessment'],
     github: null,
-    hasDiagram: false
+    hasDiagram: true
   },
   {
     slug: 'data-source-automator',
@@ -38,7 +38,7 @@ export const projects: Project[] = [
     category: 'mcp',
     tags: ['TypeScript', 'Python', 'Bitbucket API'],
     github: 'https://github.com/JaviMaligno/mcp-server-bitbucket',
-    hasDiagram: false
+    hasDiagram: true
   },
   {
     slug: 'mcp-postgres',
@@ -46,7 +46,7 @@ export const projects: Project[] = [
     category: 'mcp',
     tags: ['Python', 'PostgreSQL', 'Docker'],
     github: 'https://github.com/JaviMaligno/postgres_mcp',
-    hasDiagram: false
+    hasDiagram: true
   },
   {
     slug: 'mcp-langfuse',
@@ -54,7 +54,7 @@ export const projects: Project[] = [
     category: 'mcp',
     tags: ['Python', 'Langfuse', 'Observability'],
     github: 'https://github.com/JaviMaligno/langfuse-mcp-server',
-    hasDiagram: false
+    hasDiagram: true
   },
   {
     slug: 'application-automator',
@@ -70,7 +70,7 @@ export const projects: Project[] = [
     category: 'compliance',
     tags: ['Python', 'NLP', 'ICD-10'],
     github: null,
-    hasDiagram: false
+    hasDiagram: true
   }
 ];
 
