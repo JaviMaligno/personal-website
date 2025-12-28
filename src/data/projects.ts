@@ -44,7 +44,7 @@ export const projects: Project[] = [
     slug: 'mcp-postgres',
     key: 'mcpPostgres',
     category: 'mcp',
-    tags: ['Python', 'PostgreSQL', 'Docker'],
+    tags: ['Python', 'TypeScript', 'PostgreSQL'],
     github: 'https://github.com/JaviMaligno/postgres_mcp',
     hasDiagram: true
   },
@@ -52,7 +52,7 @@ export const projects: Project[] = [
     slug: 'mcp-langfuse',
     key: 'mcpLangfuse',
     category: 'mcp',
-    tags: ['Python', 'Langfuse', 'Observability'],
+    tags: ['TypeScript', 'Langfuse', 'Observability'],
     github: 'https://github.com/JaviMaligno/langfuse-mcp-server',
     hasDiagram: true
   },
@@ -60,15 +60,15 @@ export const projects: Project[] = [
     slug: 'application-automator',
     key: 'applicationAutomator',
     category: 'agentPipelines',
-    tags: ['Python', 'Automation', 'Email'],
-    github: null,
+    tags: ['Python', 'TypeScript', 'Automation'],
+    github: 'https://github.com/JaviMaligno/job-hunter-api',
     hasDiagram: false
   },
   {
     slug: 'medical-doc-parser',
     key: 'medicalDocParser',
     category: 'compliance',
-    tags: ['Python', 'NLP', 'ICD-10'],
+    tags: ['TypeScript', 'NLP', 'ICD-10'],
     github: null,
     hasDiagram: true
   }
