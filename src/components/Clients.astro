@@ -1,0 +1,137 @@
+---
+import { getLangFromUrl, useTranslations, type Language } from '../i18n';
+
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+
+const logoToken = import.meta.env.CLEARBIT_PK;
+
+const directClients = [
+  { name: 'Simple KYC', domain: 'simplekyc.com' },
+  { name: 'Sapira.ai', domain: 'sapira.ai' },
+  { name: 'Hastings Direct', domain: 'hastingsdirect.com' },
+  { name: 'NTT Data', domain: 'nttdata.com' },
+];
+
+const indirectClients = [
+  { name: 'American Express', domain: 'americanexpress.com' },
+  { name: 'Westpac', domain: 'westpac.com.au' },
+  { name: 'Telefonica', domain: 'telefonica.com' },
+  { name: 'Tirea', domain: 'tirea.es' },
+];
+
+const getLogoUrl = (domain: string) => `https://img.logo.dev/${domain}?token=${logoToken}`;
+---
+
+<section class="clients">
+  <div class="container">
+    <div class="clients-group">
+      <p class="clients-label">{t('clients').direct}</p>
+      <div class="clients-logos">
+        {directClients.map((client) => (
+          <div class="client-logo" title={client.name}>
+            <img
+              src={getLogoUrl(client.domain)}
+              alt={client.name}
+              loading="lazy"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            />
+            <span class="client-fallback">{client.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="clients-group">
+      <p class="clients-label">{t('clients').indirect}</p>
+      <div class="clients-logos">
+        {indirectClients.map((client) => (
+          <div class="client-logo" title={client.name}>
+            <img
+              src={getLogoUrl(client.domain)}
+              alt={client.name}
+              loading="lazy"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            />
+            <span class="client-fallback">{client.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .clients {
+    padding: var(--space-md) 0 var(--space-xl);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .clients-group {
+    margin-bottom: var(--space-lg);
+  }
+
+  .clients-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .clients-label {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--space-md);
+  }
+
+  .clients-logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-xl);
+  }
+
+  .client-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    filter: grayscale(100%) brightness(0.8);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+  }
+
+  .client-logo:hover {
+    filter: grayscale(0%) brightness(1);
+    opacity: 1;
+  }
+
+  .client-logo img {
+    max-height: 40px;
+    max-width: 120px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .client-fallback {
+    display: none;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--glass);
+    border-radius: var(--radius-sm);
+  }
+
+  @media (max-width: 768px) {
+    .clients-logos {
+      gap: var(--space-lg);
+    }
+
+    .client-logo img {
+      max-height: 32px;
+      max-width: 100px;
+    }
+  }
+</style>
