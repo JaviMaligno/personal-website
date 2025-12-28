@@ -29,19 +29,37 @@ npm run preview  # Preview production build locally
 ### Project Structure
 ```
 src/
-├── i18n/              # Internationalization (en/es)
-│   ├── index.ts       # Translation utilities
-│   ├── en.json        # English strings
-│   └── es.json        # Spanish strings
+├── data/
+│   └── projects.ts        # Centralized project definitions
+├── diagrams/
+│   └── index.ts           # Mermaid diagram registry
+├── i18n/
+│   ├── index.ts           # Translation utilities
+│   ├── en.json            # English strings
+│   └── es.json            # Spanish strings
 ├── layouts/
-│   └── Layout.astro   # Base layout with header/footer
+│   ├── Layout.astro       # Base layout with header/footer
+│   └── ProjectLayout.astro # Layout for project detail pages
 ├── pages/
-│   ├── index.astro    # Redirect page
-│   ├── en/index.astro # English homepage
-│   └── es/index.astro # Spanish homepage
-├── components/        # Section components (Hero, Services, Projects, Architecture, Process, Contact)
+│   ├── index.astro        # Redirect to /en/
+│   ├── en/
+│   │   ├── index.astro    # English homepage
+│   │   └── projects/[slug].astro  # Dynamic project pages (EN)
+│   └── es/
+│       ├── index.astro    # Spanish homepage
+│       └── projects/[slug].astro  # Dynamic project pages (ES)
+├── components/
+│   ├── Hero.astro
+│   ├── Services.astro
+│   ├── Projects.astro         # Project cards grid
+│   ├── ArchitectureTeaser.astro # Links to flagship project
+│   ├── ProjectDetail.astro    # Case study layout
+│   ├── MermaidDiagram.astro   # Reusable diagram component
+│   ├── TechStack.astro        # Technology tags display
+│   ├── Process.astro
+│   └── Contact.astro
 └── styles/
-    └── global.css     # CSS variables and base styles
+    └── global.css         # CSS variables and base styles
 ```
 
 ### Internationalization Pattern
@@ -56,8 +74,38 @@ All text content is centralized in JSON files. Components access translations vi
 ```typescript
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
-// Usage: t('hero').title, t('services').agentPipelines.description
+// Usage: t('hero').title, t('projects').dataSourceAutomator.title
 ```
+
+### Project Pages System
+
+Individual project pages use a case study format with sections:
+- Problem, Solution, Architecture (optional), Tech Stack, Outcomes
+
+**Data Layer** (`src/data/projects.ts`):
+```typescript
+interface Project {
+  slug: string;           // URL slug (e.g., 'data-source-automator')
+  key: string;            // Translation key
+  category: 'agentPipelines' | 'mcp' | 'compliance';
+  tags: string[];
+  github: string | null;
+  hasDiagram: boolean;    // Controls Architecture section visibility
+}
+```
+
+**Diagram Registry** (`src/diagrams/index.ts`):
+- Mermaid diagrams are defined in TypeScript with translation support
+- Only projects with `hasDiagram: true` show the Architecture section
+- To add a new diagram: create entry in registry, set `hasDiagram: true` in project
+
+### Adding New Projects
+
+1. Add project to `src/data/projects.ts` array
+2. Add translations in `en.json` and `es.json`:
+   - Under `projects.<key>`: `title`, `description`
+   - Under `projectDetails.<key>`: `problem`, `solution`, `outcomes[]`
+3. (Optional) Add diagram to `src/diagrams/index.ts` if `hasDiagram: true`
 
 ### Component Architecture
 
@@ -67,15 +115,26 @@ Each page section is a self-contained `.astro` component with:
 3. Scoped `<style>` block
 4. Optional `<script>` for client-side interactivity
 
-The `Architecture.astro` component uses Mermaid.js for the pipeline diagram, with translations interpolated into the Mermaid syntax string.
-
-### Adding New Projects
-
-Projects are defined in `src/components/Projects.astro` with category mappings. To add a project:
-1. Add translation keys in both `en.json` and `es.json` under `projects`
-2. Add project entry in the `projects` array in `Projects.astro`
-3. Map to existing category (`agentPipelines`, `mcp`, `compliance`) or create new one
-
 ## Deployment
 
-Site is configured for `https://javieraguilar.ai` with sitemap integration. Static output in `dist/` can be deployed to any static host.
+### CI/CD Pipeline
+
+GitHub Actions workflow (`.github/workflows/deploy.yml`) handles automatic deployments:
+- **Push to `main`** → Production deployment to Vercel
+- **Pull requests** → Preview deployment
+
+Required GitHub Secrets:
+- `VERCEL_TOKEN` - API token from vercel.com/account/tokens
+- `VERCEL_ORG_ID` - From `.vercel/project.json`
+- `VERCEL_PROJECT_ID` - From `.vercel/project.json`
+
+### Manual Deployment
+
+```bash
+vercel          # Preview deployment
+vercel --prod   # Production deployment
+```
+
+### URLs
+- **Production**: https://personal-website-lime-one-42.vercel.app
+- **Domain**: https://javieraguilar.ai (configured)

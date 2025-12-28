@@ -1,13 +1,14 @@
 # Javier Aguilar - Personal Website
 
-Professional one-pager website for AI Agent Architect services.
+Professional portfolio website for AI Agent Architect services, featuring individual project case studies with architecture diagrams.
 
 ## Tech Stack
 
-- **Framework**: Astro 5.x
+- **Framework**: Astro 5.x (Static Site Generator)
+- **Diagrams**: Mermaid.js (client-side rendering)
 - **Styling**: Vanilla CSS with custom properties
 - **i18n**: English (en) and Spanish (es)
-- **Deployment**: Vercel / GitHub Pages
+- **CI/CD**: GitHub Actions → Vercel
 
 ## Development
 
@@ -29,41 +30,77 @@ npm run preview
 
 ```
 src/
-├── components/      # Astro components (Hero, Services, Projects, etc.)
-├── i18n/           # Translation files (en.json, es.json)
-├── layouts/        # Base layout with header/footer
-├── pages/          # Route pages
-│   ├── en/         # English pages
-│   └── es/         # Spanish pages
-└── styles/         # Global CSS
+├── data/
+│   └── projects.ts      # Centralized project definitions
+├── diagrams/
+│   └── index.ts         # Mermaid diagram registry
+├── components/
+│   ├── ProjectDetail.astro   # Case study layout
+│   ├── MermaidDiagram.astro  # Reusable diagram component
+│   └── ...                   # Section components
+├── i18n/                # Translation files (en.json, es.json)
+├── layouts/
+│   ├── Layout.astro         # Base layout
+│   └── ProjectLayout.astro  # Project page layout
+├── pages/
+│   ├── en/
+│   │   ├── index.astro
+│   │   └── projects/[slug].astro  # Dynamic project pages
+│   └── es/
+│       ├── index.astro
+│       └── projects/[slug].astro
+└── styles/
+    └── global.css
 ```
+
+## Adding Projects
+
+1. Add entry to `src/data/projects.ts`
+2. Add translations in `en.json` and `es.json`:
+   - `projects.<key>`: title, description
+   - `projectDetails.<key>`: problem, solution, outcomes[]
+3. (Optional) Add diagram to `src/diagrams/index.ts`
 
 ## Configuration
 
-### Formspree
-Update the form action in `src/components/Contact.astro` with your Formspree form ID:
-```astro
-action="https://formspree.io/f/YOUR_FORM_ID"
+### Environment Variables
+Copy `.env.example` to `.env` (if needed for local testing):
+```
+VERCEL_TOKEN=<your-token>
+VERCEL_ORG_ID=<from .vercel/project.json>
+VERCEL_PROJECT_ID=<from .vercel/project.json>
 ```
 
+### Formspree
+Contact form configured in `src/components/Contact.astro`.
+
 ### Domain
-Update `astro.config.mjs` with your domain:
+Site URL in `astro.config.mjs`:
 ```js
 site: 'https://javieraguilar.ai',
 ```
 
-### Social Links
-Update footer links in `src/layouts/Layout.astro` with your actual GitHub and LinkedIn URLs.
-
 ## Deployment
 
-### Vercel
-1. Connect repository to Vercel
-2. Astro configuration auto-detected
-3. Configure custom domain in Vercel dashboard
+### Automatic (CI/CD)
+Push to `main` triggers automatic deployment via GitHub Actions.
+Pull requests create preview deployments.
 
-### GitHub Pages
-Add `.github/workflows/deploy.yml` with Astro GitHub Action.
+**Required GitHub Secrets:**
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+### Manual
+```bash
+vercel          # Preview
+vercel --prod   # Production
+```
+
+## URLs
+
+- **Production**: https://personal-website-lime-one-42.vercel.app
+- **Domain**: https://javieraguilar.ai
 
 ## License
 
