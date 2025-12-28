@@ -4,12 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Purpose
 
-This is a personal portfolio website for Javier Aguilar, an AI Agent Architect. The site serves as a "productized service" landing page to market:
+This is a personal portfolio website for Javier Aguilar, an AI Agent Architect. The site has two audiences:
+
+### Main Site (/)
+Technical audience - CTOs, engineering leads, AI teams. Markets:
 - **AI Agent Pipelines**: Multi-agent orchestration for research, coding, and review workflows
 - **MCP Development**: Custom Model Context Protocol servers
 - **Compliance Automation**: Risk assessment and classification systems
 
 The goal is to position the brand ("AGILabs") as a specialized AI orchestration consultancy, showcasing architecture diagrams and demos rather than code.
+
+### Business Landing (/business)
+Non-technical audience - SME owners, business managers. Markets:
+- **Process Automation**: Eliminating repetitive manual tasks
+- **Data Analysis**: Insights without complex spreadsheets
+- **Document Generation**: Automatic reports and documentation
+
+This is a validation landing page for testing the SME market. See `docs/business-landing-strategy.md` for details.
 
 ## Commands
 
@@ -44,9 +55,11 @@ src/
 │   ├── index.astro        # Redirect to /en/
 │   ├── en/
 │   │   ├── index.astro    # English homepage
+│   │   ├── business/index.astro  # Business landing (EN)
 │   │   └── projects/[slug].astro  # Dynamic project pages (EN)
 │   └── es/
 │       ├── index.astro    # Spanish homepage
+│       ├── business/index.astro  # Business landing (ES)
 │       └── projects/[slug].astro  # Dynamic project pages (ES)
 ├── components/
 │   ├── Hero.astro
@@ -57,7 +70,15 @@ src/
 │   ├── MermaidDiagram.astro   # Reusable diagram component
 │   ├── TechStack.astro        # Technology tags display
 │   ├── Process.astro
-│   └── Contact.astro
+│   ├── Contact.astro
+│   └── business/              # SME landing components
+│       ├── BusinessHero.astro
+│       ├── BusinessProblems.astro
+│       ├── BusinessInsight.astro
+│       ├── BusinessServices.astro
+│       ├── BusinessCases.astro
+│       ├── BusinessProcess.astro
+│       └── BusinessCTA.astro
 └── styles/
     └── global.css         # CSS variables and base styles
 ```

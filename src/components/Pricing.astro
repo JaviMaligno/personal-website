@@ -4,8 +4,18 @@ import { getLangFromUrl, useTranslations, type Language } from '../i18n';
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
 
-const tiers = ['discovery', 'audit', 'implementation'] as const;
-const projects = ['mcp', 'pipeline', 'classifier', 'platform'] as const;
+const tiers = [
+  { key: 'discovery', icon: '🔍' },
+  { key: 'audit', icon: '📋' },
+  { key: 'implementation', icon: '🚀' }
+] as const;
+
+const projects = [
+  { key: 'mcp', icon: '🔌' },
+  { key: 'pipeline', icon: '🔄' },
+  { key: 'classifier', icon: '🏷️' },
+  { key: 'platform', icon: '🏗️' }
+] as const;
 ---
 
 <section id="pricing" class="pricing">
@@ -20,10 +30,13 @@ const projects = ['mcp', 'pipeline', 'classifier', 'platform'] as const;
         <h3 class="column-title">Engagement Tiers</h3>
         <div class="pricing-cards">
           {tiers.map((tier) => (
-            <div class={`pricing-card ${tier === 'discovery' ? 'highlight' : ''}`}>
-              <h4>{t('pricing').tiers[tier].title}</h4>
-              <div class="price">{t('pricing').tiers[tier].price}</div>
-              <p>{t('pricing').tiers[tier].description}</p>
+            <div class={`pricing-card ${tier.key === 'discovery' ? 'highlight' : ''}`}>
+              <div class="pricing-card-header">
+                <div class="pricing-icon">{tier.icon}</div>
+                <h4>{t('pricing').tiers[tier.key].title}</h4>
+              </div>
+              <div class="price">{t('pricing').tiers[tier.key].price}</div>
+              <p>{t('pricing').tiers[tier.key].description}</p>
             </div>
           ))}
         </div>
@@ -34,9 +47,12 @@ const projects = ['mcp', 'pipeline', 'classifier', 'platform'] as const;
         <div class="pricing-cards">
           {projects.map((project) => (
             <div class="pricing-card">
-              <h4>{t('pricing').projects[project].title}</h4>
-              <div class="price">{t('pricing').projects[project].price}</div>
-              <p>{t('pricing').projects[project].description}</p>
+              <div class="pricing-card-header">
+                <div class="pricing-icon">{project.icon}</div>
+                <h4>{t('pricing').projects[project.key].title}</h4>
+              </div>
+              <div class="price">{t('pricing').projects[project.key].price}</div>
+              <p>{t('pricing').projects[project.key].description}</p>
             </div>
           ))}
         </div>
@@ -94,9 +110,28 @@ const projects = ['mcp', 'pipeline', 'classifier', 'platform'] as const;
     border-color: var(--accent-primary);
   }
 
+  .pricing-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+  }
+
+  .pricing-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-gradient);
+    border-radius: var(--radius-md);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
   .pricing-card h4 {
     font-size: 1.125rem;
-    margin-bottom: var(--space-xs);
+    margin-bottom: 0;
     color: var(--text-primary);
   }
 
