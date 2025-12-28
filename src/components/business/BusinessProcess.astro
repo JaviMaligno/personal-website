@@ -1,0 +1,139 @@
+---
+import { getLangFromUrl, useTranslations, type Language } from '../../i18n';
+
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+
+const steps = t('business').process.steps;
+---
+
+<section id="process" class="business-process">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{t('business').process.title}</h2>
+      <p class="section-subtitle">{t('business').process.subtitle}</p>
+    </div>
+
+    <div class="process-timeline">
+      {steps.map((step: { title: string; description: string }, index: number) => (
+        <div class="process-step">
+          <div class="step-number">{index + 1}</div>
+          <div class="step-content">
+            <h3 class="step-title">{step.title}</h3>
+            <p class="step-description">{step.description}</p>
+          </div>
+          {index < steps.length - 1 && <div class="step-connector"></div>}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .business-process {
+    padding: var(--space-3xl) 0;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    margin-bottom: var(--space-sm);
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+  }
+
+  .process-timeline {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: var(--space-md);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .process-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+    position: relative;
+  }
+
+  .step-number {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-md);
+    position: relative;
+    z-index: 2;
+  }
+
+  .step-content {
+    max-width: 200px;
+  }
+
+  .step-title {
+    font-size: 1.125rem;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+    font-weight: 600;
+  }
+
+  .step-description {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .step-connector {
+    position: absolute;
+    top: 30px;
+    left: calc(50% + 40px);
+    width: calc(100% - 20px);
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    opacity: 0.3;
+  }
+
+  @media (max-width: 768px) {
+    .process-timeline {
+      flex-direction: column;
+      gap: var(--space-xl);
+    }
+
+    .step-connector {
+      display: none;
+    }
+
+    .process-step {
+      flex-direction: row;
+      text-align: left;
+      gap: var(--space-md);
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      margin-bottom: 0;
+    }
+
+    .step-content {
+      max-width: none;
+    }
+  }
+</style>

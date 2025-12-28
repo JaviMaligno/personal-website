@@ -1,0 +1,103 @@
+---
+import { getLangFromUrl, useTranslations, type Language } from '../../i18n';
+
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+
+const cases = t('business').cases.items;
+---
+
+<section id="cases" class="business-cases">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{t('business').cases.title}</h2>
+      <p class="section-subtitle">{t('business').cases.subtitle}</p>
+    </div>
+
+    <div class="cases-grid">
+      {cases.map((caseItem: { title: string; description: string; tag: string }) => (
+        <div class="case-card">
+          <span class="case-tag">{caseItem.tag}</span>
+          <h3 class="case-title">{caseItem.title}</h3>
+          <p class="case-description">{caseItem.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .business-cases {
+    padding: var(--space-3xl) 0;
+    background: var(--bg-secondary);
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    margin-bottom: var(--space-sm);
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+  }
+
+  .cases-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .case-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+  }
+
+  .case-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.1);
+  }
+
+  .case-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--accent-primary);
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-sm);
+  }
+
+  .case-title {
+    font-size: 1.125rem;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+    font-weight: 600;
+  }
+
+  .case-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 0.9375rem;
+  }
+
+  @media (max-width: 768px) {
+    .cases-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
