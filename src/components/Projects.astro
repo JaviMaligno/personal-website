@@ -1,9 +1,11 @@
 ---
 import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../i18n';
-import { projects } from '../data/projects';
+import { getFeaturedProjects } from '../data/projects';
 
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
+
+const featuredProjects = getFeaturedProjects();
 
 // Category labels for display
 const categoryLabels: Record<string, string> = {
@@ -20,8 +22,8 @@ const categoryLabels: Record<string, string> = {
       <p>{t('projects').subtitle}</p>
     </div>
     
-    <div class="grid grid-2">
-      {projects.map((project) => (
+    <div class="grid grid-3">
+      {featuredProjects.map((project) => (
         <div class="card project-card">
           <div class="project-header">
             <span class="category-badge" data-category={project.category}>
@@ -30,13 +32,13 @@ const categoryLabels: Record<string, string> = {
           </div>
           <h3>{t('projects')[project.key].title}</h3>
           <p>{t('projects')[project.key].description}</p>
-          
+
           <div class="tags">
             {project.tags.map((tag) => (
               <span class="tag">{tag}</span>
             ))}
           </div>
-          
+
           <div class="project-actions">
             <a
               href={`${getLocalizedPath('/', lang)}projects/${project.slug}`}
@@ -52,6 +54,12 @@ const categoryLabels: Record<string, string> = {
           </div>
         </div>
       ))}
+    </div>
+
+    <div class="view-all">
+      <a href={`${getLocalizedPath('/', lang)}projects`} class="view-all-link">
+        {lang === 'es' ? 'Ver todos los proyectos' : 'View all projects'} →
+      </a>
     </div>
   </div>
 </section>
@@ -117,5 +125,21 @@ const categoryLabels: Record<string, string> = {
   .btn-sm {
     padding: 0.5rem 1rem;
     font-size: 0.8125rem;
+  }
+
+  .view-all {
+    text-align: center;
+    margin-top: var(--space-xl);
+  }
+
+  .view-all-link {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .view-all-link:hover {
+    color: var(--primary);
   }
 </style>

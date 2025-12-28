@@ -5,6 +5,7 @@ export interface Project {
   tags: string[];
   github: string | null;
   hasDiagram: boolean;
+  featured?: boolean;
 }
 
 export const projects: Project[] = [
@@ -22,7 +23,8 @@ export const projects: Project[] = [
     category: 'compliance',
     tags: ['Python', 'LangChain', 'Risk Assessment'],
     github: null,
-    hasDiagram: true
+    hasDiagram: true,
+    featured: true
   },
   {
     slug: 'data-source-automator',
@@ -30,7 +32,8 @@ export const projects: Project[] = [
     category: 'agentPipelines',
     tags: ['Python', 'Multi-Agent', 'HITL'],
     github: null,
-    hasDiagram: true
+    hasDiagram: true,
+    featured: true
   },
   {
     slug: 'mcp-bitbucket',
@@ -70,7 +73,8 @@ export const projects: Project[] = [
     category: 'compliance',
     tags: ['TypeScript', 'NLP', 'ICD-10'],
     github: null,
-    hasDiagram: true
+    hasDiagram: true,
+    featured: true
   }
 ];
 
@@ -84,4 +88,8 @@ export function getProjectByKey(key: string): Project | undefined {
 
 export function getAllProjectSlugs(): string[] {
   return projects.map(p => p.slug);
+}
+
+export function getFeaturedProjects(): Project[] {
+  return projects.filter(p => p.featured);
 }
