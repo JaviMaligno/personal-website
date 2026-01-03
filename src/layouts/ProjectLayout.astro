@@ -19,6 +19,27 @@ const otherLang = lang === 'en' ? 'es' : 'en';
 const currentPath = Astro.url.pathname;
 const pathWithoutLang = currentPath.replace(/^\/(en|es)/, '');
 const langSwitchPath = `/${otherLang}${pathWithoutLang}`;
+
+// Canonical and alternate URLs
+const siteUrl = 'https://www.javieraguilar.ai';
+const canonicalUrl = `${siteUrl}${Astro.url.pathname}`;
+const alternateUrl = `${siteUrl}${langSwitchPath}`;
+
+// Schema.org for case study / project
+const projectSchema = {
+  "@context": "https://schema.org",
+  "@type": "CreativeWork",
+  "name": title,
+  "description": description,
+  "url": canonicalUrl,
+  "author": {
+    "@type": "Person",
+    "name": "Javier Aguilar",
+    "jobTitle": "AI Agent Architect",
+    "url": siteUrl
+  },
+  "inLanguage": lang === 'en' ? 'en-US' : 'es-ES'
+};
 ---
 
 <!DOCTYPE html>
@@ -40,6 +61,15 @@ const langSwitchPath = `/${otherLang}${pathWithoutLang}`;
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+
+    <!-- Canonical and hreflang -->
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" hreflang={lang === 'en' ? 'en' : 'es'} href={canonicalUrl} />
+    <link rel="alternate" hreflang={otherLang === 'en' ? 'en' : 'es'} href={alternateUrl} />
+    <link rel="alternate" hreflang="x-default" href={`${siteUrl}/en${pathWithoutLang}`} />
+
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json" set:html={JSON.stringify(projectSchema)} />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

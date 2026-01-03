@@ -16,6 +16,70 @@ const currentYear = new Date().getFullYear();
 
 const otherLang = lang === 'en' ? 'es' : 'en';
 const langSwitchPath = langSwitchOverride || getLocalizedPath('/', otherLang);
+
+// Canonical and alternate URLs
+const siteUrl = 'https://www.javieraguilar.ai';
+const canonicalUrl = `${siteUrl}${Astro.url.pathname}`;
+const alternateUrl = `${siteUrl}${langSwitchPath}`;
+
+// Schema.org structured data for Person + Organization + WebSite
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Javier Aguilar",
+  "url": siteUrl,
+  "jobTitle": "AI Agent Architect",
+  "description": "I design AI systems that actually work. Specializing in multi-agent orchestration, MCP development, and compliance automation.",
+  "knowsAbout": [
+    "Artificial Intelligence",
+    "Multi-Agent Systems",
+    "Model Context Protocol (MCP)",
+    "AI Orchestration",
+    "Compliance Automation",
+    "Claude",
+    "LLMs"
+  ],
+  "sameAs": [
+    "https://github.com/JaviMaligno",
+    "https://linkedin.com/in/javier-aguilar-mart%C3%ADn-85575711a/"
+  ],
+  "worksFor": {
+    "@type": "Organization",
+    "name": "AGILabs",
+    "url": siteUrl
+  }
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Javier Aguilar - AI Agent Architect",
+  "alternateName": "AGILabs",
+  "url": siteUrl,
+  "description": description,
+  "author": {
+    "@type": "Person",
+    "name": "Javier Aguilar"
+  },
+  "inLanguage": ["en-US", "es-ES"]
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "AGILabs",
+  "url": siteUrl,
+  "logo": `${siteUrl}/og-image.png`,
+  "description": "AI orchestration consultancy specializing in multi-agent systems, MCP development, and compliance automation.",
+  "founder": {
+    "@type": "Person",
+    "name": "Javier Aguilar"
+  },
+  "sameAs": [
+    "https://github.com/JaviMaligno",
+    "https://linkedin.com/in/javier-aguilar-mart%C3%ADn-85575711a/"
+  ]
+};
 ---
 
 <!DOCTYPE html>
@@ -37,7 +101,18 @@ const langSwitchPath = langSwitchOverride || getLocalizedPath('/', otherLang);
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    
+
+    <!-- Canonical and hreflang -->
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" hreflang={lang === 'en' ? 'en' : 'es'} href={canonicalUrl} />
+    <link rel="alternate" hreflang={otherLang === 'en' ? 'en' : 'es'} href={alternateUrl} />
+    <link rel="alternate" hreflang="x-default" href={`${siteUrl}/en/`} />
+
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

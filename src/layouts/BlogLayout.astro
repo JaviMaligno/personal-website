@@ -7,11 +7,12 @@ interface Props {
   description: string;
   pubDate: Date;
   updatedDate?: Date;
+  heroImage?: string;
   tags?: string[];
   translationSlug?: string;
 }
 
-const { title, description, pubDate, updatedDate, tags = [], translationSlug } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, tags = [], translationSlug } = Astro.props;
 
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
@@ -19,10 +20,60 @@ const currentYear = new Date().getFullYear();
 
 const otherLang = lang === 'en' ? 'es' : 'en';
 
+// Canonical and alternate URLs
+const siteUrl = 'https://www.javieraguilar.ai';
+const canonicalUrl = `${siteUrl}${Astro.url.pathname}`;
+const currentSlug = Astro.url.pathname.split('/').filter(Boolean).pop();
+
 // For blog pages, construct alternate language URL
 const langSwitchPath = translationSlug
   ? `/${otherLang}/blog/${translationSlug}/`
   : `/${otherLang}/blog/`;
+
+const alternateUrl = translationSlug
+  ? `${siteUrl}/${otherLang}/blog/${translationSlug}/`
+  : null;
+
+// Article image - use heroImage if provided, otherwise default to og-image
+const articleImage = heroImage
+  ? (heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}`)
+  : `${siteUrl}/og-image.png`;
+
+// Schema.org Article structured data
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": title,
+  "description": description,
+  "image": articleImage,
+  "datePublished": pubDate.toISOString(),
+  "dateModified": (updatedDate || pubDate).toISOString(),
+  "author": {
+    "@type": "Person",
+    "name": "Javier Aguilar",
+    "url": siteUrl,
+    "jobTitle": "AI Agent Architect",
+    "sameAs": [
+      "https://github.com/JaviMaligno",
+      "https://linkedin.com/in/javier-aguilar-mart%C3%ADn-85575711a/"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "AGILabs",
+    "url": siteUrl,
+    "logo": {
+      "@type": "ImageObject",
+      "url": `${siteUrl}/og-image.png`
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": canonicalUrl
+  },
+  "keywords": tags.join(", "),
+  "inLanguage": lang === 'en' ? 'en-US' : 'es-ES'
+};
 
 const formattedDate = pubDate.toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-US', {
   year: 'numeric',
@@ -59,6 +110,17 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(lang === 'es' ? 'es
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+
+    <!-- Canonical and hreflang -->
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" hreflang={lang === 'en' ? 'en' : 'es'} href={canonicalUrl} />
+    {alternateUrl && (
+      <link rel="alternate" hreflang={otherLang === 'en' ? 'en' : 'es'} href={alternateUrl} />
+    )}
+    <link rel="alternate" hreflang="x-default" href={lang === 'en' ? canonicalUrl : alternateUrl || canonicalUrl} />
+
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
