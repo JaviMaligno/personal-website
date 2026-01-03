@@ -1,0 +1,178 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import { getLangFromUrl, useTranslations, type Language } from '../../../i18n';
+
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+
+// Get all English blog posts, sorted by date
+const allPosts = await getCollection('blog', ({ data }) => data.lang === 'en');
+const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// Language switch for blog index
+const langSwitchPath = '/es/blog/';
+---
+
+<Layout title={`${t('blog').title} | Javier Aguilar`} description={t('blog').subtitle} langSwitchOverride={langSwitchPath}>
+  <section class="blog-hero">
+    <div class="container">
+      <h1>{t('blog').title}</h1>
+      <p class="subtitle">{t('blog').subtitle}</p>
+    </div>
+  </section>
+
+  <section class="blog-list">
+    <div class="container">
+      {posts.length === 0 ? (
+        <p class="no-articles">{t('blog').noArticles}</p>
+      ) : (
+        <div class="articles-grid">
+          {posts.map((post) => (
+            <article class="article-card">
+              <a href={`/en/blog/${post.slug.replace('en/', '')}/`}>
+                <div class="article-content">
+                  <div class="article-meta">
+                    <time datetime={post.data.pubDate.toISOString()}>
+                      {post.data.pubDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </time>
+                  </div>
+                  <h2>{post.data.title}</h2>
+                  <p>{post.data.description}</p>
+                  {post.data.tags.length > 0 && (
+                    <div class="article-tags">
+                      {post.data.tags.slice(0, 3).map(tag => (
+                        <span class="tag">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                  <span class="read-more">{t('blog').readMore} &rarr;</span>
+                </div>
+              </a>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .blog-hero {
+    padding: calc(72px + var(--space-3xl)) 0 var(--space-2xl);
+    text-align: center;
+  }
+
+  .blog-hero h1 {
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+  }
+
+  .subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .blog-list {
+    padding: var(--space-2xl) 0 var(--space-3xl);
+  }
+
+  .no-articles {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 1.125rem;
+  }
+
+  .articles-grid {
+    display: grid;
+    gap: var(--space-xl);
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .article-card {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-base);
+  }
+
+  .article-card:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+  }
+
+  .article-card a {
+    display: block;
+    padding: var(--space-xl);
+    text-decoration: none;
+  }
+
+  .article-content h2 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+    line-height: 1.3;
+  }
+
+  .article-content p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+  }
+
+  .article-meta {
+    margin-bottom: var(--space-sm);
+  }
+
+  .article-meta time {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .article-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+  }
+
+  .tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: var(--radius-full);
+    color: var(--accent-primary);
+  }
+
+  .read-more {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--accent-primary);
+  }
+
+  @media (max-width: 768px) {
+    .blog-hero h1 {
+      font-size: 2rem;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+    }
+
+    .article-card a {
+      padding: var(--space-lg);
+    }
+
+    .article-content h2 {
+      font-size: 1.25rem;
+    }
+  }
+</style>

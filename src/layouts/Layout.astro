@@ -5,16 +5,17 @@ import { getLangFromUrl, useTranslations, languages, getLocalizedPath, type Lang
 interface Props {
   title?: string;
   description?: string;
+  langSwitchOverride?: string;
 }
 
-const { title = 'Javier Aguilar - AI Agent Architect', description = 'I design AI systems that actually work. Multi-agent orchestration, MCP development, and compliance automation.' } = Astro.props;
+const { title = 'Javier Aguilar - AI Agent Architect', description = 'I design AI systems that actually work. Multi-agent orchestration, MCP development, and compliance automation.', langSwitchOverride } = Astro.props;
 
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
 const currentYear = new Date().getFullYear();
 
 const otherLang = lang === 'en' ? 'es' : 'en';
-const langSwitchPath = getLocalizedPath('/', otherLang);
+const langSwitchPath = langSwitchOverride || getLocalizedPath('/', otherLang);
 ---
 
 <!DOCTYPE html>
@@ -61,6 +62,7 @@ const langSwitchPath = getLocalizedPath('/', otherLang);
         <nav class="nav">
           <a href="#services">{t('nav').services}</a>
           <a href="#projects">{t('nav').projects}</a>
+          <a href={getLocalizedPath('/blog/', lang)}>{t('nav').blog}</a>
           <a href="#process">{t('nav').process}</a>
           <a href="#contact">{t('nav').contact}</a>
           <a href="#" onclick="Calendly.initPopupWidget({url: 'https://calendly.com/javiecija96/discovery-call?hide_landing_page_details=1&hide_gdpr_banner=1&primary_color=6366f1'});return false;" class="btn btn-primary btn-sm">{t('cta').bookCall}</a>
