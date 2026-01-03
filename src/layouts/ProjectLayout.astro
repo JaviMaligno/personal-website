@@ -71,17 +71,34 @@ const projectSchema = {
     <!-- Schema.org structured data -->
     <script type="application/ld+json" set:html={JSON.stringify(projectSchema)} />
 
-    <!-- Fonts -->
+    <!-- Fonts - use system font stack with Inter as enhancement -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" /></noscript>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
 
-    <!-- Calendly popup widget -->
-    <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet" />
-    <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+    <!-- Calendly widget loaded on-demand -->
+    <script is:inline>
+      window.loadCalendlyPopup = function(url) {
+        if (window.Calendly) {
+          Calendly.initPopupWidget({ url: url });
+        } else {
+          // Load CSS
+          var css = document.createElement('link');
+          css.rel = 'stylesheet';
+          css.href = 'https://assets.calendly.com/assets/external/widget.css';
+          document.head.appendChild(css);
+          // Load JS
+          var script = document.createElement('script');
+          script.src = 'https://assets.calendly.com/assets/external/widget.js';
+          script.onload = function() { Calendly.initPopupWidget({ url: url }); };
+          document.head.appendChild(script);
+        }
+      };
+    </script>
   </head>
   <body>
     <!-- Header -->
@@ -98,7 +115,7 @@ const projectSchema = {
           <a href={getLocalizedPath('/blog/', lang)}>{t('nav').blog}</a>
           <a href={`${getLocalizedPath('/', lang)}#process`}>{t('nav').process}</a>
           <a href={`${getLocalizedPath('/', lang)}#contact`}>{t('nav').contact}</a>
-          <a href="#" onclick="Calendly.initPopupWidget({url: 'https://calendly.com/javiecija96/discovery-call?hide_landing_page_details=1&hide_gdpr_banner=1&primary_color=6366f1'});return false;" class="btn btn-primary btn-sm">{t('cta').bookCall}</a>
+          <a href="#" onclick="window.loadCalendlyPopup && window.loadCalendlyPopup('https://calendly.com/javiecija96/discovery-call?hide_landing_page_details=1&hide_gdpr_banner=1&primary_color=6366f1');return false;" class="btn btn-primary btn-sm">{t('cta').bookCall}</a>
           <a href={langSwitchPath} class="lang-switch" title={languages[otherLang]}>
             {otherLang.toUpperCase()}
           </a>
