@@ -98,8 +98,13 @@ export async function createLinkedInPost({ personUrn, text, imageUrn }) {
   try {
     console.log(`🤖 Creating LinkedIn post...`);
 
+    // Ensure personUrn is in full URN format
+    const fullAuthorUrn = personUrn.startsWith('urn:li:person:')
+      ? personUrn
+      : `urn:li:person:${personUrn}`;
+
     const postBody = {
-      author: personUrn,
+      author: fullAuthorUrn,
       lifecycleState: 'PUBLISHED',
       specificContent: {
         'com.linkedin.ugc.ShareContent': {
