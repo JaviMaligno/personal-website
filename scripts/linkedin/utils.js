@@ -26,6 +26,11 @@ export async function uploadImageToLinkedIn(imagePath) {
   try {
     console.log(`🤖 Step 1: Registering image upload...`);
 
+    // Ensure personUrn is in full URN format
+    const fullOwnerUrn = personUrn.startsWith('urn:li:person:')
+      ? personUrn
+      : `urn:li:person:${personUrn}`;
+
     // Step 1: Register upload
     const registerResponse = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
       method: 'POST',
@@ -37,7 +42,7 @@ export async function uploadImageToLinkedIn(imagePath) {
       body: JSON.stringify({
         registerUploadRequest: {
           recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-          owner: personUrn,
+          owner: fullOwnerUrn,
           serviceRelationships: [{
             relationshipType: 'OWNER',
             identifier: 'urn:li:userGeneratedContent',
