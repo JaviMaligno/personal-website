@@ -173,3 +173,4 @@ The code is simple, but the impact is profound. You get the safety of TypeScript
 **Want to discuss AI agent architectures?** I'm always exploring new patterns for multi-agent orchestration. Reach out on [LinkedIn](https://linkedin.com/in/javier-aguilar-ai) or check out more articles on [javieraguilar.ai](https://javieraguilar.ai).
 
 *Building the future, one specialized agent at a time.* 🤖
+
