@@ -12,6 +12,8 @@ const blog = defineCollection({
     lang: z.enum(['en', 'es']),
     // For linking translations
     translationKey: z.string(),
+    // For LinkedIn automation (optional)
+    linkedinImage: z.string().optional(),
   }),
 });
 

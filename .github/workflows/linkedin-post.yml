@@ -1,0 +1,50 @@
+name: Publish to LinkedIn
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/content/blog/en/**/*.md'
+
+jobs:
+  publish-linkedin:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit for git diff
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @google/generative-ai gray-matter
+
+      - name: Detect new posts
+        id: detect
+        run: node scripts/linkedin/detect-new-posts.js
+        env:
+          GITHUB_BEFORE: ${{ github.event.before }}
+          GITHUB_AFTER: ${{ github.event.after }}
+
+      - name: Generate summary and publish
+        if: steps.detect.outputs.has_new_posts == 'true'
+        run: node scripts/linkedin/publish-to-linkedin.js
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_PERSON_URN: ${{ secrets.LINKEDIN_PERSON_URN }}
+          NEW_POST_PATH: ${{ steps.detect.outputs.post_path }}
+          SITE_URL: 'https://javieraguilar.ai'
+
+      - name: Report success
+        if: success()
+        run: |
+          echo "✅ LinkedIn post published successfully!"
+          echo "Post: ${{ steps.detect.outputs.post_title }}"

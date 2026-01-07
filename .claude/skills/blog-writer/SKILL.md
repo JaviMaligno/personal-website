@@ -39,6 +39,33 @@ translationKey: article-slug
 | `lang` | Yes | Must be `en` or `es` |
 | `translationKey` | Yes | Same value for EN/ES pair (kebab-case) |
 
+### LinkedIn Automation (Optional)
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `linkedinImage` | string | Ruta a imagen para LinkedIn (ej: `/blog/linkedin-card.png`) |
+
+**Notas:**
+- Campo opcional
+- Solo se usa para auto-publicación en LinkedIn
+- Si se omite, el post en LinkedIn será solo texto
+- Ruta debe apuntar a archivo en `public/blog/`
+- Formatos: PNG, JPG, WEBP
+- Tamaño recomendado: 1200x627px
+
+**Ejemplo:**
+```yaml
+---
+title: "Mi Artículo"
+description: "Descripción del artículo"
+pubDate: 2026-01-07
+tags: ["AI", "Automation"]
+lang: en
+translationKey: mi-articulo
+linkedinImage: /blog/linkedin-card.png  # Opcional
+---
+```
+
 ## Bilingual Workflow
 
 1. **Always create both files** with matching `translationKey`
