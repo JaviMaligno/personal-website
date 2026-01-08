@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://javieraguilar.ai',
+  site: 'https://www.javieraguilar.ai',
 
   i18n: {
     defaultLocale: 'en',
