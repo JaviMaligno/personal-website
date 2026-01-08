@@ -49,7 +49,7 @@ The [MCP Server for Bitbucket](https://github.com/JaviMaligno/mcp-server-bitbuck
 
 Here's how I use it daily:
 
-![MCP Bitbucket in action with Claude Code](/blog/mcp-bitbucket-demo.webp)
+![MCP Bitbucket in action with Claude Code](https://www.javieraguilar.ai/blog/mcp-bitbucket-demo.webp)
 
 ```
 "Show me open PRs and do a code review of #42"

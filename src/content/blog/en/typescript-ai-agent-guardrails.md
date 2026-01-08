@@ -57,7 +57,7 @@ Each role has **specialized context** and **focused objectives**.
 
 So I built the same pattern for AI agents: a **specialized sub-agent** that handles one thing perfectly—fixing TypeScript compilation errors.
 
-![Software Development Lifecycle](/blog/typescript-agent-guardrails.png)
+![Software Development Lifecycle](https://www.javieraguilar.ai/blog/typescript-agent-guardrails.png)
 
 ### How It Works: The typescript-fixer Sub-Agent
 

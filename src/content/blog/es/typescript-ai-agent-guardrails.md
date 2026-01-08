@@ -57,7 +57,7 @@ Cada rol tiene **contexto especializado** y **objetivos enfocados**.
 
 Así que construí el mismo patrón para agentes de IA: un **sub-agente especializado** que maneja una cosa perfectamente—arreglar errores de compilación de TypeScript.
 
-![Ciclo de Vida del Desarrollo de Software](/blog/typescript-agent-guardrails.png)
+![Ciclo de Vida del Desarrollo de Software](https://www.javieraguilar.ai/blog/typescript-agent-guardrails.png)
 
 ### Cómo Funciona: El Sub-Agente typescript-fixer
 
