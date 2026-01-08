@@ -97,7 +97,9 @@ So it works automatically for new posts:
 
 4. Click **"Add secret"**
 
-✅ Done! Now every new blog post will auto-publish to Dev.to as a draft.
+✅ Done! Now every new blog post will auto-publish to Dev.to **LIVE** (publicly visible).
+
+💡 To publish as draft instead, add `devtoPublished: false` to your post's frontmatter.
 
 ---
 
@@ -172,9 +174,9 @@ Portfolio: https://www.javieraguilar.ai
 ### 3. Write New Content
 
 When you publish a new post to your blog:
-1. Push to GitHub → Auto-publishes to Dev.to as draft
-2. Review draft on Dev.to
-3. Publish when ready
+1. Push to GitHub → Auto-publishes to Dev.to **LIVE**
+2. Your post is publicly visible immediately
+3. You can edit it later if needed (use `npm run update:devto`)
 
 ---
 

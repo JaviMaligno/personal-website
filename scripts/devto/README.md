@@ -66,9 +66,11 @@ git push origin main
 
 The GitHub Action will:
 1. Detect the new post
-2. Publish it to Dev.to as a **DRAFT**
+2. Publish it to Dev.to **AUTOMATICALLY** (live immediately)
 3. You get a notification with the Dev.to URL
-4. Review and publish manually on Dev.to
+4. You can edit it later if needed
+
+To publish as draft instead, add `devtoPublished: false` to frontmatter
 
 ### Publishing Existing Posts (Testing)
 
@@ -101,8 +103,8 @@ Add these optional fields to your post's frontmatter:
 title: "Your Post Title"
 description: "Post description"
 tags: ["ai", "agents", "claude", "mcp"]  # Max 4 tags
-publishToDevto: true   # Set to false to skip Dev.to
-devtoPublished: false  # true = publish immediately, false = draft
+publishToDevto: true   # Set to false to skip Dev.to entirely
+devtoPublished: true   # true = publish immediately (DEFAULT), false = draft
 coverImage: "/path/to/custom-image.png"  # Optional custom cover
 ---
 ```
@@ -256,7 +258,8 @@ title: "Building AI Agents That Actually Work"
 description: "Practical guide to production-ready AI agents"
 tags: ["ai", "agents", "tutorial", "claude"]
 publishToDevto: true
-devtoPublished: false  # Draft first
+# devtoPublished: true by default (auto-publish)
+# Set devtoPublished: false if you want a draft first
 ---
 ```
 

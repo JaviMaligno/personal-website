@@ -60,8 +60,8 @@ Want to see more AI agent projects? Check out my [portfolio](${siteUrl}) where I
       .map(tag => tag.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, ''))
       .filter(tag => tag.length > 0);
 
-    // Determine publish status
-    const published = frontmatter.devtoPublished === true;
+    // Determine publish status (default: true = auto-publish)
+    const published = frontmatter.devtoPublished !== false;
 
     const article = {
       title: frontmatter.title,
