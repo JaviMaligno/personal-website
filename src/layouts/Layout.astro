@@ -16,7 +16,11 @@ const t = useTranslations(lang);
 const currentYear = new Date().getFullYear();
 
 const otherLang = lang === 'en' ? 'es' : 'en';
-const langSwitchPath = langSwitchOverride || getLocalizedPath('/', otherLang);
+
+// For alternate URL, replace language prefix in current path if no override provided
+const currentPath = Astro.url.pathname;
+const pathWithoutLang = currentPath.replace(/^\/(en|es)/, '');
+const langSwitchPath = langSwitchOverride || `/${otherLang}${pathWithoutLang}`;
 
 // Canonical and alternate URLs
 const siteUrl = 'https://www.javieraguilar.ai';
@@ -133,8 +137,8 @@ const organizationSchema = {
     <!-- Canonical and hreflang -->
     <link rel="canonical" href={canonicalUrl} />
     <link rel="alternate" hreflang={otherLang === 'en' ? 'en' : 'es'} href={alternateUrl} />
-    {/* x-default should always point to English version */}
-    <link rel="alternate" hreflang="x-default" href={`${siteUrl}/en/`} />
+    {/* x-default should always point to English version of current page */}
+    <link rel="alternate" hreflang="x-default" href={`${siteUrl}/en${pathWithoutLang}`} />
 
     <!-- Schema.org structured data -->
     <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
