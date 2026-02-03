@@ -4,6 +4,7 @@ description: "Analyzing the legal and ethical implications of 'Co-Authored-By: C
 pubDate: 2026-02-03
 tags: ["AI", "Legal", "Copyright", "Claude", "Ethics", "Development"]
 lang: en
+heroImage: "/blog/claude-coauthor-debate-legal.png"
 translationKey: claude-coauthor-legal-debate
 ---
 
