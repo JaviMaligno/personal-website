@@ -63,6 +63,12 @@ Want to see more AI agent projects? Check out my [portfolio](${siteUrl}) where I
     // Determine publish status (default: true = auto-publish)
     const published = frontmatter.devtoPublished !== false;
 
+    // Resolve cover image (support heroImage alias) and ensure absolute URL
+    let coverImage = frontmatter.coverImage || frontmatter.heroImage;
+    if (coverImage && coverImage.startsWith('/')) {
+      coverImage = `${siteUrl}${coverImage}`;
+    }
+
     const article = {
       title: frontmatter.title,
       body_markdown: contentWithCTA,
@@ -70,7 +76,7 @@ Want to see more AI agent projects? Check out my [portfolio](${siteUrl}) where I
       tags: tags,
       canonical_url: canonicalUrl,
       description: frontmatter.description,
-      main_image: frontmatter.coverImage || `${siteUrl}/og-image.png`,
+      main_image: coverImage || `${siteUrl}/og-image.png`,
     };
 
     console.log(`\nPublishing to Dev.to:`);

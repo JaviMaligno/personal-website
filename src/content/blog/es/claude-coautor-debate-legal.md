@@ -4,6 +4,7 @@ description: "Análisis de las implicaciones legales y éticas del 'Co-Authored-
 pubDate: 2026-02-03
 tags: ["IA", "Legal", "Copyright", "Claude", "Ética", "Desarrollo"]
 lang: es
+heroImage: "/blog/claude-coauthor-debate-legal.png"
 translationKey: claude-coauthor-legal-debate
 ---
 

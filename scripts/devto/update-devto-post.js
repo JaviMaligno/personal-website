@@ -71,6 +71,12 @@ Want to see more AI agent projects? Check out my [portfolio](${siteUrl}) where I
       .map(tag => tag.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, ''))
       .filter(tag => tag.length > 0);
 
+    // Resolve cover image (support heroImage alias) and ensure absolute URL
+    let coverImage = frontmatter.coverImage || frontmatter.heroImage;
+    if (coverImage && coverImage.startsWith('/')) {
+      coverImage = `${siteUrl}${coverImage}`;
+    }
+
     // Keep current publication status (don't change it)
     const article = {
       title: frontmatter.title,
@@ -78,7 +84,7 @@ Want to see more AI agent projects? Check out my [portfolio](${siteUrl}) where I
       tags: tags,
       canonical_url: canonicalUrl,
       description: frontmatter.description,
-      main_image: frontmatter.coverImage || `${siteUrl}/og-image.png`,
+      main_image: coverImage || `${siteUrl}/og-image.png`,
     };
 
     console.log(`\nUpdating Dev.to article ${articleId}:`);
