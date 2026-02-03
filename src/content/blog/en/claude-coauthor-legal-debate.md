@@ -36,7 +36,7 @@ Research reveals a complex and evolving legal landscape:
 
 The [U.S. Copyright Office](https://www.copyright.gov/ai/) has been clear: **only human-created works qualify for copyright protection**. Code generated exclusively by AI, without significant human creative input, enters the public domain.
 
-In its [January 2025 AI report](https://www.copyright.gov/ai/report-part-2.pdf), the Office reaffirms that substantial human contribution is an essential requirement. If a developer uses AI as an assistive tool but then **refines, modifies, and substantially transforms** the output, the human-contributed components can receive protection.
+In its [January 2025 AI report](https://www.copyright.gov/ai/ai-and-copyrightability.pdf), the Office reaffirms that substantial human contribution is an essential requirement. If a developer uses AI as an assistive tool but then **refines, modifies, and substantially transforms** the output, the human-contributed components can receive protection.
 
 ### The European Union: Human-Centric Approach
 
@@ -76,7 +76,7 @@ Uncomfortable questions arise:
 
 ## What Anthropic Says (Between the Lines)
 
-According to their [Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms), Anthropic assigns code rights to users and [claims no rights to customer content](https://www.anthropic.com/news/updated-commercial-terms-of-service). But there's an important caveat: they acknowledge that **purely AI-generated portions might lack copyright protection** because Anthropic cannot grant rights that don't inherently exist.
+According to their [Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms), Anthropic assigns code rights to users and [commits to defending customers from copyright claims](https://www.anthropic.com/news/anthropic-commercial-terms). But there's an important caveat: they acknowledge that **purely AI-generated portions might lack copyright protection** because Anthropic cannot grant rights that don't inherently exist.
 
 It's a legally savvy position: "We give you everything, but what has no protection... well, that's not our problem."
 
@@ -84,7 +84,7 @@ It's a legally savvy position: "We give you everything, but what has no protecti
 
 Microsoft took a completely different approach with GitHub Copilot. In September 2023, they introduced the [**"Copilot Copyright Commitment"**](https://blogs.microsoft.com/on-the-issues/2023/09/07/copilot-copyright-commitment-ai-legal-concerns/): if commercial customers face copyright infringement lawsuits related to Copilot's output, Microsoft assumes legal responsibility and pays potential damages.
 
-Meanwhile, the [class-action lawsuit against GitHub Copilot](https://githubcopilotlitigation.com/) continues. Although a judge [dismissed most claims in July 2024](https://www.theregister.com/2024/07/09/github_copilot_lawsuit/), the case is on appeal before the Ninth Circuit.
+Meanwhile, the [class-action lawsuit against GitHub Copilot](https://githubcopilotlitigation.com/) continues. Although a judge [dismissed most claims in July 2024](https://www.theregister.com/2024/07/08/github_copilot_claims_dismissed/), the case is on appeal before the Ninth Circuit.
 
 The contrast is notable: Microsoft offers commercial protection, not authorship claims.
 
@@ -172,7 +172,7 @@ As developers, we're participants (sometimes unwitting) in this social and legal
 
 Legislation isn't prepared for this situation. As John admitted: *"I'm not a lawyer, but I think it does open debate."*
 
-And that debate is coming. The [U.S. Copyright Office has launched a complete AI initiative](https://www.copyright.gov/ai/) with multiple reports published between 2024 and 2025. Courts are seeing cases like [Doe v. GitHub](https://githubcopilotlitigation.com/) and [artists against Stability AI](https://stablediffusionlitigation.com/). AI companies are positioning themselves strategically.
+And that debate is coming. The [U.S. Copyright Office has launched a complete AI initiative](https://www.copyright.gov/ai/) with multiple reports published between 2024 and 2025. Courts are seeing cases like [Doe v. GitHub](https://githubcopilotlitigation.com/) and [artists against Stability AI](https://www.thefashionlaw.com/stability-ai-midjourney-hit-with-landmark-copyright-infringement-lawsuit/). AI companies are positioning themselves strategically.
 
 What's clear is that **the future of software development includes questions we never had to ask**:
 - Who really owns the code I write with AI assistance?
