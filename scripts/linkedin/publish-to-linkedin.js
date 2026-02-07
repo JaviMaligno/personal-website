@@ -66,11 +66,13 @@ async function publishToLinkedIn() {
     console.log('─'.repeat(60));
     console.log('');
 
-    // Handle image upload if linkedinImage exists
+    // Handle image upload (prefer linkedinImage, fallback to heroImage)
+    const imageToUpload = frontmatter.linkedinImage || frontmatter.heroImage;
     let imageUrn = null;
-    if (frontmatter.linkedinImage) {
+
+    if (imageToUpload) {
       // Convert /blog/image.png to public/blog/image.png
-      const imagePath = `public${frontmatter.linkedinImage}`;
+      const imagePath = `public${imageToUpload}`;
 
       if (existsSync(imagePath)) {
         console.log(`🖼️  Uploading image: ${imagePath}\n`);
