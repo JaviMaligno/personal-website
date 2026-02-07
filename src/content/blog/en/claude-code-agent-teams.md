@@ -69,6 +69,12 @@ This workflow isn't for everything. If your task is strictly sequential (Step B 
 2.  **Interdependency**: Where agents might need to correct or inform each other (e.g., "I fixed the API, please update the frontend").
 3.  **Role-Based Tasks**: When you need distinct "experts" (e.g., a "Security Expert" and a "Performance Expert" reviewing the same PR).
 
+## The New Bottleneck: You
+
+As I scaled this up, I realized something interesting: when you have 4-5 agents working in parallel at superhuman speeds, **the bottleneck shifts from "doing the work" to "reviewing the work."**
+
+You become the manager. Your job isn't to write code or draft essays anymore; it's to define the scope, unblock your agents, and quality-check their output. It requires a different mindset—less "maker", more "conductor".
+
 ## Final Thoughts
 
 The combination of `tmux` and Claude Code's Agent Teams creates a powerful "command center" feel. It transforms the AI from a chatbot into a coordinated workforce.

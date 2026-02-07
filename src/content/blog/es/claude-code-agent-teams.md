@@ -69,6 +69,12 @@ Este flujo de trabajo no es para todo. Si tu tarea es estrictamente secuencial (
 2.  **Interdependencia**: Donde los agentes podrían necesitar corregirse o informarse mutuamente (ej: "Arreglé la API, por favor actualiza el frontend").
 3.  **Tareas basadas en Roles**: Cuando necesitas distintos "expertos" (ej: un "Experto en Seguridad" y un "Experto en Rendimiento" revisando el mismo PR).
 
+## El nuevo cuello de botella: Tú
+
+A medida que escalaba esto, me di cuenta de algo interesante: cuando tienes a 4 o 5 agentes trabajando en paralelo a velocidades sobrehumanas, **el cuello de botella pasa de "hacer el trabajo" a "revisar el trabajo".**
+
+Te conviertes en el gerente. Tu trabajo ya no es escribir código o redactar ensayos; es definir el alcance, desbloquear a tus agentes y verificar la calidad de su trabajo. Requiere una mentalidad diferente: menos "creador", más "director de orquesta".
+
 ## Pensamientos finales
 
 La combinación de `tmux` y los Agent Teams de Claude Code crea una sensación de "centro de comando" muy potente. Transforma la IA de un chatbot a una fuerza laboral coordinada.
