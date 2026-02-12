@@ -283,12 +283,83 @@ No uses RLM cuando:
 - La **latencia importa** más que la profundidad (RLM es secuencial)
 - El documento **cabe en contexto** (usa contexto largo directamente)
 
+## Fase 2: De prototipo a producción
+
+La primera versión funcionaba, pero tenía ineficiencias claras: el modelo gastaba 2-3 turnos parseando la estructura del documento, las sub-llamadas se ejecutaban secuencialmente (~10-25s cada una), y el modelo no tenía conocimiento previo de los archivos disponibles. Tres mejoras dirigidas cambiaron esto.
+
+### 1. Helpers de estructura
+
+En vez de dejar que el modelo descubra los límites de los archivos parseando separadores `===== FILE:` manualmente, ahora pre-computamos un índice de archivos al cargar y exponemos helpers estructurados:
+
+```python
+file_count          # → 71
+list_files()        # → [{index: 0, name: "paper1.txt", start: 0, end: 56234, size: 56200}, ...]
+get_file(i)         # → texto completo del archivo i
+```
+
+Esto elimina la fase de exploración por completo. El modelo ya no necesita `search("===== FILE:")` ni contar separadores -- sabe exactamente cuántos archivos hay y puede leer cualquiera directamente.
+
+### 2. Tabla de contenidos inyectada
+
+El primer mensaje del usuario ahora incluye una tabla de contenidos auto-generada:
+
+```
+## Tabla de Contenidos (71 archivos, 4,044,992 chars)
+
+  [0] 2501.12345_paper_title.txt (56,200 chars)
+  [1] 2501.23456_another_paper.txt (48,100 chars)
+  ...
+  [70] 2502.99999_last_paper.txt (61,300 chars)
+
+Usa `get_file(i)` para leer el archivo i. Usa `list_files()` para ver detalles.
+```
+
+Combinado con el system prompt actualizado, el flujo recomendado del modelo cambia de "explorar → descubrir → muestrear → sintetizar" a "leer TOC → analizar en batch → sintetizar".
+
+### 3. Sub-llamadas en paralelo
+
+La mayor ganancia en latencia. Una nueva función `llm_query_batch()` ejecuta múltiples sub-llamadas concurrentemente usando `ThreadPoolExecutor`:
+
+```python
+# Antes: bucle secuencial (~10s × 71 = ~12 min)
+for i in range(file_count):
+    results.append(llm_query(f"Resume:\n{get_file(i)[:6000]}"))
+
+# Después: batch paralelo (~10s × 71 / 5 workers = ~3 min)
+prompts = [f"Resume:\n{get_file(i)[:6000]}" for i in range(file_count)]
+results = llm_query_batch(prompts, max_workers=5)
+```
+
+La implementación gestiona el conteo thread-safe de subcalls (via `threading.Lock`), valida el budget antes de arrancar, devuelve resultados en el orden de entrada, y captura fallos individuales como strings `[error: ...]` sin abortar el batch completo.
+
+### 4. El agujero negro de exec()
+
+Una regresión inesperada casi descarrila la Fase 2. `exec()` de Python no muestra automáticamente los valores de las expresiones -- a diferencia de un REPL interactivo. Con el enfoque multi-turno de la Fase 1 esto no importaba, porque el modelo acumulaba resultados entre turnos. Pero el enfoque batch de la Fase 2 lo computa todo en un solo `python_exec`: el modelo analizó los 71 papers, los sintetizó en una variable `final_text`... y recibió `stdout: 0 chars`. El resultado se evaporó.
+
+Peor aún: cuando el modelo respondió con texto plano (¡tenía la respuesta!), el guardrail lo redirigió a `python_exec` -- pero con cero subcalls restantes el modelo no podía usar `llm_query()`, así que se quedó en un bucle infinito hasta agotar los turnos.
+
+Dos fixes:
+
+1. **Auto-captura de la última expresión** (como IPython): `PythonEnv.exec()` ahora usa `ast` para detectar si la última sentencia es una expresión, la separa del cuerpo, la evalúa con `eval()` por separado, y añade el resultado a stdout. El modelo ya no necesita saber nada sobre `print()` -- simplemente funciona.
+
+2. **Nudge consciente del budget**: Cuando las subcalls se agotan y el modelo responde con texto, el nudge ahora dice *"Llama a `final(answer=...)` AHORA con los datos que tienes"* en vez de redirigir a `python_exec`.
+
+### Antes vs Después
+
+| Métrica | Fase 1 | Fase 2 |
+|---------|--------|--------|
+| **Turnos** | 13 | **4** |
+| **Tiempo** | 22:53 | **8:28** |
+| **Subcalls** | 80 | 84 |
+| **Éxito subcalls** | 80/80 (100%) | 84/84 (100%) |
+| **Tiempo batch (71 papers)** | ~12 min (secuencial) | **3:12** (5 workers) |
+| **Overhead exploración** | 2-3 turnos parseando estructura | 0 (TOC + helpers) |
+
+El modelo ahora arranca con conocimiento completo de la estructura del corpus, accede a archivos directamente por índice, analiza los 71 papers en una sola llamada batch paralela, y entrega una síntesis detallada de 5 temáticas con citas específicas de papers, nombres de métodos y métricas.
+
 ## Próximos pasos
 
-El prototipo es intencionalmente mínimo. Mejoras concretas que hemos identificado:
-- **Helpers de estructura** (`list_files()`, `get_file(i)`) para eliminar los 2-3 turnos que el modelo gasta parseando separadores de documentos
-- **Tabla de contenidos inyectada** en el system prompt para que el modelo sepa qué hay disponible sin explorar a ciegas
-- **Sub-llamadas en paralelo** para reducir latencia (actualmente secuenciales a ~10s cada una; 71 papers × 10s = ~12 min que podrían ser ~2-3 min)
+Mejoras pendientes para producción:
 - **Caché de resultados** entre ejecuciones para consultas repetidas sobre el mismo corpus
 - **Tracking de costes** por consulta para presupuestos de producción
 

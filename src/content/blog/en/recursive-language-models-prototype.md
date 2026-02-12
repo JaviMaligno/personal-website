@@ -283,12 +283,83 @@ Don't use RLM when:
 - **Latency matters** more than depth (RLM is sequential)
 - The document **fits in context** (just use long context)
 
+## Phase 2: From Prototype to Production
+
+The first version worked, but it had clear inefficiencies: the model wasted 2-3 turns parsing document structure, sub-calls ran sequentially (~10-25s each), and the model had no pre-built knowledge of available files. Three targeted improvements changed this.
+
+### 1. Structure Helpers
+
+Instead of letting the model discover file boundaries by parsing `===== FILE:` separators manually, we now pre-compute a file index at load time and expose structured helpers:
+
+```python
+file_count          # → 71
+list_files()        # → [{index: 0, name: "paper1.txt", start: 0, end: 56234, size: 56200}, ...]
+get_file(i)         # → full text content of file i
+```
+
+This eliminates the exploration phase entirely. The model no longer needs to `search("===== FILE:")` and count separators -- it knows exactly how many files exist and can read any one directly.
+
+### 2. Injected Table of Contents
+
+The first user message now includes an auto-generated TOC:
+
+```
+## Table of Contents (71 files, 4,044,992 chars)
+
+  [0] 2501.12345_paper_title.txt (56,200 chars)
+  [1] 2501.23456_another_paper.txt (48,100 chars)
+  ...
+  [70] 2502.99999_last_paper.txt (61,300 chars)
+
+Use `get_file(i)` to read file i. Use `list_files()` for details.
+```
+
+Combined with the updated system prompt, the model's recommended flow shifts from "explore → discover → sample → synthesize" to "read TOC → batch analyze → synthesize".
+
+### 3. Parallel Sub-calls
+
+The biggest latency win. A new `llm_query_batch()` function runs multiple sub-calls concurrently using `ThreadPoolExecutor`:
+
+```python
+# Before: sequential loop (~10s × 71 = ~12 min)
+for i in range(file_count):
+    results.append(llm_query(f"Summarize:\n{get_file(i)[:6000]}"))
+
+# After: parallel batch (~10s × 71 / 5 workers = ~3 min)
+prompts = [f"Summarize:\n{get_file(i)[:6000]}" for i in range(file_count)]
+results = llm_query_batch(prompts, max_workers=5)
+```
+
+The implementation handles thread-safe subcall counting (via `threading.Lock`), pre-validates budget before starting, returns results in input order, and captures individual failures as `[error: ...]` strings without aborting the batch.
+
+### 4. The exec() Black Hole
+
+An unexpected regression almost derailed Phase 2. Python's `exec()` doesn't auto-print expression return values -- unlike an interactive REPL. With Phase 1's multi-turn approach, the model accumulated results across turns so this didn't matter. But Phase 2's batch approach computes everything in a single `python_exec`: the model analyzed all 71 papers, synthesized them into a `final_text` variable... and got back `stdout: 0 chars`. The result vanished into nothing.
+
+Worse, when the model then responded with plain text (it had the answer!), the guardrail nudged it back to `python_exec` -- but with zero subcalls remaining, the model couldn't use `llm_query()`, so it looped endlessly until max turns.
+
+Two fixes:
+
+1. **Auto-capture last expression** (like IPython): `PythonEnv.exec()` now uses `ast` to detect if the last statement is an expression, splits it from the body, `eval()`s it separately, and appends the result to stdout. The model no longer needs to know about `print()` -- it just works.
+
+2. **Budget-aware nudge**: When subcalls are exhausted and the model responds with text, the nudge now says *"Call `final(answer=...)` NOW with the data you have"* instead of pushing back to `python_exec`.
+
+### Before vs After
+
+| Metric | Phase 1 | Phase 2 |
+|--------|---------|---------|
+| **Turns** | 13 | **4** |
+| **Time** | 22:53 | **8:28** |
+| **Subcalls** | 80 | 84 |
+| **Subcall success** | 80/80 (100%) | 84/84 (100%) |
+| **Batch time (71 papers)** | ~12 min (sequential) | **3:12** (5 workers) |
+| **Exploration overhead** | 2-3 turns parsing structure | 0 (TOC + helpers) |
+
+The model now starts with full knowledge of the corpus structure, accesses files directly by index, analyzes all 71 papers in a single parallel batch call, and delivers a detailed 5-theme synthesis with specific paper citations, method names, and metrics.
+
 ## What's Next
 
-The prototype is intentionally minimal. Concrete improvements we've identified:
-- **Structure helpers** (`list_files()`, `get_file(i)`) to eliminate the 2-3 turns the model spends parsing document separators
-- **Injected table of contents** in the system prompt so the model knows what's available without exploring blindly
-- **Parallel sub-calls** to reduce latency (currently sequential at ~10s each; 71 papers × 10s = ~12 min that could be ~2-3 min)
+Remaining improvements for production readiness:
 - **Result caching** across runs for repeated queries on the same corpus
 - **Cost tracking** per query for production budgeting
 
