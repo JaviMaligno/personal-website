@@ -438,6 +438,42 @@ The model now starts with full knowledge of the corpus structure, accesses files
 
 </details>
 
+### 6. Dual Strategy: Broad vs Specific Questions
+
+Up to this point, the system prompt enforced a single strategy: "batch ALL files at once." Great for broad questions ("summarize the 5 main themes"), wasteful for specific ones ("what vulnerabilities does the agent-fence paper identify?"). The model burned 71 subcalls scanning the entire corpus when it only needed one file.
+
+The fix: two explicit flows in the system prompt:
+
+- **Flow A (broad question)**: batch all files, local synthesis, `final()`. Unchanged.
+- **Flow B (specific question)**: identify relevant files by name in the TOC, read FULL content with `get_file(i)`, split into ~30K-char chunks with overlap, and run focused subcalls to extract exact data.
+
+We also raised `max_subcall_prompt_chars` from 6K to 32K -- when the model needs to deeply analyze a full paper, it shouldn't be truncating to 20% of the text.
+
+### 7. Synthesis Nudge: The Exploratory Tourism Problem
+
+Even with "don't waste turns" written in the prompt, the model ignored it. After finishing its subcalls, instead of synthesizing and calling `final()`, it would launch round after round of `search()` and `get_file()` looking for "more data" until it exhausted all 15 turns.
+
+The fix was structural, not verbal: a **synthesis nudge** mechanism in the orchestrator. After each turn with tool calls, the system compares the subcall counter with the previous turn's count. If **3 consecutive turns pass without new subcalls** (only `python_exec` with `search()` or reads), it injects a forced message:
+
+> "STOP. You have enough data. Synthesize what you have and call `final(answer=...)` ON THE NEXT turn."
+
+This killed "exploratory tourism" at the root. The model now synthesizes immediately after the nudge.
+
+### 8. max_tokens for Long Answers
+
+The model sometimes said "the full message exceeds the limit, should I split it?" instead of calling `final()`. Root cause: `max_tokens=4096` in the orchestrator's main loop -- long tool call arguments were being truncated. Raised to 16384 (matching the grace turn).
+
+### Before vs After (updated)
+
+| Metric | Phase 1 | Phase 2 | Phase 2.5 (broad) | Phase 2.5 (specific) |
+|--------|---------|---------|-------|---------|
+| **Turns** | 13 | 2 | **5** | **12** |
+| **Time** | 22:53 | 3:25 | **4:13** | **3:22** |
+| **Subcalls** | 80 | 71 | **71** | **8** |
+| **Coverage** | ~50/71 | 71/71 | **71/71** | **1 paper in depth** |
+
+The broad question takes slightly longer than Phase 2's best case (the model uses more turns to synthesize with 25K prompts instead of 6K), but summary quality is noticeably higher. The specific question is an entirely new use case: previously it was impossible to extract detailed data from a single paper without wasting the entire budget on the 71-file batch.
+
 ## What's Next
 
 Remaining improvements for production readiness:

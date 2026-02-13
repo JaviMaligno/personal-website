@@ -438,6 +438,42 @@ El modelo ahora arranca con conocimiento completo de la estructura del corpus, a
 
 </details>
 
+### 6. Estrategia dual: preguntas amplias vs específicas
+
+Hasta aquí, el sistema prompt obligaba una única estrategia: "lanza un batch con TODOS los archivos". Eso funciona perfecto para preguntas amplias ("resume los 5 temas principales"), pero es un despilfarro para preguntas específicas ("¿qué vulnerabilidades identifica el paper agent-fence?"). El modelo gastaba 71 subcalls escaneando todo el corpus cuando solo necesitaba un archivo.
+
+La solución: dos flujos explícitos en el system prompt:
+
+- **Flujo A (pregunta amplia)**: batch de todos los archivos, síntesis local, `final()`. Sin cambios.
+- **Flujo B (pregunta específica)**: identificar archivos relevantes por nombre en la TOC, leer el contenido COMPLETO con `get_file(i)`, dividir en chunks de ~30K caracteres con overlap, y lanzar subcalls focalizadas para extraer datos exactos.
+
+Además, subimos `max_subcall_prompt_chars` de 6K a 32K -- cuando el modelo necesita analizar un paper entero en profundidad, no debería truncar al 20% del texto.
+
+### 7. Nudge de síntesis: el problema del turismo exploratorio
+
+Incluso con la instrucción "no desperdicies turnos" en el prompt, el modelo la ignoraba. Tras hacer sus subcalls, en vez de sintetizar y llamar `final()`, lanzaba rondas de `search()` y `get_file()` buscando "más datos" hasta agotar los 15 turnos.
+
+La solución fue estructural, no verbal: un mecanismo de **nudge de síntesis** en el orquestador. Tras cada turno con tool calls, el sistema compara el contador de subcalls con el del turno anterior. Si pasan **3 turnos consecutivos sin nuevas subcalls** (solo `python_exec` con `search()` o lectura), inyecta un mensaje forzado:
+
+> "PARA. Ya tienes suficientes datos. Sintetiza lo que tienes y llama `final(answer=...)` EN EL SIGUIENTE turno."
+
+Esto cortó el "turismo exploratorio" de raíz. El modelo ahora sintetiza inmediatamente tras el nudge.
+
+### 8. max_tokens para respuestas largas
+
+El modelo a veces decía "el mensaje completo supera el límite y se trunca, ¿lo divido en partes?" en vez de llamar `final()`. La causa: `max_tokens=4096` en el bucle principal del orquestador -- los argumentos de tool calls largos se truncaban. Subimos a 16384 (igual que el grace turn).
+
+### Antes vs Después (actualizado)
+
+| Métrica | Fase 1 | Fase 2 | Fase 2.5 (amplia) | Fase 2.5 (específica) |
+|---------|--------|--------|-------|---------|
+| **Turnos** | 13 | 2 | **5** | **12** |
+| **Tiempo** | 22:53 | 3:25 | **4:13** | **3:22** |
+| **Subcalls** | 80 | 71 | **71** | **8** |
+| **Cobertura** | ~50/71 | 71/71 | **71/71** | **1 paper en profundidad** |
+
+La pregunta amplia tarda un poco más que el mejor caso de Fase 2 (el modelo usa más turnos para sintetizar con prompts de 25K en vez de 6K), pero la calidad de los resúmenes es notablemente mayor. La pregunta específica es un caso de uso completamente nuevo: antes era imposible extraer datos detallados de un paper concreto sin desperdiciar todo el budget en el batch de 71.
+
 ## Próximos pasos
 
 Mejoras pendientes para producción:
