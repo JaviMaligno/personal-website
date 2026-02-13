@@ -330,7 +330,7 @@ prompts = [f"Resume:\n{get_file(i)[:6000]}" for i in range(file_count)]
 results = llm_query_batch(prompts, max_workers=5)
 ```
 
-La implementación gestiona el conteo thread-safe de subcalls (via `threading.Lock`), valida el budget antes de arrancar, devuelve resultados en el orden de entrada, y captura fallos individuales como strings `[error: ...]` sin abortar el batch completo.
+La implementación gestiona el conteo thread-safe de subcalls (via `threading.Lock`), valida el budget antes de arrancar, devuelve resultados en el orden de entrada, y captura fallos individuales como strings `[error: ...]` sin abortar el batch completo. Si el batch excede el budget restante, procesa tantos prompts como quepan y marca el resto como `[skipped]` -- sin turnos desperdiciados en errores.
 
 ### 4. El agujero negro de exec()
 
@@ -344,18 +344,24 @@ Dos fixes:
 
 2. **Nudge consciente del budget**: Cuando las subcalls se agotan y el modelo responde con texto, el nudge ahora dice *"Llama a `final(answer=...)` AHORA con los datos que tienes"* en vez de redirigir a `python_exec`.
 
+### 5. Truncamiento de la síntesis
+
+Otro problema sutil: el modelo delegaba la síntesis a una sub-llamada `llm_query()`, pasando los 71 resúmenes (~42K chars) como prompt. Pero las sub-llamadas tienen un límite de 6K caracteres para controlar costes -- así que la síntesis solo veía los archivos [0]-[7] y no citaba nada más allá.
+
+La solución: indicar al modelo que sintetice *localmente* en `python_exec` usando los resultados del batch que ya tiene en memoria, en vez de delegarlo a otra llamada LLM. Los datos ya están ahí -- no hace falta una sub-llamada.
+
 ### Antes vs Después
 
-| Métrica | Fase 1 | Fase 2 |
-|---------|--------|--------|
-| **Turnos** | 13 | **4** |
-| **Tiempo** | 22:53 | **8:28** |
-| **Subcalls** | 80 | 84 |
-| **Éxito subcalls** | 80/80 (100%) | 84/84 (100%) |
-| **Tiempo batch (71 papers)** | ~12 min (secuencial) | **3:12** (5 workers) |
-| **Overhead exploración** | 2-3 turnos parseando estructura | 0 (TOC + helpers) |
+| Métrica | Fase 1 | Fase 2 (inicial) | Fase 2 (final) |
+|---------|--------|--------|--------|
+| **Turnos** | 13 | 4 | **2** |
+| **Tiempo** | 22:53 | 8:28 | **3:25** |
+| **Subcalls** | 80 | 84 | **71** |
+| **Cobertura** | ~50/71 papers | 71/71 (pero síntesis citaba [0]-[7]) | **71/71 (completa)** |
+| **Tiempo batch (71 papers)** | ~12 min (secuencial) | 3:12 (5 workers) | **2:33** (5 workers) |
+| **Overhead exploración** | 2-3 turnos parseando estructura | 0 (TOC + helpers) | 0 |
 
-El modelo ahora arranca con conocimiento completo de la estructura del corpus, accede a archivos directamente por índice, analiza los 71 papers en una sola llamada batch paralela, y entrega una síntesis detallada de 5 temáticas con citas específicas de papers, nombres de métodos y métricas.
+El modelo ahora arranca con conocimiento completo de la estructura del corpus, accede a archivos directamente por índice, analiza los 71 papers en una sola llamada batch paralela, sintetiza los resultados localmente sin gastar sub-llamadas, y entrega una síntesis detallada de 5 temáticas con citas específicas de papers de todo el corpus.
 
 ### Log completo de la ejecución
 

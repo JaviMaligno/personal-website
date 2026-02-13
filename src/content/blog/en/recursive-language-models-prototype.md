@@ -330,7 +330,7 @@ prompts = [f"Summarize:\n{get_file(i)[:6000]}" for i in range(file_count)]
 results = llm_query_batch(prompts, max_workers=5)
 ```
 
-The implementation handles thread-safe subcall counting (via `threading.Lock`), pre-validates budget before starting, returns results in input order, and captures individual failures as `[error: ...]` strings without aborting the batch.
+The implementation handles thread-safe subcall counting (via `threading.Lock`), pre-validates budget before starting, returns results in input order, and captures individual failures as `[error: ...]` strings without aborting the batch. If the batch exceeds the remaining budget, it processes as many prompts as fit and marks the rest as `[skipped]` -- no wasted turns on errors.
 
 ### 4. The exec() Black Hole
 
@@ -344,18 +344,24 @@ Two fixes:
 
 2. **Budget-aware nudge**: When subcalls are exhausted and the model responds with text, the nudge now says *"Call `final(answer=...)` NOW with the data you have"* instead of pushing back to `python_exec`.
 
+### 5. Synthesis Truncation
+
+Another subtle issue emerged: the model delegated synthesis to a `llm_query()` sub-call, passing all 71 file summaries (~42K chars) as the prompt. But sub-calls have a 6K character limit to keep costs down -- so the synthesis only saw files [0]-[7] and cited nothing beyond that.
+
+The fix: tell the model to synthesize *locally* in `python_exec` using the batch results already in memory, instead of delegating to another LLM call. The data is already there -- no sub-call needed.
+
 ### Before vs After
 
-| Metric | Phase 1 | Phase 2 |
-|--------|---------|---------|
-| **Turns** | 13 | **4** |
-| **Time** | 22:53 | **8:28** |
-| **Subcalls** | 80 | 84 |
-| **Subcall success** | 80/80 (100%) | 84/84 (100%) |
-| **Batch time (71 papers)** | ~12 min (sequential) | **3:12** (5 workers) |
-| **Exploration overhead** | 2-3 turns parsing structure | 0 (TOC + helpers) |
+| Metric | Phase 1 | Phase 2 (initial) | Phase 2 (final) |
+|--------|---------|---------|---------|
+| **Turns** | 13 | 4 | **2** |
+| **Time** | 22:53 | 8:28 | **3:25** |
+| **Subcalls** | 80 | 84 | **71** |
+| **Coverage** | ~50/71 papers | 71/71 (but synthesis cited [0]-[7]) | **71/71 (full)** |
+| **Batch time (71 papers)** | ~12 min (sequential) | 3:12 (5 workers) | **2:33** (5 workers) |
+| **Exploration overhead** | 2-3 turns parsing structure | 0 (TOC + helpers) | 0 |
 
-The model now starts with full knowledge of the corpus structure, accesses files directly by index, analyzes all 71 papers in a single parallel batch call, and delivers a detailed 5-theme synthesis with specific paper citations, method names, and metrics.
+The model now starts with full knowledge of the corpus structure, accesses files directly by index, analyzes all 71 papers in a single parallel batch call, synthesizes the results locally without wasting sub-calls, and delivers a detailed 5-theme synthesis with specific paper citations across the full corpus.
 
 ### Full Run Log
 
