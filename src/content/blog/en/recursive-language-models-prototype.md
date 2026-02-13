@@ -370,71 +370,71 @@ The model now starts with full knowledge of the corpus structure, accesses files
 
 ```
 ──────────────────── Turn 1/15  subcalls=0/90  elapsed=0:00 ────────────────────
-  LLM responded in 21.6s — content=False tool_calls=1
-╭────────────────────────── python_exec (39L)  0:21 ───────────────────────────╮
-│ files = list_files()                                                         │
-│ prompts = []                                                                 │
-│ labels = [                                                                   │
-│     "evaluación/benchmarking de agentes",                                    │
-│     "coordinación multi-agente/teoría de juegos",                            │
-│     "seguridad/robustez/red-teaming/guardrails",                             │
-│     ...                                                                      │
-│ ]                                                                            │
-│ for i in range(file_count):                                                  │
-│     title = files[i]['name']                                                 │
-│     frag = get_file(i)[:6000]                                                │
-│     prompt = (...)                                                           │
-│     prompts.append(prompt)                                                   │
-│ results = llm_query_batch(prompts, max_workers=5)                            │
-│ synth_prompt = (...)                                                         │
+  LLM responded in 30.6s — content=False tool_calls=1
+╭────────────────────────── python_exec (23L)  0:30 ───────────────────────────╮
+│ import json                                                                  │
+│ files=list_files()                                                           │
+│ cats="Multi-agent coordination and planning;                                 │
+│ Safety/security/red-teaming/guardrails; GUI/mobile/web agents; ..."          │
+│ prompts=[f"Paper: {files[i]['name']}\nTask: Extract the main contribution    │
+│ (1-2 sentences) and assign ONE theme from: {cats}. Provide 1-3 concrete     │
+│ examples...\nReturn JSON with keys: paper, contribution, theme, examples.   │
+│ \nText:\n{get_file(i)[:6000]}" for i in range(len(files))]                  │
+│ results=llm_query_batch(prompts, max_workers=5)                              │
+│ parsed=[]                                                                    │
+│ for i,r in enumerate(results):                                               │
+│     try: d=json.loads(r)                                                     │
+│     except: d={'paper':files[i]['name'],'contribution':r.strip(),...}        │
+│     parsed.append(d)                                                         │
+│ counts={}; by_theme={}                                                       │
+│ for d in parsed:                                                             │
+│     t=d.get('theme','Other'); counts[t]=counts.get(t,0)+1                   │
+│     by_theme.setdefault(t,[]).append(d)                                      │
+│ top=sorted(counts.items(), key=lambda x:x[1], reverse=True)[:5]             │
+│ # ... build answer string from parsed results ...                            │
+│ ans  ← local synthesis, no sub-call needed                                   │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-  ⤷ llm_query_batch: 71 prompts, max_workers=5 (0:21)
-  ⤷ llm_query #1/90 (0:21) 6015ch — Lee el siguiente fragmento de un paper...
-  ⤷ llm_query #2/90 (0:21) 6015ch — Lee el siguiente fragmento de un paper...
-  ⤷ llm_query #3/90 (0:21) 6015ch — Lee el siguiente fragmento de un paper...
-  ⤷ llm_query #4/90 (0:21) 6015ch — Lee el siguiente fragmento de un paper...
-  ⤷ llm_query #5/90 (0:21) 6015ch — Lee el siguiente fragmento de un paper...
-    ✓ 9.3s — 685 chars
-    ✓ 10.4s — 694 chars
+  ⤷ llm_query_batch: 71 prompts, max_workers=5 (0:30)
+  ⤷ llm_query #1/90  — Paper: see_plan_snap_evaluating_multimodal_gui_agents...
+  ⤷ llm_query #2/90  — Paper: ica_information-aware_credit_assignment...
+  ⤷ llm_query #3/90  — Paper: pabu_progress-aware_belief_update...
+  ⤷ llm_query #4/90  — Paper: sci-vla_agentic_vla_inference_plugin...
+  ⤷ llm_query #5/90  — Paper: agent-supported_foresight_for_ai_systemic_risks...
+    ✓ 8.1s — 728 chars
+    ✓ 8.2s — 909 chars
     ...
-    [71 parallel sub-calls executing with 5 workers]
+    [71 parallel sub-calls with 5 workers — all papers analyzed simultaneously]
     ...
-    ✓ 12.8s — 781 chars
-  ✓ batch done 191.5s — 71/71 succeeded
-  ⤷ llm_query #72/90 (3:33) — synthesis prompt...
-    ✓ 102.0s — 4495 chars
-  ok exec=293.6s  stdout=4496ch  stderr=0ch    ← auto-captured expression!
+    ✓ 10.4s — 721 chars
+    ✓ 14.7s — 783 chars
+  ✓ batch done 153.3s — 71/71 succeeded
+  ok exec=153.3s  stdout=10750ch  stderr=0ch    ← local synthesis, no sub-call!
 ╭──────────────────────── python_exec result (ok=True) ────────────────────────╮
-│ - Tema: evaluación/benchmarking de agentes — 5/7 (71.4%)                     │
-│   - Contribución recurrente: Definición de suites y rúbricas evaluativas     │
-│     automatizables para medir desempeño de agentes en GUI, coding y          │
-│     análisis prospectivo...                                                  │
-│   - Ejemplos:                                                                │
-│     - See, Plan, Snap — benchmark Scratch (Create/Debug/Extend/Compute)      │
-│     - FeatureBench — 200 tareas y 3825 entornos ejecutables                  │
-│     ...                                                                      │
+│ Analicé 71 papers. Las 5 temáticas más frecuentes son:                       │
+│ Safety/security/red-teaming/guardrails (14),                                 │
+│ Multi-agent coordination and planning (13),                                  │
+│ Memory/RAG/belief/credit/oversight (11),                                     │
+│ Scientific discovery and biomedical/clinical agents (11),                    │
+│ Coding/software engineering agents (9).                                      │
+│                                                                              │
+│ - Safety/security/red-teaming/guardrails (14 papers):                        │
+│   • agent-supported_foresight: unified rubric for AI systemic risks,         │
+│     PESTEL classification via o3 (F1=0.86), Shannon Diversity Index          │
+│   • when_benign_inputs: AutoElicit framework for unsafe CUA behaviors,       │
+│     OSWorld benchmark, Claude 4.5 Haiku/Opus                                 │
+│   • interpretable_failure_analysis: Patient-0 detection in MARL,             │
+│     Taylor-remainder analysis, contagion graphs                              │
+│   ...                                                                        │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-    [Turns 2-3: additional sampling and synthesis]
+─────────────────── Turn 2/15  subcalls=71/90  elapsed=3:03 ────────────────────
+  LLM responded in 21.6s — content=False tool_calls=1
 
 ───────────────────────────────── Final Answer ─────────────────────────────────
-  Completed in 8:28 — 4 turns, 84 subcalls
-╭──────────────────────────────── Final Answer ────────────────────────────────╮
-│ 1) Evaluación y benchmarks de agentes — 15/71 (22.7%)                        │
-│ 2) Seguridad, privacidad y supervisión de agentes — 15/71 (22.7%)            │
-│ 3) Coordinación y razonamiento multi-agente — 13/71 (19.7%)                  │
-│ 4) Memoria, planificación y generación de workflows — 11/71 (16.7%)          │
-│ 5) Aplicaciones y dominios específicos — 12/71 (18.2%)                       │
-│                                                                              │
-│ Tendencias transversales:                                                    │
-│ - Evaluación y seguridad como pilares gemelos                                │
-│ - Coordinación multi-agente con asignación de crédito                        │
-│ - Memorias avanzadas y Graph-RAG para contexto extenso                       │
-│ - Expansión a dominios verticales con grounding multimodal                   │
-╰──────────────────────────────────────────────────────────────────────────────╯
+  Completed in 3:25 — 2 turns, 71 subcalls
 ```
 
-[Download the full run log (679 lines)](/blog/rlm-phase2-run.txt)
+[Download the full run log (572 lines)](/blog/rlm-phase2-run.txt)
 
 </details>
 
