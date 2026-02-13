@@ -388,6 +388,10 @@ The model sometimes said "the full message exceeds the limit, should I split it?
 
 The broad question takes slightly longer than Phase 2's best case (the model uses more turns to synthesize with 25K prompts instead of 6K), but summary quality is noticeably higher. The specific question is an entirely new use case: previously it was impossible to extract detailed data from a single paper without wasting the entire budget on the 71-file batch.
 
+### Video Demo
+
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/a06d99601e4a420faea5fe7753af8641" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+
 ### Run Logs
 
 <details>

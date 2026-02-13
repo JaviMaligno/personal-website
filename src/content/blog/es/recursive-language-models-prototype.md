@@ -388,6 +388,10 @@ El modelo a veces decía "el mensaje completo supera el límite y se trunca, ¿l
 
 La pregunta amplia tarda un poco más que el mejor caso de Fase 2 (el modelo usa más turnos para sintetizar con prompts de 25K en vez de 6K), pero la calidad de los resúmenes es notablemente mayor. La pregunta específica es un caso de uso completamente nuevo: antes era imposible extraer datos detallados de un paper concreto sin desperdiciar todo el budget en el batch de 71.
 
+### Demo en vídeo
+
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/a06d99601e4a420faea5fe7753af8641" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+
 ### Logs de ejecución
 
 <details>
