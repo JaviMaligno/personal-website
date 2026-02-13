@@ -357,6 +357,81 @@ Dos fixes:
 
 El modelo ahora arranca con conocimiento completo de la estructura del corpus, accede a archivos directamente por índice, analiza los 71 papers en una sola llamada batch paralela, y entrega una síntesis detallada de 5 temáticas con citas específicas de papers, nombres de métodos y métricas.
 
+### Log completo de la ejecución
+
+<details>
+<summary>Extracto: momentos clave de la ejecución Fase 2 (clic para expandir)</summary>
+
+```
+──────────────────── Turn 1/15  subcalls=0/90  elapsed=0:00 ────────────────────
+  LLM responded in 21.6s — content=False tool_calls=1
+╭────────────────────────── python_exec (39L)  0:21 ───────────────────────────╮
+│ files = list_files()                                                         │
+│ prompts = []                                                                 │
+│ labels = [                                                                   │
+│     "evaluación/benchmarking de agentes",                                    │
+│     "coordinación multi-agente/teoría de juegos",                            │
+│     "seguridad/robustez/red-teaming/guardrails",                             │
+│     ...                                                                      │
+│ ]                                                                            │
+│ for i in range(file_count):                                                  │
+│     title = files[i]['name']                                                 │
+│     frag = get_file(i)[:6000]                                                │
+│     prompt = (...)                                                           │
+│     prompts.append(prompt)                                                   │
+│ results = llm_query_batch(prompts, max_workers=5)                            │
+│ synth_prompt = (...)                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+  ⤷ llm_query_batch: 71 prompts, max_workers=5 (0:21)
+  ⤷ llm_query #1/90 (0:21) 6015ch — Lee el siguiente fragmento de un paper...
+  ⤷ llm_query #2/90 (0:21) 6015ch — Lee el siguiente fragmento de un paper...
+  ⤷ llm_query #3/90 (0:21) 6015ch — Lee el siguiente fragmento de un paper...
+  ⤷ llm_query #4/90 (0:21) 6015ch — Lee el siguiente fragmento de un paper...
+  ⤷ llm_query #5/90 (0:21) 6015ch — Lee el siguiente fragmento de un paper...
+    ✓ 9.3s — 685 chars
+    ✓ 10.4s — 694 chars
+    ...
+    [71 sub-llamadas en paralelo con 5 workers]
+    ...
+    ✓ 12.8s — 781 chars
+  ✓ batch done 191.5s — 71/71 succeeded
+  ⤷ llm_query #72/90 (3:33) — prompt de síntesis...
+    ✓ 102.0s — 4495 chars
+  ok exec=293.6s  stdout=4496ch  stderr=0ch    ← auto-captura de expresión!
+╭──────────────────────── python_exec result (ok=True) ────────────────────────╮
+│ - Tema: evaluación/benchmarking de agentes — 5/7 (71.4%)                     │
+│   - Contribución recurrente: Definición de suites y rúbricas evaluativas     │
+│     automatizables para medir desempeño de agentes en GUI, coding y          │
+│     análisis prospectivo...                                                  │
+│   - Ejemplos:                                                                │
+│     - See, Plan, Snap — benchmark Scratch (Create/Debug/Extend/Compute)      │
+│     - FeatureBench — 200 tareas y 3825 entornos ejecutables                  │
+│     ...                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+    [Turnos 2-3: muestreo adicional y síntesis]
+
+───────────────────────────────── Final Answer ─────────────────────────────────
+  Completed in 8:28 — 4 turns, 84 subcalls
+╭──────────────────────────────── Final Answer ────────────────────────────────╮
+│ 1) Evaluación y benchmarks de agentes — 15/71 (22.7%)                        │
+│ 2) Seguridad, privacidad y supervisión de agentes — 15/71 (22.7%)            │
+│ 3) Coordinación y razonamiento multi-agente — 13/71 (19.7%)                  │
+│ 4) Memoria, planificación y generación de workflows — 11/71 (16.7%)          │
+│ 5) Aplicaciones y dominios específicos — 12/71 (18.2%)                       │
+│                                                                              │
+│ Tendencias transversales:                                                    │
+│ - Evaluación y seguridad como pilares gemelos                                │
+│ - Coordinación multi-agente con asignación de crédito                        │
+│ - Memorias avanzadas y Graph-RAG para contexto extenso                       │
+│ - Expansión a dominios verticales con grounding multimodal                   │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+[Descargar el log completo de la ejecución (679 líneas)](/blog/rlm-phase2-run.txt)
+
+</details>
+
 ## Próximos pasos
 
 Mejoras pendientes para producción:
