@@ -350,93 +350,7 @@ Otro problema sutil: el modelo delegaba la síntesis a una sub-llamada `llm_quer
 
 La solución: indicar al modelo que sintetice *localmente* en `python_exec` usando los resultados del batch que ya tiene en memoria, en vez de delegarlo a otra llamada LLM. Los datos ya están ahí -- no hace falta una sub-llamada.
 
-### Antes vs Después
-
-| Métrica | Fase 1 | Fase 2 (inicial) | Fase 2 (final) |
-|---------|--------|--------|--------|
-| **Turnos** | 13 | 4 | **2** |
-| **Tiempo** | 22:53 | 8:28 | **3:25** |
-| **Subcalls** | 80 | 84 | **71** |
-| **Cobertura** | ~50/71 papers | 71/71 (pero síntesis citaba [0]-[7]) | **71/71 (completa)** |
-| **Tiempo batch (71 papers)** | ~12 min (secuencial) | 3:12 (5 workers) | **2:33** (5 workers) |
-| **Overhead exploración** | 2-3 turnos parseando estructura | 0 (TOC + helpers) | 0 |
-
-El modelo ahora arranca con conocimiento completo de la estructura del corpus, accede a archivos directamente por índice, analiza los 71 papers en una sola llamada batch paralela, sintetiza los resultados localmente sin gastar sub-llamadas, y entrega una síntesis detallada de 5 temáticas con citas específicas de papers de todo el corpus.
-
-### Log completo de la ejecución
-
-<details>
-<summary>Extracto: momentos clave de la ejecución Fase 2 (clic para expandir)</summary>
-
-```
-──────────────────── Turn 1/15  subcalls=0/90  elapsed=0:00 ────────────────────
-  LLM responded in 30.6s — content=False tool_calls=1
-╭────────────────────────── python_exec (23L)  0:30 ───────────────────────────╮
-│ import json                                                                  │
-│ files=list_files()                                                           │
-│ cats="Multi-agent coordination and planning;                                 │
-│ Safety/security/red-teaming/guardrails; GUI/mobile/web agents; ..."          │
-│ prompts=[f"Paper: {files[i]['name']}\nTask: Extract the main contribution    │
-│ (1-2 sentences) and assign ONE theme from: {cats}. Provide 1-3 concrete     │
-│ examples...\nReturn JSON with keys: paper, contribution, theme, examples.   │
-│ \nText:\n{get_file(i)[:6000]}" for i in range(len(files))]                  │
-│ results=llm_query_batch(prompts, max_workers=5)                              │
-│ parsed=[]                                                                    │
-│ for i,r in enumerate(results):                                               │
-│     try: d=json.loads(r)                                                     │
-│     except: d={'paper':files[i]['name'],'contribution':r.strip(),...}        │
-│     parsed.append(d)                                                         │
-│ counts={}; by_theme={}                                                       │
-│ for d in parsed:                                                             │
-│     t=d.get('theme','Other'); counts[t]=counts.get(t,0)+1                   │
-│     by_theme.setdefault(t,[]).append(d)                                      │
-│ top=sorted(counts.items(), key=lambda x:x[1], reverse=True)[:5]             │
-│ # ... construye la respuesta desde los resultados parseados ...              │
-│ ans  ← síntesis local, sin sub-llamada                                       │
-╰──────────────────────────────────────────────────────────────────────────────╯
-  ⤷ llm_query_batch: 71 prompts, max_workers=5 (0:30)
-  ⤷ llm_query #1/90  — Paper: see_plan_snap_evaluating_multimodal_gui_agents...
-  ⤷ llm_query #2/90  — Paper: ica_information-aware_credit_assignment...
-  ⤷ llm_query #3/90  — Paper: pabu_progress-aware_belief_update...
-  ⤷ llm_query #4/90  — Paper: sci-vla_agentic_vla_inference_plugin...
-  ⤷ llm_query #5/90  — Paper: agent-supported_foresight_for_ai_systemic_risks...
-    ✓ 8.1s — 728 chars
-    ✓ 8.2s — 909 chars
-    ...
-    [71 sub-llamadas en paralelo con 5 workers — todos los papers a la vez]
-    ...
-    ✓ 10.4s — 721 chars
-    ✓ 14.7s — 783 chars
-  ✓ batch done 153.3s — 71/71 succeeded
-  ok exec=153.3s  stdout=10750ch  stderr=0ch    ← síntesis local, sin sub-llamada!
-╭──────────────────────── python_exec result (ok=True) ────────────────────────╮
-│ Analicé 71 papers. Las 5 temáticas más frecuentes son:                       │
-│ Safety/security/red-teaming/guardrails (14),                                 │
-│ Multi-agent coordination and planning (13),                                  │
-│ Memory/RAG/belief/credit/oversight (11),                                     │
-│ Scientific discovery and biomedical/clinical agents (11),                    │
-│ Coding/software engineering agents (9).                                      │
-│                                                                              │
-│ - Safety/security/red-teaming/guardrails (14 papers):                        │
-│   • agent-supported_foresight: rúbrica unificada de riesgos sistémicos IA,   │
-│     clasificación PESTEL vía o3 (F1=0.86), índice Shannon de diversidad      │
-│   • when_benign_inputs: framework AutoElicit para comportamientos CUA,       │
-│     benchmark OSWorld, Claude 4.5 Haiku/Opus                                 │
-│   • interpretable_failure_analysis: detección Patient-0 en MARL,             │
-│     análisis Taylor-remainder, grafos de contagio                            │
-│   ...                                                                        │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-─────────────────── Turn 2/15  subcalls=71/90  elapsed=3:03 ────────────────────
-  LLM responded in 21.6s — content=False tool_calls=1
-
-───────────────────────────────── Final Answer ─────────────────────────────────
-  Completed in 3:25 — 2 turns, 71 subcalls
-```
-
-[Descargar el log completo de la ejecución (572 líneas)](/blog/rlm-phase2-run.txt)
-
-</details>
+Con estas cinco mejoras, la pregunta amplia pasó de 13 turnos / 22:53 a **2 turnos / 3:25** con cobertura completa 71/71. Pero quedaban más problemas.
 
 ### 6. Estrategia dual: preguntas amplias vs específicas
 
@@ -473,6 +387,145 @@ El modelo a veces decía "el mensaje completo supera el límite y se trunca, ¿l
 | **Cobertura** | ~50/71 | 71/71 | **71/71** | **1 paper en profundidad** |
 
 La pregunta amplia tarda un poco más que el mejor caso de Fase 2 (el modelo usa más turnos para sintetizar con prompts de 25K en vez de 6K), pero la calidad de los resúmenes es notablemente mayor. La pregunta específica es un caso de uso completamente nuevo: antes era imposible extraer datos detallados de un paper concreto sin desperdiciar todo el budget en el batch de 71.
+
+### Logs de ejecución
+
+<details>
+<summary>Flujo A — pregunta amplia: "¿Cuál es la contribución principal? Resume las 5 temáticas más frecuentes" (click para expandir)</summary>
+
+```
+──────────────────── Turn 1/15  subcalls=0/90  elapsed=0:00 ────────────────────
+  LLM responded in 26.5s — content=False tool_calls=1
+╭────────────────────────── python_exec (38L)  0:26 ───────────────────────────╮
+│ files = list_files()                                                         │
+│ prompts = []                                                                 │
+│ for f in files:                                                              │
+│     text = get_file(f['index'])                                              │
+│     chunk = text[:25000]                                                     │
+│     prompts.append(                                                          │
+│         "Resume en 1-2 frases la contribución principal del paper..."        │
+│         + chunk                                                              │
+│     )                                                                        │
+│ results = llm_query_batch(prompts, max_workers=5)                            │
+│ # ... clasificación por categorías y síntesis local ...                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+  ⤷ llm_query_batch: 71 prompts, max_workers=5 (0:26)
+  ⤷ llm_query #1/90 (0:26) 25219ch — Resume en 1-2 frases la contribución...
+  ⤷ llm_query #2/90 (0:26) 25219ch — Resume en 1-2 frases la contribución...
+    ...
+  ⤷ llm_query #71/90 (3:05) 25219ch — Resume en 1-2 frases la contribución...
+    ✓ 6.9s — 530 chars
+    ✓ 8.9s — 548 chars
+    ✓ 11.2s — 630 chars
+    ✓ 25.8s — 720 chars
+  ✓ batch done 182.9s — 71/71 succeeded
+  ok exec=182.9s  stdout=13650ch  stderr=0ch
+╭──────────────────────── python_exec result (ok=True) ────────────────────────╮
+│ {'summary': [('Evaluación y benchmarks de agentes', 25),                     │
+│  ('Seguridad, robustez y cumplimiento', 19),                                 │
+│  ('Coordinación y razonamiento multi-agente', 13),                           │
+│  ('Planificación, memoria y tareas de largo horizonte', 9),                  │
+│  ('Aplicaciones científicas, salud y dominios especializados', 5)]}          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+  [Turnos 2-3: síntesis local con categorías y ejemplos concretos]
+
+─────────────────── Turn 5/15  subcalls=71/90  elapsed=4:08 ────────────────────
+  2 text responses — accepting as final answer
+╭──────────────────────────────── Final Answer ────────────────────────────────╮
+│ Analicé 71 papers. Las 5 temáticas más frecuentes:                           │
+│ - Evaluación y benchmarks de agentes (25 papers)                             │
+│   • ScratchWorld: benchmark de 83 tareas para agentes GUI multimodales       │
+│   • PABU: actualización de creencias, 81% éxito, −26.9% pasos               │
+│ - Seguridad, robustez y cumplimiento (19 papers)                             │
+│   • AutoElicit: elicita comportamientos inseguros en agentes computer-use    │
+│   • SCOUT-RAG: traversal progresivo en Graph-RAG, reduce coste              │
+│ - Coordinación y razonamiento multi-agente (13 papers)                       │
+│   • ICA: credit assignment visual vía GRPO, supera baselines                 │
+│   • RAPS: coordinación pub-sub con reputación bayesiana                      │
+│ - Planificación, memoria y largo horizonte (9 papers)                        │
+│ - Aplicaciones científicas y salud (5 papers)                                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+  Completed in 4:13 — 5 turns, 71 subcalls
+```
+
+</details>
+
+<details>
+<summary>Flujo B — pregunta específica: "¿Qué vulnerabilidades identifica el paper agent-fence?" (click para expandir)</summary>
+
+```
+──────────────────── Turn 1/15  subcalls=0/90  elapsed=0:00 ────────────────────
+╭──────────────────── python_exec (5L)  0:10 ─────────────────────╮
+│ # Flujo B: lee el archivo completo del paper identificado       │
+│ text = get_file(13)     # ← agent-fence, identificado por TOC  │
+│ len(text)               # → 32037 chars                        │
+╰─────────────────────────────────────────────────────────────────╯
+
+──────────────────── Turn 2/15  subcalls=0/90  elapsed=0:10 ────────────────────
+╭────────────────────────── python_exec (13L)  0:18 ───────────────────────────╮
+│ # Divide en chunks de 20K con overlap y lanza batch                          │
+│ chunks = [text[i:i+25000] for i in range(0, len(text), 20000)]               │
+│ prompts = [                                                                  │
+│     "Extrae los 14 tipos de ataques definidos en Agent-Fence "               │
+│     "con nombres exactos. Extrae MSBR por arquitectura.\n" + c               │
+│     for c in chunks                                                          │
+│ ]                                                                            │
+│ results = llm_query_batch(prompts)                                           │
+╰──────────────────────────────────────────────────────────────────────────────╯
+  ⤷ llm_query_batch: 2 prompts, max_workers=5 (0:18)
+  ⤷ llm_query #1/90 (0:18) 25384ch — Extrae los 14 tipos de ataques...
+  ⤷ llm_query #2/90 (0:18) 12421ch — Extrae los 14 tipos de ataques...
+    ✓ 26.0s — 223 chars
+    ✓ 34.4s — 206 chars
+  ✓ batch done 34.4s — 2/2 succeeded
+
+──────────────────── Turn 4/15  subcalls=3/90  elapsed=1:05 ────────────────────
+  # Envía el paper completo (32015ch) en una sola subcall para confirmar
+  ⤷ llm_query #3/90 (1:05) 32015ch — Lee el paper Agent-Fence y extrae...
+    ✓ 31.2s — 640 chars
+╭──────────────────────── python_exec result (ok=True) ────────────────────────╮
+│ 1) Tipos de ataques (nombres exactos):                                       │
+│ 1. Denial-of-Wallet  2. Authorization Confusion                              │
+│ 3. Retrieval Poisoning  4. Planning-Layer Manipulation                       │
+│ 5. Tool-Use Hijacking  6. Objective Hijacking  7. Delegation Attacks         │
+│ 8. prompt/state injection  9. retrieval/search poisoning                     │
+│ 10. delegation abuse  11. Unauthorized Tool Invocation (UTI)                 │
+│ 12. Unsafe Tool Argument (UTA)  13. Wrong-Principal Action (WPA)             │
+│ 14. State/Objective Integrity Violation (SIV)                                │
+│                                                                              │
+│ 2) MSBR por arquitectura:                                                    │
+│ - LangGraph: 0.29 ± 0.04                                                    │
+│ - AutoGPT: 0.51 ± 0.07                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+  [Turnos 5-8: search() exploratorio sin nuevas subcalls]
+
+──────────────────── Turn 9/15 ────────────────────────────────────────────────
+  ⚠ 3 turns without new subcalls — nudging to call final()
+
+──────────────────── Turn 10/15  subcalls=8/90  elapsed=3:13 ──────────────────
+  # Sintetiza inmediatamente tras el nudge
+╭─────────────────────── python_exec result (ok=True) ───────────────────────╮
+│ Vulnerabilidades y tipos de ataques (14 clases definidas por Agent-Fence): │
+│ 1. Denial-of-Wallet  2. Authorization Confusion                            │
+│ 3. Retrieval Poisoning  4. Planning-Layer Manipulation                     │
+│ 5. Delegation Attacks  6. Objective Hijacking  7. Tool-Use Hijacking       │
+│ 8. prompt/state injection  9. retrieval/search poisoning                   │
+│ 10. delegation abuse  11. Unauthorized Tool Invocation (UTI)               │
+│ 12. Unsafe Tool Argument (UTA)  13. Wrong-Principal Action (WPA)           │
+│ 14. State/Objective Integrity Violation (SIV)                              │
+│                                                                            │
+│ MSBR por arquitectura: LangGraph 0.29±0.04 — AutoGPT 0.51±0.07           │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+───────────────────────────────── Final Answer ─────────────────────────────────
+  Completed in 3:22 — 12 turns, 8 subcalls
+```
+
+Nota: el paper original cita 8 arquitecturas evaluadas, pero el texto extraído de PDF solo contiene datos MSBR explícitos para LangGraph y AutoGPT. Las tablas con las 8 arquitecturas probablemente estaban en formato imagen/tabla LaTeX y no sobrevivieron la conversión a texto plano.
+
+</details>
 
 ## Próximos pasos
 
