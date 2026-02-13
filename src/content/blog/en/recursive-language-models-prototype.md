@@ -6,6 +6,7 @@ tags: ["AI", "LLM", "Azure OpenAI", "Tool Calling", "Python"]
 lang: en
 translationKey: recursive-language-models-prototype
 heroImage: "/blog/rlm-prototype-hero.png"
+linkedinImage: "/blog/rlm-prototype-hero.png"
 ---
 
 You have a million tokens of text. Your model's context window is 128K. What do you do?
