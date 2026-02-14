@@ -115,6 +115,55 @@ Wrap up with actionable takeaways or links.
 - **Code**: Include relevant code snippets with language identifiers
 - **Images**: Reference as `/blog/image-name.png`
 
+## Video Embeds
+
+### For the Website (javieraguilar.ai)
+
+Use HTML iframe embeds for video platforms. The website supports full HTML.
+
+**Loom example:**
+```html
+<div style="position: relative; padding-bottom: 56.25%; height: 0;">
+  <iframe src="https://www.loom.com/embed/VIDEO_ID"
+          frameborder="0"
+          webkitallowfullscreen
+          mozallowfullscreen
+          allowfullscreen
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+  </iframe>
+</div>
+```
+
+**YouTube example:**
+```html
+<div style="position: relative; padding-bottom: 56.25%; height: 0;">
+  <iframe src="https://www.youtube.com/embed/VIDEO_ID"
+          frameborder="0"
+          allowfullscreen
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+  </iframe>
+</div>
+```
+
+### Dev.to Compatibility
+
+**Important:** Dev.to filters HTML iframes for security. The publish script (`scripts/devto/publish-to-devto.js`) automatically transforms video embeds:
+
+- **Loom iframes** → Markdown links with note
+- **YouTube iframes** → Could be transformed to `{% youtube %}` liquid tags (not implemented yet)
+
+**What gets sent to Dev.to:**
+```markdown
+**🎥 [Watch the video demo on Loom](https://www.loom.com/share/VIDEO_ID)**
+
+> _Note: Interactive video player available on the [original article](CANONICAL_URL)_
+```
+
+**Best Practice:**
+- Always use iframe embeds in the markdown
+- The Dev.to publish script handles the transformation automatically
+- Don't manually create different versions for Dev.to
+
 ## Tag Conventions
 
 Common tag translations:
