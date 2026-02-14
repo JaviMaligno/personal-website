@@ -43,8 +43,15 @@ async function publishToDevto() {
     const slug = postPath.split('/').pop().replace('.md', '');
     const canonicalUrl = `${siteUrl}/en/blog/${slug}`;
 
+    // Transform content for Dev.to compatibility
+    // Replace Loom iframe embeds with links (Dev.to doesn't support Loom iframes)
+    let devtoContent = content.replace(
+      /<div[^>]*><iframe src="https:\/\/www\.loom\.com\/embed\/([^"]+)"[^>]*><\/iframe><\/div>/g,
+      '**🎥 [Watch the video demo on Loom](https://www.loom.com/share/$1)**\n\n> _Note: Interactive video player available on the [original article]('+canonicalUrl+')_'
+    );
+
     // Add CTA at the end of content
-    const contentWithCTA = `${content}
+    const contentWithCTA = `${devtoContent}
 
 ---
 
