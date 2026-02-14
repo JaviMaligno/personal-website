@@ -84,15 +84,43 @@ Want to see more AI agent projects? Check out my [portfolio](${siteUrl}) where I
     console.log(`  Tags: ${tags.join(', ')}`);
     console.log(`  Status: ${published ? 'PUBLISHED' : 'DRAFT'}`);
 
-    // Publish to Dev.to
-    const response = await fetch('https://dev.to/api/articles', {
-      method: 'POST',
+    // Check if article already exists by canonical URL
+    console.log(`\n🔍 Checking for existing article...`);
+    const articlesResponse = await fetch('https://dev.to/api/articles/me/all?per_page=1000', {
       headers: {
         'api-key': apiKey,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ article }),
     });
+
+    if (!articlesResponse.ok) {
+      throw new Error(`Failed to fetch articles (${articlesResponse.status})`);
+    }
+
+    const existingArticles = await articlesResponse.json();
+    const existingArticle = existingArticles.find(a => a.canonical_url === canonicalUrl);
+
+    let response;
+    if (existingArticle) {
+      console.log(`📝 Article exists (ID: ${existingArticle.id}), updating...`);
+      response = await fetch(`https://dev.to/api/articles/${existingArticle.id}`, {
+        method: 'PUT',
+        headers: {
+          'api-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ article }),
+      });
+    } else {
+      console.log(`📝 Creating new article...`);
+      response = await fetch('https://dev.to/api/articles', {
+        method: 'POST',
+        headers: {
+          'api-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ article }),
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
