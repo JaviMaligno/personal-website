@@ -89,7 +89,7 @@ Llama a `final` con tu respuesta cuando estés listo.
 ### 1. Setup
 
 ```bash
-git clone https://github.com/YOUR_USER/rlm-prototipo
+git clone https://github.com/JaviMaligno/rlm-prototipo
 cd rlm-prototipo
 uv venv && source .venv/bin/activate
 uv pip install -e .
@@ -538,7 +538,7 @@ Mejoras pendientes para producción:
 - **Caché de resultados** entre ejecuciones para consultas repetidas sobre el mismo corpus
 - **Tracking de costes** por consulta para presupuestos de producción
 
-El código fuente completo está disponible en el [repositorio de GitHub](https://github.com/YOUR_USER/rlm-prototipo).
+El código fuente completo está disponible en el [repositorio de GitHub](https://github.com/JaviMaligno/rlm-prototipo).
 
 ---
 

@@ -89,7 +89,7 @@ Call `final` with your answer when ready.
 ### 1. Setup
 
 ```bash
-git clone https://github.com/YOUR_USER/rlm-prototipo
+git clone https://github.com/JaviMaligno/rlm-prototipo
 cd rlm-prototipo
 uv venv && source .venv/bin/activate
 uv pip install -e .
@@ -538,7 +538,7 @@ Remaining improvements for production readiness:
 - **Result caching** across runs for repeated queries on the same corpus
 - **Cost tracking** per query for production budgeting
 
-The full source code is available at [GitHub repository](https://github.com/YOUR_USER/rlm-prototipo).
+The full source code is available at [GitHub repository](https://github.com/JaviMaligno/rlm-prototipo).
 
 ---
 
