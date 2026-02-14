@@ -5,6 +5,7 @@ pubDate: 2024-12-15
 tags: ["MCP", "Bitbucket", "DevOps", "Claude", "AI"]
 lang: en
 translationKey: mcp-bitbucket
+heroImage: "/blog/mcp-server-bitbucket.png"
 ---
 
 After searching for an official MCP from Atlassian and not finding one, I decided to build my own. The existing community MCPs for Bitbucket were too limited—basic repository operations only, no pipeline support, no deployment management.

@@ -5,6 +5,7 @@ pubDate: 2025-12-17
 tags: ["AI", "Claude Code", "Automation", "Git", "Developer Productivity"]
 lang: en
 translationKey: parallel-ai-agent-development
+heroImage: "/blog/parallel-ai-agents.png"
 ---
 
 I've been experimenting with a workflow that has multiplied my productivity as a developer: running multiple AI agents in parallel, each working on its own feature branch.

@@ -5,6 +5,7 @@ pubDate: 2026-01-03
 tags: ["Claude Code", "AI", "Automation", "Skills"]
 lang: en
 translationKey: claude-code-skills-blog-writer
+heroImage: "/blog/claude-code-skills.png"
 ---
 
 One of the most powerful features of Claude Code is its ability to learn your specific workflows through **Agent Skills**. Today I want to share how I built a custom skill that automates the creation of bilingual blog articles for this website.

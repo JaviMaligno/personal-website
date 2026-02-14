@@ -5,6 +5,7 @@ pubDate: 2025-10-09
 tags: ["AI", "Azure", "OpenAI", "Security", "Function Calling"]
 lang: en
 translationKey: azure-content-filter-workarounds
+heroImage: "/blog/azure-content-filter.png"
 ---
 
 While building browser automation tools with Azure OpenAI, I discovered something frustrating: the content filter blocks perfectly safe instructions based on word choice rather than actual risk.

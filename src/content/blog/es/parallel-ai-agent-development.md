@@ -5,6 +5,7 @@ pubDate: 2025-12-17
 tags: ["IA", "Claude Code", "Automatización", "Git", "Productividad"]
 lang: es
 translationKey: parallel-ai-agent-development
+heroImage: "/blog/parallel-ai-agents.png"
 ---
 
 He estado experimentando con un flujo de trabajo que ha multiplicado mi productividad como desarrollador: ejecutar múltiples agentes IA en paralelo, cada uno trabajando en su propia rama de funcionalidad.
