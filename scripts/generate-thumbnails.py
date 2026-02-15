@@ -115,8 +115,32 @@ def generate_image(prompt: str, output_path: Path) -> bool:
 
 
 def main():
-    # Filter by name if args provided
-    targets = sys.argv[1:] if len(sys.argv) > 1 else list(PROMPTS.keys())
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate blog thumbnails with FLUX.1-schnell")
+    parser.add_argument("names", nargs="*", help="Article names from PROMPTS registry")
+    parser.add_argument("--prompt", type=str, help="Ad-hoc prompt for a single image")
+    parser.add_argument("--output", type=str, help="Output filename (e.g. 'my-article.png')")
+    args = parser.parse_args()
+
+    blog_dir = Path(__file__).parent.parent / "public" / "blog"
+
+    # Ad-hoc mode: --prompt "..." --output "name.png"
+    if args.prompt:
+        if not args.output:
+            print("Error: --output is required with --prompt")
+            sys.exit(1)
+        output_path = blog_dir / args.output
+        print(f"Generating thumbnail: {args.output}")
+        print(f"  Prompt: {args.prompt[:80]}...")
+        if generate_image(args.prompt, output_path):
+            print(f"  Saved: {output_path}")
+        else:
+            sys.exit(1)
+        return
+
+    # Registry mode: generate from PROMPTS dict
+    targets = args.names if args.names else list(PROMPTS.keys())
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 

@@ -25,6 +25,7 @@ pubDate: YYYY-MM-DD
 tags: ["Tag1", "Tag2", "Tag3"]
 lang: en  # or es
 translationKey: article-slug
+heroImage: "/blog/article-slug.png"
 ---
 ```
 
@@ -38,6 +39,7 @@ translationKey: article-slug
 | `tags` | Yes | Translated (e.g., "AI" → "IA") |
 | `lang` | Yes | Must be `en` or `es` |
 | `translationKey` | Yes | Same value for EN/ES pair (kebab-case) |
+| `heroImage` | Yes | Path to thumbnail (e.g., `/blog/my-article.png`). Generate with script below. |
 
 ### LinkedIn Automation (Optional)
 
@@ -62,9 +64,52 @@ pubDate: 2026-01-07
 tags: ["AI", "Automation"]
 lang: en
 translationKey: mi-articulo
+heroImage: "/blog/mi-articulo.png"
 linkedinImage: /blog/linkedin-card.png  # Opcional
 ---
 ```
+
+## Hero Image Generation
+
+Every article must have a `heroImage`. Generate it using the thumbnail script with FLUX.1-schnell via Hugging Face's free API.
+
+### How to Generate
+
+```bash
+python3 scripts/generate-thumbnails.py --prompt "YOUR PROMPT" --output "article-slug.png"
+```
+
+This saves the image directly to `public/blog/article-slug.png`.
+
+### Prompt Guidelines
+
+Use this consistent style across all articles:
+
+```
+A minimalist isometric illustration on a dark background. [SCENE DESCRIPTION].
+Style: clean tech diagram aesthetic, neon blue and [ACCENT COLOR] accents on deep navy, no photorealism, no humans.
+```
+
+- **Always start with**: "A minimalist isometric illustration on a dark background"
+- **Always end with**: "Style: clean tech diagram aesthetic, neon [color] accents on deep navy, no photorealism, no humans"
+- **Scene**: Describe the core concept of the article as a visual metaphor using tech icons, nodes, terminals, diagrams
+- **Accent colors**: Pick one that fits the article's theme (amber, red, green, purple, orange, teal, gold)
+- **Avoid**: photorealism, humans, text-heavy prompts (FLUX struggles with legible text)
+
+### Workflow
+
+1. After writing the article content, craft an image prompt based on the article's core concept
+2. Run the generation script
+3. **Show the generated image to the user for review** (use Read tool on the PNG)
+4. The user will typically compare it with a Gemini-generated version using the same prompt before deciding
+5. If approved, add `heroImage: "/blog/article-slug.png"` to **both** EN and ES frontmatter
+6. If not approved, adjust the prompt and regenerate
+7. **Do NOT add heroImage to frontmatter until the user explicitly approves the image**
+
+### Requirements
+
+- `HF_TOKEN` must be set in `.env` (Hugging Face API token)
+- `requests` Python package must be available
 
 ## Bilingual Workflow
 
@@ -187,6 +232,7 @@ pubDate: 2025-01-03
 tags: ["AI", "Automation", "Claude"]
 lang: en
 translationKey: my-new-post
+heroImage: "/blog/my-new-post.png"
 ---
 ```
 
@@ -199,6 +245,7 @@ pubDate: 2025-01-03
 tags: ["IA", "Automatización", "Claude"]
 lang: es
 translationKey: my-new-post
+heroImage: "/blog/my-new-post.png"
 ---
 ```
 
@@ -230,5 +277,6 @@ Images from LinkedIn posts should be:
 - [ ] Same `pubDate` in both
 - [ ] Tags translated appropriately
 - [ ] `lang` field matches file location
-- [ ] Images placed in `public/blog/`
+- [ ] Hero image generated, reviewed by user, and placed in `public/blog/`
+- [ ] `heroImage` field set in both EN and ES frontmatter
 - [ ] Links are valid and functional
