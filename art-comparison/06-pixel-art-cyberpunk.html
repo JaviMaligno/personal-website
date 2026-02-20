@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>06 - Pixel Art Cyberpunk City</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: monospace;
+  }
+  canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    width: 768px;
+    height: 576px;
+    border: 2px solid #1a1a2e;
+  }
+  .title {
+    color: #667;
+    font-size: 14px;
+    margin-top: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<canvas id="c" width="256" height="192"></canvas>
+<div class="title">06 - Pixel Art Cyberpunk City</div>
+<script>
+const W = 256, H = 192;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const img = ctx.createImageData(W, H);
+const buf = img.data;
+
+// Color palette
+const COL = {
+  black:      [0x05, 0x05, 0x0a],
+  darkNavy:   [0x0a, 0x0a, 0x1e],
+  navy:       [0x10, 0x10, 0x30],
+  deepBlue:   [0x15, 0x12, 0x38],
+  midBlue:    [0x1a, 0x18, 0x45],
+  duskPurple: [0x25, 0x18, 0x50],
+  duskBlue:   [0x20, 0x20, 0x55],
+  skyPurple:  [0x30, 0x20, 0x60],
+  skyMid:     [0x35, 0x25, 0x65],
+  skyLight:   [0x40, 0x28, 0x6a],
+  darkGray:   [0x18, 0x18, 0x22],
+  midGray:    [0x25, 0x25, 0x30],
+  bldgDark1:  [0x0c, 0x0c, 0x18],
+  bldgDark2:  [0x0e, 0x0e, 0x1c],
+  bldgDark3:  [0x10, 0x10, 0x20],
+  bldgMid:    [0x16, 0x16, 0x28],
+  bldgLight:  [0x1c, 0x1c, 0x30],
+  windowDim:  [0x22, 0x20, 0x35],
+  windowLit:  [0x55, 0x50, 0x40],
+  windowBright:[0x88, 0x80, 0x55],
+  windowCyan: [0x20, 0x55, 0x66],
+  windowPink: [0x55, 0x20, 0x40],
+  // Neon colors
+  hotPink:    [0xFF, 0x00, 0x66],
+  pinkMid:    [0xCC, 0x00, 0x55],
+  pinkDark:   [0x80, 0x00, 0x38],
+  pinkGlow:   [0xFF, 0x44, 0x88],
+  pinkSoft:   [0x55, 0x10, 0x30],
+  cyan:       [0x00, 0xFF, 0xFF],
+  cyanMid:    [0x00, 0xBB, 0xCC],
+  cyanDark:   [0x00, 0x66, 0x88],
+  cyanGlow:   [0x66, 0xFF, 0xFF],
+  cyanSoft:   [0x10, 0x44, 0x55],
+  purple:     [0x99, 0x00, 0xFF],
+  purpleMid:  [0x70, 0x00, 0xBB],
+  purpleDark: [0x44, 0x00, 0x66],
+  purpleGlow: [0xBB, 0x55, 0xFF],
+  purpleSoft: [0x30, 0x10, 0x50],
+  orange:     [0xFF, 0x66, 0x00],
+  orangeMid:  [0xCC, 0x50, 0x00],
+  orangeDark: [0x66, 0x30, 0x00],
+  orangeGlow: [0xFF, 0x88, 0x33],
+  orangeDim:  [0x88, 0x44, 0x00],
+  orangeSoft: [0x44, 0x22, 0x08],
+  // Street
+  streetDark: [0x08, 0x08, 0x12],
+  streetMid:  [0x0c, 0x0c, 0x18],
+  streetWet:  [0x10, 0x10, 0x1e],
+  streetLine: [0x18, 0x18, 0x28],
+  // Rain
+  rainDim:    [0x30, 0x30, 0x55],
+  rainBright: [0x50, 0x50, 0x88],
+  // Characters
+  silhouette: [0x08, 0x08, 0x10],
+  silLight:   [0x12, 0x12, 0x1e],
+  white:      [0xFF, 0xFF, 0xFF],
+  yellow:     [0xFF, 0xDD, 0x00],
+  yellowDim:  [0x88, 0x77, 0x00],
+  green:      [0x00, 0xDD, 0x44],
+  greenDim:   [0x00, 0x66, 0x22],
+  red:        [0xFF, 0x22, 0x22],
+  redDim:     [0x88, 0x10, 0x10],
+};
+
+function setPixel(x, y, col, alpha) {
+  x = Math.round(x); y = Math.round(y);
+  if (x < 0 || x >= W || y < 0 || y >= H) return;
+  const i = (y * W + x) * 4;
+  const a = alpha !== undefined ? alpha : 1;
+  if (a < 1) {
+    buf[i]   = Math.min(255, buf[i]   + Math.round(col[0] * a));
+    buf[i+1] = Math.min(255, buf[i+1] + Math.round(col[1] * a));
+    buf[i+2] = Math.min(255, buf[i+2] + Math.round(col[2] * a));
+  } else {
+    buf[i] = col[0]; buf[i+1] = col[1]; buf[i+2] = col[2];
+  }
+  buf[i+3] = 255;
+}
+
+function getPixel(x, y) {
+  x = Math.round(x); y = Math.round(y);
+  if (x < 0 || x >= W || y < 0 || y >= H) return [0,0,0];
+  const i = (y * W + x) * 4;
+  return [buf[i], buf[i+1], buf[i+2]];
+}
+
+function blendPixel(x, y, col, t) {
+  x = Math.round(x); y = Math.round(y);
+  if (x < 0 || x >= W || y < 0 || y >= H) return;
+  const i = (y * W + x) * 4;
+  buf[i]   = Math.min(255, Math.round(buf[i]   * (1-t) + col[0] * t));
+  buf[i+1] = Math.min(255, Math.round(buf[i+1] * (1-t) + col[1] * t));
+  buf[i+2] = Math.min(255, Math.round(buf[i+2] * (1-t) + col[2] * t));
+  buf[i+3] = 255;
+}
+
+function rect(x1, y1, w, h, col) {
+  for (let y = y1; y < y1 + h; y++)
+    for (let x = x1; x < x1 + w; x++)
+      setPixel(x, y, col);
+}
+
+function ditheredRect(x1, y1, w, h, col1, col2, pattern) {
+  // pattern: 0=solid col1, 1=checkerboard, 2=sparse col2, 3=solid col2
+  for (let y = y1; y < y1 + h; y++) {
+    for (let x = x1; x < x1 + w; x++) {
+      let useCol2 = false;
+      if (pattern === 1) useCol2 = (x + y) % 2 === 0;
+      else if (pattern === 2) useCol2 = (x + y) % 2 === 0 && (x % 2 === 0);
+      else if (pattern === 3) useCol2 = true;
+      setPixel(x, y, useCol2 ? col2 : col1);
+    }
+  }
+}
+
+// Seeded random for deterministic scene
+let seed = 42;
+function rng() {
+  seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+  return (seed >> 16) / 32768;
+}
+
+// ---- SKY ----
+function drawSky() {
+  const skyColors = [
+    { y: 0,  col: COL.darkNavy },
+    { y: 10, col: COL.navy },
+    { y: 20, col: COL.deepBlue },
+    { y: 30, col: COL.midBlue },
+    { y: 40, col: COL.duskPurple },
+    { y: 55, col: COL.skyPurple },
+    { y: 70, col: COL.skyMid },
+    { y: 85, col: COL.skyLight },
+  ];
+
+  for (let y = 0; y < 90; y++) {
+    let col = COL.darkNavy;
+    for (let s = skyColors.length - 1; s >= 0; s--) {
+      if (y >= skyColors[s].y) {
+        if (s < skyColors.length - 1) {
+          const next = skyColors[s + 1];
+          const t = (y - skyColors[s].y) / (next.y - skyColors[s].y);
+          // Dither between bands
+          const c1 = skyColors[s].col;
+          const c2 = next.col;
+          for (let x = 0; x < W; x++) {
+            const dither = ((x + y) % 2 === 0) ? t + 0.15 : t - 0.15;
+            const c = dither > 0.5 ? c2 : c1;
+            setPixel(x, y, c);
+          }
+        } else {
+          for (let x = 0; x < W; x++) setPixel(x, y, skyColors[s].col);
+        }
+        break;
+      }
+    }
+  }
+
+  // Stars
+  const starPositions = [
+    [15, 5], [42, 8], [78, 3], [120, 6], [155, 2], [190, 9], [210, 4], [240, 7],
+    [30, 15], [95, 12], [170, 18], [230, 14], [60, 22], [140, 20], [200, 25],
+    [22, 28], [110, 32], [180, 30], [50, 38], [245, 35],
+  ];
+  for (const [sx, sy] of starPositions) {
+    if (sy < 50) {
+      const bright = rng() > 0.5;
+      setPixel(sx, sy, bright ? [0x88, 0x88, 0xBB] : [0x55, 0x55, 0x88]);
+    }
+  }
+}
+
+// ---- DISTANT BUILDINGS (skyline) ----
+function drawSkyline() {
+  const heights = [
+    // Far background buildings - jagged skyline
+    { x: 0, w: 12, h: 35 },
+    { x: 10, w: 8, h: 50 },
+    { x: 16, w: 14, h: 42 },
+    { x: 28, w: 6, h: 55 },
+    { x: 32, w: 10, h: 38 },
+    { x: 40, w: 8, h: 48 },
+    { x: 46, w: 12, h: 58 },
+    { x: 56, w: 6, h: 44 },
+    { x: 60, w: 10, h: 52 },
+    { x: 68, w: 8, h: 40 },
+    // Gap for street (center-left perspective)
+    { x: 175, w: 10, h: 45 },
+    { x: 183, w: 8, h: 55 },
+    { x: 189, w: 12, h: 48 },
+    { x: 199, w: 6, h: 60 },
+    { x: 203, w: 10, h: 42 },
+    { x: 211, w: 8, h: 52 },
+    { x: 217, w: 14, h: 46 },
+    { x: 229, w: 8, h: 56 },
+    { x: 235, w: 12, h: 50 },
+    { x: 245, w: 12, h: 44 },
+  ];
+
+  const horizon = 88;
+  for (const b of heights) {
+    const top = horizon - b.h;
+    // Alternate dark shades
+    const shade = rng() > 0.5 ? COL.bldgDark1 : COL.bldgDark2;
+    rect(b.x, top, b.w, b.h, shade);
+
+    // Tiny lit windows on distant buildings
+    for (let wy = top + 3; wy < horizon - 2; wy += 4) {
+      for (let wx = b.x + 1; wx < b.x + b.w - 1; wx += 3) {
+        if (rng() > 0.55) {
+          const wc = rng() > 0.7 ? COL.windowLit :
+                     rng() > 0.5 ? COL.windowCyan : COL.windowDim;
+          setPixel(wx, wy, wc);
+          if (wx + 1 < b.x + b.w - 1) setPixel(wx + 1, wy, wc);
+        }
+      }
+    }
+  }
+}
+
+// ---- MAIN STREET BUILDINGS (left side) ----
+function drawLeftBuildings() {
+  // Building 1 - far left, tall
+  rect(0, 20, 38, 155, COL.bldgDark2);
+  // Slight edge highlight
+  for (let y = 20; y < 170; y++) setPixel(37, y, COL.bldgMid);
+
+  // Windows - grid pattern
+  for (let wy = 28; wy < 155; wy += 8) {
+    for (let wx = 4; wx < 34; wx += 7) {
+      if (rng() > 0.3) {
+        const lit = rng() > 0.4;
+        const wc = lit ? (rng() > 0.6 ? COL.windowBright : COL.windowLit) : COL.windowDim;
+        rect(wx, wy, 4, 5, wc);
+        // Pane divider
+        setPixel(wx + 2, wy, COL.bldgDark2);
+        setPixel(wx + 2, wy + 1, COL.bldgDark2);
+        setPixel(wx + 2, wy + 2, COL.bldgDark2);
+        for (let px = wx; px < wx + 4; px++) setPixel(px, wy + 2, COL.bldgDark2);
+      }
+    }
+  }
+
+  // Building 2 - next, shorter
+  rect(38, 45, 30, 130, COL.bldgDark3);
+  for (let y = 45; y < 170; y++) setPixel(67, y, COL.bldgLight);
+
+  for (let wy = 50; wy < 155; wy += 7) {
+    for (let wx = 42; wx < 64; wx += 6) {
+      if (rng() > 0.35) {
+        const lit = rng() > 0.45;
+        const wc = lit ? COL.windowLit : COL.windowDim;
+        rect(wx, wy, 3, 4, wc);
+      }
+    }
+  }
+
+  // Building 3 - closest on left (narrower, extends to street edge)
+  rect(68, 30, 28, 145, COL.bldgDark1);
+  // Right edge is the street wall
+  for (let y = 30; y < 170; y++) setPixel(95, y, COL.bldgMid);
+
+  for (let wy = 38; wy < 155; wy += 9) {
+    for (let wx = 72; wx < 92; wx += 6) {
+      if (rng() > 0.25) {
+        const lit = rng() > 0.5;
+        const wc = lit ? (rng() > 0.5 ? COL.windowBright : COL.windowCyan) : COL.windowDim;
+        rect(wx, wy, 4, 6, wc);
+        setPixel(wx + 2, wy, COL.bldgDark1);
+        setPixel(wx + 2, wy + 1, COL.bldgDark1);
+        setPixel(wx + 2, wy + 2, COL.bldgDark1);
+        setPixel(wx + 2, wy + 3, COL.bldgDark1);
+        for (let px = wx; px < wx + 4; px++) setPixel(px, wy + 3, COL.bldgDark1);
+      }
+    }
+  }
+
+  // Awning/overhang at street level on building 3
+  rect(80, 130, 16, 2, COL.bldgMid);
+  rect(78, 132, 18, 1, COL.bldgLight);
+}
+
+// ---- MAIN STREET BUILDINGS (right side) ----
+function drawRightBuildings() {
+  // Building 1 - closest on right
+  rect(160, 35, 28, 140, COL.bldgDark2);
+  for (let y = 35; y < 170; y++) setPixel(160, y, COL.bldgMid);
+
+  for (let wy = 42; wy < 155; wy += 8) {
+    for (let wx = 164; wx < 184; wx += 6) {
+      if (rng() > 0.3) {
+        const lit = rng() > 0.45;
+        const wc = lit ? (rng() > 0.5 ? COL.windowLit : COL.windowPink) : COL.windowDim;
+        rect(wx, wy, 4, 5, wc);
+        setPixel(wx + 2, wy, COL.bldgDark2);
+        setPixel(wx + 2, wy + 1, COL.bldgDark2);
+        for (let px = wx; px < wx + 4; px++) setPixel(px, wy + 2, COL.bldgDark2);
+      }
+    }
+  }
+
+  // Building 2
+  rect(188, 25, 32, 150, COL.bldgDark3);
+  for (let y = 25; y < 170; y++) setPixel(188, y, COL.bldgLight);
+
+  for (let wy = 32; wy < 155; wy += 7) {
+    for (let wx = 192; wx < 216; wx += 5) {
+      if (rng() > 0.3) {
+        const lit = rng() > 0.5;
+        const wc = lit ? COL.windowLit : COL.windowDim;
+        rect(wx, wy, 3, 4, wc);
+      }
+    }
+  }
+
+  // Building 3 - far right
+  rect(220, 15, 36, 160, COL.bldgDark1);
+  for (let y = 15; y < 170; y++) setPixel(220, y, COL.bldgMid);
+
+  for (let wy = 22; wy < 155; wy += 8) {
+    for (let wx = 224; wx < 252; wx += 7) {
+      if (rng() > 0.35) {
+        const lit = rng() > 0.4;
+        const wc = lit ? (rng() > 0.6 ? COL.windowBright : COL.windowLit) : COL.windowDim;
+        rect(wx, wy, 4, 5, wc);
+        setPixel(wx + 2, wy, COL.bldgDark1);
+        setPixel(wx + 2, wy + 1, COL.bldgDark1);
+        for (let px = wx; px < wx + 4; px++) setPixel(px, wy + 2, COL.bldgDark1);
+      }
+    }
+  }
+
+  // Awning on building 1
+  rect(160, 128, 16, 2, COL.bldgMid);
+  rect(158, 130, 18, 1, COL.bldgLight);
+}
+
+// ---- NEON SIGNS ----
+function drawNeonSign(x, y, w, h, glyphData, mainCol, glowCol, darkCol, softCol) {
+  // Sign backing (dark panel)
+  rect(x - 1, y - 1, w + 2, h + 2, COL.bldgDark1);
+
+  // Draw glow halo around sign area
+  for (let gy = y - 3; gy < y + h + 3; gy++) {
+    for (let gx = x - 3; gx < x + w + 3; gx++) {
+      const dx = Math.max(0, Math.max(x - gx, gx - (x + w - 1)));
+      const dy = Math.max(0, Math.max(y - gy, gy - (y + h - 1)));
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d > 0 && d < 4) {
+        blendPixel(gx, gy, softCol, 0.3 / d);
+      }
+    }
+  }
+
+  // Draw glyph pixels
+  for (let py = 0; py < glyphData.length; py++) {
+    for (let px = 0; px < glyphData[py].length; px++) {
+      if (glyphData[py][px]) {
+        setPixel(x + px, y + py, mainCol);
+        // Glow around each lit pixel
+        blendPixel(x + px - 1, y + py, darkCol, 0.5);
+        blendPixel(x + px + 1, y + py, darkCol, 0.5);
+        blendPixel(x + px, y + py - 1, darkCol, 0.5);
+        blendPixel(x + px, y + py + 1, darkCol, 0.5);
+      }
+    }
+  }
+
+  // Bright center highlight on some pixels
+  for (let py = 0; py < glyphData.length; py++) {
+    for (let px = 0; px < glyphData[py].length; px++) {
+      if (glyphData[py][px] === 2) {
+        setPixel(x + px, y + py, glowCol);
+      }
+    }
+  }
+}
+
+function drawAllNeonSigns() {
+  // ---- LEFT SIDE NEON SIGNS ----
+
+  // Large vertical pink sign on left building (katakana-style: "ka" + "ta")
+  const pinkVertical = [
+    [1,2,1,0,0],
+    [0,1,0,0,0],
+    [1,1,1,1,0],
+    [0,0,0,1,0],
+    [0,0,1,0,0],
+    [0,1,0,0,0],
+    [0,0,0,0,0],
+    [1,1,1,1,0],
+    [1,0,0,1,0],
+    [0,0,1,0,0],
+    [0,1,0,0,0],
+    [1,0,0,0,0],
+  ];
+  drawNeonSign(72, 55, 5, 12, pinkVertical, COL.hotPink, COL.pinkGlow, COL.pinkMid, COL.pinkSoft);
+
+  // Wider glow wash on wall around pink sign
+  for (let gy = 48; gy < 74; gy++) {
+    for (let gx = 65; gx < 82; gx++) {
+      const dx = Math.abs(gx - 74);
+      const dy = Math.abs(gy - 61);
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d > 3 && d < 10) {
+        blendPixel(gx, gy, COL.pinkSoft, 0.15 / (d * 0.3));
+      }
+    }
+  }
+
+  // Cyan horizontal sign on left (like a bar sign)
+  const cyanSign = [
+    [1,0,1,1,0,1,1,0],
+    [1,0,1,0,0,0,1,0],
+    [1,1,1,0,0,1,1,0],
+    [0,0,1,0,0,1,0,0],
+    [0,0,1,1,0,1,0,0],
+  ];
+  drawNeonSign(42, 100, 8, 5, cyanSign, COL.cyan, COL.cyanGlow, COL.cyanMid, COL.cyanSoft);
+
+  // Glow wash for cyan sign
+  for (let gy = 94; gy < 112; gy++) {
+    for (let gx = 36; gx < 56; gx++) {
+      const dx = Math.abs(gx - 46);
+      const dy = Math.abs(gy - 102);
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d > 3 && d < 9) {
+        blendPixel(gx, gy, COL.cyanSoft, 0.12 / (d * 0.3));
+      }
+    }
+  }
+
+  // Small orange sign on far left building
+  const orangeSmall = [
+    [1,1,0,1],
+    [1,0,0,1],
+    [1,1,0,1],
+  ];
+  drawNeonSign(10, 72, 4, 3, orangeSmall, COL.orange, COL.orangeGlow, COL.orangeMid, COL.orangeSoft);
+
+  // ---- RIGHT SIDE NEON SIGNS ----
+
+  // Large purple vertical sign on right building
+  const purpleVert = [
+    [0,1,1,1,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,1,1,1,0],
+    [0,0,0,0,0],
+    [0,1,0,1,0],
+    [0,1,1,1,0],
+    [0,1,0,1,0],
+    [0,1,0,1,0],
+    [0,0,0,0,0],
+    [1,1,0,1,1],
+    [0,1,0,1,0],
+    [0,1,1,1,0],
+  ];
+  drawNeonSign(192, 50, 5, 13, purpleVert, COL.purple, COL.purpleGlow, COL.purpleMid, COL.purpleSoft);
+
+  // Purple glow wash
+  for (let gy = 43; gy < 70; gy++) {
+    for (let gx = 186; gx < 202; gx++) {
+      const dx = Math.abs(gx - 194);
+      const dy = Math.abs(gy - 56);
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d > 3 && d < 10) {
+        blendPixel(gx, gy, COL.purpleSoft, 0.15 / (d * 0.3));
+      }
+    }
+  }
+
+  // Large cyan sign on far right building
+  const cyanBig = [
+    [1,1,1,0,1,0,1],
+    [0,0,1,0,1,1,1],
+    [0,1,0,0,1,0,1],
+    [1,0,0,0,0,0,0],
+    [1,1,1,0,1,1,0],
+    [0,1,0,0,1,0,1],
+    [1,1,1,0,1,1,0],
+  ];
+  drawNeonSign(228, 68, 7, 7, cyanBig, COL.cyan, COL.cyanGlow, COL.cyanMid, COL.cyanSoft);
+
+  // Cyan glow wash right
+  for (let gy = 62; gy < 82; gy++) {
+    for (let gx = 222; gx < 242; gx++) {
+      const dx = Math.abs(gx - 232);
+      const dy = Math.abs(gy - 72);
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d > 3 && d < 9) {
+        blendPixel(gx, gy, COL.cyanSoft, 0.12 / (d * 0.3));
+      }
+    }
+  }
+
+  // Orange horizontal sign on right (street level)
+  const orangeBar = [
+    [1,1,0,1,1,0,1],
+    [1,0,0,0,1,0,1],
+    [1,1,0,1,1,0,1],
+  ];
+  drawNeonSign(163, 105, 7, 3, orangeBar, COL.orange, COL.orangeGlow, COL.orangeMid, COL.orangeSoft);
+
+  // Orange glow
+  for (let gy = 100; gy < 114; gy++) {
+    for (let gx = 158; gx < 176; gx++) {
+      const dx = Math.abs(gx - 166);
+      const dy = Math.abs(gy - 106);
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d > 2 && d < 8) {
+        blendPixel(gx, gy, COL.orangeSoft, 0.12 / (d * 0.3));
+      }
+    }
+  }
+
+  // Small pink sign high on far right
+  const pinkSmall = [
+    [1,0,1],
+    [1,1,1],
+    [1,0,1],
+  ];
+  drawNeonSign(240, 38, 3, 3, pinkSmall, COL.hotPink, COL.pinkGlow, COL.pinkMid, COL.pinkSoft);
+
+  // ---- CENTER NEON (visible down the street) ----
+  // A large glowing sign in the distance at the end of the street
+  const distantSign = [
+    [0,1,1,1,1,0],
+    [0,1,0,0,0,0],
+    [0,1,1,1,0,0],
+    [0,0,0,1,0,0],
+    [0,1,1,1,0,0],
+  ];
+  drawNeonSign(122, 78, 6, 5, distantSign, COL.hotPink, COL.pinkGlow, COL.pinkMid, COL.pinkSoft);
+
+  // Large glow for the distant sign
+  for (let gy = 70; gy < 92; gy++) {
+    for (let gx = 115; gx < 135; gx++) {
+      const dx = Math.abs(gx - 125);
+      const dy = Math.abs(gy - 80);
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d > 2 && d < 12) {
+        blendPixel(gx, gy, COL.pinkSoft, 0.2 / (d * 0.25));
+      }
+    }
+  }
+
+  // Distant cyan sign
+  const distantCyan = [
+    [1,0,1,1],
+    [1,0,1,0],
+    [1,1,1,1],
+  ];
+  drawNeonSign(133, 74, 4, 3, distantCyan, COL.cyan, COL.cyanGlow, COL.cyanMid, COL.cyanSoft);
+}
+
+// ---- POWER LINES / CABLES ----
+function drawCables() {
+  // Cable 1: from left building to right building, slight sag
+  for (let x = 90; x <= 165; x++) {
+    const t = (x - 90) / 75;
+    const sag = Math.sin(t * Math.PI) * 6;
+    const y = Math.round(48 + sag);
+    setPixel(x, y, COL.darkGray);
+  }
+
+  // Cable 2: higher up
+  for (let x = 85; x <= 170; x++) {
+    const t = (x - 85) / 85;
+    const sag = Math.sin(t * Math.PI) * 4;
+    const y = Math.round(38 + sag);
+    setPixel(x, y, COL.darkGray);
+  }
+
+  // Cable 3: lower, different sag
+  for (let x = 92; x <= 162; x++) {
+    const t = (x - 92) / 70;
+    const sag = Math.sin(t * Math.PI) * 8;
+    const y = Math.round(62 + sag);
+    setPixel(x, y, COL.midGray);
+  }
+
+  // Cable 4: crossing at angle
+  for (let x = 78; x <= 180; x++) {
+    const t = (x - 78) / 102;
+    const sag = Math.sin(t * Math.PI) * 5;
+    const baseY = 55 - (x - 78) * 0.08;
+    const y = Math.round(baseY + sag);
+    setPixel(x, y, COL.darkGray);
+  }
+}
+
+// ---- STREET ----
+function drawStreet() {
+  const streetTop = 148;
+
+  // Street surface
+  for (let y = streetTop; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      // Perspective: street narrows toward center-top
+      const t = (y - streetTop) / (H - streetTop);
+      const leftEdge = 96 - t * 96;
+      const rightEdge = 160 + t * (W - 160);
+
+      if (x >= leftEdge && x <= rightEdge) {
+        // Wet asphalt with slight variation
+        if ((x + y) % 3 === 0) {
+          setPixel(x, y, COL.streetWet);
+        } else if ((x * 7 + y * 13) % 5 === 0) {
+          setPixel(x, y, COL.streetMid);
+        } else {
+          setPixel(x, y, COL.streetDark);
+        }
+      }
+    }
+  }
+
+  // Center line (faded)
+  for (let y = streetTop + 2; y < H; y += 3) {
+    const t = (y - streetTop) / (H - streetTop);
+    const cx = Math.round(128 + (t - 0.5) * 2);
+    if (y % 6 < 3) {
+      setPixel(cx, y, COL.streetLine);
+    }
+  }
+}
+
+// ---- NEON REFLECTIONS ON STREET ----
+function drawReflections() {
+  const streetTop = 148;
+
+  // Pink reflection from left signs
+  for (let y = streetTop; y < H; y++) {
+    const t = (y - streetTop) / (H - streetTop);
+    const intensity = 0.15 + t * 0.2;
+    for (let x = 85; x < 110; x++) {
+      if ((x + y) % 3 === 0) {
+        blendPixel(x, y, COL.pinkDark, intensity * (1 - Math.abs(x - 97) / 15));
+      }
+    }
+  }
+
+  // Cyan reflection from left sign
+  for (let y = streetTop + 4; y < H; y++) {
+    const t = (y - streetTop) / (H - streetTop);
+    const intensity = 0.12 + t * 0.15;
+    for (let x = 70; x < 100; x++) {
+      if ((x + y + 1) % 4 === 0) {
+        blendPixel(x, y, COL.cyanDark, intensity * (1 - Math.abs(x - 85) / 18));
+      }
+    }
+  }
+
+  // Purple reflection from right sign
+  for (let y = streetTop; y < H; y++) {
+    const t = (y - streetTop) / (H - streetTop);
+    const intensity = 0.12 + t * 0.18;
+    for (let x = 150; x < 175; x++) {
+      if ((x + y) % 3 === 0) {
+        blendPixel(x, y, COL.purpleDark, intensity * (1 - Math.abs(x - 162) / 14));
+      }
+    }
+  }
+
+  // Orange reflection from right sign
+  for (let y = streetTop + 2; y < H; y++) {
+    const t = (y - streetTop) / (H - streetTop);
+    const intensity = 0.1 + t * 0.15;
+    for (let x = 155; x < 180; x++) {
+      if ((x + y + 1) % 4 === 0) {
+        blendPixel(x, y, COL.orangeDark, intensity * (1 - Math.abs(x - 168) / 14));
+      }
+    }
+  }
+
+  // Central pink glow reflection (distant sign)
+  for (let y = streetTop; y < H; y++) {
+    const t = (y - streetTop) / (H - streetTop);
+    const intensity = 0.2 + t * 0.25;
+    const cx = 128;
+    const spread = 8 + t * 20;
+    for (let x = Math.round(cx - spread); x < Math.round(cx + spread); x++) {
+      if (x >= 0 && x < W) {
+        const d = Math.abs(x - cx) / spread;
+        if ((x + y) % 2 === 0 && d < 1) {
+          blendPixel(x, y, COL.pinkDark, intensity * (1 - d) * 0.5);
+        }
+      }
+    }
+  }
+
+  // Puddle highlights - bright specular reflections
+  const puddles = [
+    { x: 105, y: 162, w: 12, h: 5, col: COL.pinkMid },
+    { x: 130, y: 170, w: 15, h: 4, col: COL.hotPink },
+    { x: 155, y: 165, w: 10, h: 4, col: COL.purpleMid },
+    { x: 120, y: 178, w: 20, h: 5, col: COL.cyanMid },
+    { x: 90, y: 180, w: 14, h: 4, col: COL.cyan },
+    { x: 165, y: 175, w: 12, h: 4, col: COL.orangeMid },
+  ];
+
+  for (const p of puddles) {
+    for (let py = p.y; py < p.y + p.h; py++) {
+      for (let px = p.x; px < p.x + p.w; px++) {
+        const dx = Math.abs(px - (p.x + p.w / 2)) / (p.w / 2);
+        const dy = Math.abs(py - (p.y + p.h / 2)) / (p.h / 2);
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 1) {
+          if ((px + py) % 2 === 0) {
+            blendPixel(px, py, p.col, 0.3 * (1 - d));
+          }
+        }
+      }
+    }
+  }
+}
+
+// ---- HUMAN SILHOUETTES ----
+function drawPerson(x, y, facing) {
+  // Tiny 3x7 pixel person
+  const f = facing || 1;
+  // Head
+  setPixel(x, y, COL.silhouette);
+  setPixel(x + 1, y, COL.silhouette);
+  // Neck
+  setPixel(x, y + 1, COL.silhouette);
+  // Body
+  setPixel(x - 1, y + 2, COL.silhouette);
+  setPixel(x, y + 2, COL.silhouette);
+  setPixel(x + 1, y + 2, COL.silhouette);
+  setPixel(x, y + 3, COL.silhouette);
+  setPixel(x + f, y + 3, COL.silhouette);
+  // Legs
+  setPixel(x - 1, y + 4, COL.silhouette);
+  setPixel(x + 1, y + 4, COL.silhouette);
+  setPixel(x - 1, y + 5, COL.silhouette);
+  setPixel(x + 1, y + 5, COL.silhouette);
+}
+
+function drawPeople() {
+  // Person 1 - walking left side of street
+  drawPerson(108, 148, 1);
+  // Slight color cast from neon on person
+  blendPixel(109, 149, COL.pinkDark, 0.3);
+  blendPixel(109, 150, COL.pinkDark, 0.3);
+
+  // Person 2 - right side, closer
+  drawPerson(152, 155, -1);
+  blendPixel(151, 156, COL.purpleDark, 0.3);
+  blendPixel(151, 157, COL.purpleDark, 0.3);
+
+  // Person 3 - center distance
+  // Smaller (farther away) - just 2x4
+  setPixel(126, 142, COL.silhouette);
+  setPixel(127, 142, COL.silhouette);
+  setPixel(126, 143, COL.silhouette);
+  setPixel(127, 143, COL.silhouette);
+  setPixel(126, 144, COL.silhouette);
+  setPixel(127, 144, COL.silhouette);
+  setPixel(125, 145, COL.silhouette);
+  setPixel(127, 145, COL.silhouette);
+
+  // Person 4 - far distance, just a dot
+  setPixel(130, 138, COL.silhouette);
+  setPixel(130, 139, COL.silhouette);
+  setPixel(130, 140, COL.silhouette);
+}
+
+// ---- RAIN ----
+function drawRain(frame) {
+  seed = 100 + frame;
+  for (let i = 0; i < 120; i++) {
+    const x = Math.floor(rng() * W);
+    const y = Math.floor(rng() * H);
+    const len = 2 + Math.floor(rng() * 3);
+    const bright = rng() > 0.7;
+
+    for (let dy = 0; dy < len; dy++) {
+      const ry = y + dy;
+      if (ry >= 0 && ry < H && x >= 0 && x < W) {
+        const existing = getPixel(x, ry);
+        // Only draw rain if it won't obliterate bright neon
+        const brightness = existing[0] + existing[1] + existing[2];
+        if (brightness < 200) {
+          blendPixel(x, ry, bright ? COL.rainBright : COL.rainDim, 0.2);
+        }
+      }
+    }
+  }
+}
+
+// ---- ADDITIONAL DETAILS ----
+function drawDetails() {
+  // Doorways at street level
+  // Left side door
+  rect(86, 138, 6, 12, [0x04, 0x04, 0x0a]);
+  setPixel(91, 143, COL.yellowDim); // door handle
+  // Warm interior glow
+  for (let dy = 0; dy < 10; dy++) {
+    blendPixel(87, 139 + dy, [0x30, 0x20, 0x08], 0.15);
+    blendPixel(88, 139 + dy, [0x30, 0x20, 0x08], 0.1);
+  }
+
+  // Right side door
+  rect(164, 135, 7, 13, [0x04, 0x04, 0x0a]);
+  setPixel(165, 141, COL.orangeDim); // door handle
+  for (let dy = 0; dy < 11; dy++) {
+    blendPixel(166, 136 + dy, [0x28, 0x14, 0x06], 0.12);
+    blendPixel(167, 136 + dy, [0x28, 0x14, 0x06], 0.08);
+  }
+
+  // AC units on buildings (small rectangles)
+  rect(22, 60, 4, 3, COL.midGray);
+  rect(55, 80, 3, 2, COL.midGray);
+  rect(200, 70, 4, 3, COL.midGray);
+  rect(238, 55, 3, 2, COL.midGray);
+
+  // Antenna on far right building
+  setPixel(245, 10, COL.midGray);
+  setPixel(245, 11, COL.midGray);
+  setPixel(245, 12, COL.midGray);
+  setPixel(245, 13, COL.midGray);
+  setPixel(245, 14, COL.midGray);
+  // Blinking red light
+  setPixel(245, 10, COL.red);
+  blendPixel(244, 10, COL.redDim, 0.4);
+  blendPixel(246, 10, COL.redDim, 0.4);
+  blendPixel(245, 9, COL.redDim, 0.3);
+
+  // Antenna on left building
+  setPixel(28, 15, COL.midGray);
+  setPixel(28, 16, COL.midGray);
+  setPixel(28, 17, COL.midGray);
+  setPixel(28, 18, COL.midGray);
+  setPixel(28, 19, COL.midGray);
+  setPixel(28, 15, COL.red);
+  blendPixel(27, 15, COL.redDim, 0.3);
+  blendPixel(29, 15, COL.redDim, 0.3);
+
+  // Pipes on left building
+  for (let y = 45; y < 130; y++) {
+    setPixel(38, y, COL.midGray);
+    if (y % 8 === 0) {
+      setPixel(37, y, COL.midGray);
+      setPixel(39, y, COL.midGray);
+    }
+  }
+
+  // Pipe on right
+  for (let y = 35; y < 125; y++) {
+    setPixel(188, y, COL.darkGray);
+    if (y % 10 === 0) {
+      setPixel(187, y, COL.darkGray);
+      setPixel(189, y, COL.darkGray);
+    }
+  }
+
+  // Small green sign (exit sign above left door)
+  setPixel(87, 136, COL.green);
+  setPixel(88, 136, COL.green);
+  setPixel(89, 136, COL.green);
+  blendPixel(87, 135, COL.greenDim, 0.3);
+  blendPixel(88, 135, COL.greenDim, 0.3);
+  blendPixel(89, 135, COL.greenDim, 0.3);
+
+  // Vending machine on right side (near door)
+  rect(174, 138, 4, 10, [0x12, 0x15, 0x20]);
+  setPixel(175, 139, COL.cyanDark);
+  setPixel(176, 139, COL.cyanDark);
+  setPixel(175, 140, COL.cyanDark);
+  setPixel(176, 140, COL.cyanDark);
+  setPixel(175, 142, COL.orangeDark);
+  setPixel(176, 142, COL.orangeDark);
+  setPixel(175, 144, [0x22, 0x22, 0x33]);
+  setPixel(176, 144, [0x22, 0x22, 0x33]);
+  // Vending machine glow
+  blendPixel(174, 148, COL.cyanDark, 0.2);
+  blendPixel(175, 148, COL.cyanDark, 0.3);
+  blendPixel(176, 148, COL.cyanDark, 0.3);
+  blendPixel(177, 148, COL.cyanDark, 0.2);
+}
+
+// ---- ATMOSPHERIC HAZE ----
+function drawAtmosphere() {
+  // Subtle fog/haze in the street canyon
+  for (let y = 85; y < 148; y++) {
+    const fogIntensity = 0.03 + (y - 85) * 0.001;
+    for (let x = 96; x < 160; x++) {
+      if ((x + y * 3) % 7 === 0) {
+        blendPixel(x, y, [0x20, 0x18, 0x30], fogIntensity);
+      }
+    }
+  }
+
+  // Light spill from distant neon onto the haze
+  for (let y = 80; y < 130; y++) {
+    for (let x = 110; x < 145; x++) {
+      const d = Math.sqrt(Math.pow(x - 128, 2) + Math.pow(y - 90, 2));
+      if (d < 25 && (x + y) % 5 === 0) {
+        blendPixel(x, y, COL.pinkSoft, 0.06 * (1 - d / 25));
+      }
+    }
+  }
+}
+
+// ---- MAIN RENDER ----
+function render(frame) {
+  // Clear to black
+  for (let i = 0; i < buf.length; i += 4) {
+    buf[i] = 0x05; buf[i+1] = 0x05; buf[i+2] = 0x0a; buf[i+3] = 255;
+  }
+
+  drawSky();
+  drawSkyline();
+  drawLeftBuildings();
+  drawRightBuildings();
+  drawCables();
+  drawAtmosphere();
+  drawAllNeonSigns();
+  drawDetails();
+  drawStreet();
+  drawReflections();
+  drawPeople();
+  drawRain(frame);
+
+  ctx.putImageData(img, 0, 0);
+}
+
+// Animate rain
+let frame = 0;
+function animate() {
+  render(frame);
+  frame = (frame + 1) % 60;
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>

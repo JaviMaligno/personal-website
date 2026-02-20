@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>08 - Mandelbrot Fractal</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #060610;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+    color: #e0e0e0;
+    overflow: hidden;
+  }
+
+  .container {
+    position: relative;
+    display: inline-block;
+  }
+
+  canvas {
+    display: block;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+      0 0 40px rgba(80, 40, 180, 0.12),
+      0 0 100px rgba(40, 15, 90, 0.08);
+  }
+
+  .info-overlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(6, 6, 16, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 11px;
+    line-height: 1.7;
+    color: rgba(200, 200, 220, 0.75);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .info-overlay .label {
+    color: rgba(140, 120, 180, 0.65);
+    margin-right: 3px;
+  }
+
+  .info-overlay .value {
+    color: rgba(190, 200, 240, 0.9);
+  }
+
+  .title {
+    margin-top: 22px;
+    font-size: 13px;
+    letter-spacing: 3.5px;
+    text-transform: uppercase;
+    color: rgba(160, 140, 200, 0.5);
+    font-weight: 300;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <canvas id="mandelbrot" width="800" height="800"></canvas>
+  <div class="info-overlay" id="info">
+    <div><span class="label">Center:</span> <span class="value" id="info-center"></span></div>
+    <div><span class="label">Zoom:</span> <span class="value" id="info-zoom"></span></div>
+    <div><span class="label">Iterations:</span> <span class="value" id="info-iter"></span></div>
+    <div><span class="label">Region:</span> <span class="value">Seahorse Valley</span></div>
+  </div>
+</div>
+<div class="title">08 - Mandelbrot Fractal</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const canvas = document.getElementById('mandelbrot');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  // ============================================================
+  // Configuration: Seahorse Valley - a deeply beautiful region
+  // with spiraling tendrils and intricate detail
+  // ============================================================
+  const CENTER_RE = -0.7463;
+  const CENTER_IM = 0.1102;
+  const VIEW_RADIUS = 0.005;  // half-width of view in complex plane
+  const MAX_ITER = 800;
+  const BAIL_OUT = 256;       // high bailout for smooth coloring
+  const BAIL_OUT_SQ = BAIL_OUT * BAIL_OUT;
+  const LOG2 = Math.log(2);
+
+  // Zoom factor relative to full Mandelbrot (approx width 4)
+  const zoomFactor = 4.0 / (VIEW_RADIUS * 2);
+
+  // Update info overlay
+  document.getElementById('info-center').textContent =
+    `${CENTER_RE} + ${CENTER_IM}i`;
+  document.getElementById('info-zoom').textContent =
+    `${zoomFactor.toFixed(0)}x (width = ${(VIEW_RADIUS * 2).toExponential(2)})`;
+  document.getElementById('info-iter').textContent = MAX_ITER;
+
+  // ============================================================
+  // Color Palette: Vibrant cosmic gradient
+  // Deep purple -> blue -> cyan -> green -> gold -> orange ->
+  // magenta -> deep purple (cyclic)
+  // ============================================================
+  const PALETTE_SIZE = 4096;
+  const paletteR = new Float32Array(PALETTE_SIZE);
+  const paletteG = new Float32Array(PALETTE_SIZE);
+  const paletteB = new Float32Array(PALETTE_SIZE);
+
+  // Define color stops: [position, R, G, B]
+  const stops = [
+    [0.00,   5,   2,  20],   // near-black purple
+    [0.04,  20,   5,  60],   // deep purple
+    [0.10,  50,  10, 120],   // purple
+    [0.16,  30,  30, 180],   // blue
+    [0.22,  10,  80, 200],   // ocean blue
+    [0.28,   5, 140, 200],   // cyan-blue
+    [0.34,   5, 190, 180],   // cyan
+    [0.40,  10, 200, 120],   // cyan-green
+    [0.46,  30, 200,  60],   // green
+    [0.52,  90, 210,  20],   // lime green
+    [0.58, 170, 210,  10],   // yellow-green
+    [0.64, 230, 200,  10],   // gold
+    [0.70, 250, 160,   5],   // orange
+    [0.76, 250, 100,  10],   // red-orange
+    [0.82, 230,  40,  30],   // red
+    [0.88, 200,  20,  80],   // crimson
+    [0.94, 140,  10, 120],   // magenta
+    [1.00,   5,   2,  20],   // back to near-black purple
+  ];
+
+  // Interpolate between stops to fill palette
+  for (let i = 0; i < PALETTE_SIZE; i++) {
+    const t = i / PALETTE_SIZE;
+
+    // Find which two stops we're between
+    let s0 = stops[0], s1 = stops[1];
+    for (let j = 1; j < stops.length; j++) {
+      if (stops[j][0] >= t) {
+        s0 = stops[j - 1];
+        s1 = stops[j];
+        break;
+      }
+    }
+
+    // Local interpolation factor with smoothstep for nicer blending
+    const range = s1[0] - s0[0];
+    let f = range > 0 ? (t - s0[0]) / range : 0;
+    // Smoothstep
+    f = f * f * (3 - 2 * f);
+
+    paletteR[i] = s0[1] + (s1[1] - s0[1]) * f;
+    paletteG[i] = s0[2] + (s1[2] - s0[2]) * f;
+    paletteB[i] = s0[3] + (s1[3] - s0[3]) * f;
+  }
+
+  // ============================================================
+  // Phase 1: Compute smooth iteration counts for every pixel
+  // ============================================================
+  const iterData = new Float64Array(W * H);
+  const exteriorValues = [];
+
+  const pixelScale = VIEW_RADIUS * 2 / W;
+
+  // Top-left corner of the view
+  const originRe = CENTER_RE - VIEW_RADIUS;
+  const originIm = CENTER_IM + VIEW_RADIUS;
+
+  for (let py = 0; py < H; py++) {
+    const ci = originIm - py * pixelScale;
+    for (let px = 0; px < W; px++) {
+      const cr = originRe + px * pixelScale;
+
+      let zr = 0, zi = 0;
+      let zr2 = 0, zi2 = 0;
+      let iter = 0;
+
+      while (zr2 + zi2 <= BAIL_OUT_SQ && iter < MAX_ITER) {
+        zi = 2 * zr * zi + ci;
+        zr = zr2 - zi2 + cr;
+        zr2 = zr * zr;
+        zi2 = zi * zi;
+        iter++;
+      }
+
+      const idx = py * W + px;
+
+      if (iter === MAX_ITER) {
+        iterData[idx] = -1;  // Interior point
+      } else {
+        // Smooth iteration count (continuous / fractional escape)
+        // This eliminates banding by computing fractional iterations
+        const logZn = 0.5 * Math.log(zr2 + zi2); // log(|z|)
+        const nu = Math.log(logZn / LOG2) / LOG2;
+        const smooth = iter + 1 - nu;
+        iterData[idx] = smooth;
+        exteriorValues.push(smooth);
+      }
+    }
+  }
+
+  // ============================================================
+  // Phase 2: Histogram equalization
+  // Maps iteration values to uniform color distribution so that
+  // areas with many similar iterations get more color resolution
+  // ============================================================
+
+  // Sort exterior values for percentile mapping
+  exteriorValues.sort((a, b) => a - b);
+  const N = exteriorValues.length;
+
+  // For efficiency, build a lookup table using binning
+  // Find min/max of exterior values
+  const minVal = exteriorValues[0];
+  const maxVal = exteriorValues[N - 1];
+  const valRange = maxVal - minVal;
+
+  // Create histogram bins for fast percentile lookup
+  const NUM_BINS = 8192;
+  const binPercentile = new Float32Array(NUM_BINS + 1);
+
+  // For each bin edge, binary search for its percentile
+  for (let b = 0; b <= NUM_BINS; b++) {
+    const val = minVal + (b / NUM_BINS) * valRange;
+    // Binary search
+    let lo = 0, hi = N;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (exteriorValues[mid] < val) lo = mid + 1;
+      else hi = mid;
+    }
+    binPercentile[b] = lo / N;
+  }
+
+  // Fast percentile lookup with linear interpolation between bins
+  function getPercentile(val) {
+    const t = (val - minVal) / valRange;
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    const bf = t * NUM_BINS;
+    const bi = bf | 0; // floor
+    const frac = bf - bi;
+    return binPercentile[bi] * (1 - frac) + binPercentile[bi + 1] * frac;
+  }
+
+  // ============================================================
+  // Phase 3: Render pixels to canvas
+  // ============================================================
+  const imageData = ctx.createImageData(W, H);
+  const pixels = imageData.data;
+
+  for (let py = 0; py < H; py++) {
+    for (let px = 0; px < W; px++) {
+      const idx = py * W + px;
+      const pixIdx = idx << 2; // * 4
+      const val = iterData[idx];
+
+      if (val < 0) {
+        // Interior: deep black with subtle warm-dark tint
+        pixels[pixIdx]     = 3;
+        pixels[pixIdx + 1] = 1;
+        pixels[pixIdx + 2] = 8;
+        pixels[pixIdx + 3] = 255;
+      } else {
+        // Map through histogram equalization then to palette
+        const pct = getPercentile(val);
+
+        // Apply a slight gamma curve to push more colors toward the
+        // interesting mid-range detail and deepen the near-boundary darks
+        const adjusted = Math.pow(pct, 0.85);
+
+        // Palette lookup with sub-index interpolation
+        const palFloat = adjusted * (PALETTE_SIZE - 1);
+        const pi = palFloat | 0;
+        const pf = palFloat - pi;
+        const ni = Math.min(pi + 1, PALETTE_SIZE - 1);
+
+        pixels[pixIdx]     = paletteR[pi] + (paletteR[ni] - paletteR[pi]) * pf;
+        pixels[pixIdx + 1] = paletteG[pi] + (paletteG[ni] - paletteG[pi]) * pf;
+        pixels[pixIdx + 2] = paletteB[pi] + (paletteB[ni] - paletteB[pi]) * pf;
+        pixels[pixIdx + 3] = 255;
+      }
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+})();
+</script>
+
+</body>
+</html>

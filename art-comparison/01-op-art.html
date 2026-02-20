@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>01 - Op Art / Victor Vasarely</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+
+  .artwork-frame {
+    background: #fafafa;
+    padding: 3px;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.9),
+      0 4px 40px rgba(0,0,0,0.5),
+      0 0 120px rgba(255,255,255,0.02);
+  }
+
+  .artwork-container {
+    position: relative;
+    width: 800px;
+    height: 800px;
+    overflow: hidden;
+  }
+
+  svg {
+    display: block;
+    width: 800px;
+    height: 800px;
+  }
+
+  .title {
+    color: #555;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 32px;
+    font-weight: 300;
+  }
+
+  /*
+   * Subtle CSS animation: a very slow, gentle contrast pulse.
+   * This creates an almost imperceptible "breathing" that makes
+   * the optical illusion feel alive, as if the sphere is slowly
+   * pulsing in and out of the surface. The effect is so subtle
+   * that viewers may not consciously notice the animation, but
+   * it contributes to a lingering sense of visual unease that
+   * is central to Op Art's perceptual effects.
+   */
+  @keyframes optical-breathe {
+    0%, 100% {
+      filter: contrast(1.00) brightness(1.00);
+    }
+    50% {
+      filter: contrast(1.06) brightness(1.01);
+    }
+  }
+
+  .artwork-container {
+    animation: optical-breathe 8s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+
+<div class="artwork-frame">
+<div class="artwork-container">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <rect width="800" height="800" fill="#ffffff"/>
+  <g id="art"></g>
+</svg>
+</div>
+</div>
+
+<div class="title">01 &mdash; Op Art / Victor Vasarely</div>
+
+<script>
+// =========================================================================
+//  VASARELY SPHERE DISTORTION - "VEGA" SERIES TRIBUTE
+// =========================================================================
+//
+//  Victor Vasarely (1906-1997) pioneered Op Art with works like "Vega-Nor"
+//  and "Vega-Tek", where regular grids are mathematically warped to create
+//  the illusion of three-dimensional forms emerging from flat surfaces.
+//
+//  ALGORITHM:
+//  1. Create a regular NxN checkerboard grid of vertices
+//  2. For each vertex within a circular region, compute the hemisphere
+//     height at that radial distance: h = sqrt(R^2 - d^2)
+//  3. Displace the vertex radially outward, proportional to h
+//  4. This stretches cells near center (sphere apex) and compresses
+//     cells near the sphere's silhouette edge
+//  5. The differential cell sizes create a powerful depth cue that the
+//     human visual system interprets as a 3D convex form
+//
+//  The checkerboard pattern is critical: alternating black/white maximizes
+//  local contrast, making the size gradient between adjacent cells as
+//  perceptible as possible. This is why Vasarely almost always used
+//  high-contrast binary patterns in his sphere distortion works.
+// =========================================================================
+
+(function() {
+  'use strict';
+
+  const target = document.getElementById('art');
+
+  // Canvas dimensions
+  const W = 800;
+  const H = 800;
+  const CX = W / 2;  // Center X
+  const CY = H / 2;  // Center Y
+
+  // -----------------------------------------------------------------------
+  // GRID PARAMETERS
+  // -----------------------------------------------------------------------
+  // 22 cells gives a good balance: enough resolution for smooth curvature,
+  // but large enough cells that the checkerboard pattern reads clearly.
+  // Vasarely typically used grids of 15-25 cells per axis.
+  // -----------------------------------------------------------------------
+  const CELLS = 22;
+  const CELL_W = W / CELLS;
+  const CELL_H = H / CELLS;
+
+  // -----------------------------------------------------------------------
+  // SPHERE PARAMETERS
+  // -----------------------------------------------------------------------
+  const SPHERE_RADIUS = 280;   // Radius of the distortion zone (px)
+  const BULGE = 0.52;          // Distortion intensity (0 = flat, 1 = extreme)
+  const CURVATURE = 0.85;      // Exponent controlling sphere profile shape
+                                // < 1 = broader bulge, > 1 = sharper peak
+
+  /**
+   * Spherical displacement function.
+   *
+   * Maps a 2D point (x, y) to its displaced position as if a hemisphere
+   * of radius SPHERE_RADIUS is pushing through the plane from behind.
+   *
+   * Points outside the sphere radius are returned unchanged.
+   * Points at the center receive maximum radial displacement.
+   * Points at the sphere edge receive zero displacement (smooth transition).
+   *
+   * @param {number} x - Original x coordinate
+   * @param {number} y - Original y coordinate
+   * @returns {number[]} Displaced [x, y] coordinates
+   */
+  function sphereDisplace(x, y) {
+    const dx = x - CX;
+    const dy = y - CY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Outside sphere influence or at exact center (no direction to displace)
+    if (dist >= SPHERE_RADIUS || dist < 0.001) {
+      return [x, y];
+    }
+
+    // Normalized radial distance (0 at center, 1 at sphere edge)
+    const t = dist / SPHERE_RADIUS;
+
+    // Hemisphere height function, normalized to [0, 1]
+    // h(t) = sqrt(1 - t^2), with adjustable curvature exponent
+    const h = Math.pow(Math.sqrt(1.0 - t * t), CURVATURE);
+
+    // The displacement pushes vertices radially outward.
+    // Magnitude = BULGE * h * dist
+    //   - Proportional to dist so center vertex stays put (dist=0 -> no move)
+    //   - Proportional to h so sphere edge transitions smoothly to undistorted grid
+    //   - BULGE scales the overall effect
+    const displaceAmount = BULGE * h;
+
+    // Unit radial direction
+    const ux = dx / dist;
+    const uy = dy / dist;
+
+    return [
+      x + ux * dist * displaceAmount,
+      y + uy * dist * displaceAmount
+    ];
+  }
+
+  // -----------------------------------------------------------------------
+  // PHASE 1: Compute displaced vertex grid
+  // -----------------------------------------------------------------------
+  // We need (CELLS+1) x (CELLS+1) vertices to define CELLS x CELLS quads.
+  // -----------------------------------------------------------------------
+  const vertices = new Array(CELLS + 1);
+  for (let row = 0; row <= CELLS; row++) {
+    vertices[row] = new Array(CELLS + 1);
+    for (let col = 0; col <= CELLS; col++) {
+      vertices[row][col] = sphereDisplace(col * CELL_W, row * CELL_H);
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // PHASE 2: Render checkerboard quads
+  // -----------------------------------------------------------------------
+  // Each cell is rendered as a <polygon> with its four displaced corners.
+  // Using stroke=fill with a thin stroke-width prevents sub-pixel gaps
+  // between adjacent polygons (anti-aliasing artifact mitigation).
+  // -----------------------------------------------------------------------
+  const parts = [];
+
+  for (let row = 0; row < CELLS; row++) {
+    for (let col = 0; col < CELLS; col++) {
+      const fill = (row + col) % 2 === 0 ? '#fff' : '#000';
+
+      const tl = vertices[row][col];
+      const tr = vertices[row][col + 1];
+      const br = vertices[row + 1][col + 1];
+      const bl = vertices[row + 1][col];
+
+      parts.push(
+        '<polygon points="',
+        tl[0].toFixed(2), ',', tl[1].toFixed(2), ' ',
+        tr[0].toFixed(2), ',', tr[1].toFixed(2), ' ',
+        br[0].toFixed(2), ',', br[1].toFixed(2), ' ',
+        bl[0].toFixed(2), ',', bl[1].toFixed(2),
+        '" fill="', fill, '" stroke="', fill, '" stroke-width="0.5" stroke-linejoin="round"/>'
+      );
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // PHASE 3: Grid line overlay
+  // -----------------------------------------------------------------------
+  // Thin black lines along every grid edge. These serve two purposes:
+  //   1. They define crisp cell boundaries (especially where white meets white
+  //      at displaced cell edges that were originally non-adjacent).
+  //   2. The curvature of these lines is itself a powerful depth cue:
+  //      straight lines that bend = surface curvature.
+  //
+  // We draw horizontal lines (connecting vertices across columns for each row)
+  // and vertical lines (connecting vertices across rows for each column).
+  // -----------------------------------------------------------------------
+
+  // Horizontal grid lines
+  for (let row = 0; row <= CELLS; row++) {
+    const segments = [];
+    for (let col = 0; col <= CELLS; col++) {
+      const v = vertices[row][col];
+      segments.push((col === 0 ? 'M' : 'L') + v[0].toFixed(2) + ',' + v[1].toFixed(2));
+    }
+    parts.push(
+      '<path d="', segments.join(''),
+      '" fill="none" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>'
+    );
+  }
+
+  // Vertical grid lines
+  for (let col = 0; col <= CELLS; col++) {
+    const segments = [];
+    for (let row = 0; row <= CELLS; row++) {
+      const v = vertices[row][col];
+      segments.push((row === 0 ? 'M' : 'L') + v[0].toFixed(2) + ',' + v[1].toFixed(2));
+    }
+    parts.push(
+      '<path d="', segments.join(''),
+      '" fill="none" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>'
+    );
+  }
+
+  // -----------------------------------------------------------------------
+  // PHASE 4: Highlight/shadow shading on the sphere
+  // -----------------------------------------------------------------------
+  // To enhance the 3D illusion, add a subtle radial gradient overlay that
+  // simulates light falling on the sphere from the upper-left. This is done
+  // with a semi-transparent radial gradient, offset toward upper-left.
+  // -----------------------------------------------------------------------
+  parts.push(
+    '<defs>',
+      '<radialGradient id="sphere-light" cx="38%" cy="38%" r="42%" fx="35%" fy="35%">',
+        '<stop offset="0%" stop-color="#fff" stop-opacity="0.08"/>',
+        '<stop offset="60%" stop-color="#fff" stop-opacity="0.02"/>',
+        '<stop offset="100%" stop-color="#000" stop-opacity="0.06"/>',
+      '</radialGradient>',
+    '</defs>',
+    '<circle cx="', CX, '" cy="', CY, '" r="', SPHERE_RADIUS * 1.15,
+    '" fill="url(#sphere-light)" />'
+  );
+
+  // -----------------------------------------------------------------------
+  // PHASE 5: Border
+  // -----------------------------------------------------------------------
+  parts.push(
+    '<rect x="0.5" y="0.5" width="799" height="799" fill="none" stroke="#000" stroke-width="1"/>'
+  );
+
+  // -----------------------------------------------------------------------
+  // Inject all SVG content at once
+  // -----------------------------------------------------------------------
+  target.innerHTML = parts.join('');
+
+})();
+</script>
+
+</body>
+</html>

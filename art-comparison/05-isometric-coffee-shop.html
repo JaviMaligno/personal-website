@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>05 - Isometric Coffee Shop</title>
+<style>
+  body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #2c2420;
+    font-family: 'Georgia', serif;
+  }
+  svg {
+    filter: drop-shadow(0 4px 20px rgba(0,0,0,0.3));
+  }
+  .title {
+    color: #e8d5c4;
+    font-size: 18px;
+    margin-top: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="700" viewBox="0 0 900 700">
+  <defs>
+    <!-- Warm light glow gradient -->
+    <radialGradient id="lightGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff5e0" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#ffe4b5" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#ffe4b5" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lightGlowSmall" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff5e0" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffe4b5" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Window sky gradient -->
+    <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a8d8ea"/>
+      <stop offset="100%" stop-color="#d4eaf7"/>
+    </linearGradient>
+    <!-- Floor shadow -->
+    <radialGradient id="floorShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="1" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <script type="text/javascript"><![CDATA[
+    // Isometric conversion helpers
+    // In true isometric: x-axis at 30deg right, y-axis at 30deg left, z straight up
+    // cos(30) = 0.866, sin(30) = 0.5
+    function isoX(x, y) { return 450 + (x - y) * 0.866; }
+    function isoY(x, y, z) { return 350 + (x + y) * 0.5 - z; }
+  ]]></script>
+
+  <!-- Background -->
+  <rect width="900" height="700" fill="#f5ece3"/>
+
+  <!-- ============ FLOOR ============ -->
+  <!-- Floor base - isometric diamond -->
+  <g id="floor">
+    <!-- Main floor area -->
+    <polygon points="450,520 130,335 450,150 770,335" fill="#e8d5c4"/>
+
+    <!-- Floor tile pattern - wooden planks going in one direction -->
+    <!-- Row lines across the floor -->
+    <g stroke="#d4c0ad" stroke-width="0.8" opacity="0.5">
+      <!-- Horizontal plank lines (isometric) -->
+      <line x1="170" y1="335" x2="450" y2="520" transform="translate(-30,-18.5)"/>
+      <line x1="210" y1="335" x2="450" y2="520" transform="translate(-30,-18.5)"/>
+      <line x1="250" y1="335" x2="490" y2="520" transform="translate(-70,-18.5)"/>
+      <line x1="290" y1="335" x2="530" y2="520" transform="translate(-110,-18.5)"/>
+
+      <!-- Parallel plank lines -->
+      <line x1="193" y1="316" x2="513" y2="501"/>
+      <line x1="237" y1="290" x2="557" y2="475"/>
+      <line x1="280" y1="265" x2="600" y2="450"/>
+      <line x1="323" y1="240" x2="643" y2="425"/>
+      <line x1="366" y1="215" x2="686" y2="400"/>
+      <line x1="410" y1="190" x2="730" y2="375"/>
+      <line x1="453" y1="168" x2="770" y2="335"/>
+
+      <!-- Cross planks -->
+      <line x1="450" y1="520" x2="770" y2="335"/>
+      <line x1="407" y1="495" x2="727" y2="310"/>
+      <line x1="364" y1="470" x2="684" y2="285"/>
+      <line x1="321" y1="445" x2="641" y2="260"/>
+      <line x1="278" y1="420" x2="598" y2="235"/>
+      <line x1="235" y1="395" x2="555" y2="210"/>
+      <line x1="192" y1="370" x2="512" y2="185"/>
+    </g>
+  </g>
+
+  <!-- ============ BACK WALLS ============ -->
+  <!-- Left wall (back-left) -->
+  <polygon points="130,335 130,85 450,0 450,150" fill="#f0e0d0"/>
+  <!-- Left wall shadow/shade for depth -->
+  <polygon points="130,335 130,85 450,0 450,150" fill="#000" opacity="0.03"/>
+
+  <!-- Right wall (back-right) -->
+  <polygon points="450,0 770,85 770,335 450,150" fill="#ecdcc8"/>
+
+  <!-- Wall trim line at floor -->
+  <line x1="130" y1="335" x2="450" y2="150" stroke="#d4b896" stroke-width="2"/>
+  <line x1="450" y1="150" x2="770" y2="335" stroke="#c9ad8a" stroke-width="2"/>
+
+  <!-- Corner edge line -->
+  <line x1="450" y1="0" x2="450" y2="150" stroke="#c9ad8a" stroke-width="1.5"/>
+
+  <!-- ============ WINDOW (on right wall) ============ -->
+  <g id="window">
+    <!-- Window frame outer -->
+    <polygon points="560,45 690,90 690,210 560,165" fill="#8b7355" stroke="#735e45" stroke-width="2"/>
+    <!-- Window glass / sky view -->
+    <polygon points="568,55 682,96 682,200 568,159" fill="url(#skyGradient)"/>
+    <!-- Window cross bars -->
+    <line x1="625" y1="75" x2="625" y2="180" stroke="#8b7355" stroke-width="2.5"/>
+    <line x1="568" y1="110" x2="682" y2="150" stroke="#8b7355" stroke-width="2.5"/>
+    <!-- Simple tree/bush outside -->
+    <ellipse cx="640" cy="170" rx="20" ry="15" fill="#9ab89a" opacity="0.6"/>
+    <ellipse cx="660" cy="165" rx="15" ry="12" fill="#82a882" opacity="0.5"/>
+    <!-- Simple cloud -->
+    <ellipse cx="610" cy="70" rx="18" ry="8" fill="#fff" opacity="0.4"/>
+    <ellipse cx="625" cy="68" rx="14" ry="7" fill="#fff" opacity="0.3"/>
+    <!-- Window sill -->
+    <polygon points="555,167 695,212 700,218 550,173" fill="#8b7355"/>
+  </g>
+
+  <!-- ============ SHELVES (on left wall) ============ -->
+  <g id="shelves">
+    <!-- Shelf 1 (upper) -->
+    <g>
+      <!-- Shelf board - top face -->
+      <polygon points="175,120 310,80 320,84 185,124" fill="#b5956a"/>
+      <!-- Shelf board - front face -->
+      <polygon points="175,120 185,124 185,130 175,126" fill="#9a7d55"/>
+      <polygon points="185,124 320,84 320,90 185,130" fill="#a68860"/>
+      <!-- Shelf bracket left -->
+      <polygon points="195,124 198,123 198,142 195,143" fill="#8b7355"/>
+      <!-- Shelf bracket right -->
+      <polygon points="300,88 303,87 303,106 300,107" fill="#8b7355"/>
+
+      <!-- Items on shelf 1: coffee jars -->
+      <!-- Jar 1 -->
+      <rect x="200" y="103" width="14" height="17" rx="2" fill="#d4956a" transform="skewY(-16.5) translate(0,12)"/>
+      <rect x="202" y="101" width="10" height="4" rx="1" fill="#c4855a" transform="skewY(-16.5) translate(0,12)"/>
+      <rect x="203" y="107" width="8" height="8" rx="1" fill="#f5e6d0" transform="skewY(-16.5) translate(0,12)"/>
+
+      <!-- Jar 2 -->
+      <rect x="225" y="96" width="14" height="17" rx="2" fill="#a8c4a0" transform="skewY(-16.5) translate(0,12)"/>
+      <rect x="227" y="94" width="10" height="4" rx="1" fill="#98b490" transform="skewY(-16.5) translate(0,12)"/>
+
+      <!-- Jar 3 -->
+      <rect x="250" y="89" width="12" height="15" rx="2" fill="#e8b4a0" transform="skewY(-16.5) translate(0,12)"/>
+      <rect x="252" y="87" width="8" height="4" rx="1" fill="#d8a490" transform="skewY(-16.5) translate(0,12)"/>
+
+      <!-- Coffee cup -->
+      <rect x="275" y="79" width="10" height="10" rx="2" fill="#f5f0ea" transform="skewY(-16.5) translate(0,12)"/>
+      <rect x="283" y="82" width="4" height="6" rx="2" fill="none" stroke="#f5f0ea" stroke-width="1.5" transform="skewY(-16.5) translate(0,12)"/>
+    </g>
+
+    <!-- Shelf 2 (lower) -->
+    <g>
+      <!-- Shelf board - top face -->
+      <polygon points="175,185 310,145 320,149 185,189" fill="#b5956a"/>
+      <!-- Shelf board - front face -->
+      <polygon points="175,185 185,189 185,195 175,191" fill="#9a7d55"/>
+      <polygon points="185,189 320,149 320,155 185,195" fill="#a68860"/>
+      <!-- Brackets -->
+      <polygon points="195,189 198,188 198,207 195,208" fill="#8b7355"/>
+      <polygon points="300,153 303,152 303,171 300,172" fill="#8b7355"/>
+
+      <!-- Items on shelf 2: cups row -->
+      <!-- Cup 1 -->
+      <ellipse cx="210" cy="172" rx="6" ry="3" fill="#f0e8e0" transform="skewY(-16.5) translate(0,12)"/>
+      <rect x="204" y="172" width="12" height="10" rx="1" fill="#f0e8e0" transform="skewY(-16.5) translate(0,12)"/>
+
+      <!-- Cup 2 -->
+      <ellipse cx="230" cy="166" rx="6" ry="3" fill="#e8c4b0" transform="skewY(-16.5) translate(0,12)"/>
+      <rect x="224" y="166" width="12" height="10" rx="1" fill="#e8c4b0" transform="skewY(-16.5) translate(0,12)"/>
+
+      <!-- Cup 3 -->
+      <ellipse cx="250" cy="159" rx="6" ry="3" fill="#c4d8c0" transform="skewY(-16.5) translate(0,12)"/>
+      <rect x="244" y="159" width="12" height="10" rx="1" fill="#c4d8c0" transform="skewY(-16.5) translate(0,12)"/>
+
+      <!-- Small plant/vase -->
+      <rect x="270" y="147" width="10" height="14" rx="2" fill="#d4956a" transform="skewY(-16.5) translate(0,12)"/>
+      <ellipse cx="275" cy="145" rx="8" ry="6" fill="#7daa7d" transform="skewY(-16.5) translate(0,12)"/>
+    </g>
+  </g>
+
+  <!-- ============ MENU BOARD (on left wall, upper area) ============ -->
+  <g id="menuBoard">
+    <!-- Board background -->
+    <polygon points="340,50 430,28 430,110 340,132" fill="#3d3530"/>
+    <!-- Board frame -->
+    <polygon points="340,50 430,28 430,110 340,132" fill="none" stroke="#5a4a3a" stroke-width="3"/>
+    <!-- Menu text lines (simplified) -->
+    <line x1="352" y1="60" x2="418" y2="42" stroke="#f5e6d0" stroke-width="2" opacity="0.8"/>
+    <line x1="352" y1="72" x2="405" y2="57" stroke="#e8c4a0" stroke-width="1.5" opacity="0.6"/>
+    <line x1="352" y1="82" x2="410" y2="66" stroke="#e8c4a0" stroke-width="1.5" opacity="0.6"/>
+    <line x1="352" y1="95" x2="400" y2="81" stroke="#e8c4a0" stroke-width="1.5" opacity="0.6"/>
+    <line x1="352" y1="105" x2="415" y2="88" stroke="#e8c4a0" stroke-width="1.5" opacity="0.6"/>
+    <line x1="352" y1="118" x2="395" y2="105" stroke="#d4956a" stroke-width="2" opacity="0.7"/>
+    <!-- Small coffee cup icon -->
+    <circle cx="423" cy="100" r="4" fill="none" stroke="#f5e6d0" stroke-width="1" opacity="0.5"/>
+  </g>
+
+  <!-- ============ COUNTER / BAR ============ -->
+  <g id="counter" filter="url(#softShadow)">
+    <!-- Counter top surface (isometric rectangle) -->
+    <polygon points="180,340 350,245 500,330 330,425" fill="#b5956a"/>
+    <!-- Counter front face (right side) -->
+    <polygon points="330,425 500,330 500,380 330,475" fill="#8b7355"/>
+    <!-- Counter left face -->
+    <polygon points="180,340 330,425 330,475 180,390" fill="#9a7d55"/>
+
+    <!-- Counter top edge highlight -->
+    <polygon points="180,340 350,245 500,330 330,425" fill="#c4a47a" opacity="0.3"/>
+
+    <!-- Counter panel detail (front face) -->
+    <polygon points="345,430 485,338 485,365 345,457" fill="#7d6545" opacity="0.3"/>
+
+    <!-- Counter panel detail (left face) -->
+    <polygon points="195,348 315,418 315,458 195,388" fill="#7d6545" opacity="0.2"/>
+
+    <!-- Shadow on floor from counter -->
+    <polygon points="330,475 500,380 520,395 350,490" fill="#000" opacity="0.08"/>
+    <polygon points="180,390 330,475 350,490 200,405" fill="#000" opacity="0.06"/>
+  </g>
+
+  <!-- ============ ESPRESSO MACHINE (on counter) ============ -->
+  <g id="espressoMachine">
+    <!-- Machine body - front -->
+    <polygon points="280,310 320,287 320,250 280,273" fill="#e07060"/>
+    <!-- Machine body - top -->
+    <polygon points="280,273 320,250 355,270 315,293" fill="#e88878"/>
+    <!-- Machine body - right side -->
+    <polygon points="320,250 355,270 355,307 320,287" fill="#c86050"/>
+
+    <!-- Machine top piece -->
+    <polygon points="290,270 315,257 340,268 315,281" fill="#c85848"/>
+    <polygon points="315,281 340,268 340,258 315,271" fill="#b04838"/>
+    <polygon points="290,270 315,281 315,271 290,260" fill="#c05040"/>
+
+    <!-- Steam wand -->
+    <line x1="335" y1="280" x2="345" y2="295" stroke="#c0c0c0" stroke-width="2"/>
+    <circle cx="345" cy="297" r="2" fill="#d0d0d0"/>
+
+    <!-- Portafilter -->
+    <line x1="300" y1="295" x2="290" y2="305" stroke="#a0a0a0" stroke-width="2.5"/>
+    <ellipse cx="288" cy="307" rx="5" ry="3" fill="#b0b0b0"/>
+
+    <!-- Gauge circle -->
+    <circle cx="300" cy="268" r="6" fill="#f5e6d0" stroke="#c85848" stroke-width="1"/>
+    <line x1="300" y1="268" x2="303" y2="265" stroke="#c85848" stroke-width="1"/>
+
+    <!-- Drip tray -->
+    <polygon points="285,308 325,288 340,296 300,316" fill="#a0a0a0"/>
+
+    <!-- Cup under machine -->
+    <polygon points="302,304 312,299 318,303 308,308" fill="#f5f0ea"/>
+    <polygon points="302,304 308,308 308,313 302,309" fill="#e8e0d8"/>
+    <polygon points="308,308 318,303 318,308 308,313" fill="#ddd5cd"/>
+  </g>
+
+  <!-- ============ TABLE 1 (front-right area) ============ -->
+  <g id="table1" filter="url(#softShadow)">
+    <!-- Table shadow on floor -->
+    <ellipse cx="600" cy="440" rx="45" ry="25" fill="#000" opacity="0.08"/>
+
+    <!-- Table legs -->
+    <polygon points="572,395 576,393 576,430 572,432" fill="#9a7d55"/>
+    <polygon points="618,415 622,413 622,450 618,452" fill="#8b7355"/>
+    <polygon points="580,420 584,418 584,455 580,457" fill="#8b7355"/>
+    <polygon points="610,400 614,398 614,435 610,437" fill="#9a7d55"/>
+
+    <!-- Table top surface -->
+    <polygon points="560,395 610,368 660,395 610,422" fill="#c4a47a"/>
+    <!-- Table top front-right edge -->
+    <polygon points="610,422 660,395 660,400 610,427" fill="#a68860"/>
+    <!-- Table top front-left edge -->
+    <polygon points="560,395 610,422 610,427 560,400" fill="#b5956a"/>
+
+    <!-- Coffee cup on table 1 -->
+    <g>
+      <!-- Saucer -->
+      <ellipse cx="600" cy="388" rx="12" ry="7" fill="#f0e8e0"/>
+      <!-- Cup body -->
+      <ellipse cx="600" cy="383" rx="8" ry="5" fill="#f5f0ea"/>
+      <rect x="593" y="376" width="14" height="7" rx="1" fill="#f5f0ea"/>
+      <ellipse cx="600" cy="376" rx="7" ry="4" fill="#e8ddd5"/>
+      <!-- Coffee inside -->
+      <ellipse cx="600" cy="377" rx="5.5" ry="3" fill="#6b4226"/>
+      <!-- Handle -->
+      <ellipse cx="609" cy="380" rx="3" ry="4" fill="none" stroke="#f5f0ea" stroke-width="1.5"/>
+    </g>
+  </g>
+
+  <!-- ============ CHAIR 1a (at table 1, left) ============ -->
+  <g id="chair1a">
+    <!-- Chair legs -->
+    <line x1="545" y1="402" x2="545" y2="425" stroke="#9a7d55" stroke-width="2.5"/>
+    <line x1="560" y1="410" x2="560" y2="433" stroke="#8b7355" stroke-width="2.5"/>
+    <line x1="540" y1="413" x2="540" y2="436" stroke="#8b7355" stroke-width="2.5"/>
+    <line x1="555" y1="420" x2="555" y2="443" stroke="#9a7d55" stroke-width="2.5"/>
+    <!-- Seat -->
+    <polygon points="535,405 555,393 570,403 550,415" fill="#e8c4a0"/>
+    <!-- Backrest -->
+    <polygon points="535,405 555,393 555,378 535,390" fill="#ddb490"/>
+    <polygon points="535,390 555,378 555,382 535,394" fill="#c4a080" opacity="0.5"/>
+  </g>
+
+  <!-- ============ CHAIR 1b (at table 1, right) ============ -->
+  <g id="chair1b">
+    <!-- Chair legs -->
+    <line x1="655" y1="395" x2="655" y2="418" stroke="#9a7d55" stroke-width="2.5"/>
+    <line x1="670" y1="403" x2="670" y2="426" stroke="#8b7355" stroke-width="2.5"/>
+    <line x1="650" y1="406" x2="650" y2="429" stroke="#8b7355" stroke-width="2.5"/>
+    <line x1="665" y1="413" x2="665" y2="436" stroke="#9a7d55" stroke-width="2.5"/>
+    <!-- Seat -->
+    <polygon points="645,398 665,386 680,396 660,408" fill="#e8c4a0"/>
+    <!-- Backrest -->
+    <polygon points="665,386 680,396 680,381 665,371" fill="#ddb490"/>
+    <polygon points="665,371 680,381 680,385 665,375" fill="#c4a080" opacity="0.5"/>
+  </g>
+
+  <!-- ============ TABLE 2 (back-right area) ============ -->
+  <g id="table2" filter="url(#softShadow)">
+    <!-- Table shadow -->
+    <ellipse cx="670" cy="330" rx="35" ry="20" fill="#000" opacity="0.08"/>
+
+    <!-- Table leg (center pedestal style) -->
+    <polygon points="665,310 670,307 670,340 665,343" fill="#8b7355"/>
+    <polygon points="655,340 680,325 682,327 657,342" fill="#7d6545"/>
+    <polygon points="655,340 657,342 670,348 668,346" fill="#8b7355"/>
+
+    <!-- Table top - round approximated as isometric diamond -->
+    <ellipse cx="668" cy="300" rx="35" ry="20" fill="#c4a47a"/>
+    <ellipse cx="668" cy="298" rx="35" ry="20" fill="#d4b48a"/>
+
+    <!-- Small pastry plate on table -->
+    <ellipse cx="675" cy="294" rx="8" ry="5" fill="#f0e8e0"/>
+    <ellipse cx="675" cy="293" rx="5" ry="3" fill="#e8b090"/>
+  </g>
+
+  <!-- ============ CHAIR 2 (at table 2) ============ -->
+  <g id="chair2">
+    <line x1="635" y1="300" x2="635" y2="320" stroke="#9a7d55" stroke-width="2"/>
+    <line x1="648" y1="307" x2="648" y2="327" stroke="#8b7355" stroke-width="2"/>
+    <line x1="630" y1="310" x2="630" y2="330" stroke="#8b7355" stroke-width="2"/>
+    <line x1="643" y1="316" x2="643" y2="336" stroke="#9a7d55" stroke-width="2"/>
+    <polygon points="625,302 643,291 656,300 638,311" fill="#d4b8a0"/>
+    <polygon points="625,302 643,291 643,278 625,289" fill="#c4a890"/>
+  </g>
+
+  <!-- ============ TABLE 3 (left area, small) ============ -->
+  <g id="table3" filter="url(#softShadow)">
+    <ellipse cx="380" cy="475" rx="30" ry="17" fill="#000" opacity="0.06"/>
+
+    <!-- Pedestal -->
+    <polygon points="375,455 380,452 380,478 375,481" fill="#8b7355"/>
+    <polygon points="367,478 387,467 389,469 369,480" fill="#7d6545"/>
+
+    <!-- Table top -->
+    <ellipse cx="378" cy="446" rx="30" ry="17" fill="#c4a47a"/>
+    <ellipse cx="378" cy="444" rx="30" ry="17" fill="#d4b48a"/>
+
+    <!-- Book on table -->
+    <polygon points="370,440 385,432 395,438 380,446" fill="#e07060"/>
+    <polygon points="370,440 380,446 380,449 370,443" fill="#c86050"/>
+  </g>
+
+  <!-- ============ CHAIR 3 (at table 3) ============ -->
+  <g id="chair3">
+    <line x1="410" y1="448" x2="410" y2="468" stroke="#9a7d55" stroke-width="2"/>
+    <line x1="423" y1="455" x2="423" y2="475" stroke="#8b7355" stroke-width="2"/>
+    <line x1="405" y1="458" x2="405" y2="478" stroke="#8b7355" stroke-width="2"/>
+    <line x1="418" y1="464" x2="418" y2="484" stroke="#9a7d55" stroke-width="2"/>
+    <polygon points="400,450 418,439 433,448 415,459" fill="#c4d8c0"/>
+    <polygon points="418,439 433,448 433,435 418,426" fill="#a8c4a0"/>
+  </g>
+
+  <!-- ============ POTTED PLANT (near counter) ============ -->
+  <g id="pottedPlant" filter="url(#softShadow)">
+    <!-- Shadow -->
+    <ellipse cx="215" cy="440" rx="18" ry="10" fill="#000" opacity="0.08"/>
+
+    <!-- Pot -->
+    <polygon points="200,410 215,403 230,410 225,435 205,435" fill="#d4956a"/>
+    <polygon points="200,410 215,403 230,410" fill="#e0a578"/>
+    <polygon points="198,408 232,408 228,413 202,413" fill="#c4855a"/>
+
+    <!-- Soil -->
+    <ellipse cx="215" cy="410" rx="13" ry="5" fill="#6b4a30"/>
+
+    <!-- Plant stems and leaves -->
+    <line x1="215" y1="410" x2="215" y2="380" stroke="#5a8a5a" stroke-width="2"/>
+    <line x1="215" y1="395" x2="200" y2="378" stroke="#5a8a5a" stroke-width="1.5"/>
+    <line x1="215" y1="390" x2="230" y2="372" stroke="#5a8a5a" stroke-width="1.5"/>
+    <line x1="215" y1="398" x2="225" y2="385" stroke="#5a8a5a" stroke-width="1.5"/>
+
+    <!-- Leaves -->
+    <ellipse cx="215" cy="376" rx="8" ry="12" fill="#7daa7d" transform="rotate(-5, 215, 376)"/>
+    <ellipse cx="197" cy="374" rx="7" ry="10" fill="#8dba8d" transform="rotate(25, 197, 374)"/>
+    <ellipse cx="233" cy="368" rx="7" ry="10" fill="#6d9a6d" transform="rotate(-30, 233, 368)"/>
+    <ellipse cx="225" cy="382" rx="6" ry="9" fill="#7daa7d" transform="rotate(-15, 225, 382)"/>
+    <ellipse cx="207" cy="385" rx="5" ry="8" fill="#8dba8d" transform="rotate(20, 207, 385)"/>
+    <ellipse cx="220" cy="370" rx="6" ry="10" fill="#6d9a6d" transform="rotate(-10, 220, 370)"/>
+  </g>
+
+  <!-- ============ PENDANT LIGHTS ============ -->
+  <!-- Light 1 (over counter area) -->
+  <g id="light1">
+    <!-- Cord -->
+    <line x1="320" y1="0" x2="320" y2="175" stroke="#5a4a3a" stroke-width="1.5"/>
+    <!-- Lamp shade - cone shape -->
+    <polygon points="305,175 335,175 325,190 310,190" fill="#e8c4a0"/>
+    <polygon points="305,175 335,175 320,170" fill="#f0d4b0"/>
+    <!-- Bulb -->
+    <circle cx="318" cy="188" r="4" fill="#fff5e0"/>
+    <!-- Glow effect -->
+    <circle cx="318" cy="200" r="40" fill="url(#lightGlow)"/>
+  </g>
+
+  <!-- Light 2 (over tables area) -->
+  <g id="light2">
+    <line x1="570" y1="15" x2="570" y2="185" stroke="#5a4a3a" stroke-width="1.5"/>
+    <polygon points="555,185 585,185 575,200 560,200" fill="#e8c4a0"/>
+    <polygon points="555,185 585,185 570,180" fill="#f0d4b0"/>
+    <circle cx="568" cy="198" r="4" fill="#fff5e0"/>
+    <circle cx="568" cy="210" r="45" fill="url(#lightGlow)"/>
+  </g>
+
+  <!-- Light 3 (ambient, back area) -->
+  <g id="light3">
+    <line x1="450" y1="0" x2="450" y2="80" stroke="#5a4a3a" stroke-width="1.5"/>
+    <polygon points="438,80 462,80 455,92 443,92" fill="#e8c4a0"/>
+    <polygon points="438,80 462,80 450,76" fill="#f0d4b0"/>
+    <circle cx="449" cy="90" r="3" fill="#fff5e0"/>
+    <circle cx="449" cy="98" r="30" fill="url(#lightGlowSmall)"/>
+  </g>
+
+  <!-- ============ ADDITIONAL DETAILS ============ -->
+
+  <!-- Items on counter top -->
+  <!-- Cash register / POS -->
+  <g id="register">
+    <polygon points="370,280 395,266 415,278 390,292" fill="#3d3530"/>
+    <polygon points="370,280 390,292 390,300 370,288" fill="#2d2520"/>
+    <polygon points="390,292 415,278 415,286 390,300" fill="#352d28"/>
+    <!-- Screen -->
+    <polygon points="375,278 392,268 407,276 390,286" fill="#a8d8ea" opacity="0.7"/>
+  </g>
+
+  <!-- Cake stand on counter -->
+  <g id="cakeStand">
+    <!-- Base -->
+    <ellipse cx="430" cy="298" rx="12" ry="7" fill="#d0d0d0"/>
+    <!-- Pedestal -->
+    <rect x="427" y="285" width="6" height="13" fill="#c0c0c0"/>
+    <!-- Plate -->
+    <ellipse cx="430" cy="285" rx="15" ry="9" fill="#e0e0e0"/>
+    <!-- Cake/pastry -->
+    <ellipse cx="430" cy="282" rx="10" ry="6" fill="#e8b090"/>
+    <ellipse cx="430" cy="279" rx="10" ry="6" fill="#f0c8a8"/>
+    <!-- Dome lid -->
+    <ellipse cx="430" cy="285" rx="16" ry="10" fill="#e8e8e8" opacity="0.25" stroke="#d0d0d0" stroke-width="0.5"/>
+    <path d="M414,285 Q430,258 446,285" fill="none" stroke="#d0d0d0" stroke-width="0.8" opacity="0.4"/>
+  </g>
+
+  <!-- Stack of cups near espresso machine -->
+  <g id="cupStack">
+    <ellipse cx="350" cy="258" rx="6" ry="3.5" fill="#f0e8e0"/>
+    <rect x="344" y="258" width="12" height="5" fill="#f0e8e0"/>
+    <ellipse cx="350" cy="255" rx="6" ry="3.5" fill="#e8e0d8"/>
+    <rect x="344" y="255" width="12" height="3" fill="#e8e0d8"/>
+    <ellipse cx="350" cy="253" rx="6" ry="3.5" fill="#f0e8e0"/>
+  </g>
+
+  <!-- Warm ambient overlay for coziness -->
+  <rect width="900" height="700" fill="#ffe8c0" opacity="0.04"/>
+
+  <!-- Subtle vignette effect -->
+  <radialGradient id="vignette" cx="50%" cy="45%" r="55%">
+    <stop offset="70%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000" stop-opacity="0.12"/>
+  </radialGradient>
+  <rect width="900" height="700" fill="url(#vignette)"/>
+</svg>
+
+<div class="title">05 - Isometric Coffee Shop</div>
+
+</body>
+</html>

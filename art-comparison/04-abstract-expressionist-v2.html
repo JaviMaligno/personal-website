@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>04 - Abstract Expressionist (v2)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+  }
+  canvas {
+    border: 2px solid #333;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .title {
+    color: #888;
+    font-size: 13px;
+    margin-top: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas" width="900" height="700"></canvas>
+<div class="title">04 - Abstract Expressionist (v2)</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 900;
+  const H = 700;
+
+  // --- Seeded PRNG (Mulberry32) for reproducibility ---
+  function mulberry32(seed) {
+    return function() {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  const rand = mulberry32(42);
+
+  // Utility: random in range
+  function rr(min, max) { return min + rand() * (max - min); }
+  function ri(min, max) { return Math.floor(rr(min, max + 1)); }
+
+  // Gaussian-ish random (sum of 3 uniform randoms)
+  function gaussRand() {
+    return (rand() + rand() + rand()) / 3;
+  }
+
+  // --- Color palette (richer, more saturated inspired by references) ---
+  const VIVID_BLUE = { r: 30, g: 90, b: 210 };
+  const DEEP_BLUE = { r: 20, g: 40, b: 140 };
+  const DARK_NAVY = { r: 10, g: 15, b: 55 };
+  const ULTRAMARINE = { r: 25, g: 25, b: 160 };
+  const CERULEAN = { r: 50, g: 120, b: 220 };
+  const GOLD = { r: 255, g: 190, b: 30 };
+  const BRIGHT_YELLOW = { r: 255, g: 210, b: 40 };
+  const AMBER = { r: 255, g: 150, b: 0 };
+  const METALLIC_GOLD = { r: 210, g: 175, b: 70 };
+  const BURNT_ORANGE = { r: 210, g: 105, b: 30 };
+  const OFF_WHITE = { r: 248, g: 244, b: 235 };
+  const CREAM = { r: 255, g: 253, b: 242 };
+  const RAW_CANVAS = { r: 235, g: 225, b: 210 };
+  const RAW_UMBER = { r: 90, g: 60, b: 30 };
+  const BLACK = { r: 8, g: 5, b: 3 };
+  const CHARCOAL = { r: 30, g: 25, b: 20 };
+
+  function colorStr(c, a) {
+    return `rgba(${c.r},${c.g},${c.b},${a !== undefined ? a : 1})`;
+  }
+
+  function lerpColor(c1, c2, t) {
+    t = Math.max(0, Math.min(1, t));
+    return {
+      r: Math.round(c1.r + (c2.r - c1.r) * t),
+      g: Math.round(c1.g + (c2.g - c1.g) * t),
+      b: Math.round(c1.b + (c2.b - c1.b) * t)
+    };
+  }
+
+  // =============================================
+  // IMPROVEMENT 1: Canvas texture (grain/weave)
+  // =============================================
+  function applyCanvasTexture() {
+    const imageData = ctx.getImageData(0, 0, W, H);
+    const data = imageData.data;
+
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const idx = (y * W + x) * 4;
+
+        // Woven canvas pattern: horizontal and vertical threads
+        const hThread = Math.sin(x * 1.8) * 0.5 + 0.5;
+        const vThread = Math.sin(y * 1.8) * 0.5 + 0.5;
+        const weave = (hThread * 0.5 + vThread * 0.5);
+
+        // Fine grain noise
+        const noise = (rand() - 0.5) * 18;
+
+        // Combine: weave pattern + noise
+        const textureMod = (weave - 0.5) * 8 + noise;
+
+        data[idx]     = Math.max(0, Math.min(255, data[idx] + textureMod));
+        data[idx + 1] = Math.max(0, Math.min(255, data[idx + 1] + textureMod));
+        data[idx + 2] = Math.max(0, Math.min(255, data[idx + 2] + textureMod));
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  // =============================================
+  // IMPROVEMENT 2 & 3: Enhanced brush with paint load
+  // =============================================
+
+  // Bezier evaluation
+  function bezierPoint(t, p0, p1, p2, p3) {
+    const it = 1 - t;
+    return it*it*it*p0 + 3*it*it*t*p1 + 3*it*t*t*p2 + t*t*t*p3;
+  }
+
+  // Draw a heavily textured brush stroke with paint-load simulation
+  function brushStroke(x0, y0, x1, y1, options) {
+    const {
+      color,
+      width = 40,
+      opacity = 0.7,
+      bristleCount = 14,
+      curvature = 0.3,
+      paintLoad = 1.0,      // 0-1: how loaded the brush is
+      pressureStart = 0.5,
+      pressureEnd = 0.1,
+      pressureMid = 1.0,
+      roughness = 0.5,
+      dryBrush = false,
+      widthVariation = 0.6  // how much width varies along the stroke
+    } = options;
+
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 2) return;
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    // Control points with curvature
+    const curveMag = len * curvature;
+    const cp1x = x0 + dx * 0.33 + nx * curveMag * rr(-1, 1);
+    const cp1y = y0 + dy * 0.33 + ny * curveMag * rr(-1, 1);
+    const cp2x = x0 + dx * 0.66 + nx * curveMag * rr(-1, 1);
+    const cp2y = y0 + dy * 0.66 + ny * curveMag * rr(-1, 1);
+
+    const steps = Math.max(40, Math.floor(len / 1.5));
+
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    for (let b = 0; b < bristleCount; b++) {
+      const bristlePosNorm = b / (bristleCount - 1) - 0.5; // -0.5 to 0.5
+      const bristleOffset = bristlePosNorm * width;
+      const bristleWander = rr(-roughness * 4, roughness * 4);
+      const bristleBaseOpacity = opacity * rr(0.3, 1.0);
+      const bristleBaseWidth = rr(0.8, Math.max(1.5, width / bristleCount * 2));
+
+      // Each bristle has its own "paint amount" that depletes
+      let bristlePaint = paintLoad * rr(0.6, 1.0);
+
+      const bx0 = x0 + nx * (bristleOffset + bristleWander);
+      const by0 = y0 + ny * (bristleOffset + bristleWander);
+      const bx1 = x1 + nx * (bristleOffset + rr(-roughness * 6, roughness * 6));
+      const by1 = y1 + ny * (bristleOffset + rr(-roughness * 6, roughness * 6));
+      const bcp1x = cp1x + nx * bristleOffset + rr(-roughness * 5, roughness * 5);
+      const bcp1y = cp1y + ny * bristleOffset + rr(-roughness * 5, roughness * 5);
+      const bcp2x = cp2x + nx * bristleOffset + rr(-roughness * 5, roughness * 5);
+      const bcp2y = cp2y + ny * bristleOffset + rr(-roughness * 5, roughness * 5);
+
+      let prevX = bx0, prevY = by0;
+
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+
+        const px = bezierPoint(t, bx0, bcp1x, bcp2x, bx1);
+        const py = bezierPoint(t, by0, bcp1y, bcp2y, by1);
+
+        // Width variation along stroke (DRAMATIC changes)
+        let widthMult = 1.0;
+        // Swell in the middle, taper at ends
+        if (t < 0.15) {
+          widthMult = pressureStart + (pressureMid - pressureStart) * (t / 0.15);
+        } else if (t > 0.75) {
+          widthMult = pressureMid + (pressureEnd - pressureMid) * ((t - 0.75) / 0.25);
+        } else {
+          // Add organic variation in the middle
+          widthMult = pressureMid + Math.sin(t * 12 + b) * widthVariation * 0.3;
+        }
+
+        // Paint load depletion: thick/wet at start, dry/broken at end
+        bristlePaint -= (1 / steps) * rr(0.8, 1.5);
+        const paintAmount = Math.max(0, bristlePaint);
+
+        // Dry brush: skip segments when paint is low
+        if (paintAmount < 0.3 && rand() < (0.3 - paintAmount) * 2) {
+          prevX = px; prevY = py;
+          continue;
+        }
+        if (dryBrush && rand() < 0.25) {
+          prevX = px; prevY = py;
+          continue;
+        }
+
+        // Opacity modulated by paint load
+        const segOpacity = bristleBaseOpacity * widthMult * Math.min(1, paintAmount + 0.15);
+
+        // Color variation per bristle segment
+        const colorShift = rr(-0.12, 0.12);
+        const segColor = lerpColor(color, colorShift > 0 ? OFF_WHITE : BLACK, Math.abs(colorShift));
+
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(px, py);
+        ctx.strokeStyle = colorStr(segColor, segOpacity);
+        ctx.lineWidth = bristleBaseWidth * widthMult;
+        ctx.stroke();
+
+        prevX = px;
+        prevY = py;
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // =============================================
+  // IMPROVEMENT 5: Impasto effect (3D paint highlight)
+  // =============================================
+  function impastoStroke(x0, y0, x1, y1, options) {
+    // Draw main stroke
+    brushStroke(x0, y0, x1, y1, options);
+
+    // Add highlight offset to simulate raised paint
+    const highlightOpts = Object.assign({}, options, {
+      color: lerpColor(options.color, OFF_WHITE, 0.35),
+      opacity: options.opacity * 0.25,
+      bristleCount: Math.max(3, Math.floor(options.bristleCount * 0.3)),
+      width: options.width * 0.7,
+      paintLoad: (options.paintLoad || 1.0) * 0.5
+    });
+
+    // Offset slightly up-left (light source top-left)
+    brushStroke(x0 - 1.5, y0 - 2, x1 - 1.5, y1 - 2, highlightOpts);
+
+    // Shadow offset (subtle, down-right)
+    const shadowOpts = Object.assign({}, options, {
+      color: lerpColor(options.color, BLACK, 0.3),
+      opacity: options.opacity * 0.12,
+      bristleCount: Math.max(2, Math.floor(options.bristleCount * 0.2)),
+      width: options.width * 0.5,
+      paintLoad: (options.paintLoad || 1.0) * 0.3
+    });
+    brushStroke(x0 + 1, y0 + 1.5, x1 + 1, y1 + 1.5, shadowOpts);
+  }
+
+  // =============================================
+  // IMPROVEMENT 6: Rothko-style irregular color fields
+  // =============================================
+  function colorField(cx, cy, w, h, color1, color2, opacity) {
+    ctx.save();
+
+    // Generate an irregular boundary using noise
+    const layers = 30;
+
+    for (let layer = 0; layer < layers; layer++) {
+      const t = layer / layers;
+      const color = lerpColor(color1, color2, t * 0.6 + rr(-0.1, 0.1));
+      const layerOpacity = opacity / layers * rr(0.5, 1.5);
+
+      // Irregular shape using many points along the boundary
+      ctx.beginPath();
+      const points = 40;
+      for (let i = 0; i <= points; i++) {
+        const angle = (i / points) * Math.PI * 2;
+        // Base elliptical shape
+        let rx = w * 0.5 + rr(-12, 12);
+        let ry = h * 0.5 + rr(-12, 12);
+        // Add organic wobble
+        const wobble = Math.sin(angle * 3 + layer * 0.5) * rr(8, 25)
+                      + Math.sin(angle * 7 + layer * 0.3) * rr(3, 12);
+        rx += wobble;
+        ry += wobble * 0.7;
+
+        const px = cx + Math.cos(angle) * rx;
+        const py = cy + Math.sin(angle) * ry;
+
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = colorStr(color, layerOpacity);
+      ctx.fill();
+
+      // Horizontal texture bands (Rothko characteristic)
+      if (rand() < 0.4) {
+        const stripeY = cy - h * 0.4 + rr(0, h * 0.8);
+        const stripeH = rr(2, 18);
+        const stripeColor = lerpColor(color, color2, rr(0, 0.4));
+        ctx.fillStyle = colorStr(stripeColor, layerOpacity * 0.7);
+        ctx.fillRect(cx - w * 0.45 + rr(0, 20), stripeY, w * 0.9 - rr(0, 40), stripeH);
+      }
+    }
+
+    // Breathing edges: very soft feathered perimeter
+    const edgeIterations = 60;
+    for (let i = 0; i < edgeIterations; i++) {
+      const angle = rr(0, Math.PI * 2);
+      const edgeColor = lerpColor(color1, color2, rr(0.2, 0.8));
+      const dist = rr(0.85, 1.15);
+
+      const ex = cx + Math.cos(angle) * w * 0.5 * dist;
+      const ey = cy + Math.sin(angle) * h * 0.5 * dist;
+      const eSize = rr(10, 40);
+
+      const grad = ctx.createRadialGradient(ex, ey, 0, ex, ey, eSize);
+      grad.addColorStop(0, colorStr(edgeColor, opacity * rr(0.03, 0.1)));
+      grad.addColorStop(1, colorStr(edgeColor, 0));
+      ctx.fillStyle = grad;
+      ctx.fillRect(ex - eSize, ey - eSize, eSize * 2, eSize * 2);
+    }
+
+    ctx.restore();
+  }
+
+  // =============================================
+  // IMPROVEMENT 9: Bold dramatic black gestures
+  // =============================================
+  function boldGestureStroke(x0, y0, x1, y1, color, maxWidth) {
+    const segments = ri(3, 7);
+    let cx = x0, cy = y0;
+
+    for (let s = 0; s < segments; s++) {
+      const t = (s + 1) / segments;
+      const nx = x0 + (x1 - x0) * t + rr(-40, 40);
+      const ny = y0 + (y1 - y0) * t + rr(-40, 40);
+
+      // Width varies MORE dramatically between segments
+      const segWidth = maxWidth * rr(0.4, 1.5);
+
+      impastoStroke(cx, cy, nx, ny, {
+        color: color,
+        width: segWidth,
+        opacity: rr(0.75, 0.95),
+        bristleCount: ri(18, 35),
+        curvature: rr(0.03, 0.2),
+        paintLoad: rr(0.6, 1.0),
+        pressureStart: rr(0.5, 0.9),
+        pressureEnd: rr(0.15, 0.5),
+        pressureMid: rr(0.85, 1.0),
+        roughness: rr(0.3, 1.0),
+        dryBrush: rand() < 0.2,
+        widthVariation: rr(0.4, 0.9)
+      });
+
+      cx = nx;
+      cy = ny;
+    }
+  }
+
+  // Circular Kline-like gesture (inspired by Gemini reference)
+  function circularGesture(cx, cy, radius, color, width, arcStart, arcEnd) {
+    const steps = 50;
+    let prevX, prevY;
+
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const angle = arcStart + (arcEnd - arcStart) * t;
+      const r = radius + rr(-15, 15) + Math.sin(t * 8) * 10;
+      const px = cx + Math.cos(angle) * r;
+      const py = cy + Math.sin(angle) * r;
+
+      if (i > 0) {
+        const segWidth = width * (0.5 + 0.5 * Math.sin(t * Math.PI));
+        impastoStroke(prevX, prevY, px, py, {
+          color: color,
+          width: segWidth,
+          opacity: rr(0.7, 0.9),
+          bristleCount: ri(10, 20),
+          curvature: rr(0.02, 0.1),
+          paintLoad: Math.max(0.2, 1.0 - t * 0.8),
+          pressureStart: 0.7,
+          pressureEnd: 0.3,
+          pressureMid: 1.0,
+          roughness: rr(0.3, 0.8),
+          widthVariation: 0.5
+        });
+      }
+
+      prevX = px;
+      prevY = py;
+    }
+  }
+
+  // =============================================
+  // IMPROVEMENT 4: Physics-based splatter
+  // =============================================
+  function physicsSplatter(cx, cy, velocity, angle, color, count, opacity) {
+    ctx.save();
+
+    for (let i = 0; i < count; i++) {
+      // Launch angle with spread
+      const launchAngle = angle + rr(-0.8, 0.8);
+      const speed = velocity * rr(0.2, 1.0);
+
+      // Physics: parabolic trajectory
+      const gravity = 0.15;
+      let px = cx;
+      let py = cy;
+      let vx = Math.cos(launchAngle) * speed;
+      let vy = Math.sin(launchAngle) * speed;
+
+      // Simulate a few steps of flight
+      const flightSteps = ri(3, 15);
+      for (let s = 0; s < flightSteps; s++) {
+        px += vx;
+        py += vy;
+        vy += gravity; // gravity pulls down
+      }
+
+      // Where it lands
+      const size = rr(0.5, 4) * (speed / velocity + 0.3);
+      const dropOpacity = opacity * rr(0.3, 1.0);
+
+      // Splat shape (slightly elongated in direction of travel)
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(launchAngle);
+      ctx.scale(1, rr(0.6, 1.0));
+      ctx.beginPath();
+      ctx.arc(0, 0, size, 0, Math.PI * 2);
+      ctx.fillStyle = colorStr(color, dropOpacity);
+      ctx.fill();
+      ctx.restore();
+
+      // Some drops create small secondary spatter
+      if (rand() < 0.15) {
+        for (let j = 0; j < ri(2, 5); j++) {
+          const sx = px + rr(-8, 8);
+          const sy = py + rr(-6, 6);
+          const ss = rr(0.3, 1.5);
+          ctx.beginPath();
+          ctx.arc(sx, sy, ss, 0, Math.PI * 2);
+          ctx.fillStyle = colorStr(color, dropOpacity * 0.6);
+          ctx.fill();
+        }
+      }
+
+      // Gravity drips from larger drops
+      if (size > 2.5 && rand() < 0.2) {
+        const dripLen = rr(15, 80);
+        const dripWidth = rr(0.5, size * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        // Drip curves slightly as it runs down
+        ctx.quadraticCurveTo(
+          px + rr(-4, 4), py + dripLen * 0.5,
+          px + rr(-6, 6), py + dripLen
+        );
+        ctx.strokeStyle = colorStr(color, dropOpacity * 0.5);
+        ctx.lineWidth = dripWidth;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Terminal bead at drip end
+        if (rand() < 0.5) {
+          ctx.beginPath();
+          ctx.arc(px + rr(-6, 6), py + dripLen, dripWidth * 1.3, 0, Math.PI * 2);
+          ctx.fillStyle = colorStr(color, dropOpacity * 0.4);
+          ctx.fill();
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  // =============================================
+  // Heavy drip trails (like Flux reference)
+  // =============================================
+  function heavyDrip(x, yStart, length, color, width, opacity) {
+    ctx.save();
+    ctx.lineCap = 'round';
+
+    let cy = yStart;
+    let currentWidth = width;
+    const segments = Math.floor(length / 3);
+    let currentX = x;
+
+    for (let i = 0; i < segments; i++) {
+      const t = i / segments;
+      const segOpacity = opacity * (1 - t * 0.5) * rr(0.6, 1.0);
+
+      // Width decreases then bulges at drip end
+      if (t < 0.8) {
+        currentWidth = width * (1 - t * 0.4);
+      } else {
+        currentWidth = width * (0.6 + (t - 0.8) * 3); // bulge at end
+      }
+
+      const nx = currentX + rr(-1.5, 1.5);
+      const ny = cy + rr(2, 5);
+
+      ctx.beginPath();
+      ctx.moveTo(currentX, cy);
+      ctx.lineTo(nx, ny);
+      ctx.strokeStyle = colorStr(color, segOpacity);
+      ctx.lineWidth = currentWidth;
+      ctx.stroke();
+
+      currentX = nx;
+      cy = ny;
+    }
+
+    // Terminal bead
+    ctx.beginPath();
+    ctx.arc(currentX, cy, currentWidth * 1.2, 0, Math.PI * 2);
+    ctx.fillStyle = colorStr(color, opacity * 0.7);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // =============================================
+  // IMPROVEMENT 8: Palette knife scratchy lines
+  // =============================================
+  function paletteKnifeScratch(x0, y0, x1, y1, color, opacity) {
+    ctx.save();
+    ctx.lineCap = 'butt'; // sharp edges like a knife
+
+    const len = Math.sqrt((x1-x0)**2 + (y1-y0)**2);
+    const steps = Math.floor(len / 2);
+    let px = x0, py = y0;
+
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const x = x0 + (x1 - x0) * t + rr(-1.5, 1.5);
+      const y = y0 + (y1 - y0) * t + rr(-1.5, 1.5);
+      const segOpacity = opacity * rr(0.1, 0.9);
+
+      // Gaps for authenticity - scratches aren't continuous
+      if (rand() < 0.8) {
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = colorStr(color, segOpacity);
+        // Width varies: mostly very thin, occasionally wider
+        ctx.lineWidth = rand() < 0.9 ? rr(0.3, 1.5) : rr(1.5, 3.5);
+        ctx.stroke();
+      }
+      px = x;
+      py = y;
+    }
+    ctx.restore();
+  }
+
+  // =============================================
+  // Paint splotch (thick impasto deposit)
+  // =============================================
+  function paintSplotch(cx, cy, size, color, opacity) {
+    ctx.save();
+    const lobes = ri(5, 12);
+    for (let pass = 0; pass < 4; pass++) {
+      ctx.beginPath();
+      const startAngle = rr(0, Math.PI * 2);
+      const startR = size * rr(0.3, 0.7);
+      ctx.moveTo(cx + Math.cos(startAngle) * startR, cy + Math.sin(startAngle) * startR);
+
+      for (let i = 0; i <= lobes; i++) {
+        const angle = startAngle + (i / lobes) * Math.PI * 2;
+        const r = size * rr(0.35, 1.1);
+        const cpAngle = angle - (Math.PI * 2 / lobes) * 0.5;
+        const cpR = size * rr(0.5, 1.4);
+
+        ctx.quadraticCurveTo(
+          cx + Math.cos(cpAngle) * cpR,
+          cy + Math.sin(cpAngle) * cpR,
+          cx + Math.cos(angle) * r,
+          cy + Math.sin(angle) * r
+        );
+      }
+
+      ctx.closePath();
+      const splotchColor = lerpColor(color, rand() < 0.5 ? OFF_WHITE : BLACK, rr(0, 0.15));
+      ctx.fillStyle = colorStr(splotchColor, opacity * rr(0.2, 0.5));
+      ctx.fill();
+    }
+
+    // Impasto highlight
+    ctx.beginPath();
+    ctx.arc(cx - 2, cy - 2, size * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = colorStr(lerpColor(color, OFF_WHITE, 0.4), opacity * 0.15);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // =============================================
+  // PAINTING COMPOSITION
+  // =============================================
+
+  // LAYER 0: Raw canvas ground
+  // Start with a warm canvas tone
+  ctx.fillStyle = '#e8ddd0';
+  ctx.fillRect(0, 0, W, H);
+
+  // Canvas texture - visible weave before any paint
+  applyCanvasTexture();
+
+  // Tone the canvas unevenly (like a real toned ground)
+  for (let i = 0; i < 40; i++) {
+    const gx = rr(-50, W);
+    const gy = rr(-50, H);
+    const gw = rr(100, 400);
+    const gh = rr(100, 400);
+    const toneColor = lerpColor(RAW_CANVAS, { r: 45, g: 38, b: 30 }, rr(0.3, 0.8));
+    const grad = ctx.createRadialGradient(gx + gw/2, gy + gh/2, 10, gx + gw/2, gy + gh/2, gw * 0.6);
+    grad.addColorStop(0, colorStr(toneColor, rr(0.15, 0.4)));
+    grad.addColorStop(1, colorStr(toneColor, 0));
+    ctx.fillStyle = grad;
+    ctx.fillRect(gx, gy, gw, gh);
+  }
+
+  // LAYER 1: Areas of canvas left showing through (IMPROVEMENT 7)
+  // We'll paint around these, leaving gaps. First mark reserved areas.
+  // (The white showing through is the canvas ground itself.)
+
+  // LAYER 2: Rothko-style color fields (irregular, breathing edges)
+  // Deep blue field - upper area, large and atmospheric
+  colorField(450, 180, 800, 320, DEEP_BLUE, DARK_NAVY, 0.65);
+
+  // Second blue mass - right side
+  colorField(680, 420, 400, 300, ULTRAMARINE, CERULEAN, 0.45);
+
+  // Gold/amber warm field - center-left, large
+  colorField(320, 350, 500, 280, GOLD, BRIGHT_YELLOW, 0.55);
+
+  // Smaller gold field - upper right
+  colorField(650, 130, 300, 200, AMBER, METALLIC_GOLD, 0.4);
+
+  // Off-white luminous field - breathing space mid-canvas
+  colorField(380, 280, 250, 140, OFF_WHITE, CREAM, 0.25);
+
+  // Deep dark field - lower left
+  colorField(150, 500, 350, 250, DARK_NAVY, BLACK, 0.5);
+
+  // LAYER 3: More canvas texture on top of color fields
+  // This creates the effect of paint sitting ON textured canvas
+  for (let i = 0; i < 50000; i++) {
+    const x = rr(0, W);
+    const y = rr(0, H);
+    const brightness = rr(0, 40);
+    ctx.fillStyle = `rgba(${brightness},${brightness},${brightness},${rr(0.01, 0.04)})`;
+    ctx.fillRect(x, y, rr(0.5, 2), rr(0.5, 1.5));
+  }
+
+  // LAYER 4: Bold Kline-style gestures (DRAMATIC black marks)
+  // Main sweeping diagonal - thick, confident
+  boldGestureStroke(20, 580, 750, 80, BLACK, 90);
+
+  // Counter-diagonal crossing
+  boldGestureStroke(100, 50, 820, 600, BLACK, 70);
+
+  // Massive horizontal bar
+  boldGestureStroke(30, 370, 870, 350, BLACK, 100);
+
+  // Vertical pillar - left
+  boldGestureStroke(210, 20, 230, 680, CHARCOAL, 60);
+
+  // Vertical gesture - right area
+  boldGestureStroke(700, 60, 680, 640, BLACK, 50);
+
+  // Circular gesture (Gemini-inspired Kline loops)
+  circularGesture(450, 350, 180, BLACK, 55, 0.3, 4.5);
+  circularGesture(350, 300, 120, CHARCOAL, 35, 1.0, 5.0);
+
+  // LAYER 5: Color gestures over the black structure
+
+  // Bold gold slashes
+  impastoStroke(60, 180, 520, 160, {
+    color: GOLD, width: 50, opacity: 0.85, bristleCount: 24,
+    curvature: 0.12, paintLoad: 1.0, pressureStart: 0.6, pressureEnd: 0.15,
+    pressureMid: 1.0, roughness: 0.5, widthVariation: 0.7
+  });
+
+  impastoStroke(280, 380, 780, 340, {
+    color: BRIGHT_YELLOW, width: 45, opacity: 0.75, bristleCount: 20,
+    curvature: 0.18, paintLoad: 0.85, pressureStart: 0.7, pressureEnd: 0.2,
+    pressureMid: 0.95, roughness: 0.7, dryBrush: true, widthVariation: 0.8
+  });
+
+  // Vivid blue accents
+  impastoStroke(480, 80, 830, 200, {
+    color: VIVID_BLUE, width: 55, opacity: 0.8, bristleCount: 26,
+    curvature: 0.1, paintLoad: 0.95, pressureStart: 0.8, pressureEnd: 0.3,
+    pressureMid: 1.0, roughness: 0.4, widthVariation: 0.6
+  });
+
+  impastoStroke(30, 420, 380, 550, {
+    color: CERULEAN, width: 40, opacity: 0.65, bristleCount: 20,
+    curvature: 0.2, paintLoad: 0.7, pressureStart: 0.5, pressureEnd: 0.2,
+    pressureMid: 0.9, roughness: 0.6, widthVariation: 0.5
+  });
+
+  // White breaking through (like Flux reference)
+  impastoStroke(320, 130, 600, 270, {
+    color: OFF_WHITE, width: 35, opacity: 0.6, bristleCount: 16,
+    curvature: 0.25, paintLoad: 0.8, pressureStart: 0.4, pressureEnd: 0.1,
+    pressureMid: 0.85, roughness: 0.8, dryBrush: true, widthVariation: 0.9
+  });
+
+  impastoStroke(100, 290, 420, 250, {
+    color: CREAM, width: 28, opacity: 0.5, bristleCount: 12,
+    curvature: 0.15, paintLoad: 0.6, pressureStart: 0.5, pressureEnd: 0.15,
+    pressureMid: 0.7, roughness: 1.0, dryBrush: true, widthVariation: 0.7
+  });
+
+  // Amber/burnt orange warm accent
+  impastoStroke(550, 420, 800, 500, {
+    color: AMBER, width: 38, opacity: 0.7, bristleCount: 18,
+    curvature: 0.15, paintLoad: 0.9, pressureStart: 0.6, pressureEnd: 0.25,
+    pressureMid: 1.0, roughness: 0.5, widthVariation: 0.6
+  });
+
+  // LAYER 6: Expressive smaller marks with varied widths
+  for (let i = 0; i < 18; i++) {
+    const sx = rr(40, 860);
+    const sy = rr(40, 660);
+    const ex = sx + rr(-150, 150);
+    const ey = sy + rr(-100, 100);
+    const colors = [GOLD, VIVID_BLUE, OFF_WHITE, BLACK, AMBER, BURNT_ORANGE, DEEP_BLUE, BRIGHT_YELLOW];
+    const c = colors[ri(0, colors.length - 1)];
+    const isImpasto = rand() < 0.5;
+
+    const opts = {
+      color: c, width: rr(8, 35), opacity: rr(0.3, 0.75),
+      bristleCount: ri(6, 16), curvature: rr(0.08, 0.4),
+      paintLoad: rr(0.3, 1.0),
+      pressureStart: rr(0.3, 0.8), pressureEnd: rr(0.05, 0.3),
+      pressureMid: rr(0.6, 1.0), roughness: rr(0.4, 1.2),
+      dryBrush: rand() < 0.35, widthVariation: rr(0.3, 1.0)
+    };
+
+    if (isImpasto) {
+      impastoStroke(sx, sy, ex, ey, opts);
+    } else {
+      brushStroke(sx, sy, ex, ey, opts);
+    }
+  }
+
+  // LAYER 7: Paint splotches (thick impasto deposits)
+  for (let i = 0; i < 15; i++) {
+    const x = rr(60, 840);
+    const y = rr(60, 640);
+    const size = rr(8, 40);
+    const colors = [GOLD, VIVID_BLUE, OFF_WHITE, AMBER, METALLIC_GOLD, BRIGHT_YELLOW];
+    const c = colors[ri(0, colors.length - 1)];
+    paintSplotch(x, y, size, c, rr(0.2, 0.55));
+  }
+
+  // LAYER 8: Physics-based splatter (IMPROVED)
+  // Gold splatter flung from center
+  physicsSplatter(350, 250, 12, -0.5, GOLD, 80, 0.65);
+  physicsSplatter(500, 200, 15, -0.3, BRIGHT_YELLOW, 60, 0.55);
+
+  // Blue splatter clusters
+  physicsSplatter(200, 150, 10, -0.8, VIVID_BLUE, 70, 0.5);
+  physicsSplatter(700, 350, 12, 2.5, CERULEAN, 55, 0.45);
+
+  // White splatter for light punctuation
+  physicsSplatter(450, 300, 8, -1.2, OFF_WHITE, 50, 0.45);
+
+  // Black splatter - energetic, from bold gestures
+  physicsSplatter(300, 400, 14, -1.0, BLACK, 90, 0.6);
+  physicsSplatter(600, 200, 11, 0.5, BLACK, 60, 0.5);
+
+  // LAYER 9: Heavy drips (like Flux reference)
+  for (let i = 0; i < 14; i++) {
+    const x = rr(80, 820);
+    const y = rr(80, 400);
+    const len = rr(30, 200);
+    const colors = [BLACK, BLACK, DEEP_BLUE, GOLD, AMBER, VIVID_BLUE];
+    const c = colors[ri(0, colors.length - 1)];
+    heavyDrip(x, y, len, c, rr(1.5, 6), rr(0.4, 0.8));
+  }
+
+  // LAYER 10: Palette knife scratches (IMPROVEMENT 8)
+  for (let i = 0; i < 30; i++) {
+    const sx = rr(20, 880);
+    const sy = rr(20, 680);
+    const ex = sx + rr(-220, 220);
+    const ey = sy + rr(-160, 160);
+    const colors = [BLACK, CHARCOAL, RAW_UMBER, DEEP_BLUE, OFF_WHITE, GOLD];
+    const c = colors[ri(0, colors.length - 1)];
+    paletteKnifeScratch(sx, sy, ex, ey, c, rr(0.15, 0.55));
+  }
+
+  // Some longer, more deliberate knife marks
+  paletteKnifeScratch(100, 350, 800, 330, BLACK, 0.6);
+  paletteKnifeScratch(450, 50, 460, 650, CHARCOAL, 0.45);
+  paletteKnifeScratch(50, 200, 600, 220, OFF_WHITE, 0.35);
+
+  // LAYER 11: Final bold accent marks
+  // A few decisive gold strokes
+  impastoStroke(380, 270, 560, 300, {
+    color: GOLD, width: 16, opacity: 0.9, bristleCount: 10,
+    curvature: 0.04, paintLoad: 1.0, pressureStart: 0.9, pressureEnd: 0.15,
+    pressureMid: 1.0, roughness: 0.3, widthVariation: 0.8
+  });
+
+  impastoStroke(170, 370, 340, 340, {
+    color: AMBER, width: 14, opacity: 0.85, bristleCount: 8,
+    curvature: 0.06, paintLoad: 0.95, pressureStart: 0.8, pressureEnd: 0.2,
+    pressureMid: 1.0, roughness: 0.4, widthVariation: 0.6
+  });
+
+  // Bright white flash - focal point
+  impastoStroke(360, 290, 500, 310, {
+    color: OFF_WHITE, width: 20, opacity: 0.8, bristleCount: 12,
+    curvature: 0.08, paintLoad: 1.0, pressureStart: 0.7, pressureEnd: 0.1,
+    pressureMid: 1.0, roughness: 0.3, widthVariation: 0.7
+  });
+
+  // LAYER 12: Metallic shimmer (Gemini-inspired gold)
+  for (let i = 0; i < 200; i++) {
+    const x = rr(0, W);
+    const y = rr(0, H);
+    // Sample the approximate area: if in gold zones, add shimmer
+    const inGoldZone = (y > 250 && y < 500 && x > 200 && x < 700);
+    if (inGoldZone && rand() < 0.3) {
+      const size = rr(1, 3);
+      const shimmerColor = lerpColor(METALLIC_GOLD, OFF_WHITE, rr(0.3, 0.8));
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fillStyle = colorStr(shimmerColor, rr(0.1, 0.4));
+      ctx.fill();
+    }
+  }
+
+  // Occasional small diamond sparkles (like Gemini reference)
+  for (let i = 0; i < 8; i++) {
+    const x = rr(100, 800);
+    const y = rr(100, 600);
+    const size = rr(3, 8);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.PI / 4);
+    ctx.beginPath();
+    ctx.moveTo(0, -size);
+    ctx.lineTo(size * 0.3, 0);
+    ctx.lineTo(0, size);
+    ctx.lineTo(-size * 0.3, 0);
+    ctx.closePath();
+    ctx.fillStyle = colorStr(OFF_WHITE, rr(0.3, 0.7));
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // LAYER 13: Unifying glazes (very subtle)
+  // Cool blue glaze over upper half
+  ctx.save();
+  const coolGlaze = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+  coolGlaze.addColorStop(0, 'rgba(20,40,140,0.04)');
+  coolGlaze.addColorStop(1, 'rgba(20,40,140,0)');
+  ctx.fillStyle = coolGlaze;
+  ctx.fillRect(0, 0, W, H * 0.5);
+  ctx.restore();
+
+  // Warm glaze on lower portion
+  ctx.save();
+  const warmGlaze = ctx.createLinearGradient(0, H * 0.5, 0, H);
+  warmGlaze.addColorStop(0, 'rgba(255,190,30,0)');
+  warmGlaze.addColorStop(1, 'rgba(255,190,30,0.03)');
+  ctx.fillStyle = warmGlaze;
+  ctx.fillRect(0, H * 0.4, W, H * 0.6);
+  ctx.restore();
+
+  // LAYER 14: Final canvas texture overlay (grain on top of everything)
+  // This simulates the physical surface catching light
+  for (let i = 0; i < 15000; i++) {
+    const x = rr(0, W);
+    const y = rr(0, H);
+    const s = rr(0.3, 1.2);
+    const brightness = rr(200, 255);
+    ctx.fillStyle = `rgba(${brightness},${brightness},${brightness - 10},${rr(0.005, 0.02)})`;
+    ctx.beginPath();
+    ctx.arc(x, y, s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Very fine dark grain
+  for (let i = 0; i < 15000; i++) {
+    const x = rr(0, W);
+    const y = rr(0, H);
+    const s = rr(0.2, 0.8);
+    const brightness = rr(0, 30);
+    ctx.fillStyle = `rgba(${brightness},${brightness},${brightness},${rr(0.005, 0.025)})`;
+    ctx.beginPath();
+    ctx.arc(x, y, s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+})();
+</script>
+</body>
+</html>

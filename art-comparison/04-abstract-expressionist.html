@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>04 - Abstract Expressionist</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+  }
+  canvas {
+    border: 2px solid #333;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .title {
+    color: #888;
+    font-size: 13px;
+    margin-top: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas" width="900" height="700"></canvas>
+<div class="title">04 - Abstract Expressionist</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 900;
+  const H = 700;
+
+  // --- Seeded PRNG (Mulberry32) for reproducibility ---
+  function mulberry32(seed) {
+    return function() {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  const rand = mulberry32(42);
+
+  // Utility: random in range
+  function rr(min, max) { return min + rand() * (max - min); }
+  function ri(min, max) { return Math.floor(rr(min, max + 1)); }
+
+  // --- Color palette ---
+  const DEEP_BLUE = { r: 26, g: 35, b: 126 };    // #1a237e
+  const DARK_NAVY = { r: 13, g: 17, b: 63 };
+  const GOLD = { r: 249, g: 168, b: 37 };          // #f9a825
+  const AMBER = { r: 255, g: 143, b: 0 };
+  const BURNT_ORANGE = { r: 210, g: 105, b: 30 };
+  const OFF_WHITE = { r: 245, g: 240, b: 230 };
+  const CREAM = { r: 255, g: 253, b: 240 };
+  const RAW_UMBER = { r: 90, g: 60, b: 30 };
+  const BLACK = { r: 15, g: 12, b: 10 };
+  const CHARCOAL = { r: 40, g: 35, b: 30 };
+
+  function colorStr(c, a) {
+    return `rgba(${c.r},${c.g},${c.b},${a})`;
+  }
+
+  function lerpColor(c1, c2, t) {
+    return {
+      r: Math.round(c1.r + (c2.r - c1.r) * t),
+      g: Math.round(c1.g + (c2.g - c1.g) * t),
+      b: Math.round(c1.b + (c2.b - c1.b) * t)
+    };
+  }
+
+  // --- Brush stroke engine ---
+
+  // Simulate a single bristle path along a bezier curve
+  function bristlePath(x0, y0, cp1x, cp1y, cp2x, cp2y, x1, y1, steps) {
+    const points = [];
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const it = 1 - t;
+      const x = it*it*it*x0 + 3*it*it*t*cp1x + 3*it*t*t*cp2x + t*t*t*x1;
+      const y = it*it*it*y0 + 3*it*it*t*cp1y + 3*it*t*t*cp2y + t*t*t*y1;
+      points.push({ x, y });
+    }
+    return points;
+  }
+
+  // Draw a textured brush stroke with bristle simulation
+  function brushStroke(x0, y0, x1, y1, options) {
+    const {
+      color,
+      width = 40,
+      opacity = 0.7,
+      bristleCount = 12,
+      curvature = 0.3,
+      pressureStart = 0.3,
+      pressureEnd = 0.1,
+      pressureMid = 1.0,
+      roughness = 0.5,
+      dryBrush = false
+    } = options;
+
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    // Control points with curvature and randomness
+    const midX = (x0 + x1) / 2;
+    const midY = (y0 + y1) / 2;
+    const curveMag = len * curvature;
+    const cp1x = x0 + dx * 0.33 + nx * curveMag * rr(-1, 1);
+    const cp1y = y0 + dy * 0.33 + ny * curveMag * rr(-1, 1);
+    const cp2x = x0 + dx * 0.66 + nx * curveMag * rr(-1, 1);
+    const cp2y = y0 + dy * 0.66 + ny * curveMag * rr(-1, 1);
+
+    const steps = Math.max(30, Math.floor(len / 2));
+
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    for (let b = 0; b < bristleCount; b++) {
+      // Each bristle gets its own offset within the brush width
+      const bristleOffset = (b / (bristleCount - 1) - 0.5) * width;
+      const bristleWander = rr(-roughness * 3, roughness * 3);
+      const bristleOpacity = opacity * rr(0.4, 1.0);
+      const bristleWidth = rr(1, Math.max(2, width / bristleCount * 1.5));
+
+      // Bristle-specific offset from main path
+      const bx0 = x0 + nx * (bristleOffset + bristleWander);
+      const by0 = y0 + ny * (bristleOffset + bristleWander);
+      const bx1 = x1 + nx * (bristleOffset + rr(-roughness * 5, roughness * 5));
+      const by1 = y1 + ny * (bristleOffset + rr(-roughness * 5, roughness * 5));
+      const bcp1x = cp1x + nx * bristleOffset + rr(-roughness * 4, roughness * 4);
+      const bcp1y = cp1y + ny * bristleOffset + rr(-roughness * 4, roughness * 4);
+      const bcp2x = cp2x + nx * bristleOffset + rr(-roughness * 4, roughness * 4);
+      const bcp2y = cp2y + ny * bristleOffset + rr(-roughness * 4, roughness * 4);
+
+      const points = bristlePath(bx0, by0, bcp1x, bcp1y, bcp2x, bcp2y, bx1, by1, steps);
+
+      // Draw the bristle with varying pressure
+      for (let i = 1; i < points.length; i++) {
+        const t = i / points.length;
+        // Pressure curve: thin at start, thick in middle, thin at end
+        let pressure;
+        if (t < 0.2) {
+          pressure = pressureStart + (pressureMid - pressureStart) * (t / 0.2);
+        } else if (t > 0.8) {
+          pressure = pressureMid + (pressureEnd - pressureMid) * ((t - 0.8) / 0.2);
+        } else {
+          pressure = pressureMid;
+        }
+
+        // Dry brush effect: random gaps
+        if (dryBrush && rand() < 0.3) continue;
+
+        const segmentOpacity = bristleOpacity * pressure;
+        // Color variation per bristle for texture
+        const colorVar = lerpColor(color, BLACK, rr(-0.1, 0.15));
+
+        ctx.beginPath();
+        ctx.moveTo(points[i - 1].x, points[i - 1].y);
+        ctx.lineTo(points[i].x, points[i].y);
+        ctx.strokeStyle = colorStr(colorVar, segmentOpacity);
+        ctx.lineWidth = bristleWidth * pressure;
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // --- Rothko-style color field with soft edges ---
+  function colorField(x, y, w, h, color1, color2, opacity) {
+    ctx.save();
+
+    // Build up the field with many semi-transparent layers
+    const layers = 25;
+    for (let layer = 0; layer < layers; layer++) {
+      const t = layer / layers;
+      const color = lerpColor(color1, color2, t * 0.5 + rr(-0.1, 0.1));
+      const layerOpacity = opacity / layers * rr(0.6, 1.4);
+
+      // Soft, irregular rectangle
+      const jx = x + rr(-8, 8);
+      const jy = y + rr(-8, 8);
+      const jw = w + rr(-6, 6);
+      const jh = h + rr(-6, 6);
+
+      // Create gradient for soft edges
+      const grad = ctx.createRadialGradient(
+        jx + jw / 2, jy + jh / 2, Math.min(jw, jh) * 0.2,
+        jx + jw / 2, jy + jh / 2, Math.max(jw, jh) * 0.7
+      );
+      grad.addColorStop(0, colorStr(color, layerOpacity * 1.2));
+      grad.addColorStop(0.7, colorStr(color, layerOpacity * 0.8));
+      grad.addColorStop(1, colorStr(color, 0));
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(jx - 20, jy - 20, jw + 40, jh + 40);
+
+      // Add some horizontal texture (Rothko's characteristic horizontal blending)
+      if (rand() < 0.5) {
+        const stripeY = jy + rr(0, jh);
+        const stripeH = rr(2, 15);
+        const stripeColor = lerpColor(color, color2, rr(0, 0.3));
+        ctx.fillStyle = colorStr(stripeColor, layerOpacity * 0.5);
+        ctx.fillRect(jx + rr(0, 10), stripeY, jw - rr(0, 20), stripeH);
+      }
+    }
+
+    // Edge blur: paint soft edges
+    const edgeIterations = 40;
+    for (let i = 0; i < edgeIterations; i++) {
+      const side = ri(0, 3);
+      let ex, ey, ew, eh;
+      const edgeColor = lerpColor(color1, color2, rr(0.2, 0.8));
+
+      switch(side) {
+        case 0: // top
+          ex = x + rr(-5, 5); ey = y + rr(-15, 10); ew = w + rr(-10, 10); eh = rr(5, 25);
+          break;
+        case 1: // bottom
+          ex = x + rr(-5, 5); ey = y + h + rr(-15, 5); ew = w + rr(-10, 10); eh = rr(5, 25);
+          break;
+        case 2: // left
+          ex = x + rr(-15, 10); ey = y + rr(-5, 5); ew = rr(5, 25); eh = h + rr(-10, 10);
+          break;
+        case 3: // right
+          ex = x + w + rr(-15, 5); ey = y + rr(-5, 5); ew = rr(5, 25); eh = h + rr(-10, 10);
+          break;
+      }
+      ctx.fillStyle = colorStr(edgeColor, opacity * rr(0.01, 0.06));
+      ctx.fillRect(ex, ey, ew, eh);
+    }
+
+    ctx.restore();
+  }
+
+  // --- Kline-style bold gesture strokes ---
+  function boldGestureStroke(x0, y0, x1, y1, color, maxWidth) {
+    const segments = ri(3, 6);
+    let cx = x0, cy = y0;
+
+    for (let s = 0; s < segments; s++) {
+      const t = (s + 1) / segments;
+      const nx = x0 + (x1 - x0) * t + rr(-30, 30);
+      const ny = y0 + (y1 - y0) * t + rr(-30, 30);
+      const segWidth = maxWidth * rr(0.5, 1.2);
+
+      brushStroke(cx, cy, nx, ny, {
+        color: color,
+        width: segWidth,
+        opacity: rr(0.7, 0.95),
+        bristleCount: ri(15, 30),
+        curvature: rr(0.05, 0.25),
+        pressureStart: rr(0.4, 0.8),
+        pressureEnd: rr(0.2, 0.6),
+        pressureMid: rr(0.8, 1.0),
+        roughness: rr(0.3, 1.0),
+        dryBrush: rand() < 0.3
+      });
+
+      cx = nx;
+      cy = ny;
+    }
+  }
+
+  // --- Splatter / drip effects ---
+  function splatter(cx, cy, radius, color, count, opacity) {
+    ctx.save();
+    for (let i = 0; i < count; i++) {
+      const angle = rr(0, Math.PI * 2);
+      const dist = rr(0, radius) * rr(0, 1); // cluster toward center
+      const x = cx + Math.cos(angle) * dist;
+      const y = cy + Math.sin(angle) * dist;
+      const size = rr(1, 5);
+      const dropOpacity = opacity * rr(0.3, 1.0);
+
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fillStyle = colorStr(color, dropOpacity);
+      ctx.fill();
+
+      // Occasional drip running down
+      if (rand() < 0.08) {
+        const dripLen = rr(10, 60);
+        const dripWidth = rr(0.5, 2.5);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + rr(-3, 3), y + dripLen);
+        ctx.strokeStyle = colorStr(color, dropOpacity * 0.6);
+        ctx.lineWidth = dripWidth;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  // --- Drip trails ---
+  function dripTrail(x, yStart, length, color, width, opacity) {
+    ctx.save();
+    ctx.lineCap = 'round';
+
+    let cy = yStart;
+    const segments = Math.floor(length / 4);
+    for (let i = 0; i < segments; i++) {
+      const t = i / segments;
+      const segOpacity = opacity * (1 - t * 0.7) * rr(0.5, 1.0);
+      const segWidth = width * (1 - t * 0.5);
+      const nx = x + rr(-2, 2);
+
+      ctx.beginPath();
+      ctx.moveTo(x + rr(-1, 1), cy);
+      cy += rr(2, 6);
+      ctx.lineTo(nx, cy);
+      ctx.strokeStyle = colorStr(color, segOpacity);
+      ctx.lineWidth = segWidth;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // --- Paint splotch (thick paint deposit) ---
+  function paintSplotch(cx, cy, size, color, opacity) {
+    ctx.save();
+    const lobes = ri(5, 10);
+    for (let pass = 0; pass < 3; pass++) {
+      ctx.beginPath();
+      const startAngle = rr(0, Math.PI * 2);
+      const startR = size * rr(0.3, 0.7);
+      ctx.moveTo(cx + Math.cos(startAngle) * startR, cy + Math.sin(startAngle) * startR);
+
+      for (let i = 0; i <= lobes; i++) {
+        const angle = startAngle + (i / lobes) * Math.PI * 2;
+        const r = size * rr(0.4, 1.0);
+        const cpAngle = angle - (Math.PI * 2 / lobes) * 0.5;
+        const cpR = size * rr(0.5, 1.3);
+
+        ctx.quadraticCurveTo(
+          cx + Math.cos(cpAngle) * cpR,
+          cy + Math.sin(cpAngle) * cpR,
+          cx + Math.cos(angle) * r,
+          cy + Math.sin(angle) * r
+        );
+      }
+
+      ctx.closePath();
+      const splotchColor = lerpColor(color, rand() < 0.5 ? OFF_WHITE : BLACK, rr(0, 0.15));
+      ctx.fillStyle = colorStr(splotchColor, opacity * rr(0.3, 0.6));
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // --- Thin scratchy line (palette knife / charcoal gesture) ---
+  function scratchLine(x0, y0, x1, y1, color, opacity) {
+    ctx.save();
+    ctx.lineCap = 'round';
+
+    const steps = Math.floor(Math.sqrt((x1-x0)**2 + (y1-y0)**2) / 3);
+    let px = x0, py = y0;
+
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const x = x0 + (x1 - x0) * t + rr(-2, 2);
+      const y = y0 + (y1 - y0) * t + rr(-2, 2);
+      const segOpacity = opacity * rr(0.2, 1.0);
+
+      if (rand() < 0.85) { // gaps for authenticity
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = colorStr(color, segOpacity);
+        ctx.lineWidth = rr(0.5, 2.5);
+        ctx.stroke();
+      }
+      px = x;
+      py = y;
+    }
+    ctx.restore();
+  }
+
+  // =============================================
+  // PAINTING COMPOSITION
+  // =============================================
+
+  // LAYER 0: Ground / toned canvas
+  ctx.fillStyle = '#2a2520';
+  ctx.fillRect(0, 0, W, H);
+
+  // Add subtle canvas texture
+  for (let i = 0; i < 80000; i++) {
+    const x = rr(0, W);
+    const y = rr(0, H);
+    const brightness = rr(20, 50);
+    ctx.fillStyle = `rgba(${brightness},${brightness - 5},${brightness - 10},${rr(0.02, 0.08)})`;
+    ctx.fillRect(x, y, rr(1, 3), rr(1, 2));
+  }
+
+  // LAYER 1: Rothko-style color fields (background atmosphere)
+  // Deep blue field - upper area
+  colorField(60, 40, 780, 260, DEEP_BLUE, DARK_NAVY, 0.7);
+
+  // Gold/amber warm field - lower center
+  colorField(100, 340, 700, 220, GOLD, AMBER, 0.5);
+
+  // Off-white luminous field - middle band (tension between blue and gold)
+  colorField(120, 250, 660, 120, OFF_WHITE, CREAM, 0.3);
+
+  // Small deep accent field
+  colorField(550, 480, 280, 160, DARK_NAVY, DEEP_BLUE, 0.4);
+
+  // LAYER 2: Kline-style bold structural strokes
+  // Major diagonal gesture - sweeping from lower-left to upper-right
+  boldGestureStroke(30, 580, 700, 120, BLACK, 65);
+
+  // Counter-diagonal - crossing tension
+  boldGestureStroke(150, 50, 800, 550, CHARCOAL, 45);
+
+  // Horizontal bar - like Kline's beam structures
+  boldGestureStroke(50, 350, 850, 340, BLACK, 80);
+
+  // Vertical pillar left
+  boldGestureStroke(200, 30, 220, 670, DARK_NAVY, 50);
+
+  // Vertical gesture right
+  boldGestureStroke(680, 80, 660, 600, BLACK, 35);
+
+  // LAYER 3: Color gestures over structure
+  // Gold slashes across the dark
+  brushStroke(80, 200, 500, 180, {
+    color: GOLD, width: 35, opacity: 0.8, bristleCount: 20,
+    curvature: 0.15, pressureStart: 0.5, pressureEnd: 0.2,
+    pressureMid: 1.0, roughness: 0.6, dryBrush: false
+  });
+
+  brushStroke(300, 400, 750, 370, {
+    color: AMBER, width: 28, opacity: 0.7, bristleCount: 16,
+    curvature: 0.2, pressureStart: 0.6, pressureEnd: 0.3,
+    pressureMid: 0.9, roughness: 0.8, dryBrush: true
+  });
+
+  // White light breaking through
+  brushStroke(350, 150, 600, 280, {
+    color: OFF_WHITE, width: 25, opacity: 0.5, bristleCount: 14,
+    curvature: 0.3, pressureStart: 0.3, pressureEnd: 0.1,
+    pressureMid: 0.8, roughness: 0.7, dryBrush: true
+  });
+
+  brushStroke(100, 300, 400, 260, {
+    color: CREAM, width: 20, opacity: 0.4, bristleCount: 10,
+    curvature: 0.15, pressureStart: 0.4, pressureEnd: 0.2,
+    pressureMid: 0.7, roughness: 0.9, dryBrush: true
+  });
+
+  // Deep blue accent strokes
+  brushStroke(500, 100, 800, 200, {
+    color: DEEP_BLUE, width: 40, opacity: 0.75, bristleCount: 22,
+    curvature: 0.12, pressureStart: 0.7, pressureEnd: 0.4,
+    pressureMid: 1.0, roughness: 0.5, dryBrush: false
+  });
+
+  brushStroke(50, 450, 350, 550, {
+    color: DEEP_BLUE, width: 30, opacity: 0.6, bristleCount: 18,
+    curvature: 0.25, pressureStart: 0.5, pressureEnd: 0.3,
+    pressureMid: 0.9, roughness: 0.6, dryBrush: false
+  });
+
+  // LAYER 4: Expressive smaller marks
+  // Quick gestural marks
+  for (let i = 0; i < 15; i++) {
+    const sx = rr(50, 850);
+    const sy = rr(50, 650);
+    const ex = sx + rr(-120, 120);
+    const ey = sy + rr(-80, 80);
+    const colors = [GOLD, DEEP_BLUE, OFF_WHITE, BLACK, AMBER, BURNT_ORANGE];
+    const c = colors[ri(0, colors.length - 1)];
+
+    brushStroke(sx, sy, ex, ey, {
+      color: c, width: rr(8, 22), opacity: rr(0.3, 0.7),
+      bristleCount: ri(6, 14), curvature: rr(0.1, 0.4),
+      pressureStart: rr(0.3, 0.7), pressureEnd: rr(0.1, 0.4),
+      pressureMid: rr(0.6, 1.0), roughness: rr(0.4, 1.2),
+      dryBrush: rand() < 0.4
+    });
+  }
+
+  // LAYER 5: Paint splotches (thick impasto deposits)
+  for (let i = 0; i < 12; i++) {
+    const x = rr(80, 820);
+    const y = rr(80, 620);
+    const size = rr(10, 35);
+    const colors = [GOLD, DEEP_BLUE, OFF_WHITE, AMBER];
+    const c = colors[ri(0, colors.length - 1)];
+    paintSplotch(x, y, size, c, rr(0.2, 0.5));
+  }
+
+  // LAYER 6: Splatter effects (Pollock-inspired)
+  // Gold splatter across dark areas
+  splatter(300, 200, 200, GOLD, 120, 0.6);
+  splatter(600, 400, 180, AMBER, 100, 0.5);
+
+  // White splatter for light punctuation
+  splatter(450, 300, 250, OFF_WHITE, 80, 0.4);
+
+  // Dark splatter for depth
+  splatter(200, 500, 160, BLACK, 70, 0.5);
+  splatter(700, 150, 140, DARK_NAVY, 60, 0.4);
+
+  // Blue splatter clusters
+  splatter(150, 150, 120, DEEP_BLUE, 90, 0.45);
+  splatter(750, 500, 130, DEEP_BLUE, 75, 0.4);
+
+  // LAYER 7: Drip trails
+  for (let i = 0; i < 8; i++) {
+    const x = rr(100, 800);
+    const y = rr(100, 400);
+    const len = rr(40, 180);
+    const colors = [BLACK, DEEP_BLUE, GOLD, AMBER];
+    const c = colors[ri(0, colors.length - 1)];
+    dripTrail(x, y, len, c, rr(1, 4), rr(0.3, 0.7));
+  }
+
+  // LAYER 8: Scratchy gestural lines (like charcoal or palette knife)
+  for (let i = 0; i < 20; i++) {
+    const sx = rr(30, 870);
+    const sy = rr(30, 670);
+    const ex = sx + rr(-200, 200);
+    const ey = sy + rr(-150, 150);
+    const colors = [BLACK, CHARCOAL, RAW_UMBER, DEEP_BLUE];
+    const c = colors[ri(0, colors.length - 1)];
+    scratchLine(sx, sy, ex, ey, c, rr(0.2, 0.6));
+  }
+
+  // LAYER 9: Final accents - bright decisive marks
+  // A few sharp gold accents
+  brushStroke(400, 280, 550, 310, {
+    color: GOLD, width: 12, opacity: 0.9, bristleCount: 8,
+    curvature: 0.05, pressureStart: 0.8, pressureEnd: 0.2,
+    pressureMid: 1.0, roughness: 0.3, dryBrush: false
+  });
+
+  brushStroke(180, 380, 320, 350, {
+    color: AMBER, width: 10, opacity: 0.85, bristleCount: 7,
+    curvature: 0.08, pressureStart: 0.7, pressureEnd: 0.3,
+    pressureMid: 1.0, roughness: 0.4, dryBrush: false
+  });
+
+  // Bright white flash - focal point
+  brushStroke(380, 300, 480, 320, {
+    color: OFF_WHITE, width: 15, opacity: 0.75, bristleCount: 10,
+    curvature: 0.1, pressureStart: 0.6, pressureEnd: 0.1,
+    pressureMid: 1.0, roughness: 0.4, dryBrush: false
+  });
+
+  // LAYER 10: Very subtle top glaze
+  // A thin wash of blue over everything to unify
+  ctx.save();
+  ctx.globalAlpha = 0.04;
+  ctx.fillStyle = colorStr(DEEP_BLUE, 1);
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+
+  // A thin warm glaze on the lower half
+  ctx.save();
+  const warmGlaze = ctx.createLinearGradient(0, H * 0.4, 0, H);
+  warmGlaze.addColorStop(0, 'rgba(249,168,37,0)');
+  warmGlaze.addColorStop(1, 'rgba(249,168,37,0.03)');
+  ctx.fillStyle = warmGlaze;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+
+  // Final tiny splatter for surface texture
+  for (let i = 0; i < 300; i++) {
+    const x = rr(0, W);
+    const y = rr(0, H);
+    const s = rr(0.5, 1.5);
+    const brightness = rr(0, 80);
+    ctx.fillStyle = `rgba(${brightness},${brightness},${brightness},${rr(0.01, 0.04)})`;
+    ctx.beginPath();
+    ctx.arc(x, y, s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+})();
+</script>
+</body>
+</html>

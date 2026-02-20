@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>07 - Botanical Illustration</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #f5f0e8;
+    font-family: 'Georgia', 'Times New Roman', serif;
+  }
+  .container {
+    width: 700px;
+    text-align: center;
+  }
+  svg {
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 2px 8px rgba(120,100,70,0.12));
+  }
+  .title {
+    margin-top: 18px;
+    font-size: 15px;
+    color: #8a7b6b;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 900" width="700" height="900">
+  <defs>
+    <!-- Paper texture filter -->
+    <filter id="paperTexture" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="5" seed="2" result="noise"/>
+      <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
+      <feBlend in="SourceGraphic" in2="grayNoise" mode="multiply" result="textured"/>
+      <feComponentTransfer in="textured">
+        <feFuncA type="linear" slope="1"/>
+      </feComponentTransfer>
+    </filter>
+
+    <!-- Watercolor edge effect -->
+    <filter id="watercolor" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="turbulence" baseFrequency="0.015" numOctaves="4" seed="3" result="turbulence"/>
+      <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="4" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+      <feGaussianBlur in="displaced" stdDeviation="0.8" result="blurred"/>
+      <feComponentTransfer in="blurred">
+        <feFuncA type="linear" slope="0.95"/>
+      </feComponentTransfer>
+    </filter>
+
+    <!-- Stronger watercolor for petals -->
+    <filter id="watercolorStrong" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="5" seed="7" result="turbulence"/>
+      <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="5" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+      <feGaussianBlur in="displaced" stdDeviation="1.0" result="blurred"/>
+      <feComposite in="blurred" in2="SourceGraphic" operator="atop"/>
+    </filter>
+
+    <!-- Soft watercolor wash -->
+    <filter id="watercolorWash" x="-12%" y="-12%" width="124%" height="124%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="12" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+      <feGaussianBlur in="displaced" stdDeviation="1.5" result="blurred"/>
+      <feComponentTransfer in="blurred">
+        <feFuncA type="linear" slope="0.85"/>
+      </feComponentTransfer>
+    </filter>
+
+    <!-- Wing vein detail filter -->
+    <filter id="veinDetail" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="turbulence" baseFrequency="0.04" numOctaves="2" seed="5" result="turb"/>
+      <feDisplacementMap in="SourceGraphic" in2="turb" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- Leaf texture -->
+    <filter id="leafTexture" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" seed="8" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" result="disp"/>
+      <feGaussianBlur in="disp" stdDeviation="0.6"/>
+    </filter>
+
+    <!-- Stem texture -->
+    <filter id="stemTexture" x="-3%" y="-3%" width="106%" height="106%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="3" seed="15" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G" result="disp"/>
+      <feGaussianBlur in="disp" stdDeviation="0.4"/>
+    </filter>
+
+    <!-- Soft glow for flower center -->
+    <filter id="softGlow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <!-- Orange wing gradient -->
+    <linearGradient id="wingOrange1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e8751a"/>
+      <stop offset="30%" stop-color="#f08c2e"/>
+      <stop offset="55%" stop-color="#e06a10"/>
+      <stop offset="80%" stop-color="#d45e08"/>
+      <stop offset="100%" stop-color="#c85510"/>
+    </linearGradient>
+
+    <linearGradient id="wingOrange2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e87820"/>
+      <stop offset="35%" stop-color="#f09035"/>
+      <stop offset="60%" stop-color="#db6510"/>
+      <stop offset="100%" stop-color="#c0500a"/>
+    </linearGradient>
+
+    <radialGradient id="wingOrangeRadial" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f5a040"/>
+      <stop offset="40%" stop-color="#e8802a"/>
+      <stop offset="100%" stop-color="#c85a12"/>
+    </radialGradient>
+
+    <!-- Hindwing gradient -->
+    <linearGradient id="hindwingOrange" x1="0%" y1="20%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#e07018"/>
+      <stop offset="50%" stop-color="#d86015"/>
+      <stop offset="100%" stop-color="#b84a0a"/>
+    </linearGradient>
+
+    <!-- Body gradient -->
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2020"/>
+      <stop offset="50%" stop-color="#1a1515"/>
+      <stop offset="100%" stop-color="#2a2020"/>
+    </linearGradient>
+
+    <!-- Stem gradient -->
+    <linearGradient id="stemGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4a7a3a"/>
+      <stop offset="50%" stop-color="#5a8a48"/>
+      <stop offset="100%" stop-color="#3d6830"/>
+    </linearGradient>
+
+    <!-- Leaf gradients -->
+    <linearGradient id="leafGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5a9048"/>
+      <stop offset="40%" stop-color="#4d8040"/>
+      <stop offset="100%" stop-color="#3a6530"/>
+    </linearGradient>
+
+    <linearGradient id="leafGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5f9550"/>
+      <stop offset="50%" stop-color="#4a7a3a"/>
+      <stop offset="100%" stop-color="#3a6228"/>
+    </linearGradient>
+
+    <!-- Petal gradients -->
+    <radialGradient id="petalGrad1" cx="30%" cy="100%" r="100%">
+      <stop offset="0%" stop-color="#c86aaa"/>
+      <stop offset="30%" stop-color="#b85898"/>
+      <stop offset="60%" stop-color="#a04880"/>
+      <stop offset="100%" stop-color="#7a3568"/>
+    </radialGradient>
+
+    <radialGradient id="petalGrad2" cx="50%" cy="100%" r="100%">
+      <stop offset="0%" stop-color="#d070b0"/>
+      <stop offset="35%" stop-color="#ba5a98"/>
+      <stop offset="70%" stop-color="#984080"/>
+      <stop offset="100%" stop-color="#783068"/>
+    </radialGradient>
+
+    <radialGradient id="petalGrad3" cx="70%" cy="100%" r="100%">
+      <stop offset="0%" stop-color="#c468a5"/>
+      <stop offset="40%" stop-color="#aa4a8a"/>
+      <stop offset="100%" stop-color="#803870"/>
+    </radialGradient>
+
+    <!-- Flower center gradient -->
+    <radialGradient id="centerGrad" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#c07030"/>
+      <stop offset="30%" stop-color="#a85828"/>
+      <stop offset="60%" stop-color="#8a4520"/>
+      <stop offset="100%" stop-color="#6a3518"/>
+    </radialGradient>
+
+    <!-- Cone highlight -->
+    <radialGradient id="coneHighlight" cx="40%" cy="30%" r="50%">
+      <stop offset="0%" stop-color="#d8884a" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#a85828" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Background gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#faf6ee"/>
+      <stop offset="60%" stop-color="#f5f0e5"/>
+      <stop offset="100%" stop-color="#ede6d8"/>
+    </radialGradient>
+
+    <!-- Antenna gradient -->
+    <linearGradient id="antennaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3a2a20"/>
+      <stop offset="80%" stop-color="#1a1210"/>
+      <stop offset="100%" stop-color="#e08020"/>
+    </linearGradient>
+
+    <!-- Clip paths for wing cells -->
+    <clipPath id="leftForewingClip">
+      <path d="M 340,370 C 320,340 280,280 255,240 C 235,208 220,180 210,160 C 195,135 178,118 165,115 C 145,110 130,125 125,140 C 118,160 120,195 130,230 C 140,265 155,300 175,335 C 195,368 220,398 250,420 C 275,438 310,450 340,448 Z"/>
+    </clipPath>
+
+    <clipPath id="rightForewingClip">
+      <path d="M 365,370 C 385,340 425,280 450,240 C 470,208 485,180 495,160 C 510,135 527,118 540,115 C 560,110 575,125 580,140 C 587,160 585,195 575,230 C 565,265 550,300 530,335 C 510,368 485,398 455,420 C 430,438 395,450 365,448 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background with paper texture -->
+  <rect width="700" height="900" fill="url(#bgGrad)"/>
+  <rect width="700" height="900" fill="url(#bgGrad)" filter="url(#paperTexture)" opacity="0.15"/>
+
+  <!-- Subtle warm wash in center -->
+  <ellipse cx="350" cy="400" rx="280" ry="350" fill="#f5e8d5" opacity="0.15" filter="url(#watercolorWash)"/>
+
+  <!-- ============ STEM ============ -->
+  <g filter="url(#stemTexture)">
+    <!-- Main stem -->
+    <path d="M 348,520 C 346,560 344,620 340,680 C 336,740 330,790 325,840"
+          fill="none" stroke="url(#stemGrad)" stroke-width="5" stroke-linecap="round"/>
+    <!-- Stem highlight -->
+    <path d="M 347,525 C 345,565 343,625 339,685 C 335,740 329,788 324,835"
+          fill="none" stroke="#6a9a58" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+
+    <!-- Secondary stem branching -->
+    <path d="M 342,650 C 335,660 310,680 280,695"
+          fill="none" stroke="url(#stemGrad)" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M 338,710 C 345,720 365,738 390,748"
+          fill="none" stroke="url(#stemGrad)" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- ============ LEAVES ============ -->
+  <g filter="url(#leafTexture)">
+    <!-- Lower left leaf -->
+    <path d="M 280,695 C 265,690 235,678 210,680 C 190,682 170,695 165,710
+             C 162,720 170,730 185,728 C 205,725 235,710 260,700 C 270,696 278,694 280,695 Z"
+          fill="url(#leafGrad1)" opacity="0.9"/>
+    <!-- Leaf vein -->
+    <path d="M 278,695 C 255,694 225,692 195,703 C 180,709 170,718 167,714"
+          fill="none" stroke="#3a6530" stroke-width="1" opacity="0.6"/>
+    <!-- Side veins -->
+    <path d="M 250,694 L 240,685" fill="none" stroke="#3a6530" stroke-width="0.6" opacity="0.4"/>
+    <path d="M 230,696 L 218,688" fill="none" stroke="#3a6530" stroke-width="0.6" opacity="0.4"/>
+    <path d="M 215,700 L 205,692" fill="none" stroke="#3a6530" stroke-width="0.6" opacity="0.4"/>
+    <path d="M 230,698 L 222,710" fill="none" stroke="#3a6530" stroke-width="0.6" opacity="0.4"/>
+    <path d="M 210,704 L 200,716" fill="none" stroke="#3a6530" stroke-width="0.6" opacity="0.4"/>
+
+    <!-- Lower right leaf -->
+    <path d="M 390,748 C 405,742 435,728 460,724 C 480,721 500,728 508,742
+             C 512,750 506,762 490,762 C 470,762 440,752 415,745 C 400,740 392,746 390,748 Z"
+          fill="url(#leafGrad2)" opacity="0.9"/>
+    <!-- Leaf vein -->
+    <path d="M 392,748 C 420,742 455,732 485,740 C 498,744 506,752 507,748"
+          fill="none" stroke="#3a6530" stroke-width="1" opacity="0.6"/>
+    <!-- Side veins -->
+    <path d="M 425,740 L 435,730" fill="none" stroke="#3a6530" stroke-width="0.6" opacity="0.4"/>
+    <path d="M 450,734 L 458,725" fill="none" stroke="#3a6530" stroke-width="0.6" opacity="0.4"/>
+    <path d="M 470,732 L 478,724" fill="none" stroke="#3a6530" stroke-width="0.6" opacity="0.4"/>
+    <path d="M 450,738 L 458,750" fill="none" stroke="#3a6530" stroke-width="0.6" opacity="0.4"/>
+    <path d="M 472,738 L 480,750" fill="none" stroke="#3a6530" stroke-width="0.6" opacity="0.4"/>
+
+    <!-- Upper leaf on stem (near flower) -->
+    <path d="M 344,580 C 330,570 300,548 275,540 C 255,534 238,538 232,550
+             C 228,558 234,568 248,570 C 268,572 305,568 330,575 C 340,578 344,580 344,580 Z"
+          fill="url(#leafGrad1)" opacity="0.85"/>
+    <path d="M 342,579 C 315,570 278,552 252,556 C 240,558 234,564 234,556"
+          fill="none" stroke="#3a6530" stroke-width="0.8" opacity="0.5"/>
+    <path d="M 310,566 L 302,556" fill="none" stroke="#3a6530" stroke-width="0.5" opacity="0.35"/>
+    <path d="M 288,558 L 278,548" fill="none" stroke="#3a6530" stroke-width="0.5" opacity="0.35"/>
+    <path d="M 290,562 L 284,572" fill="none" stroke="#3a6530" stroke-width="0.5" opacity="0.35"/>
+
+    <!-- Small leaf opposite -->
+    <path d="M 347,610 C 358,602 380,586 398,582 C 412,579 424,585 426,594
+             C 428,600 422,608 410,608 C 394,608 372,602 356,607 C 350,609 347,610 347,610 Z"
+          fill="url(#leafGrad2)" opacity="0.8"/>
+    <path d="M 349,609 C 370,600 400,590 418,594 C 424,596 426,600 426,596"
+          fill="none" stroke="#3a6530" stroke-width="0.7" opacity="0.5"/>
+  </g>
+
+  <!-- ============ FLOWER (ECHINACEA) ============ -->
+  <g filter="url(#watercolorStrong)">
+    <!-- Drooping petals (behind) -->
+    <path d="M 310,520 C 300,530 275,560 258,580 C 248,592 245,600 250,602
+             C 256,604 268,594 280,575 C 294,554 305,535 310,520 Z"
+          fill="url(#petalGrad3)" opacity="0.7"/>
+    <path d="M 390,520 C 400,530 425,560 442,580 C 452,592 455,600 450,602
+             C 444,604 432,594 420,575 C 406,554 395,535 390,520 Z"
+          fill="url(#petalGrad1)" opacity="0.7"/>
+
+    <!-- Petals layer 1 (back) -->
+    <path d="M 325,518 C 315,530 290,565 270,588 C 258,602 252,612 258,616
+             C 264,620 278,608 292,588 C 310,562 322,538 325,518 Z"
+          fill="url(#petalGrad2)" opacity="0.78"/>
+    <path d="M 375,518 C 385,530 410,565 430,588 C 442,602 448,612 442,616
+             C 436,620 422,608 408,588 C 390,562 378,538 375,518 Z"
+          fill="url(#petalGrad3)" opacity="0.78"/>
+
+    <!-- Petals layer 2 (middle) -->
+    <path d="M 340,522 C 332,538 315,575 302,600 C 294,615 290,626 296,630
+             C 304,634 314,618 324,598 C 336,572 340,545 340,522 Z"
+          fill="url(#petalGrad1)" opacity="0.82"/>
+    <path d="M 360,522 C 368,538 385,575 398,600 C 406,615 410,626 404,630
+             C 396,634 386,618 376,598 C 364,572 360,545 360,522 Z"
+          fill="url(#petalGrad2)" opacity="0.82"/>
+
+    <!-- Central petal (front, drooping down) -->
+    <path d="M 350,525 C 348,545 345,585 344,612 C 343,628 344,640 350,642
+             C 356,640 357,628 356,612 C 355,585 352,545 350,525 Z"
+          fill="url(#petalGrad1)" opacity="0.85"/>
+
+    <!-- Petal vein details -->
+    <g opacity="0.25" stroke="#6a2850" fill="none" stroke-width="0.5">
+      <path d="M 350,530 C 349,555 347,595 346,625"/>
+      <path d="M 340,525 C 330,548 312,590 300,615"/>
+      <path d="M 360,525 C 370,548 388,590 400,615"/>
+      <path d="M 325,520 C 310,540 285,578 268,600"/>
+      <path d="M 375,520 C 390,540 415,578 432,600"/>
+    </g>
+
+    <!-- Side petals -->
+    <path d="M 300,515 C 282,525 248,548 228,565 C 215,575 208,584 212,590
+             C 218,594 232,584 248,568 C 268,548 290,528 300,515 Z"
+          fill="url(#petalGrad2)" opacity="0.72"/>
+    <path d="M 400,515 C 418,525 452,548 472,565 C 485,575 492,584 488,590
+             C 482,594 468,584 452,568 C 432,548 410,528 400,515 Z"
+          fill="url(#petalGrad3)" opacity="0.72"/>
+  </g>
+
+  <!-- ============ FLOWER CENTER (CONE) ============ -->
+  <g filter="url(#watercolor)">
+    <!-- Cone base shadow -->
+    <ellipse cx="350" cy="520" rx="50" ry="22" fill="#5a3518" opacity="0.3"/>
+
+    <!-- Cone shape -->
+    <ellipse cx="350" cy="505" rx="48" ry="30" fill="url(#centerGrad)"/>
+
+    <!-- Cone 3D highlight -->
+    <ellipse cx="342" cy="498" rx="30" ry="18" fill="url(#coneHighlight)"/>
+
+    <!-- Cone texture - tiny florets -->
+    <g opacity="0.6">
+      <circle cx="335" cy="495" r="2" fill="#c87838"/>
+      <circle cx="345" cy="492" r="2" fill="#d08040"/>
+      <circle cx="355" cy="494" r="2" fill="#c07030"/>
+      <circle cx="365" cy="498" r="1.8" fill="#b86828"/>
+      <circle cx="328" cy="502" r="1.8" fill="#d08848"/>
+      <circle cx="340" cy="500" r="2" fill="#c87838"/>
+      <circle cx="352" cy="502" r="2" fill="#b86828"/>
+      <circle cx="362" cy="505" r="1.8" fill="#a86020"/>
+      <circle cx="372" cy="502" r="1.5" fill="#b06828"/>
+      <circle cx="333" cy="510" r="1.8" fill="#c07030"/>
+      <circle cx="345" cy="510" r="2" fill="#b86828"/>
+      <circle cx="358" cy="512" r="1.8" fill="#a05820"/>
+      <circle cx="368" cy="510" r="1.5" fill="#a86020"/>
+      <circle cx="340" cy="518" r="1.5" fill="#a85828"/>
+      <circle cx="352" cy="518" r="1.5" fill="#984820"/>
+      <circle cx="362" cy="516" r="1.5" fill="#a05020"/>
+      <circle cx="325" cy="508" r="1.5" fill="#c87838"/>
+      <circle cx="375" cy="508" r="1.3" fill="#a05020"/>
+    </g>
+
+    <!-- Tiny spines on cone -->
+    <g opacity="0.4" stroke="#e8a060" stroke-width="0.8" fill="none">
+      <line x1="335" y1="493" x2="334" y2="489"/>
+      <line x1="348" y1="490" x2="348" y2="486"/>
+      <line x1="360" y1="492" x2="361" y2="488"/>
+      <line x1="340" y1="498" x2="339" y2="494"/>
+      <line x1="355" y1="500" x2="356" y2="496"/>
+      <line x1="330" y1="505" x2="328" y2="501"/>
+      <line x1="345" y1="508" x2="344" y2="504"/>
+      <line x1="360" y1="509" x2="361" y2="505"/>
+      <line x1="370" y1="505" x2="372" y2="501"/>
+    </g>
+  </g>
+
+  <!-- ============ BUTTERFLY ============ -->
+  <g filter="url(#watercolor)">
+
+    <!-- ===== LEFT HINDWING ===== -->
+    <g>
+      <!-- Base shape -->
+      <path d="M 338,420 C 320,430 280,445 248,460 C 225,472 205,488 195,502
+               C 188,512 186,525 195,530 C 205,535 220,528 235,515
+               C 258,496 285,470 310,448 C 325,436 338,425 338,420 Z"
+            fill="url(#hindwingOrange)" opacity="0.92"/>
+
+      <!-- Black border -->
+      <path d="M 338,420 C 320,430 280,445 248,460 C 225,472 205,488 195,502
+               C 188,512 186,525 195,530 C 205,535 220,528 235,515
+               C 258,496 285,470 310,448 C 325,436 338,425 338,420 Z"
+            fill="none" stroke="#1a1210" stroke-width="4"/>
+
+      <!-- Black edge band -->
+      <path d="M 248,460 C 225,472 205,488 195,502 C 188,512 186,525 195,530
+               C 205,535 220,528 235,515 C 248,504 260,490 268,478
+               C 255,482 238,494 225,505 C 215,514 205,522 200,525
+               C 196,520 198,510 205,498 C 215,482 235,468 248,460 Z"
+            fill="#1a1210" opacity="0.85"/>
+
+      <!-- White spots on hindwing edge -->
+      <circle cx="200" cy="520" r="3" fill="#f0ece4" opacity="0.85"/>
+      <circle cx="210" cy="515" r="2.5" fill="#f0ece4" opacity="0.8"/>
+      <circle cx="220" cy="510" r="2.5" fill="#f0ece4" opacity="0.8"/>
+      <circle cx="230" cy="503" r="2.2" fill="#f0ece4" opacity="0.75"/>
+      <circle cx="240" cy="496" r="2" fill="#f0ece4" opacity="0.7"/>
+
+      <!-- Hindwing veins -->
+      <g stroke="#1a1210" stroke-width="1.2" fill="none" opacity="0.7">
+        <path d="M 338,420 C 310,438 270,462 238,482"/>
+        <path d="M 335,425 C 300,448 260,475 228,498"/>
+        <path d="M 332,432 C 295,458 255,488 218,510"/>
+      </g>
+
+      <!-- Orange cells between veins -->
+      <path d="M 300,445 C 285,455 268,468 255,478 L 250,472 C 265,460 282,448 298,438 Z"
+            fill="#f09538" opacity="0.4"/>
+    </g>
+
+    <!-- ===== RIGHT HINDWING ===== -->
+    <g>
+      <!-- Base shape -->
+      <path d="M 367,420 C 385,430 425,445 457,460 C 480,472 500,488 510,502
+               C 517,512 519,525 510,530 C 500,535 485,528 470,515
+               C 447,496 420,470 395,448 C 380,436 367,425 367,420 Z"
+            fill="url(#hindwingOrange)" opacity="0.92"/>
+
+      <!-- Black border -->
+      <path d="M 367,420 C 385,430 425,445 457,460 C 480,472 500,488 510,502
+               C 517,512 519,525 510,530 C 500,535 485,528 470,515
+               C 447,496 420,470 395,448 C 380,436 367,425 367,420 Z"
+            fill="none" stroke="#1a1210" stroke-width="4"/>
+
+      <!-- Black edge band -->
+      <path d="M 457,460 C 480,472 500,488 510,502 C 517,512 519,525 510,530
+               C 500,535 485,528 470,515 C 457,504 445,490 437,478
+               C 450,482 467,494 480,505 C 490,514 500,522 505,525
+               C 509,520 507,510 500,498 C 490,482 470,468 457,460 Z"
+            fill="#1a1210" opacity="0.85"/>
+
+      <!-- White spots -->
+      <circle cx="505" cy="520" r="3" fill="#f0ece4" opacity="0.85"/>
+      <circle cx="495" cy="515" r="2.5" fill="#f0ece4" opacity="0.8"/>
+      <circle cx="485" cy="510" r="2.5" fill="#f0ece4" opacity="0.8"/>
+      <circle cx="475" cy="503" r="2.2" fill="#f0ece4" opacity="0.75"/>
+      <circle cx="465" cy="496" r="2" fill="#f0ece4" opacity="0.7"/>
+
+      <!-- Hindwing veins -->
+      <g stroke="#1a1210" stroke-width="1.2" fill="none" opacity="0.7">
+        <path d="M 367,420 C 395,438 435,462 467,482"/>
+        <path d="M 370,425 C 405,448 445,475 477,498"/>
+        <path d="M 373,432 C 410,458 450,488 487,510"/>
+      </g>
+    </g>
+
+    <!-- ===== LEFT FOREWING ===== -->
+    <g>
+      <!-- Base wing shape -->
+      <path d="M 340,370 C 320,340 280,280 255,240 C 235,208 220,180 210,160
+               C 195,135 178,118 165,115 C 145,110 130,125 125,140
+               C 118,160 120,195 130,230 C 140,265 155,300 175,335
+               C 195,368 220,398 250,420 C 275,438 310,450 340,448 Z"
+            fill="url(#wingOrangeRadial)"/>
+
+      <!-- Black leading edge (costal margin) -->
+      <path d="M 340,370 C 320,340 280,280 255,240 C 235,208 220,180 210,160
+               C 195,135 178,118 165,115 C 155,112 145,115 138,122
+               L 145,115 C 158,110 175,112 192,130
+               C 205,145 218,170 235,205 C 258,250 290,310 340,375 Z"
+            fill="#1a1210" opacity="0.85"/>
+
+      <!-- Black outer edge band -->
+      <path d="M 125,140 C 118,160 120,195 130,230 C 140,265 155,300 175,335
+               C 195,368 220,398 250,420 C 275,438 310,450 340,448
+               L 340,435 C 312,437 280,426 258,412
+               C 235,396 212,372 192,340 C 172,308 158,272 148,238
+               C 140,210 135,180 135,155 C 135,145 130,138 125,140 Z"
+            fill="#1a1210" opacity="0.8"/>
+
+      <!-- Orange cells (visible between veins) -->
+      <!-- Cell 1 - upper -->
+      <path d="M 260,240 C 250,260 238,285 230,308 L 220,295 C 228,275 240,255 255,235 Z"
+            fill="#e88028" opacity="0.5"/>
+      <!-- Cell 2 -->
+      <path d="M 280,280 C 268,305 252,340 245,360 L 235,348
+               C 242,330 258,300 272,275 Z"
+            fill="#f09038" opacity="0.5"/>
+      <!-- Cell 3 -->
+      <path d="M 300,315 C 290,340 278,370 270,392 L 260,382
+               C 268,362 282,335 295,310 Z"
+            fill="#e87828" opacity="0.45"/>
+
+      <!-- Wing veins -->
+      <g stroke="#1a1210" stroke-width="1.8" fill="none" opacity="0.75" filter="url(#veinDetail)">
+        <!-- Main veins radiating from body -->
+        <path d="M 340,400 C 310,380 260,330 220,270"/>
+        <path d="M 340,410 C 305,390 255,350 210,300"/>
+        <path d="M 338,420 C 295,400 245,368 200,328"/>
+        <path d="M 338,430 C 290,415 240,390 190,355"/>
+        <path d="M 338,438 C 290,428 240,410 185,385"/>
+
+        <!-- Cross veins -->
+        <path d="M 262,290 C 258,298 252,310 248,318"/>
+        <path d="M 242,325 C 238,335 233,348 230,358"/>
+        <path d="M 222,360 C 218,370 213,382 210,390"/>
+      </g>
+
+      <!-- White spots along outer edge -->
+      <g opacity="0.88">
+        <circle cx="132" cy="175" r="3.5" fill="#f0ece4"/>
+        <circle cx="134" cy="200" r="3.5" fill="#f0ece4"/>
+        <circle cx="138" cy="225" r="3.2" fill="#f0ece4"/>
+        <circle cx="144" cy="250" r="3" fill="#f0ece4"/>
+        <circle cx="152" cy="273" r="3" fill="#f0ece4"/>
+        <circle cx="162" cy="295" r="2.8" fill="#f0ece4"/>
+        <circle cx="175" cy="315" r="2.8" fill="#f0ece4"/>
+        <circle cx="190" cy="335" r="2.5" fill="#f0ece4"/>
+        <circle cx="207" cy="353" r="2.5" fill="#f0ece4"/>
+        <circle cx="226" cy="370" r="2.5" fill="#f0ece4"/>
+        <circle cx="245" cy="386" r="2.5" fill="#f0ece4"/>
+        <circle cx="265" cy="400" r="2.5" fill="#f0ece4"/>
+      </g>
+
+      <!-- White spots in apical area (wing tip) -->
+      <g opacity="0.8">
+        <circle cx="165" cy="120" r="4" fill="#f0ece4"/>
+        <circle cx="150" cy="132" r="3" fill="#f0ece4"/>
+        <circle cx="140" cy="148" r="3" fill="#f0ece4"/>
+        <ellipse cx="175" cy="125" rx="4" ry="2.5" fill="#f0ece4" transform="rotate(-20,175,125)"/>
+      </g>
+
+      <!-- Subtle orange wash in cell areas -->
+      <path d="M 280,280 C 260,310 240,350 230,380 C 250,365 275,330 290,300
+               C 300,280 305,268 300,270 Z"
+            fill="#f0a048" opacity="0.25"/>
+    </g>
+
+    <!-- ===== RIGHT FOREWING ===== -->
+    <g>
+      <!-- Base wing shape -->
+      <path d="M 365,370 C 385,340 425,280 450,240 C 470,208 485,180 495,160
+               C 510,135 527,118 540,115 C 560,110 575,125 580,140
+               C 587,160 585,195 575,230 C 565,265 550,300 530,335
+               C 510,368 485,398 455,420 C 430,438 395,450 365,448 Z"
+            fill="url(#wingOrange2)"/>
+
+      <!-- Black leading edge -->
+      <path d="M 365,370 C 385,340 425,280 450,240 C 470,208 485,180 495,160
+               C 510,135 527,118 540,115 C 550,112 560,115 567,122
+               L 560,115 C 547,110 530,112 513,130
+               C 500,145 487,170 470,205 C 447,250 415,310 365,375 Z"
+            fill="#1a1210" opacity="0.85"/>
+
+      <!-- Black outer edge band -->
+      <path d="M 580,140 C 587,160 585,195 575,230 C 565,265 550,300 530,335
+               C 510,368 485,398 455,420 C 430,438 395,450 365,448
+               L 365,435 C 393,437 425,426 447,412
+               C 470,396 493,372 513,340 C 533,308 547,272 557,238
+               C 565,210 570,180 570,155 C 570,145 575,138 580,140 Z"
+            fill="#1a1210" opacity="0.8"/>
+
+      <!-- Orange cells -->
+      <path d="M 445,240 C 455,260 467,285 475,308 L 485,295 C 477,275 465,255 450,235 Z"
+            fill="#e88028" opacity="0.5"/>
+      <path d="M 425,280 C 437,305 453,340 460,360 L 470,348
+               C 463,330 447,300 433,275 Z"
+            fill="#f09038" opacity="0.5"/>
+      <path d="M 405,315 C 415,340 427,370 435,392 L 445,382
+               C 437,362 423,335 410,310 Z"
+            fill="#e87828" opacity="0.45"/>
+
+      <!-- Wing veins -->
+      <g stroke="#1a1210" stroke-width="1.8" fill="none" opacity="0.75" filter="url(#veinDetail)">
+        <path d="M 365,400 C 395,380 445,330 485,270"/>
+        <path d="M 365,410 C 400,390 450,350 495,300"/>
+        <path d="M 367,420 C 410,400 460,368 505,328"/>
+        <path d="M 367,430 C 415,415 465,390 515,355"/>
+        <path d="M 367,438 C 415,428 465,410 520,385"/>
+
+        <!-- Cross veins -->
+        <path d="M 443,290 C 447,298 453,310 457,318"/>
+        <path d="M 463,325 C 467,335 472,348 475,358"/>
+        <path d="M 483,360 C 487,370 492,382 495,390"/>
+      </g>
+
+      <!-- White spots along outer edge -->
+      <g opacity="0.88">
+        <circle cx="573" cy="175" r="3.5" fill="#f0ece4"/>
+        <circle cx="571" cy="200" r="3.5" fill="#f0ece4"/>
+        <circle cx="567" cy="225" r="3.2" fill="#f0ece4"/>
+        <circle cx="561" cy="250" r="3" fill="#f0ece4"/>
+        <circle cx="553" cy="273" r="3" fill="#f0ece4"/>
+        <circle cx="543" cy="295" r="2.8" fill="#f0ece4"/>
+        <circle cx="530" cy="315" r="2.8" fill="#f0ece4"/>
+        <circle cx="515" cy="335" r="2.5" fill="#f0ece4"/>
+        <circle cx="498" cy="353" r="2.5" fill="#f0ece4"/>
+        <circle cx="479" cy="370" r="2.5" fill="#f0ece4"/>
+        <circle cx="460" cy="386" r="2.5" fill="#f0ece4"/>
+        <circle cx="440" cy="400" r="2.5" fill="#f0ece4"/>
+      </g>
+
+      <!-- White spots in apical area -->
+      <g opacity="0.8">
+        <circle cx="540" cy="120" r="4" fill="#f0ece4"/>
+        <circle cx="555" cy="132" r="3" fill="#f0ece4"/>
+        <circle cx="565" cy="148" r="3" fill="#f0ece4"/>
+        <ellipse cx="530" cy="125" rx="4" ry="2.5" fill="#f0ece4" transform="rotate(20,530,125)"/>
+      </g>
+
+      <!-- Subtle orange wash -->
+      <path d="M 425,280 C 445,310 465,350 475,380 C 455,365 430,330 415,300
+               C 405,280 400,268 405,270 Z"
+            fill="#f0a048" opacity="0.25"/>
+    </g>
+
+    <!-- ===== BUTTERFLY BODY ===== -->
+    <g>
+      <!-- Abdomen -->
+      <ellipse cx="352" cy="465" rx="7" ry="30" fill="url(#bodyGrad)" transform="rotate(2,352,465)"/>
+      <!-- Abdomen segments -->
+      <g stroke="#3a2a20" stroke-width="0.5" opacity="0.4" fill="none">
+        <path d="M 346,450 Q 352,448 358,450"/>
+        <path d="M 345,458 Q 352,456 359,458"/>
+        <path d="M 346,466 Q 352,464 358,466"/>
+        <path d="M 346,474 Q 352,472 358,474"/>
+        <path d="M 347,482 Q 352,480 357,482"/>
+      </g>
+      <!-- Abdomen white spots -->
+      <g fill="#f0ece4" opacity="0.5">
+        <circle cx="346" cy="455" r="1"/>
+        <circle cx="358" cy="455" r="1"/>
+        <circle cx="345" cy="465" r="1"/>
+        <circle cx="359" cy="465" r="1"/>
+        <circle cx="346" cy="475" r="1"/>
+        <circle cx="358" cy="475" r="1"/>
+      </g>
+
+      <!-- Thorax -->
+      <ellipse cx="352" cy="420" rx="10" ry="22" fill="#1a1210"/>
+      <!-- Thorax white spots -->
+      <g fill="#f0ece4" opacity="0.55">
+        <circle cx="348" cy="410" r="1.2"/>
+        <circle cx="356" cy="410" r="1.2"/>
+        <circle cx="347" cy="418" r="1"/>
+        <circle cx="357" cy="418" r="1"/>
+        <circle cx="348" cy="426" r="1.2"/>
+        <circle cx="356" cy="426" r="1.2"/>
+      </g>
+
+      <!-- Head -->
+      <circle cx="352" cy="393" r="8" fill="#1a1210"/>
+      <!-- Eyes -->
+      <circle cx="347" cy="390" r="3.5" fill="#2a2218"/>
+      <circle cx="357" cy="390" r="3.5" fill="#2a2218"/>
+      <!-- Eye highlights -->
+      <circle cx="346" cy="389" r="1.2" fill="#4a4038" opacity="0.6"/>
+      <circle cx="356" cy="389" r="1.2" fill="#4a4038" opacity="0.6"/>
+      <!-- Head white spots -->
+      <circle cx="352" cy="386" r="1" fill="#f0ece4" opacity="0.5"/>
+      <circle cx="348" cy="396" r="0.8" fill="#f0ece4" opacity="0.4"/>
+      <circle cx="356" cy="396" r="0.8" fill="#f0ece4" opacity="0.4"/>
+
+      <!-- Proboscis (curled) -->
+      <path d="M 352,398 C 354,405 358,412 360,418 C 362,425 358,430 354,428
+               C 350,425 348,418 350,412"
+            fill="none" stroke="#2a1a10" stroke-width="1" opacity="0.7"/>
+
+      <!-- Antennae -->
+      <g stroke="#1a1210" stroke-width="1.5" fill="none" stroke-linecap="round">
+        <!-- Left antenna -->
+        <path d="M 348,386 C 340,365 325,340 310,318 C 300,305 288,295 280,290"/>
+        <!-- Right antenna -->
+        <path d="M 356,386 C 364,365 379,340 394,318 C 404,305 416,295 424,290"/>
+      </g>
+      <!-- Antenna clubs (bulbous tips) -->
+      <ellipse cx="278" cy="288" rx="4" ry="6" fill="#e08020" transform="rotate(-25,278,288)"/>
+      <ellipse cx="278" cy="288" rx="3" ry="5" fill="#1a1210" transform="rotate(-25,278,288)" opacity="0.5"/>
+      <ellipse cx="426" cy="288" rx="4" ry="6" fill="#e08020" transform="rotate(25,426,288)"/>
+      <ellipse cx="426" cy="288" rx="3" ry="5" fill="#1a1210" transform="rotate(25,426,288)" opacity="0.5"/>
+
+      <!-- Legs -->
+      <g stroke="#1a1210" stroke-width="1.2" fill="none" opacity="0.65" stroke-linecap="round">
+        <!-- Front legs (tucked, monarchs have reduced front legs) -->
+        <path d="M 348,415 C 342,420 338,425 336,430"/>
+        <path d="M 356,415 C 362,420 366,425 368,430"/>
+
+        <!-- Middle legs -->
+        <path d="M 346,430 C 338,440 328,452 322,460 C 318,465 316,470 318,472"/>
+        <path d="M 358,430 C 366,440 376,452 382,460 C 386,465 388,470 386,472"/>
+
+        <!-- Hind legs (gripping flower) -->
+        <path d="M 348,440 C 340,455 330,475 325,490 C 322,498 324,505 328,505"/>
+        <path d="M 356,440 C 364,455 374,475 379,490 C 382,498 380,505 376,505"/>
+      </g>
+    </g>
+
+    <!-- Butterfly shadow on flower -->
+    <ellipse cx="352" cy="500" rx="35" ry="8" fill="#3a2a18" opacity="0.12"/>
+  </g>
+
+  <!-- ============ ADDITIONAL BOTANICAL DETAILS ============ -->
+
+  <!-- Small bud on secondary stem -->
+  <g filter="url(#watercolorWash)">
+    <path d="M 280,695 C 275,690 268,682 264,678 C 260,674 258,668 262,666
+             C 266,664 272,668 275,674 C 278,680 280,688 280,695 Z"
+          fill="#7a9a68" opacity="0.7"/>
+    <path d="M 280,695 C 278,688 275,678 272,672 C 270,668 268,665 270,667"
+          fill="none" stroke="#4a7038" stroke-width="0.5" opacity="0.4"/>
+  </g>
+
+  <!-- Tiny scattered details - pollen/dust -->
+  <g opacity="0.15">
+    <circle cx="310" cy="280" r="1" fill="#e8a040"/>
+    <circle cx="420" cy="310" r="0.8" fill="#e8a040"/>
+    <circle cx="250" cy="350" r="0.7" fill="#d8c080"/>
+    <circle cx="480" cy="380" r="0.9" fill="#d8c080"/>
+    <circle cx="300" cy="550" r="0.6" fill="#a0c080"/>
+    <circle cx="420" cy="560" r="0.8" fill="#a0c080"/>
+  </g>
+
+  <!-- Subtle vignette overlay -->
+  <rect width="700" height="900" fill="url(#bgGrad)" opacity="0">
+    <animate attributeName="opacity" values="0" dur="1s" fill="freeze"/>
+  </rect>
+
+  <!-- Scientific name label -->
+  <text x="350" y="865" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+        font-size="13" font-style="italic" fill="#9a8a78" letter-spacing="1.5" opacity="0.7">
+    Danaus plexippus on Echinacea purpurea
+  </text>
+
+</svg>
+<p class="title">07 &mdash; Botanical Illustration</p>
+</div>
+</body>
+</html>
