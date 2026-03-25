@@ -1,4 +1,4 @@
-import { readFileSync, appendFileSync } from 'fs';
+import { readFileSync, appendFileSync, statSync } from 'fs';
 
 /**
  * Set GitHub Actions output
@@ -95,9 +95,10 @@ export async function uploadImageToLinkedIn(imagePath) {
  * @param {string} params.personUrn - LinkedIn person URN
  * @param {string} params.text - Post text content
  * @param {string} [params.imageUrn] - Optional image URN from uploadImageToLinkedIn
+ * @param {string} [params.videoUrn] - Optional video URN from uploadVideoToLinkedIn
  * @returns {Promise<Object>} - Created post data
  */
-export async function createLinkedInPost({ personUrn, text, imageUrn }) {
+export async function createLinkedInPost({ personUrn, text, imageUrn, videoUrn }) {
   const accessToken = process.env.LINKEDIN_ACCESS_TOKEN;
 
   try {
@@ -116,16 +117,16 @@ export async function createLinkedInPost({ personUrn, text, imageUrn }) {
           shareCommentary: {
             text: text,
           },
-          shareMediaCategory: imageUrn ? 'IMAGE' : 'NONE',
-          ...(imageUrn && {
+          shareMediaCategory: videoUrn ? 'VIDEO' : (imageUrn ? 'IMAGE' : 'NONE'),
+          ...((videoUrn || imageUrn) && {
             media: [{
               status: 'READY',
               description: {
-                text: 'Blog post featured image',
+                text: videoUrn ? 'Watch the demo' : 'Blog post featured image',
               },
-              media: imageUrn,
+              media: videoUrn || imageUrn,
               title: {
-                text: 'Read the full article',
+                text: videoUrn ? 'AI automation demo' : 'Read the full article',
               },
             }],
           }),
@@ -158,6 +159,125 @@ export async function createLinkedInPost({ personUrn, text, imageUrn }) {
 
   } catch (error) {
     console.error('❌ Error creating LinkedIn post:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Upload video to LinkedIn
+ * LinkedIn video upload flow:
+ *   1. Register upload (recipe: feedshare-video)
+ *   2. Upload binary to provided URL
+ *   3. Poll asset status until AVAILABLE (processing takes seconds to minutes)
+ * Returns: Asset URN for use in post
+ *
+ * @param {string} videoPath - Local path to video file (.mov, .mp4, etc.)
+ * @returns {Promise<string>} - LinkedIn asset URN
+ */
+export async function uploadVideoToLinkedIn(videoPath) {
+  const accessToken = process.env.LINKEDIN_ACCESS_TOKEN;
+  const personUrn = process.env.LINKEDIN_PERSON_URN;
+  const fileSizeBytes = statSync(videoPath).size;
+
+  const fullOwnerUrn = personUrn.startsWith('urn:li:person:')
+    ? personUrn
+    : `urn:li:person:${personUrn}`;
+
+  try {
+    console.log(`🎬 Step 1: Registering video upload (${(fileSizeBytes / 1024 / 1024).toFixed(1)} MB)...`);
+
+    // Step 1: Register upload
+    const registerResponse = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+      body: JSON.stringify({
+        registerUploadRequest: {
+          recipes: ['urn:li:digitalmediaRecipe:feedshare-video'],
+          owner: fullOwnerUrn,
+          serviceRelationships: [{
+            relationshipType: 'OWNER',
+            identifier: 'urn:li:userGeneratedContent',
+          }],
+        },
+      }),
+    });
+
+    if (!registerResponse.ok) {
+      const errorText = await registerResponse.text();
+      throw new Error(`Video registration failed (${registerResponse.status}): ${errorText}`);
+    }
+
+    const registerData = await registerResponse.json();
+    const uploadUrl = registerData.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
+    const asset = registerData.value.asset;
+
+    console.log(`🎬 Step 2: Uploading video binary...`);
+
+    // Step 2: Upload video binary
+    const videoBuffer = readFileSync(videoPath);
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': String(fileSizeBytes),
+      },
+      body: videoBuffer,
+    });
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      throw new Error(`Video upload failed (${uploadResponse.status}): ${errorText}`);
+    }
+
+    console.log(`🎬 Step 3: Waiting for LinkedIn to process video...`);
+
+    // Step 3: Poll for processing completion
+    // Extract asset ID from URN (e.g., "urn:li:digitalmediaAsset:D4E10AQHP..." -> full URN)
+    const assetId = asset.replace('urn:li:digitalmediaAsset:', '');
+    const maxPolls = 30; // 5 min max (30 * 10s)
+    const pollInterval = 10_000; // 10 seconds
+
+    for (let i = 0; i < maxPolls; i++) {
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+      const statusResponse = await fetch(`https://api.linkedin.com/v2/assets/${assetId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+      });
+
+      if (!statusResponse.ok) {
+        console.log(`   ⏳ Poll ${i + 1}/${maxPolls}: status check returned ${statusResponse.status}, retrying...`);
+        continue;
+      }
+
+      const statusData = await statusResponse.json();
+      const recipes = statusData.recipes || [];
+      const status = recipes[0]?.status || statusData.status || 'UNKNOWN';
+
+      console.log(`   ⏳ Poll ${i + 1}/${maxPolls}: ${status}`);
+
+      if (status === 'AVAILABLE') {
+        console.log(`✅ Video processed successfully: ${asset}`);
+        return asset;
+      }
+
+      if (status === 'FAILED' || status === 'CANCELED') {
+        throw new Error(`Video processing ${status}. LinkedIn rejected the video.`);
+      }
+    }
+
+    throw new Error(`Video processing timed out after ${maxPolls * pollInterval / 1000}s. Try a smaller file.`);
+
+  } catch (error) {
+    console.error('❌ Error uploading video to LinkedIn:', error.message);
     throw error;
   }
 }
