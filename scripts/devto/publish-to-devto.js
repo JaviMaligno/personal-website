@@ -50,6 +50,12 @@ async function publishToDevto() {
       '**🎥 [Watch the video demo on Loom](https://www.loom.com/share/$1)**\n\n> _Note: Interactive video player available on the [original article]('+canonicalUrl+')_'
     );
 
+    // Convert relative image paths to absolute URLs for Dev.to
+    devtoContent = devtoContent.replace(
+      /!\[([^\]]*)\]\(\/([^)]+)\)/g,
+      `![$1](${siteUrl}/$2)`
+    );
+
     // Add CTA at the end of content
     const contentWithCTA = `${devtoContent}
 

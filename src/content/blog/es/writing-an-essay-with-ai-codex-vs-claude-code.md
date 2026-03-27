@@ -15,7 +15,7 @@ La diferencia de calidad fue llamativa. No de la forma que esperarías de una co
 
 El ensayo está disponible en [Payhip (español)](https://payhip.com/b/M4bjR) y [Payhip (inglés)](https://payhip.com/b/KHMxr).
 
-![La Cascada de Parches — diagrama matplotlib generado por Claude Code, comparando cómo las intervenciones aisladas crean efectos secundarios en cascada en medicina y ecología](/blog/scu-patch-cascade-es.png)
+![La Cascada de Parches — diagrama matplotlib generado por Claude Code, comparando cómo las intervenciones aisladas crean efectos secundarios en cascada en medicina y ecología](https://www.javieraguilar.ai/blog/scu-patch-cascade-es.png)
 
 ## El proyecto
 

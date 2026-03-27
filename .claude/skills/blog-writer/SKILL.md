@@ -158,7 +158,7 @@ Wrap up with actionable takeaways or links.
 - **Length**: 800-2000 words typically
 - **Structure**: Clear headings, scannable sections
 - **Code**: Include relevant code snippets with language identifiers
-- **Images**: Reference as `/blog/image-name.png`
+- **Images**: Always use **absolute URLs** for inline images: `https://www.javieraguilar.ai/blog/image-name.png`. Dev.to cannot resolve relative paths (`/blog/...`), and the publish script auto-converts relative paths but using absolute URLs from the start avoids issues. The `heroImage` frontmatter field can remain a relative path (it's converted by the publish script).
 
 ## Video Embeds
 
