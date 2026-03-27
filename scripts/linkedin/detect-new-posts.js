@@ -4,7 +4,7 @@ import matter from 'gray-matter';
 import { setOutput } from './utils.js';
 
 /**
- * Detects new or modified English blog posts from git diff
+ * Detects new English blog posts from git diff (ignores modifications)
  * Outputs: has_new_posts, post_path, post_title
  */
 async function detectNewPosts() {
@@ -24,20 +24,23 @@ async function detectNewPosts() {
 
     console.log(`Found ${changedFiles.length} changed files`);
 
-    // Filter for new/modified English blog posts
+    // Filter for NEW English blog posts only (not modifications)
+    // Modifications should not trigger a new LinkedIn post
     const newPosts = changedFiles
       .filter(line => {
         if (!line) return false;
 
         const [status, file] = line.split('\t');
-        const isNewOrModified = (status === 'A' || status === 'M');
+        const isNew = status === 'A';
         const isEnglishBlogPost = file && file.startsWith('src/content/blog/en/') && file.endsWith('.md');
 
-        if (isNewOrModified && isEnglishBlogPost) {
+        if (isNew && isEnglishBlogPost) {
           console.log(`  ✅ ${status} ${file}`);
+        } else if (status === 'M' && isEnglishBlogPost) {
+          console.log(`  ⏭️  ${status} ${file} (modified, skipping — only new posts trigger LinkedIn)`);
         }
 
-        return isNewOrModified && isEnglishBlogPost;
+        return isNew && isEnglishBlogPost;
       })
       .map(line => line.split('\t')[1]);
 
