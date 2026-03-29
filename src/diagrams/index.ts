@@ -48,16 +48,19 @@ graph TB
 
     subgraph Verify ["${t.phases.verify}"]
         N --> O["${t.nodes.verifier}"]
+        O --> O1["${t.nodes.infraChecks}"]
+        O --> O2["${t.nodes.dataChecks}"]
+        O --> O3["${t.nodes.apiChecks}"]
     end
 
     subgraph Fix ["${t.phases.fix}"]
-        O -->|FAIL| P["${t.nodes.codeFixer}"]
+        O1 & O2 & O3 -->|FAIL| P["${t.nodes.codeFixer}"]
         P --> Q["${t.nodes.loopGuard}"]
         Q -->|retry| M
         Q -->|max reached| R["${t.nodes.hitl}"]
     end
 
-    O -->|PASS| S["✓"]
+    O1 & O2 & O3 -->|PASS| S["✓"]
 
     classDef default fill:#0f172a,stroke:#334155,color:#fff,stroke-width:1px;
     classDef review fill:#3b0764,stroke:#a855f7,stroke-width:2px;
@@ -66,7 +69,7 @@ graph TB
     classDef success fill:#064e3b,stroke:#10b981,color:#fff,stroke-width:2px;
 
     class G,K,R review;
-    class A,B,B2,C,H,I,J,M,O,P agent;
+    class A,B,B2,C,H,I,J,M,O,O1,O2,O3,P agent;
     class Q feedback;
     class S success;`,
   legend: [
