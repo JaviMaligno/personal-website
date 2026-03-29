@@ -1,5 +1,5 @@
 export interface DiagramLegendItem {
-  key: 'agent' | 'process' | 'review';
+  key: 'agent' | 'process' | 'review' | 'feedback';
   color: string;
   borderColor: string;
 }
@@ -37,19 +37,43 @@ graph TB
         G --> H["${t.nodes.techSpec}"]
         H --> I["${t.nodes.coder}"]
         I --> J["${t.nodes.tester}"]
-        J --> K["${t.nodes.review}"]
+        J --> L["${t.nodes.schemas}"]
+        L --> K["${t.nodes.review}"]
     end
+
+    subgraph Deploy ["${t.phases.deploy}"]
+        K --> M["${t.nodes.deployer}"]
+        M --> N["${t.nodes.argocd}"]
+    end
+
+    subgraph Verify ["${t.phases.verify}"]
+        N --> O["${t.nodes.verifier}"]
+    end
+
+    subgraph Fix ["${t.phases.fix}"]
+        O -->|FAIL| P["${t.nodes.codeFixer}"]
+        P --> Q["${t.nodes.loopGuard}"]
+        Q -->|retry| M
+        Q -->|max reached| R["${t.nodes.hitl}"]
+    end
+
+    O -->|PASS| S["✓"]
 
     classDef default fill:#0f172a,stroke:#334155,color:#fff,stroke-width:1px;
     classDef review fill:#3b0764,stroke:#a855f7,stroke-width:2px;
     classDef agent fill:#0f172a,stroke:#3b82f6,color:#fff;
+    classDef feedback fill:#0f172a,stroke:#f59e0b,color:#fff,stroke-width:2px;
+    classDef success fill:#064e3b,stroke:#10b981,color:#fff,stroke-width:2px;
 
-    class G,K review;
-    class A,B,B2,C,H,I,J agent;`,
+    class G,K,R review;
+    class A,B,B2,C,H,I,J,M,O,P agent;
+    class Q feedback;
+    class S success;`,
   legend: [
     { key: 'agent', color: '#0f172a', borderColor: '#3b82f6' },
     { key: 'process', color: '#0f172a', borderColor: '#334155' },
-    { key: 'review', color: '#3b0764', borderColor: '#a855f7' }
+    { key: 'review', color: '#3b0764', borderColor: '#a855f7' },
+    { key: 'feedback', color: '#0f172a', borderColor: '#f59e0b' }
   ]
 };
 
