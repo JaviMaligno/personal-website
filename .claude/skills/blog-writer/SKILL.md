@@ -71,15 +71,15 @@ linkedinImage: /blog/linkedin-card.png  # Opcional
 
 ## Hero Image Generation
 
-Every article must have a `heroImage`. Generate it using the thumbnail script with FLUX.1-schnell via Hugging Face's free API.
+Every article must have a `heroImage`. Generate it using Codex CLI, which has access to OpenAI's image generation models (gpt-image-2).
 
 ### How to Generate
 
 ```bash
-python3 scripts/generate-thumbnails.py --prompt "YOUR PROMPT" --output "article-slug.png"
+codex exec --full-auto "Generate an image with this prompt and save it to public/blog/article-slug.png: 'YOUR PROMPT HERE'"
 ```
 
-This saves the image directly to `public/blog/article-slug.png`.
+Codex will use its built-in `image_gen` tool, generate the image, and copy it to the specified path in the project.
 
 ### Prompt Guidelines
 
@@ -94,22 +94,21 @@ Style: clean tech diagram aesthetic, neon blue and [ACCENT COLOR] accents on dee
 - **Always end with**: "Style: clean tech diagram aesthetic, neon [color] accents on deep navy, no photorealism, no humans"
 - **Scene**: Describe the core concept of the article as a visual metaphor using tech icons, nodes, terminals, diagrams
 - **Accent colors**: Pick one that fits the article's theme (amber, red, green, purple, orange, teal, gold)
-- **Avoid**: photorealism, humans, text-heavy prompts (FLUX struggles with legible text)
+- **Avoid**: photorealism, humans, text-heavy prompts
 
 ### Workflow
 
 1. After writing the article content, craft an image prompt based on the article's core concept
-2. Run the generation script
+2. Run Codex to generate the image
 3. **Show the generated image to the user for review** (use Read tool on the PNG)
-4. The user will typically compare it with a Gemini-generated version using the same prompt before deciding
-5. If approved, add `heroImage: "/blog/article-slug.png"` to **both** EN and ES frontmatter
-6. If not approved, adjust the prompt and regenerate
-7. **Do NOT add heroImage to frontmatter until the user explicitly approves the image**
+4. If approved, add `heroImage: "/blog/article-slug.png"` to **both** EN and ES frontmatter
+5. If not approved, adjust the prompt and regenerate
+6. Codex image quality is trusted — no need for comparison with other generators
 
 ### Requirements
 
-- `HF_TOKEN` must be set in `.env` (Hugging Face API token)
-- `requests` Python package must be available
+- Codex CLI installed (`codex` command available)
+- OpenAI API key configured in Codex
 
 ## Bilingual Workflow
 
