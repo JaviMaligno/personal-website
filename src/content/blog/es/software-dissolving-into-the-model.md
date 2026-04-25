@@ -56,9 +56,9 @@ Llevo dándole vueltas en el contexto de mi propio trabajo.
 
 Los servidores MCP que he construido — [`mcp-server-bitbucket`](https://github.com/JaviMaligno/mcp-server-bitbucket), [`postgres_mcp`](https://github.com/JaviMaligno/postgres_mcp), [`langfuse-mcp-server`](https://github.com/JaviMaligno/langfuse-mcp-server) — ya viven en esta nueva forma. No son productos con UI. Son protocolos que cualquier agente puede recoger. La interfaz es la spec, no la pantalla.
 
-El clasificador de compliance y el parser de documentos médicos dependen de algo que *no* se comprime en un fichero markdown: una taxonomía curada, edge cases extraídos de documentos reales, un suite de evaluación que demuestra que el modelo aguanta la cola larga. La orquestación a su alrededor cada vez se comprime más en instrucciones, pero el contexto de dominio no.
+El [clasificador de compliance](/es/projects/compliance-classifier) y el [parser de documentos médicos](/es/projects/medical-doc-parser) dependen de algo que *no* se comprime en un fichero markdown: una taxonomía curada, edge cases extraídos de documentos reales, un suite de evaluación que demuestra que el modelo aguanta la cola larga. La orquestación a su alrededor cada vez se comprime más en instrucciones, pero el contexto de dominio no.
 
-El valor del data-source automator está en una secuencia específica de human-in-the-loop que afinamos a base de iterar — dónde se para el agente, qué pregunta, qué loguea. Hace dos años eso vivía en código. Hoy vive más naturalmente como una skill más un set de evals.
+El valor del [data-source automator](/es/projects/data-source-automator) está en una secuencia específica de human-in-the-loop que afinamos a base de iterar — dónde se para el agente, qué pregunta, qué loguea. Hace dos años eso vivía en código. Hoy vive más naturalmente como una skill más un set de evals.
 
 Lo que sobrevive en el medio es lo que en realidad nunca fue código del todo: los datos, la taxonomía, el harness de evals, las *decisiones* de orquestación. Lo que era simplemente "código" — el envoltorio, el formulario, el boilerplate — se va a la capa de skills por un lado o al render generado por el otro.
 

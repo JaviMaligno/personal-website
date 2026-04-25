@@ -56,9 +56,9 @@ I've been thinking about this in the context of my own work.
 
 The MCP servers I've built — [`mcp-server-bitbucket`](https://github.com/JaviMaligno/mcp-server-bitbucket), [`postgres_mcp`](https://github.com/JaviMaligno/postgres_mcp), [`langfuse-mcp-server`](https://github.com/JaviMaligno/langfuse-mcp-server) — already live in this new shape. They're not products with UIs. They're protocols any agent can pick up. The interface is the spec, not the screen.
 
-The compliance classifier and the medical document parser depend on something that *doesn't* compress into a markdown file: a curated taxonomy, edge cases extracted from real documents, an evaluation suite that proves the model handles the long tail. The orchestration around them increasingly does compress into instructions, but the domain context doesn't.
+The [compliance classifier](/en/projects/compliance-classifier) and the [medical document parser](/en/projects/medical-doc-parser) depend on something that *doesn't* compress into a markdown file: a curated taxonomy, edge cases extracted from real documents, an evaluation suite that proves the model handles the long tail. The orchestration around them increasingly does compress into instructions, but the domain context doesn't.
 
-The data-source automator's value is in a specific human-in-the-loop sequence we worked out the hard way — where the agent stops, what it asks, what it logs. Two years ago that lived in code. Today it lives more naturally as a skill plus an eval set.
+The [data-source automator](/en/projects/data-source-automator)'s value is in a specific human-in-the-loop sequence we worked out the hard way — where the agent stops, what it asks, what it logs. Two years ago that lived in code. Today it lives more naturally as a skill plus an eval set.
 
 What survives in the middle is the stuff that wasn't really code in the first place: the data, the taxonomy, the eval harness, the orchestration *decisions*. The stuff that was just "code" — the wrapper, the form, the boilerplate — heads to the skill layer on one end or the generated render on the other.
 
