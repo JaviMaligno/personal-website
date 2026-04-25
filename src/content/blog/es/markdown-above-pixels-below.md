@@ -62,6 +62,14 @@ El valor del data-source automator está en una secuencia específica de human-i
 
 Lo que sobrevive en el medio es lo que en realidad nunca fue código del todo: los datos, la taxonomía, el harness de evals, las *decisiones* de orquestación. Lo que era simplemente "código" — el envoltorio, el formulario, el boilerplate — se va arriba a la capa de skills o abajo al render generado.
 
+## Los ingenieros ya no podemos escondernos en el nicho
+
+Hay un corolario para los que escribimos el código que se está estrujando: la distancia entre idea y producto entregado se está acortando lo bastante como para que ya no podamos quedarnos metidos en un nicho de desarrollo y seguir aportando valor.
+
+Cuando la capa intermedia era gruesa, podías ser "el del backend" o "el de LLM ops" y contribuir a través de tu trozo del stack. El product owner tenía la idea, los diseñadores se encargaban de la superficie, los ingenieros del plumbing, y los handoffs eran el trabajo. Cuando el medio es fino, esos handoffs cuestan más de lo que coordinan. El modelo renderiza buena parte de la superficie. El agente carga con buena parte del plumbing.
+
+Lo que queda para los ingenieros se parece más al juicio de producto que a la implementación — qué problema resolver, qué significa "lo bastante bueno" en este dominio, dónde el modelo necesita ir sobre raíles y dónde no, qué pinta tiene un fallo y cómo cazarlo. Incluso cuando no construyes tu propio producto, no puedes esconderte en tu nicho. Tienes que tomar ownership del resultado para que se te confíe — porque la parte por la que solías cobrar, la implementación, es la que se está comprimiendo.
+
 ## Conclusiones prácticas
 
 Tres cosas sobre las que estoy actuando:

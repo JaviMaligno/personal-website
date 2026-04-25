@@ -62,6 +62,14 @@ The data-source automator's value is in a specific human-in-the-loop sequence we
 
 What survives in the middle is the stuff that wasn't really code in the first place: the data, the taxonomy, the eval harness, the orchestration *decisions*. The stuff that was just "code" — the wrapper, the form, the boilerplate — heads up to the skill layer or down to the generated render.
 
+## Engineers can't hide in the niche anymore
+
+There's a corollary for those of us who write the code being squeezed: the gap between idea and shipped product is getting short enough that we can't stay tucked into a development niche and still add value.
+
+When the middle layer was thick, you could be "the backend person" or "the LLM ops person" and contribute through a slice of the stack. The product owner had the idea, designers handled the surface, engineers handled the plumbing, and the handoffs were the work. When the middle is thin, those handoffs cost more than they coordinate. The model renders a lot of the surface. The agent carries a lot of the plumbing.
+
+What's left for engineers looks more like product judgment than implementation — which problem to solve, what "good enough" means in this domain, where the model needs to be on rails and where it doesn't, what failure looks like and how to catch it. Even when you're not building your own product, you can't hide in your niche. You have to take ownership of the outcome to be trusted with it — because the part you used to be paid for, the implementation, is the part that's compressing.
+
 ## Practical takeaways
 
 Three things I'm acting on:
