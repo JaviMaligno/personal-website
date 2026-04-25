@@ -1,0 +1,48 @@
+name: LinkedIn Scheduled Posts
+
+on:
+  schedule:
+    # Every day at 8:00 UTC = 9:00 BST (Europe/London)
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  publish-if-scheduled:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check schedule and publish
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_PERSON_URN: ${{ secrets.LINKEDIN_PERSON_URN }}
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          echo "Today is $TODAY"
+
+          # Read schedule and find today's post
+          POST_FILE=$(node -e "
+            const schedule = JSON.parse(require('fs').readFileSync('scripts/linkedin/posts/schedule.json', 'utf-8'));
+            const today = '$TODAY';
+            const entry = schedule.find(e => e.date === today);
+            if (entry) {
+              console.log(entry.file);
+            } else {
+              console.log('');
+            }
+          ")
+
+          if [ -z "$POST_FILE" ]; then
+            echo "📅 No post scheduled for today ($TODAY). Exiting."
+            exit 0
+          fi
+
+          echo "📝 Found scheduled post: $POST_FILE"
+          node scripts/linkedin/post-standalone.js "$POST_FILE"
