@@ -5,6 +5,7 @@ pubDate: 2026-04-25
 tags: ["IA", "Agent Skills", "UI Generativa", "Software", "Tendencias"]
 lang: es
 translationKey: software-dissolving-into-the-model
+heroImage: "/blog/software-dissolving-into-the-model.png"
 ---
 
 Dos repositorios me llamaron la atención este mes. El primero es [`google/agents-cli`](https://github.com/google/agents-cli), la herramienta oficial de Google para construir agentes en Google Cloud — un CLI más un paquete de "skills" en markdown que cualquier asistente de código (Claude Code, Codex, Gemini CLI, Cursor) puede cargar. El segundo es [Flipbook](https://flipbook.page/), un "navegador" experimental que un equipo de ex-OpenAI lanzó hace dos días. Flipbook no tiene HTML, ni DOM, ni componentes renderizados. Cada píxel que ves — incluido el texto — lo genera fotograma a fotograma un modelo de difusión de vídeo que streamea por WebSocket.
