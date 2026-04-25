@@ -7,7 +7,6 @@ lang: en
 translationKey: software-dissolving-into-the-model
 heroImage: "/blog/software-dissolving-into-the-model.png"
 publishToDevto: true
-devtoPublished: false
 ---
 
 Two repositories caught my eye this month. The first is [`google/agents-cli`](https://github.com/google/agents-cli), Google's official tooling for building agents on Google Cloud — a CLI plus a bundle of markdown "skills" that any coding assistant (Claude Code, Codex, Gemini CLI, Cursor) can pick up. The second is [Flipbook](https://flipbook.page/), an experimental "browser" launched by ex-OpenAI researchers two days ago. Flipbook has no HTML, no DOM, no rendered components. Every pixel you see — including the text — is generated frame-by-frame by a video diffusion model streaming over a WebSocket.

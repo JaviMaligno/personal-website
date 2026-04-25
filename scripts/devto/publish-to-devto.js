@@ -56,6 +56,12 @@ async function publishToDevto() {
       `![$1](${siteUrl}/$2)`
     );
 
+    // Convert relative link paths to absolute URLs for Dev.to
+    devtoContent = devtoContent.replace(
+      /(?<!!)\[([^\]]*)\]\(\/([^)]+)\)/g,
+      `[$1](${siteUrl}/$2)`
+    );
+
     // Add CTA at the end of content
     const contentWithCTA = `${devtoContent}
 
