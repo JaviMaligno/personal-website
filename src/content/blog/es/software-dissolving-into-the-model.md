@@ -1,21 +1,21 @@
 ---
-title: "Markdown arriba, píxeles abajo: cómo el software se está disolviendo en el modelo"
-description: "El código se mueve hacia arriba, hacia la capa de skills; las UIs se mueven hacia abajo, hacia píxeles generados; y el medio cada vez es más fino. Una mirada a hacia dónde va el software en 2026."
+title: "El software se está disolviendo en el modelo"
+description: "Lo que escribimos se está convirtiendo en skills en markdown, lo que ven los usuarios se está convirtiendo en píxeles generados, y el medio cada vez es más fino. Una mirada a hacia dónde va el software en 2026."
 pubDate: 2026-04-25
 tags: ["IA", "Agent Skills", "UI Generativa", "Software", "Tendencias"]
 lang: es
-translationKey: markdown-above-pixels-below
+translationKey: software-dissolving-into-the-model
 ---
 
 Dos repositorios me llamaron la atención este mes. El primero es [`google/agents-cli`](https://github.com/google/agents-cli), la herramienta oficial de Google para construir agentes en Google Cloud — un CLI más un paquete de "skills" en markdown que cualquier asistente de código (Claude Code, Codex, Gemini CLI, Cursor) puede cargar. El segundo es [Flipbook](https://flipbook.page/), un "navegador" experimental que un equipo de ex-OpenAI lanzó hace dos días. Flipbook no tiene HTML, ni DOM, ni componentes renderizados. Cada píxel que ves — incluido el texto — lo genera fotograma a fotograma un modelo de difusión de vídeo que streamea por WebSocket.
 
-Parecen pertenecer a conversaciones distintas. No lo son. Si los pones uno al lado del otro aparece un patrón: la capa que llamábamos "software" se está estrujando por arriba y por abajo. El código que escribimos se está convirtiendo en markdown. La UI que renderizamos se está convirtiendo en una salida del modelo. El medio cada vez es más fino.
+Parecen pertenecer a conversaciones distintas. No lo son. Si los pones uno al lado del otro aparece un patrón: la capa que llamábamos "software" se está estrujando por los dos extremos. Lo que escribimos se está convirtiendo en markdown. Lo que ven los usuarios se está convirtiendo en una salida del modelo. El medio cada vez es más fino.
 
-## Arriba: el software se está convirtiendo en markdown
+## Lo que escribimos se está convirtiendo en markdown
 
 Las skills son repositorios de instrucciones, no servicios desplegados. El runtime es el asistente de código que el usuario tenga instalado. El artefacto es un fichero `SKILL.md` con quizá un par de scripts auxiliares.
 
-Algunos datos de las últimas semanas:
+Solo las últimas semanas ya cuentan la historia:
 
 - [`OthmanAdi/planning-with-files`](https://github.com/othmanadi/planning-with-files) es una skill para Claude Code que da al agente un workflow de planificación persistente al estilo Manus — unos cuantos ficheros markdown que definen cuándo escribir `task_plan.md`, `findings.md`, `progress.md`. Tiene 9.2k estrellas. Manus, la empresa que llevó ese workflow a producto, fue [adquirida por una cifra del orden de 2.000 millones de dólares](https://aibit.im/blog/post/planning-with-files-manus-style-claude-code-plugin). La propiedad intelectual era el patrón, no la implementación.
 - [`VoltAgent/awesome-agent-skills`](https://github.com/VoltAgent/awesome-agent-skills) cura más de 1.000 skills portables compatibles con Claude Code, Codex, Gemini CLI, Cursor y otros 40+ agentes. 18.7k estrellas.
@@ -24,9 +24,9 @@ Algunos datos de las últimas semanas:
 
 Hace un año, "lanzar una herramienta para X" significaba construir un SDK, un servicio o al menos una librería envoltorio. Hoy cada vez más significa escribir una carpeta de markdown que cualquier agente puede cargar bajo demanda. La tendencia no es "la IA te ayuda a escribir software". Es "lo que llamábamos software ahora es un conjunto de instrucciones".
 
-## Abajo: la UI se está convirtiendo en salida del modelo
+## Lo que ven los usuarios se está convirtiendo en salida del modelo
 
-Ahora dale la vuelta al stack. El otro extremo está haciendo lo mismo.
+Ahora mira el otro extremo del pipeline. Está haciendo lo mismo.
 
 Flipbook se lanzó el 23 de abril desde el equipo de Zain Shah (ex-OpenAI, ex-Humane, ex-Apple), parte de South Park Commons. La interfaz se genera píxel a píxel con [LTX Video](https://github.com/Lightricks/LTX-Video), un transformer de difusión open source para vídeo, optimizado para hacer streaming a 1080p/24fps por WebSocket desde GPUs serverless de Modal Labs. No hay DOM. No hay botones en el sentido tradicional. Cuando "haces clic", el modelo genera los siguientes fotogramas.
 
@@ -50,7 +50,7 @@ Eso no significa que la corrección desaparezca. Significa que la reubicamos. Lo
 
 ## Qué sobrevive en el medio
 
-Si el código sube a la capa de skills y la UI baja a la capa de píxeles, ¿qué queda para los que construimos cosas en el medio?
+Si lo que escribimos se está volviendo skills y lo que ven los usuarios se está volviendo píxeles, ¿qué queda para los que construimos cosas en el medio?
 
 Llevo dándole vueltas en el contexto de mi propio trabajo.
 
@@ -60,7 +60,7 @@ El clasificador de compliance y el parser de documentos médicos dependen de alg
 
 El valor del data-source automator está en una secuencia específica de human-in-the-loop que afinamos a base de iterar — dónde se para el agente, qué pregunta, qué loguea. Hace dos años eso vivía en código. Hoy vive más naturalmente como una skill más un set de evals.
 
-Lo que sobrevive en el medio es lo que en realidad nunca fue código del todo: los datos, la taxonomía, el harness de evals, las *decisiones* de orquestación. Lo que era simplemente "código" — el envoltorio, el formulario, el boilerplate — se va arriba a la capa de skills o abajo al render generado.
+Lo que sobrevive en el medio es lo que en realidad nunca fue código del todo: los datos, la taxonomía, el harness de evals, las *decisiones* de orquestación. Lo que era simplemente "código" — el envoltorio, el formulario, el boilerplate — se va a la capa de skills por un lado o al render generado por el otro.
 
 ## Los ingenieros ya no podemos escondernos en el nicho
 

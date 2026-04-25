@@ -1,21 +1,21 @@
 ---
-title: "Markdown Above, Pixels Below: How Software Is Dissolving Into the Model"
-description: "Code is moving up to the skill layer, UIs are moving down to generated pixels, and the middle keeps getting thinner. A look at where software is heading in 2026."
+title: "Software Is Dissolving Into the Model"
+description: "What we write is becoming markdown skills, what users see is becoming generated pixels, and the middle keeps getting thinner. A look at where software is heading in 2026."
 pubDate: 2026-04-25
 tags: ["AI", "Agent Skills", "Generative UI", "Software", "Trends"]
 lang: en
-translationKey: markdown-above-pixels-below
+translationKey: software-dissolving-into-the-model
 ---
 
 Two repositories caught my eye this month. The first is [`google/agents-cli`](https://github.com/google/agents-cli), Google's official tooling for building agents on Google Cloud — a CLI plus a bundle of markdown "skills" that any coding assistant (Claude Code, Codex, Gemini CLI, Cursor) can pick up. The second is [Flipbook](https://flipbook.page/), an experimental "browser" launched by ex-OpenAI researchers two days ago. Flipbook has no HTML, no DOM, no rendered components. Every pixel you see — including the text — is generated frame-by-frame by a video diffusion model streaming over a WebSocket.
 
-They look like they belong to different conversations. They don't. Put them next to each other and a pattern emerges: the layer we used to call "software" is being squeezed from above and below. The code we write is becoming markdown. The UI we render is becoming a model output. The middle keeps getting thinner.
+They look like they belong to different conversations. They don't. Put them next to each other and a pattern emerges: the layer we used to call "software" is being squeezed from both ends. What we write is becoming markdown. What users see is becoming a model output. The middle keeps getting thinner.
 
-## Above: software is becoming markdown
+## What we write is becoming markdown
 
 Skills are repositories of instructions, not deployed services. The runtime is whatever coding agent the user happens to have installed. The artifact is a `SKILL.md` file with maybe a couple of helper scripts.
 
-A few data points from the last few weeks:
+The last few weeks alone tell the story:
 
 - [`OthmanAdi/planning-with-files`](https://github.com/othmanadi/planning-with-files) is a Claude Code skill that gives the agent a Manus-style persistent planning workflow — a few markdown files defining when to write `task_plan.md`, `findings.md`, `progress.md`. It has 9.2k stars. Manus, the company that built that workflow into a full product, was reportedly acquired for $2B. The IP was the pattern, not the implementation.
 - [`VoltAgent/awesome-agent-skills`](https://github.com/VoltAgent/awesome-agent-skills) curates 1000+ portable skills across Claude Code, Codex, Gemini CLI, Cursor and 40+ other agents. 18.7k stars.
@@ -24,9 +24,9 @@ A few data points from the last few weeks:
 
 A year ago, "ship a tool for X" meant building an SDK, a service, or at least a wrapper library. Today it increasingly means writing a folder of markdown that any agent can load on demand. The trend isn't "AI helps you write software". It's "what we used to call software is now an instruction set".
 
-## Below: the UI is becoming a model output
+## What users see is becoming a model output
 
-Now flip the stack upside down. The other end is doing the same thing.
+Now look at the other end of the pipeline. It's doing the same thing.
 
 Flipbook launched on April 23 from Zain Shah's team (ex-OpenAI, ex-Humane, ex-Apple), out of South Park Commons. The interface is generated pixel-by-pixel by [LTX Video](https://github.com/Lightricks/LTX-Video), an open-source diffusion transformer for video, optimized to stream at 1080p/24fps via WebSocket from Modal Labs serverless GPUs. There is no DOM. There are no buttons in the traditional sense. When you "click", the model generates the next frames.
 
@@ -50,7 +50,7 @@ That doesn't mean correctness goes away. It means we re-locate it. Evals replace
 
 ## What survives in the middle
 
-So if the code is going up to the skill layer and the UI is going down to the pixel layer, what's left for those of us building things in the middle?
+So if what we write is becoming skills and what users see is becoming pixels, what's left for those of us building things in the middle?
 
 I've been thinking about this in the context of my own work.
 
@@ -60,7 +60,7 @@ The compliance classifier and the medical document parser depend on something th
 
 The data-source automator's value is in a specific human-in-the-loop sequence we worked out the hard way — where the agent stops, what it asks, what it logs. Two years ago that lived in code. Today it lives more naturally as a skill plus an eval set.
 
-What survives in the middle is the stuff that wasn't really code in the first place: the data, the taxonomy, the eval harness, the orchestration *decisions*. The stuff that was just "code" — the wrapper, the form, the boilerplate — heads up to the skill layer or down to the generated render.
+What survives in the middle is the stuff that wasn't really code in the first place: the data, the taxonomy, the eval harness, the orchestration *decisions*. The stuff that was just "code" — the wrapper, the form, the boilerplate — heads to the skill layer on one end or the generated render on the other.
 
 ## Engineers can't hide in the niche anymore
 
