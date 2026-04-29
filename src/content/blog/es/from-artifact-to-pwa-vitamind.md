@@ -53,7 +53,9 @@ Y, fundamentalmente, no es lineal. La [previtamina D3](https://en.wikipedia.org/
 
 Lo modelé como una exponencial saturante:
 
-$$UI(t) = UI_{sat} \cdot \left(1 - e^{-\frac{R \cdot t}{UI_{sat}}}\right)$$
+$$
+UI(t) = UI_{sat} \cdot \left(1 - e^{-\frac{R \cdot t}{UI_{sat}}}\right)
+$$
 
 Donde $UI_{sat}$ es el techo de fotodegradación (19.200 UI para cuerpo completo a 1 MED, según [Holick 1982](https://doi.org/10.1126/science.6281884), escalado por área y edad) y `R` es la tasa de producción basada en las tablas MED de [Dowdy et al. 2010](https://doi.org/10.1111/j.1365-2133.2010.09888.x). A dosis bajas, coincide con la regla lineal de Holick. A dosis más altas, los rendimientos decrecientes entran en juego. El modelo concuerda con [Young et al. 2021](https://doi.org/10.1073/pnas.2015867118) (n=75, validación in-vivo).
 

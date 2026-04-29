@@ -53,7 +53,9 @@ And critically, it's not linear. [Previtamin D3](https://en.wikipedia.org/wiki/P
 
 I modeled this as a saturating exponential:
 
-$$IU(t) = IU_{sat} \cdot \left(1 - e^{-\frac{R \cdot t}{IU_{sat}}}\right)$$
+$$
+IU(t) = IU_{sat} \cdot \left(1 - e^{-\frac{R \cdot t}{IU_{sat}}}\right)
+$$
 
 Where $IU_{sat}$ is the photodegradation ceiling (19,200 IU for full-body 1 MED, per [Holick 1982](https://doi.org/10.1126/science.6281884), scaled by area and age) and `R` is the production rate based on [Dowdy et al. 2010](https://doi.org/10.1111/j.1365-2133.2010.09888.x) MED tables. At low doses, it matches Holick's linear rule. At higher doses, diminishing returns kick in. The model agrees with [Young et al. 2021](https://doi.org/10.1073/pnas.2015867118) (n=75, in-vivo validation).
 
