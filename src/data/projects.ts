@@ -80,6 +80,22 @@ export const projects: Project[] = [
   },
   // Domain Systems
   {
+    slug: 'steel-pricing-platform',
+    key: 'steelPricing',
+    category: 'domainSystems',
+    tags: ['Next.js', 'Python', 'Azure OpenAI', 'OCR'],
+    github: null,
+    hasDiagram: false
+  },
+  {
+    slug: 'purchasing-management-platform',
+    key: 'purchasingPlatform',
+    category: 'domainSystems',
+    tags: ['Next.js', 'TypeScript', 'Azure OpenAI', 'BOM'],
+    github: null,
+    hasDiagram: false
+  },
+  {
     slug: 'compliance-classifier',
     key: 'complianceClassifier',
     category: 'domainSystems',
