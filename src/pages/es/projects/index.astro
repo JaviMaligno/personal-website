@@ -7,15 +7,16 @@ const lang = 'es';
 const t = useTranslations(lang);
 
 const categoryLabels: Record<string, string> = {
-  agentPipelines: 'Pipelines IA',
+  automation: 'Automatización IA',
+  assistants: 'Asistentes IA',
   mcp: 'MCP',
-  compliance: 'Cumplimiento'
+  domainSystems: 'Sistemas de Dominio'
 };
 ---
 
 <Layout
   title="Todos los Proyectos - Javier Aguilar"
-  description="Explora todos los proyectos de automatización IA: pipelines de agentes, servidores MCP y sistemas de cumplimiento."
+  description="Explora todos los proyectos de IA: pipelines de automatización, asistentes, conectores MCP y sistemas de dominio."
 >
   <section class="all-projects">
     <div class="container">
@@ -26,9 +27,16 @@ const categoryLabels: Record<string, string> = {
         <p>Portfolio completo de sistemas de automatización IA</p>
       </div>
 
+      <div class="category-filters">
+        <button class="filter-btn active" data-filter="all">Todos</button>
+        {Object.entries(categoryLabels).map(([key, label]) => (
+          <button class="filter-btn" data-filter={key}>{label}</button>
+        ))}
+      </div>
+
       <div class="grid grid-2">
         {projects.map((project) => (
-          <div class="card project-card">
+          <div class="card project-card" data-project-category={project.category}>
             <div class="project-header">
               <span class="category-badge" data-category={project.category}>
                 {categoryLabels[project.category]}
@@ -63,7 +71,66 @@ const categoryLabels: Record<string, string> = {
   </section>
 </Layout>
 
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const category = params.get('category');
+  const buttons = document.querySelectorAll('.filter-btn');
+  const cards = document.querySelectorAll('.project-card');
+
+  function filter(cat) {
+    cards.forEach(card => {
+      card.style.display = (!cat || cat === 'all' || card.dataset.projectCategory === cat) ? '' : 'none';
+    });
+    buttons.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === (cat || 'all'));
+    });
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const f = btn.dataset.filter;
+      filter(f);
+      const url = new URL(window.location);
+      if (f === 'all') url.searchParams.delete('category');
+      else url.searchParams.set('category', f);
+      history.replaceState(null, '', url);
+    });
+  });
+
+  if (category) filter(category);
+</script>
+
 <style>
+  .category-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    justify-content: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  .filter-btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .filter-btn:hover {
+    background: var(--glass-border);
+    color: var(--text-primary);
+  }
+
+  .filter-btn.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: #fff;
+  }
   .all-projects {
     padding: var(--space-3xl) 0;
   }
@@ -117,10 +184,16 @@ const categoryLabels: Record<string, string> = {
     color: var(--text-muted);
   }
 
-  .category-badge[data-category="agentPipelines"] {
+  .category-badge[data-category="automation"] {
     background: rgba(99, 102, 241, 0.15);
     border-color: rgba(99, 102, 241, 0.3);
     color: #818cf8;
+  }
+
+  .category-badge[data-category="assistants"] {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
+    color: #38bdf8;
   }
 
   .category-badge[data-category="mcp"] {
@@ -129,7 +202,7 @@ const categoryLabels: Record<string, string> = {
     color: #4ade80;
   }
 
-  .category-badge[data-category="compliance"] {
+  .category-badge[data-category="domainSystems"] {
     background: rgba(251, 146, 60, 0.15);
     border-color: rgba(251, 146, 60, 0.3);
     color: #fb923c;

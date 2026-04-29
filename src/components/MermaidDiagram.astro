@@ -39,19 +39,38 @@ const archTranslations = t('architecture');
 <script>
   import mermaid from 'mermaid';
 
-  document.addEventListener('DOMContentLoaded', () => {
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'dark',
-      securityLevel: 'loose',
-      fontFamily: 'Inter, sans-serif',
-      flowchart: {
-        useMaxWidth: true,
-        htmlLabels: true,
-        curve: 'basis'
-      }
-    });
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    fontFamily: 'Inter, sans-serif',
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis'
+    }
   });
+
+  async function renderDiagrams() {
+    const elements = document.querySelectorAll('.mermaid');
+    for (const el of elements) {
+      const code = el.textContent || '';
+      if (!code.trim()) continue;
+      const id = 'mermaid-' + Math.random().toString(36).slice(2, 9);
+      try {
+        const { svg } = await mermaid.render(id, code);
+        el.innerHTML = svg;
+      } catch (e) {
+        console.error('Mermaid render error:', e);
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderDiagrams);
+  } else {
+    renderDiagrams();
+  }
 </script>
 
 <style>

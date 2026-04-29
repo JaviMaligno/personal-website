@@ -1,23 +1,28 @@
 ---
-import { getLangFromUrl, useTranslations, type Language } from '../i18n';
+import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../i18n';
 
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
 
-const services = [
+const mainServices = [
   {
     icon: '🔄',
-    key: 'agentPipelines' as const
+    key: 'aiAutomation' as const,
+    category: 'automation'
   },
   {
-    icon: '🔌',
-    key: 'mcpDevelopment' as const
+    icon: '💬',
+    key: 'aiAssistants' as const,
+    category: 'assistants'
   },
   {
-    icon: '🛡️',
-    key: 'complianceAutomation' as const
+    icon: '🏗️',
+    key: 'domainSystems' as const,
+    category: 'domainSystems'
   }
 ];
+
+const projectsPath = `${getLocalizedPath('/', lang)}projects`;
 ---
 
 <section id="services" class="services">
@@ -26,16 +31,26 @@ const services = [
       <h2>{t('services').title}</h2>
       <p>{t('services').subtitle}</p>
     </div>
-    
+
     <div class="grid grid-3">
-      {services.map((service) => (
-        <div class="card service-card">
+      {mainServices.map((service) => (
+        <a href={`${projectsPath}?category=${service.category}`} class="card service-card">
           <div class="icon">{service.icon}</div>
           <h3>{t('services')[service.key].title}</h3>
           <p>{t('services')[service.key].description}</p>
-        </div>
+        </a>
       ))}
     </div>
+
+    <a href={`${projectsPath}?category=mcp`} class="mcp-band">
+      <div class="mcp-inner">
+        <span class="mcp-icon">🔌</span>
+        <div class="mcp-content">
+          <h4>{t('services').mcpConnectors.title}</h4>
+          <p>{t('services').mcpConnectors.description}</p>
+        </div>
+      </div>
+    </a>
   </div>
 </section>
 
@@ -43,13 +58,72 @@ const services = [
   .services {
     background: var(--bg-secondary);
   }
-  
+
+  .service-card {
+    text-decoration: none;
+    color: inherit;
+    transition: all var(--transition-base);
+  }
+
+  .service-card:hover {
+    color: inherit;
+  }
+
   .service-card h3 {
     margin-bottom: var(--space-sm);
   }
-  
+
   .service-card p {
     font-size: 0.9375rem;
     line-height: 1.6;
+  }
+
+  .mcp-band {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    margin-top: var(--space-xl);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+  }
+
+  .mcp-band:hover {
+    background: var(--glass-border);
+    color: inherit;
+  }
+
+  .mcp-inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .mcp-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .mcp-content h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .mcp-content p {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .mcp-inner {
+      flex-direction: column;
+      text-align: center;
+    }
   }
 </style>

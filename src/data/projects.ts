@@ -1,7 +1,7 @@
 export interface Project {
   slug: string;
   key: string;
-  category: 'agentPipelines' | 'mcp' | 'compliance';
+  category: 'automation' | 'assistants' | 'mcp' | 'domainSystems';
   tags: string[];
   github: string | null;
   hasDiagram: boolean;
@@ -9,32 +9,43 @@ export interface Project {
 }
 
 export const projects: Project[] = [
+  // AI Automation
   {
     slug: 'devops-agent',
     key: 'devopsAgent',
-    category: 'agentPipelines',
+    category: 'automation',
     tags: ['TypeScript', 'Multi-Agent', 'GitHub API'],
     github: 'https://github.com/JaviMaligno/oss-agent',
     hasDiagram: true
   },
   {
-    slug: 'compliance-classifier',
-    key: 'complianceClassifier',
-    category: 'compliance',
-    tags: ['Python', 'LangChain', 'Risk Assessment'],
-    github: null,
-    hasDiagram: true,
-    featured: true
-  },
-  {
     slug: 'data-source-automator',
     key: 'dataSourceAutomator',
-    category: 'agentPipelines',
+    category: 'automation',
     tags: ['Python', 'Multi-Agent', 'HITL'],
     github: null,
     hasDiagram: true,
     featured: true
   },
+  {
+    slug: 'application-automator',
+    key: 'applicationAutomator',
+    category: 'automation',
+    tags: ['Python', 'TypeScript', 'Automation'],
+    github: 'https://github.com/JaviMaligno/job-hunter-api',
+    hasDiagram: false
+  },
+  // AI Assistants
+  {
+    slug: 'devops-slack-bot',
+    key: 'devopsSlackBot',
+    category: 'assistants',
+    tags: ['Python', 'Azure OpenAI', 'Slack', 'Kubernetes'],
+    github: null,
+    hasDiagram: false,
+    featured: true
+  },
+  // MCP & Connectors
   {
     slug: 'mcp-bitbucket',
     key: 'mcpBitbucket',
@@ -59,22 +70,23 @@ export const projects: Project[] = [
     github: 'https://github.com/JaviMaligno/langfuse-mcp-server',
     hasDiagram: true
   },
+  // Domain Systems
   {
-    slug: 'application-automator',
-    key: 'applicationAutomator',
-    category: 'agentPipelines',
-    tags: ['Python', 'TypeScript', 'Automation'],
-    github: 'https://github.com/JaviMaligno/job-hunter-api',
-    hasDiagram: false
+    slug: 'compliance-classifier',
+    key: 'complianceClassifier',
+    category: 'domainSystems',
+    tags: ['Python', 'LangChain', 'Risk Assessment'],
+    github: null,
+    hasDiagram: true,
+    featured: true
   },
   {
     slug: 'medical-doc-parser',
     key: 'medicalDocParser',
-    category: 'compliance',
+    category: 'domainSystems',
     tags: ['TypeScript', 'NLP', 'ICD-10'],
     github: null,
-    hasDiagram: true,
-    featured: true
+    hasDiagram: true
   }
 ];
 
