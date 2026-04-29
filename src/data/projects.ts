@@ -51,8 +51,7 @@ export const projects: Project[] = [
     category: 'assistants',
     tags: ['TypeScript', 'Azure OpenAI', 'Next.js', 'pgvector'],
     github: null,
-    hasDiagram: false,
-    featured: true
+    hasDiagram: false
   },
   // MCP & Connectors
   {
