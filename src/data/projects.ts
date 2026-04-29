@@ -45,6 +45,15 @@ export const projects: Project[] = [
     hasDiagram: false,
     featured: true
   },
+  {
+    slug: 'compliance-assistant',
+    key: 'complianceAssistant',
+    category: 'assistants',
+    tags: ['TypeScript', 'Azure OpenAI', 'Next.js', 'pgvector'],
+    github: null,
+    hasDiagram: false,
+    featured: true
+  },
   // MCP & Connectors
   {
     slug: 'mcp-bitbucket',
