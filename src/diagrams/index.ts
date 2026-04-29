@@ -128,28 +128,43 @@ const complianceClassifierDiagram: DiagramConfig = {
   getMermaidCode: (t) => `%%{init: {'theme': 'dark', 'themeVariables': { 'fontFamily': 'Inter', 'secondaryColor': '#1e293b', 'primaryColor': '#3b82f6', 'primaryBorderColor': '#60a5fa' }}}%%
 graph TB
     subgraph Input ["${t.phases.input}"]
-        A["Company Data"]
+        A["${t.nodes.companyData}<br/>(name, identifiers, country)"]
+        B["${t.nodes.config}<br/>(Risk Policy + Classification System)"]
     end
 
-    subgraph Processing ["${t.phases.processing}"]
-        A --> B["${t.nodes.webSearch}"]
-        A --> C["${t.nodes.registry}"]
-        B --> D["${t.nodes.grounding}"]
-        C --> D
-        D --> E["${t.nodes.llmClassify}"]
-        E --> F["${t.nodes.riskAssess}"]
+    subgraph Enrichment ["${t.nodes.enrichment}"]
+        A --> C1["${t.nodes.abrRegistry}"]
+        A --> C2["${t.nodes.nzbnRegistry}"]
+        A --> C3["${t.nodes.austracRegistry}"]
+        A --> C4["${t.nodes.webSearch}"]
+    end
+
+    subgraph Classification ["${t.nodes.classification}"]
+        C1 & C2 & C3 & C4 --> D1["${t.nodes.trustDetection}"]
+        B --> D2
+        D1 --> D2["${t.nodes.llmClassify}"]
+        D2 --> D3["${t.nodes.grounding}"]
+    end
+
+    subgraph Risk ["${t.nodes.riskAssess}"]
+        D3 --> E1["${t.nodes.blacklist}"]
+        E1 --> E2["${t.nodes.codeRiskMap}"]
+        E2 --> E3["${t.nodes.keywordScan}"]
+        E3 --> E4["${t.nodes.llmRisk}"]
     end
 
     subgraph Output ["${t.phases.output}"]
-        F --> G["${t.nodes.result}<br/>+ Risk Level"]
+        E4 --> F["${t.nodes.result}<br/>+ Risk Level + Confidence"]
     end
 
     classDef default fill:#0f172a,stroke:#334155,color:#fff,stroke-width:1px;
     classDef agent fill:#0f172a,stroke:#3b82f6,color:#fff;
     classDef process fill:#0f172a,stroke:#334155,color:#fff;
+    classDef config fill:#1e1b4b,stroke:#818cf8,color:#fff,stroke-width:2px;
 
-    class E,F agent;
-    class B,C,D process;`,
+    class D2,E3,E4 agent;
+    class C1,C2,C3,C4,D1,D3,E1,E2 process;
+    class B config;`,
   legend: [
     { key: 'agent', color: '#0f172a', borderColor: '#3b82f6' },
     { key: 'process', color: '#0f172a', borderColor: '#334155' }

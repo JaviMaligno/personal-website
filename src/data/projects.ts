@@ -99,7 +99,7 @@ export const projects: Project[] = [
     slug: 'compliance-classifier',
     key: 'complianceClassifier',
     category: 'domainSystems',
-    tags: ['Python', 'LangChain', 'Risk Assessment'],
+    tags: ['Python', 'Web Search', 'Data Enrichment', 'Risk Assessment', 'Multi-Registry'],
     github: null,
     hasDiagram: true,
     featured: true
