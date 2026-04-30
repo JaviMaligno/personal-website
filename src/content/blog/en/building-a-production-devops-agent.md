@@ -1,7 +1,7 @@
 ---
 title: "Building a Production DevOps Agent: From Slack to Kubernetes"
 description: "How I built an AI agent that investigates infrastructure issues autonomously — with read-only guardrails, output compaction, and infrastructure knowledge baked into the system prompt."
-pubDate: 2026-04-29
+pubDate: 2026-04-30
 tags: ["AI Agents", "DevOps", "Slack", "Kubernetes", "Azure"]
 lang: en
 translationKey: building-a-production-devops-agent
@@ -136,4 +136,4 @@ The best case is that 70% of your `#devops_requests` channel gets answered in se
 
 ---
 
-*Built with Python, Azure OpenAI, Slack Bolt, and a lot of infrastructure knowledge. Deployed on AKS via ArgoCD.*
+*Built with Python, Azure OpenAI, Slack Bolt, and a lot of infrastructure knowledge. Deployed on AKS via ArgoCD. [View the project details](https://www.javieraguilar.ai/en/projects/devops-slack-bot/).*
