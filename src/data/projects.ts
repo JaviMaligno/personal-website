@@ -78,6 +78,22 @@ export const projects: Project[] = [
     github: 'https://github.com/JaviMaligno/langfuse-mcp-server',
     hasDiagram: true
   },
+  {
+    slug: 'mcp-azure',
+    key: 'mcpAzure',
+    category: 'mcp',
+    tags: ['TypeScript', 'Azure CLI', 'Cloud'],
+    github: null,
+    hasDiagram: false
+  },
+  {
+    slug: 'mcp-kubernetes',
+    key: 'mcpKubernetes',
+    category: 'mcp',
+    tags: ['TypeScript', 'kubectl', 'Kubernetes'],
+    github: null,
+    hasDiagram: false
+  },
   // Domain Systems
   {
     slug: 'steel-pricing-platform',
