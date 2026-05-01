@@ -95,9 +95,13 @@ Building an agent that runs shell commands against production infrastructure req
 
 ## The Moment It Clicked
 
-Before any DevOps engineer had responded to a request, the bot investigated a service that appeared healthy on the surface — pods running, endpoints responding. But it dug deeper, found a new pod that was failing to start, pulled the container logs, and identified the exact error: a misconfigured environment variable in the latest deployment.
+Someone asked the bot to check resource usage for a service. The Grafana query was failing, and the bot started investigating — as usual. But then something unexpected happened: it found its own bug.
 
-That's the kind of investigation that takes a human 10-15 minutes of context-switching between terminals. The bot did it in seconds, in the Slack thread where the question was asked, visible to everyone.
+The bot's Grafana tool was sending `step: '1h'` as a string, but the implementation tried to parse it as an integer. `ValueError: invalid literal for int() with base 10: '1h'`. The bot traced the error to its own code, reported it honestly — "the error was mine" — and then pivoted: instead of giving up, it checked what it *could* verify (the deployment, replicas, pod status, resource definitions), gave an honest assessment of what it couldn't answer yet, and proposed a fix for its own Grafana tool.
+
+![DevOpsBot diagnosing its own bug in a Slack thread — tracing a ValueError to its Grafana tool implementation and proposing a fix](/blog/devopsbot-self-diagnosis.png)
+
+That's meta-debugging. An agent that not only investigates infrastructure issues, but catches and reports its own failures with the same rigor. No hallucinated numbers, no pretending everything is fine — just "here's what I can confirm, here's what I can't, and here's how to fix it."
 
 ## The First Test Went Wrong
 

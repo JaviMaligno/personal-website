@@ -95,9 +95,13 @@ Construir un agente que ejecuta comandos shell contra infraestructura de producc
 
 ## El Momento en que Hizo Click
 
-Antes de que ningún ingeniero de DevOps respondiera a una petición, el bot investigó un servicio que parecía sano en la superficie — pods corriendo, endpoints respondiendo. Pero profundizó más, encontró un pod nuevo que no conseguía arrancar, sacó los logs del contenedor, e identificó el error exacto: una variable de entorno mal configurada en el último despliegue.
+Alguien pidió al bot que revisara el uso de recursos de un servicio. La query de Grafana estaba fallando, y el bot empezó a investigar — como siempre. Pero entonces pasó algo inesperado: encontró su propio bug.
 
-Ese es el tipo de investigación que a un humano le lleva 10-15 minutos de cambio de contexto entre terminales. El bot lo hizo en segundos, en el hilo de Slack donde se hizo la pregunta, visible para todos.
+La herramienta de Grafana del bot enviaba `step: '1h'` como string, pero la implementación intentaba parsearlo como entero. `ValueError: invalid literal for int() with base 10: '1h'`. El bot trazó el error hasta su propio código, lo reportó honestamente — "el error fue mío" — y después pivotó: en vez de rendirse, comprobó lo que *sí* podía verificar (el despliegue, réplicas, estado de los pods, definiciones de recursos), dio una evaluación honesta de lo que no podía responder aún, y propuso un fix para su propia herramienta de Grafana.
+
+![DevOpsBot diagnosticando su propio bug en un hilo de Slack — trazando un ValueError hasta su implementación de la herramienta de Grafana y proponiendo un fix](/blog/devopsbot-self-diagnosis.png)
+
+Eso es meta-debugging. Un agente que no solo investiga problemas de infraestructura, sino que detecta y reporta sus propios fallos con el mismo rigor. Sin números inventados, sin fingir que todo va bien — solo "esto es lo que puedo confirmar, esto es lo que no, y así se arregla."
 
 ## La Primera Prueba Salió Mal
 
