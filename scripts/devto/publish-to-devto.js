@@ -1,12 +1,44 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import matter from 'gray-matter';
 
 /**
  * Publishes a blog post to Dev.to
  * Requires: DEVTO_API_KEY, NEW_POST_PATH, SITE_URL environment variables
  */
+function loadLocalEnv() {
+  const envPath = new URL('../../.env', import.meta.url);
+  if (!existsSync(envPath)) {
+    return;
+  }
+
+  const envContent = readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split(/\r?\n/)) {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+    if (!match || line.trim().startsWith('#')) {
+      continue;
+    }
+
+    const [, key, rawValue] = match;
+    if (process.env[key] !== undefined) {
+      continue;
+    }
+
+    let value = rawValue.trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] = value;
+  }
+}
+
 async function publishToDevto() {
   try {
+    loadLocalEnv();
+
     console.log('📝 Publishing to Dev.to...');
 
     // Validate environment variables
