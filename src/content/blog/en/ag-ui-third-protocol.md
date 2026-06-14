@@ -6,6 +6,7 @@ tags: ["AI Agents", "Generative UI", "AG-UI", "Conversational AI"]
 lang: en
 translationKey: ag-ui-third-protocol
 heroImage: "/blog/ag-ui-third-protocol.png"
+linkedinVideo: /blog/ag-ui-generative-ui-demo.mp4
 ---
 
 At [AI Signals x LangChain Community London #32](https://lu.ma/hn9dhq7e), [Sofía Sánchez-Zárate](https://www.linkedin.com/in/sof%C3%ADa-s%C3%A1nchez-z%C3%A1rate-91493381/) from CopilotKit gave a talk titled *"AG-UI & The Generative UI Spectrum."* The demo that stuck with me: you ask for help working out a loan repayment, and instead of answering with a single number — one you'd have to ask it to recompute every time you change the rate or the term — it renders an actual working calculator *inside the chat*. Inputs you can edit, a total that updates live. Not a screenshot of one; a real widget the agent assembled for that question, on the fly.
