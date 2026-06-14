@@ -1,0 +1,77 @@
+name: LinkedIn Token Expiry Check
+
+# LinkedIn access tokens last 60 days and (without programmatic refresh tokens,
+# which this app does not have) cannot be auto-renewed. This workflow checks the
+# real expiry via the Token Introspection API and opens a GitHub issue when
+# renewal is due, so the token never silently expires mid-publish.
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # daily at 09:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check-token:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check token expiry
+        id: check
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+        run: node scripts/linkedin/check-token-expiry.js --threshold 7
+
+      - name: Open renewal issue if due
+        if: steps.check.outputs.needs_renewal == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DAYS_LEFT: ${{ steps.check.outputs.days_left }}
+          EXPIRES_ON: ${{ steps.check.outputs.expires_on }}
+          TOKEN_STATUS: ${{ steps.check.outputs.status }}
+        run: |
+          # Deduplicate: skip if an open token issue already exists
+          existing=$(gh issue list --label "linkedin-token" --state open --json number --jq 'length')
+          if [ "$existing" != "0" ]; then
+            echo "An open 'linkedin-token' issue already exists — skipping."
+            exit 0
+          fi
+
+          gh label create "linkedin-token" --color "FFA500" --description "LinkedIn API token maintenance" 2>/dev/null || true
+
+          {
+            echo "The LinkedIn access token used by the auto-publish workflows is about to expire."
+            echo ""
+            echo "- **Days left:** ${DAYS_LEFT}"
+            echo "- **Expires on:** ${EXPIRES_ON}"
+            echo "- **Status:** ${TOKEN_STATUS}"
+            echo ""
+            echo "This app does not have programmatic refresh tokens, so the token must be"
+            echo "regenerated manually via the OAuth flow:"
+            echo ""
+            echo "1. \`export LINKEDIN_CLIENT_ID=...\` and \`export LINKEDIN_CLIENT_SECRET=...\`"
+            echo "2. \`node scripts/linkedin-oauth-setup.js\` — open the printed URL, click Allow"
+            echo "3. Copy the new token from the success page"
+            echo "4. \`gh secret set LINKEDIN_ACCESS_TOKEN\` and update your local \`.env\`"
+            echo ""
+            echo "Full procedure: \`scripts/linkedin/README.md\` → \"Token expiry & renewal\"."
+            echo ""
+            echo "Close this issue once the token is renewed."
+          } > issue-body.md
+
+          gh issue create \
+            --title "🔑 LinkedIn access token renewal due (${DAYS_LEFT} days left)" \
+            --label "linkedin-token" \
+            --body-file issue-body.md
+
+          echo "Opened renewal issue."

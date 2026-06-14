@@ -34,13 +34,31 @@ Todos los secrets están en GitHub → Settings → Secrets and variables → Ac
 
 ## ⚠️ Renovación del Access Token (cada 60 días)
 
-El `LINKEDIN_ACCESS_TOKEN` expira después de **60 días** (configurado el 2026-01-07, expira ~2026-03-08).
+El `LINKEDIN_ACCESS_TOKEN` expira después de **60 días**. Esta app **no tiene
+programmatic refresh tokens** (el OAuth devuelve `refresh_token: undefined`),
+así que el token **no se puede renovar automáticamente** — hay que regenerarlo
+con el flujo OAuth.
 
-### Cuando el token expire:
+### Aviso automático de caducidad
+
+El workflow `.github/workflows/linkedin-token-check.yml` corre a diario, consulta
+la caducidad real vía la [Token Introspection API](https://learn.microsoft.com/en-us/linkedin/shared/authentication/token-introspection)
+y **abre un issue con la etiqueta `linkedin-token`** cuando quedan ≤ 7 días
+(deduplicado: no abre un segundo issue si ya hay uno abierto). Así el token nunca
+caduca en silencio a mitad de una publicación.
+
+Comprobación manual en local:
+```bash
+set -a; . ./.env; set +a
+node scripts/linkedin/check-token-expiry.js          # umbral por defecto: 7 días
+node scripts/linkedin/check-token-expiry.js --threshold 14
+```
+
+### Cuando el token expire (o el issue avise):
 
 Verás un error en GitHub Actions similar a:
 ```
-❌ LinkedIn post creation failed (401): Unauthorized
+❌ LinkedIn post creation failed (401): EXPIRED_ACCESS_TOKEN
 ```
 
 ### Para renovar el token:
