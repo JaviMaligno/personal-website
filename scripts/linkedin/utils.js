@@ -89,53 +89,141 @@ export async function uploadImageToLinkedIn(imagePath) {
 }
 
 /**
+ * Parse @-mentions from raw post text.
+ *
+ * Syntax in .txt files: @[Visible Name](urn:li:organization:1337)
+ *                       @[Person Name](urn:li:person:abc123)
+ *
+ * The marker is removed from the text (only "Visible Name" remains) and
+ * start/length offsets are computed over the CLEANED text.
+ *
+ * IMPORTANT (offsets): LinkedIn counts start/length over the final text.
+ * JavaScript strings are UTF-16, so `.length`/index arithmetic here is in
+ * UTF-16 code units — emojis outside the BMP (🚀, 🤖, …) count as 2 units.
+ * This matches LinkedIn's observed behavior. Do NOT recompute offsets with
+ * grapheme- or codepoint-based counting.
+ *
+ * NOTE: LinkedIn only renders the mention as a link if the visible text
+ * matches the real name of the company/person (case-sensitive). Otherwise
+ * it falls back to plain text.
+ *
+ * @param {string} rawText - Text possibly containing @[Name](urn) markers
+ * @returns {{ text: string, mentions: Array<{start: number, length: number, name: string, urn: string}> }}
+ */
+export function parseMentions(rawText) {
+  const MENTION_REGEX = /@\[([^\]]+)\]\((urn:li:(?:organization|person):[^)\s]+)\)/g;
+  const mentions = [];
+  let cleanText = '';
+  let lastIndex = 0;
+
+  for (const match of rawText.matchAll(MENTION_REGEX)) {
+    cleanText += rawText.slice(lastIndex, match.index);
+    const [marker, name, urn] = match;
+    mentions.push({
+      start: cleanText.length,   // UTF-16 code units (see note above)
+      length: name.length,       // UTF-16 code units
+      name,
+      urn,
+    });
+    cleanText += name;
+    lastIndex = match.index + marker.length;
+  }
+  cleanText += rawText.slice(lastIndex);
+
+  return { text: cleanText, mentions };
+}
+
+/**
+ * Build shareCommentary.attributes from parsed mentions.
+ * Companies use CompanyAttributedEntity, people use MemberAttributedEntity.
+ * Ref: https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/ugc-post-api (Attribute schema)
+ *
+ * @param {Array<{start: number, length: number, urn: string}>} mentions
+ * @returns {Array<Object>} - Attributes array for shareCommentary
+ */
+export function buildMentionAttributes(mentions = []) {
+  return mentions.map(({ start, length, urn }) => ({
+    start,
+    length,
+    value: urn.startsWith('urn:li:organization:')
+      ? { 'com.linkedin.common.CompanyAttributedEntity': { company: urn } }
+      : { 'com.linkedin.common.MemberAttributedEntity': { member: urn } },
+  }));
+}
+
+/**
+ * Build the ugcPosts request body (pure function — used by dry-run and tests).
+ *
+ * @param {Object} params - Same params as createLinkedInPost
+ * @returns {Object} - Request body for POST /v2/ugcPosts
+ */
+export function buildPostBody({ personUrn, text, imageUrn, imageUrns, videoUrn, mentions }) {
+  // Ensure personUrn is in full URN format
+  const fullAuthorUrn = personUrn.startsWith('urn:li:person:')
+    ? personUrn
+    : `urn:li:person:${personUrn}`;
+
+  // Backward compat: accept single imageUrn (string) or imageUrns (array)
+  const allImageUrns = (imageUrns && imageUrns.length > 0)
+    ? imageUrns
+    : (imageUrn ? [imageUrn] : []);
+
+  const attributes = buildMentionAttributes(mentions);
+
+  const mediaElements = videoUrn
+    ? [{
+        status: 'READY',
+        description: { text: 'Watch the demo' },
+        media: videoUrn,
+        title: { text: 'AI automation demo' },
+      }]
+    : allImageUrns.map((urn, i) => ({
+        status: 'READY',
+        description: {
+          text: allImageUrns.length > 1 ? `Image ${i + 1} of ${allImageUrns.length}` : 'Blog post featured image',
+        },
+        media: urn,
+        title: { text: 'Read the full article' },
+      }));
+
+  return {
+    author: fullAuthorUrn,
+    lifecycleState: 'PUBLISHED',
+    specificContent: {
+      'com.linkedin.ugc.ShareContent': {
+        shareCommentary: {
+          text: text,
+          ...(attributes.length > 0 && { attributes }),
+        },
+        shareMediaCategory: videoUrn ? 'VIDEO' : (mediaElements.length > 0 ? 'IMAGE' : 'NONE'),
+        ...(mediaElements.length > 0 && { media: mediaElements }),
+      },
+    },
+    visibility: {
+      'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+    },
+  };
+}
+
+/**
  * Create LinkedIn post (UGC Post API)
  *
  * @param {Object} params - Post parameters
  * @param {string} params.personUrn - LinkedIn person URN
- * @param {string} params.text - Post text content
- * @param {string} [params.imageUrn] - Optional image URN from uploadImageToLinkedIn
+ * @param {string} params.text - Post text content (already cleaned of @[..](..) markers)
+ * @param {string} [params.imageUrn] - Optional single image URN (backward compat)
+ * @param {string[]} [params.imageUrns] - Optional array of image URNs (multi-image post)
  * @param {string} [params.videoUrn] - Optional video URN from uploadVideoToLinkedIn
+ * @param {Array<{start: number, length: number, urn: string}>} [params.mentions] - Mentions from parseMentions
  * @returns {Promise<Object>} - Created post data
  */
-export async function createLinkedInPost({ personUrn, text, imageUrn, videoUrn }) {
+export async function createLinkedInPost({ personUrn, text, imageUrn, imageUrns, videoUrn, mentions }) {
   const accessToken = process.env.LINKEDIN_ACCESS_TOKEN;
 
   try {
     console.log(`🤖 Creating LinkedIn post...`);
 
-    // Ensure personUrn is in full URN format
-    const fullAuthorUrn = personUrn.startsWith('urn:li:person:')
-      ? personUrn
-      : `urn:li:person:${personUrn}`;
-
-    const postBody = {
-      author: fullAuthorUrn,
-      lifecycleState: 'PUBLISHED',
-      specificContent: {
-        'com.linkedin.ugc.ShareContent': {
-          shareCommentary: {
-            text: text,
-          },
-          shareMediaCategory: videoUrn ? 'VIDEO' : (imageUrn ? 'IMAGE' : 'NONE'),
-          ...((videoUrn || imageUrn) && {
-            media: [{
-              status: 'READY',
-              description: {
-                text: videoUrn ? 'Watch the demo' : 'Blog post featured image',
-              },
-              media: videoUrn || imageUrn,
-              title: {
-                text: videoUrn ? 'AI automation demo' : 'Read the full article',
-              },
-            }],
-          }),
-        },
-      },
-      visibility: {
-        'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-      },
-    };
+    const postBody = buildPostBody({ personUrn, text, imageUrn, imageUrns, videoUrn, mentions });
 
     const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
       method: 'POST',
