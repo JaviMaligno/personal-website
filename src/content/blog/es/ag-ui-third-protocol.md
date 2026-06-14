@@ -8,7 +8,7 @@ translationKey: ag-ui-third-protocol
 heroImage: "/blog/ag-ui-third-protocol.png"
 ---
 
-En el [AI Signals x LangChain Community London #32](https://lu.ma/hn9dhq7e), [Sofía Sánchez-Zárate](https://www.linkedin.com/in/sof%C3%ADa-s%C3%A1nchez-z%C3%A1rate-91493381/), de CopilotKit, dio una charla titulada *"AG-UI & The Generative UI Spectrum"*. La demo que se me quedó grabada era simple: le pides algo al chatbot y, en vez de describirte una calculadora, renderiza una calculadora funcional de verdad *dentro del propio chat* — botones que puedes pulsar, un display que se actualiza. No un pantallazo. Un widget vivo que el modelo decidió construirte sobre la marcha.
+En el [AI Signals x LangChain Community London #32](https://lu.ma/hn9dhq7e), [Sofía Sánchez-Zárate](https://www.linkedin.com/in/sof%C3%ADa-s%C3%A1nchez-z%C3%A1rate-91493381/), de CopilotKit, dio una charla titulada *"AG-UI & The Generative UI Spectrum"*. La demo que se me quedó grabada: le pides ayuda para calcular la cuota de un préstamo y, en vez de responderte con un único número —uno que tendrías que pedirle recalcular cada vez que cambias el tipo o el plazo—, renderiza una calculadora funcional de verdad *dentro del propio chat*. Campos que editas, un total que se actualiza en vivo. No un pantallazo de una; un widget real que el agente montó para esa pregunta, sobre la marcha.
 
 Eso es la UI generativa: el chat deja de ser una caja de texto y se convierte en una superficie que el agente puede componer.
 
@@ -53,6 +53,14 @@ Una conversación es una forma estupenda de *recoger* información y una forma p
 Nuestro protocolo casero funciona, pero está acoplado. Un estándar como AG-UI permitiría que el mismo backend conversacional hablara con cualquier front end que lo entienda, mezclar specs de UI declarativa donde un catálogo fijo de widgets se queda corto, y obtener las pausas de human-in-the-loop como parte de primera clase del protocolo en lugar de una convención que mantenemos nosotros. El coste es el de siempre al adoptar un estándar joven: apostar por su modelo de eventos y su trayectoria.
 
 Dado que LangGraph — sobre el que nuestro proyecto ya corre — está entre los frameworks con integración de AG-UI, el camino de migración de "nuestro dialecto" al "estándar" es inusualmente corto. Eso lo convierte en una opción real, no en una reescritura.
+
+## Probándolo: del patrón hecho a mano al SDK
+
+Para palpar la diferencia entre mi versión a medida y el estándar, monté una demo mínima con el SDK de AG-UI — un agente [Pydantic AI](https://ai.pydantic.dev/) sobre Azure OpenAI, un frontend de CopilotKit en React, y los dos widgets declarados como *frontend tools*. Le pides estimar la cuota de un préstamo y renderiza una calculadora interactiva en el chat; dices que quieres solicitarlo y renderiza un formulario. La parte de Python es esencialmente "conectar un modelo a AG-UI" — la UI generativa vive en el cliente, en unas cien líneas en total.
+
+![La demo de AG-UI: el agente renderiza una calculadora de préstamo interactiva, y luego un formulario de solicitud, dentro del propio chat](/blog/ag-ui-generative-ui-demo.gif)
+
+Ahí está la idea entera en una pantalla: el mismo bucle que el proyecto de KYC —el modelo elige un widget, el cliente lo renderiza, el usuario interactúa, el resultado vuelve— pero el cableado es un protocolo en vez de un registry que mantengo a mano. [Código en GitHub](https://github.com/JaviMaligno/agui-generative-ui-demo).
 
 ## El punto medio del espectro
 
