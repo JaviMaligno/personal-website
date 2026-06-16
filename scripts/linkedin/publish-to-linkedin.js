@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import matter from 'gray-matter';
 import { generateSummary } from './generate-summary.js';
-import { uploadImageToLinkedIn, createLinkedInPost } from './utils.js';
+import { uploadImageToLinkedIn, uploadVideoToLinkedIn, createLinkedInPost } from './utils.js';
 
 /**
  * Main orchestrator: Generate summary, upload image (if exists), publish to LinkedIn
@@ -66,27 +66,46 @@ async function publishToLinkedIn() {
     console.log('─'.repeat(60));
     console.log('');
 
-    // Handle image upload (prefer linkedinImage, fallback to heroImage)
-    const imageToUpload = frontmatter.linkedinImage || frontmatter.heroImage;
+    // Media: prefer a video (linkedinVideo), else an image (linkedinImage, then heroImage).
+    // LinkedIn does not animate uploaded GIFs via the API, so motion demos must be MP4 video.
+    let videoUrn = null;
     let imageUrn = null;
 
-    if (imageToUpload) {
-      // Convert /blog/image.png to public/blog/image.png
-      const imagePath = `public${imageToUpload}`;
-
-      if (existsSync(imagePath)) {
-        console.log(`🖼️  Uploading image: ${imagePath}\n`);
+    if (frontmatter.linkedinVideo) {
+      const videoPath = `public${frontmatter.linkedinVideo}`;
+      if (existsSync(videoPath)) {
+        console.log(`🎬 Uploading video: ${videoPath}\n`);
         try {
-          imageUrn = await uploadImageToLinkedIn(imagePath);
-          console.log(`✅ Image uploaded: ${imageUrn}\n`);
+          videoUrn = await uploadVideoToLinkedIn(videoPath);
+          console.log(`✅ Video uploaded: ${videoUrn}\n`);
         } catch (error) {
-          console.error(`❌ Image upload failed: ${error.message}`);
-          console.log(`⚠️  Continuing with text-only post...\n`);
-          imageUrn = null;
+          console.error(`❌ Video upload failed: ${error.message}`);
+          console.log(`⚠️  Falling back to image...\n`);
+          videoUrn = null;
         }
       } else {
-        console.warn(`⚠️  Image not found: ${imagePath}`);
-        console.log(`⚠️  Posting without image...\n`);
+        console.warn(`⚠️  Video not found: ${videoPath} — falling back to image\n`);
+      }
+    }
+
+    if (!videoUrn) {
+      const imageToUpload = frontmatter.linkedinImage || frontmatter.heroImage;
+      if (imageToUpload) {
+        const imagePath = `public${imageToUpload}`;
+        if (existsSync(imagePath)) {
+          console.log(`🖼️  Uploading image: ${imagePath}\n`);
+          try {
+            imageUrn = await uploadImageToLinkedIn(imagePath);
+            console.log(`✅ Image uploaded: ${imageUrn}\n`);
+          } catch (error) {
+            console.error(`❌ Image upload failed: ${error.message}`);
+            console.log(`⚠️  Continuing with text-only post...\n`);
+            imageUrn = null;
+          }
+        } else {
+          console.warn(`⚠️  Image not found: ${imagePath}`);
+          console.log(`⚠️  Posting without image...\n`);
+        }
       }
     }
 
@@ -96,6 +115,7 @@ async function publishToLinkedIn() {
       personUrn: process.env.LINKEDIN_PERSON_URN,
       text: postText,
       imageUrn,
+      videoUrn,
     });
 
     console.log('\n✅ LinkedIn post published successfully!');
