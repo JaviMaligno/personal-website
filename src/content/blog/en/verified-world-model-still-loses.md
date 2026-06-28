@@ -58,17 +58,21 @@ That leads to the finding I find most practical. Can you *repair* the gap by fee
 
 It doesn't work. Across the board, the synthesized model stays rule-blind even when the rule is present in its training trajectories with near-certainty (you can watch it: the gate accuracy sits far below 1.0, meaning the rule *is* in the data, and after six refinement passes the model still hasn't encoded it). The behaviour is **rule translation, not rule inference**: the model faithfully encodes rules it is *told*, and does not reliably infer rules it is only *shown*. The actionable version: complete the specification before you synthesize. Verifying on the play distribution will *detect* an incomplete spec; it will not *repair* it.
 
-## The same trap on the belief side
+## The same split on the belief side
 
-Games with hidden information (poker-like) add a second surface: the model's *belief function* — how it reconstructs what it can't see. Here I could prove something clean: a sampling gate over random play is *provably* enough to certify the belief function on small or shallow games (it's why Kuhn and Leduc poker show no gap). But the belief function has its own blind spot, and a transition-accuracy gate is *structurally* blind to it — the information about what a player can and can't see never appears in a transition at all. I show this with hand-built witnesses rather than synthesized models, and I'm explicit about that line in the paper.
+Games with hidden information — poker and the like — add a second thing the model has to get right: not just the dynamics, but a *belief function*, the code that reconstructs what a player can't see from what they can. I expected the gap to show up here too. The first surprise was that it doesn't — and the reason is almost funny.
+
+On small poker games (Kuhn, Leduc) the sampling gate is *provably* enough to certify the belief function; I can write the bound down. Random play turns out to be a **more** thorough explorer of a betting tree than skilled play, because it raises and calls indiscriminately while good play folds and bails. So the rare belief-states never hide from the gate — competent play only ever visits a subset of what random already covered. No gap.
+
+But that tells you exactly what a gap *would* need: a game where skill takes you **deeper** than randomness — where depth comes from *surviving*, not from flailing. So I built the smallest game I could that has that shape. Call it Beacon, and it's essentially the picture you'd draw on a napkin: a walk where, at each step, you pick a move — one choice lets you continue, the wrong one ends the game on the spot. Random play wanders off the path almost immediately; skilled play walks all the way to the end. And at the very end there's a single decision that turns on a hidden fact about your opponent — a fact you could have read from the moves they made on the way down.
+
+Now hand a model a belief function that is correct everywhere *except* that final stretch — the deep end of the walk that only skilled play ever reaches. It sails through the gate (random play never gets far enough to test it) and then loses every single game, because the one place its beliefs are wrong is the one place the game is actually decided. Same shape as the rare rule, now on the belief side: verified, and still wrong exactly where it counts.
+
+There's a clean structural point underneath: a transition-accuracy gate is **blind by construction** to the belief function. What a player can and cannot see never appears in a "this state became that state" transition — so no amount of transition-checking can catch a wrong belief model; you need a separate check on the beliefs themselves. (These imperfect-information results use games I instrumented by hand to isolate the effect, rather than fully synthesized models — a distinction I'm careful to keep in the paper.)
 
 ## What I actually take from this
 
-Two things, one technical and one about how the work got made.
-
-**Technical:** a passing test suite — or a sampling-based gate — is a *result-check with a coverage blind spot*. It certifies the model exactly where your samples land, and competent behaviour systematically lands somewhere else: the rare, pivotal, deep parts of the space. If you verify a world model (or, honestly, any model used for planning or decisions) by sampling, measure adequacy **on the distribution it will actually be used on**, not on a convenient random one. And when correctness depends on a rule, put the rule in the spec — don't hope the system infers it.
-
-**Meta:** the discipline that hardened this paper wasn't "claim less." It was, for each big claim, separating the part I could actually *prove* from the part that was only *measured* — and saying which was which. That's the same results-oriented reflex (verify the result, and be precise about what "verified" covers), applied to a paper instead of a program.
+A passing test suite — or a sampling-based gate — is a *result-check with a coverage blind spot*. It certifies the model exactly where your samples land, and competent behaviour systematically lands somewhere else: the rare, pivotal, deep parts of the space. If you verify a world model (or, honestly, any model used for planning or decisions) by sampling, measure adequacy **on the distribution it will actually be used on**, not on a convenient random one. And when correctness depends on a rule, put the rule in the spec — don't hope the system infers it.
 
 If you want the formal version, with the theorems and the numbers, it's in the preprint. <!-- TODO: arXiv URL --> The code is open too.
 
