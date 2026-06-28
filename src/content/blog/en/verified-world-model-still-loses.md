@@ -10,7 +10,7 @@ publishToDevto: true
 ---
 A while back I wrote that programming is drifting from verifying *how* code works to verifying *what* it produces — [results-oriented programming](/en/blog/results-oriented-programming). This post is what happened when I took that idea seriously enough to break it. I set out to reproduce a DeepMind result and instead spent a few weeks on a small, stubborn question: **if a result-check passes, does that actually mean the result is right?** The answer, it turns out, is "not necessarily" — and you can say exactly when it fails, and prove part of why.
 
-I wrote the whole thing up as a preprint, *When a Verified World Model Still Loses: Play-Adequacy vs Prediction-Accuracy in LLM-Synthesized Code World Models*. <!-- TODO: replace with the real arXiv URL once posted --> The arXiv link will go here once it's up; the rest of this post is the story in plain language.
+I wrote the whole thing up as a preprint, *When a Verified World Model Still Loses: Play-Adequacy vs Prediction-Accuracy in LLM-Synthesized Code World Models*. `<!-- TODO: replace with the real arXiv URL once posted -->` The arXiv link will go here once it's up; the rest of this post is the story in plain language.
 
 ## The setup: Code World Models
 
@@ -44,7 +44,9 @@ The 1% it gets wrong is exactly the 1% that decides games. Averages hide it — 
 
 The nice part is that this isn't a one-off anecdote; it has a shape. The expected harm follows
 
-$$\text{danger} = \text{play\_cost} \times (1 - \text{rarity})^N$$
+$$
+\text{danger} = \text{play\_cost} \times (1 - \text{rarity})^N
+$$
 
 where `rarity` is how often a random play-through triggers the omitted rule and $N$ is how many play-throughs the gate samples. The $(1 - \text{rarity})^N$ factor is exact — it's just the probability that $N$ independent random games all miss the rule. So harm is negligible while the rule is common enough to get caught, rises through a threshold as it gets rarer, and saturates at the full cost of the rule once it almost always escapes the gate.
 
@@ -62,7 +64,7 @@ It doesn't work. Across the board, the synthesized model stays rule-blind even w
 
 Games with hidden information — poker and the like — add a second thing the model has to get right: not just the dynamics, but a *belief function*, the code that reconstructs what a player can't see from what they can. I expected the gap to show up here too. The first surprise was that it doesn't — and the reason is almost funny.
 
-On small poker games (Kuhn, Leduc) the sampling gate is *provably* enough to certify the belief function; I can write the bound down. Random play turns out to be a **more** thorough explorer of a betting tree than skilled play, because it raises and calls indiscriminately while good play folds and bails. So the rare belief-states never hide from the gate — competent play only ever visits a subset of what random already covered. No gap.
+On small poker games (Kuhn, Leduc) the sampling gate is *provably* enough to certify the belief function; one can write the bound down. Random play turns out to be a **more** thorough explorer of a betting tree than skilled play, because it raises and calls indiscriminately while good play folds and bails. So the rare belief-states never hide from the gate — competent play only ever visits a subset of what random already covered. No gap.
 
 But that tells you exactly what a gap *would* need: a game where skill takes you **deeper** than randomness — where depth comes from *surviving*, not from flailing. So I built the smallest game I could that has that shape. Call it Beacon, and it's essentially the picture you'd draw on a napkin: a walk where, at each step, you pick a move — one choice lets you continue, the wrong one ends the game on the spot. Random play wanders off the path almost immediately; skilled play walks all the way to the end. And at the very end there's a single decision that turns on a hidden fact about your opponent — a fact you could have read from the moves they made on the way down.
 
@@ -74,7 +76,7 @@ There's a clean structural point underneath: a transition-accuracy gate is **bli
 
 A passing test suite — or a sampling-based gate — is a *result-check with a coverage blind spot*. It certifies the model exactly where your samples land, and competent behaviour systematically lands somewhere else: the rare, pivotal, deep parts of the space. If you verify a world model (or, honestly, any model used for planning or decisions) by sampling, measure adequacy **on the distribution it will actually be used on**, not on a convenient random one. And when correctness depends on a rule, put the rule in the spec — don't hope the system infers it.
 
-If you want the formal version, with the theorems and the numbers, it's in the preprint. <!-- TODO: arXiv URL --> The code is open too.
+If you want the formal version, with the theorems and the numbers, it's in the preprint. `<!-- TODO: arXiv URL -->` The code is open too.
 
 ---
 
