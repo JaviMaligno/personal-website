@@ -10,6 +10,8 @@ heroImage: "/blog/from-artifact-to-pwa-vitamind.png"
 
 Todo empezó con una pregunta simple: **¿puedo sintetizar vitamina D hoy en Londres?**
 
+> **Pruébala ya → [VitaminD Explorer](https://getvitamind.app)** — gratuita y open source. Esta es la historia de cómo llegó hasta ahí.
+
 Había estado leyendo sobre cómo la latitud, la estación y el tipo de piel determinan si la luz solar puede realmente activar la producción de vitamina D. La ciencia es clara — por debajo de cierto [ángulo de elevación solar](https://en.wikipedia.org/wiki/Solar_zenith_angle) (~45–50°), la radiación UVB es demasiado débil para la síntesis, sin importar cuánto tiempo pases al aire libre. Pero calcular *cuándo* se abre esa ventana para una ciudad concreta en un día concreto requiere cálculos con [declinación solar](https://en.wikipedia.org/wiki/Position_of_the_Sun#Declination_of_the_Sun), ángulos horarios y trigonometría esférica.
 
 Así que se lo pregunté a Claude.

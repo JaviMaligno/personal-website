@@ -40,7 +40,7 @@ Framed that way, two situations make building the obvious call.
 
 **When it's trivial and then goes silent.** The calendar sync is the clean case. I built it once, it runs on a schedule, and it makes no further claim on me. The attention cost was a single evening and then approximately zero. This is the sweet spot the maximalists are actually right about: small, well-scoped, set-and-forget. When something can be built quickly and then left to run without watching, building wins easily — you skip the subscription and you pay almost nothing in the currency that's actually scarce.
 
-**When nothing on the market fits well enough.** [VitaminD Explorer](/en/blog/from-artifact-to-pwa-vitamind) — my solar vitamin-D calculator — started as a Claude artifact and grew into a real PWA precisely because what I wanted didn't exist in a form I'd have paid for. When the market's answer is "close, but not the thing," the build/buy math stops being about cost at all. You're not undercutting a product; you're filling a gap a product never filled.
+**When nothing on the market fits well enough.** [VitaminD Explorer](https://getvitamind.app) — my solar vitamin-D calculator — started as a Claude artifact and grew into a real PWA precisely because what I wanted didn't exist in a form I'd have paid for. When the market's answer is "close, but not the thing," the build/buy math stops being about cost at all. You're not undercutting a product; you're filling a gap a product never filled.
 
 Notice that neither of these is "build because building is free." Free is the *precondition* that puts building on the table. It isn't the reason.
 
