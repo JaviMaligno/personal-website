@@ -18,13 +18,13 @@ It's a careful paper, and I want to be fair to it: they **deliberately** run age
 
 ## The setup
 
-I started from CooperBench's own benchmark (it's open source) and reproduced the baseline: two agents, each assigned one feature of a task, working in isolated containers, patches merged afterwards. Then I added a **ladder of coordination structures**, ordered from "advisory" (the agent can ignore it) to "enforced" (the scaffold guarantees it):
+I started from [CooperBench's own benchmark](https://github.com/cooperbench/CooperBench) (it's open source) and reproduced the baseline: two agents, each assigned one feature of a task, working in isolated containers, patches merged afterwards. Then I added a **ladder of coordination structures**, ordered from "advisory" (the agent can ignore it) to "enforced" (the scaffold guarantees it):
 
 - **Handshake (C1):** agents must exchange a plan before the scaffold lets them edit code. *(Analogy: a design review before coding.)*
 - **File ownership (C2):** each file is owned by one agent; edits to another agent's file are reverted. *(Analogy: CODEOWNERS.)*
 - **Line-range ownership (C2b):** finer version — both may edit the same file, but only in disjoint regions. *(Analogy: not stepping on each other's functions.)*
-- **Sequential pipeline (seq):** agent A implements feature 1 and commits; agent B starts *from A's code* and adds feature 2. No concurrency. *(Analogy: small, sequential PRs on trunk.)*
-- **Integrator (c4):** A and B work independently; a third agent reconciles both patches. *(Analogy: an integration engineer / PR reviewer.)*
+- **Sequential pipeline (C3):** agent A implements feature 1 and commits; agent B starts *from A's code* and adds feature 2. No concurrency. *(Analogy: small, sequential PRs on trunk.)*
+- **Integrator (C4):** A and B work independently; a third agent reconciles both patches. *(Analogy: an integration engineer / PR reviewer.)*
 
 The point of the ladder is to separate "did they *talk*?" from "did the process *stop them from colliding*?" — and to find the *minimum* structure that helps.
 
@@ -39,18 +39,18 @@ The point of the ladder is to separate "did they *talk*?" from "did the process 
 | handshake (C1) | 0% | 0% |
 | file ownership (C2) | 0% | **16%** |
 | line ownership (C2b) | 0% | 5% |
-| integrator (c4) | 0% | 0% |
-| **sequential (seq)** | **21%** | **32%** |
+| **integrator (C4)** | **21%** | **32%** |
+| **sequential (C3)** | **21%** | **32%** |
 
 Four things stand out:
 
 1. **The coordination gap reproduces — at both tiers.** Solo solves 16% / 37%; the moment two agents work concurrently (coop), it collapses to 0% / 5%. CooperBench's core finding holds up on my subset.
 
-2. **Sequencing is what recovers it — regardless of capability.** The **sequential pipeline** recovers to the solo level for both models (21% vs 16% for mini; 32% vs 37% for the strong one — statistically indistinguishable from solo in both cases), while every concurrent condition sits far below. My reading: this isn't really "coordination" at all. When agent B starts from A's *finished* feature and only adds one thing on top, it's doing a *smaller, cleaner task* than solo. Decomposition plus sequencing is the lever — not more talking, not stricter territory.
+2. **Two structures recover it — and they share a mechanism.** The **sequential pipeline (C3)** and the **integrator (C4)** both recover to solo level at both tiers (21% / 32% each, vs solo's 16% / 37% — statistically indistinguishable from solo). At the strong tier they even pass the *identical* set of tasks. What they have in common: **one agent ends up owning the final integrated state** — B builds directly on A's finished work, or a reviewer reconciles both patches in a single workspace. The lever isn't more talking or stricter fences; it's making integration *somebody's job*.
 
 3. **Structure interacts with capability — the interesting part.** Enforced **file ownership (C2)** recovered nothing for the weak model (0%) but a meaningful chunk for the strong one (0% → **16%**). The stronger model can actually *use* a structural rule it's given; the weaker one can't. That interaction — *the same scaffold helps or doesn't depending on who's using it* — is exactly what a noisy 4-task pilot couldn't show, and it's the part I find most worth chasing. (With one run per cell this particular contrast is suggestive, not significant — more below.)
 
-4. **Forcing communication does nothing — because they already communicate.** The handshake gate (C1) never even fired: agents *already* message each other before touching code (first message on turn 2, first edit on turn 6). Making them talk more changed nothing, at either tier. This echoes CooperBench's own "communication doesn't help" result — and suggests the problem isn't *whether* they exchange information, but what they *do* with it. The integrator (c4) also didn't help either model.
+4. **Forcing communication does nothing — because they already communicate.** The handshake gate (C1) never even fired: agents *already* message each other before touching code (first message on turn 2, first edit on turn 6). Making them talk more changed nothing, at either tier. This echoes CooperBench's own "communication doesn't help" result — and suggests the problem isn't *whether* they exchange information, but what they *do* with it.
 
 A smaller, slightly uncomfortable note: finer **line-range** ownership (C2b, 5%) did *worse* than coarse **file** ownership (C2, 16%) for the strong model — likely an artifact of my v1 that reverts the whole file on any overlap. Enforcement design details matter, and I haven't optimized them.
 
@@ -68,9 +68,9 @@ This rhymes with CooperBench's own observation that communication reduces confli
 
 **Both tiers hit the fence equally often; only one recovers.** The enforcement hook fired a similar number of times for both models (≈18–29 violations per run). The strong model isn't "tidier" — it violates territory just as much. The difference is what happens *after* the revert: the strong model re-plans and routes around it; the weak one keeps banging. All three of the strong model's C2 passes had enforcement events — the mechanism was active in every one of them, they weren't conflict-free freebies.
 
-**Statistics, honestly.** With one run per cell and N=19, individual contrasts are fragile. What survives paired testing (McNemar): the coordination gap (solo vs coop, pooled across tiers, p≈0.004) and sequencing's recovery over coop (pooled p≈0.004). What doesn't: seq vs solo is indistinguishable (p≈1 — seq *recovers* solo, it doesn't beat it), and the C2 capability interaction (p≈0.5) is a hypothesis for a bigger run, not a result.
+**Statistics, honestly.** With one run per cell and N=19, individual contrasts are fragile. What survives paired testing (McNemar): the coordination gap (solo vs coop, pooled across tiers, p≈0.004) and the recovery of both sequencing and the integrator over coop (each pooled p≈0.004). What doesn't: seq vs solo is indistinguishable (p≈1 — seq *recovers* solo, it doesn't beat it), and the C2 capability interaction (p≈0.5) is a hypothesis for a bigger run, not a result.
 
-**Teamwork has a price tag.** For the strong model: solo cost ~$3.60 for 37%; sequential ~$7.10 for 32%; the integrator ~$9.73 for 0%. On small, coupled tasks, two agents cost roughly twice as much to at best match one — if you must collaborate, sequence; if you can avoid it, don't.
+**Teamwork has a price tag.** For the strong model: solo cost ~$3.60 for 37%; sequential ~$7.10 and the integrator ~$9.73, both for 32%. On small, coupled tasks, collaboration costs 2–3× as much to at best match one agent — if you must collaborate, sequence or appoint an integrator; if you can avoid it, don't.
 
 ## What this does and doesn't say
 
@@ -78,10 +78,10 @@ It does **not** say CooperBench is wrong — I reproduced their gap at both tier
 
 The honest headline isn't "structure beats social skills." It's narrower and, I think, more useful:
 
-- The single most reliable lever wasn't communication or ownership — it was **restructuring the work itself**: decompose, then sequence. That helped both models.
+- The single most reliable lever wasn't communication or ownership — it was **giving one agent ownership of the final integration**: hand off sequentially, or appoint an integrator/reviewer to own the merge. Both recover solo-level performance at both tiers.
 - **Enforced structure only pays off for a capable-enough model.** Below some threshold, handing an agent a coordination protocol is like handing a process manual to someone who can't yet do the underlying job.
 
-So "they can't be teammates yet" reads, from here, less like *they lack social intelligence* and more like *they were dropped into an unstructured free-for-all no sane engineering team would run* — and the fix that generalizes is process (decompose + sequence), not exhortations to communicate.
+So "they can't be teammates yet" reads, from here, less like *they lack social intelligence* and more like *they were dropped into an unstructured free-for-all no sane engineering team would run* — and the fix that generalizes is process (decompose + sequence, or appoint an integrator), not exhortations to communicate.
 
 ## Caveats and what's next
 
@@ -89,6 +89,7 @@ So "they can't be teammates yet" reads, from here, less like *they lack social i
 - **Passes concentrate in a few repos.** Every pass, in every condition and tier, lands in two Python repos (plus one Pillow task); four of the nine tasks were solved by nothing, ever — including solo. The effectively discriminative set is closer to ~10 pairs than 19.
 - The subset skews toward what I could run natively; broadening it is the obvious next step.
 - The line-range enforcement deserves a per-hunk revert before I trust the C2b number.
+- A caution from building this: two conditions initially scored a false 0% due to eval-composition bugs (a stacked patch evaluated against the wrong base). In agent harnesses, the scoring plumbing deserves as much testing as the conditions themselves.
 
 The conditions are implemented on top of the open CooperBench harness — I'll share the code alongside a fuller writeup if the pattern holds up on a larger, repeated run.
 
