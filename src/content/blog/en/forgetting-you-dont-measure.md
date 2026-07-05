@@ -1,7 +1,7 @@
 ---
 title: "The Forgetting You Don't Measure"
 description: "When you continually pre-train an LLM into a 'world model', it quietly forgets general knowledge — and a little data mixing buys most of it back. But how much it forgets depends heavily on how you specialize it, and full fine-tuning pays three costs a single benchmark undersells."
-pubDate: 2026-07-01
+pubDate: 2026-07-06
 tags: ["AI", "Machine Learning", "Continual Learning", "LoRA", "Engineering"]
 lang: en
 translationKey: forgetting-you-dont-measure

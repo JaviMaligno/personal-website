@@ -1,7 +1,7 @@
 ---
 title: "El olvido que no mides"
 description: "Cuando conviertes un LLM en un 'modelo del mundo' con pre-entrenamiento continuo, olvida conocimiento general en silencio — y un poco de mezcla de datos recupera casi todo. Pero cuánto olvida depende mucho de cómo lo especializas, y el fine-tuning completo paga tres costes que un solo benchmark subestima."
-pubDate: 2026-07-01
+pubDate: 2026-07-06
 tags: ["IA", "Machine Learning", "Continual Learning", "LoRA", "Ingeniería"]
 lang: es
 translationKey: forgetting-you-dont-measure
