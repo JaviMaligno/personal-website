@@ -55,7 +55,7 @@ Four things stand out:
 
 4. **Forcing communication does nothing — because they already communicate.** The handshake gate (C1) never even fired: agents *already* message each other before touching code (first message on turn 2, first edit on turn 6). Making them talk more changed nothing, at either tier. This echoes CooperBench's own "communication doesn't help" result — and suggests the problem isn't *whether* they exchange information, but what they *do* with it.
 
-A smaller, slightly uncomfortable note: finer **line-range** ownership (C2b, 5%) did *worse* than coarse **file** ownership (C2, 16%) for the strong model — likely an artifact of my v1 that reverts the whole file on any overlap. Enforcement design details matter, and I haven't optimized them.
+A smaller, slightly uncomfortable note: finer **line-range** ownership (C2b, 5%) did *worse* than coarse **file** ownership (C2, 16%) for the strong model. I first suspected an artifact of my v1 enforcement, which reverted the whole file on any overlap — so I built a v2 that reverts only the violating hunks and re-ran both tiers: **still 0%**. The binding constraint isn't revert granularity. It's that CooperBench features *intentionally* overlap on shared lines (the same import list, the same function signature), so any exclusive line ownership starves whichever agent arrives second — in one logged run, the blocked agent tried to negotiate for the shared export line, got no useful reply, and finally submitted nothing at all.
 
 ## Under the hood: collaboration dies at the merge
 
@@ -95,7 +95,7 @@ So "they can't be teammates yet" reads, from here, less like *they lack social i
 - **19 pairs, 5 repos, one run each.** No error bars yet; single-run pass/fail is noisy. Treat the small differences (5% vs 16%) as suggestive, not settled.
 - **Passes concentrate in a few repos.** Every pass, in every condition and tier, lands in two Python repos (plus one Pillow task); four of the nine tasks were solved by nothing, ever — including solo. The effectively discriminative set is closer to ~10 pairs than 19.
 - The subset skews toward what I could run natively; broadening it is the obvious next step.
-- The line-range enforcement deserves a per-hunk revert before I trust the C2b number.
+- The C2b number survived a v2 with per-hunk reverts (0% at both tiers on a re-run) — it is not a revert-granularity artifact.
 - A caution from building this: two conditions initially scored a false 0% due to eval-composition bugs (a stacked patch evaluated against the wrong base). We then ran two independent adversarial code audits over all five condition implementations and the eval routing; the published numbers survived, and the audit is what surfaced the missing conflict resolver behind the fair-merge row above. In agent harnesses, the scoring plumbing deserves as much testing as the conditions themselves.
 
 The conditions are implemented on top of the open CooperBench harness — I'll share the code alongside a fuller writeup if the pattern holds up on a larger, repeated run.

@@ -55,7 +55,7 @@ Cuatro cosas destacan:
 
 4. **Forzar la comunicación no hace nada — porque ya se comunican.** El gate del handshake (C1) ni llegó a dispararse: los agentes *ya* se mandan mensajes antes de tocar código (primer mensaje en el turno 2, primera edición en el turno 6). Hacerles hablar más no cambió nada, en ningún tier. Esto coincide con el propio "la comunicación no ayuda" de CooperBench — y sugiere que el problema no es *si* intercambian información, sino qué **hacen** con ella.
 
-Una nota menor y algo incómoda: el ownership fino por **rangos de línea** (C2b, 5%) rindió *peor* que el grueso por **fichero** (C2, 16%) en el modelo fuerte — probablemente un artefacto de mi v1, que revierte el fichero entero ante cualquier solape. Los detalles del diseño de enforcement importan, y no los he optimizado.
+Una nota menor y algo incómoda: el ownership fino por **rangos de línea** (C2b, 5%) rindió *peor* que el grueso por **fichero** (C2, 16%) en el modelo fuerte. Primero sospeché de un artefacto de mi v1 de enforcement, que revertía el fichero entero ante cualquier solape — así que construí una v2 que revierte solo los hunks violadores y re-corrí ambos tiers: **sigue en 0%**. La restricción vinculante no es la granularidad del revert. Es que las features de CooperBench solapan *a propósito* en líneas compartidas (la misma lista de imports, la misma firma de función), así que cualquier ownership exclusivo de líneas deja sin sitio al agente que llega segundo — en una tanda registrada, el agente bloqueado intentó negociar la línea de exports compartida, no obtuvo respuesta útil, y acabó sin entregar nada.
 
 ## Bajo el capó: la colaboración muere en el merge
 
@@ -95,7 +95,7 @@ Así que "todavía no pueden ser compañeros de equipo" se lee, desde aquí, men
 - **19 parejas, 5 repos, una tanda cada una.** Sin barras de error aún; el pass/fail de una sola ejecución es ruidoso. Trata las diferencias pequeñas (5% vs 16%) como sugerentes, no zanjadas.
 - **Los passes se concentran en pocos repos.** Todos los passes, en toda condición y tier, caen en dos repos Python (más una tarea de Pillow); cuatro de las nueve tareas no las resolvió nada, nunca — ni el solo. El conjunto efectivamente discriminativo está más cerca de ~10 parejas que de 19.
 - El subconjunto se inclina hacia lo que pude correr de forma nativa; ampliarlo es el siguiente paso obvio.
-- El enforcement por rangos de línea merece un revert por-hunk antes de fiarme del número de C2b.
+- El número de C2b sobrevivió a una v2 con reverts por-hunk (0% en ambos tiers al re-correrlo) — no es un artefacto de la granularidad del revert.
 - Una advertencia de construir esto: dos condiciones puntuaron un 0% falso por bugs de composición del eval (un parche apilado evaluado contra la base equivocada). Después corrimos dos auditorías de código adversariales e independientes sobre las cinco condiciones y el ruteo del eval; los números publicados sobrevivieron, y la auditoría es la que destapó el resolver de conflictos ausente detrás de la fila de "merge justo" de arriba. En harnesses de agentes, la fontanería de puntuación merece tantos tests como las condiciones mismas.
 
 Las condiciones están implementadas sobre el harness abierto de CooperBench — compartiré el código junto a un writeup más completo si el patrón se sostiene en una tanda mayor y repetida.
