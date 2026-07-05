@@ -1,6 +1,6 @@
 ---
 title: "The Forgetting You Don't Measure"
-description: "When you continually pre-train an LLM into a 'world model', it quietly forgets general knowledge — and a little data mixing buys most of it back. But the finding that stuck with me is that the cheap, default method hides the forgetting entirely. The problem was never the forgetting. It was whether you could see it."
+description: "When you continually pre-train an LLM into a 'world model', it quietly forgets general knowledge — and a little data mixing buys most of it back. But how much it forgets depends heavily on how you specialize it, and full fine-tuning pays three costs a single benchmark undersells."
 pubDate: 2026-07-01
 tags: ["AI", "Machine Learning", "Continual Learning", "LoRA", "Engineering"]
 lang: en
@@ -34,9 +34,9 @@ Ten percent replay recovers about 73% of the average forgetting — and roughly 
 
 I want to be upfront: this is not a new discovery. That a small replay fraction suppresses catastrophic forgetting in continual pre-training is [well-established](https://arxiv.org/html/2401.03129v1) — the continual-learning literature has been saying "mix in 1–5% of the old distribution" for years. What I did was *measure* the specific claim the world-model paper makes by design but leaves unquantified. The number was pleasant to see. It wasn't the interesting part.
 
-## The interesting part: the method decides whether you see it at all
+## The more interesting part: how much you forget depends on how you specialize
 
-I ran the same sweep a second way: instead of full fine-tuning, I used **LoRA** — the cheap, default parameter-efficient method that trains a small set of adapter weights and leaves the base model frozen. Here's the mean forgetting, LoRA versus full fine-tuning, at each replay fraction:
+Data mixing is one lever. The *method* is a bigger one. I ran the same setup a second way: instead of full fine-tuning, **LoRA** — the cheap, default parameter-efficient method that trains a small set of adapter weights and leaves the base model frozen. Same mean forgetting, LoRA versus full fine-tuning, at each replay fraction:
 
 | Replay % | Full fine-tuning | LoRA |
 |---|---|---|
@@ -45,23 +45,35 @@ I ran the same sweep a second way: instead of full fine-tuning, I used **LoRA** 
 | 25% | −0.012 | +0.009 |
 | 50% | −0.015 | +0.009 |
 
-LoRA shows **no forgetting at all** — not even at zero replay — while learning the terminal task just as well (same ~0.90 accuracy). If you had only ever trained this way, you would look at your numbers, see general ability perfectly intact, and conclude that turning your model into a world model is free. And you'd be wrong. The forgetting is real. Your instrument just couldn't see it, because LoRA barely moves the weights that hold the general knowledge — it's [known to forget less](https://arxiv.org/html/2405.09673v2) precisely *because* it touches so little.
+LoRA barely forgets — not even at zero replay — while learning the terminal task just as well (same ~0.90 accuracy). This isn't mysterious: LoRA freezes the base weights and only trains a thin adapter, so the general knowledge sits untouched by construction. It's [known to forget less](https://arxiv.org/html/2405.09673v2) precisely *because* it moves so little. Full fine-tuning, by contrast, lets the optimizer overwrite any weight — including the ones holding general ability.
 
-This is the same trap I keep writing about from different angles. In [Results-Oriented Programming](/en/blog/results-oriented-programming) it was verifying the output while trusting a signal that couldn't fail loudly. In [How Much Should You Still Know?](/en/blog/how-much-should-you-still-know) it was delegating knowledge and losing the ability to tell when the retrieved answer is wrong. Here it's the same shape at the level of a training run: the danger isn't the forgetting, it's picking a method — for perfectly good reasons of cost and convenience — that can't reveal the forgetting even when it's happening. Full fine-tuning "looks worse" because it's the honest instrument. LoRA "looks safe" because it's a quieter one.
+So I pushed on what full fine-tuning actually costs, beyond the reasoning benchmarks. Two more probes, at zero replay, full-FT versus LoRA:
 
-That's not an argument against LoRA. LoRA forgetting less is often exactly what you want. It's an argument against reading "my general benchmarks didn't move" as "nothing was lost," when the two can come apart entirely depending on how you trained.
+| Probe | Full fine-tuning | LoRA |
+|---|---|---|
+| **IFEval** (instruction-following) | 0.194 → 0.123 (**−0.071**) | 0.194 → 0.227 (**+0.033**) |
+| **Held-out sim on OOD commands** (sed/awk/grep/pipes) | **0.00** | **0.15** |
+
+Both cost full-FT, both spare LoRA:
+
+- **Instruction-following.** My reasoning/commonsense battery couldn't see this, so I added IFEval — programmatically-checkable instructions (format, length, required words). Full fine-tuning drops it 37% relative; LoRA actually nudges it up. This is the concrete thing that "general benchmarks barely moved" was hiding on the full-FT side: an instruct model quietly losing the instruction-following it was tuned for.
+- **Depth of the learned task.** I expected the opposite here — that LoRA, touching so little, would learn a *shallower* world model. It's the reverse. Both score ~0.90 on held-out commands drawn from the training distribution, but on genuinely out-of-distribution commands (ones the training set never contains) full fine-tuning collapses to zero while LoRA still gets 15%. Full-FT overfits the exact command shapes it saw; LoRA, riding on the frozen base, generalizes a little.
+
+So the honest read is simpler than a "gotcha": **full fine-tuning pays three costs — general reasoning, instruction-following, and out-of-distribution robustness — that a single benchmark undersells, and LoRA mostly doesn't pay them, because it perturbs the model far less.** That's not LoRA hiding anything; it's LoRA doing less damage. The mild version of the lesson still holds, though, and it's the through-line of [Results-Oriented Programming](/en/blog/results-oriented-programming) and [How Much Should You Still Know?](/en/blog/how-much-should-you-still-know): one number ("my general accuracy held") can quietly stand in for several you didn't check.
+
+The trade-off is the usual one: LoRA learns the *new* task a bit less aggressively than full-FT. Here the terminal task was easy enough that both hit the same ~0.90, so LoRA looks strictly better — but on a harder target where you need every point of task performance, full fine-tuning's willingness to overwrite is exactly what you're paying for. There's no free lunch, just a dial between "learn more, forget more" and "learn less, forget less."
 
 ## Two nuances, honestly reported
 
-**Base versus instruct.** I expected the instruction-tuned model to forget more — more to lose. It didn't: base and instruct 0.5B forgot almost identically (−0.077 vs −0.078 at zero replay). The honest caveat is that my battery is reasoning and commonsense tasks; the place an instruct model would bleed is *instruction-following*, which I didn't measure. So this says less than it looks like it does.
+**Base versus instruct.** I expected the instruction-tuned model to forget more — more to lose. On reasoning it didn't: base and instruct 0.5B forgot almost identically (−0.14 vs −0.17 mean at zero replay). Where the instruct model *does* bleed is instruction-following itself (the IFEval drop above) — a base model has little of that to lose in the first place. So "more to lose" is true, but only on the axis the instruct model was tuned for.
 
 **Size.** The larger model forgot a bit less: full fine-tuning 1.5B lost −0.060 on average versus 0.5B's −0.078, leaning toward "smaller models forget more." But the effect is soft and not uniform — clear on ARC-Easy, reversed on ARC-Challenge — and comparable to the noise between seeds. (Getting 1.5B full fine-tuning to fit on a 16 GB T4 at all took an offloaded 8-bit optimizer and a batch size of one; it overshot memory by 200 MB on the first try. A craft note, not a finding.)
 
 ## What it was actually worth
 
-None of the four results would survive as a preprint — I checked, and every one of them is already in the literature: replay mitigates forgetting, LoRA forgets less, larger models forget a little less. This was a reproduction, in a new-ish setting, at a scale you can run overnight for pocket change.
+None of these results would survive as a preprint — I checked, and each is already in the literature: replay mitigates forgetting, LoRA forgets less, larger models forget a little less. This was a reproduction, in a new-ish setting, at a scale you can run overnight for pocket change.
 
-The value, for me, was the middle result, and it isn't about world models at all. When you specialize a model and then check whether it kept its general ability, *the answer you get depends on how you looked*. Same model, same data, same task — one method reports a real loss, the other reports none. If you only own the quiet instrument, "no forgetting" is not evidence of no forgetting. It's just silence.
+The value, for me, was seeing how much the answer to "did it keep its general ability?" depends on *what you measured and how you trained*. Full fine-tuning on a narrow task looked fine on reasoning, until IFEval showed the instruction-following it had shed and an OOD probe showed how narrowly it had actually learned. Same model, same data — the losses were real, they just weren't in the first place you'd look. The fix isn't exotic: when you specialize a model, check more than one capability, and remember that the training method sets how much there was to lose in the first place.
 
 ---
 

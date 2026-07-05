@@ -1,6 +1,6 @@
 ---
 title: "El olvido que no mides"
-description: "Cuando conviertes un LLM en un 'modelo del mundo' con pre-entrenamiento continuo, olvida conocimiento general en silencio — y un poco de mezcla de datos recupera casi todo. Pero lo que se me quedó grabado es que el método barato y por defecto esconde el olvido por completo. El problema nunca fue el olvido. Fue si podías verlo."
+description: "Cuando conviertes un LLM en un 'modelo del mundo' con pre-entrenamiento continuo, olvida conocimiento general en silencio — y un poco de mezcla de datos recupera casi todo. Pero cuánto olvida depende mucho de cómo lo especializas, y el fine-tuning completo paga tres costes que un solo benchmark subestima."
 pubDate: 2026-07-01
 tags: ["IA", "Machine Learning", "Continual Learning", "LoRA", "Ingeniería"]
 lang: es
@@ -34,9 +34,9 @@ Un 10% de replay recupera cerca del 73% del olvido medio — y en torno al 82% d
 
 Quiero ser claro: esto no es un descubrimiento nuevo. Que una fracción pequeña de replay suprima el olvido catastrófico en pre-entrenamiento continuo está [bien establecido](https://arxiv.org/html/2401.03129v1) — la literatura de continual learning lleva años diciendo "mezcla un 1–5% de la distribución vieja". Lo que hice fue *medir* la afirmación concreta que el paper del modelo del mundo hace por diseño pero deja sin cuantificar. El número dio gusto verlo. No era lo interesante.
 
-## Lo interesante: el método decide si lo ves siquiera
+## Lo más interesante: cuánto olvidas depende de cómo especializas
 
-Corrí el mismo barrido de una segunda forma: en vez de fine-tuning completo, usé **LoRA** — el método barato y por defecto, eficiente en parámetros, que entrena un pequeño conjunto de pesos adaptadores y deja el modelo base congelado. Aquí el olvido medio, LoRA frente a fine-tuning completo, en cada fracción de replay:
+La mezcla de datos es una palanca. El *método* es una mayor. Corrí el mismo montaje de una segunda forma: en vez de fine-tuning completo, **LoRA** — el método barato y por defecto, eficiente en parámetros, que entrena un pequeño conjunto de pesos adaptadores y deja el modelo base congelado. El mismo olvido medio, LoRA frente a fine-tuning completo, en cada fracción de replay:
 
 | Replay % | Fine-tuning completo | LoRA |
 |---|---|---|
@@ -45,23 +45,35 @@ Corrí el mismo barrido de una segunda forma: en vez de fine-tuning completo, us
 | 25% | −0.012 | +0.009 |
 | 50% | −0.015 | +0.009 |
 
-LoRA no muestra **ningún olvido** — ni siquiera a cero replay — mientras aprende la tarea de terminal igual de bien (la misma accuracy ~0.90). Si solo hubieras entrenado así, mirarías tus números, verías la capacidad general perfectamente intacta, y concluirías que convertir tu modelo en modelo del mundo es gratis. Y estarías equivocado. El olvido es real. Tu instrumento simplemente no podía verlo, porque LoRA apenas mueve los pesos que sostienen el conocimiento general — se sabe que [olvida menos](https://arxiv.org/html/2405.09673v2) precisamente *porque* toca tan poco.
+LoRA apenas olvida — ni siquiera a cero replay — mientras aprende la tarea de terminal igual de bien (la misma accuracy ~0.90). No es un misterio: LoRA congela los pesos base y solo entrena un adaptador fino, así que el conocimiento general queda intacto por construcción. Se sabe que [olvida menos](https://arxiv.org/html/2405.09673v2) precisamente *porque* mueve tan poco. El fine-tuning completo, en cambio, deja que el optimizador sobrescriba cualquier peso — incluidos los que sostienen la capacidad general.
 
-Es la misma trampa sobre la que escribo desde ángulos distintos. En [Programación orientada a resultados](/es/blog/results-oriented-programming) era verificar la salida confiando en una señal que no podía fallar en voz alta. En [¿Cuánto deberías seguir sabiendo?](/es/blog/how-much-should-you-still-know) era delegar conocimiento y perder la capacidad de notar cuándo la respuesta recuperada está mal. Aquí es la misma forma a nivel de una corrida de entrenamiento: el peligro no es el olvido, es elegir un método — por razones perfectamente buenas de coste y comodidad — que no puede revelar el olvido aunque esté ocurriendo. El fine-tuning completo "se ve peor" porque es el instrumento honesto. LoRA "se ve seguro" porque es uno más silencioso.
+Así que apreté sobre lo que el fine-tuning completo cuesta de verdad, más allá de los benchmarks de razonamiento. Dos sondas más, a cero replay, full-FT frente a LoRA:
 
-No es un argumento contra LoRA. Que LoRA olvide menos suele ser justo lo que quieres. Es un argumento contra leer "mis benchmarks generales no se movieron" como "no se perdió nada", cuando las dos cosas pueden separarse por completo según cómo entrenaste.
+| Sonda | Fine-tuning completo | LoRA |
+|---|---|---|
+| **IFEval** (seguimiento de instrucciones) | 0.194 → 0.123 (**−0.071**) | 0.194 → 0.227 (**+0.033**) |
+| **Sim held-out en comandos OOD** (sed/awk/grep/pipes) | **0.00** | **0.15** |
+
+Ambas cuestan a full-FT, ambas perdona LoRA:
+
+- **Seguimiento de instrucciones.** Mi batería de razonamiento/sentido común no podía ver esto, así que añadí IFEval — instrucciones verificables por programa (formato, longitud, palabras obligatorias). El fine-tuning completo lo baja un 37% relativo; LoRA incluso lo sube un poco. Esto es lo concreto que "los benchmarks generales apenas se movieron" ocultaba del lado de full-FT: un modelo instruct perdiendo en silencio el seguimiento de instrucciones para el que fue afinado.
+- **Profundidad de la tarea aprendida.** Aquí esperaba lo contrario — que LoRA, tocando tan poco, aprendiera un modelo del mundo *más superficial*. Es al revés. Ambos sacan ~0.90 en comandos held-out de la distribución de entrenamiento, pero en comandos genuinamente fuera de distribución (que el training nunca contiene) el fine-tuning completo se desploma a cero mientras LoRA aún saca un 15%. Full-FT sobreajusta las formas exactas de comando que vio; LoRA, apoyado en el base congelado, generaliza un poco.
+
+Así que la lectura honesta es más simple que un "te pillé": **el fine-tuning completo paga tres costes — razonamiento general, seguimiento de instrucciones y robustez fuera de distribución — que un solo benchmark subestima, y LoRA en su mayoría no los paga, porque perturba el modelo mucho menos.** No es que LoRA oculte nada; es que LoRA hace menos daño. La versión suave de la lección sigue en pie, y es el hilo de [Programación orientada a resultados](/es/blog/results-oriented-programming) y [¿Cuánto deberías seguir sabiendo?](/es/blog/how-much-should-you-still-know): un solo número ("mi accuracy general aguantó") puede sustituir en silencio a varios que no comprobaste.
+
+El trade-off es el de siempre: LoRA aprende la tarea *nueva* algo menos agresivamente que full-FT. Aquí la tarea de terminal era fácil y ambos llegaron al mismo ~0.90, así que LoRA sale estrictamente mejor — pero en un objetivo más difícil donde necesites cada punto de rendimiento, la disposición de full-FT a sobrescribir es justo lo que estás pagando. No hay comida gratis, solo un dial entre "aprende más, olvida más" y "aprende menos, olvida menos".
 
 ## Dos matices, reportados con honestidad
 
-**Base frente a instruct.** Esperaba que el modelo instruido olvidara más — más que perder. No fue así: base e instruct de 0.5B olvidaron casi idéntico (−0.077 vs −0.078 a cero replay). El matiz honesto es que mi batería son tareas de razonamiento y sentido común; donde un modelo instruct sangraría es en *seguimiento de instrucciones*, que no medí. Así que dice menos de lo que parece.
+**Base frente a instruct.** Esperaba que el modelo instruido olvidara más — más que perder. En razonamiento no fue así: base e instruct de 0.5B olvidaron casi idéntico (−0.14 vs −0.17 de media a cero replay). Donde el modelo instruct *sí* sangra es en el propio seguimiento de instrucciones (la caída de IFEval de arriba) — un modelo base tiene poco de eso que perder de entrada. Así que "más que perder" es cierto, pero solo en el eje para el que el modelo instruct fue afinado.
 
 **Tamaño.** El modelo más grande olvidó algo menos: fine-tuning completo de 1.5B perdió −0.060 de media frente al −0.078 del 0.5B, inclinándose hacia "los modelos pequeños olvidan más". Pero el efecto es suave y no uniforme — claro en ARC-Easy, invertido en ARC-Challenge — y comparable al ruido entre semillas. (Hacer que el fine-tuning completo de 1.5B cupiera en una T4 de 16 GB requirió un optimizador de 8 bits descargado a CPU y batch de uno; en el primer intento se pasó de memoria por 200 MB. Una nota de oficio, no un hallazgo.)
 
 ## Para qué sirvió de verdad
 
-Ninguno de los cuatro resultados sobreviviría como preprint — lo comprobé, y todos están ya en la literatura: el replay mitiga el olvido, LoRA olvida menos, los modelos grandes olvidan un poco menos. Fue una reproducción, en un escenario nuevecillo, a una escala que corres de una noche por calderilla.
+Ninguno de estos resultados sobreviviría como preprint — lo comprobé, y cada uno está ya en la literatura: el replay mitiga el olvido, LoRA olvida menos, los modelos grandes olvidan un poco menos. Fue una reproducción, en un escenario nuevecillo, a una escala que corres de una noche por calderilla.
 
-El valor, para mí, fue el resultado del medio, y no va de modelos del mundo en absoluto. Cuando especializas un modelo y luego compruebas si conservó su capacidad general, *la respuesta que obtienes depende de cómo miraste*. Mismo modelo, mismos datos, misma tarea — un método reporta una pérdida real, el otro no reporta ninguna. Si solo tienes el instrumento silencioso, "sin olvido" no es evidencia de que no hubo olvido. Es solo silencio.
+El valor, para mí, fue ver cuánto depende la respuesta a "¿conservó su capacidad general?" de *qué mediste y cómo entrenaste*. El fine-tuning completo sobre una tarea estrecha se veía bien en razonamiento, hasta que IFEval mostró el seguimiento de instrucciones que había soltado y una sonda OOD mostró lo estrechamente que en realidad había aprendido. Mismo modelo, mismos datos — las pérdidas eran reales, solo que no estaban en el primer sitio donde mirarías. El arreglo no es exótico: cuando especializas un modelo, comprueba más de una capacidad, y recuerda que el método de entrenamiento fija cuánto había que perder de entrada.
 
 ---
 
