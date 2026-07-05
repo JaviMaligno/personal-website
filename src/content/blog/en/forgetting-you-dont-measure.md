@@ -7,6 +7,7 @@ lang: en
 translationKey: forgetting-you-dont-measure
 heroImage: "/blog/forgetting-you-dont-measure.png"
 linkedinImage: /blog/forgetting-mixing-curve.png
+repoUrl: https://github.com/JaviMaligno/language-world-model-forgetting
 ---
 
 There's a recent paper from the Qwen team — [Qwen-AgentWorld](https://arxiv.org/abs/2606.24597) — that turns an LLM into a *world model*: instead of answering as an assistant, the model learns to predict what an environment returns after an action. Run a shell command, and it predicts the exact terminal output, exit code and all. They build this by taking a finished, general-purpose model and training it further on millions of interaction trajectories — a step called **continual pre-training** (you keep pre-training an already-trained model on new data to teach it something new).

@@ -14,6 +14,8 @@ const blog = defineCollection({
     translationKey: z.string(),
     // For LinkedIn automation (optional)
     linkedinImage: z.string().optional(),
+    // Optional link to a code repo; appended to the LinkedIn post when present
+    repoUrl: z.string().optional(),
   }),
 });
 

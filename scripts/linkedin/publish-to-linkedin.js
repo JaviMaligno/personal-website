@@ -50,14 +50,17 @@ async function publishToLinkedIn() {
       .map(tag => `#${tag.replace(/\s+/g, '')}`)
       .join(' ');
 
-    let postText = `${summary}\n\n📖 Read more: ${postUrl}\n\n${hashtags}`;
+    // Optional: link to the code repo when the article declares one (repoUrl frontmatter).
+    const repoLine = frontmatter.repoUrl ? `💻 Code: ${frontmatter.repoUrl}\n` : '';
+
+    let postText = `${summary}\n\n${repoLine}📖 Read more: ${postUrl}\n\n${hashtags}`;
 
     // Check character limit (LinkedIn max: 3000 chars)
     if (postText.length > 3000) {
       console.warn(`⚠️  Post text exceeds 3000 chars (${postText.length}). Truncating...`);
-      const maxSummaryLength = 3000 - postUrl.length - hashtags.length - 50; // Buffer for formatting
+      const maxSummaryLength = 3000 - postUrl.length - repoLine.length - hashtags.length - 50; // Buffer for formatting
       const truncatedSummary = summary.substring(0, maxSummaryLength) + '...';
-      postText = `${truncatedSummary}\n\n📖 Read more: ${postUrl}\n\n${hashtags}`;
+      postText = `${truncatedSummary}\n\n${repoLine}📖 Read more: ${postUrl}\n\n${hashtags}`;
     }
 
     console.log(`\n📄 Post preview (${postText.length} chars):`);
