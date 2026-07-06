@@ -1,0 +1,66 @@
+---
+import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../i18n';
+import { getSkillsByCategory, getFeaturedSkills } from '../data/skills';
+import SkillCard from './SkillCard.astro';
+
+interface Props {
+  full?: boolean;
+}
+
+const { full = false } = Astro.props;
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+const s = t('skills');
+const groups = getSkillsByCategory();
+const featured = getFeaturedSkills();
+const skillsPath = `${getLocalizedPath('/', lang)}skills`;
+const repoRoot = 'https://github.com/JaviMaligno/agilabs-skills';
+---
+
+<section id="skills" class="skills">
+  <div class="container">
+    <div class="section-header">
+      <h2>{s.section.title}</h2>
+      <p>{s.section.subtitle}</p>
+    </div>
+
+    {full ? (
+      <>
+        {groups.map((group) => (
+          <div class="skill-group">
+            <h3 class="group-title">{s.categories[group.category]}</h3>
+            <div class="grid grid-3">
+              {group.skills.map((skill) => <SkillCard skill={skill} />)}
+            </div>
+          </div>
+        ))}
+        <div class="view-all">
+          <a href={repoRoot} target="_blank" rel="noopener" class="view-all-link">{s.section.ctaLabel}</a>
+        </div>
+      </>
+    ) : (
+      <>
+        <div class="grid grid-3">
+          {featured.map((skill) => <SkillCard skill={skill} />)}
+        </div>
+        <div class="view-all">
+          <a href={skillsPath} class="view-all-link">{s.section.viewAllLabel}</a>
+        </div>
+      </>
+    )}
+  </div>
+</section>
+
+<style>
+  .skill-group { margin-top: var(--space-xl); }
+  .group-title {
+    font-size: 1.125rem;
+    color: var(--text-secondary, var(--text-muted));
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .view-all { text-align: center; margin-top: var(--space-xl); }
+  .view-all-link { color: var(--text-muted); font-size: 0.9375rem; text-decoration: none; transition: color 0.2s ease; }
+  .view-all-link:hover { color: var(--primary); }
+</style>
