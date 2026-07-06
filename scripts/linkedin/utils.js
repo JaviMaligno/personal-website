@@ -152,6 +152,31 @@ export function buildMentionAttributes(mentions = []) {
 }
 
 /**
+ * Compose the LinkedIn post text (pure function — used by the publisher and tests).
+ * Layout: summary, then an optional "💻 Code" line when repoUrl is set, then the
+ * "📖 Read more" link, then hashtags. Truncates the summary to keep the whole post
+ * under maxLength characters (LinkedIn's limit is 3000).
+ *
+ * @param {Object} p
+ * @param {string} p.summary   - Generated summary body
+ * @param {string} p.postUrl   - Canonical article URL
+ * @param {string} [p.hashtags] - Space-joined hashtags line
+ * @param {string} [p.repoUrl]  - Optional code repo URL
+ * @param {number} [p.maxLength] - Character cap (default 3000)
+ * @returns {string} the final post text
+ */
+export function buildPostText({ summary, postUrl, hashtags = '', repoUrl = '', maxLength = 3000 }) {
+  const repoLine = repoUrl ? `💻 Code: ${repoUrl}\n` : '';
+  const compose = (body) => `${body}\n\n${repoLine}📖 Read more: ${postUrl}\n\n${hashtags}`;
+  let postText = compose(summary);
+  if (postText.length > maxLength) {
+    const maxSummaryLength = maxLength - postUrl.length - repoLine.length - hashtags.length - 50;
+    postText = compose(summary.substring(0, Math.max(0, maxSummaryLength)) + '...');
+  }
+  return postText;
+}
+
+/**
  * Build the ugcPosts request body (pure function — used by dry-run and tests).
  *
  * @param {Object} params - Same params as createLinkedInPost

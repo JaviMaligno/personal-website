@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import matter from 'gray-matter';
 import { generateSummary } from './generate-summary.js';
-import { uploadImageToLinkedIn, uploadVideoToLinkedIn, createLinkedInPost } from './utils.js';
+import { uploadImageToLinkedIn, uploadVideoToLinkedIn, createLinkedInPost, buildPostText } from './utils.js';
 
 /**
  * Main orchestrator: Generate summary, upload image (if exists), publish to LinkedIn
@@ -50,15 +50,14 @@ async function publishToLinkedIn() {
       .map(tag => `#${tag.replace(/\s+/g, '')}`)
       .join(' ');
 
-    let postText = `${summary}\n\n📖 Read more: ${postUrl}\n\n${hashtags}`;
-
-    // Check character limit (LinkedIn max: 3000 chars)
-    if (postText.length > 3000) {
-      console.warn(`⚠️  Post text exceeds 3000 chars (${postText.length}). Truncating...`);
-      const maxSummaryLength = 3000 - postUrl.length - hashtags.length - 50; // Buffer for formatting
-      const truncatedSummary = summary.substring(0, maxSummaryLength) + '...';
-      postText = `${truncatedSummary}\n\n📖 Read more: ${postUrl}\n\n${hashtags}`;
-    }
+    // Compose the post text (summary + optional "💻 Code" line + "Read more" + hashtags,
+    // truncated under 3000 chars). Pure logic lives in buildPostText (unit-tested).
+    const postText = buildPostText({
+      summary,
+      postUrl,
+      hashtags,
+      repoUrl: frontmatter.repoUrl,
+    });
 
     console.log(`\n📄 Post preview (${postText.length} chars):`);
     console.log('─'.repeat(60));
