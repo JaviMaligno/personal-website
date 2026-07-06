@@ -108,10 +108,10 @@ Notes:
 ## Part 2 — Public repo v1
 
 ### Repo
-- **Name (proposed):** `agilabs-skills` — *decision to confirm during implementation.*
+- **Name:** `agilabs-skills`.
 - **Owner:** `JaviMaligno` (matches existing project GitHub links).
 - **Visibility:** public.
-- **License:** MIT (permissive, standard for reusable tooling) — *confirm.*
+- **License:** MIT.
 
 ### Contents (v1 = 8 fully-generic skills)
 demo-video, spotify-upload, tailor-cv, blog-writer, feature-dev, code-review, commit-pr,
@@ -149,9 +149,9 @@ Any hit → sanitize or drop the file. If a skill can't be cleaned without gutti
 to v2 and note it.
 
 ### Wiring back to the site
-- `repoUrl` for the 8 published skills → `https://github.com/JaviMaligno/agilabs-skills`
-  (optionally deep-linking to each skill's subdirectory).
-- Section CTA → repo root.
+- `repoUrl` for the 8 published skills → deep-link to each skill's subdirectory, e.g.
+  `https://github.com/JaviMaligno/agilabs-skills/tree/main/content-media/demo-video`.
+- Section CTA → repo root (`https://github.com/JaviMaligno/agilabs-skills`).
 
 ## Testing / verification
 - `npm run build` succeeds.
@@ -167,7 +167,8 @@ to v2 and note it.
 - Publishing any 🔒/🟡 skill before its generic core is extracted (that is repo v2+).
 - Extracting generic cores (v2+ follow-up).
 
-## Open decisions to confirm during implementation
-1. Public repo name (`agilabs-skills` proposed).
-2. License (MIT proposed).
-3. Whether `repoUrl` deep-links to each skill's subdirectory or just the repo root.
+## Confirmed decisions
+1. Public repo name: **`agilabs-skills`**.
+2. License: **MIT**.
+3. `repoUrl` **deep-links to each skill's subdirectory** within the repo (e.g.
+   `.../agilabs-skills/tree/main/content-media/demo-video`). Section CTA still points to repo root.
