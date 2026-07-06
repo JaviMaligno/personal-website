@@ -1,11 +1,19 @@
 ---
-import { getLangFromUrl, useTranslations, type Language } from '../i18n';
-import { getSkillsByCategory } from '../data/skills';
+import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../i18n';
+import { getSkillsByCategory, getFeaturedSkills } from '../data/skills';
+import SkillCard from './SkillCard.astro';
 
+interface Props {
+  full?: boolean;
+}
+
+const { full = false } = Astro.props;
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
 const s = t('skills');
 const groups = getSkillsByCategory();
+const featured = getFeaturedSkills();
+const skillsPath = `${getLocalizedPath('/', lang)}skills`;
 const repoRoot = 'https://github.com/JaviMaligno/agilabs-skills';
 ---
 
@@ -16,37 +24,30 @@ const repoRoot = 'https://github.com/JaviMaligno/agilabs-skills';
       <p>{s.section.subtitle}</p>
     </div>
 
-    {groups.map((group) => (
-      <div class="skill-group">
-        <h3 class="group-title">{s.categories[group.category]}</h3>
-        <div class="grid grid-3">
-          {group.skills.map((skill) => {
-            const badge = skill.visibility === 'public' ? s.badges.public : s.badges.internal;
-            const body = (
-              <>
-                <div class="skill-header">
-                  <span class="visibility-badge" data-visibility={skill.visibility}>{badge}</span>
-                </div>
-                <h4>{s[skill.key].title}</h4>
-                <p>{s[skill.key].description}</p>
-                <div class="tags">
-                  {skill.tags.map((tag) => <span class="tag">{tag}</span>)}
-                </div>
-              </>
-            );
-            return skill.visibility === 'public' && skill.repoUrl ? (
-              <a class="card skill-card is-link" href={skill.repoUrl} target="_blank" rel="noopener">{body}</a>
-            ) : (
-              <div class="card skill-card">{body}</div>
-            );
-          })}
+    {full ? (
+      <>
+        {groups.map((group) => (
+          <div class="skill-group">
+            <h3 class="group-title">{s.categories[group.category]}</h3>
+            <div class="grid grid-3">
+              {group.skills.map((skill) => <SkillCard skill={skill} />)}
+            </div>
+          </div>
+        ))}
+        <div class="view-all">
+          <a href={repoRoot} target="_blank" rel="noopener" class="view-all-link">{s.section.ctaLabel}</a>
         </div>
-      </div>
-    ))}
-
-    <div class="view-all">
-      <a href={repoRoot} target="_blank" rel="noopener" class="view-all-link">{s.section.ctaLabel}</a>
-    </div>
+      </>
+    ) : (
+      <>
+        <div class="grid grid-3">
+          {featured.map((skill) => <SkillCard skill={skill} />)}
+        </div>
+        <div class="view-all">
+          <a href={skillsPath} class="view-all-link">{s.section.viewAllLabel}</a>
+        </div>
+      </>
+    )}
   </div>
 </section>
 
@@ -59,34 +60,6 @@ const repoRoot = 'https://github.com/JaviMaligno/agilabs-skills';
     padding-bottom: var(--space-sm);
     border-bottom: 1px solid var(--glass-border);
   }
-  .skill-card { display: flex; flex-direction: column; text-decoration: none; color: inherit; }
-  .skill-card.is-link { transition: transform 0.2s ease, border-color 0.2s ease; }
-  .skill-card.is-link:hover { transform: translateY(-2px); border-color: var(--primary); }
-  .skill-header { margin-bottom: var(--space-sm); }
-  .visibility-badge {
-    display: inline-block;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0.25rem 0.625rem;
-    border-radius: var(--radius-full);
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    color: var(--text-muted);
-  }
-  .visibility-badge[data-visibility="public"] {
-    background: rgba(34, 197, 94, 0.15);
-    border-color: rgba(34, 197, 94, 0.3);
-    color: #4ade80;
-  }
-  .visibility-badge[data-visibility="internal"] {
-    background: rgba(148, 163, 184, 0.15);
-    border-color: rgba(148, 163, 184, 0.3);
-    color: #94a3b8;
-  }
-  .skill-card h4 { margin-bottom: var(--space-sm); color: var(--text-primary); }
-  .skill-card p { flex-grow: 1; font-size: 0.9375rem; }
   .view-all { text-align: center; margin-top: var(--space-xl); }
   .view-all-link { color: var(--text-muted); font-size: 0.9375rem; text-decoration: none; transition: color 0.2s ease; }
   .view-all-link:hover { color: var(--primary); }
