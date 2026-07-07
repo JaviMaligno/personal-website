@@ -1,5 +1,5 @@
 // src/data/skills.ts
-export type SkillCategory = 'content' | 'devWorkflow' | 'qa' | 'governance';
+export type SkillCategory = 'content' | 'devWorkflow' | 'qa' | 'governance' | 'ops' | 'productivity';
 
 export interface Skill {
   slug: string;            // stable id
@@ -13,7 +13,7 @@ export interface Skill {
 
 const REPO = 'https://github.com/JaviMaligno/agilabs-skills/tree/main';
 
-export const skillCategoryOrder: SkillCategory[] = ['content', 'devWorkflow', 'qa', 'governance'];
+export const skillCategoryOrder: SkillCategory[] = ['content', 'devWorkflow', 'qa', 'governance', 'ops', 'productivity'];
 
 export const skills: Skill[] = [
   // Content & media
@@ -27,13 +27,21 @@ export const skills: Skill[] = [
   { slug: 'commit-pr',     key: 'commitPr',     category: 'devWorkflow', visibility: 'public',   repoUrl: `${REPO}/dev-workflow/commit-pr`,   tags: ['Git', 'gh CLI'] },
   { slug: 'deploy',        key: 'deploy',       category: 'devWorkflow', visibility: 'public',   repoUrl: `${REPO}/dev-workflow/release-tag`, tags: ['Semver', 'CI/CD', 'Release'] },
   { slug: 'microservice-lifecycle', key: 'microserviceLifecycle', category: 'devWorkflow', visibility: 'public', repoUrl: `${REPO}/dev-workflow/microservice-scaffold`, tags: ['Scaffolding', 'Kubernetes', 'Testing'] },
+  { slug: 'spec-driven-development', key: 'specDrivenDevelopment', category: 'devWorkflow', visibility: 'public', repoUrl: `${REPO}/dev-workflow/spec-driven-development`, tags: ['Specs', 'Traceability', 'Planning'] },
+  { slug: 'codegen-validation-loop', key: 'codegenValidationLoop', category: 'devWorkflow', visibility: 'public', repoUrl: `${REPO}/dev-workflow/codegen-validation-loop`, tags: ['Codegen', 'Validation', 'Agents'] },
   // QA & testing
   { slug: 'verify-test',   key: 'verifyTest',   category: 'qa', visibility: 'public',   repoUrl: `${REPO}/qa-testing/deployment-verification`, tags: ['E2E', 'Infra', 'UI'] },
   { slug: 'verify-env',    key: 'verifyEnv',    category: 'qa', visibility: 'public',   repoUrl: `${REPO}/qa-testing/authenticated-api-probe`, tags: ['API', 'Auth', 'Diagnostics'] },
   { slug: 'playwright-cli',key: 'playwrightCli',category: 'qa', visibility: 'public',   repoUrl: `${REPO}/qa-testing/playwright-cli`, tags: ['Playwright', 'Scraping', 'Testing'] },
   { slug: 'e2e-testing',   key: 'e2eTesting',   category: 'qa', visibility: 'internal', repoUrl: null, tags: ['Playwright', 'E2E', 'UI'] },
+  { slug: 'qa-design',     key: 'qaDesign',     category: 'qa', visibility: 'public',   repoUrl: `${REPO}/qa-testing/qa-design`, tags: ['QA', 'Test plan', 'Coverage'] },
+  { slug: 'qa-execution',  key: 'qaExecution',  category: 'qa', visibility: 'public',   repoUrl: `${REPO}/qa-testing/qa-execution`, tags: ['QA', 'Evidence', 'Bug hunt'] },
   // Governance
   { slug: 'responsible-ai-audit', key: 'responsibleAiAudit', category: 'governance', visibility: 'public', repoUrl: `${REPO}/governance/responsible-ai-audit`, tags: ['Compliance', 'Multi-agent', 'Governance'], featured: true },
+  // Ops
+  { slug: 'render-development', key: 'renderDevelopment', category: 'ops', visibility: 'public', repoUrl: `${REPO}/ops/render-development`, tags: ['Render', 'Postgres', 'Deploy'] },
+  // Productivity
+  { slug: 'email-cleanup', key: 'emailCleanup', category: 'productivity', visibility: 'public', repoUrl: `${REPO}/productivity/email-cleanup`, tags: ['Gmail', 'Automation', 'Triage'] },
 ];
 
 export function getSkillsByCategory(): { category: SkillCategory; skills: Skill[] }[] {
