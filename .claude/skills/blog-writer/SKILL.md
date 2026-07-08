@@ -55,6 +55,8 @@ heroImage: "/blog/article-slug.png"
 - Formatos: PNG, JPG, WEBP
 - Tamaño recomendado: 1200x627px
 
+**Prefer article charts over the hero image.** Si el artículo incluye gráficos generados (resultados de experimentos, curvas, benchmarks), usa el gráfico más llamativo como `linkedinImage` en lugar del hero: un dato concreto suele parar más el scroll en el feed que una ilustración. Precedente: `forgetting-you-dont-measure` usa `linkedinImage: /blog/forgetting-mixing-curve.png` (la curva de mixing del experimento) mientras el hero es una ilustración.
+
 **Ejemplo:**
 ```yaml
 ---
@@ -75,34 +77,43 @@ Every article must have a `heroImage`. Generate it using Codex CLI, which has ac
 
 ### How to Generate
 
+**Delegate the final prompt to Codex.** Codex knows its own image model better than we do: don't hand it a rigid pre-baked prompt — give it the article context plus the style constraints below and let it write and run the final image prompt itself.
+
 ```bash
-codex exec --full-auto "Generate an image with this prompt and save it to public/blog/article-slug.png: 'YOUR PROMPT HERE'"
+codex exec --full-auto "Read the article at src/content/blog/en/article-slug.md. Craft an image-generation prompt for its hero image following these style constraints: [STYLE CONSTRAINTS BELOW]. Then generate the image with your image_gen tool and save it to public/blog/article-slug.png. Finally, print the exact prompt you used."
 ```
 
 Codex will use its built-in `image_gen` tool, generate the image, and copy it to the specified path in the project.
 
-### Prompt Guidelines
+### Prompt Style Constraints
 
-Use this consistent style across all articles:
+**Do NOT use the old "minimalist isometric illustration" template.** It produced images that were visually clean but simplistic and schematic. The proven style is a rich technical editorial illustration (see `public/blog/bootstrap-cloud-environments.png` on main as the reference result, and `docs/marketing/image-prompts.md` for its exact prompt).
+
+Anatomy of a good prompt (based on the reference):
 
 ```
-A minimalist isometric illustration on a dark background. [SCENE DESCRIPTION].
-Style: clean tech diagram aesthetic, neon blue and [ACCENT COLOR] accents on deep navy, no photorealism, no humans.
+Create a 1020x510 blog hero image for a technical article titled "[TITLE]".
+Style: refined technical editorial illustration, dark but not monochrome, showing [CONCRETE SCENE — the article's core concept as a working system, not an abstract metaphor].
+Visual motifs: [3-6 SPECIFIC ELEMENTS — e.g. terminal window with readable but generic lines like "session-start.sh", labeled package boxes, arrows between components, a laptop, a CI runner], clean geometric composition.
+No logos, no brand names, no people, no text-heavy poster.
+Use crisp bitmap illustration, high contrast, professional AI/developer blog aesthetic, balanced teal, amber, graphite, and off-white accents, no purple gradient blobs, no bokeh.
 ```
 
-- **Always start with**: "A minimalist isometric illustration on a dark background"
-- **Always end with**: "Style: clean tech diagram aesthetic, neon [color] accents on deep navy, no photorealism, no humans"
-- **Scene**: Describe the core concept of the article as a visual metaphor using tech icons, nodes, terminals, diagrams
-- **Accent colors**: Pick one that fits the article's theme (amber, red, green, purple, orange, teal, gold)
-- **Avoid**: photorealism, humans, text-heavy prompts
+Key learnings vs the old template:
+
+- **Readable generic text is GOOD**: terminal lines, box labels, checklists with plausible-but-generic content make the image concrete and credible. Only avoid *text-heavy posters* (the image shouldn't be a wall of text).
+- **Concrete scene over abstract metaphor**: depict the actual system/workflow the article describes (terminals, workspaces, pipelines, charts) rather than floating nodes and glowing cubes.
+- **Density is a feature**: several distinct zones (a terminal, a diagram, a desk with objects) beat a single centered icon.
+- **Palette**: balanced teal, amber, graphite, off-white on dark — explicitly ban purple gradient blobs and bokeh.
+- **Size**: 1020x510 (≈2:1 hero ratio).
 
 ### Workflow
 
-1. After writing the article content, craft an image prompt based on the article's core concept
-2. Run Codex to generate the image
-3. **Show the generated image to the user for review** (use Read tool on the PNG)
-4. If approved, add `heroImage: "/blog/article-slug.png"` to **both** EN and ES frontmatter
-5. If not approved, adjust the prompt and regenerate
+1. After writing the article content, run Codex with the article path + style constraints (command above)
+2. **Show the generated image to the user for review** (use Read tool on the PNG)
+3. If approved, add `heroImage: "/blog/article-slug.png"` to **both** EN and ES frontmatter
+4. If not approved, adjust the constraints and regenerate
+5. **Record the exact prompt used** in `docs/marketing/image-prompts.md` (article path, image path, generation date, prompt in a code block — follow the existing entries' format; create the file if missing)
 6. Codex image quality is trusted — no need for comparison with other generators
 
 ### Requirements
@@ -278,4 +289,6 @@ Images from LinkedIn posts should be:
 - [ ] `lang` field matches file location
 - [ ] Hero image generated, reviewed by user, and placed in `public/blog/`
 - [ ] `heroImage` field set in both EN and ES frontmatter
+- [ ] Image prompt recorded in `docs/marketing/image-prompts.md`
+- [ ] If the article has generated charts, considered using the best one as `linkedinImage`
 - [ ] Links are valid and functional
