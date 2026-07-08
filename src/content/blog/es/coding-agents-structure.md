@@ -81,6 +81,16 @@ Esto rima con la propia observación de CooperBench de que la comunicación redu
 
 **El trabajo en equipo tiene factura.** Para el modelo fuerte, por tanda: el solo costó ~$3.60; el secuencial ~$7.10 y el integrador ~$9.73. Secuenciar más o menos duplica la factura para superar modestamente al solo; el integrador casi la triplica para igualarlo. En tareas pequeñas y acopladas, si tienes que colaborar, secuencia; si puedes evitarlo, un solo agente capaz es la opción fuerte más barata.
 
+## ¿Se pueden apilar los arreglos?
+
+Si el territorio impuesto mata los conflictos sintácticos y un integrador se hace dueño del merge, ¿combinar ambos no debería superar a cualquiera por separado? Probé tres combinaciones: **territorio + integrador**, **secuencial + revisor** y **handshake + territorio**. Respuesta corta: **ninguna supera de forma robusta a sus propios componentes.**
+
+La instructiva es territorio + integrador. A un seed parecía la estrella del experimento entero — 42% en el modelo fuerte, aparentemente por delante del integrador solo. Luego corrí dos seeds más y se desplomó a 33% [21–42]: el 42% fue una tirada afortunada, y pareado contra el integrador solo en los tres seeds sale p=1.0 — indistinguible. Las réplicas existían justo para cazar ese tipo de sobre-afirmación, y la cazaron.
+
+Pero una medición más limpia rescata algo real. Para cada par re-puntué el árbol *sin* la etapa extra, sobre los mismos dos parches de los agentes — así la única variable es la etapa extra en sí, sin ruido entre tandas. El integrador, medido así, **rescató 8 pares y rompió 0**; el revisor (sobre un pipeline secuencial) rescató 3 y rompió 3, un neto cero. O sea, la contribución del integrador es genuina y va en una sola dirección: solo ayuda. La razón de que territorio + integrador aun así no gane en el marcador: la fase de desarrollo con territorio no le entrega al integrador mejor materia prima que el desarrollo independiente normal, así que un empujón real pero modesto parte de insumos igual de ruidosos y se diluye entre seeds. El revisor da neto cero por un motivo más simple — un pipeline secuencial ya integró el árbol, así que no queda nada que reconciliar, solo código que romper por accidente.
+
+La lección no es "la estructura no se apila". Es más estrecha: **apilar solo compone cuando una etapa mejora los *insumos* de la siguiente.** Secuencial→revisión no pasa esa prueba (nada que mejorar); territorio→integración tampoco (el territorio no produce mejores parches, solo parches que no solapan). La única palanca que sigue funcionando es la misma de las condiciones sueltas — un agente dueño de la integración — y redoblar la apuesta combinándolas no compró más.
+
 ## Lo que dice y lo que no
 
 **No** dice que CooperBench se equivoque — reproduje su gap en ambos tiers. Lo que añade es la pieza que su montaje dejó fuera a propósito: **una vez que das estructura a los agentes, ¿se cierra el gap?** En este subconjunto, en parte — y *qué* estructura funciona depende tanto de la estructura como del modelo.

@@ -81,6 +81,16 @@ This rhymes with CooperBench's own observation that communication reduces confli
 
 **Teamwork has a price tag.** For the strong model, per run: solo cost ~$3.60; sequential ~$7.10 and the integrator ~$9.73. Sequencing roughly doubles the bill to modestly beat solo; the integrator nearly triples it to match. On small, coupled tasks, if you must collaborate, sequence; if you can avoid it, one capable agent is the cheapest strong option.
 
+## Can you stack the fixes?
+
+If enforced territory kills syntactic conflicts and an integrator owns the merge, surely combining them beats either alone? I tried three combinations: **territory + integrator**, **sequencing + reviewer**, and **handshake + territory**. Short answer: **none robustly beats its own components.**
+
+The instructive one is territory + integrator. At one seed it looked like the star of the whole experiment — 42% for the strong model, seemingly ahead of the integrator alone. Then I ran two more seeds and it collapsed to 33% [21–42]: the 42% was a lucky draw, and paired against the plain integrator across all three seeds it comes out at p=1.0 — indistinguishable. The replicates existed precisely to catch that kind of over-claim, and they did.
+
+But a cleaner measurement rescues something real. For each pair I re-scored the tree *without* the extra stage, on the very same two agent patches — so the only variable is the extra stage itself, no run-to-run noise. The integrator, measured this way, **rescued 8 pairs and broke 0**; the reviewer (on top of a sequential pipeline) rescued 3 and broke 3, a net zero. So the integrator's contribution is genuine and one-directional — it only ever helps. The reason territory + integrator still doesn't win on the scoreboard: the territory-constrained development phase hands the integrator no better raw material than plain independent development does, so a real but modest boost starts from equally noisy inputs and washes out across seeds. The reviewer nets zero for a simpler reason — a sequential pipeline already integrated the tree, so there's nothing left to reconcile, only code to accidentally break.
+
+The lesson isn't "structure doesn't stack." It's narrower: **stacking composes only when an earlier stage improves the *inputs* to a later one.** Sequencing→review fails that test (nothing to improve); territory→integrate fails it too (territory doesn't make better patches, just non-overlapping ones). The one lever that keeps working is the same one from the single conditions — one agent owning the integration — and doubling down on it by combination didn't buy more.
+
 ## What this does and doesn't say
 
 It does **not** say CooperBench is wrong — I reproduced their gap at both tiers. What it adds is the piece their setup deliberately left out: **once you give agents structure, does the gap close?** On this subset, partly — and *which* structure works depends on both the structure and the model.
