@@ -120,7 +120,7 @@ So the fair comparison isn't "humans vs agents at coordination." It's "humans *w
 - The C2b number survived a v2 with per-hunk reverts (0% at both tiers on a re-run) — it is not a revert-granularity artifact.
 - A caution from building this: two conditions initially scored a false 0% due to eval-composition bugs (a stacked patch evaluated against the wrong base). We then ran two independent adversarial code audits over all five condition implementations and the eval routing; the published numbers survived, and the audit is what surfaced the missing conflict resolver behind the fair-merge row above. In agent harnesses, the scoring plumbing deserves as much testing as the conditions themselves.
 
-The conditions are implemented on top of the open CooperBench harness — I'll share the code alongside a fuller writeup if the pattern holds up on a larger, repeated run.
+All five conditions, the combos, the LLM conflict resolver, and the eval fixes are implemented on top of the open CooperBench harness — the full fork is public at [github.com/JaviMaligno/CooperBench](https://github.com/JaviMaligno/CooperBench/tree/experiment/structural-conditions) (branch `experiment/structural-conditions`), so you can reproduce or poke holes in any of this.
 
 ---
 

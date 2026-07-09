@@ -120,7 +120,7 @@ Así que la comparación justa no es "humanos vs agentes coordinando". Es "human
 - El número de C2b sobrevivió a una v2 con reverts por-hunk (0% en ambos tiers al re-correrlo) — no es un artefacto de la granularidad del revert.
 - Una advertencia de construir esto: dos condiciones puntuaron un 0% falso por bugs de composición del eval (un parche apilado evaluado contra la base equivocada). Después corrí dos auditorías de código adversariales e independientes sobre las cinco condiciones y el ruteo del eval; los números publicados sobrevivieron, y la auditoría es la que destapó el resolver de conflictos ausente detrás de la fila de "merge justo" de arriba. En harnesses de agentes, la fontanería de puntuación merece tantos tests como las condiciones mismas.
 
-Las condiciones están implementadas sobre el harness abierto de CooperBench — compartiré el código junto a un writeup más completo si el patrón se sostiene en una tanda mayor y repetida.
+Las cinco condiciones, los combos, el resolver LLM de conflictos y los arreglos del eval están implementados sobre el harness abierto de CooperBench — el fork completo es público en [github.com/JaviMaligno/CooperBench](https://github.com/JaviMaligno/CooperBench/tree/experiment/structural-conditions) (rama `experiment/structural-conditions`), así que puedes reproducir o buscarle las cosquillas a todo esto.
 
 ---
 
