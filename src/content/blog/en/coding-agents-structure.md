@@ -8,7 +8,7 @@ translationKey: coding-agents-structure
 heroImage: "/blog/coding-agents-structure.png"
 ---
 
-> **Status: preliminary but complete for two model tiers, with three seeds on the headline conditions.** Results are on a 19-task subset I could run cleanly, across two capability levels. Directional, not the full benchmark — but the pattern holds across seeds.
+> **This is a finished study on a slice of the benchmark, not a preview of one.** Every condition ran to completion, the headline cells have three seeds, and I audited the eval harness itself — but on a 19-task subset of CooperBench's 652, chosen because I could run it cleanly on two model tiers. The ceiling here is *coverage, not confidence*: within this slice the pattern replicates; whether it holds across the full benchmark is the open question.
 
 A recent Stanford benchmark, [CooperBench](https://arxiv.org/abs/2601.13295) ("Why Coding Agents Cannot be Your Teammates Yet"), reports a striking result: when you pair up two strong coding agents to split a task, their success rate roughly *halves* versus a single agent doing the same total work. They call it the **curse of coordination**, and their reading is that the missing ingredient is *social intelligence* — agents don't use language for coordination reliably, so, they argue, this needs to be *trained*, not prompted away.
 
@@ -18,7 +18,7 @@ It's a careful paper, and I want to be fair to it: they **deliberately** run age
 
 ## The setup
 
-I started from [CooperBench's own benchmark](https://github.com/cooperbench/CooperBench) (it's open source) and reproduced the baseline: two agents, each assigned one feature of a task, working in isolated containers, patches merged afterwards. Then I added a **ladder of coordination structures**, ordered from "advisory" (the agent can ignore it) to "enforced" (the scaffold guarantees it):
+I started from [CooperBench's own benchmark](https://github.com/cooperbench/CooperBench) (it's open source) and reproduced the baseline: two agents, each assigned one feature of a task, working in separate containers but **connected by a message channel they can use to coordinate at any time** (the benchmark gives them this from the start), with their patches merged afterwards. That channel matters for everything below: the agents can *always* talk — the open question is whether talking is enough. Then I added a **ladder of coordination structures**, ordered from "advisory" (the agent can ignore it) to "enforced" (the scaffold guarantees it):
 
 - **Handshake (C1):** agents must exchange a plan before the scaffold lets them edit code. *(Analogy: a design review before coding.)*
 - **File ownership (C2):** each file is owned by one agent; edits to another agent's file are reverted. *(Analogy: CODEOWNERS.)*
@@ -79,7 +79,7 @@ This rhymes with CooperBench's own observation that communication reduces confli
 
 **Statistics, honestly.** The four headline conditions have three seeds each; the enforced conditions are single runs. Paired McNemar tests (matched per task and seed) give: the coordination gap solid pooled (p=0.002) and clearly significant for the strong model alone (p=0.002); sequencing and the integrator each beat coop overwhelmingly (p<0.0001); sequencing beats *solo* pooled (p=0.021) and for the weak model alone (p=0.039, ahead in all three seeds), while only tying solo for the strong one (p=0.45); the integrator recovers but never significantly beats solo (p=0.23). One honest caveat on the method: pooling discordant pairs across seeds treats each (task, seed) as independent, which mildly overstates significance — so I lean on the per-seed direction (mini seq > solo in 3/3 seeds) as much as on the p-value. With three seeds on a 19-task subset these are still directional; I'd want a larger repeated run before hardening any single number.
 
-**Teamwork has a price tag.** For the strong model, per run: solo cost ~$3.60; sequential ~$7.10 and the integrator ~$9.73. Sequencing roughly doubles the bill to modestly beat solo; the integrator nearly triples it to match. On small, coupled tasks, if you must collaborate, sequence; if you can avoid it, one capable agent is the cheapest strong option.
+**Teamwork has a price tag.** For the strong model, per run: solo cost ~\$3.60; sequential ~\$7.10 and the integrator ~\$9.73. Sequencing roughly doubles the bill to modestly beat solo; the integrator nearly triples it to match. On small, coupled tasks, if you must collaborate, sequence; if you can avoid it, one capable agent is the cheapest strong option.
 
 ## Can you stack the fixes?
 
@@ -101,6 +101,16 @@ The honest headline isn't "structure beats social skills." It's narrower and, I 
 - **The structure has to match the model.** Sequencing — which shrinks the task rather than adding rules to obey — is the one intervention that lifts the *weak* model above its own solo score; concurrent collaboration otherwise stays dead for it no matter what you fix (fair merging, fences, handshakes all leave it flat). Enforced ownership, a rule the agent has to actively exploit, only paid off for the *strong* model. Below some capability threshold, handing an agent a coordination protocol is like handing a process manual to someone who can't yet do the underlying job — but handing it a smaller job still helps.
 
 So "they can't be teammates yet" reads, from here, less like *they lack social intelligence* and more like *they were dropped into an unstructured free-for-all no sane engineering team would run* — and the fix that generalizes is process (decompose + sequence, or appoint an integrator), not exhortations to communicate.
+
+## Are humans actually better at this?
+
+It's tempting to read the paper's framing as "agents lack the social intelligence humans have." But look at the three failure modes I found and ask honestly whether *we* are immune to them:
+
+- **Concurrent edits collide at the merge.** Two humans editing the same file in parallel produce merge conflicts too — constantly. We didn't solve that by getting more socially intelligent; we solved it with *process*: small PRs, code ownership, trunk-based development, "rebase before you push."
+- **Follow-through fails even when the message arrives.** The sharpest failure here was an agent that read a teammate's request, wrote "I'll need to coordinate with them," and then simply didn't. If you've ever watched a Slack request get a 👍 and then nothing, you know humans do this too. Our fix isn't willpower — it's tickets, assignees, standups, and "who owns this?" made explicit.
+- **What rescued the agents is what we already do.** One agent owning the final integration — sequential handoff, or a designated integrator/reviewer — is just trunk-based development and the release-manager role. We didn't invent those because we're bad at talking; we invented them because unstructured concurrency doesn't scale for *anyone*.
+
+So the fair comparison isn't "humans vs agents at coordination." It's "humans *with decades of accumulated process* vs agents dropped into a process vacuum." Put a human team in the agents' exact setup — no ticketing, no ownership, no review, just a chat channel and "go" — and it would step on itself too. The honest difference that remains: when process is missing, a good human *improvises* it (pings the right person, swivels their chair, calls a five-minute huddle); the agents, handed the very same channel, mostly didn't. That gap — improvising coordination when none was imposed — is real, and it may be exactly what "social intelligence" is pointing at. But it's a smaller, more specific gap than "they can't be teammates," and the practical lesson cuts the same way for both species: **don't rely on anyone, silicon or carbon, to invent process in the moment — give them the process.**
 
 ## Caveats and what's next
 

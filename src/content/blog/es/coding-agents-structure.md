@@ -8,7 +8,7 @@ translationKey: coding-agents-structure
 heroImage: "/blog/coding-agents-structure.png"
 ---
 
-> **Estado: preliminar pero completo para dos tiers de modelo, con tres seeds en las condiciones de cabecera.** Los resultados son sobre un subconjunto de 19 tareas que pude correr limpiamente, en dos niveles de capacidad. Direccional, no el benchmark completo — pero el patrón se sostiene entre seeds.
+> **Es un estudio terminado sobre una porción del benchmark, no el adelanto de uno.** Todas las condiciones corrieron hasta el final, las celdas de cabecera tienen tres seeds y audité el propio harness de evaluación — pero sobre un subconjunto de 19 tareas de las 652 de CooperBench, elegido porque podía correrlo limpiamente en dos tiers de modelo. El techo aquí es de *cobertura, no de confianza*: dentro de esta porción el patrón se replica; si se sostiene en el benchmark completo es la pregunta abierta.
 
 Un benchmark reciente de Stanford, [CooperBench](https://arxiv.org/abs/2601.13295) ("Why Coding Agents Cannot be Your Teammates Yet"), reporta un resultado llamativo: si emparejas dos agentes de código potentes para repartirse una tarea, su tasa de éxito casi se *reduce a la mitad* frente a un solo agente haciendo el mismo trabajo total. Lo llaman la **maldición de la coordinación**, y su lectura es que lo que falta es *inteligencia social* — los agentes no usan el lenguaje para coordinarse de forma fiable, así que, argumentan, esto hay que *entrenarlo*, no arreglarlo con prompts.
 
@@ -18,7 +18,7 @@ Es un paper cuidadoso, y quiero ser justo con él: **deliberadamente** corren lo
 
 ## El montaje
 
-Partí del [propio benchmark de CooperBench](https://github.com/cooperbench/CooperBench) (es open source) y reproduje el baseline: dos agentes, cada uno con una feature de la tarea, en contenedores aislados, y los parches se mergean después. Luego añadí una **escalera de estructuras de coordinación**, ordenada de "advisory" (el agente puede ignorarla) a "impuesta" (el scaffold la garantiza):
+Partí del [propio benchmark de CooperBench](https://github.com/cooperbench/CooperBench) (es open source) y reproduje el baseline: dos agentes, cada uno con una feature de la tarea, en contenedores separados pero **conectados por un canal de mensajería que pueden usar para coordinarse en cualquier momento** (el benchmark se lo da desde el principio), y sus parches se mergean después. Ese canal importa para todo lo que sigue: los agentes *siempre* pueden hablar — la pregunta abierta es si hablar basta. Luego añadí una **escalera de estructuras de coordinación**, ordenada de "advisory" (el agente puede ignorarla) a "impuesta" (el scaffold la garantiza):
 
 - **Handshake (C1):** los agentes deben intercambiar un plan antes de que el scaffold les deje editar código. *(Analogía: una revisión de diseño antes de codear.)*
 - **Ownership por fichero (C2):** cada fichero es de un agente; las ediciones al fichero de otro se revierten. *(Analogía: CODEOWNERS.)*
@@ -79,7 +79,7 @@ Esto rima con la propia observación de CooperBench de que la comunicación redu
 
 **Estadística, con honestidad.** Las cuatro condiciones de cabecera tienen tres seeds cada una; las impuestas son tandas únicas. Los tests pareados de McNemar (emparejados por tarea y seed) dan: la coordination gap sólida agregada (p=0.002) y claramente significativa solo en el modelo fuerte (p=0.002); secuenciar y el integrador superan a coop de forma abrumadora (p<0.0001); secuenciar supera al *solo* agregado (p=0.021) y en el modelo flojo por separado (p=0.039, por delante en las tres seeds), mientras que en el fuerte solo lo iguala (p=0.45); el integrador recupera pero nunca supera al solo de forma significativa (p=0.23). Un caveat honesto de método: agregar las parejas discordantes entre seeds trata cada (tarea, seed) como independiente, lo que exagera un poco la significancia — así que me apoyo tanto en la dirección por-seed (mini seq > solo en 3/3) como en el p-value. Con tres seeds sobre un subconjunto de 19 tareas esto sigue siendo direccional; querría una tanda mayor y repetida antes de endurecer cualquier número.
 
-**El trabajo en equipo tiene factura.** Para el modelo fuerte, por tanda: el solo costó ~$3.60; el secuencial ~$7.10 y el integrador ~$9.73. Secuenciar más o menos duplica la factura para superar modestamente al solo; el integrador casi la triplica para igualarlo. En tareas pequeñas y acopladas, si tienes que colaborar, secuencia; si puedes evitarlo, un solo agente capaz es la opción fuerte más barata.
+**El trabajo en equipo tiene factura.** Para el modelo fuerte, por tanda: el solo costó ~\$3.60; el secuencial ~\$7.10 y el integrador ~\$9.73. Secuenciar más o menos duplica la factura para superar modestamente al solo; el integrador casi la triplica para igualarlo. En tareas pequeñas y acopladas, si tienes que colaborar, secuencia; si puedes evitarlo, un solo agente capaz es la opción fuerte más barata.
 
 ## ¿Se pueden apilar los arreglos?
 
@@ -101,6 +101,16 @@ El titular honesto no es "la estructura le gana a las habilidades sociales". Es 
 - **La estructura tiene que encajar con el modelo.** Secuenciar — que *encoge* la tarea en lugar de añadir reglas que obedecer — es la única intervención que sube al modelo *flojo* por encima de su propio solo; la colaboración concurrente sigue muerta para él, arregles lo que arregles (merge justo, vallas, handshakes lo dejan plano). El ownership impuesto, una regla que el agente tiene que saber aprovechar, solo rindió en el *fuerte*. Por debajo de cierto umbral de capacidad, darle a un agente un protocolo de coordinación es como darle un manual de proceso a alguien que aún no sabe hacer la tarea de base — pero darle una tarea más pequeña sí ayuda.
 
 Así que "todavía no pueden ser compañeros de equipo" se lee, desde aquí, menos como *les falta inteligencia social* y más como *los soltaron en un caos sin estructura que ningún equipo de ingeniería sensato montaría* — y el arreglo que generaliza es proceso (descomponer + secuenciar, o nombrar un integrador), no exhortaciones a comunicarse.
+
+## ¿De verdad los humanos somos mejores en esto?
+
+Es tentador leer el encuadre del paper como "a los agentes les falta la inteligencia social que los humanos sí tenemos". Pero mira los tres modos de fallo que encontré y pregúntate con honestidad si *nosotros* somos inmunes:
+
+- **Las ediciones concurrentes chocan en el merge.** Dos humanos editando el mismo fichero en paralelo también producen conflictos de merge — constantemente. Eso no lo resolvimos volviéndonos más sociales; lo resolvimos con *proceso*: PRs pequeños, ownership de código, trunk-based, "rebasa antes de pushear".
+- **El follow-through falla aunque el mensaje llegue.** El fallo más nítido aquí fue un agente que leyó la petición de su compañero, escribió "tendré que coordinarme con él", y simplemente no lo hizo. Si alguna vez has visto una petición en Slack recibir un 👍 y luego nada, sabes que los humanos también hacemos esto. Nuestro arreglo no es fuerza de voluntad — son tickets, asignados, dailies y "¿quién se encarga de esto?" hecho explícito.
+- **Lo que rescató a los agentes es lo que ya hacemos.** Que un solo agente sea dueño de la integración final — traspaso secuencial, o un integrador/revisor designado — no es más que trunk-based development y el rol de release manager. No inventamos eso porque se nos dé mal hablar; lo inventamos porque la concurrencia sin estructura no escala para *nadie*.
+
+Así que la comparación justa no es "humanos vs agentes coordinando". Es "humanos *con décadas de proceso acumulado* vs agentes soltados en un vacío de proceso". Mete a un equipo humano en el montaje exacto de los agentes — sin tickets, sin ownership, sin review, solo un canal de chat y "adelante" — y también se pisaría. La diferencia honesta que queda: cuando falta el proceso, un buen humano lo *improvisa* (le escribe a la persona correcta, gira la silla, convoca cinco minutos); los agentes, con el mismísimo canal, en su mayoría no lo hicieron. Ese hueco — improvisar coordinación cuando no se impuso ninguna — es real, y quizá sea exactamente a lo que apunta la "inteligencia social". Pero es un hueco más pequeño y más específico que "no pueden ser compañeros de equipo", y la lección práctica corta igual para ambas especies: **no cuentes con que nadie, de silicio o de carbono, invente el proceso sobre la marcha — dales el proceso.**
 
 ## Limitaciones y qué sigue
 
