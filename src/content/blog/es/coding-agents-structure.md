@@ -37,13 +37,14 @@ El sentido de la escalera es separar "¿*hablaron*?" de "¿el proceso *les impid
 | solo (un agente, ambas features) | 14% [11–16] | 30% [21–37] |
 | coop (dos agentes, libre) | 7% [0–11] | 7% [0–16] |
 | coop + resolución justa de conflictos* | 7% [0–11] | 9% [0–16] |
+| team — el del propio paper (lead + member, task-list compartida)† | 0% | 0% |
 | **secuencial (C3)** | **26% [21–37]** | **35% [32–37]** |
 | **integrador (C4)** | **23% [21–26]** | **33% [26–42]** |
 | ownership por fichero (C2) | 0% [0–0] | 14% [11–16] |
 | handshake (C1)† | 0% | 0% |
 | ownership por línea (C2b)† | 0% | 0% |
 
-<sub>Las celdas de cabecera y C2 son media [mín–máx] sobre tres seeds; †C1 y C2b son una sola tanda cada una — solo repliqué las condiciones con alguna señal que defender (C1 y C2b se quedaron en 0% en el modelo flojo y nunca superaron al coop simple, así que un segundo seed no iba a cambiar la historia). *La eval del paper resuelve automáticamente los conflictos de merge triviales con un modelo pequeño antes de declarar fallo; la release open-source omite ese paso. Añadí un resolver equivalente (si acaso más potente) y re-puntué las condiciones concurrentes — detalles en "Bajo el capó".</sub>
+<sub>Las celdas de cabecera y C2 son media [mín–máx] sobre tres seeds; †team, C1 y C2b son una sola tanda cada una — solo repliqué las condiciones con alguna señal que defender (las tres se quedaron en 0% en el modelo flojo y nunca superaron al coop simple, así que un segundo seed no iba a cambiar la historia). *La eval del paper resuelve automáticamente los conflictos de merge triviales con un modelo pequeño antes de declarar fallo; la release open-source omite ese paso. Añadí un resolver equivalente (si acaso más potente) y re-puntué las condiciones concurrentes — detalles en "Bajo el capó".</sub>
 
 Cuatro cosas destacan:
 
@@ -74,6 +75,8 @@ La cadena causal queda así:
 Esto rima con la propia observación de CooperBench de que la comunicación reduce conflictos sin mejorar el éxito — la capa sintáctica simplemente no es donde se gana la tarea.
 
 **Las filas de "0%" esconden trabajo a medias.** La métrica exige que pasen *ambas* features. Contando éxito parcial (al menos una feature funcionando), el cuadro del modelo flojo se mueve: el coop libre logra apenas un puñado de passes de una-sola-feature, mientras que el ownership impuesto los duplica largamente (mini llega a 5/19 con enforcement por líneas). El enforcement convierte el colapso total en "media tarea hecha" más a menudo — solo que no basta para superar el listón de ambas-features.
+
+**El team estructurado del propio paper es el peor de todos — y ese es el punto.** CooperBench trae un modo de coordinación más rico que el coop simple: un *lead* y un *member* con una task-list compartida, y el lead responsable de integrar ambas features y entregar un solo patch. Puntuó **0% en ambos tiers** — por debajo incluso del coop libre. El crédito parcial lo delata: el lead pasa *su propia* feature en 7/19 (flojo) y 11/19 (fuerte) pares, y **nunca ambas**. Hace su mitad y suelta la del compañero — el mismo fallo de follow-through que el coop, solo que el protocolo más rico añade un paso de integración manual (el lead recoge el patch del member de un workspace compartido y lo cose) que resulta *más* frágil que dejarlo a la herramienta de merge. Más estructura de coordinación, más sitios donde fallar el traspaso. (Una nota de rigor, porque un 0% redondo merece sospecha: la eval open-source ruteaba team como coop y mergeaba los dos patches — aplicando dos veces el trabajo del member, que ya está dentro del patch del lead. Lo arreglé para puntuar el entregable real del lead; el número no se movió, pero ahora mide lo correcto.)
 
 **Ambos tiers chocan con la valla igual de a menudo; solo uno se recupera.** El hook de enforcement disparó un número similar de veces en ambos modelos (≈18–29 violaciones por tanda). El modelo fuerte no es "más ordenado" — viola territorio igual. La diferencia es lo que pasa *después* del revert: el fuerte re-planifica y lo rodea; el flojo sigue dándose contra la valla. Los tres passes de C2 del modelo fuerte tuvieron eventos de enforcement — el mecanismo estuvo activo en todos ellos; no fueron tareas sin conflicto que pasaron de gratis.
 

@@ -37,13 +37,14 @@ The point of the ladder is to separate "did they *talk*?" from "did the process 
 | solo (one agent, both features) | 14% [11–16] | 30% [21–37] |
 | coop (two agents, free-form) | 7% [0–11] | 7% [0–16] |
 | coop + fair conflict resolution* | 7% [0–11] | 9% [0–16] |
+| team — the paper's own (lead + member, shared task list)† | 0% | 0% |
 | **sequential (C3)** | **26% [21–37]** | **35% [32–37]** |
 | **integrator (C4)** | **23% [21–26]** | **33% [26–42]** |
 | file ownership (C2) | 0% [0–0] | 14% [11–16] |
 | handshake (C1)† | 0% | 0% |
 | line ownership (C2b)† | 0% | 0% |
 
-<sub>Headline cells and C2 are mean [min–max] over three seeds; †C1 and C2b are a single run each — I only replicated the conditions with any signal to defend (both C1 and C2b sat at 0% for the weak model and never beat plain coop, so a second seed wasn't going to change the story). *The paper's eval auto-resolves trivial merge conflicts with a small model before declaring failure; the open-source release omits that step. I added an equivalent (if anything stronger) resolver and re-scored the concurrent conditions — details in "Under the hood".</sub>
+<sub>Headline cells and C2 are mean [min–max] over three seeds; †team, C1 and C2b are a single run each — I only replicated the conditions with any signal to defend (all three sat at 0% for the weak model and never beat plain coop, so a second seed wasn't going to change the story). *The paper's eval auto-resolves trivial merge conflicts with a small model before declaring failure; the open-source release omits that step. I added an equivalent (if anything stronger) resolver and re-scored the concurrent conditions — details in "Under the hood".</sub>
 
 Four things stand out:
 
@@ -74,6 +75,8 @@ So the causal chain reads:
 This rhymes with CooperBench's own observation that communication reduces conflicts without improving success — the syntactic layer is simply not where the task is won.
 
 **The "0%" rows hide half-done work.** Scoring requires *both* features to pass. Count partial success (at least one feature working) and the weak model's picture shifts: free-form coop lands only a handful of single-feature passes, while enforced ownership roughly doubles them (mini reaches 5/19 under line-range enforcement). Enforcement turns total collapse into "half the job done" more often — it's just not enough to clear the both-features bar.
+
+**The paper's own structured team is the worst of all — and that's the point.** CooperBench ships a richer coordination mode than plain coop: a *lead* and a *member* with a shared task list, the lead responsible for integrating both features and shipping one patch. It scored **0% at both tiers** — below even free-form coop. The partial credit is the tell: the lead passes its *own* feature in 7/19 (weak) and 11/19 (strong) pairs, and **never both**. It does its half and drops the partner's — the same follow-through failure as coop, except the richer protocol adds a manual hand-off step (the lead pulls the member's patch from a shared workspace and stitches it in) that turns out *more* fragile than letting the merge tool do it. More coordination structure, more places to fumble the hand-off. (A rigor note, since a flat 0% deserves suspicion: the open-source eval routed team like coop and merged both patches — double-applying the member's work, which is already inside the lead's patch. I fixed it to score the lead's shipped artifact instead; the number didn't move, but now it's measuring the right thing.)
 
 **Both tiers hit the fence equally often; only one recovers.** The enforcement hook fired a similar number of times for both models (≈18–29 violations per run). The strong model isn't "tidier" — it violates territory just as much. The difference is what happens *after* the revert: the strong model re-plans and routes around it; the weak one keeps banging. All three of the strong model's C2 passes had enforcement events — the mechanism was active in every one of them, they weren't conflict-free freebies.
 
