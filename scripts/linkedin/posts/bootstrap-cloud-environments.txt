@@ -1,0 +1,37 @@
+I keep seeing the same failure mode in cloud coding environments:
+
+The repo builds fine on your laptop.
+CI knows how to install the missing system packages.
+Then an AI agent opens the project in a clean remote workspace and immediately trips over `pdflatex`, `libpq-dev`, browser deps, Graphviz, ffmpeg, or some other toolchain that only exists in human memory.
+
+The fix is not a better prompt.
+
+It is a repo-owned bootstrap.
+
+In my Code World Models repo, the Python tests were easy. The paper build was the hidden edge: the project needs TeX Live to compile `docs/paper/main.tex`.
+
+So I added a Claude Code `SessionStart` hook that:
+
+- no-ops on my local laptop
+- detects remote sessions
+- runs asynchronously because the paper build happens later in the workflow
+- installs the required TeX packages only if `pdflatex` is missing
+- runs `python -m pip install -e ".[dev]"` against the same interpreter the tests use
+
+That async detail matters. My first version was synchronous. I changed it because I did not need TeX Live before the agent started editing; I needed it before the final paper build. In another repo, where the first command is a test that needs native packages immediately, I would keep the bootstrap synchronous and fail fast.
+
+Small change, big difference: the next remote session starts with the environment moving toward the repo's real build contract instead of making the agent rediscover it.
+
+This is not just about agents. It applies to Codespaces, Dev Containers, Gitpod, CI runners, demo machines, onboarding environments, and any ephemeral workspace.
+
+But AI makes the cost more obvious. Agents close the build-test-fix loop constantly. If the environment is incomplete, they spend reasoning on setup archaeology instead of the actual problem.
+
+My rule now:
+
+If an agent, CI, or a new developer has to ask for it manually to run the basic workflow, it should be declared in the repo.
+
+Bootstrap the environment, not the agent.
+
+Full write-up: https://www.javieraguilar.ai/en/blog/bootstrap-the-environment-not-the-agent/
+
+#AIAgents #DevEx #CloudDevelopment #Automation #ClaudeCode

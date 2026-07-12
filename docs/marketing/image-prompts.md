@@ -8,7 +8,7 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 - **Article:** `src/content/blog/en/coding-agents-structure.md`
 - **Image:** `public/blog/coding-agents-structure.png`
-- **Generated:** 2026-07-09 (Codex `image_gen`, editorial-illustration guide)
+- **Generated:** 2026-07-12 (Codex `image_gen`, editorial-illustration guide)
 
 ```text
 Use case: infographic-diagram
@@ -21,4 +21,16 @@ Lighting/mood: dark but not monochrome, low-contrast graphite grid background, r
 Color palette: balanced teal, amber, graphite, and off-white accents on a dark base; tiny red conflict marks only where needed.
 Text: sparse, readable, generic terminal/label text only: "agent A", "agent B", "feature 1", "feature 2", "merge conflict", "sequential handoff", "integrator", "resolved build".
 Constraints: no people, no logos, no brand names, no product names, no mascots, no purple gradient blobs, no bokeh, no stock-photo look, no text-heavy poster, no abstract metaphor, no giant centered icon. Keep all text minimal and generic.
+```
+
+---
+
+## Bootstrap the Environment, Not the Agent
+
+- **Article:** `src/content/blog/en/bootstrap-the-environment-not-the-agent.md`
+- **Image:** `public/blog/bootstrap-cloud-environments.png`
+- **Generated:** 2026-07-08
+
+```text
+Create a 1020x510 blog hero image for a technical article titled "Bootstrap the Environment, Not the Agent". Style: refined technical editorial illustration, dark but not monochrome, showing a cloud development workspace being initialized by a small terminal script. Visual motifs: terminal window with readable but generic lines like "session-start.sh", package boxes labeled "TeX", "Python", "Build", arrows into cloud workspaces, a laptop and CI runner, clean geometric composition. No logos, no brand names, no people, no text-heavy poster. Use crisp bitmap illustration, high contrast, professional AI/developer blog aesthetic, balanced teal, amber, graphite, and off-white accents, no purple gradient blobs, no bokeh.
 ```
