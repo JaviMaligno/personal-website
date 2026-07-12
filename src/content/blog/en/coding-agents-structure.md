@@ -8,7 +8,7 @@ translationKey: coding-agents-structure
 heroImage: "/blog/coding-agents-structure.png"
 ---
 
-> **This is a finished study on a slice of the benchmark, not a preview of one.** Every condition ran to completion, the headline cells have three seeds, and I audited the eval harness itself — but on a 19-task subset of CooperBench's 652, chosen because I could run it cleanly on two model tiers. The ceiling here is *coverage, not confidence*: within this slice the pattern replicates; whether it holds across the full benchmark is the open question.
+> **A complete study on a 19-task slice of CooperBench's 652.** Every condition ran to completion, the headline cells have three seeds, and I audited the eval harness itself — all on a subset I could run cleanly across two model tiers. The ceiling is *coverage, not confidence*: within this slice the pattern replicates; whether it holds across the full benchmark is the open question.
 
 A recent Stanford benchmark, [CooperBench](https://arxiv.org/abs/2601.13295) ("Why Coding Agents Cannot be Your Teammates Yet"), reports a striking result: when you pair up two strong coding agents to split a task, their success rate roughly *halves* versus a single agent doing the same total work. They call it the **curse of coordination**, and their reading is that the missing ingredient is *social intelligence* — agents don't use language for coordination reliably, so, they argue, this needs to be *trained*, not prompted away.
 
@@ -58,7 +58,17 @@ Four things stand out:
 
 A smaller, slightly uncomfortable note: finer **line-range** ownership (C2b) did *worse* than coarse **file** ownership (C2, 16%) for the strong model. I first suspected an artifact of my v1 enforcement, which reverted the whole file on any overlap — so I built a v2 that reverts only the violating hunks and re-ran both tiers: **0% at both**. The binding constraint isn't revert granularity. It's that CooperBench features *intentionally* overlap on shared lines (the same import list, the same function signature), so any exclusive line ownership starves whichever agent arrives second.
 
-One logged run shows the failure in miniature. The blocked agent escalated exactly the way a person would: it announced its plan, then asked its partner to avoid the shared regions, then — after more reverts — *delegated*: "could you add my export line, since you own that region?" I checked the plumbing on both sides: all three messages were delivered into the partner's context with turns to spare, and the partner's outbound channel demonstrably worked (it had messaged first, at the very start). The partner read the requests, even wrote "I'll need to coordinate with agent1" in its own reasoning — and then never replied, never added the one-line export it owned, and closed out its task. The bottleneck isn't the communication channel; it's **follow-through** — precisely the commitment failure CooperBench's taxonomy describes, reproduced here with the channel verified blameless.
+One logged run shows the failure in miniature. Agent 1, blocked by the territory guard, escalates exactly the way a person would — announces, asks, and finally *delegates* — while agent 2 says its piece once and then goes quiet:
+
+<div class="agent-chat">
+<div class="turn a"><span class="who">agent 1 → agent 2</span><p>I'm going to touch <code>_other.py</code> and <code>__init__.py</code> for an IsMac validator. Are you touching either of those? …so I can keep the patch merge-friendly?</p></div>
+<div class="turn b"><span class="who">agent 2 → agent 1</span><p>I'm about to add an IsEmail validator. I expect to touch <code>_other.py</code> and <code>__init__.py</code> too. …can we coordinate to avoid conflicts?</p></div>
+<div class="turn a"><span class="who">agent 1 → agent 2</span><p>The guard reverted my first attempt — claimed regions. Can you avoid the import block and <code>__all__</code>, and the top of <code>_other.py</code>?</p></div>
+<div class="turn a"><span class="who">agent 1 → agent 2 · delegating</span><p>The guard is blocking me from the import/export regions. Could you add the IsMac re-export there, since you own that region?</p></div>
+<div class="silence">agent 2 never replies. In its own private reasoning it wrote: <em>"We do overlap. I should inspect and respond with precise coordination."</em> It never did.</div>
+</div>
+
+I checked the plumbing on both sides: all of agent 1's messages landed in agent 2's context with turns to spare, and agent 2's outbound channel demonstrably worked — it sent the first message of the whole thread. It read the requests, even *planned* to coordinate in its own reasoning, and then never replied, never added the one-line export it owned, and closed out its task. The bottleneck isn't the communication channel; it's **follow-through** — precisely the commitment failure CooperBench's taxonomy describes, reproduced here with the channel verified blameless.
 
 ## Under the hood: collaboration dies at the merge
 

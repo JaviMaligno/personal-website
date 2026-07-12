@@ -8,7 +8,7 @@ translationKey: coding-agents-structure
 heroImage: "/blog/coding-agents-structure.png"
 ---
 
-> **Es un estudio terminado sobre una porción del benchmark, no el adelanto de uno.** Todas las condiciones corrieron hasta el final, las celdas de cabecera tienen tres seeds y audité el propio harness de evaluación — pero sobre un subconjunto de 19 tareas de las 652 de CooperBench, elegido porque podía correrlo limpiamente en dos tiers de modelo. El techo aquí es de *cobertura, no de confianza*: dentro de esta porción el patrón se replica; si se sostiene en el benchmark completo es la pregunta abierta.
+> **Un estudio completo sobre una porción de 19 tareas de las 652 de CooperBench.** Todas las condiciones corrieron hasta el final, las celdas de cabecera tienen tres seeds y audité el propio harness de evaluación — todo sobre un subconjunto que pude correr limpiamente en dos tiers de modelo. El techo es de *cobertura, no de confianza*: dentro de esta porción el patrón se replica; si se sostiene en el benchmark completo es la pregunta abierta.
 
 Un benchmark reciente de Stanford, [CooperBench](https://arxiv.org/abs/2601.13295) ("Why Coding Agents Cannot be Your Teammates Yet"), reporta un resultado llamativo: si emparejas dos agentes de código potentes para repartirse una tarea, su tasa de éxito casi se *reduce a la mitad* frente a un solo agente haciendo el mismo trabajo total. Lo llaman la **maldición de la coordinación**, y su lectura es que lo que falta es *inteligencia social* — los agentes no usan el lenguaje para coordinarse de forma fiable, así que, argumentan, esto hay que *entrenarlo*, no arreglarlo con prompts.
 
@@ -58,7 +58,17 @@ Cuatro cosas destacan:
 
 Una nota menor y algo incómoda: el ownership fino por **rangos de línea** (C2b) rindió *peor* que el grueso por **fichero** (C2, 16%) en el modelo fuerte. Primero sospeché de un artefacto de mi v1 de enforcement, que revertía el fichero entero ante cualquier solape — así que construí una v2 que revierte solo los hunks violadores y re-corrí ambos tiers: **0% en ambos**. La restricción vinculante no es la granularidad del revert. Es que las features de CooperBench solapan *a propósito* en líneas compartidas (la misma lista de imports, la misma firma de función), así que cualquier ownership exclusivo de líneas deja sin sitio al agente que llega segundo.
 
-Una tanda registrada muestra el fallo en miniatura. El agente bloqueado escaló exactamente como lo haría una persona: anunció su plan, luego pidió a su compañero que evitara las regiones compartidas, y — tras más reverts — *delegó*: "¿podrías añadir tú mi línea de export, ya que esa región es tuya?". Comprobé la fontanería por ambos lados: los tres mensajes llegaron al contexto del compañero con turnos de sobra, y su canal de salida funcionaba de forma demostrable (él había enviado el primer mensaje del hilo, nada más empezar). El compañero leyó las peticiones, llegó a escribir en su propio razonamiento "tendré que coordinarme con agent1" — y después no respondió, no añadió la línea de export que poseía, y cerró su tarea. El cuello de botella no es el canal de comunicación; es el **follow-through** — exactamente el fallo de commitment que describe la taxonomía de CooperBench, reproducido aquí con el canal verificado como inocente.
+Una tanda registrada muestra el fallo en miniatura. El agente 1, bloqueado por la valla de territorio, escala exactamente como lo haría una persona — anuncia, pide y finalmente *delega* — mientras el agente 2 dice lo suyo una vez y luego se calla:
+
+<div class="agent-chat">
+<div class="turn a"><span class="who">agente 1 → agente 2</span><p>Voy a tocar <code>_other.py</code> y <code>__init__.py</code> para un validador IsMac. ¿Vas a tocar alguno de esos? …para mantener el patch merge-friendly.</p></div>
+<div class="turn b"><span class="who">agente 2 → agente 1</span><p>Estoy a punto de añadir un validador IsEmail. Espero tocar <code>_other.py</code> y <code>__init__.py</code> también. …¿podemos coordinarnos para evitar conflictos?</p></div>
+<div class="turn a"><span class="who">agente 1 → agente 2</span><p>La valla revirtió mi primer intento — regiones reclamadas. ¿Puedes evitar el bloque de imports y <code>__all__</code>, y la parte de arriba de <code>_other.py</code>?</p></div>
+<div class="turn a"><span class="who">agente 1 → agente 2 · delegando</span><p>La valla me bloquea las regiones de import/export. ¿Podrías añadir tú el re-export de IsMac ahí, ya que esa región es tuya?</p></div>
+<div class="silence">El agente 2 nunca responde. En su propio razonamiento privado escribió: <em>"Sí solapamos. Debería inspeccionar y responder con coordinación precisa."</em> Nunca lo hizo.</div>
+</div>
+
+Comprobé la fontanería por ambos lados: todos los mensajes del agente 1 llegaron al contexto del agente 2 con turnos de sobra, y el canal de salida del agente 2 funcionaba de forma demostrable — envió el primer mensaje de todo el hilo. Leyó las peticiones, incluso *planeó* coordinarse en su propio razonamiento, y después no respondió, no añadió la línea de export que poseía, y cerró su tarea. El cuello de botella no es el canal de comunicación; es el **follow-through** — exactamente el fallo de commitment que describe la taxonomía de CooperBench, reproducido aquí con el canal verificado como inocente.
 
 ## Bajo el capó: la colaboración muere en el merge
 
