@@ -1,7 +1,7 @@
 ---
 title: "Agentes de código y trabajo en equipo: ¿habilidades sociales o estructura?"
 description: "Un benchmark reciente dice que los agentes de código no colaboran porque les falta inteligencia social. Pruebo otra hipótesis: les falta estructura — y encuentro que hacer de la integración el trabajo de un solo agente recupera la colaboración, mientras que los conflictos de merge sobre todo enmascaran fallos semánticos más profundos."
-pubDate: 2026-07-01
+pubDate: 2026-07-12
 tags: ["IA", "Agentes", "Evaluación"]
 lang: es
 translationKey: coding-agents-structure

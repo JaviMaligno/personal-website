@@ -1,7 +1,7 @@
 ---
 title: "Coding Agents and Teamwork: Social Skills, or Structure?"
 description: "A recent benchmark says coding agents can't collaborate because they lack social intelligence. I test a different hypothesis: they lack structure — and find that making integration one agent's job recovers collaboration, while merge conflicts mostly mask deeper semantic failures."
-pubDate: 2026-07-01
+pubDate: 2026-07-12
 tags: ["AI", "Agents", "Evaluation"]
 lang: en
 translationKey: coding-agents-structure
