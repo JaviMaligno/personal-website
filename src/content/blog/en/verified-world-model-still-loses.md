@@ -10,7 +10,7 @@ repoUrl: https://github.com/JaviMaligno/code-world-models
 ---
 A while back I wrote that programming is drifting from verifying *how* code works to verifying *what* it produces — [results-oriented programming](/en/blog/results-oriented-programming). This post is what happened when I took that idea seriously enough to break it. I set out to reproduce a DeepMind result and instead spent a few weeks on a small, stubborn question: **if a result-check passes, does that actually mean the result is right?** The answer, it turns out, is "not necessarily" — and you can say exactly when it fails, and prove part of why.
 
-I wrote the whole thing up as a preprint, *When a Verified World Model Still Loses: Play-Adequacy vs Prediction-Accuracy in LLM-Synthesized Code World Models*, now on arXiv (**[arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)** — link goes live once it clears moderation). The [code and full reproduction log are open](https://github.com/JaviMaligno/code-world-models); the rest of this post is the story in plain language.
+I wrote the whole thing up as a preprint, *When a Verified World Model Still Loses: Play-Adequacy vs Prediction-Accuracy in LLM-Synthesized Code World Models*, now on arXiv (**[arXiv:2607.14169](https://arxiv.org/abs/2607.14169)**). The [code and full reproduction log are open](https://github.com/JaviMaligno/code-world-models); the rest of this post is the story in plain language.
 
 ## The setup: Code World Models
 
@@ -78,8 +78,8 @@ There's a clean structural point underneath: a transition-accuracy gate is **bli
 
 A passing test suite — or a sampling-based gate — is a *result-check with a coverage blind spot*. It certifies the model exactly where your samples land, and competent behaviour systematically lands somewhere else: the rare, pivotal, deep parts of the space. If you verify a world model (or, honestly, any model used for planning or decisions) by sampling, measure adequacy **on the distribution it will actually be used on**, not on a convenient random one. And when correctness depends on a rule, put the rule in the spec — don't hope the system infers it.
 
-If you want the formal version, with the theorems and the numbers, it's in the [preprint](https://arxiv.org/abs/XXXX.XXXXX). The [code is open too](https://github.com/JaviMaligno/code-world-models).
+If you want the formal version, with the theorems and the numbers, it's in the [preprint](https://arxiv.org/abs/2607.14169). The [code is open too](https://github.com/JaviMaligno/code-world-models).
 
 ---
 
-*Preprint: "When a Verified World Model Still Loses" ([arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)) · [code](https://github.com/JaviMaligno/code-world-models). Related reading: [Results-Oriented Programming](/en/blog/results-oriented-programming) and [Software Dissolving Into the Model](/en/blog/software-dissolving-into-the-model).*
+*Preprint: "When a Verified World Model Still Loses" ([arXiv:2607.14169](https://arxiv.org/abs/2607.14169)) · [code](https://github.com/JaviMaligno/code-world-models). Related reading: [Results-Oriented Programming](/en/blog/results-oriented-programming) and [Software Dissolving Into the Model](/en/blog/software-dissolving-into-the-model).*

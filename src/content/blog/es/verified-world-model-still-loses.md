@@ -10,7 +10,7 @@ repoUrl: https://github.com/JaviMaligno/code-world-models
 ---
 Hace un tiempo escribí que la programación se está desplazando de verificar *cómo* funciona el código a verificar *qué* produce — [programación orientada a resultados](/es/blog/results-oriented-programming). Este post es lo que pasó cuando me tomé esa idea lo bastante en serio como para romperla. Quise reproducir un resultado de DeepMind y acabé varias semanas con una pregunta pequeña y testaruda: **si un chequeo de resultado pasa, ¿significa eso de verdad que el resultado es correcto?** La respuesta resulta ser "no necesariamente" — y se puede decir exactamente cuándo falla, y demostrar parte del porqué.
 
-Lo escribí todo como un preprint, *When a Verified World Model Still Loses: Play-Adequacy vs Prediction-Accuracy in LLM-Synthesized Code World Models*, ya en arXiv (**[arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)** — el enlace se activa en cuanto pase moderación). El [código y el registro completo de reproducción son abiertos](https://github.com/JaviMaligno/code-world-models); el resto de este post es la historia en lenguaje llano.
+Lo escribí todo como un preprint, *When a Verified World Model Still Loses: Play-Adequacy vs Prediction-Accuracy in LLM-Synthesized Code World Models*, ya en arXiv (**[arXiv:2607.14169](https://arxiv.org/abs/2607.14169)**). El [código y el registro completo de reproducción son abiertos](https://github.com/JaviMaligno/code-world-models); el resto de este post es la historia en lenguaje llano.
 
 ## El planteamiento: Code World Models
 
@@ -76,8 +76,8 @@ Debajo hay un punto estructural limpio: un gate de precisión de transición es 
 
 Una batería de tests que pasa — o un gate basado en muestreo — es un *chequeo de resultado con un punto ciego de cobertura*. Certifica el modelo justo donde caen tus muestras, y el comportamiento competente cae sistemáticamente en otra parte: las zonas raras, decisivas y profundas del espacio. Si verificas un modelo del mundo (o, francamente, cualquier modelo usado para planificar o decidir) por muestreo, mide la adecuación **sobre la distribución en la que realmente se va a usar**, no sobre una aleatoria cómoda. Y cuando la corrección depende de una regla, pon la regla en la especificación — no esperes que el sistema la infiera.
 
-Si quieres la versión formal, con los teoremas y los números, está en el [preprint](https://arxiv.org/abs/XXXX.XXXXX). El [código también es abierto](https://github.com/JaviMaligno/code-world-models).
+Si quieres la versión formal, con los teoremas y los números, está en el [preprint](https://arxiv.org/abs/2607.14169). El [código también es abierto](https://github.com/JaviMaligno/code-world-models).
 
 ---
 
-*Preprint: "When a Verified World Model Still Loses" ([arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)) · [código](https://github.com/JaviMaligno/code-world-models). Lecturas relacionadas: [Programación Orientada a Resultados](/es/blog/results-oriented-programming) y [Software Disolviéndose en el Modelo](/es/blog/software-dissolving-into-the-model).*
+*Preprint: "When a Verified World Model Still Loses" ([arXiv:2607.14169](https://arxiv.org/abs/2607.14169)) · [código](https://github.com/JaviMaligno/code-world-models). Lecturas relacionadas: [Programación Orientada a Resultados](/es/blog/results-oriented-programming) y [Software Disolviéndose en el Modelo](/es/blog/software-dissolving-into-the-model).*
