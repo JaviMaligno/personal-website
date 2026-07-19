@@ -29,7 +29,7 @@ La forma en que el software se encuentra con la inteligencia ha pasado por dos f
 
 **El onboarding colapsa a una descripción.** En el paradigma uno diseñas estados vacíos, tooltips y tutoriales para que un humano aprenda tu interfaz. En el paradigma tres, el "usuario" que lee tu interfaz es un modelo, y lee las descripciones de tus herramientas en milisegundos. Nadie tiene que aprender nada.
 
-**Las capacidades componen; las pantallas no.** En cuanto tu app es un conjunto de herramientas dentro de un agente, se combina con todo lo demás que el agente alcanza. "Búscame un hueco en el calendario mañana cuando la ventana de vitamina D esté abierta" cruza mi app con un calendario — una funcionalidad que ningún producto construyó, ensamblada al vuelo por el agente. Tu app deja de ser un destino y se convierte en una capacidad, y las capacidades se multiplican entre sí.
+**Las capacidades componen; las pantallas no.** En cuanto tu app es un conjunto de herramientas dentro de un agente, se combina con todo lo demás que el agente alcanza. "Convierte este contrato en un calendario con cada fecha límite que menciona" cruza una herramienta de documentos con un calendario — una funcionalidad que ningún producto construyó, ensamblada al vuelo por el agente. Tu app deja de ser un destino y se convierte en una capacidad, y las capacidades se multiplican entre sí.
 
 ## MCP es el estándar, no el punto
 
@@ -49,7 +49,7 @@ Esa segunda integración es donde está el valor que compone. El software que lo
 
 [VitaminD Explorer](https://getvitamind.app) es mi app para responder bien a una sola pregunta: *¿cuándo puede tu cuerpo sintetizar vitamina D de verdad, y cuánto tiempo necesitas fuera?* Ya conté [la historia de cómo pasó de artifact de Claude a PWA en producción](/es/blog/from-artifact-to-pwa-vitamind). Tiene gráficos, un mapa mundial, notificaciones push — una interfaz de paradigma uno completa.
 
-Hace poco le di una interfaz de paradigma tres: un servidor MCP. Está en fase temprana — cinco herramientas de momento, todavía en desarrollo:
+Hace poco le di una interfaz de paradigma tres: un servidor MCP ([guía de conexión](https://getvitamind.app/connect)). El endpoint público no necesita cuenta y expone los cálculos base:
 
 - `search_city` — resolver una ciudad a coordenadas
 - `get_sun_times` — amanecer, atardecer, mediodía solar
@@ -58,6 +58,8 @@ Hace poco le di una interfaz de paradigma tres: un servidor MCP. Está en fase t
 - `get_vitamin_d_year` — el patrón de todo el año: meses, estaciones, "cuándo desaparece la ventana en mi latitud"
 
 Con eso conectado, la interacción del principio de este artículo simplemente funciona. Le pregunto a mi asistente por hoy en Londres y llama a las herramientas y responde: ventana de 10:00 a 17:00, mejor hora las 13:00, unos 8 minutos de sol para 1000 UI con un índice UV máximo de cielo despejado de 6,8. Sin abrir la app, sin cambiar de pestaña. (Cada número de esa frase salió de una llamada real a las herramientas mientras escribía esto.)
+
+Hay un segundo endpoint detrás de OAuth. Enlazas tu cuenta y el agente también puede leer tu perfil guardado, tus ciudades y tu historial de días de sol — y *escribir* en él: "hoy he salido 20 minutos" apunta una sesión. Antes de nada, una pantalla de permiso detalla exactamente qué puede leer y escribir el agente, y puedes revocarlo desde tu cliente de IA cuando quieras. En un mundo mediado por agentes esa pantalla de permiso *es* la interfaz de permisos — la única superficie donde la persona todavía ve, en lenguaje claro, qué está a punto de hacer su asistente en su nombre.
 
 La PWA no queda obsoleta — un heatmap de 47.000 celdas por latitud es trabajo para una interfaz de verdad, no para prosa. Ese es el punto de que los paradigmas se apilan: la experiencia visual y exploratoria se queda en la app; la pregunta diaria se va al agente.
 
@@ -82,4 +84,4 @@ Si la respuesta es no, en esa respuesta estará el producto de otro.
 
 ---
 
-*[VitaminD Explorer](https://getvitamind.app) es gratis y open source ([GitHub](https://github.com/JaviMaligno/vitamind)); su servidor MCP está en desarrollo activo. Lecturas relacionadas: [Cuando el chat construye su propia interfaz](/es/blog/ag-ui-third-protocol) y [El software se está disolviendo en el modelo](/es/blog/software-dissolving-into-the-model).*
+*[VitaminD Explorer](https://getvitamind.app) es gratis y open source ([GitHub](https://github.com/JaviMaligno/vitamind)); su servidor MCP está en desarrollo activo — [conecta tu IA aquí](https://getvitamind.app/connect). Lecturas relacionadas: [Cuando el chat construye su propia interfaz](/es/blog/ag-ui-third-protocol) y [El software se está disolviendo en el modelo](/es/blog/software-dissolving-into-the-model).*

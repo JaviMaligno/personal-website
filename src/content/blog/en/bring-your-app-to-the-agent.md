@@ -29,7 +29,7 @@ The way software meets intelligence has gone through two phases, and I think we'
 
 **Onboarding collapses to a description.** In paradigm one you design empty states, tooltips, and tutorials so a human can learn your interface. In paradigm three the "user" reading your interface is a model, and it reads your tool descriptions in milliseconds. Nobody has to learn anything.
 
-**Capabilities compose; screens don't.** Once your app is a set of tools inside an agent, it combines with everything else the agent can reach. "Find a gap in my calendar tomorrow when the vitamin D window is open" crosses my app with a calendar — a feature neither product built, assembled on the fly by the agent. Your app stops being a destination and becomes a capability, and capabilities multiply each other.
+**Capabilities compose; screens don't.** Once your app is a set of tools inside an agent, it combines with everything else the agent can reach. "Turn this contract into a calendar of every deadline it mentions" crosses a document tool with a calendar — a feature neither product built, assembled on the fly by the agent. Your app stops being a destination and becomes a capability, and capabilities multiply each other.
 
 ## MCP is the standard, not the point
 
@@ -49,7 +49,7 @@ That second integration is where the compounding value is. Software that agents 
 
 [VitaminD Explorer](https://getvitamind.app) is my app for answering one question well: *when can your body actually synthesize vitamin D, and how long do you need outside?* I've told [the story of how it went from a Claude artifact to a production PWA](/en/blog/from-artifact-to-pwa-vitamind). It has charts, a world map, push notifications — a full paradigm-one interface.
 
-Recently I gave it a paradigm-three interface: an MCP server. It's early — five tools so far, still in development:
+Recently I gave it a paradigm-three interface: an MCP server ([connection guide](https://getvitamind.app/connect)). The public endpoint needs no account and exposes the core calculations:
 
 - `search_city` — resolve a city to coordinates
 - `get_sun_times` — sunrise, sunset, solar noon
@@ -58,6 +58,8 @@ Recently I gave it a paradigm-three interface: an MCP server. It's early — fiv
 - `get_vitamin_d_year` — the whole year's pattern: months, seasons, "when does the window disappear at my latitude"
 
 With that connected, the interaction from the top of this article just works. I ask my assistant about today in London and it calls the tools and answers: window from 10:00 to 17:00, best hour 13:00, about 8 minutes of sun for 1000 IU with a peak clear-sky UV index of 6.8. No app opened, no tab switched. (Every number in that sentence came from a real tool call while writing this.)
+
+A second endpoint sits behind OAuth. Link your account and the agent can also read your saved profile, your cities and your sun-day history — and *write* to it: "I was out for 20 minutes today" logs a session. Before any of that, a consent screen spells out exactly what the agent may read and write, and you can revoke it from your AI client at any time. In an agent-mediated world that consent screen *is* the permissions UI — the one surface where the person still sees, in plain language, what their assistant is about to do on their behalf.
 
 The PWA isn't obsolete — a 47,000-cell latitude heatmap is a job for a real UI, not for prose. That's the point about paradigms stacking: the visual, exploratory experience stays in the app; the daily question goes to the agent.
 
@@ -82,4 +84,4 @@ If the answer is no, someone else's product will be in that response.
 
 ---
 
-*[VitaminD Explorer](https://getvitamind.app) is free and open source ([GitHub](https://github.com/JaviMaligno/vitamind)); its MCP server is in active development. Related reading: [When the Chat Builds Its Own Interface](/en/blog/ag-ui-third-protocol) and [Software Is Dissolving Into the Model](/en/blog/software-dissolving-into-the-model).*
+*[VitaminD Explorer](https://getvitamind.app) is free and open source ([GitHub](https://github.com/JaviMaligno/vitamind)); its MCP server is in active development — [connect your AI to it here](https://getvitamind.app/connect). Related reading: [When the Chat Builds Its Own Interface](/en/blog/ag-ui-third-protocol) and [Software Is Dissolving Into the Model](/en/blog/software-dissolving-into-the-model).*
