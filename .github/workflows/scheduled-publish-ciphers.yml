@@ -1,0 +1,61 @@
+name: Scheduled publish — ciphers article
+
+# One-shot: merge the ciphers article branch into main on 2026-07-20 so the
+# existing deploy + LinkedIn + Dev.to workflows fire on the resulting push.
+# The push MUST use a user PAT (secret PUBLISH_PAT) — a push made with the
+# default GITHUB_TOKEN does NOT re-trigger other workflows.
+on:
+  schedule:
+    - cron: '0 9 20 7 *'   # 2026-07-20 09:00 UTC (11:00 CEST)
+  workflow_dispatch: {}      # allow a manual run from the Actions tab
+
+permissions:
+  contents: read
+  issues: write              # for the notify steps (via GITHUB_TOKEN)
+
+concurrency: publish-ciphers  # never run twice at once
+
+jobs:
+  merge-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (with PAT so the push re-triggers publish workflows)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.PUBLISH_PAT }}
+
+      - name: Merge article branch and push
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin blog/ciphers-edges
+          if git merge-base --is-ancestor origin/blog/ciphers-edges HEAD; then
+            echo "Branch already merged into main — nothing to do."
+            exit 0
+          fi
+          git merge --no-ff origin/blog/ciphers-edges \
+            -m "Publish: ciphers article (scheduled 2026-07-20)"
+          git push origin main
+
+      - name: Notify success
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "✅ Ciphers article published (scheduled)" \
+            --body "blog/ciphers-edges was merged into main on schedule. Deploy + LinkedIn + Dev.to should be running now. Verify: https://www.javieraguilar.ai/en/blog/ciphers-edges-of-language" \
+            || echo "issue creation failed (non-fatal)"
+
+      - name: Notify failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "❌ Scheduled ciphers publish FAILED" \
+            --body "The scheduled merge did not complete. Check the run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} — you may need to merge blog/ciphers-edges into main manually." \
+            || echo "issue creation failed (non-fatal)"
