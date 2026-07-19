@@ -57,11 +57,11 @@ Entre los modelos que participan (GPT-5 + Qwen ×2, ocho réplicas), la pregunta
 
 Un matiz honesto que revela la vista por-modelo: **base64 para GPT-5 es `filtered`, no fallado.** El filtro de *categorías de daño* de Azure — el que dejé puesto a propósito — bloqueó todas las celdas base64 de GPT-5, así que el número agregado de base64 sencillamente carece de su modelo más fuerte. Trata su dificultad aparente con recelo; los casos genuinamente difíciles son los cifrados **con clave**.
 
-Lo que *sí* es robusto es que la dificultad se manifiesta de dos formas a la vez — menos éxito **y** más turnos hasta lograrlo:
+Lo que *sí* es robusto es que la dificultad se manifiesta de dos formas a la vez — menos éxito **y** más turnos hasta lograrlo. Desglosado del mismo modo, por modelo:
 
-![Gráfico de barras de la mediana de turnos hasta comprensión por cifrado. La mayoría hacen clic en el turno 1-2; base64, permutación por bloques y sustitución aleatoria tardan una mediana de 4-5 turnos con cola larga hasta siete.](/blog/ciphers-turns.png)
+![Mapa de calor de la mediana de turnos hasta comprensión por cifrado y modelo. GPT-5 descifra la mayoría en el turno 1 pero tarda 4-5 turnos en los que llevan clave (sustitución aleatoria, permutación por bloques); los modelos Qwen son más lentos; los guiones marcan cifrados que un modelo nunca resolvió.](/blog/ciphers-turns.png)
 
-La mayoría de cifrados hacen clic en el **primer turno** — el 54% de todas las celdas resueltas se resuelven de inmediato, el 73% en dos turnos. Pero los que llevan clave — sustitución aleatoria y permutación por bloques — más base64 tardan una mediana de **4–5 turnos**, con cola hasta siete. La sustitución aleatoria con clave es el caso más puro: es el único cifrado que ningún modelo pudo memorizar, así que ver a un modelo pelearlo a lo largo de varios turnos es lo más parecido aquí a un "break" de análisis de frecuencias humano en cámara lenta.
+**GPT-5 descifra la mayoría de cifrados en el primerísimo turno**, pero tarda una mediana de 4–5 en los que llevan clave — sustitución aleatoria y permutación por bloques, los dos que tiene que *inferir* de verdad. La sustitución aleatoria con clave es el caso más puro: ningún modelo pudo memorizarla, así que ver a uno pelearla a lo largo de varios turnos es lo más parecido aquí a un "break" de análisis de frecuencias humano en cámara lenta. (Una arruga honesta: los Qwen abiertos corren greedy, así que sus réplicas son deterministas — sus "turnos" reflejan el protocolo y la rotación de tareas más que ruido de muestreo. Lo leo como un orden aproximado, no como una latencia precisa.)
 
 ## Qué ayuda de verdad a un modelo a descifrar un código
 

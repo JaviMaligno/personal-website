@@ -57,11 +57,11 @@ Among the engaging models (GPT-5 + Qwen ×2, eight replicates), the original que
 
 One honest caveat the model-by-model view surfaces: **base64 for GPT-5 is `filtered`, not failed.** Azure's *harm-category* filter — the one I deliberately left on — blocked every one of GPT-5's base64 cells, so base64's pooled number is simply missing its strongest model. Treat its apparent difficulty with suspicion; the genuinely hard cases are the **keyed** ciphers.
 
-What *is* robust is that difficulty shows up two ways at once — lower success **and** more turns to get there:
+What *is* robust is that difficulty shows up two ways at once — lower success **and** more turns to get there. Broken down the same way, by model:
 
-![Bar chart of median turns-to-comprehension by cipher. Most ciphers click on turn 1-2; base64, block_permutation and random_substitution take a median of 4-5 turns with a long tail to seven.](/blog/ciphers-turns.png)
+![Heatmap of median turns-to-comprehension by cipher and model. GPT-5 cracks most ciphers on turn 1 but takes 4-5 turns on the keyed ones (random substitution, block permutation); the Qwen models are slower; dashes mark ciphers a model never solved.](/blog/ciphers-turns.png)
 
-Most ciphers click on the **first turn** — 54% of all solved cells are solved immediately, 73% within two turns. But the keyed ones — random substitution and block permutation — plus base64 take a median of **4–5 turns**, with a tail out to seven. The keyed random substitution is the purest case: it's the one cipher no model could have memorized, so watching a model grind it out over several turns is the closest thing here to a human frequency-analysis "break" happening in slow motion.
+**GPT-5 cracks most ciphers on the very first turn**, but takes a median of 4–5 on the keyed ones — random substitution and block permutation, the two it has to genuinely *infer*. The keyed random substitution is the purest case: no model could have memorized it, so watching one grind it out over several turns is the closest thing here to a human frequency-analysis "break" in slow motion. (One honest wrinkle: the open Qwen models run greedily, so their replicates are deterministic — their "turns" reflect the protocol and the task rotation more than sampling noise. I read this as a coarse ordering, not a precise latency.)
 
 ## What actually helps a model crack a code
 
