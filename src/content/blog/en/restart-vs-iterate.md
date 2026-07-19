@@ -46,7 +46,11 @@ Four findings, in order of how well they survive the statistics:
 
 3. **Handing the agent the decision is the best cell in the table — and it never hurts.** Agent-decides tops both tiers (91% for gpt-5.4, its best; 75% for mini). Against restart-fresh at the strong tier it wins **19–0** (p<0.001). Against pure iterate the edge is not significant (8–4, p=0.39) — so read it conservatively: the bulk of the value is in iterating; the restart *option* adds a plausible-but-unproven bonus and costs nothing.
 
-4. **The capability marker is restart *style*, not restart rate.** This is the finding I'd keep if I could keep only one. Across all three seeds, the strong model restarted **rarely and surgically**: 7 restarts total, 5 of them file-scoped, and **3 of the 4** features where it restarted ended up solved. The weak model restarted **often and destructively**: 34 restarts, 23 of them scope=all — raze everything — and only **1 of 14** restarted features got solved. Same tool, same prompt, same benchmark: one tier uses the scalpel and wins; the other swings the wrecking ball and loses. Knowing *what* to throw away is the metacognition; throwing things away is not.
+4. **The capability marker is restart *style* — though the causal story is subtler than "scalpel vs. wrecking ball."** This is the finding I'd keep if I could keep only one, and it's the one a sharp reader (`alex_spinov`, in the comments) pushed hardest — rightly. The raw pattern is real: across three seeds the strong model restarted **rarely and surgically** (7 restarts, 5 file-scoped, **3 of 4** restarted feature-runs solved), while the weak model restarted **often and destructively** (34 restarts, 23 of them `scope=all`, only **1 of 14** restarted feature-runs solved). But restarts are *self-selected* — the agent reaches for one exactly where it's already losing — so restarted features are a hard subset by construction. The honest test is the counterfactual: the *same* features and seeds under pure `iterate`, which the harness already ran. It separates the tiers cleanly:
+   - **Weak tier — the wrecking ball is a symptom, not the cause.** Those same 14 features solve just **2/14 under iterate**, nowhere near the 74% base. Broad restarts didn't destroy winnable work; the agent razed everything *because* the feature was already lost. Restart is roughly neutral here (1/14 vs 2/14), not destructive.
+   - **Strong tier — the scalpel genuinely rescues.** Those same 4 features solve **0/4 under iterate**; the scoped restart turned three of them into wins. Against the right baseline — the matched subset, not the 91% global rate — that's a real causal gain, though at n=4 it's directional (exact p≈0.25), not significant.
+
+   So the sharpened claim: knowing *what* to throw away is the metacognition, and it's the strong tier's scoped restart that actually pays — while the weak tier's broad restart is the *signature* of an agent that has already lost, not the mechanism of its loss.
 
 ## Under the hood
 
@@ -67,8 +71,8 @@ The echo with the [coordination article](https://www.javieraguilar.ai/en/blog/co
 If you run coding agents in practice, the actionable version is three lines:
 
 - Default to **iterate with visible tests** — don't restart-by-default, and don't hide the feedback.
-- If you add a restart affordance, make it **scoped** — file-level reverts, not workspace wipes — and expect only your stronger models to use it well.
-- Watch the *style* of your agent's discards. Frequent, broad restarts aren't decisiveness; on our data they're the signature of an agent that's lost.
+- If you add a restart affordance, expect **only your stronger models to wield it well** — on our data, the strong tier's scoped reverts rescued features plain iteration lost (3/4 vs 0/4 on the same features), while the weak tier's restarts merely marked work that was already sunk. Don't count on *forcing* narrow scope to lift a weaker model's pass rate.
+- Watch the *style* of your agent's discards. Frequent, broad restarts aren't decisiveness; on our data they're the signature of an agent that's already lost — iteration fails those same features too.
 
 ## Caveats and what's next
 

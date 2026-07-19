@@ -46,7 +46,11 @@ Cuatro hallazgos, en orden de cuánto aguantan la estadística:
 
 3. **Darle la decisión al agente es la mejor celda de la tabla — y nunca estorba.** Agent-decides corona ambos tiers (91% en gpt-5.4, su máximo; 75% en mini). Contra restart-fresh en el tier fuerte gana **19–0** (p<0.001). Contra iterate puro la ventaja no es significativa (8–4, p=0.39) — así que léelo con prudencia: el grueso del valor está en iterar; la *opción* de reiniciar añade un plus plausible-pero-no-probado y no cuesta nada.
 
-4. **El marcador de capacidad es el *estilo* del reinicio, no la tasa.** Este es el hallazgo que me quedaría si solo pudiera quedarme uno. En los tres seeds, el modelo fuerte reinició **poco y con bisturí**: 7 reinicios en total, 5 de ellos a nivel de fichero, y **3 de las 4** features donde reinició acabaron resueltas. El modelo débil reinició **mucho y a lo bruto**: 34 reinicios, 23 de ellos scope=all — arrasar todo — y solo **1 de 14** features reiniciadas se resolvió. Misma herramienta, mismo prompt, mismo benchmark: un tier usa el bisturí y gana; el otro blande la bola de demolición y pierde. Saber *qué* tirar es la metacognición; tirar cosas no lo es.
+4. **El marcador de capacidad es el *estilo* del reinicio — aunque la historia causal es más sutil que "bisturí vs. bola de demolición".** Este es el hallazgo que me quedaría si solo pudiera quedarme uno, y es el que un lector afilado (`alex_spinov`, en los comentarios) atacó con más fuerza — con razón. El patrón bruto es real: en los tres seeds el modelo fuerte reinició **poco y con bisturí** (7 reinicios, 5 a nivel de fichero, **3 de 4** feature-runs reiniciadas resueltas), mientras que el débil reinició **mucho y a lo bruto** (34 reinicios, 23 de ellos `scope=all`, solo **1 de 14** feature-runs reiniciadas resueltas). Pero un reinicio es *autoseleccionado* — el agente lo usa justo donde ya va perdiendo —, así que las features reiniciadas son un subconjunto difícil por construcción. La prueba honesta es el contrafactual: las *mismas* features y seeds bajo `iterate` puro, que el harness ya corrió. Separa los tiers con nitidez:
+   - **Tier débil — la bola de demolición es el síntoma, no la causa.** Esas mismas 14 features se resuelven solo **2/14 con iterate**, muy lejos de la base del 74%. Los reinicios amplios no destruyeron trabajo ganable; el agente arrasó todo *porque* la feature ya estaba perdida. El reinicio es casi neutro aquí (1/14 vs 2/14), no destructivo.
+   - **Tier fuerte — el bisturí sí rescata.** Esas mismas 4 features se resuelven **0/4 con iterate**; el reinicio acotado convirtió tres en victorias. Contra el baseline correcto — el subconjunto emparejado, no la tasa global del 91% — eso es una ganancia causal real, aunque con n=4 es direccional (p exacta ≈0.25), no significativa.
+
+   Así que la afirmación afinada: saber *qué* tirar es la metacognición, y es el reinicio acotado del tier fuerte el que de verdad compensa — mientras que el reinicio amplio del tier débil es la *firma* de un agente que ya ha perdido, no el mecanismo de su derrota.
 
 ## Bajo el capó
 
@@ -67,8 +71,8 @@ El eco con el [artículo de coordinación](https://www.javieraguilar.ai/es/blog/
 Si corres agentes de código en la práctica, la versión accionable son tres líneas:
 
 - Por defecto, **itera con tests visibles** — no reinicies por defecto, y no escondas el feedback.
-- Si añades la opción de reiniciar, hazla **con alcance** — reverts a nivel de fichero, no arrasar el workspace — y espera que solo tus modelos más fuertes la usen bien.
-- Vigila el *estilo* de los descartes de tu agente. Reinicios frecuentes y amplios no son decisión; en nuestros datos son la firma de un agente perdido.
+- Si añades la opción de reiniciar, espera que **solo tus modelos más fuertes la usen bien** — en nuestros datos, los reverts acotados del tier fuerte rescataron features que la iteración pura perdía (3/4 vs 0/4 sobre las mismas features), mientras que los reinicios del tier débil solo marcaban trabajo ya hundido. No cuentes con que *forzar* un alcance estrecho suba el pass rate de un modelo más débil.
+- Vigila el *estilo* de los descartes de tu agente. Reinicios frecuentes y amplios no son decisión; en nuestros datos son la firma de un agente ya perdido — la iteración falla también esas mismas features.
 
 ## Limitaciones y qué sigue
 

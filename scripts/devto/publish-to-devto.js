@@ -75,9 +75,37 @@ async function publishToDevto() {
     const slug = postPath.split('/').pop().replace('.md', '');
     const canonicalUrl = `${siteUrl}/en/blog/${slug}`;
 
+    let devtoContent = content;
+
+    // --- Dev.to compatibility: it renders neither inline SVG nor $$…$$ KaTeX ---
+    // 1) Strip scoped <style> blocks (would show as raw CSS text on Dev.to).
+    devtoContent = devtoContent.replace(/<style>[\s\S]*?<\/style>\s*/g, '');
+
+    // 2) Replace each inline SVG <figure class="cwm-fig"> with a hosted image
+    //    (pre-rendered to public/blog/<slug>-fig-<n>.{gif,png}, in document order).
+    //    alt = the SVG aria-label; caption = the <figcaption> text.
+    let figIdx = 0;
+    devtoContent = devtoContent.replace(/<figure class="cwm-fig">([\s\S]*?)<\/figure>/g, (_m, inner) => {
+      figIdx++;
+      const alt = (inner.match(/aria-label="([^"]*)"/) || [, `Figure ${figIdx}`])[1];
+      let cap = (inner.match(/<figcaption>([\s\S]*?)<\/figcaption>/) || [, ''])[1];
+      cap = cap.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      const base = `${slug}-fig-${figIdx}`;
+      const ext = existsSync(`public/blog/${base}.gif`) ? 'gif' : 'png';
+      const url = `${siteUrl}/blog/${base}.${ext}`;
+      return `![${alt}](${url})\n\n*${cap}*`;
+    });
+
+    // 3) KaTeX: block $$…$$ → Dev.to's {% katex %} liquid tag.
+    devtoContent = devtoContent.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, (_m, eq) => `{% katex %}\n${eq.trim()}\n{% endkatex %}`);
+    // 4) Inline $…$ → readable unicode (Dev.to has no reliable inline-math tag).
+    devtoContent = devtoContent.replace(/\$([^$\n]+)\$/g, (_m, eq) =>
+      eq.replace(/\\text\{([^}]*)\}/g, '$1').replace(/\\,/g, ' ').replace(/\^N\b/g, 'ᴺ').replace(/[{}]/g, '').trim()
+    );
+
     // Transform content for Dev.to compatibility
     // Replace Loom iframe embeds with links (Dev.to doesn't support Loom iframes)
-    let devtoContent = content.replace(
+    devtoContent = devtoContent.replace(
       /<div[^>]*><iframe src="https:\/\/www\.loom\.com\/embed\/([^"]+)"[^>]*><\/iframe><\/div>/g,
       '**🎥 [Watch the video demo on Loom](https://www.loom.com/share/$1)**\n\n> _Note: Interactive video player available on the [original article]('+canonicalUrl+')_'
     );
@@ -134,6 +162,13 @@ Want to see more AI agent projects? Check out my [portfolio](${siteUrl}) where I
     console.log(`  Canonical URL: ${canonicalUrl}`);
     console.log(`  Tags: ${tags.join(', ')}`);
     console.log(`  Status: ${published ? 'PUBLISHED' : 'DRAFT'}`);
+
+    if (process.env.DEVTO_DRY_RUN) {
+      console.log('\n===== DRY RUN: transformed body_markdown =====\n');
+      console.log(contentWithCTA);
+      console.log('\n===== END DRY RUN =====');
+      return;
+    }
 
     // Check if article already exists by canonical URL
     console.log(`\n🔍 Checking for existing article...`);
