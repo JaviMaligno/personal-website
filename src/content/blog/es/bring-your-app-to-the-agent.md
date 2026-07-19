@@ -6,6 +6,7 @@ tags: ["Agentes IA", "MCP", "Diseño de Software"]
 lang: es
 translationKey: bring-your-app-to-the-agent
 repoUrl: https://github.com/JaviMaligno/vitamind
+heroImage: "/blog/bring-your-app-to-the-agent.png"
 ---
 
 Esta mañana le pregunté a mi asistente de IA cuándo debería salir a tomar vitamina D. Me respondió con datos de mi propia aplicación — la ventana de síntesis, la mejor hora, los minutos que necesitaría — y en ningún momento abrí la aplicación. El asistente la llamó directamente, a través del servidor MCP que le publiqué hace poco.

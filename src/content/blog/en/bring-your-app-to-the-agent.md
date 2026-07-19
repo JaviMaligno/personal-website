@@ -6,6 +6,7 @@ tags: ["AI Agents", "MCP", "Software Design"]
 lang: en
 translationKey: bring-your-app-to-the-agent
 repoUrl: https://github.com/JaviMaligno/vitamind
+heroImage: "/blog/bring-your-app-to-the-agent.png"
 ---
 
 This morning I asked my AI assistant when I should go outside for vitamin D. It answered with data from my own app — the synthesis window, the best hour, the minutes I'd need — and at no point did I open the app. The assistant called it directly, through the MCP server I recently shipped for it.

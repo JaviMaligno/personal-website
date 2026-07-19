@@ -4,6 +4,27 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## bring-your-app-to-the-agent
+
+- **Article:** `src/content/blog/en/bring-your-app-to-the-agent.md`
+- **Image:** `public/blog/bring-your-app-to-the-agent.png`
+- **Generated:** 2026-07-19 (Codex `image_gen`, editorial-illustration guide)
+
+```text
+Use case: infographic-diagram
+Asset type: blog hero image, 1020x510 px, horizontal 2:1.
+Primary request: refined technical editorial illustration showing three stacked paradigms of software design, with the emphasis on the third: an application being plugged INTO an AI agent instead of standing alone. Convey the inversion — not an agent inside an app, but an app inside the agent the user already uses.
+Scene/backdrop: a dark technical workbench arranged as three left-to-right zones that layer forward. Zone one (back, faded): a standalone application window labeled "app" facing a small generic user glyph — the classic destination. Zone two (middle): the same app window with a small assistant chip docked inside it labeled "copilot", a chat bubble embedded in a corner. Zone three (front, brightest, largest): a central assistant/agent panel labeled "agent" acting as a hub, with several small capability modules labeled "tools" docking into it through clean socket connectors; teal connector lines flow from the app's capabilities into the agent panel, and one off-white response card reads a short generic result. A thin connector rail labeled "MCP" links the app's tools to the agent socket to signal the current plumbing.
+Composition/framing: wide 2:1 editorial hero, three distinct depth-layered zones receding back-to-front, diagonal flow of capability lines from the app into the agent, balanced negative space, clear hierarchy suitable for a blog header.
+Style/medium: refined technical editorial illustration, crisp vector-like raster rendering, precise linework, subtle grain, mature engineering-magazine aesthetic.
+Lighting/mood: dark but not monochrome, low-contrast graphite grid background, restrained luminous panel screens with the front agent zone most lit.
+Color palette: balanced teal, amber, graphite, and off-white accents on a dark base.
+Text: sparse, readable, generic UI/label text only: "app", "copilot", "agent", "tools", "MCP".
+Constraints: no people (a single tiny abstract user glyph is fine), no logos, no brand names, no product names, no mascots, no purple gradient blobs, no bokeh, no stock-photo look, no text-heavy poster, no giant centered icon. Keep all text minimal and generic.
+```
+
+---
+
 ## restart-vs-iterate
 
 - **Article:** `src/content/blog/en/restart-vs-iterate.md`
