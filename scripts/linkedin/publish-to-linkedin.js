@@ -57,6 +57,7 @@ async function publishToLinkedIn() {
       postUrl,
       hashtags,
       repoUrl: frontmatter.repoUrl,
+      links: frontmatter.linkedinLinks,
     });
 
     console.log(`\n📄 Post preview (${postText.length} chars):`);
