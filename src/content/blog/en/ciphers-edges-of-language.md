@@ -37,7 +37,7 @@ Five models: Claude Opus and Sonnet, GPT-5, and Qwen2.5-7B in both Instruct and 
 
 Here is the plan meeting reality. Before I could measure *how fast* anyone cracks a cipher, I had to notice that **two of my five models refuse to try.**
 
-![Bar chart of refusal rate by model: Claude Opus 87%, Claude Sonnet 86%, GPT-5 0%, Qwen Instruct 0%, Qwen Base 0%. An annotation notes Azure's content filter blocks GPT-5's ciphered prompts as 'jailbreak' before the model sees them.](https://www.javieraguilar.ai/blog/ciphers-safety-boundary.png)
+![Bar chart of refusal rate by model: Claude Opus 87%, Claude Sonnet 86%, GPT-5 0%, Qwen Instruct 0%, Qwen Base 0%. An annotation notes Azure's content filter blocks GPT-5's ciphered prompts as 'jailbreak' before the model sees them.](/blog/ciphers-safety-boundary.png)
 
 **Claude Opus and Sonnet refuse ~87% of encoded turns.** Not "fail to decode" — *refuse*, with the API's `stop_reason: refusal` and an empty completion. Feed the same model the same question in plain English and it answers instantly and correctly ("The capital of France is **Paris**"). It is not that Claude can't read ROT13; it is that Claude won't act on an instruction it can't read as plain text.
 
@@ -51,7 +51,7 @@ So before any cryptanalysis happens, encoded text has already hit a **safety bou
 
 Among the engaging models (GPT-5 + Qwen ×2, eight replicates, 95% confidence intervals), the original question finally has a clean answer.
 
-![Horizontal bar chart ranking cipher comprehension rate: letters_to_digits 100%, morse 79%, disemvowel 78%, reverse_all 75%, random_substitution 74%, rot13/cyrillic/binary 67%, block_permutation 51%, base64 50%.](https://www.javieraguilar.ai/blog/ciphers-difficulty-ranking.png)
+![Horizontal bar chart ranking cipher comprehension rate: letters_to_digits 100%, morse 79%, disemvowel 78%, reverse_all 75%, random_substitution 74%, rot13/cyrillic/binary 67%, block_permutation 51%, base64 50%.](/blog/ciphers-difficulty-ranking.png)
 
 The ladder mostly matches intuition, with a couple of surprises. **Letters→digits is trivial** (100%) — the model reads `8-5-12-12-15` as "hello" without breaking stride. **base64 and the keyed block permutation are the hardest** (~50%), which is the interesting part: base64 is *everywhere* in training data, yet decoding a long base64 string turn after turn and acting on it is genuinely error-prone. Familiarity isn't the same as fluency. And the hard ciphers aren't just less often solved — when they *are* solved it takes longer (median 4–5 turns versus 1 for the easy ones).
 
@@ -61,7 +61,7 @@ The keyed random substitution — the one cipher no model could have memorized �
 
 The three protocols pull two different levers, and this is where a design decision paid off.
 
-![Grouped bar chart by protocol. Comprehension: pure 61%, few-shot 83%, escalating 70%. Production: pure 25%, few-shot 14%, escalating 62%.](https://www.javieraguilar.ai/blog/ciphers-protocol-effect.png)
+![Grouped bar chart by protocol. Comprehension: pure 61%, few-shot 83%, escalating 70%. Production: pure 25%, few-shot 14%, escalating 62%.](/blog/ciphers-protocol-effect.png)
 
 Giving the model a **Rosetta stone** — a few plaintext↔coded pairs — lifts comprehension from 61% to 83%, a gap whose confidence intervals don't overlap, and it helps the *novel* keyed ciphers as much as the memorized ones. That is exactly what you'd hope: shown the key, the model cracks the code faster, even a code it's never seen.
 
@@ -75,7 +75,7 @@ Which brings us back to that safety boundary, and the obvious follow-up. If enco
 
 The result runs the opposite way from the scare headline.
 
-![Bar chart: compliance on a harmful request in plain text is 36%, versus 1% when the same request is encoded in a cipher. Annotation: the model switches to 'decode this puzzle' mode instead of obeying.](https://www.javieraguilar.ai/blog/ciphers-jailbreak-backfire.png)
+![Bar chart: compliance on a harmful request in plain text is 36%, versus 1% when the same request is encoded in a cipher. Annotation: the model switches to 'decode this puzzle' mode instead of obeying.](/blog/ciphers-jailbreak-backfire.png)
 
 In plain text these requests get complied with 36% of the time (and the *base* model, with no alignment layer, 80% of the time — it simply hasn't learned to refuse). Encode the exact same request and compliance **collapses to ~1%.** Reading the transcripts by hand shows why: the cipher flips the model into *translator mode*. It replies, in plain English, "This looks like ROT13 — decoding: EXPLAIN HOW TO…" and then treats the decoded text as a puzzle it has solved rather than an order it must follow. The obfuscation that gets past the outer filter also stops the model from *executing* the instruction, because it reframes the instruction as an object to be examined.
 

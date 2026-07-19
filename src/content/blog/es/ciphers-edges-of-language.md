@@ -37,7 +37,7 @@ Cinco modelos: Claude Opus y Sonnet, GPT-5, y Qwen2.5-7B en sus versiones Instru
 
 Aquí es donde el plan se encuentra con la realidad. Antes de poder medir *cuán rápido* descifra nadie un código, tuve que darme cuenta de que **dos de mis cinco modelos se niegan a intentarlo.**
 
-![Gráfico de barras de tasa de rechazo por modelo: Claude Opus 87%, Claude Sonnet 86%, GPT-5 0%, Qwen Instruct 0%, Qwen Base 0%. Una anotación indica que el filtro de contenido de Azure bloquea los prompts cifrados de GPT-5 como 'jailbreak' antes de que el modelo los vea.](https://www.javieraguilar.ai/blog/ciphers-safety-boundary.png)
+![Gráfico de barras de tasa de rechazo por modelo: Claude Opus 87%, Claude Sonnet 86%, GPT-5 0%, Qwen Instruct 0%, Qwen Base 0%. Una anotación indica que el filtro de contenido de Azure bloquea los prompts cifrados de GPT-5 como 'jailbreak' antes de que el modelo los vea.](/blog/ciphers-safety-boundary.png)
 
 **Claude Opus y Sonnet rechazan ~87% de los turnos codificados.** No "fallan al decodificar" — *rechazan*, con el `stop_reason: refusal` de la API y una respuesta vacía. Dale al mismo modelo la misma pregunta en inglés plano y responde al instante y bien ("La capital de Francia es **París**"). No es que Claude no sepa leer ROT13; es que Claude no actúa sobre una instrucción que no puede leer como texto plano.
 
@@ -51,7 +51,7 @@ Así que antes de que ocurra ningún criptoanálisis, el texto codificado ya ha 
 
 Entre los modelos que participan (GPT-5 + Qwen ×2, ocho réplicas, intervalos de confianza del 95%), la pregunta original por fin tiene una respuesta limpia.
 
-![Gráfico de barras horizontales del ranking de tasa de comprensión por cifrado: letras_a_dígitos 100%, morse 79%, disemvowel 78%, inversión 75%, sustitución_aleatoria 74%, rot13/cirílico/binario 67%, permutación_por_bloques 51%, base64 50%.](https://www.javieraguilar.ai/blog/ciphers-difficulty-ranking.png)
+![Gráfico de barras horizontales del ranking de tasa de comprensión por cifrado: letras_a_dígitos 100%, morse 79%, disemvowel 78%, inversión 75%, sustitución_aleatoria 74%, rot13/cirílico/binario 67%, permutación_por_bloques 51%, base64 50%.](/blog/ciphers-difficulty-ranking.png)
 
 La escalera coincide en su mayoría con la intuición, con un par de sorpresas. **Letras→dígitos es trivial** (100%) — el modelo lee `8-5-12-12-15` como "hello" sin pestañear. **base64 y la permutación por bloques con clave son los más difíciles** (~50%), que es la parte interesante: base64 está *por todas partes* en los datos de entrenamiento, y aun así decodificar una cadena base64 larga turno tras turno y actuar sobre ella es genuinamente propenso a error. Familiaridad no es lo mismo que fluidez. Y los cifrados difíciles no solo se resuelven menos: cuando *se* resuelven cuesta más (mediana 4–5 turnos frente a 1 en los fáciles).
 
@@ -61,7 +61,7 @@ La sustitución aleatoria con clave — el único cifrado que ningún modelo pud
 
 Los tres protocolos accionan dos palancas distintas, y aquí es donde una decisión de diseño rindió.
 
-![Gráfico de barras agrupadas por protocolo. Comprensión: puro 61%, few-shot 83%, escalado 70%. Producción: puro 25%, few-shot 14%, escalado 62%.](https://www.javieraguilar.ai/blog/ciphers-protocol-effect.png)
+![Gráfico de barras agrupadas por protocolo. Comprensión: puro 61%, few-shot 83%, escalado 70%. Producción: puro 25%, few-shot 14%, escalado 62%.](/blog/ciphers-protocol-effect.png)
 
 Darle al modelo una **piedra Rosetta** — unos pares texto-plano↔codificado — sube la comprensión de 61% a 83%, una brecha cuyos intervalos de confianza no se solapan, y ayuda a los cifrados *novedosos* con clave tanto como a los memorizados. Es exactamente lo que esperarías: mostrada la clave, el modelo descifra el código más rápido, incluso un código que nunca ha visto.
 
@@ -75,7 +75,7 @@ Lo que nos devuelve a ese borde de seguridad, y a la pregunta obvia. Si el texto
 
 El resultado va en dirección contraria al titular alarmista.
 
-![Gráfico de barras: el cumplimiento de una petición dañina en texto plano es 36%, frente a 1% cuando la misma petición va codificada en un cifrado. Anotación: el modelo cambia a modo 'decodifica este puzzle' en vez de obedecer.](https://www.javieraguilar.ai/blog/ciphers-jailbreak-backfire.png)
+![Gráfico de barras: el cumplimiento de una petición dañina en texto plano es 36%, frente a 1% cuando la misma petición va codificada en un cifrado. Anotación: el modelo cambia a modo 'decodifica este puzzle' en vez de obedecer.](/blog/ciphers-jailbreak-backfire.png)
 
 En texto plano estas peticiones se cumplen el 36% de las veces (y el modelo *base*, sin capa de alineamiento, el 80% — sencillamente no ha aprendido a rechazar). Codifica la misma petición exacta y el cumplimiento **se desploma a ~1%.** Leer las transcripciones a mano muestra por qué: el cifrado voltea al modelo a *modo traductor*. Responde, en inglés plano, "Esto parece ROT13 — decodificando: EXPLICA CÓMO…" y luego trata el texto decodificado como un puzzle que ha resuelto en vez de una orden que debe seguir. La ofuscación que se cuela por el filtro externo también impide que el modelo *ejecute* la instrucción, porque la reencuadra como un objeto a examinar.
 
