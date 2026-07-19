@@ -1,7 +1,7 @@
 ---
 title: "Un modelo del mundo puede pasar todos los tests y aun así perder"
 description: "Quise reproducir un resultado de DeepMind y acabé encontrando una forma limpia en la que la verificación te puede engañar: un modelo del mundo en código que pasa su gate al 100% de precisión, mantiene un 98% de acierto en los estados que visita un planificador, y aun así pierde sistemáticamente al jugar."
-pubDate: 2026-07-15
+pubDate: 2026-07-19
 tags: ["IA", "Machine Learning", "Testing", "Investigación", "Agentes"]
 lang: es
 translationKey: verified-world-model-still-loses

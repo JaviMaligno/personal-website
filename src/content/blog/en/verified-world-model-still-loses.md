@@ -1,7 +1,7 @@
 ---
 title: "A World Model Can Pass Every Test and Still Lose"
 description: "I set out to reproduce a DeepMind result and instead found a clean way verification can lie to you: a code world model that passes its gate at 100% accuracy, stays 98% accurate on the states a planner visits, and still loses systematically at play."
-pubDate: 2026-07-15
+pubDate: 2026-07-19
 tags: ["AI", "Machine Learning", "Testing", "Research", "Agents"]
 lang: en
 translationKey: verified-world-model-still-loses
