@@ -66,3 +66,22 @@ Create a 1020x510 blog hero image for a technical article titled "Bootstrap the 
 ```
 Create a 1020x510 blog hero image for a technical article titled "Repetition at the Edges of Language". Style: refined technical editorial illustration, dark but not monochrome. Concrete scene: two side-by-side chat/terminal panels on a dark graphite desk. The LEFT panel shows a clean, composed assistant reply — a short line trailing into an ellipsis; the RIGHT panel shows the same interface degenerating into a runaway loop of one repeated token ("table table table…"), one line glitching. A faint input bubble at the top feeds both panels; a repetition-count meter climbs along the side. Readable generic monospace text, clean geometric composition. No logos, no people, no text-heavy poster. Crisp bitmap illustration, high contrast; teal, amber, graphite and off-white on dark; no purple gradient blobs, no bokeh.
 ```
+
+## writing-a-research-paper-with-ai (2026-07-19)
+
+- Article: `src/content/blog/en/writing-a-research-paper-with-ai.md`
+- Image: `public/blog/writing-a-research-paper-with-ai.png`
+- Generated with: Codex (gpt-image), prompt delegated to Codex from style constraints
+
+```text
+Use case: scientific-educational. Asset type: 1020x510 landscape blog hero image for a technical AI/developer article.
+Primary request: Show that advanced AI intelligence matters in planning science and peer review, not prose writing. Depict a concrete researcher's workspace where a flawed experimental-design document is being reviewed and materially improved.
+Scene: Dark graphite desktop, slightly elevated three-quarter top-down perspective, organized like a real research workstation.
+Subject: A before-versus-after scientific plan. Left: a rough "EXPERIMENTAL DESIGN (DRAFT)" page with a red-flagged error and a struck-through line. Right: a cleaner "EXPERIMENTAL DESIGN (REVISED)" plan reorganized into controlled stages with an oracle-baseline check. Review marks connect the flaw to the correction.
+Scientific motif: a compact geometry diagram of a curved boundary reconstructed from scattered sample points — sparse teal/amber points around a smooth closed region, dashed attempt on the flawed side, cleaner solid reconstruction on the revised side.
+Reviewer structure: two distinct review lenses/panels ("CAUSAL", "INFORMATION") examining the plan from separate angles; a human researcher's hands and pen at the bottom edge (no face); a "HUMAN JUDGMENT" sticky note. Three viewpoints legible through separate annotation colors.
+Supporting detail: a small terminal window with exactly one commit line: "spec: redesign per expert review". A couple of short callouts: "CONFOUND", "ADD CONTROL". Text minimal and generic.
+Style: crisp bitmap technical editorial illustration, precise geometric shapes, subtle paper/screen texture, high contrast, professional AI/developer blog aesthetic.
+Composition: exact 2:1 wide hero, distinct-but-unified zones. Palette: dark graphite / deep blue-black base with balanced teal, amber, off-white, restrained red error accents. Dark but not monochrome.
+Avoid: purple gradient blobs, bokeh, glowing brain imagery, robot characters, floating abstract metaphors, excessive equations, dense paragraphs, decorative pseudo-text, cyberpunk neon, photorealistic stock-photo look. No logos, no brand names, no real AI model names, no watermark.
+```
