@@ -97,7 +97,13 @@ async function publishToDevto() {
     });
 
     // 3) KaTeX: block $$…$$ → Dev.to's {% katex %} liquid tag.
-    devtoContent = devtoContent.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, (_m, eq) => `{% katex %}\n${eq.trim()}\n{% endkatex %}`);
+    //    Markdown turns "\_" inside \text{} into a bare "_" that KaTeX reads as a
+    //    subscript and rejects ("Expected 'EOF', got '_'"); collapse underscores
+    //    inside \text{} to spaces (no subscripts live there).
+    devtoContent = devtoContent.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, (_m, eq) => {
+      const safe = eq.trim().replace(/\\text\{([^}]*)\}/g, (_mm, inner) => `\\text{${inner.replace(/\\?_/g, ' ')}}`);
+      return `{% katex %}\n${safe}\n{% endkatex %}`;
+    });
     // 4) Inline $…$ → readable unicode (Dev.to has no reliable inline-math tag).
     devtoContent = devtoContent.replace(/\$([^$\n]+)\$/g, (_m, eq) =>
       eq.replace(/\\text\{([^}]*)\}/g, '$1').replace(/\\,/g, ' ').replace(/\^N\b/g, 'ᴺ').replace(/[{}]/g, '').trim()
