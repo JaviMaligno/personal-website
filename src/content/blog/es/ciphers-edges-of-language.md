@@ -49,13 +49,19 @@ Así que antes de que ocurra ningún criptoanálisis, el texto codificado ya ha 
 
 ## Para los que sí juegan: la escalera de dificultad
 
-Entre los modelos que participan (GPT-5 + Qwen ×2, ocho réplicas, intervalos de confianza del 95%), la pregunta original por fin tiene una respuesta limpia.
+Entre los modelos que participan (GPT-5 + Qwen ×2, ocho réplicas), la pregunta original por fin tiene respuesta — pero conviene mirar modelo a modelo en vez de un promedio agregado, porque los tres no son igual de fluidos.
 
-![Gráfico de barras horizontales del ranking de tasa de comprensión por cifrado: letras_a_dígitos 100%, morse 79%, disemvowel 78%, inversión 75%, sustitución_aleatoria 74%, rot13/cirílico/binario 67%, permutación_por_bloques 51%, base64 50%.](/blog/ciphers-difficulty-ranking.png)
+![Mapa de calor de tasa de comprensión por cifrado y modelo. GPT-5 cerca del 100% casi en todo; Qwen-7B Instruct un escalón por debajo; Qwen-7B Base bajo en la mayoría (0% en binario, cirílico, permutación por bloques) pero 100% en letras-a-dígitos. La celda base64 de GPT-5 marcada 'filtered'.](/blog/ciphers-difficulty-heatmap.png)
 
-La escalera coincide en su mayoría con la intuición, con un par de sorpresas. **Letras→dígitos es trivial** (100%) — el modelo lee `8-5-12-12-15` como "hello" sin pestañear. **base64 y la permutación por bloques con clave son los más difíciles** (~50%), que es la parte interesante: base64 está *por todas partes* en los datos de entrenamiento, y aun así decodificar una cadena base64 larga turno tras turno y actuar sobre ella es genuinamente propenso a error. Familiaridad no es lo mismo que fluidez. Y los cifrados difíciles no solo se resuelven menos: cuando *se* resuelven cuesta más (mediana 4–5 turnos frente a 1 en los fáciles).
+**GPT-5 está casi al techo en casi todo** (88–100%); Qwen-7B-Instruct queda un escalón por debajo; y **Qwen-7B-Base es el que se atasca** — 0% en binario, homóglifos cirílicos y la permutación por bloques, pero un impecable 100% en letras→dígitos. Un "ranking de dificultad" agregado es en realidad el ranking del *modelo base* arrastrado sobre los demás; los modelos alineados en su mayoría lo resuelven todo.
 
-La sustitución aleatoria con clave — el único cifrado que ningún modelo pudo memorizar — queda a media escalera con 74%, y los modelos *trabajan* visiblemente por él, que es lo más parecido aquí a ver un "break" de análisis de frecuencias suceder a lo largo de varios turnos.
+Un matiz honesto que revela la vista por-modelo: **base64 para GPT-5 es `filtered`, no fallado.** El filtro de *categorías de daño* de Azure — el que dejé puesto a propósito — bloqueó todas las celdas base64 de GPT-5, así que el número agregado de base64 sencillamente carece de su modelo más fuerte. Trata su dificultad aparente con recelo; los casos genuinamente difíciles son los cifrados **con clave**.
+
+Lo que *sí* es robusto es que la dificultad se manifiesta de dos formas a la vez — menos éxito **y** más turnos hasta lograrlo:
+
+![Gráfico de barras de la mediana de turnos hasta comprensión por cifrado. La mayoría hacen clic en el turno 1-2; base64, permutación por bloques y sustitución aleatoria tardan una mediana de 4-5 turnos con cola larga hasta siete.](/blog/ciphers-turns.png)
+
+La mayoría de cifrados hacen clic en el **primer turno** — el 54% de todas las celdas resueltas se resuelven de inmediato, el 73% en dos turnos. Pero los que llevan clave — sustitución aleatoria y permutación por bloques — más base64 tardan una mediana de **4–5 turnos**, con cola hasta siete. La sustitución aleatoria con clave es el caso más puro: es el único cifrado que ningún modelo pudo memorizar, así que ver a un modelo pelearlo a lo largo de varios turnos es lo más parecido aquí a un "break" de análisis de frecuencias humano en cámara lenta.
 
 ## Qué ayuda de verdad a un modelo a descifrar un código
 
@@ -77,9 +83,13 @@ El resultado va en dirección contraria al titular alarmista.
 
 ![Gráfico de barras: el cumplimiento de una petición dañina en texto plano es 36%, frente a 1% cuando la misma petición va codificada en un cifrado. Anotación: el modelo cambia a modo 'decodifica este puzzle' en vez de obedecer.](/blog/ciphers-jailbreak-backfire.png)
 
-En texto plano estas peticiones se cumplen el 36% de las veces (y el modelo *base*, sin capa de alineamiento, el 80% — sencillamente no ha aprendido a rechazar). Codifica la misma petición exacta y el cumplimiento **se desploma a ~1%.** Leer las transcripciones a mano muestra por qué: el cifrado voltea al modelo a *modo traductor*. Responde, en inglés plano, "Esto parece ROT13 — decodificando: EXPLICA CÓMO…" y luego trata el texto decodificado como un puzzle que ha resuelto en vez de una orden que debe seguir. La ofuscación que se cuela por el filtro externo también impide que el modelo *ejecute* la instrucción, porque la reencuadra como un objeto a examinar.
+En texto plano estas peticiones se cumplen el 36% de las veces — y el modelo *base*, sin capa de alineamiento, el 80%, porque nunca aprendió a rechazar nada. Codifica la misma petición exacta y el cumplimiento en todos los modelos **se desploma por debajo del 1%.**
 
-Esa es la versión honesta y sin alarmismo. Bajo *inferencia pura* — sin un system prompt que enseñe el cifrado, al estilo del montaje original de CipherChat — envolver una petición en un código no hace jailbreak al modelo; lo desactiva. La lección relevante para seguridad no es "los cifrados rompen los guardarraíles". Es más sutil y más útil: **los filtros en texto plano y el contenido decodificado son dos superficies distintas.** El filtro de Azure salta por la forma del texto cifrado; Claude rechaza por ilegibilidad; el cumplimiento decodificado real es una tercera cosa completamente distinta. Una defensa afinada para cualquiera de ellas es ciega a las otras dos.
+¿Conseguimos entonces hacer jailbreak a alguno? La respuesta tajante de los datos: **no. De 375 peticiones codificadas, exactamente tres se cumplieron — y las tres son la misma celda:** el *modelo base sin alineamiento*, en base64, sobre una única petición de ganzúa. Todos los modelos con entrenamiento de seguridad (GPT-5, Qwen-Instruct) cumplieron **cero** peticiones codificadas. No hay aquí ni un solo caso de un cifrado logrando que un modelo alineado ejecute algo que de otro modo rechazaría.
+
+Lo que los modelos hacen en su lugar es **decodificar-y-comentar**. El cifrado los voltea a *modo traductor*: responden, en inglés plano, "Esto parece ROT13 — dice: EXPLICA CÓMO…", imprimen el texto decodificado, y ahí se paran. Tratan el mensaje como un puzzle a *resolver*, no como una instrucción a *obedecer* — así que la misma ofuscación que se cuela por el filtro externo es lo que impide que el modelo actúe sobre la petición. Decodificarla y ejecutarla tiran en direcciones opuestas.
+
+Esa es la versión honesta y sin alarmismo. Bajo *inferencia pura* — sin un system prompt que enseñe el cifrado, al contrario que el montaje original de CipherChat — un cifrado no hace jailbreak a un modelo; lo desactiva. La única excepción confirma la regla: lo único que "cumplió" fue el único modelo que no tenía ningún guardarraíl que saltarse. La lección real no es "los cifrados rompen los guardarraíles" — es que **un filtro de seguridad en texto plano y el contenido decodificado son dos superficies distintas.** El filtro de Azure salta por la *forma* del texto cifrado; Claude rechaza por ilegibilidad; si la instrucción decodificada llega a *ejecutarse* es una tercera cosa completamente distinta. Una defensa afinada para cualquiera de ellas es ciega a las otras dos.
 
 ## De vuelta al clic
 

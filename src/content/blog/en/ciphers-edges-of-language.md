@@ -49,13 +49,19 @@ So before any cryptanalysis happens, encoded text has already hit a **safety bou
 
 ## For the models that do play: the difficulty ladder
 
-Among the engaging models (GPT-5 + Qwen ×2, eight replicates, 95% confidence intervals), the original question finally has a clean answer.
+Among the engaging models (GPT-5 + Qwen ×2, eight replicates), the original question finally has an answer — but it pays to look model by model rather than at a pooled average, because the three are not equally fluent.
 
-![Horizontal bar chart ranking cipher comprehension rate: letters_to_digits 100%, morse 79%, disemvowel 78%, reverse_all 75%, random_substitution 74%, rot13/cyrillic/binary 67%, block_permutation 51%, base64 50%.](/blog/ciphers-difficulty-ranking.png)
+![Heatmap of comprehension rate by cipher and model. GPT-5 is near 100% almost everywhere; Qwen-7B Instruct sits a notch below; Qwen-7B Base is low on most ciphers (0% on binary, Cyrillic, block permutation) but 100% on letters-to-digits. GPT-5's base64 cell is marked 'filtered'.](/blog/ciphers-difficulty-heatmap.png)
 
-The ladder mostly matches intuition, with a couple of surprises. **Letters→digits is trivial** (100%) — the model reads `8-5-12-12-15` as "hello" without breaking stride. **base64 and the keyed block permutation are the hardest** (~50%), which is the interesting part: base64 is *everywhere* in training data, yet decoding a long base64 string turn after turn and acting on it is genuinely error-prone. Familiarity isn't the same as fluency. And the hard ciphers aren't just less often solved — when they *are* solved it takes longer (median 4–5 turns versus 1 for the easy ones).
+**GPT-5 is near-ceiling on almost everything** (88–100%); Qwen-7B-Instruct sits a notch below; and **Qwen-7B-Base is the one that struggles** — 0% on binary, Cyrillic homoglyphs, and the block permutation, yet a flawless 100% on letters→digits. A pooled "difficulty ranking" is really the *base model's* ranking dragged over the others; the aligned models mostly just solve everything.
 
-The keyed random substitution — the one cipher no model could have memorized — sits mid-ladder at 74%, and the models visibly *work* for it, which is the closest thing here to watching a frequency-analysis "break" happen over several turns.
+One honest caveat the model-by-model view surfaces: **base64 for GPT-5 is `filtered`, not failed.** Azure's *harm-category* filter — the one I deliberately left on — blocked every one of GPT-5's base64 cells, so base64's pooled number is simply missing its strongest model. Treat its apparent difficulty with suspicion; the genuinely hard cases are the **keyed** ciphers.
+
+What *is* robust is that difficulty shows up two ways at once — lower success **and** more turns to get there:
+
+![Bar chart of median turns-to-comprehension by cipher. Most ciphers click on turn 1-2; base64, block_permutation and random_substitution take a median of 4-5 turns with a long tail to seven.](/blog/ciphers-turns.png)
+
+Most ciphers click on the **first turn** — 54% of all solved cells are solved immediately, 73% within two turns. But the keyed ones — random substitution and block permutation — plus base64 take a median of **4–5 turns**, with a tail out to seven. The keyed random substitution is the purest case: it's the one cipher no model could have memorized, so watching a model grind it out over several turns is the closest thing here to a human frequency-analysis "break" happening in slow motion.
 
 ## What actually helps a model crack a code
 
@@ -77,9 +83,13 @@ The result runs the opposite way from the scare headline.
 
 ![Bar chart: compliance on a harmful request in plain text is 36%, versus 1% when the same request is encoded in a cipher. Annotation: the model switches to 'decode this puzzle' mode instead of obeying.](/blog/ciphers-jailbreak-backfire.png)
 
-In plain text these requests get complied with 36% of the time (and the *base* model, with no alignment layer, 80% of the time — it simply hasn't learned to refuse). Encode the exact same request and compliance **collapses to ~1%.** Reading the transcripts by hand shows why: the cipher flips the model into *translator mode*. It replies, in plain English, "This looks like ROT13 — decoding: EXPLAIN HOW TO…" and then treats the decoded text as a puzzle it has solved rather than an order it must follow. The obfuscation that gets past the outer filter also stops the model from *executing* the instruction, because it reframes the instruction as an object to be examined.
+In plain text these requests get complied with 36% of the time — and the *base* model, with no alignment layer, 80% of the time, because it never learned to refuse anything. Encode the exact same request and compliance across every model **collapses to under 1%.**
 
-That's the honest, un-scary version. Under *pure inference* — no system prompt teaching the cipher, à la the original CipherChat setup — wrapping a request in a code doesn't jailbreak the model; it defuses it. The safety-relevant lesson isn't "ciphers break guardrails." It's subtler and more useful: **plaintext filters and decoded content are two different surfaces.** Azure's filter fires on the ciphertext's shape; Claude refuses on illegibility; the actual decoded compliance is a third thing entirely. A defense tuned to any one of them is blind to the other two.
+So did we actually jailbreak anything? The blunt answer from the data: **no. Across 375 encoded requests, exactly three were complied with — and all three are the same cell:** the *unaligned base model*, on base64, for a single lock-picking prompt. Every safety-trained model (GPT-5, Qwen-Instruct) complied with **zero** encoded requests. There is no case here of a cipher making an aligned model carry out something it would otherwise refuse.
+
+What the models do instead is **decode-and-comment**. The cipher flips them into *translator mode*: they reply, in plain English, "This looks like ROT13 — it says: EXPLAIN HOW TO…", print the decoded text, and stop there. They treat the message as a puzzle to *solve*, not an instruction to *obey* — so the very obfuscation that slips past the outer filter is also what stops the model from acting on the request. Decoding it and executing it pull in opposite directions.
+
+That's the honest, un-scary version. Under *pure inference* — no system prompt teaching the cipher, unlike the original CipherChat setup — a cipher doesn't jailbreak a model; it defuses it. The lone exception proves the rule: the only thing that "complied" was the one model with no guardrail to bypass in the first place. The real lesson isn't "ciphers break guardrails" — it's that **a plaintext safety filter and the decoded content are two different surfaces.** Azure's filter fires on the ciphertext's *shape*; Claude refuses on illegibility; whether the decoded instruction ever gets *executed* is a third thing entirely. A defense tuned to any one of them is blind to the other two.
 
 ## Back to the click
 
