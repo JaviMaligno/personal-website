@@ -22,7 +22,7 @@ Neither of these is a hallucination. The agent didn't invent anything. It did so
 
 Once I started collecting instances, they sorted themselves into three distinct failure modes, and they matter differently.
 
-**Type 1 — Confidential leak.** Information that must not leave the building: client conditions, internal assessments, commercial context, candid feedback about a third party. This is the severe case. In my experience it's also the one that human review usually catches in time — precisely *because* it's severe, we read anything sensitive-adjacent with full attention before it ships. The agent has certainly tried; it just hasn't gotten past me. Which is not the same as saying it never will.
+**Type 1 — Confidential leak.** Information that must not leave the building: client conditions, internal assessments, commercial context, candid feedback about a third party. This is the severe case, and the one human review usually catches in time — precisely *because* it's severe, we read anything sensitive-adjacent with full attention before it ships. But review is the last line, not the first; the real defense here is structural, and it's the strongest thing you can do — I'll come to it below. The agent has certainly tried; it just hasn't gotten past me. Which is not the same as saying it never will.
 
 **Type 2 — Unintelligible reference.** Not confidential, just meaningless outside the session: the spec numbering in the client email, an internal codename for a workstream, a shorthand only my notes use. The reader isn't harmed — they're confused. It makes the communication look sloppy and forces a round of "sorry, what's F-12?"
 
@@ -52,6 +52,10 @@ These are the patterns I'm converging on. The common thread: stop trying to make
 The direct analogue of least privilege: each step of the pipeline gets only the context it needs. The agent drafting the client email doesn't inherit the whole working session with the spec and the feedback discussion — it receives a curated brief: what to communicate, to whom, in what tone.
 
 In Claude Code this is almost free: subagents don't see the parent conversation. Dispatch the drafting task to a subagent with an explicit brief, and the internal context physically isn't there to leak. The failure mode changes from "leaked the spec numbering" to "asked for a detail it didn't have" — which is a far better failure mode, because it's visible.
+
+For confidential material — the Type 1 case — this is the rule at its hardest and cheapest: don't curate it into the brief at all. Withhold it entirely, or give the agent read-only access to sources it can't quote wholesale, so the material can inform an upstream decision without ever sitting in the context that produces the deliverable. If it never enters, there's nothing to leak — which is why, for the severe category, this beats any amount of vigilance downstream.
+
+One caveat, and it's the one I get wrong most often: *least* context is not *starved* context. A fresh agent doesn't carry the internal excess — good — but it also doesn't carry what the client legitimately already knows: what was agreed on the last call, what's been sent before, the shorthand the client themselves introduced. Starve it and it overcompensates — a naive drafting or review pass, unsure what the reader knows, re-explains everything and asks for clarifications it doesn't need, and the email converges on long, redundant, faintly patronizing. The brief has to be *precise*: exactly what this reader needs, no more and no less. Which means the internal context worth keeping isn't the spec numbering — it's a current record of what's actually been communicated to this client. Track that thread and keep it updated, and the same discipline that stops the leak also stops the over-explaining. Both failures are really one failure: imprecision about the audience.
 
 ### 2. Clean-room review pass
 
