@@ -159,3 +159,12 @@ vercel --prod   # Production deployment
 ### URLs
 - **Production**: https://personal-website-lime-one-42.vercel.app
 - **Domain**: https://javieraguilar.ai (configured)
+
+### Blog publishing & scheduling
+
+Merging an article branch into `main` is the (irreversible) publish action — it
+triggers the Vercel deploy plus automatic cross-posting to Dev.to and LinkedIn.
+Publications are scheduled with one-shot `scheduled-publish-<slug>.yml` cron
+workflows (one article per day), and the LinkedIn post is auto-generated on that
+push (not pre-written); extra links go in the `linkedinLinks` frontmatter field.
+**Full details in [`docs/blog-publishing.md`](docs/blog-publishing.md).**
