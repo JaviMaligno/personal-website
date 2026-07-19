@@ -1,7 +1,7 @@
 ---
 title: "Enseñarle a un modelo un idioma que acabas de inventar"
 description: "Háblale a un modelo en un cifrado del que nunca le has dado la clave y ocurre algo sorprendente antes de que descifre nada: algunos modelos se niegan a jugar. Un pequeño experimento sobre cuán rápido descifran códigos nuevos — y dónde eso choca con un muro de seguridad."
-pubDate: 2026-07-18
+pubDate: 2026-07-20
 tags: ["IA", "Machine Learning", "Evaluación", "Alineamiento", "Seguridad"]
 lang: es
 translationKey: ciphers-edges-of-language

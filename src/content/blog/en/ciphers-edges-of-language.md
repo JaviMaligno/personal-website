@@ -1,7 +1,7 @@
 ---
 title: "Teaching a Model a Language You Just Invented"
 description: "Speak to a language model in a cipher it has never been told the key to, and something surprising happens before any decoding does: some models refuse to play at all. A small experiment on how fast models crack novel codes — and where that runs into a safety wall."
-pubDate: 2026-07-18
+pubDate: 2026-07-20
 tags: ["AI", "Machine Learning", "Evaluation", "Alignment", "Security"]
 lang: en
 translationKey: ciphers-edges-of-language
