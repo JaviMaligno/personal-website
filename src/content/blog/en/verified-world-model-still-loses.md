@@ -64,7 +64,9 @@ Now omit that rule from the spec and synthesize a world model. The result is a m
 
 - passes the gate at **100% transition accuracy**,
 - is **≥98% accurate** on the exact distribution of states the planner visits,
-- and yet **loses systematically at play** (win rate 0.404 vs 0.495 for a calibrated fair baseline — a play cost of 0.091, with non-overlapping 95% confidence intervals; seed-clustered 95% CI [0.065, 0.117] over 20 seeds).
+- and yet **loses systematically at play** (win rate 0.404 vs 0.495 for a calibrated fair baseline — a *play cost* of 0.091, with non-overlapping 95% confidence intervals; seed-clustered 95% CI [0.065, 0.117] over 20 seeds).
+
+Throughout, **play cost** is just the win rate the flaw gives up: the fair baseline's win rate minus the flawed model's, both playing the true game at the same budget. 0 means "plays as well as the truth"; bigger means "the flaw is costing you games."
 
 The handful of states it gets wrong are exactly the ones that decide games. Averages hide it — the error is *diluted* away by all the ordinary positions it gets right. Prediction accuracy and play-adequacy come apart, cleanly and reproducibly.
 
@@ -226,7 +228,11 @@ But that tells you exactly what a gap *would* need: a game where skill takes you
 
 Now hand a model a belief function that is correct everywhere *except* that final stretch — the deep end of the walk that only skilled play ever reaches. It sails through the gate (random play never gets far enough to test it) and then loses every single game, because the one place its beliefs are wrong is the one place the game is actually decided. Same shape as the rare rule, now on the belief side: verified, and still wrong exactly where it counts.
 
-There's a clean structural point underneath: a transition-accuracy gate is **blind by construction** to the belief function. What a player can and cannot see never appears in a "this state became that state" transition — so no amount of transition-checking can catch a wrong belief model; you need a separate check on the beliefs themselves. (These imperfect-information results use games I instrumented by hand to isolate the effect, rather than fully synthesized models — a distinction I'm careful to keep in the paper.)
+To be upfront: Beacon is a *deliberately constructed witness*, not something a model stumbled into — an existence proof. And the deep placement isn't a trick, it's the whole point: it's the *only* spot that is simultaneously unreachable by the gate (which samples shallow, random play) and decisive for the outcome (the game is settled in the final round). Put the error anywhere shallower and the gate catches it; make it somewhere that doesn't decide games and it costs nothing. "Wrong exactly where the gate can't look *and* the game is won" is precisely the corner the construction has to hit — and Beacon proves that corner is non-empty.
+
+There's a clean structural point underneath: a transition-accuracy gate is **blind by construction** to the belief function. What a player can and cannot see never appears in a "this state became that state" transition — so no amount of transition-checking can catch a wrong belief model; you need a *separate* check on the beliefs themselves. (These imperfect-information results use games I instrumented by hand to isolate the effect, rather than fully synthesized models — a distinction I'm careful to keep in the paper.)
+
+The more hopeful half of the story is that this separate check is often *enough*, and provably so. In the paper I work out a coverage bound: a random inference gate is guaranteed to catch belief errors once it samples more than roughly `bᵈ` play-throughs, where `d` is how deep the game's decisions reach. Shallow games clear that bar easily — which is exactly why Kuhn and Leduc poker show *no* belief gap at all; their gate is provably sufficient. For games too large to enumerate, there's a companion bound that caps the undetected error a gate-passing belief function can hide. Beacon is simply the case engineered to sit on the wrong side of that bound. What's still missing — and what I'd flag as future work — is an *adversarial* belief check that deliberately samples the deep, skill-reachable region instead of hoping random play wanders in; that's the check that would actually close the Beacon-shaped hole.
 
 ## What I actually take from this
 
