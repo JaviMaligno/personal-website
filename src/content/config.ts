@@ -16,6 +16,11 @@ const blog = defineCollection({
     linkedinImage: z.string().optional(),
     // Optional link to a code repo; appended to the LinkedIn post when present
     repoUrl: z.string().optional(),
+    // Optional extra links (product page, preprint, …); each rendered as a
+    // "🔗 <label>: <url>" line in the auto-generated LinkedIn post
+    linkedinLinks: z
+      .array(z.object({ label: z.string().optional(), url: z.string() }))
+      .optional(),
   }),
 });
 
