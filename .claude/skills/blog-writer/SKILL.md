@@ -46,14 +46,20 @@ heroImage: "/blog/article-slug.png"
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | `linkedinImage` | string | Ruta a imagen para LinkedIn (ej: `/blog/linkedin-card.png`) |
+| `repoUrl` | string | URL del repo/código del artículo (ej: `https://github.com/JaviMaligno/...`) |
 
-**Notas:**
+**`linkedinImage`:**
 - Campo opcional
 - Solo se usa para auto-publicación en LinkedIn
 - Si se omite, el post en LinkedIn será solo texto
 - Ruta debe apuntar a archivo en `public/blog/`
 - Formatos: PNG, JPG, WEBP
 - Tamaño recomendado: 1200x627px
+
+**`repoUrl` (importante para artículos con código):**
+- Si el artículo tiene un repo/fork asociado, **ponlo siempre** en el frontmatter de EN y ES.
+- `buildPostText` en `scripts/linkedin/utils.js` añade una línea `💻 Code: <url>` al post de LinkedIn **solo si este campo existe**. Sin él, el enlace al código no sale y hay que editar el post a mano tras publicar (le pasó a `coding-agents-structure` y `restart-vs-iterate`).
+- Regla: cualquier enlace externo relevante (repo, fork, paper) debe llegar al post de LinkedIn — `repoUrl` para el código, `linkedinLinks` para papers/preprints.
 
 **Prefer article charts over the hero image.** Si el artículo incluye gráficos generados (resultados de experimentos, curvas, benchmarks), usa el gráfico más llamativo como `linkedinImage` en lugar del hero: un dato concreto suele parar más el scroll en el feed que una ilustración. Precedente: `forgetting-you-dont-measure` usa `linkedinImage: /blog/forgetting-mixing-curve.png` (la curva de mixing del experimento) mientras el hero es una ilustración.
 
@@ -291,4 +297,5 @@ Images from LinkedIn posts should be:
 - [ ] `heroImage` field set in both EN and ES frontmatter
 - [ ] Image prompt recorded in `docs/marketing/image-prompts.md`
 - [ ] If the article has generated charts, considered using the best one as `linkedinImage`
+- [ ] **If the article involves code, `repoUrl:` set in both EN and ES frontmatter** — the LinkedIn auto-post (`scripts/linkedin/utils.js`) adds a "💻 Code:" line only when this field is present. Omitting it means editing the LinkedIn post by hand after publish.
 - [ ] Links are valid and functional
