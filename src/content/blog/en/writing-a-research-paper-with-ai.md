@@ -6,6 +6,7 @@ tags: ["AI", "Research", "Writing", "Claude", "GPT"]
 lang: en
 translationKey: writing-a-research-paper-with-ai
 heroImage: "/blog/writing-a-research-paper-with-ai.png"
+repoUrl: https://github.com/JaviMaligno/code-world-models
 linkedinLinks:
   - label: "Preprint"
     url: "https://arxiv.org/abs/2607.14169"
