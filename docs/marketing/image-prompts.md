@@ -76,3 +76,22 @@ Create a 1020x510 blog hero image for a technical article titled "Repetition at 
 ```
 Create a 1020x510 blog hero image for a technical article about language models decoding ciphers and hitting a safety boundary. Style: refined technical editorial illustration, dark but not monochrome, concrete terminal/workspace scene. LEFT: panels of scrambled ciphertext ("Wklv", "uryyb", "... --- ...", "01001000") wired through a central lock/key motif (the Rosetta-stone key). RIGHT: decoded readable words ("This", "hello") pass a translucent barrier as teal signal streams, while other decoded messages ("SOS", "H") bounce off the barrier as amber blocked/refused streams with ✕ marks. Text (verbatim, only these): "Wklv", "uryyb", "... --- ...", "01001000", "This", "hello", "SOS", "H". Lighting: high contrast, controlled screen glow, analytical, ordered. Palette: deep graphite/blue-black foundation, balanced teal decoding signals, restrained amber refusal accents, off-white terminal text. No people, no logos, no brand names, no watermark, no title typography, no purple gradient blobs, no bokeh, no neon overload, clean geometric composition.
 ```
+
+## writing-a-research-paper-with-ai (2026-07-19)
+
+- Article: `src/content/blog/en/writing-a-research-paper-with-ai.md`
+- Image: `public/blog/writing-a-research-paper-with-ai.png`
+- Generated with: Codex (gpt-image), prompt delegated to Codex from style constraints
+
+```text
+Use case: scientific-educational. Asset type: 1020x510 landscape blog hero image for a technical AI/developer article.
+Primary request: Show that advanced AI intelligence matters in planning science and peer review, not prose writing. Depict a concrete researcher's workspace where a flawed experimental-design document is being reviewed and materially improved.
+Scene: Dark graphite desktop, slightly elevated three-quarter top-down perspective, organized like a real research workstation.
+Subject: A before-versus-after scientific plan. Left: a rough "EXPERIMENTAL DESIGN (DRAFT)" page with a red-flagged error and a struck-through line. Right: a cleaner "EXPERIMENTAL DESIGN (REVISED)" plan reorganized into controlled stages with an oracle-baseline check. Review marks connect the flaw to the correction.
+Scientific motif: a compact geometry diagram of a curved boundary reconstructed from scattered sample points — sparse teal/amber points around a smooth closed region, dashed attempt on the flawed side, cleaner solid reconstruction on the revised side.
+Reviewer structure: two distinct review lenses/panels ("CAUSAL", "INFORMATION") examining the plan from separate angles; a human researcher's hands and pen at the bottom edge (no face); a "HUMAN JUDGMENT" sticky note. Three viewpoints legible through separate annotation colors.
+Supporting detail: a small terminal window with exactly one commit line: "spec: redesign per expert review". A couple of short callouts: "CONFOUND", "ADD CONTROL". Text minimal and generic.
+Style: crisp bitmap technical editorial illustration, precise geometric shapes, subtle paper/screen texture, high contrast, professional AI/developer blog aesthetic.
+Composition: exact 2:1 wide hero, distinct-but-unified zones. Palette: dark graphite / deep blue-black base with balanced teal, amber, off-white, restrained red error accents. Dark but not monochrome.
+Avoid: purple gradient blobs, bokeh, glowing brain imagery, robot characters, floating abstract metaphors, excessive equations, dense paragraphs, decorative pseudo-text, cyberpunk neon, photorealistic stock-photo look. No logos, no brand names, no real AI model names, no watermark.
+```
