@@ -10,6 +10,8 @@ repoUrl: https://github.com/JaviMaligno/code-world-models
 linkedinLinks:
   - label: "Preprint"
     url: "https://arxiv.org/abs/2607.14169"
+  - label: "My earlier maths preprint"
+    url: "https://arxiv.org/abs/2307.11414"
 ---
 
 This year I published a preprint — [*When a Verified World Model Still Loses*](https://arxiv.org/abs/2607.14169). It took about two weeks, on my own. Years before I ever used AI, I published my first one — my [mathematics thesis](https://arxiv.org/abs/2307.11414): a theorem, a proof, and more than two years of work with a university and a funded project behind me.
