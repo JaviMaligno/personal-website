@@ -6,6 +6,9 @@ tags: ["AI", "Agents", "Claude Code", "Workflow"]
 lang: en
 translationKey: internal-context-leakage
 heroImage: "/blog/internal-context-leakage.png"
+linkedinLinks:
+  - label: "Related: Claude Code skills"
+    url: "https://www.javieraguilar.ai/en/blog/claude-code-skills-blog-writer"
 ---
 
 There's a failure mode I keep hitting with AI agents, and once you see it you can't stop seeing it: the agent takes context that was meant to stay *inside* the working session — client background, internal spec names, my own corrections — and writes it straight into the deliverable. The thing that was supposed to shape the output ends up *in* the output.

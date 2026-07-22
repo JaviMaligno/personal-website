@@ -6,6 +6,9 @@ tags: ["IA", "Agentes", "Claude Code", "Flujos de trabajo"]
 lang: es
 translationKey: internal-context-leakage
 heroImage: "/blog/internal-context-leakage.png"
+linkedinLinks:
+  - label: "Relacionado: skills de Claude Code"
+    url: "https://www.javieraguilar.ai/es/blog/claude-code-skills-blog-writer"
 ---
 
 Hay un modo de fallo con el que me tropiezo constantemente al trabajar con agentes de IA, y una vez lo ves ya no puedes dejar de verlo: el agente coge contexto que debía quedarse *dentro* de la sesión de trabajo — información de cliente, nomenclatura interna de specs, mis propias correcciones — y lo escribe directamente en el entregable. Lo que debía *dar forma* al resultado acaba *dentro* del resultado.
