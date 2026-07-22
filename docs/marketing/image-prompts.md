@@ -4,6 +4,28 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## internal-context-leakage
+
+- **Article:** `src/content/blog/en/internal-context-leakage.md`
+- **Image:** `public/blog/internal-context-leakage.png`
+- **Generated:** 2026-07-19 (Codex `image_gen`, editorial-illustration guide)
+
+```text
+Use case: infographic-diagram
+Asset type: 1020×510 website blog hero image, wide 2:1 composition.
+Primary request: Create a refined technical editorial illustration contrasting how internal working context leaks into a client-facing deliverable versus how an isolated pipeline keeps it out. Make the scene concrete and operational, not metaphorical.
+Scene/backdrop: A dark graphite developer workstation shown as a clean cutaway workflow, split into two horizontal lanes that both flow left-to-right from a shared "internal context" source panel toward a "deliverable" panel. On the left, a single source container labeled "internal context" holds several tagged chips: "spec 3.2", "codename F-12", "feedback note". Top lane ("leak"): those internal chips flow unfiltered straight through into a client document panel labeled "client email", where they appear embedded inside the text with small amber/coral warning markers; label this lane "leak". Bottom lane ("isolated"): the same chips flow toward the deliverable but hit a clear vertical boundary — a membrane/gate labeled "isolate" with a small deterministic filter labeled "lint gate" — where the internal chips are stopped and held back, so the client document panel on the right emerges clean with a teal check labeled "clean".
+Subject: tangible interface elements — a source panel with tagged chips, connective flow arrows/traces, a boundary membrane, a small filter/gate node, and two client-document panels (one contaminated with embedded internal chips, one clean). Not an abstract icon-only metaphor.
+Style/medium: Refined technical editorial illustration; crisp geometric 2D/2.5D vector-like forms, subtle print texture, precise interface details, sophisticated data-journalism aesthetic, high visual hierarchy, no photorealism.
+Composition/framing: Wide panoramic 2:1 layout, balanced asymmetry, two clearly separated horizontal lanes sharing one source on the left, diagonal left-to-right flow, comfortable margins, no tiny clutter.
+Lighting/mood: Dark, focused, analytical; controlled contrast, high legibility.
+Color palette: Dark graphite and deep blue-black base, balanced teal for clean/passing state, amber for internal chips and warnings, warm off-white for document surfaces and type, muted coral only for the leak markers. Dark but not monochrome.
+Text (verbatim where shown): "internal context", "spec 3.2", "codename F-12", "feedback note", "leak", "isolate", "lint gate", "client email", "clean". Text must be readable, generic, and limited to these short interface labels; omit a label if needed rather than rendering garbled text.
+Constraints: Clearly communicate that unfiltered internal context contaminates the deliverable while an isolation boundary + deterministic gate keeps it out. No people or humanoid agents. No logos or brand names. No abstract metaphor as the primary scene. No text-heavy poster. No purple gradient blobs, no bokeh, no glossy neon cyberpunk look, no giant central icon, no decorative nonsense.
+```
+
+---
+
 ## restart-vs-iterate
 
 - **Article:** `src/content/blog/en/restart-vs-iterate.md`
