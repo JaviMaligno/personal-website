@@ -28,6 +28,8 @@ That is the prompt engineering. *Do a breakthrough. Just continue. Enough partia
 
 It's a joke. It's also the most honest description of the state of the art I've seen this year.
 
+And the conjecture wasn't a one-off. The same week saw a small cluster of long-open problems fall to AI — some proved, some refuted, and several *checked* rather than merely asserted. Many were **Graffiti conjectures**, from a 1988 program that mechanically generated graph-theory conjectures: one agent [refuted Conjecture 284](https://x.com/justinsunyt/status/2080116559352316409) (open ~30 years) in about eight minutes, and [Cognition's Devin refuted Conjecture 154](https://x.com/imjaredz/status/2080088344424583261) (open ~40 years) with the counterexample **verified in Lean**, while proving Conjectures 39 and 40 outright. The machine-checked part is what keeps this from being a season of merely plausible-looking guesses — results are being formally verified faster than anyone can read them.
+
 Something else died quietly in the spectacle. It was prompt engineering.
 
 ## What actually died

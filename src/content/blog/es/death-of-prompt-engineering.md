@@ -28,6 +28,8 @@ Eso es el prompt engineering. *Haz un breakthrough. Simplemente continúa. Basta
 
 Es una broma. Y también es la descripción más honesta del estado del arte que he visto este año.
 
+Y la conjetura no fue un caso aislado. Esa misma semana un pequeño grupo de problemas abiertos desde hacía mucho cayó ante la IA — algunos demostrados, otros refutados, y varios *verificados* en vez de solo afirmados. Muchos eran **conjeturas Graffiti**, de un programa de 1988 que generaba conjeturas de teoría de grafos de forma mecánica: un agente [refutó la Conjetura 284](https://x.com/justinsunyt/status/2080116559352316409) (abierta ~30 años) en unos ocho minutos, y [el Devin de Cognition refutó la Conjetura 154](https://x.com/imjaredz/status/2080088344424583261) (abierta ~40 años) con el contraejemplo **verificado en Lean**, además de demostrar las Conjeturas 39 y 40. Esa parte verificada por máquina es lo que impide que esto sea una temporada de conjeturas con buena pinta y poco más — hay resultados formalmente verificados llegando más rápido de lo que nadie puede leerlos.
+
 Algo más murió en silencio dentro del espectáculo. Fue el prompt engineering.
 
 ## Qué murió exactamente
