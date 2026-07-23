@@ -20,11 +20,11 @@ Y aquí está la parte que debería frenarte. Los prompts que lo produjeron dec�
 >
 > "it's enough of partial results. let's finish with a complete unconditional counterexample"
 
-Eso es el prompt engineering. *Haz un breakthrough. Simplemente continúa. Basta de parciales, terminemos.* Esa misma semana un meme condensó la broma en cuatro instrucciones tajantes. Esta es una representación original de ese bucle de investigación:
+Eso es el prompt engineering. *Haz un breakthrough. Simplemente continúa. Basta de parciales, terminemos.* Esa misma semana un meme lo capturaba a la perfección:
 
-![Cuatro etapas de un bucle de investigación con IA que avanza desde "Do a breakthrough" por "Continue" y "Clear strategy" hasta "Finish it", y termina en un grafo verificado.](/blog/prompt-breakthrough-loop.png)
+![Meme titulado "Math now" con una fila de caras brainlet cada vez más desquiciadas rotuladas "do a breakthrough", "continue", "just do it" y "find the proof", sobre un tweet que dice "So another long-standing open conjecture was disproved by AI."](https://www.javieraguilar.ai/blog/conjecture-disproved-meme.jpg)
 
-*Ilustración original inspirada en el intercambio entre [@Merkaloid](https://x.com/Merkaloid) y [@mattshumer_](https://x.com/mattshumer_) en X.*
+*Fuente: [@Merkaloid](https://x.com/Merkaloid) citando a [@mattshumer_](https://x.com/mattshumer_) en X.*
 
 Es una broma. Y también es la descripción más honesta del estado del arte que he visto este año.
 

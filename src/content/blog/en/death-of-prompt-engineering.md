@@ -20,11 +20,11 @@ Here is the part that should stop you. The prompts that produced it read, verbat
 >
 > "it's enough of partial results. let's finish with a complete unconditional counterexample"
 
-That is the prompt engineering. *Do a breakthrough. Just continue. Enough partial results, let's finish.* The same week, a meme compressed the joke into four blunt instructions. Here is an original rendering of that research loop:
+That is the prompt engineering. *Do a breakthrough. Just continue. Enough partial results, let's finish.* The same week, a meme captured it perfectly:
 
-![Four stages of an AI research loop moving from "Do a breakthrough" through "Continue" and "Clear strategy" to "Finish it", ending in a verified graph.](/blog/prompt-breakthrough-loop.png)
+![Meme titled "Math now" showing a row of increasingly deranged brainlet faces labeled "do a breakthrough", "continue", "just do it" and "find the proof", above a tweet reading "So another long-standing open conjecture was disproved by AI."](https://www.javieraguilar.ai/blog/conjecture-disproved-meme.jpg)
 
-*Original illustration inspired by the exchange between [@Merkaloid](https://x.com/Merkaloid) and [@mattshumer_](https://x.com/mattshumer_) on X.*
+*Source: [@Merkaloid](https://x.com/Merkaloid) quote-tweeting [@mattshumer_](https://x.com/mattshumer_) on X.*
 
 It's a joke. It's also the most honest description of the state of the art I've seen this year.
 
