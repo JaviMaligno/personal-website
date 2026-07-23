@@ -4,6 +4,29 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## wheres-the-ball
+
+- **Article:** `src/content/blog/en/wheres-the-ball.md`
+- **Image:** `public/blog/wheres-the-ball.png`
+- **Generated:** 2026-07-23 (Codex `image_gen`, editorial-illustration guide)
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 px website blog hero image, exact wide 2:1 composition.
+Primary request: Create a refined technical editorial illustration for an article titled “Where’s the Ball? Testing Whether a VLM Has a Spectator’s Intuition.” Show a concrete computer-vision experiment in which the football has been removed from broadcast footage and an AI must infer its location only from the players, while statistical controls expose how easy it is to reach the wrong conclusion.
+Scene/backdrop: A dark graphite sports-analysis workstation seen from a slightly elevated three-quarter top-down view, divided into three connected zones. The dominant central zone is a broadcast-analysis monitor containing a crisp oblique view of a green football pitch with small generic player figures clustering, leaning, and orienting toward one area. The ball itself is completely absent. Subtle teal gaze/orientation traces converge near a small dashed off-white prediction reticle, while an amber crosshair at the geometric center represents the misleading camera-center baseline. A compact scan/status strip reads “BALL: HIDDEN”.
+Supporting zone one: at one side, show the inpainting and inference pipeline as two small stacked frame cards: an input crop with a tiny ball-sized marker, then a clean reconstructed grass patch labeled “INPAINT”, feeding into a coordinate panel labeled “PREDICTION”. Keep it operational and visually plausible, not decorative.
+Supporting zone two: at the other side, show the methodology audit: a small confidence-interval plot with a wide amber interval crossing a dashed “CHANCE” line and a tighter teal interval beside it, plus a short label “BOOTSTRAP CI”. Beneath it, four miniature football-frame cards appear in deliberately shuffled order “1 4 2 3”, connected to a compact “MULTI-VIEW” node while a motion-path icon is crossed out, conveying that extra views help but temporal order does not.
+Style/medium: refined technical editorial illustration; crisp bitmap rendering with vector-like geometric forms, precise linework, subtle print grain and restrained screen glow; mature engineering/science-magazine aesthetic; no photorealism.
+Composition/framing: exact panoramic 2:1 hero ratio; central pitch monitor occupies roughly 55% of the frame, flanked by the smaller pipeline and audit zones; clear left-to-right experimental flow, balanced asymmetry, comfortable margins, dense enough to reward inspection but readable at card size. No title typography.
+Lighting/mood: dark but not monochrome, analytical, curious, slightly skeptical; controlled contrast and high legibility.
+Color palette: deep graphite and blue-black base, believable muted pitch green, balanced teal inference signals, amber baseline/warning accents, warm off-white surfaces and type, tiny muted coral only for the crossed-out motion symbol.
+Text (render only these short generic labels, readable where possible): “BALL: HIDDEN”, “INPAINT”, “PREDICTION”, “BOOTSTRAP CI”, “CHANCE”, “MULTI-VIEW”, and frame numbers “1 4 2 3”. Omit a label rather than rendering garbled pseudo-text.
+Constraints: the football must be visibly absent from the main pitch; communicate inference from player orientation, camera-center confounding, statistical uncertainty, and shuffled multi-view frames. No people outside the tiny anonymous player figures on the pitch. No faces. No logos, brand names, product names, team crests, model names, mascots, watermark, text-heavy poster, giant centered icon, floating robot, glowing brain, purple gradient blobs, bokeh, glossy neon cyberpunk, stock-photo look, or decorative nonsense.
+```
+
+---
+
 ## bring-your-app-to-the-agent
 
 - **Article:** `src/content/blog/en/bring-your-app-to-the-agent.md`
