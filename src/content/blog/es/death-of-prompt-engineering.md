@@ -1,6 +1,6 @@
 ---
 title: "La muerte del prompt engineer"
-description: "Una conjetura abierta 30 años cayó con prompts que decían 'haz un breakthrough' y 'sigue'. El oficio de escribir el prompt perfecto se está muriendo, y algo más interesante ocupa su lugar."
+description: "Un supuesto contraejemplo a una conjetura abierta 30 años surgió de prompts como 'haz un breakthrough' y 'sigue'. El oficio de escribir el prompt perfecto se está muriendo, y algo más interesante ocupa su lugar."
 pubDate: 2026-07-25
 tags: ["IA", "Prompt Engineering", "Agentes", "Tendencias"]
 lang: es
@@ -8,7 +8,7 @@ translationKey: death-of-prompt-engineering
 heroImage: "/blog/death-of-prompt-engineering.png"
 ---
 
-El mes pasado alguien refutó una conjetura de teoría de grafos que llevaba unos treinta años abierta. La conjetura de Dinitz–Garg–Goemans es falsa: existe un grafo cuyo flujo fraccional cuesta 58, mientras que cualquier flujo no divisible —incluso permitiendo una violación de capacidad de hasta 15— cuesta al menos 60. El contraejemplo salió de una sesión de chat con GPT-5.6 Pro.
+Esta semana, el investigador [Dmitry Rybin publicó](https://x.com/DmitryRybin1/status/2079904005652893709) lo que parece ser un contraejemplo compacto a una conjetura de teoría de grafos que llevaba unos treinta años abierta. En la construcción propuesta, el flujo fraccional cuesta 58, mientras que cualquier flujo no divisible —incluso permitiendo una violación de capacidad de hasta 15— cuesta al menos 60. Si la construcción supera el escrutinio formal, la conjetura de Dinitz–Garg–Goemans es falsa. El candidato salió de una [sesión de chat pública con GPT-5.6 Pro](https://chatgpt.com/share/6a60b2eb-0b64-83ee-9c76-7931ca1de063).
 
 Y aquí está la parte que debería frenarte. Los prompts que lo produjeron decían, textualmente (en su inglés original), esto:
 
@@ -20,15 +20,15 @@ Y aquí está la parte que debería frenarte. Los prompts que lo produjeron dec�
 >
 > "it's enough of partial results. let's finish with a complete unconditional counterexample"
 
-Eso es el prompt engineering. *Haz un breakthrough. Simplemente continúa. Basta de parciales, terminemos.* Esa misma semana circuló un meme que lo capturaba a la perfección:
+Eso es el prompt engineering. *Haz un breakthrough. Simplemente continúa. Basta de parciales, terminemos.* Esa misma semana un meme condensó la broma en cuatro instrucciones tajantes. Esta es una representación original de ese bucle de investigación:
 
-![Meme titulado "Math now" con una fila de caras brainlet cada vez más desquiciadas rotuladas "do a breakthrough", "continue", "just do it" y "find the proof", sobre un tweet que dice "So another long-standing open conjecture was disproved by AI."](https://www.javieraguilar.ai/blog/conjecture-disproved-meme.jpg)
+![Cuatro etapas de un bucle de investigación con IA que avanza desde "Do a breakthrough" por "Continue" y "Clear strategy" hasta "Finish it", y termina en un grafo verificado.](/blog/prompt-breakthrough-loop.png)
 
-*Fuente: [@Merkaloid](https://x.com/Merkaloid) citando a [@mattshumer_](https://x.com/mattshumer_) en X.*
+*Ilustración original inspirada en el intercambio entre [@Merkaloid](https://x.com/Merkaloid) y [@mattshumer_](https://x.com/mattshumer_) en X.*
 
 Es una broma. Y también es la descripción más honesta del estado del arte que he visto este año.
 
-Aquí murió algo en silencio, y no fue la conjetura. Fue el prompt engineering.
+Algo más murió en silencio dentro del espectáculo. Fue el prompt engineering.
 
 ## Qué murió exactamente
 
@@ -36,7 +36,7 @@ No el prompting. Prompting —pedirle a un modelo lo que quieres— es más cent
 
 Durante un par de años esa creencia tuvo toda una economía alrededor. Plantillas. Preámbulos de `Eres un experto…`. Andamios few-shot que ajustabas como hiperparámetros. Trucos de delimitadores y conjuros de "piensa paso a paso". Marketplaces de prompts. Ofertas de "Prompt Engineer" a seis cifras, como si la habilidad fuera una profesión estable y no un artefacto temporal de los modelos débiles. Hace unos meses escribí un artículo que listaba el prompt engineering, sin ironía, como una de las skills clave de cara al futuro. Estaba describiendo un blanco móvil y no lo sabía.
 
-La señal está en el ejemplo matemático. Si el prompting siguiera siendo una artesanía del artefacto, refutar una conjetura de treinta años exigiría el prompt más exquisitamente diseñado jamás escrito. En cambio, bastó "haz un breakthrough". La redacción no aportaba casi ninguna información. Todo vino del modelo y del bucle.
+La señal está en el ejemplo matemático. Si el prompting siguiera siendo una artesanía del artefacto, producir un contraejemplo candidato serio a una conjetura de treinta años exigiría el prompt más exquisitamente diseñado jamás escrito. En cambio, bastó "haz un breakthrough". La redacción no aportaba casi ninguna información. Todo vino del modelo y del bucle.
 
 ## La versión cotidiana: la divagación
 
@@ -62,7 +62,7 @@ Sería mentira cerrar con "diverga y la máquina hace todo lo demás". Para los 
 
 Detrás de "haz un breakthrough" sigue habiendo una persona que distingue un resultado real de uno plausible. Cuando [escribí un paper de investigación con IA](/es/blog/writing-a-research-paper-with-ai), la disciplina que importaba no era la redacción: era separar lo que se podía *demostrar* de lo que solo se podía *medir*, y negarse a difuminar los dos. En una sesión de planificación un modelo garabateó mal una nota sobre topología, afirmando que un anillo en el plano necesitaba una dimensión más. Lo pillé porque es mi campo, no porque hubiera escrito un prompt ingenioso. El modelo puede hacer la búsqueda; tú sigues teniendo que saber cuándo la respuesta es real.
 
-Y para el trabajo más difícil cada vez recurres no a un prompt mejor sino a una **estructura** —una skill, un harness— que fuerza al modelo a probar varias estrategias, descomponer el problema en partes más pequeñas o lemas, correr experimentos, escribir tests, revisar su propio output, mantener un estándar de rigor. Ese andamiaje es el sucesor de la plantilla de prompt. No es una frase mágica; es un proceso. La conjetura tampoco cayó por un mensaje afortunado: cayó por un bucle que insistió en el rigor hasta que un resultado parcial se volvió completo.
+Y para el trabajo más difícil cada vez recurres no a un prompt mejor sino a una **estructura** —una skill, un harness— que fuerza al modelo a probar varias estrategias, descomponer el problema en partes más pequeñas o lemas, correr experimentos, escribir tests, revisar su propio output, mantener un estándar de rigor. Ese andamiaje es el sucesor de la plantilla de prompt. No es una frase mágica; es un proceso. El contraejemplo candidato tampoco surgió de un mensaje afortunado: salió de un bucle que insistió en el rigor hasta que un resultado parcial se volvió completo.
 
 Así que la habilidad no se esfumó. Se movió — de las *palabras* al *encuadre, la dirección y la verificación*. El término de Karpathy para la meta es el "mind meld": alinear al modelo con lo que realmente quieres decir, para tener que corregirlo menos a partir de ahí. Ese es el oficio ahora. La línea de tendencia es inequívoca: cada generación hace más con menos, y la parte que puedes dejarle al modelo no para de crecer.
 

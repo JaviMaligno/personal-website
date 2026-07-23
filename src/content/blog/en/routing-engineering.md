@@ -10,7 +10,7 @@ heroImage: "/blog/routing-engineering.png"
 
 In the [first part of this pair](/en/blog/death-of-prompt-engineering) I argued that prompt engineering — the craft of wording — is dying, and that the effort didn't vanish so much as climb the stack. This is where it climbed to.
 
-Here is the new friction. I sit down to a task and, before I've done anything, I face a grid. OpenAI alone now ships GPT-5.6 in three tiers — Sol, Terra, Luna — and each exposes as many as six levels of reasoning effort, from `none` to `max`. Add the earlier 5.x models still in rotation, the Codex variants, and you are well past a hundred (model × effort) combinations from one vendor. Claude exposes its own effort ladder — `standard`, `high`, `xhigh`, `max`. Gemini has a thinking budget. The wording is no longer the decision. *The allocation* is: which model, at what effort, for which slice of the work. Getting that right is what I'd call routing engineering, and it's quietly become one of the more valuable things to be good at.
+Here is the new friction. I sit down to a task and, before I've done anything, I face a grid. [OpenAI now ships GPT-5.6](https://openai.com/index/gpt-5-6/) in three tiers — Sol, Terra, Luna — with several reasoning-effort settings and a new `max` level. Add the earlier 5.x models still in rotation and the Codex variants, and one vendor already gives you dozens of plausible (model × effort) routes. [Claude's effort ladder](https://platform.claude.com/docs/en/build-with-claude/effort) spans `low`, `medium`, `high`, and `max`, with `xhigh` on supported models. Gemini has a thinking budget. The wording is no longer the decision. *The allocation* is: which model, at what effort, for which slice of the work. Getting that right is what I'd call routing engineering, and it's quietly become one of the more valuable things to be good at.
 
 ## The matrix nobody asked for
 
@@ -26,13 +26,13 @@ I do the same thing in research. In [writing a paper with AI](/en/blog/writing-a
 
 ## Why the split works
 
-The reason this particular seam — plan strong, execute cheap — keeps showing up is that most of a task's difficulty is concentrated in a few decisions. Cursor put a number on it recently. In a study on long-running agent "swarms," they had a fleet build SQLite from scratch in Rust, working only from its 835-page manual, and varied who planned and who executed. Their own summary of the mechanism is the clearest statement of the principle I've seen:
+The reason this particular seam — plan strong, execute cheap — keeps showing up is that most of a task's difficulty is concentrated in a few decisions. [Cursor put a number on it recently](https://cursor.com/blog/agent-swarm-model-economics). In a study on long-running agent "swarms," they had a fleet build SQLite from scratch in Rust, working only from its 835-page manual, and varied who planned and who executed. Their own summary of the mechanism is the clearest statement of the principle I've seen:
 
 > "There are few moments in a large task that truly require frontier intelligence — the initial decomposition, the design decisions, certain trade-offs. Once a frontier planner has turned ambiguity into a detailed, explicit instruction, the cheaper models simply have to follow it."
 
-The result was that every model combination reached *similar quality*, while cost varied by roughly 8× — from about \$1,339 for an Opus-4.8-plans / Composer-2.5-executes hybrid, up to \$10,565 for a strong model doing everything itself. On the execution slice alone the gap was starker: the cheap workers cost around \$411 where the all-frontier run's workers cost \$9,373. Same destination, an order of magnitude apart on the fare.
+The result was that every model mix reached *similar quality*, while cost varied by roughly 8× — from about \$1,339 for an Opus-4.8-plans / Composer-2.5-executes hybrid, up to \$10,565 for GPT-5.5 doing everything itself. On the execution slice alone the gap was starker: the cheap workers cost around \$411 where the all-frontier run's workers cost \$9,373. Same destination, an order of magnitude apart on the fare.
 
-And this isn't a vendor's marketing artifact. The academic work points the same way: [RouteLLM](https://github.com/lm-sys/RouteLLM) reported up to **85% cost reduction while keeping 95% of GPT-4's quality** by routing each query to a strong or weak model; FrugalGPT, earlier, showed cascades matching a top model at up to 98% lower cost. The asymmetry is real and it's large.
+And this isn't only a vendor's marketing claim. The academic work points the same way: [RouteLLM](https://github.com/lm-sys/RouteLLM) reported up to **85% cost reduction while keeping 95% of GPT-4's quality** by routing each query to a strong or weak model; [FrugalGPT](https://arxiv.org/abs/2305.05176), earlier, showed cascades matching a top model at up to 98% lower cost. The asymmetry is real and it's large.
 
 ## The part that makes it *engineering*
 
@@ -46,7 +46,7 @@ That's the whole lesson in one data point. The cost of a route is non-linear and
 
 You can route by hand, the way I do, or hand the decision to a system.
 
-The automatic tier is filling in fast. Cursor now ships a request-level **Router** that classifies each task and sends it to an appropriate model, with an Auto mode you can bias toward intelligence, balance, or cost — they report 30–50% cost reductions at frontier quality. [OpenRouter](https://openrouter.ai)'s `auto` endpoint routes per-prompt (powered by NotDiamond's model) with a cost-versus-quality dial. Martian and NotDiamond sell the same idea as a service. There's even a small benchmark literature — RouterBench, RouterArena — trying to answer "how good is routing, really," and the honest read is *promising but unsettled*: some routers save real money, and some, under scrutiny, just default to the expensive model.
+The automatic tier is filling in fast. Cursor now ships a request-level **[Router](https://cursor.com/blog/router)** that classifies each task and sends it to an appropriate model, with an Auto mode you can bias toward intelligence, balance, or cost — they report 30–50% cost reductions at frontier quality in early enterprise use. [OpenRouter](https://openrouter.ai)'s `auto` endpoint routes per-prompt (powered by NotDiamond's model) with a cost-versus-quality dial. Martian and NotDiamond sell the same idea as a service. There's even a small benchmark literature — RouterBench, RouterArena — trying to answer "how good is routing, really," and the honest read is *promising but unsettled*: some routers save real money, and some, under scrutiny, just default to the expensive model.
 
 Automatic routing will get better, but it inherits the hard part above: to route well it has to predict the second-order cost, not just classify difficulty. For now I trust a hand-drawn seam I've measured over a router I haven't.
 

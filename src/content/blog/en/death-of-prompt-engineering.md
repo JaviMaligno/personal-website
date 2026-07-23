@@ -1,6 +1,6 @@
 ---
 title: "The Death of the Prompt Engineer"
-description: "A 30-year-old conjecture fell to prompts that read 'do a breakthrough' and 'just continue.' The craft of writing the perfect prompt is dying — and something more interesting is taking its place."
+description: "A claimed counterexample to a 30-year-old conjecture emerged from prompts like 'do a breakthrough' and 'just continue.' The craft of writing the perfect prompt is dying — and something more interesting is taking its place."
 pubDate: 2026-07-25
 tags: ["AI", "Prompt Engineering", "Agents", "Trends"]
 lang: en
@@ -8,7 +8,7 @@ translationKey: death-of-prompt-engineering
 heroImage: "/blog/death-of-prompt-engineering.png"
 ---
 
-Last month someone disproved a graph-theory conjecture that had been open for roughly thirty years. The Dinitz–Garg–Goemans conjecture is false: there is a graph whose fractional flow costs 58, while every indivisible flow — even allowing a capacity violation of up to 15 — costs at least 60. The counterexample came out of a chat session with GPT-5.6 Pro.
+This week, researcher [Dmitry Rybin published](https://x.com/DmitryRybin1/status/2079904005652893709) what appears to be a compact counterexample to a graph-theory conjecture that had been open for roughly thirty years. In the proposed construction, the fractional flow costs 58, while every indivisible flow — even allowing a capacity violation of up to 15 — costs at least 60. If the construction holds up under formal scrutiny, the Dinitz–Garg–Goemans conjecture is false. The candidate came out of a [public chat session with GPT-5.6 Pro](https://chatgpt.com/share/6a60b2eb-0b64-83ee-9c76-7931ca1de063).
 
 Here is the part that should stop you. The prompts that produced it read, verbatim, like this:
 
@@ -20,15 +20,15 @@ Here is the part that should stop you. The prompts that produced it read, verbat
 >
 > "it's enough of partial results. let's finish with a complete unconditional counterexample"
 
-That is the prompt engineering. *Do a breakthrough. Just continue. Enough partial results, let's finish.* The same week, a meme went around that captured it perfectly:
+That is the prompt engineering. *Do a breakthrough. Just continue. Enough partial results, let's finish.* The same week, a meme compressed the joke into four blunt instructions. Here is an original rendering of that research loop:
 
-![Meme titled "Math now" showing a row of increasingly deranged brainlet faces labeled "do a breakthrough", "continue", "just do it" and "find the proof", above a tweet reading "So another long-standing open conjecture was disproved by AI."](https://www.javieraguilar.ai/blog/conjecture-disproved-meme.jpg)
+![Four stages of an AI research loop moving from "Do a breakthrough" through "Continue" and "Clear strategy" to "Finish it", ending in a verified graph.](/blog/prompt-breakthrough-loop.png)
 
-*Source: [@Merkaloid](https://x.com/Merkaloid) quote-tweeting [@mattshumer_](https://x.com/mattshumer_) on X.*
+*Original illustration inspired by the exchange between [@Merkaloid](https://x.com/Merkaloid) and [@mattshumer_](https://x.com/mattshumer_) on X.*
 
 It's a joke. It's also the most honest description of the state of the art I've seen this year.
 
-Something died quietly here, and it wasn't the conjecture. It was prompt engineering.
+Something else died quietly in the spectacle. It was prompt engineering.
 
 ## What actually died
 
@@ -36,7 +36,7 @@ Not prompting. Prompting — asking a model for what you want — is more centra
 
 For a couple of years that belief had a whole economy around it. Templates. `You are an expert…` preambles. Few-shot scaffolds you tuned like hyperparameters. Delimiter tricks and "think step by step" incantations. Prompt marketplaces. Job posts for "Prompt Engineer" at six figures, as if the skill were a stable profession rather than a temporary artifact of weak models. A few months ago I wrote an article that listed prompt engineering, without irony, as one of the core skills that would matter going forward. I was describing a moving target and didn't know it.
 
-The tell is the math example. If prompting were still an artifact craft, disproving a thirty-year-old conjecture would demand the most exquisitely engineered prompt anyone had ever written. Instead it took "do a breakthrough." The wording carried almost no information. All of it came from the model and the loop.
+The tell is the math example. If prompting were still an artifact craft, producing a serious candidate counterexample to a thirty-year-old conjecture would demand the most exquisitely engineered prompt anyone had ever written. Instead it took "do a breakthrough." The wording carried almost no information. All of it came from the model and the loop.
 
 ## The everyday version: the ramble
 
@@ -62,7 +62,7 @@ It would be a lie to end on "just ramble and the machine does everything." For t
 
 Behind "do a breakthrough" there is still a person who knows a real result from a plausible one. When I [wrote a research paper with AI](/en/blog/writing-a-research-paper-with-ai), the discipline that mattered wasn't the wording — it was separating what could be *demonstrated* from what could only be *measured*, and refusing to blur the two. In one planning session a model garbled a note about topology, claiming a ring in the plane needed a higher dimension. I caught it because it's my field, not because I'd written a clever prompt. The model can do the search; you still have to know when the answer is real.
 
-And for the hardest work you increasingly reach not for a better prompt but for a **structure** — a skill, a harness — that forces the model to try several strategies, decompose the problem into smaller parts or lemmas, run experiments, write tests, review its own output, hold a standard of rigor. That scaffolding is the successor to the prompt template. It's not a magic sentence; it's a process. The conjecture didn't fall to one lucky message either — it fell to a loop that kept insisting on rigor until a partial result became a complete one.
+And for the hardest work you increasingly reach not for a better prompt but for a **structure** — a skill, a harness — that forces the model to try several strategies, decompose the problem into smaller parts or lemmas, run experiments, write tests, review its own output, hold a standard of rigor. That scaffolding is the successor to the prompt template. It's not a magic sentence; it's a process. The candidate counterexample didn't emerge from one lucky message either — it came from a loop that kept insisting on rigor until a partial result became a complete one.
 
 So the skill didn't vanish. It moved — from the *words* to the *framing, the steering, and the verification*. Karpathy's term for the goal is the "mind meld": getting the model aligned with what you actually mean, so you have to correct it less from that point on. That is the craft now. The trend line is unmistakable: every generation does more with less, and the part you can leave to the model keeps growing.
 
