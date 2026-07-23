@@ -35,7 +35,7 @@ Dos problemas, ambos míos.
 
 Primero, un *confound*. Las cámaras de retransmisión *siguen al balón* — lo mantienen cerca del centro del plano. Así que "adivina el centro" no es un baseline tonto en absoluto; es fuerte, y cualquier modelo que tienda al centro parece listo por el motivo equivocado. Segundo, y peor: mi muestra era diminuta. Aquel 64% salía de **14 ítems**. Cuando le puse un intervalo de confianza por bootstrap, el intervalo iba del 36% al 86% — incluyendo cómodamente el 50%, es decir, el azar.
 
-![Cómo una muestra pequeña casi nos engaña](https://www.javieraguilar.ai/blog/wheres-the-ball-sample-trap.png)
+![Cómo una muestra pequeña casi nos engaña](/blog/wheres-the-ball-sample-trap.png)
 
 Así que reconstruí la prueba para desactivar ambos problemas: balanceé el dataset por la distancia del balón al centro (para que "adivina el centro" sea inútil por construcción) y escalé la muestra. Con más datos, ese mismo porcentaje de victorias en balones descentrados se quedó en **55%**, y su intervalo *seguía* tocando el 50%. El emocionante primer resultado no había sobrevivido al contacto con la estadística. Era un espejismo hecho de una cámara que sigue al balón y catorce puntos de datos.
 
@@ -45,7 +45,7 @@ Lo cuento no por falsa modestia, sino porque es justo el quid: un baseline confu
 
 Una vez la muestra fue honesta, dejé de apoyarme en el error sobre un subconjunto difícil (aún con poca potencia) y usé una medida mejor comportada: **¿correlaciona la predicción del modelo con dónde está el balón realmente**, a lo largo de todo el rango de posiciones? A esa pregunta sí pueden responder los datos.
 
-![Correlación de la predicción de cada modelo con la posición real del balón](https://www.javieraguilar.ai/blog/wheres-the-ball-correlation.png)
+![Correlación de la predicción de cada modelo con la posición real del balón](/blog/wheres-the-ball-correlation.png)
 
 - **Claude Opus 4.8** tiene la señal más clara — sus predicciones siguen la posición real del balón en ambos ejes, y los intervalos de confianza se mantienen lejos del cero.
 - **GPT-5.4** muestra señal parcial (sólida en horizontal, más ruidosa en vertical).
@@ -61,7 +61,7 @@ Aquí estaba seguro de saber la respuesta de antemano. Un solo fotograma es ambi
 
 Y parecía ayudar a GPT. Pero antes de creérmelo, ejecuté el control que importa: **desordené los fotogramas en orden aleatorio**. Si un modelo lee movimiento, revolver el tiempo debería destruir el beneficio.
 
-![Nadie lee el movimiento — es un efecto multi-vista](https://www.javieraguilar.ai/blog/wheres-the-ball-multiview.png)
+![Nadie lee el movimiento — es un efecto multi-vista](/blog/wheres-the-ball-multiview.png)
 
 Desordenar no cambió nada. El orden de los fotogramas fue el nulo más limpio de todo el experimento. Ningún modelo integra la *trayectoria* de la jugada — no razonan sobre el movimiento en absoluto. Lo que sí cambiaba con varios fotogramas era algo más soso y más raro: **vistas extra de la escena**, en cualquier orden. Y los dos modelos frontera lo manejan de forma opuesta. GPT *agrega* — más miradas al momento, aunque estén revueltas, afinan su predicción. Opus se *diluye* — los fotogramas extra lo alejan de una lectura del fotograma objetivo en la que ya era mejor. El mejor modelo con una sola imagen era el peor usando más imágenes.
 

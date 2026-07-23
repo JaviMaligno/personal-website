@@ -35,7 +35,7 @@ Two problems, both mine.
 
 First, a confound. Broadcast cameras *follow the ball* — they keep it near the center of the shot. So "just guess the center" isn't a dumb baseline at all; it's a strong one, and any model that leans central looks smart for the wrong reason. Second, and worse: my sample was tiny. That 64% came from **14 items**. When I put a bootstrap confidence interval around it, the interval ran from 36% to 86% — comfortably including 50%, i.e. chance.
 
-![How a small sample almost fooled us](https://www.javieraguilar.ai/blog/wheres-the-ball-sample-trap.png)
+![How a small sample almost fooled us](/blog/wheres-the-ball-sample-trap.png)
 
 So I rebuilt the test to defuse both issues: I balanced the dataset by the ball's distance from the center (so "guess the center" is useless by construction), and I scaled up. At a larger sample the same off-center win-rate settled at **55%**, and its interval *still* touched 50%. The exciting first result hadn't survived contact with statistics. It was a mirage made of a followed camera and fourteen data points.
 
@@ -45,7 +45,7 @@ I mention this not to be self-deprecating but because it's the whole point: a co
 
 Once the sample was honest, I stopped leaning on error-on-a-hard-subset (still underpowered) and used a better-behaved measure: **does the model's prediction correlate with where the ball actually is**, across the whole range of positions? That question the data can answer.
 
-![Correlation of each model's prediction with the true ball position](https://www.javieraguilar.ai/blog/wheres-the-ball-correlation.png)
+![Correlation of each model's prediction with the true ball position](/blog/wheres-the-ball-correlation.png)
 
 - **Claude Opus 4.8** has the clearest signal — its guesses track the true ball position on both axes, and the confidence intervals stay clear of zero.
 - **GPT-5.4** shows partial signal (solid horizontally, noisier vertically).
@@ -61,7 +61,7 @@ Here's where I was sure I knew the answer in advance. A single frame is ambiguou
 
 It did seem to help GPT. But before believing it, I ran the control that matters: I **shuffled the frames into a random order**. If a model reads motion, scrambling time should destroy the benefit.
 
-![Nobody reads motion — it is a multi-view effect](https://www.javieraguilar.ai/blog/wheres-the-ball-multiview.png)
+![Nobody reads motion — it is a multi-view effect](/blog/wheres-the-ball-multiview.png)
 
 Shuffling changed nothing. The order of the frames was the single cleanest null in the whole experiment. No model is integrating the *trajectory* of the play — they aren't reasoning about motion at all. What actually changed with multiple frames was something duller and stranger: **extra views of the scene**, in any order. And the two frontier models handle that in opposite ways. GPT *aggregates* — more looks at the moment, even scrambled, sharpen its guess. Opus gets *diluted* — the extra frames pull it away from a target-frame read it was already better at. The best single-frame model was the worst at using more frames.
 
