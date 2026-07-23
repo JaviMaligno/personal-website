@@ -55,6 +55,8 @@ Así que la intuición de espectador es real, pero tenue, y es un rasgo de model
 
 Un giro más, que me gustó. Le di a cada modelo un prompt "informado" — nombrando el deporte y detallando lo que usa un espectador (los jugadores se orientan hacia el balón, convergen sobre él, el que lo lleva encabeza un corro). Ayudó **mucho a GPT** (su correlación dio un salto), **nada a Sonnet** y apenas movió a Opus. Léelo con cuidado: el problema de Sonnet nunca fue que no supiera de fútbol. Explicarle las reglas no cambió nada, porque su cuello de botella es *ver*, no *saber*. Para GPT, que ya podía razonar sobre la escena, el marco desbloqueó margen — el prompt importó tanto como la gama del modelo.
 
+![Prompt neutral vs informado: correlación media con la posición real del balón, por modelo](/blog/wheres-the-ball-informed.png)
+
 ## El vídeo que no iba de vídeo
 
 Aquí estaba seguro de saber la respuesta de antemano. Un solo fotograma es ambiguo; el truco real del espectador es ver la jugada *desarrollarse*. Así que di a los modelos secuencias cortas — cuatro fotogramas abarcando unos segundos, el balón borrado en todos — esperando que el movimiento desbloqueara los casos difíciles.

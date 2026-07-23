@@ -55,6 +55,8 @@ So the spectator intuition is real, but faint, and it's a frontier-model trait: 
 
 One more twist, which I liked. I gave every model an "informed" prompt — naming the sport and spelling out what a spectator uses (players orient toward the ball, converge on it, the carrier leads a cluster). It helped **GPT a lot** (its correlation jumped), did **nothing for Sonnet**, and barely moved Opus. Read that carefully: Sonnet's problem was never that it didn't know football. Telling it the rules changed nothing, because its bottleneck is *seeing*, not *knowing*. For GPT, which could already reason about the scene, the framing unlocked headroom — the prompt mattered about as much as the model tier.
 
+![Neutral vs informed prompt: mean correlation with the true ball position, per model](/blog/wheres-the-ball-informed.png)
+
 ## The video that wasn't about video
 
 Here's where I was sure I knew the answer in advance. A single frame is ambiguous; a spectator's real trick is watching the play *develop*. So I gave the models short sequences — four frames spanning a few seconds, the ball erased from all of them — expecting the motion to unlock the hard cases.
