@@ -1,7 +1,7 @@
 ---
 title: "The Death of the Prompt Engineer"
 description: "A 30-year-old conjecture fell to prompts that read 'do a breakthrough' and 'just continue.' The craft of writing the perfect prompt is dying — and something more interesting is taking its place."
-pubDate: 2026-07-23
+pubDate: 2026-07-25
 tags: ["AI", "Prompt Engineering", "Agents", "Trends"]
 lang: en
 translationKey: death-of-prompt-engineering
@@ -10,9 +10,9 @@ heroImage: "/blog/death-of-prompt-engineering.png"
 
 Last month someone disproved a graph-theory conjecture that had been open for roughly thirty years. The Dinitz–Garg–Goemans conjecture is false: there is a graph whose fractional flow costs 58, while every indivisible flow — even allowing a capacity violation of up to 15 — costs at least 60. The counterexample came out of a chat session with GPT-5.6 Pro.
 
-Here is the part that should stop you. The prompts that produced it read, more or less in full, like this:
+Here is the part that should stop you. The prompts that produced it read, verbatim, like this:
 
-> "Construct a counterexample to the general (non-planar) case of the Dinitz–Garg–Goemans conjecture. **You should do a breakthrough** and find a structured counterexample."
+> "Construct a counterexample to general (non-planar) case of Dinitz Garg Goemans conjecture. You should do a breakthrough and find a structured counterexample."
 >
 > "please continue research and find a complete unconditional counterexample"
 >
@@ -20,7 +20,13 @@ Here is the part that should stop you. The prompts that produced it read, more o
 >
 > "it's enough of partial results. let's finish with a complete unconditional counterexample"
 
-That is the prompt engineering. *Do a breakthrough. Just continue. Enough partial results, let's finish.* The same week, a meme went around — a row of increasingly deranged brainlet faces captioned **do a breakthrough / continue / just do it / find the proof** — under a post reading, "So another long-standing open conjecture was disproved by AI." It's a joke. It's also the most honest description of the state of the art I've seen this year.
+That is the prompt engineering. *Do a breakthrough. Just continue. Enough partial results, let's finish.* The same week, a meme went around that captured it perfectly:
+
+![Meme titled "Math now" showing a row of increasingly deranged brainlet faces labeled "do a breakthrough", "continue", "just do it" and "find the proof", above a tweet reading "So another long-standing open conjecture was disproved by AI."](https://www.javieraguilar.ai/blog/conjecture-disproved-meme.jpg)
+
+*Source: [@Merkaloid](https://x.com/Merkaloid) quote-tweeting [@mattshumer_](https://x.com/mattshumer_) on X.*
+
+It's a joke. It's also the most honest description of the state of the art I've seen this year.
 
 Something died quietly here, and it wasn't the conjecture. It was prompt engineering.
 

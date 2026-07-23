@@ -1,7 +1,7 @@
 ---
 title: "La muerte del prompt engineer"
 description: "Una conjetura abierta 30 años cayó con prompts que decían 'haz un breakthrough' y 'sigue'. El oficio de escribir el prompt perfecto se está muriendo, y algo más interesante ocupa su lugar."
-pubDate: 2026-07-23
+pubDate: 2026-07-25
 tags: ["IA", "Prompt Engineering", "Agentes", "Tendencias"]
 lang: es
 translationKey: death-of-prompt-engineering
@@ -10,17 +10,23 @@ heroImage: "/blog/death-of-prompt-engineering.png"
 
 El mes pasado alguien refutó una conjetura de teoría de grafos que llevaba unos treinta años abierta. La conjetura de Dinitz–Garg–Goemans es falsa: existe un grafo cuyo flujo fraccional cuesta 58, mientras que cualquier flujo no divisible —incluso permitiendo una violación de capacidad de hasta 15— cuesta al menos 60. El contraejemplo salió de una sesión de chat con GPT-5.6 Pro.
 
-Y aquí está la parte que debería frenarte. Los prompts que lo produjeron decían, más o menos al completo, esto:
+Y aquí está la parte que debería frenarte. Los prompts que lo produjeron decían, textualmente (en su inglés original), esto:
 
-> "Construye un contraejemplo para el caso general (no planar) de la conjetura de Dinitz–Garg–Goemans. **Deberías hacer un breakthrough** y encontrar un contraejemplo estructurado."
+> "Construct a counterexample to general (non-planar) case of Dinitz Garg Goemans conjecture. You should do a breakthrough and find a structured counterexample."
 >
-> "por favor continúa la investigación y encuentra un contraejemplo completo e incondicional"
+> "please continue research and find a complete unconditional counterexample"
 >
-> "Continúa la búsqueda. Ten una estrategia clara obtenida de una comprensión más profunda de la estructura del problema."
+> "Continue the search. Have a clear strategy obtained from deeper understanding of the problem structure."
 >
-> "ya basta de resultados parciales. terminemos con un contraejemplo completo e incondicional"
+> "it's enough of partial results. let's finish with a complete unconditional counterexample"
 
-Eso es el prompt engineering. *Haz un breakthrough. Simplemente continúa. Basta de parciales, terminemos.* Esa misma semana circuló un meme —una fila de caras brainlet cada vez más desquiciadas con los rótulos **do a breakthrough / continue / just do it / find the proof**— bajo un tweet que decía: "Así que otra conjetura abierta de hace tiempo fue refutada por una IA." Es una broma. Y también es la descripción más honesta del estado del arte que he visto este año.
+Eso es el prompt engineering. *Haz un breakthrough. Simplemente continúa. Basta de parciales, terminemos.* Esa misma semana circuló un meme que lo capturaba a la perfección:
+
+![Meme titulado "Math now" con una fila de caras brainlet cada vez más desquiciadas rotuladas "do a breakthrough", "continue", "just do it" y "find the proof", sobre un tweet que dice "So another long-standing open conjecture was disproved by AI."](https://www.javieraguilar.ai/blog/conjecture-disproved-meme.jpg)
+
+*Fuente: [@Merkaloid](https://x.com/Merkaloid) citando a [@mattshumer_](https://x.com/mattshumer_) en X.*
+
+Es una broma. Y también es la descripción más honesta del estado del arte que he visto este año.
 
 Aquí murió algo en silencio, y no fue la conjetura. Fue el prompt engineering.
 
