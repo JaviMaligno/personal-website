@@ -29,9 +29,13 @@ Then I evaluated it on the same hidden-ball items from Part 1, paired with the s
 
 ![A tiny tracker-fed network beats the camera bias where frontier VLMs sit at chance](/blog/wtb2-david-goliath.png)
 
-On off-center balls the tiny network beats the camera bias **82% of the time**; GPT-5.4 and Claude Opus 4.8 sit at 53% — statistically, a coin flip. Two honest footnotes before this goes to anyone's head. First, the little model reads *ground-truth* player tracks, so this is an information ceiling — it answers "is the signal there?", not "can you perceive it from pixels?". Second, the VLMs still post better global medians (0.147 vs 0.195), because they are pixel-precise on the easy, centered items where the camera has already done the work. Item-by-item against each VLM on the hard subset the tiny net wins 59–62% — directionally favorable, not individually significant at n=34.
+On off-center balls the tiny network beats the camera bias **82% of the time**; given pixels, GPT-5.4 and Claude Opus 4.8 sit at 53% — statistically, a coin flip. Two honest footnotes before this goes to anyone's head. First, the little model reads *ground-truth* player tracks, so this is an information ceiling — it answers "is the signal there?". Second, the VLMs still post better global medians (0.147 vs 0.195), because they are pixel-precise on the easy, centered items where the camera has already done the work.
 
-But the core claim survives the caveats, and it reframes Part 1: **the ball's position is written in the players' movements — plainly enough for a toy model — and today's VLMs can't read it off the pixels.** Their failure isn't the task being impossible. It's a reading problem.
+There's an obvious objection, though, and it deserved its own experiment: this is apples and oranges. One system reads pixels; the other reads clean tracking data. Maybe the VLMs would do fine if you handed them the tracks. So I ran the missing cell of the comparison: I gave GPT and Opus the **exact same one-second player tracks the tiny net saw, as plain text coordinates**, and asked the same question.
+
+They got *worse*, not better. On the hard subset they dropped to 35–38% — below chance — and their correlation with the true ball position went from weakly positive to null or slightly *negative*. Handed the raw numbers, they appear to fall into the very centroid trap that broadcast geometry punishes (more on that below). Whatever spatial intuition these models have seems to live in pixels, not in coordinates. (The fourth cell of the grid — the tiny architecture trained on raw pixels — needs a vision model and stays out of scope; the grid is three cells and says plenty.)
+
+That result sharpened the conclusion beyond what I expected, and it reframes Part 1: **the ball's position is written in the players' movements — plainly enough for a toy model — and the frontier models' failure isn't perception. Given the same information with the pixels stripped away, they do worse. What's missing is the geometric inference itself.** A fair caveat cuts the other way too: the tiny net was *trained* for this exact task and the VLMs are zero-shot — but that is precisely the question Part 1 asked, whether general game-knowledge substitutes for specialization. On this task, it doesn't.
 
 ## The camera lies
 
@@ -65,7 +69,7 @@ What survives all the controls, pooled across both transfer directions: real pre
 
 ## Takeaways
 
-- **The signal is in the tracks.** A 60 kB network on player tracks solves the off-center balls that frontier VLMs can't, beating the camera bias 82% of the time where they sit at chance. The VLM failure in Part 1 is a pixel-reading problem, not an information problem.
+- **The signal is in the tracks — and the VLM failure isn't perception.** A 60 kB network on player tracks solves the off-center balls that frontier VLMs can't (82% vs chance). Given the *same tracks as plain text*, the VLMs get worse, not better (35–38%, below chance). What they lack is the geometric inference itself; their spatial priors live in pixels, not coordinates.
 - **Broadcast geometry is a trap.** The player centroid is anti-correlated with the ball in image space (−0.58) and strongly correlated in field coordinates (+0.83). The camera flips the sign.
 - **Transfer between sports is real, small, and asymmetric.** Basketball exports its ball-sense to football; football doesn't return the favor. What transfers isn't rules or formations — it's the use of velocity features, worth ~5% after calibration.
 - **The controls did the heavy lifting, again.** A shuffled-target pretraining control and a feature ablation each overturned a conclusion I was ready to publish. This project is three-for-three on "the first version of the story was wrong."
