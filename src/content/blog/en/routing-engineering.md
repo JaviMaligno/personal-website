@@ -22,6 +22,8 @@ Nobody hand-optimizes a hundred-cell grid per task, so in practice we all collap
 
 My own default is embarrassingly simple, and it's a routing decision. In Claude Code I plan with Fable 5 and then execute with Opus or something lighter. If I let the planning-grade model drive the whole task, token usage explodes; the plan is where the intelligence has to be, and the execution mostly has to *follow* the plan. Splitting the two along that seam is the single change that made long agent sessions affordable for me.
 
+*Publication note: two days before this article went live, [Opus 5 arrived](https://www.anthropic.com/news/claude-opus-5) with performance close to Fable 5 on many tasks at half the price. It has already replaced Fable as my planner. The route changed before the article even shipped, which is almost too on-theme.*
+
 I do the same thing in research. In [writing a paper with AI](/en/blog/writing-a-research-paper-with-ai) the division that mattered was Fable 5 for planning the science and GPT-5.6 as a second reviewer — a strong model where judgment lives, a swap when I hit usage limits, and cheaper execution in between. None of that is prompt craft. It's routing: matching the model to the shape of the work.
 
 ## Why the split works

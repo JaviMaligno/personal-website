@@ -22,6 +22,8 @@ Nadie optimiza a mano una rejilla de cien celdas por tarea, así que en la prác
 
 Mi opción por defecto es de una simpleza vergonzosa, y es una decisión de routing. En Claude Code planeo con Fable 5 y luego ejecuto con Opus o algo más ligero. Si dejo que el modelo con nivel de planificación conduzca toda la tarea, el consumo de tokens se dispara; el plan es donde tiene que estar la inteligencia, y la ejecución básicamente tiene que *seguir* el plan. Partir los dos por esa costura es el único cambio que me hizo asequibles las sesiones largas de agente.
 
+*Nota al publicar: dos días antes de que saliera este artículo, [llegó Opus 5](https://www.anthropic.com/news/claude-opus-5) con un rendimiento cercano a Fable 5 en muchas tareas a mitad de precio. Ya ha sustituido a Fable como mi planner. La ruta cambió antes de que el artículo llegara a publicarse, algo casi demasiado apropiado para el tema.*
+
 Hago lo mismo en investigación. Al [escribir un paper con IA](/es/blog/writing-a-research-paper-with-ai) la división que importaba era Fable 5 para planificar la ciencia y GPT-5.6 como segundo revisor —un modelo fuerte donde vive el criterio, un cambio cuando llego a los límites de uso, y ejecución más barata en medio—. Nada de eso es artesanía de prompts. Es routing: emparejar el modelo con la forma del trabajo.
 
 ## Por qué funciona la división
