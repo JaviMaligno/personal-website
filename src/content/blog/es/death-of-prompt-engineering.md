@@ -22,7 +22,7 @@ Y aquí está la parte que debería frenarte. Los prompts que lo produjeron dec�
 
 Eso es el prompt engineering. *Haz un breakthrough. Simplemente continúa. Basta de parciales, terminemos.* Esa misma semana un meme lo capturaba a la perfección:
 
-![Meme titulado "Math now" con una fila de caras brainlet cada vez más desquiciadas rotuladas "do a breakthrough", "continue", "just do it" y "find the proof", sobre un tweet que dice "So another long-standing open conjecture was disproved by AI."](https://www.javieraguilar.ai/blog/conjecture-disproved-meme.jpg)
+![Meme titulado "Math now" con una fila de caras brainlet cada vez más desquiciadas rotuladas "do a breakthrough", "continue", "just do it" y "find the proof", sobre un tweet que dice "So another long-standing open conjecture was disproved by AI."](/blog/conjecture-disproved-meme.jpg)
 
 *Fuente: [@Merkaloid](https://x.com/Merkaloid) citando a [@mattshumer_](https://x.com/mattshumer_) en X.*
 
@@ -36,13 +36,13 @@ Algo más murió en silencio dentro del espectáculo. Fue el prompt engineering.
 
 No el prompting. Prompting —pedirle a un modelo lo que quieres— es más central que nunca. Lo que murió es el prompt engineering como *artesanía del artefacto*: la creencia de que el valor vivía en la redacción.
 
-Durante un par de años esa creencia tuvo toda una economía alrededor. Plantillas. Preámbulos de `Eres un experto…`. Andamios few-shot que ajustabas como hiperparámetros. Trucos de delimitadores y conjuros de "piensa paso a paso". Marketplaces de prompts. Ofertas de "Prompt Engineer" a seis cifras, como si la habilidad fuera una profesión estable y no un artefacto temporal de los modelos débiles. Hace unos meses escribí un artículo que listaba el prompt engineering, sin ironía, como una de las skills clave de cara al futuro. Estaba describiendo un blanco móvil y no lo sabía.
+Durante un par de años esa creencia tuvo toda una economía alrededor. Plantillas. Preámbulos de `Eres un experto…`. Andamios few-shot que ajustabas como hiperparámetros. Trucos de delimitadores y conjuros de "piensa paso a paso". Marketplaces de prompts. Ofertas de "Prompt Engineer" a seis cifras, como si la habilidad fuera una profesión estable y no un artefacto temporal de los modelos débiles. [En diciembre, en un artículo sobre agentes de IA en paralelo](/es/blog/parallel-ai-agent-development), incluí «prompt engineering para especificar tareas con claridad» en una lista de habilidades cuya importancia estaba cambiando. Estaba describiendo un blanco móvil y no lo sabía.
 
 La señal está en el ejemplo matemático. Si el prompting siguiera siendo una artesanía del artefacto, producir un contraejemplo candidato serio a una conjetura de treinta años exigiría el prompt más exquisitamente diseñado jamás escrito. En cambio, bastó "haz un breakthrough". La redacción no aportaba casi ninguna información. Todo vino del modelo y del bucle.
 
 ## La versión cotidiana: la divagación
 
-No hace falta una conjetura abierta para verlo. Andrej Karpathy describió la versión ordinaria en un tweet que Carlos Santana amplificó con el marco exacto: que Karpathy no descubría nada, solo ponía en voz alta lo que la práctica ya hacía en silencio.
+No hace falta una conjetura abierta para verlo. [Andrej Karpathy describió la versión ordinaria](https://x.com/karpathy/status/2079610838143623371) en un tweet que [Carlos Santana amplificó](https://x.com/DotCSV/status/2079613175947747775) con el marco exacto: que Karpathy no descubría nada, solo ponía en voz alta lo que la práctica ya hacía en silencio.
 
 > "Un patrón que me resulta útil trabajando con LLMs es una buena sesión larga de divagación… me gusta echarme hacia atrás, cambiar a /voice y simplemente divagar durante unos 10 minutos, un caos total, todo vale, flujo de conciencia puro… descubro que los LLMs son de algún modo muy buenos reconstruyendo divagaciones largas e incoherentes, y a menudo su eco de tu propia maraña de pensamientos sale bastante más limpio de lo que empezaste."
 

@@ -22,7 +22,7 @@ Here is the part that should stop you. The prompts that produced it read, verbat
 
 That is the prompt engineering. *Do a breakthrough. Just continue. Enough partial results, let's finish.* The same week, a meme captured it perfectly:
 
-![Meme titled "Math now" showing a row of increasingly deranged brainlet faces labeled "do a breakthrough", "continue", "just do it" and "find the proof", above a tweet reading "So another long-standing open conjecture was disproved by AI."](https://www.javieraguilar.ai/blog/conjecture-disproved-meme.jpg)
+![Meme titled "Math now" showing a row of increasingly deranged brainlet faces labeled "do a breakthrough", "continue", "just do it" and "find the proof", above a tweet reading "So another long-standing open conjecture was disproved by AI."](/blog/conjecture-disproved-meme.jpg)
 
 *Source: [@Merkaloid](https://x.com/Merkaloid) quote-tweeting [@mattshumer_](https://x.com/mattshumer_) on X.*
 
@@ -36,13 +36,13 @@ Something else died quietly in the spectacle. It was prompt engineering.
 
 Not prompting. Prompting — asking a model for what you want — is more central than ever. What died is prompt engineering as an *artifact craft*: the belief that the value lived in the wording.
 
-For a couple of years that belief had a whole economy around it. Templates. `You are an expert…` preambles. Few-shot scaffolds you tuned like hyperparameters. Delimiter tricks and "think step by step" incantations. Prompt marketplaces. Job posts for "Prompt Engineer" at six figures, as if the skill were a stable profession rather than a temporary artifact of weak models. A few months ago I wrote an article that listed prompt engineering, without irony, as one of the core skills that would matter going forward. I was describing a moving target and didn't know it.
+For a couple of years that belief had a whole economy around it. Templates. `You are an expert…` preambles. Few-shot scaffolds you tuned like hyperparameters. Delimiter tricks and "think step by step" incantations. Prompt marketplaces. Job posts for "Prompt Engineer" at six figures, as if the skill were a stable profession rather than a temporary artifact of weak models. [In December, in an article about parallel AI agents](/en/blog/parallel-ai-agent-development), I included "prompt engineering for clear task specification" in a list of skills whose importance was shifting. I was describing a moving target and didn't know it.
 
 The tell is the math example. If prompting were still an artifact craft, producing a serious candidate counterexample to a thirty-year-old conjecture would demand the most exquisitely engineered prompt anyone had ever written. Instead it took "do a breakthrough." The wording carried almost no information. All of it came from the model and the loop.
 
 ## The everyday version: the ramble
 
-You don't need an open conjecture to see it. Andrej Karpathy described the ordinary version in a post that Carlos Santana amplified with exactly the right framing — that Karpathy wasn't discovering anything, just naming out loud what practitioners already did in silence:
+You don't need an open conjecture to see it. [Andrej Karpathy described the ordinary version](https://x.com/karpathy/status/2079610838143623371) in a post that [Carlos Santana amplified](https://x.com/DotCSV/status/2079613175947747775) with exactly the right framing — that Karpathy wasn't discovering anything, just naming out loud what practitioners already did in silence:
 
 > "One pattern I find useful for working with LLMs is a nice long ramble session… I like to lean back, switch to /voice and just ramble for like 10 minutes, total mess, anything goes, full stream of consciousness… I find that the LLMs are somehow very good at reconstructing long incoherent rambles and often their echo of your own tangle of thoughts comes out quite a bit cleaner than what you started with."
 
