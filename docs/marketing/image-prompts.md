@@ -161,3 +161,31 @@ Style: crisp bitmap technical editorial illustration, precise geometric shapes, 
 Composition: exact 2:1 wide hero, distinct-but-unified zones. Palette: dark graphite / deep blue-black base with balanced teal, amber, off-white, restrained red error accents. Dark but not monochrome.
 Avoid: purple gradient blobs, bokeh, glowing brain imagery, robot characters, floating abstract metaphors, excessive equations, dense paragraphs, decorative pseudo-text, cyberpunk neon, photorealistic stock-photo look. No logos, no brand names, no real AI model names, no watermark.
 ```
+
+## expensive-form (2026-07-25)
+
+- Article: `src/content/blog/en/expensive-form.md`
+- Image: `public/blog/expensive-form.png`
+- Generated with: Codex (gpt-image), prompt delegated to Codex from style constraints
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 technical blog hero image for the article "I Built an Expensive Form"
+Primary request: Create a refined technical editorial illustration showing a concrete side-by-side scene that contrasts two ways of collecting the same regulatory-report information. The image must communicate that a sequential conversational form is slower and more expensive, while a single free-text narrative can populate many structured fields and leave only genuine gaps.
+Scene/backdrop: dark graphite developer-workspace backdrop, not monochrome, divided into several distinct connected zones across a wide 2:1 landscape canvas.
+Subject and composition: On the left third, show a long vertical chain of seven small chat bubbles/cards, each containing only one tiny field row; each step has a small circular loading spinner and an amber token-cost meter that visibly climbs from step to step. Add a subtle small latency clock beside this chain. In the center-right, show one large open free-text narrative panel with several short abstract text lines; clean teal arrows carry extracted values from that narrative into a compact structured form panel on the far right. In that compact form, most rows are visibly completed with teal checks or filled bars, while exactly two rows remain empty and highlighted in amber as gaps. Across the lower middle, integrate a graph/DAG of connected phase nodes: "intake" flows into "phase 1" and onward toward "confirm"; several intermediate phase nodes are greyed out and bypassed by a prominent curved teal arrow labeled "skip". Include a compact status chip reading "missing: 2 fields". Keep the zones visually connected but clearly separated, with the left side feeling repetitive and costly and the right side feeling efficient and resolved.
+Style/medium: crisp bitmap editorial illustration with precise vector-like geometry, sharp UI panels, clean arrows, restrained subtle texture, professional AI/developer blog aesthetic; high contrast and polished, not a literal product screenshot.
+Lighting/mood: controlled luminous edge highlights and quiet technical depth; analytical, elegant, calm.
+Color palette: dark graphite background, balanced teal for successful extraction and bypass flow, amber for cost/latency/gaps, off-white for primary structure and readable labels, muted grey for skipped nodes.
+Text (verbatim, render only these short generic labels): "intake", "phase 1", "missing: 2 fields", "confirm", "skip".
+Constraints: exact wide 2:1 composition intended to be delivered at 1020x510; several distinct zones rather than one centered icon; readable hierarchy at blog-card scale; exactly two highlighted missing fields on the right; visibly multiple sequential chat steps on the left; preserve generous safe margins; no people, no logos, no brand names, no title text, no watermark.
+Avoid: text-heavy poster, purple gradients or purple blobs, bokeh, neon cyberpunk clutter, photorealism, 3D mascots, generic centered chatbot icon, decorative code snippets, excessive tiny labels, illegible typography.
+```
+
+**Regenerated once.** The first attempt rendered the amber chip as `missing: 2 fields` followed by stray quote-like artefacts. Re-running the *same* prompt with this single sentence appended fixed it — and the second pass also came out richer (per-step latency column with a running total, labelled cost meters, four greyed phase nodes):
+
+```text
+Render the amber status chip text exactly as "missing: 2 fields" and end the text immediately after the final "s" in "fields"; do not add any trailing characters, quotation marks, punctuation, glyphs, or artefacts.
+```
+
+Lesson worth reusing: when an image model mangles a short label, re-run the same prompt with an explicit "end the text after this character, add nothing further" instruction. No need to redesign the composition.
