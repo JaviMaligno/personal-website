@@ -1,7 +1,7 @@
 ---
 title: "Your Agent Doesn't Know What's Internal: Context Leakage in AI Workflows"
 description: "AI agents keep quoting internal feedback, spec codenames, and process notes in client-facing deliverables. Why it happens, a taxonomy of the three failure modes, and the structural fixes that actually work."
-pubDate: 2026-07-19
+pubDate: 2026-07-22
 tags: ["AI", "Agents", "Claude Code", "Workflow"]
 lang: en
 translationKey: internal-context-leakage

@@ -1,7 +1,7 @@
 ---
 title: "Where's the Ball? Testing Whether a VLM Has a Spectator's Intuition"
 description: "I hid the ball from vision-language models and asked them to find it from the players alone. The answer was interesting — but the more interesting part was how easily I almost concluded the wrong thing."
-pubDate: 2026-07-22
+pubDate: 2026-07-24
 tags: ["AI", "Computer Vision", "Research"]
 lang: en
 translationKey: wheres-the-ball

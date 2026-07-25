@@ -1,7 +1,7 @@
 ---
 title: "Lleva tu aplicación al agente"
 description: "El próximo cambio de paradigma en el desarrollo de aplicaciones no es meter un agente en tu app — es meter tu app en el agente que tus usuarios ya usan. MCP es solo la fontanería actual para hacerlo."
-pubDate: 2026-07-19
+pubDate: 2026-07-23
 tags: ["Agentes IA", "MCP", "Diseño de Software"]
 lang: es
 translationKey: bring-your-app-to-the-agent

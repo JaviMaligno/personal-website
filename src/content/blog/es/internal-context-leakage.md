@@ -1,7 +1,7 @@
 ---
 title: "Tu agente no sabe qué es interno: fugas de contexto en flujos con IA"
 description: "Los agentes de IA acaban citando feedback interno, nomenclatura de specs y notas de proceso en entregables para clientes. Por qué ocurre, una taxonomía de los tres modos de fallo y las soluciones estructurales que funcionan de verdad."
-pubDate: 2026-07-19
+pubDate: 2026-07-22
 tags: ["IA", "Agentes", "Claude Code", "Flujos de trabajo"]
 lang: es
 translationKey: internal-context-leakage

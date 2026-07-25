@@ -1,7 +1,7 @@
 ---
 title: "¿Dónde está el balón? Probando si un VLM tiene intuición de espectador"
 description: "Le escondí el balón a varios modelos de visión-lenguaje y les pedí encontrarlo solo a partir de los jugadores. La respuesta fue interesante — pero lo más interesante fue lo cerca que estuve de concluir algo falso."
-pubDate: 2026-07-22
+pubDate: 2026-07-24
 tags: ["IA", "Visión por Computador", "Investigación"]
 lang: es
 translationKey: wheres-the-ball
