@@ -27,14 +27,43 @@ into `main` on a given date so the workflows above fire on the resulting push.
 
 Pattern (copy an existing one, e.g. `scheduled-publish-internal-context-leakage.yml`):
 
-- `on.schedule.cron: '0 9 <DAY> <MONTH> *'` — 09:00 UTC (11:00 CEST) on the date.
+- `on.schedule.cron: '19 8 <DAY> <MONTH> *'` plus two later retries. See
+  **"The cron runs late, it does not get dropped"** below before picking a time.
 - Checks out `main` **with `secrets.PUBLISH_PAT`** (a user PAT). This is required:
   a push made with the default `GITHUB_TOKEN` does **not** re-trigger other
   workflows, so deploy/LinkedIn/Dev.to would silently not run.
 - `git merge --no-ff origin/<article-branch>` then `git push origin main`.
 - Guards with `git merge-base --is-ancestor` (no-op if already merged) and a
   `concurrency` group (never runs twice).
+- Checks the branch exists first: if it is gone **and** the article is already in
+  `main`, it exits 0 as a no-op (published by hand, branch deleted). It only errors
+  when the branch is missing *and* the article is absent — i.e. a real typo.
 - Opens a GitHub issue on success/failure as a notification.
+
+### The cron runs late, it does not get dropped
+
+Measured on 2026-07-25 over 20 consecutive days of this repo's daily 08:00 UTC
+cron (`linkedin-scheduled-posts.yml`, which nobody ever triggers by hand): it
+fired **every single day**, and **never on time** — between 1h21m and 4h02m late,
+median ~2h13m. The `scheduled-publish` crons show the same shift: `09:19` UTC
+consistently ran at ~11:20 UTC. This matches GitHub's own docs — *"the `schedule`
+event can be delayed during periods of high loads […] High load times include the
+start of every hour"* — and cannot be eliminated, only compensated.
+
+Consequences to keep in mind:
+
+- **Cron times are departure times, not arrival times.** Set the cron ~1-2h before
+  you actually want the article out.
+- **As of 2026-07-25, no article had ever been published by its cron.** The first
+  six (07-20 … 07-25) all went out via a manual `workflow_dispatch` or a manual
+  merge, because the cron ran ~2h late and somebody always got there first. When
+  that happens the late cron run is a harmless no-op (`already merged`).
+- So the automatic path is **not yet validated end-to-end**. The merge step itself
+  is proven (the manual dispatches published fine, deploy + Dev.to + LinkedIn
+  included); what has never been observed is a cron firing *and* publishing.
+- Two things that did break, both fixed: `PUBLISH_PAT` was missing on 07-20
+  (`Input required and not supplied: token`), and the 07-23 workflow pointed at a
+  branch name that did not exist.
 
 Checklist when scheduling:
 
