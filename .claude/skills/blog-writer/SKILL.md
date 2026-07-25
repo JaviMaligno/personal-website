@@ -51,7 +51,7 @@ heroImage: "/blog/article-slug.png"
 **`linkedinImage`:**
 - Campo opcional
 - Solo se usa para auto-publicación en LinkedIn
-- Si se omite, el post en LinkedIn será solo texto
+- Si se omite, **se usa `heroImage` como fallback** (`publish-to-linkedin.js:92` hace `linkedinImage || heroImage`); el post solo sale sin imagen si tampoco hay hero
 - Ruta debe apuntar a archivo en `public/blog/`
 - Formatos: PNG, JPG, WEBP
 - Tamaño recomendado: 1200x627px
@@ -61,7 +61,14 @@ heroImage: "/blog/article-slug.png"
 - `buildPostText` en `scripts/linkedin/utils.js` añade una línea `💻 Code: <url>` al post de LinkedIn **solo si este campo existe**. Sin él, el enlace al código no sale y hay que editar el post a mano tras publicar (le pasó a `coding-agents-structure` y `restart-vs-iterate`).
 - Regla: cualquier enlace externo relevante (repo, fork, paper) debe llegar al post de LinkedIn — `repoUrl` para el código, `linkedinLinks` para papers/preprints.
 
-**Prefer article charts over the hero image.** Si el artículo incluye gráficos generados (resultados de experimentos, curvas, benchmarks), usa el gráfico más llamativo como `linkedinImage` en lugar del hero: un dato concreto suele parar más el scroll en el feed que una ilustración. Precedente: `forgetting-you-dont-measure` usa `linkedinImage: /blog/forgetting-mixing-curve.png` (la curva de mixing del experimento) mientras el hero es una ilustración.
+**Decide la imagen de LinkedIn ANTES de publicar.** El post se genera en el push del merge; una vez publicado no se puede cambiar la imagen — hay que borrar el post en LinkedIn y repostearlo a mano con `scripts/linkedin/post-standalone.js`. Así que la elección se hace en el frontmatter, no después.
+
+Recorre las imágenes del artículo y pregúntate cuál para más el scroll. Si alguna es más fuerte que el hero, ponla como `linkedinImage` en EN y ES:
+
+- **Gráficos generados** (resultados, curvas, benchmarks): un dato concreto suele ganar a una ilustración. Precedente: `forgetting-you-dont-measure` usa `linkedinImage: /blog/forgetting-mixing-curve.png` (la curva de mixing del experimento) mientras el hero es una ilustración.
+- **Memes y capturas** (tuits, pantallazos, imágenes citadas en el artículo): si el artículo se apoya en un meme o una captura reconocible, casi siempre es la mejor imagen para el feed. Precedente: `death-of-prompt-engineering` salió con el hero porque el campo estaba vacío, y hubo que borrar el post y repostearlo con `/blog/conjecture-disproved-meme.jpg` (la captura del tuit original que cita el artículo).
+
+Si eliges una imagen que ya está *dentro* del artículo, usa el archivo original (la captura o figura real), no una versión regenerada.
 
 **Ejemplo:**
 ```yaml
@@ -297,6 +304,6 @@ Images from LinkedIn posts should be:
 - [ ] Hero image generated, reviewed by user, and placed in `public/blog/`
 - [ ] `heroImage` field set in both EN and ES frontmatter
 - [ ] Image prompt recorded in `docs/marketing/image-prompts.md`
-- [ ] If the article has generated charts, considered using the best one as `linkedinImage`
+- [ ] **`linkedinImage` decidido antes de publicar** — revisadas todas las imágenes del artículo (gráficos, memes, capturas) y puesta la más llamativa en EN y ES si supera al hero. Sin este campo se publica el hero (`linkedinImage || heroImage`), y cambiarlo después obliga a borrar el post y repostearlo a mano.
 - [ ] **If the article involves code, `repoUrl:` set in both EN and ES frontmatter** — the LinkedIn auto-post (`scripts/linkedin/utils.js`) adds a "💻 Code:" line only when this field is present. Omitting it means editing the LinkedIn post by hand after publish.
 - [ ] Links are valid and functional
