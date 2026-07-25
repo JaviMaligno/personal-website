@@ -5,14 +5,19 @@ name: Scheduled publish — routing-engineering article
 # The push MUST use a user PAT (secret PUBLISH_PAT) — a push made with the default
 # GITHUB_TOKEN does NOT re-trigger other workflows.
 on:
-  # GitHub cron is best-effort and drops runs under load — the top of the hour
-  # (:00) is the worst slot. So we fire at an off-peak minute and RETRY a few
-  # times the same day. The merge below is idempotent (it exits early once the
-  # branch is already in main), so the extra runs are safe no-ops.
+  # MEASURED, 2026-07-25: GitHub's schedule queue does not drop these runs — it
+  # runs them LATE. Over 20 consecutive days the daily 08:00 UTC cron in this repo
+  # fired every single time, but always 1h21m–4h02m late (median ~2h13m). The
+  # scheduled-publish crons showed the same shift (09:19 -> ~11:20 UTC).
+  # So the times below are DEPARTURE times, not arrival times: expect the run
+  # roughly 1-2h after the cron. Kept off the top of the hour (:00 is the worst
+  # slot, per GitHub's docs) and with retries in case a run really is dropped.
+  # The merge is idempotent (early exit once the branch is in main), so extra
+  # runs are safe no-ops.
   schedule:
-    - cron: '19 9 26 7 *'   # 2026-07-26 09:19 UTC (~11:19 CEST) — primary
-    - cron: '37 11 26 7 *'  # 2026-07-26 11:37 UTC — retry if the primary was dropped
-    - cron: '53 14 26 7 *'  # 2026-07-26 14:53 UTC — final retry
+    - cron: '19 8 26 7 *'   # 08:19 UTC — primary
+    - cron: '37 10 26 7 *'  # 10:37 UTC — retry
+    - cron: '53 13 26 7 *'  # 13:53 UTC — final retry
   workflow_dispatch: {}      # allow a manual run from the Actions tab
 
 permissions:
@@ -41,9 +46,19 @@ jobs:
           BRANCH=blog/routing-engineering
           # Fail loudly on a wrong branch name. A typo here used to surface only on
           # publication day, as an opaque "couldn't find remote ref" (see the 07-23 run).
+          ARTICLE=src/content/blog/en/routing-engineering.md
           if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
-            echo "::error::Branch '$BRANCH' does not exist on origin — either the name in"
-            echo "::error::this workflow is wrong, or the branch was already merged and deleted."
+            # Branch gone. If the article is already in main it was published by hand
+            # and the branch deleted — a no-op, not a failure. Late cron runs used to
+            # open false "FAILED" issues in exactly this case (07-20, 07-23, 07-24).
+            if [ -f "$ARTICLE" ]; then
+              echo "Branch '$BRANCH' is gone and $ARTICLE is already in main —"
+              echo "already published (manual merge + branch deleted). Nothing to do."
+              echo "published=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::Branch '$BRANCH' does not exist on origin and $ARTICLE is not"
+            echo "::error::in main either — the branch name in this workflow is likely wrong."
             echo 'Existing blog branches:'
             git ls-remote --heads origin 'refs/heads/blog/*' | sed 's#.*refs/heads/#  - #' || true
             exit 1
