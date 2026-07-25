@@ -49,7 +49,7 @@ With a working specialist in hand, I could finally ask the question that motivat
 
 Zero-shot — trained on one sport, tested cold on the other — the result is asymmetric in a way I didn't predict. Soccer→basketball fails: worse than an *untrained* centroid. But basketball→soccer *works*: 0.17 median error, beating soccer's own geometric baselines without ever seeing a football match. And no, it's not that the basketball dataset is bigger — subsampling it to match the soccer data leaves the result intact (0.174).
 
-My first interpretation was that basketball's ball simply lives closer to the player mass — dribbles, screens, short passes — so the model learns a coupling that exports. Measured, that premise is *false*: in normalized field units the ball-to-mass distance distributions of the two sports are nearly identical. But a causal test rescued the core of the idea. Training the soccer model **only on its tightly-coupled frames** (same amount of data) improves its transfer to basketball by ~15%. Football's loose-ball moments — long balls, broken play — actively teach the model a habit of predicting far from the mass, and basketball punishes that habit. That accounts for part of the asymmetry; the rest is, honestly, still open, and it's one of the questions the upcoming workshop paper digs into.
+My first interpretation was that basketball's ball simply lives closer to the player mass — dribbles, screens, short passes — so the model learns a coupling that exports. Measured, that premise is *false*: in normalized field units the ball-to-mass distance distributions of the two sports are nearly identical. But a causal test rescued the core of the idea. Training the soccer model **only on its tightly-coupled frames** (same amount of data) improves its transfer to basketball by ~15%. Football's loose-ball moments — long balls, broken play — actively teach the model a habit of predicting far from the mass, and basketball punishes that habit. That accounts for part of the asymmetry; the rest is, honestly, still open, and something I'll keep digging into.
 
 ## Fine-tuning, and a hypothesis that died twice
 
@@ -70,7 +70,7 @@ What survives all the controls, pooled across both transfer directions: real pre
 - **Transfer between sports is real, small, and asymmetric.** Basketball exports its ball-sense to football; football doesn't return the favor. What transfers isn't rules or formations — it's the use of velocity features, worth ~5% after calibration.
 - **The controls did the heavy lifting, again.** A shuffled-target pretraining control and a feature ablation each overturned a conclusion I was ready to publish. This project is three-for-three on "the first version of the story was wrong."
 
-Next up is Level 3 of this ladder: the geometry and topology underneath — *when* do the players determine the ball, and can interpretable structure (Voronoi cells, pitch control, persistent homology) recover what the little black box learned? A workshop paper collecting the full transfer study is also in the works.
+Next up is Level 3 of this ladder: the geometry and topology underneath — *when* do the players determine the ball, and can interpretable structure (Voronoi cells, pitch control, persistent homology) recover what the little black box learned? And I'll keep chasing the transfer asymmetry — there's more of it to explain.
 
 ---
 
