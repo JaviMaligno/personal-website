@@ -41,9 +41,19 @@ jobs:
           BRANCH=blog/death-of-prompt-engineering
           # Fail loudly on a wrong branch name. A typo here used to surface only on
           # publication day, as an opaque "couldn't find remote ref" (see the 07-23 run).
+          ARTICLE=src/content/blog/en/death-of-prompt-engineering.md
           if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
-            echo "::error::Branch '$BRANCH' does not exist on origin — either the name in"
-            echo "::error::this workflow is wrong, or the branch was already merged and deleted."
+            # Branch gone. If the article is already in main it was published by hand
+            # and the branch deleted — a no-op, not a failure. Late cron runs used to
+            # open false "FAILED" issues in exactly this case (07-20, 07-23, 07-24).
+            if [ -f "$ARTICLE" ]; then
+              echo "Branch '$BRANCH' is gone and $ARTICLE is already in main —"
+              echo "already published (manual merge + branch deleted). Nothing to do."
+              echo "published=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::Branch '$BRANCH' does not exist on origin and $ARTICLE is not"
+            echo "::error::in main either — the branch name in this workflow is likely wrong."
             echo 'Existing blog branches:'
             git ls-remote --heads origin 'refs/heads/blog/*' | sed 's#.*refs/heads/#  - #' || true
             exit 1
