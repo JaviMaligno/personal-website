@@ -51,6 +51,8 @@ Zero-shot — trained on one sport, tested cold on the other — the result is a
 
 It took a couple of wrong turns to pin down. My first guess — that basketball's ball simply lives closer to the player mass — measured false: the ball-to-mass distance distributions are nearly identical. The real culprit is **velocity scale**. Strip each player down to *positions only*, discarding the velocity channel, and the asymmetry vanishes — positions transfer symmetrically both ways; it's the *use of velocity* that only travels one direction. The reason is a units mismatch I should have seen coming: a basketball court is about a sixth the area of a football pitch, so in the normalized coordinates the model reads, players move three to four times faster in basketball. A model's learned sense of "how fast is fast, and what that implies about where the ball is" is calibrated to its own sport's scale and misfires across a 3–4× gap. Positions carry no such scale, so they cross cleanly. That turns out to be the whole asymmetry — and a small, general lesson: what transfers between domains is the scale-free structure; anything with units attached needs recalibration.
 
+![Removing the velocity channel makes cross-sport transfer symmetric](/blog/wtb2-asymmetry-velocity.png)
+
 ## Fine-tuning, and a hypothesis that died twice
 
 Does pretraining on one sport at least give you a head start on another? Here I got burned by my own enthusiasm — twice — and both times a control caught it.

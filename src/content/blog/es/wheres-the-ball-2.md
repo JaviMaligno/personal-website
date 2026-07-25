@@ -51,6 +51,8 @@ En zero-shot — entrenado en un deporte, probado en frío en el otro — el res
 
 Costó un par de pasos en falso concretarlo. Mi primera hipótesis — que el balón de baloncesto vive más cerca de la masa de jugadores — salió falsa: las distribuciones de distancia balón-masa son casi idénticas. El verdadero culpable es la **escala de velocidad**. Recorta cada jugador a *solo posiciones*, tirando el canal de velocidad, y la asimetría se desvanece — las posiciones transfieren simétricamente en ambos sentidos; es el *uso de la velocidad* lo que viaja en una sola dirección. Y la razón es un desajuste de unidades que debería haber visto venir: una cancha de baloncesto es una sexta parte del área de un campo de fútbol, así que en las coordenadas normalizadas que lee el modelo, los jugadores se mueven tres o cuatro veces más rápido en baloncesto. El sentido aprendido de "qué es rápido, y qué implica sobre dónde está el balón" está calibrado a la escala del propio deporte y falla al cruzar un salto de 3-4×. Las posiciones no llevan esa escala, así que cruzan sin problema. Esa es toda la asimetría — y una lección pequeña y general: lo que transfiere entre dominios es la estructura sin escala; todo lo que lleva unidades pegadas necesita recalibrarse.
 
+![Al quitar el canal de velocidad, la transferencia entre deportes se vuelve simétrica](/blog/wtb2-asymmetry-velocity.png)
+
 ## Fine-tuning, y una hipótesis que murió dos veces
 
 ¿Pre-entrenar en un deporte da al menos ventaja para aprender otro? Aquí me quemé con mi propio entusiasmo — dos veces — y las dos veces lo cazó un control.
