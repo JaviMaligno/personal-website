@@ -6,18 +6,23 @@ name: Scheduled publish — routing-engineering article
 # GITHUB_TOKEN does NOT re-trigger other workflows.
 on:
   # MEASURED, 2026-07-25: GitHub's schedule queue does not drop these runs — it
-  # runs them LATE. Over 20 consecutive days the daily 08:00 UTC cron in this repo
-  # fired every single time, but always 1h21m–4h02m late (median ~2h13m). The
-  # scheduled-publish crons showed the same shift (09:19 -> ~11:20 UTC).
-  # So the times below are DEPARTURE times, not arrival times: expect the run
-  # roughly 1-2h after the cron. Kept off the top of the hour (:00 is the worst
-  # slot, per GitHub's docs) and with retries in case a run really is dropped.
-  # The merge is idempotent (early exit once the branch is in main), so extra
-  # runs are safe no-ops.
+  # runs them LATE, and the lateness shrinks as the day goes on:
+  #     cron 09:19 UTC -> 1h53m late on average (spread 1h28m-2h03m, n=5)
+  #     cron 11:37 UTC -> 1h28m late            (spread 1h24m-1h33m, n=4)
+  #     cron 14:53 UTC -> 1h17m late            (spread 1h15m-1h22m, n=4)
+  # Plus 20 straight days of the daily 08:00 UTC cron: it fired EVERY day, always
+  # 1h21m-4h02m late (median 2h13m). Nothing has ever been dropped here.
+  # So: the times below are DEPARTURE times, not arrival times — and early slots
+  # are both later and far less predictable than midday ones. If you want a
+  # predictable hour, schedule LATER, not earlier.
+  # Retries sit ~45min apart so that IF a run is ever genuinely dropped, the next
+  # one is close behind. The merge is idempotent (early exit once the branch is in
+  # main), so the extra runs are silent no-ops — they don't even open an issue.
   schedule:
     - cron: '19 8 26 7 *'   # 08:19 UTC — primary
-    - cron: '37 10 26 7 *'  # 10:37 UTC — retry
-    - cron: '53 13 26 7 *'  # 13:53 UTC — final retry
+    - cron: '7 9 26 7 *'    # 09:07 UTC — retry (+48m)
+    - cron: '59 9 26 7 *'   # 09:59 UTC — retry (+52m)
+    - cron: '53 13 26 7 *'  # 13:53 UTC — final safety net
   workflow_dispatch: {}      # allow a manual run from the Actions tab
 
 permissions:
