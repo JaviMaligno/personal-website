@@ -79,7 +79,7 @@ Plus optional user instructions (e.g., "emphasize Langfuse experience", "focus o
 - [only for academic, research or teaching-adjacent roles; omit from engineering CVs]
 
 ### Graduate Data Scientist — Hastings Direct
-**2023 – Aug 2025**
+**Sep 2023 – Aug 2025**
 
 - [1-2 bullets relevant to role]
 
