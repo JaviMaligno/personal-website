@@ -1,7 +1,7 @@
 ---
 title: "Bring Your App to the Agent"
 description: "The next paradigm shift in application development isn't putting an agent inside your app — it's putting your app inside the agent your users already have. MCP is just the current plumbing for it."
-pubDate: 2026-07-19
+pubDate: 2026-07-23
 tags: ["AI Agents", "MCP", "Software Design"]
 lang: en
 translationKey: bring-your-app-to-the-agent

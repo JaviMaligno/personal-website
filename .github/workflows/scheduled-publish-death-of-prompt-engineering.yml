@@ -38,13 +38,23 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin blog/death-of-prompt-engineering
-          if git merge-base --is-ancestor origin/blog/death-of-prompt-engineering HEAD; then
+          BRANCH=blog/death-of-prompt-engineering
+          # Fail loudly on a wrong branch name. A typo here used to surface only on
+          # publication day, as an opaque "couldn't find remote ref" (see the 07-23 run).
+          if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "::error::Branch '$BRANCH' does not exist on origin — either the name in"
+            echo "::error::this workflow is wrong, or the branch was already merged and deleted."
+            echo 'Existing blog branches:'
+            git ls-remote --heads origin 'refs/heads/blog/*' | sed 's#.*refs/heads/#  - #' || true
+            exit 1
+          fi
+          git fetch origin "$BRANCH"
+          if git merge-base --is-ancestor "origin/$BRANCH" HEAD; then
             echo "Branch already merged into main — nothing to do."
             echo "published=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git merge --no-ff origin/blog/death-of-prompt-engineering \
+          git merge --no-ff "origin/$BRANCH" \
             -m "Publish: death-of-prompt-engineering article (scheduled 2026-07-25)"
           git push origin main
           echo "published=true" >> "$GITHUB_OUTPUT"

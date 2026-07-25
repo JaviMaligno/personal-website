@@ -43,8 +43,17 @@ Checklist when scheduling:
    **not** publish the article, it only arms the future merge.
 2. The **article branch must be pushed to `origin`** with the exact name the
    workflow's `git fetch origin <branch>` expects, or the scheduled merge fails.
+   The workflow validates this with `git ls-remote` and fails with an explicit
+   error listing the real `blog/*` branches — a typo here previously surfaced only
+   on publication day as an opaque `couldn't find remote ref` (2026-07-23).
 3. Pick a **free date** — check the crons of the other `scheduled-publish-*.yml`
    files first (one article per day).
+4. **Set the article's `pubDate` to the cron date, in both EN and ES.** The blog
+   index sorts *and displays* by `pubDate` (`src/pages/*/blog/index.astro`), not by
+   the merge date, so a draft date left in the frontmatter makes the article show
+   up under an older date — and, if it ties with older posts, buried below them.
+   This is what happened to the 07-22/07-23/07-24 publications (fixed in
+   `fix/blog-pubdates`). If the schedule is later moved, move the `pubDate` too.
 
 ## LinkedIn auto-post (the real mechanism)
 

@@ -35,7 +35,7 @@ heroImage: "/blog/article-slug.png"
 |-------|----------|-------|
 | `title` | Yes | Translated per language |
 | `description` | Yes | Translated, SEO-friendly, 1-2 sentences |
-| `pubDate` | Yes | Same date for both languages |
+| `pubDate` | Yes | Same date for both languages. **Must be the date the article actually gets merged to `main`** — if the publication is scheduled via `scheduled-publish-<slug>.yml`, use that cron's date, and update it if the schedule moves. The blog index sorts and displays by `pubDate`, so a stale draft date makes the article appear under an older date instead of as the newest post. |
 | `tags` | Yes | Translated (e.g., "AI" → "IA") |
 | `lang` | Yes | Must be `en` or `es` |
 | `translationKey` | Yes | Same value for EN/ES pair (kebab-case) |
@@ -291,6 +291,7 @@ Images from LinkedIn posts should be:
 - [ ] Both EN and ES files created
 - [ ] Matching `translationKey` in both
 - [ ] Same `pubDate` in both
+- [ ] **`pubDate` equals the actual publication date** (the `scheduled-publish-<slug>.yml` cron date, or today if merging manually) — not the date the draft was written
 - [ ] Tags translated appropriately
 - [ ] `lang` field matches file location
 - [ ] Hero image generated, reviewed by user, and placed in `public/blog/`
