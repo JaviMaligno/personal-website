@@ -18,6 +18,8 @@ Plus optional user instructions (e.g., "emphasize Langfuse experience", "focus o
 
 ## Workflow
 
+0. **Read the master CV first.** It is the source of truth for dates, job titles, contract status and confidentiality rules, and lives in the **private** repo `JaviMaligno/cv-and-interviews` at `master/Javier_Aguilar_CV_Master.md` (locally: `C:\Users\Usuario\GitHub\cv-and-interviews`). Do **not** take dates or titles from the old PDFs in `Downloads/` — they have incorrect overlapping "Present" ranges. Never invent a job title, a contract type, or the reason behind a technical decision: a fabricated date fails the reference check and a fabricated rationale fails the technical interview. Ask instead.
+
 1. **Read portfolio context**
    - Read `src/data/projects.ts` for project list
    - Read `src/i18n/en.json` for project descriptions and outcomes
@@ -55,19 +57,29 @@ Plus optional user instructions (e.g., "emphasize Langfuse experience", "focus o
 
 ## EXPERIENCE
 
-### [Tailored Title] — Sapira AI
+### ML Engineer (contractor) — Sapira AI
 **Aug 2025 – Present**
 
 - [4-5 bullets tailored to job requirements, using STAR-lite format]
 - Each bullet: **Bold keyword:** Action + measurable result
 
-### [Tailored Title] — Simple KYC
-**Jan 2024 – Jul 2025**
+### AI Engineer — Simple KYC
+**Jan 2024 – Present**
 
 - [3-4 bullets relevant to role]
 
+### Founder / AI Engineer — AGILabs
+**2025 – Present**
+
+- [only if independent/consultancy work is relevant to the role]
+
+### Lecturer in Algebra & Geometry — Universidad de las Hespérides
+**From Oct 2026**
+
+- [only for academic, research or teaching-adjacent roles; omit from engineering CVs]
+
 ### Graduate Data Scientist — Hastings Direct
-**Sep 2023 – Aug 2024**
+**2023 – Aug 2025**
 
 - [1-2 bullets relevant to role]
 
