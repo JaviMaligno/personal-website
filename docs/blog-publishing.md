@@ -50,10 +50,28 @@ consistently ran at ~11:20 UTC. This matches GitHub's own docs — *"the `schedu
 event can be delayed during periods of high loads […] High load times include the
 start of every hour"* — and cannot be eliminated, only compensated.
 
+**The lateness shrinks as the day goes on**, and so does its spread. Same repo,
+three different cron slots, 07-21 … 07-25:
+
+| Cron (UTC) | Mean lateness | Spread | n |
+|---|---|---|---|
+| 09:19 | 1h53m | 1h28m – 2h03m (±35m) | 5 |
+| 11:37 | 1h28m | 1h24m – 1h33m (±5m) | 4 |
+| 14:53 | 1h17m | 1h15m – 1h22m (±4m) | 4 |
+
 Consequences to keep in mind:
 
 - **Cron times are departure times, not arrival times.** Set the cron ~1-2h before
   you actually want the article out.
+- **Scheduling earlier buys less than it looks, and costs predictability.** An
+  early slot is queued during the European-morning peak, so it is both later *and*
+  much noisier (±35m at 09:19 vs ±5m at 11:37). If you want a *predictable*
+  publication hour, schedule **later**, not earlier.
+- **Retries are cheap, so keep them close (~45m).** They do not help with the
+  delay — only with a genuine dropped run, which has never been observed here. But
+  a no-op run opens no issue and costs seconds, so a tight retry chain is free
+  insurance: if a run is ever dropped, the next attempt is 45m behind instead of
+  2h+.
 - **As of 2026-07-25, no article had ever been published by its cron.** The first
   six (07-20 … 07-25) all went out via a manual `workflow_dispatch` or a manual
   merge, because the cron ran ~2h late and somebody always got there first. When
