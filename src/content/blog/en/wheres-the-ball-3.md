@@ -6,7 +6,7 @@ tags: ["AI", "Computer Vision", "Research"]
 lang: en
 translationKey: wheres-the-ball-3
 heroImage: "/blog/wheres-the-ball-3.png"
-linkedinImage: /blog/wtb3-blind-spot.png
+linkedinImage: /blog/wtb3-geometry-recovers.png
 repoUrl: https://github.com/JaviMaligno/wheres-the-ball
 linkedinLinks:
   - label: "Part 1 (the VLM benchmark)"
