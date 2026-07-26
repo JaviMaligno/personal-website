@@ -206,4 +206,36 @@ Lighting/mood: Dark, analytical, high contrast, quietly cinematic, precise; not 
 Color palette: Deep graphite and blue-black background, balanced teal motion vectors, warm amber centroid and warning accents, off-white construction lines and pitch marks. No purple.
 Text: at most one tiny compact legend-like label reading exactly "WEIGHTED CENTROID", clean uppercase technical sans-serif. No other text.
 Avoid: purple gradient blobs, bokeh, glossy 3D rendering, photorealism, neon cyberpunk overload, clutter, illegible microtext, decorative topology dominating the image, large warning icons, generic circuit-board imagery.
+## wheres-the-ball-4 (2026-07-27)
+
+- Article: `src/content/blog/en/wheres-the-ball-4.md`
+- Image: `public/blog/wheres-the-ball-4.png`
+- Generated with: Codex (gpt-image), prompt delegated to Codex from style constraints
+
+```text
+
+Use case: infographic-diagram
+Asset type: 1020×510 landscape blog hero image
+Primary request: Create a refined technical editorial illustration that explains the counterintuitive finding: a motionless hidden ball is the hardest to locate because player motion provides no signal, while a ball in flight has a readable direction of travel from the players’ runs.
+Scene/backdrop: A single top-down stylized football/soccer pitch on a dark graphite ground, with subtle pitch markings and restrained data-visualization overlays.
+Subject: In open central space, show one small STILL off-white ball sitting alone, far from every player. Players are scattered around it and explicitly NOT converging; nearby player dots are static with no velocity arrows. Surround this ball with a faint broken/dashed undetermined halo and a subtle quiet greyed zone, communicating a blind spot and no usable signal. Elsewhere on the same pitch, show a ball IN FLIGHT moving fast, with a bright amber motion trail, a crisp teal-and-amber direction cone/arrow, and a clearly legible heading. Several player dots lean and run into that projected path, each with crisp velocity arrows aligned toward the flight corridor. Make the contrast between quiet stillness and directional energy unmistakable.
+Style/medium: Crisp bitmap illustration; refined technical editorial art; clean geometric shapes; precise linework; high contrast; professional AI/developer research-blog aesthetic; dark but not monochrome; sophisticated and restrained, not a literal scientific chart.
+Composition/framing: Exact 2:1 wide hero composition, designed to crop cleanly at 1020×510. Balanced visual weight across one continuous pitch. The isolated still-ball blind spot should be the central conceptual anchor; the flying-ball action should occupy a distinct secondary zone elsewhere without creating a split-screen or two separate panels. Keep generous breathing room and strong thumbnail readability.
+Color palette: Balanced teal, amber, graphite, and off-white on a dark ground. Quiet zone in muted graphite-grey; flight zone brighter and energetic. Absolutely no purple.
+Text (verbatim): “STILL = NO SIGNAL” — optional, at most once, tiny and unobtrusive near the dashed halo. No other text.
+Constraints: Top-down view only. Player dots and abstract directional marks only; no realistic people. Static players around the still ball must have no arrows and must not converge. Flying ball must have a visible motion trail and an unambiguous direction cone. No logos, no brand names, no watermark, no decorative statistics, no text-heavy poster.
+Avoid: purple; bokeh; photorealism; stadium crowds; realistic human figures; split-screen panels; neon cyberpunk glow; clutter; excessive labels; extra balls beyond the one still ball and one flying ball.
+Exact prompt used:
+
+Use case: infographic-diagram
+Asset type: 1020×510 landscape blog hero image
+Primary request: Create a refined technical editorial illustration that explains the counterintuitive finding: a motionless hidden ball is the hardest to locate because player motion provides no signal, while a ball in flight has a readable direction of travel from the players’ runs.
+Scene/backdrop: A single top-down stylized football/soccer pitch on a dark graphite ground, with subtle pitch markings and restrained data-visualization overlays.
+Subject: In open central space, show one small STILL off-white ball sitting alone, far from every player. Players are scattered around it and explicitly NOT converging; nearby player dots are static with no velocity arrows. Surround this ball with a faint broken/dashed undetermined halo and a subtle quiet greyed zone, communicating a blind spot and no usable signal. Elsewhere on the same pitch, show a ball IN FLIGHT moving fast, with a bright amber motion trail, a crisp teal-and-amber direction cone/arrow, and a clearly legible heading. Several player dots lean and run into that projected path, each with crisp velocity arrows aligned toward the flight corridor. Make the contrast between quiet stillness and directional energy unmistakable.
+Style/medium: Crisp bitmap illustration; refined technical editorial art; clean geometric shapes; precise linework; high contrast; professional AI/developer research-blog aesthetic; dark but not monochrome; sophisticated and restrained, not a literal scientific chart.
+Composition/framing: Exact 2:1 wide hero composition, designed to crop cleanly at 1020×510. Balanced visual weight across one continuous pitch. The isolated still-ball blind spot should be the central conceptual anchor; the flying-ball action should occupy a distinct secondary zone elsewhere without creating a split-screen or two separate panels. Keep generous breathing room and strong thumbnail readability.
+Color palette: Balanced teal, amber, graphite, and off-white on a dark ground. Quiet zone in muted graphite-grey; flight zone brighter and energetic. Absolutely no purple.
+Text (verbatim): “STILL = NO SIGNAL” — optional, at most once, tiny and unobtrusive near the dashed halo. No other text.
+Constraints: Top-down view only. Player dots and abstract directional marks only; no realistic people. Static players around the still ball must have no arrows and must not converge. Flying ball must have a visible motion trail and an unambiguous direction cone. No logos, no brand names, no watermark, no decorative statistics, no text-heavy poster.
+Avoid: purple; bokeh; photorealism; stadium crowds; realistic human figures; split-screen panels; neon cyberpunk glow; clutter; excessive labels; extra balls beyond the one still ball and one flying ball.
 ```
