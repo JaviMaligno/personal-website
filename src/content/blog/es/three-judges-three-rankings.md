@@ -31,7 +31,7 @@ Las tres familias corrieron a través de una única suscripción de Azure AI Fou
 
 ## 1. El ranking depende de quién sostiene el portapapeles
 
-![Tres jueces, tres rankings distintos de las mismas 45 comparaciones](https://www.javieraguilar.ai/blog/judge-bias-ranking.png)
+![Tres jueces, tres rankings distintos de las mismas 45 comparaciones](/blog/judge-bias-ranking.png)
 
 Las mismas respuestas. El mismo prompt ciego. Los dos órdenes de presentación. Lo único que cambia entre esas tres columnas es qué modelo juzga, y el orden cambia con él:
 
@@ -63,7 +63,7 @@ Esa última columna merece una nota, porque es la que yo citaría. Con tres juec
 
 Y ahora el hallazgo que más me importa:
 
-![El sesgo de un juez hacia sus propias respuestas crece con lo subjetiva que sea la tarea](https://www.javieraguilar.ai/blog/judge-bias-self-preference.png)
+![El sesgo de un juez hacia sus propias respuestas crece con lo subjetiva que sea la tarea](/blog/judge-bias-self-preference.png)
 
 | Juez | Objetiva | Media | Subjetiva |
 |---|---|---|---|

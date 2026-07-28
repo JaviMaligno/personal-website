@@ -31,7 +31,7 @@ All three families ran through a single Azure AI Foundry subscription, which is 
 
 ## 1. The ranking depends on who is holding the clipboard
 
-![Three judges, three different rankings of the same 45 comparisons](https://www.javieraguilar.ai/blog/judge-bias-ranking.png)
+![Three judges, three different rankings of the same 45 comparisons](/blog/judge-bias-ranking.png)
 
 Same answers. Same blinded prompt. Both presentation orders. The only thing that changes between those three columns is which model is judging — and the ordering changes with it:
 
@@ -63,7 +63,7 @@ That last column deserves a note, because it is the one I would quote. With thre
 
 Now the finding I care most about:
 
-![A judge's bias towards its own answers grows with how subjective the task is](https://www.javieraguilar.ai/blog/judge-bias-self-preference.png)
+![A judge's bias towards its own answers grows with how subjective the task is](/blog/judge-bias-self-preference.png)
 
 | Judge | Objective | Medium | Subjective |
 |---|---|---|---|
