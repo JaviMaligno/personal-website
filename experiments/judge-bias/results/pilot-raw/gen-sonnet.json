@@ -1,0 +1,26 @@
+[
+  {
+    "task_id": "obj-parse-duration",
+    "text": "```python\nimport re\n\ndef parse_duration(s: str) -> int:\n    if not isinstance(s, str) or not s:\n        raise ValueError(f\"Invalid duration: {s!r}\")\n\n    matches = re.findall(r'(\\d+)([hms])', s)\n    if not matches:\n        raise ValueError(f\"Invalid duration: {s!r}\")\n\n    # Ensure the whole string is consumed by valid tokens (no garbage characters)\n    reconstructed = ''.join(f\"{num}{unit}\" for num, unit in matches)\n    if reconstructed != s:\n        raise ValueError(f\"Invalid duration: {s!r}\")\n\n    seconds_per_unit = {'h': 3600, 'm': 60, 's': 1}\n    order = {'h': 0, 'm': 1, 's': 2}\n\n    seen_units = set()\n    total = 0\n    last_order = -1\n    for num, unit in matches:\n        if unit in seen_units:\n            raise ValueError(f\"Invalid duration: {s!r}\")\n        if order[unit] < last_order:\n            raise ValueError(f\"Invalid duration: {s!r}\")\n        seen_units.add(unit)\n        last_order = order[unit]\n        total += int(num) * seconds_per_unit[unit]\n\n    return total\n```"
+  },
+  {
+    "task_id": "obj-fix-bug",
+    "text": "```python\ndef median(xs):\n    if not xs:\n        raise ValueError(\"median() arg is an empty sequence\")\n    xs_sorted = sorted(xs)\n    n = len(xs_sorted)\n    mid = n // 2\n    if n % 2 == 1:\n        return xs_sorted[mid]\n    return (xs_sorted[mid - 1] + xs_sorted[mid]) / 2\n```"
+  },
+  {
+    "task_id": "med-summarize",
+    "text": "The pipeline ingests ~4.2 million events/day from 37 source systems. Before March, bespoke per-source parsers caused ~3 breakages/month with a 4-hour mean time to recovery (MTTR). A declarative mapping layer replaced them: each source ships a YAML descriptor, validated against a JSON Schema at deploy time. This cut breakages to 0.4/month and MTTR to 25 minutes. The migration took 6 engineer-weeks. Remaining failures cluster in 2 legacy SOAP sources that cannot emit a stable schema, slated for sunset in Q4. Cost rose 11%, since validation now runs per-event rather than per-batch."
+  },
+  {
+    "task_id": "med-extract",
+    "text": "```json\n[\n  {\n    \"version\": \"v2.3.1\",\n    \"date\": \"2025-03-04\",\n    \"type\": \"fix\",\n    \"summary\": \"fixed a race in the token refresher\"\n  },\n  {\n    \"version\": \"v2.4.0\",\n    \"date\": \"2025-03-19\",\n    \"type\": \"feature\",\n    \"summary\": \"added webhook retries with exponential backoff\"\n  },\n  {\n    \"version\": \"2.5.0\",\n    \"date\": \"2025-04-02\",\n    \"type\": \"breaking\",\n    \"summary\": \"renamed client.fetch() to client.request()\"\n  },\n  {\n    \"version\": \"v2.5.1\",\n    \"date\": \"2025-04-07\",\n    \"type\": \"fix\",\n    \"summary\": \"null pointer when config file absent\"\n  }\n]\n```"
+  },
+  {
+    "task_id": "subj-empty-state",
+    "text": "No pipelines have run yet\n\nYour repository is connected and ready to go. Push a commit or trigger a run manually to see your first pipeline in action.\n\n[Run your first pipeline]"
+  },
+  {
+    "task_id": "subj-explain",
+    "text": "Eventual consistency means that when data changes in a distributed system, not every part of the system sees that change at the exact same instant, but if you stop making new changes, all parts will eventually agree on the same value within a short window of time, usually milliseconds to a few seconds. For product decisions, this means you should avoid promising customers that an action is reflected everywhere \"instantly\" or that two people looking at the same data at the same moment are guaranteed to see identical results; instead you can promise that the system is highly available and fast, and that any temporary mismatch will resolve itself very quickly without the customer needing to do anything, so it is safe to say \"your change will be visible within moments\" but risky to say \"your change is visible immediately everywhere, guaranteed.\""
+  }
+]
