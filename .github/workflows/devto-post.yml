@@ -6,11 +6,20 @@ on:
       - main
     paths:
       - 'src/content/blog/en/**/*.md'
+  # Manual retry: re-publishing does not depend on re-running an old push.
+  # Use this when a run failed for a reason unrelated to the article itself
+  # (expired DEVTO_API_KEY, Dev.to outage) — publish-to-devto.js is idempotent,
+  # it looks the article up by canonical_url and PUTs instead of duplicating.
+  workflow_dispatch:
+    inputs:
+      post_path:
+        description: 'EN article to publish, e.g. src/content/blog/en/expensive-form.md'
+        required: true
+        type: string
 
 jobs:
   publish-devto:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
 
     steps:
       - name: Checkout
@@ -28,22 +37,52 @@ jobs:
 
       - name: Detect new posts
         id: detect
+        if: github.event_name == 'push'
         run: node scripts/linkedin/detect-new-posts.js
         env:
           GITHUB_BEFORE: ${{ github.event.before }}
           GITHUB_AFTER: ${{ github.event.after }}
 
+      # On push the article comes from the diff; on workflow_dispatch it comes
+      # from the input. Either way the rest of the job reads a single output,
+      # empty meaning "nothing to publish".
+      - name: Resolve article
+        id: resolve
+        env:
+          INPUT_POST_PATH: ${{ inputs.post_path }}
+          DETECTED_PATH: ${{ steps.detect.outputs.post_path }}
+          DETECTED_TITLE: ${{ steps.detect.outputs.post_title }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            case "$INPUT_POST_PATH" in
+              src/content/blog/en/*.md) ;;
+              *)
+                echo "::error::post_path must be an EN article under src/content/blog/en/ ending in .md (got '$INPUT_POST_PATH')"
+                exit 1
+                ;;
+            esac
+            if [ ! -f "$INPUT_POST_PATH" ]; then
+              echo "::error::No article at '$INPUT_POST_PATH' on ref '${{ github.ref_name }}'"
+              exit 1
+            fi
+            echo "post_path=$INPUT_POST_PATH" >> "$GITHUB_OUTPUT"
+            echo "post_title=$INPUT_POST_PATH" >> "$GITHUB_OUTPUT"
+          else
+            echo "post_path=$DETECTED_PATH" >> "$GITHUB_OUTPUT"
+            echo "post_title=$DETECTED_TITLE" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish to Dev.to
-        if: steps.detect.outputs.has_new_posts == 'true'
+        if: steps.resolve.outputs.post_path != ''
         run: node scripts/devto/publish-to-devto.js
         env:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
-          NEW_POST_PATH: ${{ steps.detect.outputs.post_path }}
+          NEW_POST_PATH: ${{ steps.resolve.outputs.post_path }}
           SITE_URL: 'https://www.javieraguilar.ai'
 
       - name: Report success
-        if: success() && steps.detect.outputs.has_new_posts == 'true'
+        if: success() && steps.resolve.outputs.post_path != ''
         run: |
           echo "✅ Dev.to post published successfully!"
-          echo "Post: ${{ steps.detect.outputs.post_title }}"
+          echo "Post: ${{ steps.resolve.outputs.post_title }}"
           echo "Status: Draft (review and publish manually on Dev.to)"
