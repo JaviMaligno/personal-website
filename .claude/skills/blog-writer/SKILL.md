@@ -293,8 +293,30 @@ Images from LinkedIn posts should be:
 - Named descriptively (e.g., `azure-content-filter-demo.png`)
 - Referenced in markdown as `/blog/[name].png`
 
+## Render for Review (do this by default)
+
+**Never hand back a finished article as raw markdown and stop there.** Always render it and give the user a URL, so they review it the way a reader will see it — typography, headings, code blocks, hero image in place, links resolving.
+
+```bash
+npm run build   # validates frontmatter against the content schema and catches broken pages
+npm run dev     # run in background; serves on http://localhost:4321
+```
+
+Then give the user both language URLs explicitly:
+
+- `http://localhost:4321/en/blog/<slug>`
+- `http://localhost:4321/es/blog/<slug>`
+
+Rules:
+- **Build before serving.** A frontmatter or schema error fails the build; catching it here beats the user hitting an error page.
+- **Verify the article actually generated**: `ls dist/en/blog/ | grep <slug>` and the same for `es`.
+- **Show the hero image inline** (Read tool on the PNG) as well, since it is easy to miss in a page scroll, and call out any visible text artefacts in the generated image — image models frequently mangle labels.
+- Only after the user has reviewed the rendered pages should you consider the article done, commit it, or schedule publication.
+
 ## Checklist Before Publishing
 
+- [ ] `npm run build` passes and both pages appear in `dist/en/blog/` and `dist/es/blog/`
+- [ ] **Rendered pages reviewed by the user** at `localhost:4321` (both languages) — not just the markdown
 - [ ] Both EN and ES files created
 - [ ] Matching `translationKey` in both
 - [ ] Same `pubDate` in both
