@@ -1,0 +1,1042 @@
+{
+  "meta": {
+    "generators": [
+      "opus-5",
+      "sonnet-5",
+      "haiku-4.5"
+    ],
+    "judges": [
+      "opus-5",
+      "sonnet-5",
+      "haiku-4.5"
+    ],
+    "execution": "claude-code-subagents",
+    "notes": "Within-family pilot. Generation and judging ran through Claude Code subagents, not raw API calls, so each model carried a coding-agent system prompt. Judges saw 18 blinded comparisons per batch in one context, and the two presentation orders were separate contexts. Judges were forbidden from executing code, so even the low-subjectivity tasks were graded by reading, not by running tests."
+  },
+  "tasks": [
+    {
+      "id": "obj-parse-duration",
+      "subjectivity": "low",
+      "prompt": "Write a Python function `parse_duration(s: str) -> int` that converts a duration string like \"1h30m\", \"45s\", \"2h\", \"90m\", \"1h2m3s\" into a total number of seconds. Invalid input must raise ValueError. Return only the function and any imports it needs, in a single ```python code block. No explanation."
+    },
+    {
+      "id": "obj-fix-bug",
+      "subjectivity": "low",
+      "prompt": "This function is supposed to return the median of a list of numbers, but it is wrong for some inputs:\n\n```python\ndef median(xs):\n    xs.sort()\n    return xs[len(xs) // 2]\n```\n\nReturn a corrected version in a single ```python code block. It must handle even-length lists, must not mutate the caller's list, and must raise ValueError on empty input. No explanation."
+    },
+    {
+      "id": "med-summarize",
+      "subjectivity": "medium",
+      "prompt": "Summarize the following text in at most 100 words, preserving every concrete number and constraint.\n\n---\nOur ingestion pipeline processes roughly 4.2 million events per day across 37 source systems. Until March, each source had its own bespoke parser, which meant a schema change upstream broke ingestion an average of 3 times per month, with a mean time to recovery of 4 hours. We replaced the bespoke parsers with a declarative mapping layer: each source now ships a YAML descriptor, validated against a JSON Schema at deploy time. Breakages dropped to 0.4 per month and MTTR to 25 minutes. The migration took 6 engineer-weeks. The remaining failures are concentrated in 2 legacy SOAP sources that cannot emit a stable schema; we plan to sunset them in Q4. Cost went up 11% because validation runs on every event rather than every batch.\n---"
+    },
+    {
+      "id": "med-extract",
+      "subjectivity": "medium",
+      "prompt": "Extract the following changelog into a JSON array. Each element must have exactly these keys: `version` (string), `date` (ISO 8601 YYYY-MM-DD), `type` (one of \"feature\", \"fix\", \"breaking\"), `summary` (string). Return only a single ```json code block.\n\n---\nv2.3.1 - Mar 4 2025 - fixed a race in the token refresher\nv2.4.0 (2025-03-19): added webhook retries with exponential backoff\n2.5.0, released April 2nd 2025 -- BREAKING: renamed `client.fetch()` to `client.request()`\nv2.5.1 / 2025-04-07 / patch: null pointer when config file absent\n---"
+    },
+    {
+      "id": "subj-empty-state",
+      "subjectivity": "high",
+      "prompt": "Write the empty-state copy for a CI dashboard: the screen a user sees when they have connected their repository but no pipeline has ever run. Include a headline, one or two lines of body copy, and the label for a single primary button. Return only the copy."
+    },
+    {
+      "id": "subj-explain",
+      "subjectivity": "high",
+      "prompt": "Explain \"eventual consistency\" in one paragraph to a product manager with no distributed systems background, in a way that helps them reason about what to promise customers. No bullet points, no headings."
+    }
+  ],
+  "outputs": [
+    {
+      "task_id": "obj-parse-duration",
+      "model": "opus-5",
+      "text": "```python\nimport re\n\n_DURATION_RE = re.compile(r\"^(?:(\\d+)h)?(?:(\\d+)m)?(?:(\\d+)s)?$\")\n\n\ndef parse_duration(s: str) -> int:\n    if not isinstance(s, str):\n        raise ValueError(f\"invalid duration: {s!r}\")\n    text = s.strip()\n    match = _DURATION_RE.match(text)\n    if not match or not any(match.groups()):\n        raise ValueError(f\"invalid duration: {s!r}\")\n    hours, minutes, seconds = (int(g) if g is not None else 0 for g in match.groups())\n    return hours * 3600 + minutes * 60 + seconds\n```",
+      "chars": 503,
+      "words": 62
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "model": "opus-5",
+      "text": "```python\ndef median(xs):\n    ys = sorted(xs)\n    n = len(ys)\n    if n == 0:\n        raise ValueError(\"median() arg is an empty sequence\")\n    mid = n // 2\n    if n % 2:\n        return ys[mid]\n    return (ys[mid - 1] + ys[mid]) / 2\n```",
+      "chars": 235,
+      "words": 40
+    },
+    {
+      "task_id": "med-summarize",
+      "model": "opus-5",
+      "text": "The pipeline handles roughly 4.2 million events daily across 37 source systems. Before March, each source had a bespoke parser, so upstream schema changes broke ingestion about 3 times monthly, with a 4-hour mean time to recovery. A declarative mapping layer replaced them: each source ships a YAML descriptor, validated against a JSON Schema at deploy time. Breakages fell to 0.4 per month and MTTR to 25 minutes; the migration took 6 engineer-weeks. Remaining failures come from 2 legacy SOAP sources that cannot emit a stable schema; they will be sunset in Q4. Cost rose 11% because validation runs per event, not per batch.",
+      "chars": 627,
+      "words": 104
+    },
+    {
+      "task_id": "med-extract",
+      "model": "opus-5",
+      "text": "```json\n[\n  {\n    \"version\": \"2.3.1\",\n    \"date\": \"2025-03-04\",\n    \"type\": \"fix\",\n    \"summary\": \"Fixed a race in the token refresher\"\n  },\n  {\n    \"version\": \"2.4.0\",\n    \"date\": \"2025-03-19\",\n    \"type\": \"feature\",\n    \"summary\": \"Added webhook retries with exponential backoff\"\n  },\n  {\n    \"version\": \"2.5.0\",\n    \"date\": \"2025-04-02\",\n    \"type\": \"breaking\",\n    \"summary\": \"Renamed client.fetch() to client.request()\"\n  },\n  {\n    \"version\": \"2.5.1\",\n    \"date\": \"2025-04-07\",\n    \"type\": \"fix\",\n    \"summary\": \"Fixed null pointer when config file is absent\"\n  }\n]\n```",
+      "chars": 575,
+      "words": 65
+    },
+    {
+      "task_id": "subj-empty-state",
+      "model": "opus-5",
+      "text": "No pipelines have run yet\n\nYour repository is connected and ready. Run your first pipeline to start seeing build times, test results, and failures here.\n\nRun first pipeline",
+      "chars": 172,
+      "words": 28
+    },
+    {
+      "task_id": "subj-explain",
+      "model": "opus-5",
+      "text": "Eventual consistency means that when something changes in one part of the system, the change is guaranteed to reach everywhere it needs to go, but not instantly and not everywhere at the same moment, so for a brief window different users or different screens can legitimately see slightly different versions of the truth. Think of it like an announcement spreading through a large office: the news is definitely correct and everyone will have it shortly, but for a few seconds some people are still working off what they heard a moment ago. Practically, this means you can safely promise customers that their change was accepted and will be reflected everywhere, and you can usually promise a typical settling time measured in milliseconds or seconds, but you should avoid promising that a change is visible to every user the instant they make it, and you should avoid designing flows that assume a write can be read back immediately from a different device or region. Where that instant guarantee genuinely matters, such as account balances, inventory counts, or permission revocations, flag it early, because the engineering cost of strong consistency is real and it is better to pay it deliberately in a few places than to imply it everywhere.",
+      "chars": 1246,
+      "words": 207
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "model": "sonnet-5",
+      "text": "```python\nimport re\n\ndef parse_duration(s: str) -> int:\n    if not isinstance(s, str) or not s:\n        raise ValueError(f\"Invalid duration: {s!r}\")\n\n    matches = re.findall(r'(\\d+)([hms])', s)\n    if not matches:\n        raise ValueError(f\"Invalid duration: {s!r}\")\n\n    # Ensure the whole string is consumed by valid tokens (no garbage characters)\n    reconstructed = ''.join(f\"{num}{unit}\" for num, unit in matches)\n    if reconstructed != s:\n        raise ValueError(f\"Invalid duration: {s!r}\")\n\n    seconds_per_unit = {'h': 3600, 'm': 60, 's': 1}\n    order = {'h': 0, 'm': 1, 's': 2}\n\n    seen_units = set()\n    total = 0\n    last_order = -1\n    for num, unit in matches:\n        if unit in seen_units:\n            raise ValueError(f\"Invalid duration: {s!r}\")\n        if order[unit] < last_order:\n            raise ValueError(f\"Invalid duration: {s!r}\")\n        seen_units.add(unit)\n        last_order = order[unit]\n        total += int(num) * seconds_per_unit[unit]\n\n    return total\n```",
+      "chars": 994,
+      "words": 117
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "model": "sonnet-5",
+      "text": "```python\ndef median(xs):\n    if not xs:\n        raise ValueError(\"median() arg is an empty sequence\")\n    xs_sorted = sorted(xs)\n    n = len(xs_sorted)\n    mid = n // 2\n    if n % 2 == 1:\n        return xs_sorted[mid]\n    return (xs_sorted[mid - 1] + xs_sorted[mid]) / 2\n```",
+      "chars": 275,
+      "words": 41
+    },
+    {
+      "task_id": "med-summarize",
+      "model": "sonnet-5",
+      "text": "The pipeline ingests ~4.2 million events/day from 37 source systems. Before March, bespoke per-source parsers caused ~3 breakages/month with a 4-hour mean time to recovery (MTTR). A declarative mapping layer replaced them: each source ships a YAML descriptor, validated against a JSON Schema at deploy time. This cut breakages to 0.4/month and MTTR to 25 minutes. The migration took 6 engineer-weeks. Remaining failures cluster in 2 legacy SOAP sources that cannot emit a stable schema, slated for sunset in Q4. Cost rose 11%, since validation now runs per-event rather than per-batch.",
+      "chars": 585,
+      "words": 91
+    },
+    {
+      "task_id": "med-extract",
+      "model": "sonnet-5",
+      "text": "```json\n[\n  {\n    \"version\": \"v2.3.1\",\n    \"date\": \"2025-03-04\",\n    \"type\": \"fix\",\n    \"summary\": \"fixed a race in the token refresher\"\n  },\n  {\n    \"version\": \"v2.4.0\",\n    \"date\": \"2025-03-19\",\n    \"type\": \"feature\",\n    \"summary\": \"added webhook retries with exponential backoff\"\n  },\n  {\n    \"version\": \"2.5.0\",\n    \"date\": \"2025-04-02\",\n    \"type\": \"breaking\",\n    \"summary\": \"renamed client.fetch() to client.request()\"\n  },\n  {\n    \"version\": \"v2.5.1\",\n    \"date\": \"2025-04-07\",\n    \"type\": \"fix\",\n    \"summary\": \"null pointer when config file absent\"\n  }\n]\n```",
+      "chars": 569,
+      "words": 63
+    },
+    {
+      "task_id": "subj-empty-state",
+      "model": "sonnet-5",
+      "text": "No pipelines have run yet\n\nYour repository is connected and ready to go. Push a commit or trigger a run manually to see your first pipeline in action.\n\n[Run your first pipeline]",
+      "chars": 177,
+      "words": 32
+    },
+    {
+      "task_id": "subj-explain",
+      "model": "sonnet-5",
+      "text": "Eventual consistency means that when data changes in a distributed system, not every part of the system sees that change at the exact same instant, but if you stop making new changes, all parts will eventually agree on the same value within a short window of time, usually milliseconds to a few seconds. For product decisions, this means you should avoid promising customers that an action is reflected everywhere \"instantly\" or that two people looking at the same data at the same moment are guaranteed to see identical results; instead you can promise that the system is highly available and fast, and that any temporary mismatch will resolve itself very quickly without the customer needing to do anything, so it is safe to say \"your change will be visible within moments\" but risky to say \"your change is visible immediately everywhere, guaranteed.\"",
+      "chars": 853,
+      "words": 142
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "model": "haiku-4.5",
+      "text": "```python\nimport re\n\ndef parse_duration(s: str) -> int:\n    pattern = r'(\\d+)([hms])'\n    matches = re.findall(pattern, s)\n    \n    if not matches:\n        raise ValueError(f\"Invalid duration format: {s}\")\n    \n    total_seconds = 0\n    for value, unit in matches:\n        value = int(value)\n        if unit == 'h':\n            total_seconds += value * 3600\n        elif unit == 'm':\n            total_seconds += value * 60\n        elif unit == 's':\n            total_seconds += value\n    \n    return total_seconds\n```",
+      "chars": 518,
+      "words": 62
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "model": "haiku-4.5",
+      "text": "```python\ndef median(xs):\n    sorted_xs = sorted(xs)\n    if not sorted_xs:\n        raise ValueError(\"Cannot compute median of empty list\")\n    \n    n = len(sorted_xs)\n    if n % 2 == 1:\n        return sorted_xs[n // 2]\n    else:\n        return (sorted_xs[n // 2 - 1] + sorted_xs[n // 2]) / 2\n```",
+      "chars": 295,
+      "words": 43
+    },
+    {
+      "task_id": "med-summarize",
+      "model": "haiku-4.5",
+      "text": "The ingestion pipeline processes 4.2 million events daily from 37 source systems. Previously, bespoke parsers caused schema changes to break ingestion an average of 3 times monthly with 4-hour recovery time. A declarative YAML-based mapping layer, validated against JSON Schema at deploy time, reduced breakages to 0.4 per month and MTTR to 25 minutes. The migration required 6 engineer-weeks. Two legacy SOAP sources remain problematic due to unstable schemas; sunset is planned for Q4. Validation now runs on every event, increasing costs by 11%.",
+      "chars": 548,
+      "words": 84
+    },
+    {
+      "task_id": "med-extract",
+      "model": "haiku-4.5",
+      "text": "```json\n[\n  {\n    \"version\": \"2.3.1\",\n    \"date\": \"2025-03-04\",\n    \"type\": \"fix\",\n    \"summary\": \"fixed a race in the token refresher\"\n  },\n  {\n    \"version\": \"2.4.0\",\n    \"date\": \"2025-03-19\",\n    \"type\": \"feature\",\n    \"summary\": \"added webhook retries with exponential backoff\"\n  },\n  {\n    \"version\": \"2.5.0\",\n    \"date\": \"2025-04-02\",\n    \"type\": \"breaking\",\n    \"summary\": \"renamed `client.fetch()` to `client.request()`\"\n  },\n  {\n    \"version\": \"2.5.1\",\n    \"date\": \"2025-04-07\",\n    \"type\": \"fix\",\n    \"summary\": \"null pointer when config file absent\"\n  }\n]\n```",
+      "chars": 570,
+      "words": 63
+    },
+    {
+      "task_id": "subj-empty-state",
+      "model": "haiku-4.5",
+      "text": "**No pipelines yet**\n\nPush a commit to your connected repository to trigger your first pipeline and start building.\n\n[Push Your Code]",
+      "chars": 133,
+      "words": 21
+    },
+    {
+      "task_id": "subj-explain",
+      "model": "haiku-4.5",
+      "text": "Eventual consistency means that when you make a change in one part of a system, it might not appear everywhere instantly\u2014there's a brief delay as the system synchronizes. Think of it like when you change your social media profile photo: not all servers see the update immediately, but within seconds or minutes, everyone gets the latest version. This differs from immediate consistency, which guarantees changes appear everywhere at once but becomes expensive and slow as you grow. Eventual consistency lets you serve customers faster and more reliably, though it means different users might see slightly different information for a short window. For product planning, this means you should set expectations that real-time consistency isn't guaranteed for distributed data, but all information will synchronize within a specific timeframe you can promise.",
+      "chars": 855,
+      "words": 130
+    }
+  ],
+  "judgments": [
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B anchors the pattern so malformed input like \"1h30x\" or \"5x\" is rejected, while A silently ignores garbage and accepts repeated or out-of-order units."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B validates that the whole string is consumed and that units are unique and ordered, whereas A silently ignores trailing or interleaved garbage instead of raising ValueError."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "Both validate correctly, but A achieves the same strictness with one anchored regex instead of B's reconstruction plus duplicate and ordering bookkeeping."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both are functionally identical correct fixes that copy the list, handle even lengths, and raise ValueError on empty input."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both correctly avoid mutation, average the two middle values, and raise ValueError on empty input, differing only in trivial style and check ordering."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "The two implementations are semantically equivalent and both satisfy every stated requirement."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B preserves every constraint including the pre-March baseline and the per-event-rather-than-per-batch cause of the 11% cost rise, both of which A drops, at only a marginal length cost."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B stays comfortably under 100 words while retaining details A omits, notably the March baseline and the per-event versus per-batch validation contrast."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Both preserve all numbers and constraints, but B does so in roughly 90 words while A sits at or slightly over the 100-word ceiling."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "A extracts the summaries faithfully from the source, while B rewrites and re-capitalizes them and strips the code formatting around client.fetch()/client.request()."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A normalizes version strings consistently, whereas B inconsistently keeps the \"v\" prefix on three entries but not on 2.5.0."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A gives consistently formatted version strings while B mixes \"v2.3.1\" with \"2.5.0\", an inconsistency worse than A's light summary rewording."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B's button is an action the dashboard can actually perform and its body explains the payoff, while A's \"Push Your Code\" button label points at work done outside the product."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B confirms the connected state, offers both ways to start a run, and pairs them with an in-product button label, whereas A's button asks the user to do something the UI cannot do."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both use the same headline and a clear primary action, trading A's payoff framing for B's how-to-start guidance with no clear overall winner."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B gives the same intuition plus concrete guidance on which promises are safe and which cases warrant strong consistency, while A ends on a vague assurance about a timeframe it never grounds."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B translates the concept directly into safe versus risky customer promises, whereas A stays generic and its closing advice about promising a timeframe is unsupported."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A pairs an accessible analogy with concrete promise guidance and names the cases where strong consistency must be flagged, making it more useful to a non-technical PM than B's denser, analogy-free paragraph."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A's anchored regex rejects malformed input like \"abc1h\" or \"1h1h\", while B's findall silently accepts garbage and repeated units, failing the ValueError requirement."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A validates that the whole string is consumed and that units are unique and ordered, whereas B accepts malformed inputs like \"x1h2h\" without raising ValueError."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "Both validate correctly, but B achieves the same strictness (order, uniqueness, no stray characters) in a single anchored regex with far less code."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both are functionally identical: non-mutating sorted copy, correct even-length averaging, and ValueError on empty input."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both fix all three requirements identically, differing only in whether the emptiness check precedes or follows the sort."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both are correct and equivalent in behavior, style, and handling of the empty, odd, and even cases."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A preserves every detail including the \"until March\" cutoff and the per-event vs per-batch contrast, which B drops, at only a marginal length cost."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A stays well under 100 words while retaining every number plus the March cutoff and the per-event vs per-batch cost cause, both of which B loses."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Both preserve all the facts, but A does so more compactly and comfortably within the 100-word limit that B strains against."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A normalizes versions and summaries consistently and cleanly, while B leaves markdown backticks embedded in a JSON string field."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "A is internally inconsistent, prefixing three versions with \"v\" but not the fourth, while B normalizes all four uniformly."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B uses consistent version strings and clean, uniformly phrased summaries, whereas A mixes \"v2.3.1\" with \"2.5.0\" in the same array."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A is clean plain copy that tells the user what value the dashboard will show, while B wraps the copy in markdown and its \"Push Your Code\" label does not describe a button action."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A gives both ways to start (push or manual trigger) and a button label that names a real in-app action, unlike B's \"Push Your Code\"."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "A's body is more actionable by naming both trigger paths, and it avoids B's redundancy between body copy and button label."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A gives a clearer analogy plus concrete guidance on what is safe to promise and which cases (balances, inventory, permissions) need strong consistency, while B is vaguer and slightly overstates the alternative."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A directly supplies safe versus risky promise wording for the PM, whereas B ends on a vague assurance of a \"specific timeframe you can promise\"."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B matches A's promise guidance and adds an intuitive analogy plus the crucial flag that some domains genuinely need strong consistency."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B's anchored regex validates the entire string and rejects garbage or malformed input that A's unanchored findall would silently accept."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B rejects duplicate units, wrong ordering, and stray characters via a full-string reconstruction check, while A accepts garbage between valid tokens."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "Both correctly validate structure and reject malformed input, but A's anchored compiled regex is more concise and equally robust."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both corrected functions are logically equivalent: non-mutating, correct even/odd median, and raise ValueError on empty input."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both avoid mutating the input, raise ValueError on empty lists, and compute the median identically for even and odd lengths."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "The two implementations differ only in variable naming and check ordering, with identical correctness and behavior."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B preserves the 'before March' timing context and the 'per event, not per batch' cost driver that A drops."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B retains both the pre-March timeframe and the per-event-vs-per-batch distinction that A omits."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both preserve every number and constraint from the source text, differing only in minor cosmetic phrasing."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B's summaries are cleaner (consistent capitalization, no stray markdown backticks) while both handle dates and types identically."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A keeps a consistent version string format across all entries, whereas B inconsistently prefixes some versions with 'v' and not others."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A is consistent in both version formatting and summary style, while B mixes 'v'-prefixed and bare version strings."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B's body copy previews concrete value (build times, test results, failures), giving the user a stronger reason to act."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B's copy accounts for both push-triggered and manually-triggered pipelines rather than assuming push is the only option."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both are well-crafted empty-state copy taking equally valid but different angles, one benefit-focused and one mechanism-focused."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B gives concrete, actionable promise/don't-promise guidance plus domain examples that directly serve the stated goal better than A's vaguer closing advice."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B translates the concept into explicit 'safe to say / risky to say' promise language, more directly useful to a PM than A's generic closing."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A additionally flags concrete domains needing strong consistency (balances, inventory, permissions) and the engineering cost tradeoff, giving the PM more to act on."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A's anchored regex rejects trailing garbage (e.g. \"1hfoo\") while B's re.findall silently ignores unmatched characters and fails to raise ValueError on such invalid input."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A validates that the entire string is consumed by valid tokens and rejects duplicate/out-of-order units, whereas B's findall-based approach silently ignores trailing garbage instead of raising ValueError."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both use a fully-anchored/whole-string validation strategy (regex anchors vs. reconstruction+order checks) that correctly rejects malformed input and produce equivalent results on all valid and invalid cases."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both implementations are functionally identical: they sort a copy, raise ValueError on empty input, and correctly average the two middle elements for even-length lists."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both implementations are functionally identical, differing only in variable names and the order of the empty-check versus sort."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both implementations are functionally identical in correctness, non-mutation, and empty-list handling, differing only in cosmetic style."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "Response A runs to roughly 104 words, exceeding the 100-word limit, while B preserves all the same numbers/constraints in about 84 words."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both stay under the 100-word cap and preserve every number and constraint from the source with only minor, offsetting stylistic trade-offs."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A stays within the 100-word limit (~91 words) while preserving all constraints, whereas B runs to roughly 104 words, violating the stated limit."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both use a consistent version format and correct dates/types; the only differences are cosmetic (capitalization and backtick retention in the summary text), a matter of style rather than correctness."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "B uses a consistent version format across all entries, while A inconsistently keeps a \"v\" prefix on some versions (v2.3.1, v2.4.0, v2.5.1) but not others (2.5.0), which is less usable for downstream parsing."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B has a consistent version string format across all entries and clean, complete-sentence summaries, while A inconsistently mixes \"v\"-prefixed and unprefixed version strings."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A's button label \"Run first pipeline\" is a plausible dashboard action, whereas B's \"[Push Your Code]\" mislabels a button with an action (pushing code) that can't actually be performed by clicking it."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A's CTA \"Run your first pipeline\" is an actionable dashboard button, whereas B's \"[Push Your Code]\" describes a git action that a UI button click cannot perform."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both provide a clear headline, concise body copy, and an actionable, sensible primary button label, differing only in minor emphasis (mechanism vs. benefit)."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A gives concrete, business-relevant guidance (including when NOT to promise instant consistency, e.g. account balances, inventory, permissions) that is more directly useful for reasoning about customer promises than B's more generic analogy-based explanation."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A offers precise, quotable \"safe to promise X / risky to promise Y\" language tailored to the task, while B's explanation is more generic and less directly tied to what can be promised."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B additionally flags concrete cases (account balances, inventory, permission revocations) where eventual consistency is not an acceptable promise, giving a more complete framework for reasoning about customer commitments than A's otherwise crisp explanation."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "Response B uses anchored regex and validates full string format, while Response A only partially validates and would accept malformed inputs like embedded garbage."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B comprehensively validates input with string reconstruction, duplicate-unit checking, and ordering enforcement, while Response A only finds matches without checking for garbage characters."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "Response A's anchored regex pattern cleanly validates the entire format with no overhead, while Response B adds unnecessary checks (ordering, duplicate detection) not specified in the task."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both solutions correctly handle even-length lists, avoid mutation, and raise ValueError on empty input; they differ only in style and variable naming."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B checks emptiness before creating the sorted copy, making it more efficient than Response A which sorts before checking."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B checks emptiness before sorting, improving efficiency over Response A which incurs the cost of sorting an empty list."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A stays within the 100-word limit (84 words) while Response B exceeds it (104 words), violating the primary constraint."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both summaries preserve all concrete numbers and stay within the 100-word limit; they differ only in style (Response B uses abbreviations like events/day)."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B stays within the 100-word limit (91 words) while Response A exceeds it by 4 words, violating the strict word-count constraint."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A preserves the original summary text exactly, while Response B modifies them by capitalizing, which adds unnecessary transformation to the extraction task."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "Response B has inconsistent version formatting (v-prefix on some but not all entries) and removes backticks from summaries, while Response A extracts consistently."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "Response A maintains consistent version formatting without the v-prefix, while Response B inconsistently adds v-prefixes to only some versions."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "Response B's button label 'Run first pipeline' is more specific and actionable than Response A's generic 'Push Your Code'."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B offers two trigger methods (push commit or manual trigger) and uses a clearer button label, while Response A only suggests pushing."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B acknowledges user agency by offering multiple trigger options (push or manual), while Response A prescriptively tells them to run a pipeline."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "Response B provides concrete examples (account balances, inventory, permissions) and explains engineering trade-offs clearly, offering deeper guidance for PM decision-making."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B provides a more technically precise definition while maintaining clarity, and offers concise, actionable guidance on what to promise customers."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B respects the 'one paragraph' constraint better while providing clear, concise guidance; Response A significantly exceeds one paragraph in length."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A validates string consumption and enforces ordering/no-duplicates, while Response B accepts invalid inputs like '1h30m45' or '1h1h'."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A comprehensively validates for empty strings, string consumption, ordering, and duplicate units, while Response B accepts invalid formats."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "Response B's compiled regex elegantly enforces format and ordering in a single pass, while Response A is correct but more verbose through explicit validation steps."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A uses more idiomatic Python with 'if n % 2:' for odd check and is slightly more concise while remaining equally correct."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A checks for empty input before sorting, avoiding unnecessary work, while Response B wastes a sort call on empty input."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A checks for empty input before sorting for efficiency, while Response B performs an unnecessary sort of an empty list."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "Response A exceeds the 100-word limit at ~112 words, while Response B stays within the constraint at ~95 words."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "Response A is at ~102 words, slightly over limit, while Response B is at ~95 words and comfortably within the 100-word constraint."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A is at ~102 words, just barely over, while Response B is at ~112 words and significantly exceeds the 100-word limit."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A provides complete, properly capitalized summaries with full context, while Response B omits important words like 'Fixed' in the last summary."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A preserves the original inconsistent 'v' prefixes from the source (v2.3.1, v2.4.0, 2.5.0, v2.5.1), while Response B normalizes them away."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A preserves the original version format with selective 'v' prefixes, while Response B both normalizes versions and alters summary wording and formatting."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A is plain text and clearly formatted, while Response B includes markdown formatting (**bold**, [brackets]) that shouldn't be in plain copy output."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A offers users two actions (push or manual trigger) with clear button text, while Response B includes unwanted markdown formatting and only suggests one path."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A provides more user guidance by offering multiple paths (push commit or manually trigger), making it more helpful for the empty state."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A provides thorough guidance with office analogy, practical implications, and specific cases where strong consistency is needed (accounts, inventory, permissions)."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "Response B's social media example and explicit contrast with immediate consistency makes the tradeoff clearer for a product manager."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A provides specific domain examples (account balances, inventory, permissions) that help a PM decide where to enforce strong consistency, while Response B is more generic."
+    }
+  ]
+}

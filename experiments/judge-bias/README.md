@@ -33,6 +33,14 @@ number here worth quoting.
 - **Three subjectivity levels** in `tasks.json` (`low` / `medium` / `high`), because
   the interesting hypothesis is that judge choice matters more as subjectivity rises.
 
+### Known gap: the length metric has no control
+
+`longer-wins rate` is reported but is **not** on its own evidence of length bias. If the
+models that write longest are also the models judges rank highest — which is what happened
+in the pilot — length and quality are confounded and the number cannot separate them.
+Before trusting it, add paired tasks that elicit the same content at two different lengths,
+so length varies while quality is held roughly fixed.
+
 ## Running it across families
 
 Needs API keys; no other dependencies (stdlib only).
