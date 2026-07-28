@@ -54,7 +54,7 @@ And it gets worse exactly where you would least want it to:
 | slot-A rate | 64% (p = 0.29) | 75% (p = 0.023) | 77% (p = 0.005) |
 | flip rate | 13% | 40% | 53% |
 
-On the subjective half of the task set, grok-4.3 reverses its own verdict on **more than
+On the subjective third of the task set, grok-4.3 reverses its own verdict on **more than
 half** of all comparisons. A judge that cannot reproduce its own answer when you swap two
 paragraphs is not measuring the answers. The other two judges stay flat across
 subjectivity (gpt-5.5: 55/54/50%, claude: 56/40/57%, none significant).
@@ -149,7 +149,7 @@ So the preference is not just real, it is **stronger than the uncontrolled numbe
 | `len-error-copy` (write an error message) | concision | 50.0% |
 
 **The elaboration half is unanimous: 27 out of 27, every judge, every generator, both
-orders.** Add the pilot's 18 and it is 45 for 45 across six different judges from four
+orders.** Add the pilot's 18 and it is 45 for 45 across six different judges from three
 families. If anything in this experiment deserves to be called a law, it is that one.
 
 **The concision half does not replicate.** The pilot reported a reversal — judges preferring
@@ -202,8 +202,8 @@ the pair that excludes the strongest.
   `claude-opus-5` or `claude-sonnet-5` at run time, so the Anthropic seat is
   `claude-sonnet-4-6` — a generation behind the other two. The obvious worry is that a
   capability gap is being read as a family effect. Two things push back: the older model is
-  *not* the lowest-ranked (grok-4.3 is, under every judge including its own), and the
-  self-preference deltas are within 7pp of each other across all three families. But the
+  *not* the lowest-ranked overall (grok-4.3 is), and the self-preference deltas are within
+  7pp of each other across all three families. But the
   clean version of this experiment runs same-tier models, and this is not it.
 - **gpt-5.5 did not run at temperature 0**, because it refuses to: the API accepts only its
   default. The other two ran at 0. Some part of gpt-5.5's flip rate is sampling noise the

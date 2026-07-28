@@ -4,6 +4,28 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## three-judges-three-rankings
+
+- **Article:** `src/content/blog/en/three-judges-three-rankings.md`
+- **Image:** `public/blog/three-judges-three-rankings.png`
+- **Generated:** 2026-07-28 (Codex `image_gen`, editorial-illustration guide)
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 (exact 2:1 aspect ratio) blog hero image
+Primary request: Create a refined technical editorial bitmap illustration of an LLM evaluation harness in action: three different anonymous LLM judges score the exact same blinded pair of answers, yet produce three different rankings. This must be a concrete system scene, not an abstract metaphor.
+Scene/backdrop: Dark graphite developer workstation / evaluation dashboard, dark but not monochrome, with subtle grid structure and crisp panel borders.
+Subject and composition: Clean wide geometric composition with several distinct zones. Center-left: two prominent side-by-side off-white answer cards labeled exactly “A” and “B”, with short neutral placeholder lines and no identifying names; a clear bidirectional swap arrow between the cards shows that presentation order is reversed. Upper-right: one scoreboard/ranking panel split into three equal columns labeled exactly “JUDGE 1”, “JUDGE 2”, “JUDGE 3”. Each column evaluates the same A/B pair but visibly disagrees: JUDGE 1 shows “A > B”, JUDGE 2 shows “B > A”, JUDGE 3 shows “A = B”; use compact score bars or ranked rows so the differing order is immediately legible. Thin connector lines lead from the same answer pair to all three judge columns. Lower-left: a compact terminal window with only these readable generic lines: “run.py --judges 3”, “blinded: true”, “swap_order: true”. Lower-right: a small, clearly legible bar chart titled exactly “BIAS DELTA”, with three unequal teal/amber bars and minimal axis marks. Keep every element within generous safe margins.
+Style/medium: Crisp bitmap illustration with vector-like precision, refined technical editorial illustration, professional AI/developer blog aesthetic, clean sans-serif UI typography, sharp edges, restrained fine texture, high contrast, polished and publication-ready.
+Color palette: Balanced teal, amber, graphite, charcoal, and off-white accents on a dark background; each zone is distinct while the whole image remains cohesive.
+Lighting/mood: Controlled screen-like illumination, analytical, serious, elegant.
+Text requirements: Render only the specified generic labels and lines, spelled exactly; no extra headline, prose, captions, model names, or decorative pseudo-text. Readable generic labels are good, but this must not become a text-heavy poster.
+Constraints: 2:1 landscape hero composition; three anonymous judge modules must clearly receive the same two blinded answer cards; the ranking order/outcome must differ across all three columns; include the A/B swap arrow, small bias bar chart, and terminal window; no people, faces, hands, mascots, logos, brand names, real model names, trademarks, or watermark.
+Avoid: abstract metaphor as the main concept, purple gradient blobs, purple-dominant palette, bokeh, lens flare, glossy sci-fi holograms, excessive glow, clutter, tiny unreadable text, photorealistic office scene, poster-like wall of text.
+```
+
+---
+
 ## wheres-the-ball
 
 - **Article:** `src/content/blog/en/wheres-the-ball.md`
