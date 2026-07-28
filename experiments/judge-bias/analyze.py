@@ -166,6 +166,57 @@ def main() -> int:
             hits += wl > ll
         print(f"{j:<34} {pct(hits / tot if tot else None):>12} {tot:>5}")
     print("  50% = no length preference; higher = longer answers win more.")
+    print("  CONFOUNDED with quality on its own — read the length control below instead.")
+
+    # --- 4b. length control --------------------------------------------------
+    probe = data.get("length_probe")
+    if probe:
+        pw = {(o["task_id"], o["model"], o["variant"]): o["words"] for o in probe["outputs"]}
+        short_w = [v for (t, m, var), v in pw.items() if var == "short"]
+        long_w = [v for (t, m, var), v in pw.items() if var == "long"]
+        print("\n## Length control (same model, same task, only the target length differs)")
+        print(f"  manipulation check: short mean {sum(short_w)/len(short_w):.0f} words, "
+              f"long mean {sum(long_w)/len(long_w):.0f} words")
+
+        pc: dict = collections.defaultdict(dict)
+        for x in probe["judgments"]:
+            if x["verdict"] is None:
+                continue
+            win = {"a": x["slot_a_variant"], "b": x["slot_b_variant"], "tie": "tie"}[x["verdict"]]
+            slot = "sl" if x["slot_a_variant"] == "short" else "ls"
+            pc[(x["task_id"], x["model"], x["judge"])][slot] = win
+
+        print(f"\n{'judge':<34} {'long wins':>10} {'flip':>7} {'n':>5}")
+        for j in judges:
+            vals, flips = [], 0
+            for (t, m, jj), cell in pc.items():
+                if jj != j or len(cell) < 2:
+                    continue
+                x, y = cell["sl"], cell["ls"]
+                if x == y:
+                    vals.append(1.0 if x == "long" else 0.0 if x == "short" else 0.5)
+                else:
+                    vals.append(0.5)
+                    flips += x != y and "tie" not in (x, y)
+            if vals:
+                print(f"{j:<34} {pct(sum(vals)/len(vals)):>10} "
+                      f"{pct(flips/len(vals)):>7} {len(vals):>5}")
+        print("  50% = no length preference, quality held as fixed as this design allows.")
+        print("  Compare against the confounded number above; a large gap means that")
+        print("  number was measuring quality, not verbosity.")
+
+        print(f"\n{'by subjectivity':<34} {'long wins':>10} {'n':>5}")
+        for lvl in ["low", "medium", "high"]:
+            psubj = {t["id"]: t["subjectivity"] for t in probe["tasks"]}
+            vals = []
+            for (t, m, jj), cell in pc.items():
+                if psubj.get(t) != lvl or len(cell) < 2:
+                    continue
+                x, y = cell["sl"], cell["ls"]
+                vals.append((1.0 if x == "long" else 0.0 if x == "short" else 0.5)
+                            if x == y else 0.5)
+            if vals:
+                print(f"{lvl:<34} {pct(sum(vals)/len(vals)):>10} {len(vals):>5}")
 
     # --- 5. agreement --------------------------------------------------------
     print("\n## Inter-judge agreement (Cohen's kappa), by subjectivity")

@@ -23,6 +23,52 @@ import protocol  # noqa: E402
 NAMES = {"opus": "opus-5", "sonnet": "sonnet-5", "haiku": "haiku-4.5"}
 
 
+def assemble_length(missing: list) -> dict | None:
+    """The length control, in the shape run.py's length_probe() emits."""
+    if not (RAW / "lenkey.json").exists():
+        return None
+    tasks = json.loads((ROOT / "tasks-length.json").read_text())
+    key = json.loads((RAW / "lenkey.json").read_text())
+
+    outputs = []
+    for short, name in NAMES.items():
+        for o in json.loads((RAW / f"len-{short}.json").read_text()):
+            outputs.append({
+                "task_id": o["task_id"],
+                "model": name,
+                "variant": o["variant"],
+                "text": o["text"],
+                **protocol.size(o["text"]),
+            })
+
+    judgments = []
+    for short, name in NAMES.items():
+        for order in ("sl", "ls"):
+            path = RAW / f"lenjudge-{short}-{order}.json"
+            if not path.exists():
+                missing.append(path.name)
+                continue
+            seen = set()
+            for v in json.loads(path.read_text()):
+                k = key[v["comparison_id"]]
+                seen.add(v["comparison_id"])
+                va, vb = ("short", "long") if order == "sl" else ("long", "short")
+                judgments.append({
+                    "task_id": k["task_id"],
+                    "judge": name,
+                    "model": NAMES[k["model"]],
+                    "slot_a_variant": va,
+                    "slot_b_variant": vb,
+                    "verdict": protocol.parse_verdict(json.dumps({"winner": v["verdict"]})),
+                    "raw": v.get("reason", ""),
+                })
+            gap = set(key) - seen
+            if gap:
+                missing.append(f"{path.name}: {len(gap)} missing")
+
+    return {"tasks": tasks, "outputs": outputs, "judgments": judgments}
+
+
 def main() -> int:
     tasks = json.loads((ROOT / "tasks.json").read_text())
     key = json.loads((RAW / "key.json").read_text())
@@ -64,6 +110,8 @@ def main() -> int:
             if gap:
                 missing.append(f"{path.name}: {len(gap)} comparisons missing")
 
+    probe = assemble_length(missing)
+
     if missing:
         print("INCOMPLETE:", "; ".join(missing), file=sys.stderr)
         return 1
@@ -86,8 +134,10 @@ def main() -> int:
         "tasks": tasks,
         "outputs": outputs,
         "judgments": judgments,
+        "length_probe": probe,
     }, indent=2))
-    print(f"wrote {out}: {len(outputs)} outputs, {len(judgments)} judgments")
+    print(f"wrote {out}: {len(outputs)} outputs, {len(judgments)} judgments"
+          + (f", + {len(probe['judgments'])} length-control judgments" if probe else ""))
     return 0
 
 

@@ -57,7 +57,9 @@ the time — a number that reads like damning bias until you see that its peers 
 same answer 58% of the time. Most of the 75% is that Opus's answers are simply rated best
 by everyone.
 
-## 3. Length — measured, and uninterpretable by design
+## 3. Length — the naive number is uninterpretable; the controlled one inverts
+
+### The number everyone quotes
 
 | Judge | Longer answer wins | n |
 |---|---|---|
@@ -65,20 +67,64 @@ by everyone.
 | sonnet-5 | 85.0% | 20 |
 | haiku-4.5 | 50.0% | 30 |
 
-80–85% looks like a textbook length bias. It is not usable evidence, because in this
-task set the models that write longest are also the models every judge ranks highest.
-Length and quality are confounded, so the number cannot distinguish "judges reward
-verbosity" from "the verbose answers were better".
+80–85% looks like a textbook length bias. It is not usable evidence: in this task set the
+models that write longest are also the models every judge ranks highest, so length and
+quality are confounded and the number cannot distinguish "judges reward verbosity" from
+"the verbose answers were better".
 
-This is the pilot's clearest methodological lesson, and it applies to the statistic as it
-is usually quoted in blog posts: a longer-wins rate without a length control measures
-almost nothing. **Fix before the cross-family run:** add paired tasks where the same
-content is produced at two lengths, so length varies with quality held fixed.
+### The control
 
-One concrete case cuts against the bias reading. On `med-summarize` the prompt capped the
-answer at 100 words; Opus wrote 104, Sonnet 91, Haiku 84. Every judge — including Opus
-itself — preferred Sonnet over Opus on that comparison. The judges did penalise the
-over-long answer when a stated constraint made length checkable.
+`tasks-length.json` holds model and task fixed and varies only the target length. The two
+variants share an identical base prompt and differ by one appended sentence ("Answer in
+roughly N words"). The judge is shown the **base prompt only** — never the length
+directive — so it cannot be grading compliance with a word count it was told about.
+
+Manipulation check: short answers averaged 59 words, long 193, consistently across all
+three models.
+
+| Judge | Long wins (controlled) | Flip rate | n |
+|---|---|---|---|
+| opus-5 | 88.9% | 0% | 9 |
+| sonnet-5 | 66.7% | 0% | 9 |
+| haiku-4.5 | 83.3% | 33.3% | 9 |
+
+So the preference survives the control — but the aggregate hides the actual finding.
+
+### Broken down by task, it inverts
+
+| Length-probe task | Long wins | Detail |
+|---|---|---|
+| `len-index` (explain a DB index) | **100%** | 9/9, unanimous across all judges and models |
+| `len-idempotency` (explain idempotency to a PM) | **100%** | 9/9, unanimous |
+| `len-summarize` (summarize, preserving numbers) | **38.9%** | short preferred; Haiku flipped on all 3 |
+
+On the two explanation tasks the verdict is unanimous — 18 out of 18 comparisons, every
+judge, every model, both orders, zero flips. That is about as strong as a signal gets at
+this n.
+
+On summarization it reverses. And not because the short answers were worse: **every
+variant, short and long, preserved all 9 numbers from the source.** The judges' stated
+reasons are explicit about why they went short — "genuinely condensed form, whereas B is
+essentially a full paraphrase", "reads as narrative retelling rather than a summary",
+"unnecessary editorializing".
+
+### What this actually means
+
+The received claim is "LLM judges equate longer with better". The controlled measurement
+says something more specific and more useful: **judges reward elaboration, and that
+reward inverts when the task's implicit success criterion is concision.** Nobody told the
+judges the summary had a length limit — the word "summarize" was enough for them to treat
+brevity as part of the goal.
+
+Which reframes the practical advice. "Watch out for length bias" is the wrong instruction,
+because on explanation tasks the longer answer plausibly *was* better and penalising it
+would be wrong. The right instruction is to know whether your task rewards elaboration or
+compression, and to check that your judge has inferred the same thing from the prompt you
+gave it — which is a `Dimension` question in the three-decisions sense, not a bias to
+correct away.
+
+Note also that Haiku flipped on all three summarization comparisons — the same pattern as
+in §1: its instability concentrates on the task where the right answer is contested.
 
 ## 4. Inter-judge agreement (Cohen's kappa)
 
@@ -105,6 +151,40 @@ It is within one family, so it says nothing about the actual question — whethe
 judge favours GPT-shaped answers over Claude-shaped ones. Every model here also ran under
 a coding-agent system prompt rather than bare, which shifts style. And 6 tasks is small.
 
-Carry forward to the cross-family run: the length control above, more tasks per
-subjectivity level, and judges of comparable capability tier so the capability effect does
-not swamp the family effect.
+Carry forward to the cross-family run: more tasks per subjectivity level, more length-probe
+tasks split between elaboration-rewarding and concision-rewarding phrasings, and judges of
+comparable capability tier so the capability effect does not swamp the family effect.
+
+## Article notes (not written yet — waiting on the cross-family data)
+
+Working angle: the sequel to `llm-as-judge-three-decisions`. That post covered *what* you
+score; this one covers *who* scores it, and what happens when you actually measure the
+things everyone repeats about judges.
+
+The spine, in the order the evidence supports:
+
+1. **Position bias didn't show up.** Universally-repeated advice, absent at this n.
+   Randomizing order is still right — it's free — but the justification usually given
+   for it isn't what the data shows.
+2. **The real failure mode was instability, not bias.** Haiku reversed itself 4× more
+   often than the frontier tiers, concentrated on tasks with a contested right answer.
+   A judge that can't reproduce its own verdict is a worse problem than one that leans.
+3. **Self-preference needs a delta, not a rate.** Opus picking its own answer 75% of the
+   time reads as damning until you see peers pick it 58%. And Sonnet's delta goes
+   *negative*, which is hard to square with a mechanical style-recognition story.
+4. **Length bias is the best story.** The naive 80–85% is uninterpretable; the controlled
+   version is unanimous *in both directions* depending on whether the task rewards
+   elaboration or compression. This is the section that earns the post — it shows a
+   commonly-cited statistic being wrong in a way you can only see by building the control.
+5. **Agreement tracked capability gap more than subjectivity**, which if it survives
+   cross-family would change the panel-of-judges advice: pair judges of comparable
+   capability rather than assuming more judges = more robustness.
+
+Honesty requirements for the draft:
+- State the within-family limitation up front, not in a footnote — until the cross-family
+  run exists, this measures tiers, not families, and therefore does not answer the
+  question that started it.
+- The claims inherited from `docs/research/llm-judge-bias-conversation.md` about prior
+  work are uncited. Either find the actual papers or drop the appeals to literature and
+  stand on the measurements.
+- n is small. Every number above wants the word "pilot" near it.

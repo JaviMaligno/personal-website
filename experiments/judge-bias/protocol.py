@@ -76,3 +76,26 @@ def parse_verdict(raw: str) -> str:
 
 def size(text: str) -> dict:
     return {"chars": len(text), "words": len(text.split())}
+
+
+# --- length control ---------------------------------------------------------
+#
+# The plain longer-wins rate confounds length with quality: if the models that
+# write longest are also the ones judges rank highest, the number says nothing.
+#
+# The control holds the model and the task fixed and varies only the target
+# length. The two variants share an identical base prompt and differ by one
+# appended sentence ("Answer in roughly N words"), so neither variant is given
+# more freedom over content — only over how much of it to spend words on.
+#
+# The judge is then shown the BASE prompt, without the length directive. That is
+# the whole trick: if the judge saw the directive it would grade compliance with
+# a word count, which is not the question. Seeing only the base, it has to say
+# which answer is better for a task that never mentioned length at all.
+
+def length_variant_prompt(task: dict, variant: str) -> str:
+    return f"{task['base']}\n\n{task['variants'][variant]}"
+
+
+def length_judge_prompt(task: dict, a: str, b: str) -> str:
+    return JUDGE_TEMPLATE.format(task=task["base"], a=a, b=b)

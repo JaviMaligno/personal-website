@@ -1038,5 +1038,670 @@
       "verdict": "a",
       "raw": "Response A provides specific domain examples (account balances, inventory, permissions) that help a PM decide where to enforce strong consistency, while Response B is more generic."
     }
-  ]
+  ],
+  "length_probe": {
+    "tasks": [
+      {
+        "id": "len-index",
+        "subjectivity": "low",
+        "base": "Explain what a database index is and why adding one can make writes slower.",
+        "variants": {
+          "short": "Answer in roughly 60 words.",
+          "long": "Answer in roughly 220 words."
+        }
+      },
+      {
+        "id": "len-summarize",
+        "subjectivity": "medium",
+        "base": "Summarize the following text, preserving every concrete number and constraint.\n\n---\nOur ingestion pipeline processes roughly 4.2 million events per day across 37 source systems. Until March, each source had its own bespoke parser, which meant a schema change upstream broke ingestion an average of 3 times per month, with a mean time to recovery of 4 hours. We replaced the bespoke parsers with a declarative mapping layer: each source now ships a YAML descriptor, validated against a JSON Schema at deploy time. Breakages dropped to 0.4 per month and MTTR to 25 minutes. The migration took 6 engineer-weeks. The remaining failures are concentrated in 2 legacy SOAP sources that cannot emit a stable schema; we plan to sunset them in Q4. Cost went up 11% because validation runs on every event rather than every batch.\n---",
+        "variants": {
+          "short": "Answer in roughly 50 words.",
+          "long": "Answer in roughly 150 words."
+        }
+      },
+      {
+        "id": "len-idempotency",
+        "subjectivity": "high",
+        "base": "Explain idempotency to a product manager with no distributed systems background, in a way that helps them reason about what to promise customers. No bullet points, no headings.",
+        "variants": {
+          "short": "Answer in roughly 60 words.",
+          "long": "Answer in roughly 220 words."
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "task_id": "len-index",
+        "model": "opus-5",
+        "variant": "short",
+        "text": "An index is a separate, sorted data structure \u2014 usually a B-tree \u2014 that maps column values to row locations, so the database can jump straight to matching rows instead of scanning the whole table. Writes get slower because every insert, update, or delete must also update each index: extra I/O, page splits, and locking on top of the table write itself.",
+        "chars": 353,
+        "words": 62
+      },
+      {
+        "task_id": "len-index",
+        "model": "opus-5",
+        "variant": "long",
+        "text": "A database index is a secondary data structure the database maintains alongside a table to speed up lookups. The most common form is a B-tree: the indexed column's values are kept in sorted order, each pointing to the location of the corresponding row. Without an index, answering `WHERE email = 'x'` means scanning every row in the table. With one, the database walks a few levels of the tree and jumps straight to the matches.\n\nThe catch is that an index is redundant, derived data, and redundant data must be kept in sync. Every INSERT writes the row and then adds an entry to each index on that table. Every DELETE removes both. An UPDATE touching an indexed column is effectively a delete plus an insert in that index, even though the row itself hasn't moved. A table with five indexes can therefore do six writes' worth of work per row change.\n\nThere are second-order costs too. Index pages stay sorted, so inserting into a full page causes a page split \u2014 extra I/O and fragmentation. Random keys like UUIDs scatter writes across the whole index, hurting cache locality. Indexes also enlarge the write-ahead log and add latch contention on hot pages.\n\nThat's the trade: cheaper reads, and a write tax roughly proportional to how many indexes you keep.",
+        "chars": 1257,
+        "words": 219
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "opus-5",
+        "variant": "short",
+        "text": "Since March, the pipeline's 37 bespoke parsers (4.2M events/day) were replaced by YAML descriptors validated against a JSON Schema at deploy time. Cost: 6 engineer-weeks. Breakages fell from 3/month to 0.4; MTTR from 4 hours to 25 minutes. Costs rose 11% (per-event validation). Two legacy SOAP sources remain; sunset in Q4.",
+        "chars": 324,
+        "words": 51
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "opus-5",
+        "variant": "long",
+        "text": "The ingestion pipeline handles roughly 4.2 million events per day from 37 source systems. Until March, every source had its own bespoke parser. That design meant an upstream schema change broke ingestion an average of 3 times per month, with a mean time to recovery of 4 hours.\n\nThe team replaced the bespoke parsers with a declarative mapping layer: each source now ships a YAML descriptor, validated against a JSON Schema at deploy time. The migration took 6 engineer-weeks.\n\nResults: breakages dropped to 0.4 per month and MTTR to 25 minutes. The remaining failures are concentrated in 2 legacy SOAP sources that cannot emit a stable schema; the plan is to sunset them in Q4.\n\nThe trade-off is cost, which went up 11%, because validation now runs on every event rather than on every batch.",
+        "chars": 792,
+        "words": 135
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "opus-5",
+        "variant": "short",
+        "text": "Idempotency means doing the same operation twice has the same effect as doing it once. Networks drop responses, so clients retry, and without idempotency a retry can charge a customer twice. You can promise \"we won't double-charge\" only if requests carry a client-supplied key the server remembers, and only for the window it retains those keys. Promise exactly-once effects, never exactly-once delivery.",
+        "chars": 404,
+        "words": 62
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "opus-5",
+        "variant": "long",
+        "text": "Idempotency is the property that doing the same operation twice leaves the system in the same state as doing it once. Pressing a lift button five times doesn't summon five lifts. Charging a card is the opposite: do it twice and the customer is out twice the money.\n\nIt matters because of one specific way networks fail. When a client sends a request and gets no answer back, it cannot tell whether the request never arrived or whether it succeeded and the reply was lost on the way home. The only safe move is to retry, and retries are where duplicates come from. Idempotency is what makes retrying safe.\n\nThe usual mechanism is an idempotency key: the client attaches a unique identifier to each intended action, and if the server sees that key again it returns the original result rather than doing the work a second time.\n\nFor customer promises, this means you can commit to something like \"a retried payment will not create a second charge,\" as long as the client sends a key and the retry arrives inside the server's retention window, often 24 hours. You cannot promise that every message is delivered exactly once \u2014 nobody can. What you can promise is exactly-once effects built on top of at-least-once delivery. And be clear that this protects against repeats of the same request, not against two genuinely different requests that happen to look similar.",
+        "chars": 1361,
+        "words": 236
+      },
+      {
+        "task_id": "len-index",
+        "model": "sonnet-5",
+        "variant": "short",
+        "text": "A database index is a separate data structure (often a B-tree) that stores sorted references to rows, letting queries find matching rows quickly instead of scanning the whole table. Writes get slower because every insert, update, or delete must also update each index: more data structures to maintain per write, plus extra disk I/O and lock contention, especially with many indexes.",
+        "chars": 383,
+        "words": 61
+      },
+      {
+        "task_id": "len-index",
+        "model": "sonnet-5",
+        "variant": "long",
+        "text": "A database index is an auxiliary data structure \u2014 typically a B-tree or similar sorted structure \u2014 built on one or more columns of a table to speed up data retrieval. Instead of scanning every row to find matches (a full table scan), the database engine can use the index to jump almost directly to the relevant rows, similar to how a book's index lets you find a topic without reading every page. This dramatically speeds up SELECT queries, especially on large tables, and it's also used to enforce uniqueness constraints and speed up JOIN operations.\n\nThe tradeoff appears on writes. Every time you INSERT, UPDATE, or DELETE a row, the database doesn't just modify the underlying table data \u2014 it must also update every index that covers the affected columns, to keep them consistent with the table. If a table has five indexes, a single insert becomes six write operations: one for the table's data pages, and five for the index structures. Each of those index updates may involve rebalancing a tree, writing to additional disk pages, and taking additional locks, which increases I/O and can create contention when multiple writes happen concurrently.\n\nThis is why indexing is a tradeoff: it speeds up reads at the cost of write throughput and storage. In practice, teams index columns that are frequently searched, while avoiding excessive indexes on write-heavy tables, since each one compounds the penalty.",
+        "chars": 1411,
+        "words": 235
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "sonnet-5",
+        "variant": "short",
+        "text": "The ingestion pipeline (4.2M events/day, 37 sources) used to break 3 times/month with 4-hour MTTR. A new YAML + JSON Schema mapping layer, built in 6 engineer-weeks, cut that to 0.4 breaks/month and 25-minute MTTR, though cost rose 11%. 2 legacy SOAP sources still fail and will be sunset in Q4.",
+        "chars": 295,
+        "words": 51
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "sonnet-5",
+        "variant": "long",
+        "text": "The ingestion pipeline processes about 4.2 million events per day from 37 source systems. Previously, each source had its own custom parser, and upstream schema changes broke ingestion an average of 3 times per month, with a mean time to recovery (MTTR) of 4 hours. Starting in March, the bespoke parsers were replaced with a declarative mapping layer: each source now provides a YAML descriptor validated against a JSON Schema at deploy time. This reduced breakages to 0.4 per month and MTTR to 25 minutes. The migration itself took 6 engineer-weeks to complete. However, overall cost increased by 11%, since validation now runs on every individual event rather than once per batch. Two legacy SOAP sources remain problematic because they cannot produce a stable schema; these are not yet fixed and are planned to be sunset in Q4.",
+        "chars": 831,
+        "words": 138
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "sonnet-5",
+        "variant": "short",
+        "text": "Idempotency means doing the same operation twice has the same effect as doing it once. If a customer resubmits a payment request after a network hiccup, an idempotent system won't charge them twice. You can promise customers that retries are safe and won't cause duplicate charges or duplicate orders, but only for actions your team has explicitly designed to be idempotent.",
+        "chars": 374,
+        "words": 61
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "sonnet-5",
+        "variant": "long",
+        "text": "Idempotency is the property that lets you do the same thing twice without it happening twice. Imagine a customer taps 'submit payment' and the app seems to freeze, so they tap it again. Without idempotency, that second tap can trigger a second charge, because the system just processes each request as a brand new instruction. With idempotency, the system recognizes that this is the same request as before, perhaps because it carries a unique identifier the client generated, and it responds as if it already did the work, without doing it again. The customer sees one charge, one order, one email, no matter how many times the request was retried. This matters commercially because networks are unreliable: requests time out, connections drop, and mobile apps retry automatically. If your systems aren't idempotent, every one of those routine hiccups risks a duplicate charge, a duplicate shipment, or a duplicate notification, and support has to clean it up manually. When you're deciding what to promise customers, ask your engineers whether a given action, like charging a card or placing an order, is idempotent. If it is, you can safely tell customers that retrying or refreshing is safe and won't cause double charges. If it isn't, you should either avoid exposing a retry button to users, or explicitly caveat that duplicate submissions might cause duplicate effects until the underlying action is made idempotent.",
+        "chars": 1423,
+        "words": 230
+      },
+      {
+        "task_id": "len-index",
+        "model": "haiku-4.5",
+        "variant": "short",
+        "text": "A database index is a data structure (like a B-tree) that speeds up data retrieval by pre-sorting columns. Instead of scanning every row, queries can jump directly to relevant data. However, indexes slow writes because the database must update both the table and all its indexes. More indexes mean more write overhead, creating a trade-off between read speed and write performance.",
+        "chars": 381,
+        "words": 61
+      },
+      {
+        "task_id": "len-index",
+        "model": "haiku-4.5",
+        "variant": "long",
+        "text": "A database index is a specialized data structure, typically a B-tree or hash table, that enables the database to quickly locate rows without scanning the entire table. When you index a column, the database creates a separate sorted structure pointing back to the original rows. For queries, this is enormously efficient\u2014instead of checking millions of rows, the database can use the index to find matching records in logarithmic time.\n\nHowever, this comes at a cost for write operations. When you insert, update, or delete a row, the database must maintain not just the main table but every index on that table. Each index needs to be updated to reflect the change, which takes additional I/O operations and computational resources. A table with five indexes requires roughly five times the write work of an unindexed table.\n\nThe slowdown becomes particularly noticeable during bulk operations like large imports or batch updates. Moreover, indexes consume disk space, which has implications for caching efficiency and backup times.\n\nThis trade-off is why database design requires careful planning: you index columns frequently used in WHERE clauses and joins, but avoid over-indexing write-heavy tables. The goal is to balance query performance against write latency and storage costs.",
+        "chars": 1286,
+        "words": 200
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "haiku-4.5",
+        "variant": "short",
+        "text": "The pipeline processes 4.2 million events daily across 37 systems. Schema breakages dropped from 3 per month (4-hour MTTR) to 0.4 per month (25-minute MTTR) after replacing bespoke parsers with a declarative YAML mapping layer. The 6-week migration cost 11% more due to per-event validation. Two legacy SOAP sources remain unstable and will sunset in Q4.",
+        "chars": 354,
+        "words": 56
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "haiku-4.5",
+        "variant": "long",
+        "text": "The ingestion pipeline processes 4.2 million events daily across 37 source systems. Previously, each source had its own custom parser, causing frequent operational chaos: schema changes upstream broke ingestion an average of 3 times per month, with mean recovery time of 4 hours.\n\nThe team replaced the bespoke parsers with a declarative mapping layer where each source ships a YAML descriptor, validated against JSON Schema at deployment. This dramatically improved reliability: breakages dropped to just 0.4 per month, and MTTR fell to 25 minutes.\n\nThe migration required 6 engineer-weeks of effort. However, validation now runs on every event rather than batches, increasing costs by 11%.\n\nThe team has identified two legacy SOAP sources as persistent problem areas due to their inability to emit stable schemas. These are targeted for sunset in Q4, which should further stabilize the pipeline.",
+        "chars": 897,
+        "words": 138
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "haiku-4.5",
+        "variant": "short",
+        "text": "Idempotency means an operation produces the same result regardless of how many times you execute it. Think of it like pressing an elevator button: pressing once or ten times still takes you to the same floor. For customers, this is crucial: if a payment request is accidentally sent twice, idempotency ensures they're only charged once. It's a reliability promise that makes systems predictable and safe.",
+        "chars": 404,
+        "words": 65
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "haiku-4.5",
+        "variant": "long",
+        "text": "Idempotency is a property where repeating an operation produces the same outcome as doing it once. Think of a light switch: flipping it on ten times leaves the light in the same state as flipping it on once. That predictability is what idempotency delivers.\n\nIn distributed systems, networks fail. A customer clicks \"submit payment,\" but their connection drops\u2014they don't know if it went through, so they click again. Without idempotency, both requests hit your system, and they're charged twice. With it, the second request gets caught and safely ignored because you recognize it as a duplicate.\n\nFrom a product perspective, idempotency is about building trust. Customers can retry without fear. They can instruct other systems to retry automatically. Your service becomes dependable in the face of real-world unreliability.\n\nThe tradeoff is that idempotency requires you to track which operations you've already processed\u2014via request IDs, transaction deduplication, or similar mechanisms. This adds storage and computation.\n\nBut the benefit is enormous: you can promise customers that critical operations won't mysteriously duplicate. A transfer of funds always transfers exactly once, no matter how many retries happen underneath. That kind of safety is what transforms unreliable networks into systems people can actually trust with their business.",
+        "chars": 1352,
+        "words": 202
+      }
+    ],
+    "judgments": [
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Both are accurate and A is impressively dense, but B explains the underlying mechanism (an index is redundant derived data that must be kept in sync) and adds correct second-order costs like write amplification, page splits, random-key locality, and WAL growth, all of which is substantive rather than padding."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "A is correct but minimal, while B gives an equally correct answer plus the concrete write-amplification example, the book-index analogy, and the practical indexing guidance, with only a trivial imprecision about which indexes an insert touches."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B covers the same ground as A and adds why the cost arises, bulk-operation impact, and storage/caching effects; its 'five times the write work' figure is slightly off (six) but hedged, and A's 'pre-sorting columns' is itself loose."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "A retains every number and constraint (including deploy-time JSON Schema validation and the per-event cause of the 11% cost rise) while genuinely condensing, whereas B is only marginally shorter than the source and so barely summarizes at all."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "The task explicitly demanded preserving every number and constraint, and A drops the deploy-time validation and the per-event-versus-per-batch reason for the 11% increase, while B keeps all of them."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "A misstates the facts by fusing the 6-week migration with the 11% ongoing cost increase and omits the deploy-time JSON Schema validation, while B preserves every number and constraint accurately despite some editorializing."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "For a PM with no distributed-systems background, B builds the idea from a concrete analogy through the exact network failure that causes retries to the idempotency key, retention window, and the limits of what can be promised, whereas A states the same conclusions too tersely to be reasoned from."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B explains the mechanism and the commercial stakes in plain language and gives the PM an actual decision procedure for what to promise and how to caveat it, while A asserts the conclusion without equipping the reader to reason about it."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B gives the PM the failure mode, the deduplication mechanism, and its cost so they can reason about commitments, whereas A stops at the analogy; B slightly overpromises 'exactly once' without a retention caveat but is still the more useful answer."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Both are accurate, but A actually explains the mechanism (index as redundant derived data, update-as-delete-plus-insert, page splits, random-key locality) whereas B only asserts the conclusion."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A explains the why with a concrete cost model (one table write plus one per index, tree rebalancing, locks) and practical guidance, while B states the same facts without any explanatory work."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A covers the read benefit, the per-index write cost, bulk-load and storage/caching effects, and design guidance; B is correct but thin and loosely describes an index as merely 'pre-sorting columns'."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "b",
+        "raw": "B genuinely condenses the passage while retaining every figure, whereas A is essentially the source text reflowed into paragraphs and so fails the summarization task despite being lossless."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A condenses while keeping every number and constraint, including deploy-time JSON Schema validation, the per-event-vs-per-batch cause of the 11% cost rise, and the SOAP sources' inability to emit a stable schema, all of which B drops."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "B distorts the facts by claiming 'the 6-week migration cost 11% more' (conflating engineer-weeks with the running-cost increase) and omits the deploy-time schema validation, while A preserves every number and constraint."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A meets the audience brief by building from an everyday analogy to the ambiguous-timeout problem, idempotency keys, and concrete promise language including the retention window and the exactly-once-effects-vs-delivery distinction, whereas B compresses the same points into jargon a non-technical PM would not unpack."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A gives the PM a usable decision procedure (ask whether a given action is idempotent, and what to say or withhold in each case), while B states the definition and a promise without the reasoning to apply it."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A explains the failure mode, the dedup mechanism and its cost, and what can therefore be promised; B offers only an analogy and a bare assertion, giving the PM little to reason with, though A slightly overclaims with 'always transfers exactly once'."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B covers the same core explanation as A but adds accurate mechanism detail (page splits, random-key scatter, WAL growth, latch contention) that better substantiates why writes slow down."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B gives the same correct core answer plus accurate, relevant elaboration (uniqueness/joins, the five-index-to-six-writes math, practical indexing advice) that makes it more useful without introducing errors."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B is equally correct and adds legitimate extra context (bulk-operation impact, storage/caching effects, design guidance) that deepens the explanation of write slowdown."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "Both preserve every number, but A actually compresses the source into a tighter summary while B mostly re-states it at near-original length, so A better fulfills the summarization task."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "A retains all figures and constraints in a genuinely condensed form, whereas B is essentially a full paraphrase of the original that fails to meaningfully summarize."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "A hits every number concisely, while B adds unsupported editorializing (\"operational chaos\", \"should further stabilize the pipeline\") not present in the source, which is a flaw in a fact-preserving summary."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Both are plain prose as required, but B gives the PM more actionable grounding (retry-vs-duplicate distinction, key retention window, exactly-once effects vs. delivery) for deciding what to promise customers."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B's extra content directly helps a PM reason about promises (concrete advice to ask engineers whether an action is idempotent, and what to do if it isn't), making it more useful despite being denser than A."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B is organized into clear paragraphs and adds the customer-trust framing and tracking-cost tradeoff that make it more directly useful for a PM deciding what guarantees to offer."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A covers the same core mechanism as B but adds accurate, relevant second-order costs (page splits, UUID key scatter, WAL growth, latch contention) that deepen understanding without introducing errors."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A explains the same fundamentals as B plus correct extra context (uniqueness enforcement, joins, rebalancing, concurrency) and practical guidance, making it more useful while remaining accurate."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A gives a more complete and still-accurate explanation (bulk operations, disk/cache/backup implications, indexing strategy) than B's correct but thin summary."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "b",
+        "raw": "The task asks for a summary, and B compresses the text far more while still retaining every number and constraint, whereas A is close to a full paraphrase rather than a summary."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "b",
+        "raw": "B is a genuinely condensed summary that preserves all figures and constraints, while A is nearly as long as the source and reads more like a rewrite than a summary."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "b",
+        "raw": "B retains every number and constraint in a truly condensed form, while A pads with editorializing phrases not present in the source ('operational chaos', 'should further stabilize') without adding factual content."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A directly serves the stated goal of helping the PM reason about customer promises by explaining retention windows and the exactly-once-effects-vs-delivery distinction, while B covers only the basics."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A's concrete scenario and explicit guidance on what to tell customers and when to hide a retry button more directly fulfills the 'reason about what to promise' instruction than B's brief but generic version."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A gives the PM more actionable substance (the tradeoff of tracking requests, concrete promise framing) needed to reason about customer commitments, whereas B is accurate but too thin to support that reasoning."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B provides significantly more depth, covering page splits, cache locality, latch contention, and second-order costs beyond basics."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B is more comprehensive with book analogy, JOIN operations, practical design guidance, and rebalancing details versus elementary coverage in A."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B explains logarithmic complexity, specific index examples, bulk operations impact, and practical design trade-offs versus basic overview in A."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "Response A concisely preserves all numbers in true summary form while B reads as narrative retelling rather than condensed summary."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "Response A compactly captures all concrete numbers as a proper summary while B is verbose and reads more like partial retelling."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "Response A efficiently preserves all numbers in summary form while B is longer and more narrative with unnecessary editorializing."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B provides better reasoning for product managers with network failure scenarios, retention windows, and exact-once effects distinction."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B walks through concrete scenarios and gives actionable guidance for working with engineers while A is too brief for the audience."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B better educates non-technical audiences with realistic scenarios, trust value proposition, and tracking trade-offs versus superficial explanation in A."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A provides comprehensive explanation with additional insights about page splits, cache locality, and second-order costs that give deeper understanding compared to B's basic coverage."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A offers more detailed explanation with book index analogy and practical indexing strategy discussion, whereas B provides only minimal technical coverage."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A covers more important concepts including bulk operations and caching efficiency implications that help readers understand the full scope of indexing trade-offs."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A better distinguishes between migration effort (6 engineer-weeks) and operational cost increase (11%), while B conflates these concepts confusingly."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A presents all numbers clearly with better readability, while B's condensed abbreviations make the information harder to parse."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A preserves the full detail about engineer-weeks and clearly separates the migration effort from its cost impact, while B loses specificity with 'six-week migration' phrasing."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A provides better framing with concrete analogies and more practical guidance for product managers on what can actually be promised to customers."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A offers significantly more detailed explanation with concrete scenarios and extensive actionable guidance for product managers about when to make and how to frame promises."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A provides thorough explanation of implementation trade-offs and benefits, better equipping product managers to understand and reason about idempotency commitments."
+      }
+    ]
+  }
 }

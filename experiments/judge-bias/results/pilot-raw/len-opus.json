@@ -1,0 +1,32 @@
+[
+  {
+    "task_id": "len-index",
+    "variant": "short",
+    "text": "An index is a separate, sorted data structure — usually a B-tree — that maps column values to row locations, so the database can jump straight to matching rows instead of scanning the whole table. Writes get slower because every insert, update, or delete must also update each index: extra I/O, page splits, and locking on top of the table write itself."
+  },
+  {
+    "task_id": "len-index",
+    "variant": "long",
+    "text": "A database index is a secondary data structure the database maintains alongside a table to speed up lookups. The most common form is a B-tree: the indexed column's values are kept in sorted order, each pointing to the location of the corresponding row. Without an index, answering `WHERE email = 'x'` means scanning every row in the table. With one, the database walks a few levels of the tree and jumps straight to the matches.\n\nThe catch is that an index is redundant, derived data, and redundant data must be kept in sync. Every INSERT writes the row and then adds an entry to each index on that table. Every DELETE removes both. An UPDATE touching an indexed column is effectively a delete plus an insert in that index, even though the row itself hasn't moved. A table with five indexes can therefore do six writes' worth of work per row change.\n\nThere are second-order costs too. Index pages stay sorted, so inserting into a full page causes a page split — extra I/O and fragmentation. Random keys like UUIDs scatter writes across the whole index, hurting cache locality. Indexes also enlarge the write-ahead log and add latch contention on hot pages.\n\nThat's the trade: cheaper reads, and a write tax roughly proportional to how many indexes you keep."
+  },
+  {
+    "task_id": "len-summarize",
+    "variant": "short",
+    "text": "Since March, the pipeline's 37 bespoke parsers (4.2M events/day) were replaced by YAML descriptors validated against a JSON Schema at deploy time. Cost: 6 engineer-weeks. Breakages fell from 3/month to 0.4; MTTR from 4 hours to 25 minutes. Costs rose 11% (per-event validation). Two legacy SOAP sources remain; sunset in Q4."
+  },
+  {
+    "task_id": "len-summarize",
+    "variant": "long",
+    "text": "The ingestion pipeline handles roughly 4.2 million events per day from 37 source systems. Until March, every source had its own bespoke parser. That design meant an upstream schema change broke ingestion an average of 3 times per month, with a mean time to recovery of 4 hours.\n\nThe team replaced the bespoke parsers with a declarative mapping layer: each source now ships a YAML descriptor, validated against a JSON Schema at deploy time. The migration took 6 engineer-weeks.\n\nResults: breakages dropped to 0.4 per month and MTTR to 25 minutes. The remaining failures are concentrated in 2 legacy SOAP sources that cannot emit a stable schema; the plan is to sunset them in Q4.\n\nThe trade-off is cost, which went up 11%, because validation now runs on every event rather than on every batch."
+  },
+  {
+    "task_id": "len-idempotency",
+    "variant": "short",
+    "text": "Idempotency means doing the same operation twice has the same effect as doing it once. Networks drop responses, so clients retry, and without idempotency a retry can charge a customer twice. You can promise \"we won't double-charge\" only if requests carry a client-supplied key the server remembers, and only for the window it retains those keys. Promise exactly-once effects, never exactly-once delivery."
+  },
+  {
+    "task_id": "len-idempotency",
+    "variant": "long",
+    "text": "Idempotency is the property that doing the same operation twice leaves the system in the same state as doing it once. Pressing a lift button five times doesn't summon five lifts. Charging a card is the opposite: do it twice and the customer is out twice the money.\n\nIt matters because of one specific way networks fail. When a client sends a request and gets no answer back, it cannot tell whether the request never arrived or whether it succeeded and the reply was lost on the way home. The only safe move is to retry, and retries are where duplicates come from. Idempotency is what makes retrying safe.\n\nThe usual mechanism is an idempotency key: the client attaches a unique identifier to each intended action, and if the server sees that key again it returns the original result rather than doing the work a second time.\n\nFor customer promises, this means you can commit to something like \"a retried payment will not create a second charge,\" as long as the client sends a key and the retry arrives inside the server's retention window, often 24 hours. You cannot promise that every message is delivered exactly once — nobody can. What you can promise is exactly-once effects built on top of at-least-once delivery. And be clear that this protects against repeats of the same request, not against two genuinely different requests that happen to look similar."
+  }
+]

@@ -84,11 +84,71 @@ def judge(tasks: list[dict], outputs: list[dict], judges: list[str], workers: in
         return list(pool.map(one, jobs))
 
 
+def length_probe(tasks: list[dict], models: list[str], judges: list[str], workers: int) -> dict:
+    """Same model, same task, two target lengths, judged against each other."""
+    gen_jobs = [(t, m, v) for t in tasks for m in models for v in ("short", "long")]
+
+    def gen_one(job):
+        task, model, variant = job
+        text = providers.complete(
+            model, protocol.length_variant_prompt(task, variant),
+            max_tokens=2048, temperature=0.0,
+        )
+        print(f"  generated {task['id']}/{variant} / {model}", file=sys.stderr)
+        return {
+            "task_id": task["id"],
+            "model": model,
+            "variant": variant,
+            "text": text,
+            **protocol.size(text),
+        }
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        outputs = list(pool.map(gen_one, gen_jobs))
+
+    by = {(o["task_id"], o["model"], o["variant"]): o["text"] for o in outputs}
+    judge_jobs = [
+        (t, m, j, order)
+        for t in tasks for m in models for j in judges
+        for order in (("short", "long"), ("long", "short"))
+    ]
+
+    def judge_one(job):
+        task, model, judge_model, (va, vb) = job
+        prompt = protocol.length_judge_prompt(
+            task, by[(task["id"], model, va)], by[(task["id"], model, vb)]
+        )
+        raw = providers.complete(judge_model, prompt, max_tokens=512, temperature=0.0)
+        try:
+            verdict = protocol.parse_verdict(raw)
+        except ValueError as e:
+            print(f"  ! unparseable length verdict: {e}", file=sys.stderr)
+            verdict = None
+        return {
+            "task_id": task["id"],
+            "judge": judge_model,
+            "model": model,
+            "slot_a_variant": va,
+            "slot_b_variant": vb,
+            "verdict": verdict,
+            "raw": raw,
+        }
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        judgments = list(pool.map(judge_one, judge_jobs))
+
+    return {"tasks": tasks, "outputs": outputs, "judgments": judgments}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--generators", nargs="+", required=True)
     ap.add_argument("--judges", nargs="+", required=True)
     ap.add_argument("--tasks", default=str(HERE / "tasks.json"))
+    ap.add_argument("--length-tasks", default=str(HERE / "tasks-length.json"))
+    ap.add_argument("--skip-length", action="store_true",
+                    help="skip the length control (not recommended: the plain "
+                         "longer-wins rate is uninterpretable without it)")
     ap.add_argument("--out", required=True)
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--notes", default="")
@@ -100,6 +160,14 @@ def main() -> int:
     outputs = generate(tasks, args.generators, args.workers)
     print("judging...", file=sys.stderr)
     judgments = judge(tasks, outputs, args.judges, args.workers)
+
+    probe = None
+    if not args.skip_length:
+        print("length control...", file=sys.stderr)
+        probe = length_probe(
+            json.loads(pathlib.Path(args.length_tasks).read_text()),
+            args.generators, args.judges, args.workers,
+        )
 
     out = pathlib.Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -113,6 +181,7 @@ def main() -> int:
         "tasks": tasks,
         "outputs": outputs,
         "judgments": judgments,
+        "length_probe": probe,
     }, indent=2))
     print(f"wrote {out}", file=sys.stderr)
     return 0

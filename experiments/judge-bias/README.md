@@ -33,17 +33,29 @@ number here worth quoting.
 - **Three subjectivity levels** in `tasks.json` (`low` / `medium` / `high`), because
   the interesting hypothesis is that judge choice matters more as subjectivity rises.
 
-### Known gap: the length metric has no control
+### The length control
 
-`longer-wins rate` is reported but is **not** on its own evidence of length bias. If the
-models that write longest are also the models judges rank highest — which is what happened
-in the pilot — length and quality are confounded and the number cannot separate them.
-Before trusting it, add paired tasks that elicit the same content at two different lengths,
-so length varies while quality is held roughly fixed.
+The plain `longer-wins rate` is reported but is **not** on its own evidence of length bias.
+If the models that write longest are also the ones judges rank highest — which is what
+happened in the pilot — length and quality are confounded and the number cannot separate
+them.
 
-## Running it across families
+`tasks-length.json` is the control. It holds model and task fixed and varies only the
+target length: the two variants share an identical base prompt and differ by one appended
+sentence ("Answer in roughly N words"). The judge sees the **base prompt only**, never the
+directive, so it grades which answer is better rather than which one hit a word count it
+was told about.
 
-Needs API keys; no other dependencies (stdlib only).
+Keep both kinds of probe task in the set. In the pilot the controlled preference was
+unanimous for the long variant on explanation tasks and reversed on summarization — a task
+set containing only one kind would have produced a confident and wrong headline number.
+
+## Running it across families — the actual experiment
+
+This is the run that answers the original question. Everything in `results/` so far is a
+within-family pilot that cannot.
+
+Needs API keys; no other dependencies (stdlib only, Python 3.10+).
 
 ```bash
 export ANTHROPIC_API_KEY=... OPENAI_API_KEY=... GEMINI_API_KEY=...
@@ -56,8 +68,25 @@ python3 run.py \
 python3 analyze.py results/cross-family.json
 ```
 
-Generators and judges are separate lists, but they should overlap: self-preference
-can only be measured for a model that both produces and judges.
+Model ids are `<provider>:<model>`; the provider prefix is what routes the call. Pick
+current model ids at run time rather than trusting any hardcoded here.
+
+Four things to get right, learned the hard way in the pilot:
+
+1. **Generators and judges must overlap.** Self-preference can only be measured for a
+   model that both produces and judges. Pass the same three ids to both flags.
+2. **Match capability tiers.** In the pilot, inter-judge agreement tracked the capability
+   gap more strongly than task subjectivity did. Comparing a frontier model against a
+   small one will produce a "family effect" that is really a capability effect. Use each
+   vendor's comparable tier.
+3. **Do not pass `--skip-length`.** The uncontrolled longer-wins rate is the single most
+   misleading number the harness produces.
+4. **Expand the task set first.** 6 main tasks + 3 length probes is thin. The metrics are
+   per-judge over ~12–36 observations, which is why the pilot reports bootstrap CIs and
+   calls most of its numbers underpowered. Aim for 4–6 tasks per subjectivity level.
+
+Then compare against `results/pilot-findings.md`: the interesting question is which of the
+pilot's within-family findings survive when the judges come from different vendors.
 
 ## The pilot in `results/`
 
@@ -80,6 +109,16 @@ Read it with its limits in mind:
   low-subjectivity tasks were graded by reading. That is deliberate — the point is to
   measure the *LLM judge*, not to replace it with a test runner (which, where you can,
   you should).
-- **Small.** 6 tasks, 18 comparisons, 108 judgments. Directional, not conclusive.
+- **Small.** 6 tasks + 3 length probes, 162 judgments total. Directional, not conclusive.
 
+Findings and the notes for the eventual article: `results/pilot-findings.md`.
 Source discussion: `docs/research/llm-judge-bias-conversation.md`.
+
+## Status
+
+- [x] Harness, provider-agnostic, stdlib only
+- [x] Within-family pilot (Opus 5 / Sonnet 5 / Haiku 4.5), 162 judgments
+- [x] Length control, with both elaboration- and concision-rewarding probes
+- [ ] **Cross-family run** — blocked on API keys, see above
+- [ ] Expanded task set (4–6 per subjectivity level)
+- [ ] Article — deliberately not written until the cross-family data exists

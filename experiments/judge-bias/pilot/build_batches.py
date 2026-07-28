@@ -29,6 +29,43 @@ import protocol  # noqa: E402
 MODELS = ["opus", "sonnet", "haiku"]
 
 
+def build_length() -> None:
+    """The length control: same model, same task, short vs long, both orders.
+
+    The judge is shown the base prompt only — never the 'answer in roughly N
+    words' directive — so it grades which answer is better, not which one hit a
+    word count it was told about.
+    """
+    tasks = json.loads((ROOT / "tasks-length.json").read_text())
+    outputs = {
+        m: {(o["task_id"], o["variant"]): o["text"]
+            for o in json.loads((RAW / f"len-{m}.json").read_text())}
+        for m in MODELS
+    }
+
+    sl, ls, key = [], [], {}
+    for task in tasks:
+        for m in MODELS:
+            cid = f"{task['id']}__{m}"
+            key[cid] = {"task_id": task["id"], "model": m}
+            short, long = outputs[m][(task["id"], "short")], outputs[m][(task["id"], "long")]
+            sl.append({"comparison_id": cid,
+                       "prompt": protocol.length_judge_prompt(task, short, long)})
+            ls.append({"comparison_id": cid,
+                       "prompt": protocol.length_judge_prompt(task, long, short)})
+
+    (RAW / "lenbatch-sl.json").write_text(json.dumps(sl, indent=2))
+    (RAW / "lenbatch-ls.json").write_text(json.dumps(ls, indent=2))
+    (RAW / "lenkey.json").write_text(json.dumps(key, indent=2))
+
+    # Check for the exact directive strings, not loose words: the len-summarize
+    # source text legitimately contains "roughly", which is not a leak.
+    directives = [d for t in tasks for d in t["variants"].values()]
+    leaks = [w for w in MODELS + directives if any(w in c["prompt"] for c in sl + ls)]
+    print(f"\nlength control: {len(sl)} comparisons per order")
+    print(f"blinding check — model names / length directives leaked: {leaks or 'none'}")
+
+
 def main() -> int:
     tasks = json.loads((ROOT / "tasks.json").read_text())
     outputs = {
@@ -64,6 +101,9 @@ def main() -> int:
     leak = [m for m in MODELS if any(m in c["prompt"] for c in ab + ba)]
     print(f"{len(ab)} comparisons per order, {len(key)} keyed")
     print(f"blinding check — model names appearing in batch prompts: {leak or 'none'}")
+
+    if (RAW / f"len-{MODELS[0]}.json").exists():
+        build_length()
     return 0
 
 
