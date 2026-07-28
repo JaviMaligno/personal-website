@@ -76,11 +76,11 @@ within-family pilot that cannot.
 Needs API keys; no other dependencies (stdlib only, Python 3.10+).
 
 ```bash
-export ANTHROPIC_API_KEY=... OPENAI_API_KEY=... GEMINI_API_KEY=...
+export ANTHROPIC_API_KEY=... OPENAI_API_KEY=... XAI_API_KEY=... GEMINI_API_KEY=...
 
 python3 run.py \
-  --generators anthropic:<model> openai:<model> gemini:<model> \
-  --judges     anthropic:<model> openai:<model> gemini:<model> \
+  --generators anthropic:<model> openai:<model> xai:<model> \
+  --judges     anthropic:<model> openai:<model> xai:<model> \
   --out results/cross-family.json
 
 python3 analyze.py results/cross-family.json
@@ -88,6 +88,41 @@ python3 analyze.py results/cross-family.json
 
 Model ids are `<provider>:<model>`; the provider prefix is what routes the call. Pick
 current model ids at run time rather than trusting any hardcoded here.
+
+### …or through one Azure AI Foundry subscription
+
+Getting three vendors' keys is the boring half of this experiment. Azure serves all
+three, so `providers.py` treats Azure as a *transport*: keep the vendor in the model
+id and set the endpoints, and the same command runs unchanged.
+
+```bash
+export AZURE_OPENAI_ENDPOINT=https://<resource>.cognitiveservices.azure.com
+export AZURE_OPENAI_KEY=...       # serves openai: and xai: ids
+export AZURE_ANTHROPIC_ENDPOINT=https://<resource>.cognitiveservices.azure.com
+export AZURE_ANTHROPIC_KEY=...    # serves anthropic: ids
+
+python3 run.py \
+  --generators openai:gpt-5.5 xai:grok-4.3 anthropic:claude-sonnet-4-6 \
+  --judges     openai:gpt-5.5 xai:grok-4.3 anthropic:claude-sonnet-4-6 \
+  --out results/cross-family.json
+```
+
+The model name becomes the Azure *deployment* name, so name deployments after their
+models. Four things Azure will teach you the slow way:
+
+1. **The two routes are not interchangeable.** OpenAI and xAI models answer on
+   `/openai/v1/chat/completions`; Anthropic models 404 there and answer on the native
+   `/anthropic/v1/messages` instead. Hence two endpoint variables, not one.
+2. **Deploying an Anthropic model needs an undocumented `modelProviderData` block**
+   (`organizationName`, `countryCode`, `industry`) that the portal and the CLI do not
+   expose — and on a freshly created resource the request can still be rejected as
+   "unusual activity". Budget time for this, or reuse a resource that already has a
+   Claude deployment.
+3. **`gpt-5.5` refuses `temperature=0`** — only its default is accepted. The adapter
+   detects the 400, drops the parameter, and says so. It is not a knob you can win.
+4. **Reasoning models spend the output budget before they answer.** `grok-4.3` burns
+   ~350 tokens of reasoning on one comparison, so the judge budget defaults to 1024
+   (`--judge-max-tokens`); at 512 the verdict JSON can get truncated into nothing.
 
 Four things to get right, learned the hard way in the pilot:
 
@@ -108,6 +143,13 @@ Four things to get right, learned the hard way in the pilot:
 
 Then compare against `results/pilot-findings.md`: the interesting question is which of the
 pilot's within-family findings survive when the judges come from different vendors.
+
+**That run now exists**: `results/cross-family.json` (gpt-5.5, grok-4.3,
+claude-sonnet-4-6 — 270 judgments + 108 length-control), written up in
+`results/cross-family-findings.md`. Short version: the ranking changes with the judge,
+self-preference is real in all three families and scales with subjectivity, position bias
+turns out to be a property of one specific judge rather than a universal, and the pilot's
+"the length reward inverts on compression tasks" was one model's habit.
 
 ## The pilot in `results/`
 
@@ -144,5 +186,8 @@ Source discussion: `docs/research/llm-judge-bias-conversation.md`.
 - [x] Within-family pilot (Opus 5 / Sonnet 5 / Haiku 4.5), 162 judgments
 - [x] Length control, with both elaboration- and concision-rewarding probes
 - [x] Expanded task set — 15 main (5 per level), 6 length probes (3/3 by reward)
-- [ ] **Cross-family run** — blocked on API keys, see above
-- [ ] Article — deliberately not written until the cross-family data exists
+- [x] **Cross-family run** — 3 vendors through Azure, 378 judgments, 0 unparseable
+      (`results/cross-family-findings.md`)
+- [ ] Same-tier rerun — the Anthropic seat is a generation behind the other two, because
+      that was the only Claude quota available. Redo it when a current Claude deploys.
+- [ ] Article

@@ -46,7 +46,8 @@ def generate(tasks: list[dict], models: list[str], workers: int) -> list[dict]:
         return list(pool.map(one, jobs))
 
 
-def judge(tasks: list[dict], outputs: list[dict], judges: list[str], workers: int) -> list[dict]:
+def judge(tasks: list[dict], outputs: list[dict], judges: list[str], workers: int,
+          judge_max_tokens: int) -> list[dict]:
     by_task: dict[str, dict[str, str]] = {}
     for o in outputs:
         by_task.setdefault(o["task_id"], {})[o["model"]] = o["text"]
@@ -63,7 +64,8 @@ def judge(tasks: list[dict], outputs: list[dict], judges: list[str], workers: in
         prompt = protocol.JUDGE_TEMPLATE.format(
             task=task["prompt"], a=got[slot_a], b=got[slot_b]
         )
-        raw = providers.complete(judge_model, prompt, max_tokens=512, temperature=0.0)
+        raw = providers.complete(judge_model, prompt, max_tokens=judge_max_tokens,
+                                 temperature=0.0)
         try:
             verdict = protocol.parse_verdict(raw)
         except ValueError as e:
@@ -84,7 +86,8 @@ def judge(tasks: list[dict], outputs: list[dict], judges: list[str], workers: in
         return list(pool.map(one, jobs))
 
 
-def length_probe(tasks: list[dict], models: list[str], judges: list[str], workers: int) -> dict:
+def length_probe(tasks: list[dict], models: list[str], judges: list[str], workers: int,
+                 judge_max_tokens: int) -> dict:
     """Same model, same task, two target lengths, judged against each other."""
     gen_jobs = [(t, m, v) for t in tasks for m in models for v in ("short", "long")]
 
@@ -118,7 +121,8 @@ def length_probe(tasks: list[dict], models: list[str], judges: list[str], worker
         prompt = protocol.length_judge_prompt(
             task, by[(task["id"], model, va)], by[(task["id"], model, vb)]
         )
-        raw = providers.complete(judge_model, prompt, max_tokens=512, temperature=0.0)
+        raw = providers.complete(judge_model, prompt, max_tokens=judge_max_tokens,
+                                 temperature=0.0)
         try:
             verdict = protocol.parse_verdict(raw)
         except ValueError as e:
@@ -150,6 +154,11 @@ def main() -> int:
                     help="skip the length control (not recommended: the plain "
                          "longer-wins rate is uninterpretable without it)")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--judge-max-tokens", type=int, default=1024,
+                    help="output budget for a judgment. Reasoning models spend most of "
+                         "it before the JSON verdict appears — grok-4.3 burns ~350 "
+                         "tokens of reasoning on a single comparison, so the old 512 "
+                         "left almost no room for the answer.")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--notes", default="")
     args = ap.parse_args()
@@ -159,14 +168,14 @@ def main() -> int:
     print("generating...", file=sys.stderr)
     outputs = generate(tasks, args.generators, args.workers)
     print("judging...", file=sys.stderr)
-    judgments = judge(tasks, outputs, args.judges, args.workers)
+    judgments = judge(tasks, outputs, args.judges, args.workers, args.judge_max_tokens)
 
     probe = None
     if not args.skip_length:
         print("length control...", file=sys.stderr)
         probe = length_probe(
             json.loads(pathlib.Path(args.length_tasks).read_text()),
-            args.generators, args.judges, args.workers,
+            args.generators, args.judges, args.workers, args.judge_max_tokens,
         )
 
     out = pathlib.Path(args.out)
@@ -176,6 +185,7 @@ def main() -> int:
             "generators": args.generators,
             "judges": args.judges,
             "execution": "api",
+            "judge_max_tokens": args.judge_max_tokens,
             "notes": args.notes,
         },
         "tasks": tasks,

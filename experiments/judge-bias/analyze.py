@@ -23,6 +23,7 @@ import collections
 import itertools
 import json
 import pathlib
+import random
 import sys
 
 
@@ -80,6 +81,37 @@ def score(verdict: str, model: str) -> float:
     return 0.0
 
 
+def binom_p(k: int, n: int, p: float = 0.5) -> float | None:
+    """Two-sided exact binomial p-value: how surprised should you be by k of n?
+
+    Reported next to the slot-A rate because a 60% slot-A rate on 20 decisions and
+    on 200 decisions are very different claims, and only one of them is a finding.
+    """
+    if n == 0:
+        return None
+    from math import comb
+    probs = [comb(n, i) * p ** i * (1 - p) ** (n - i) for i in range(n + 1)]
+    return min(1.0, sum(x for x in probs if x <= probs[k] * (1 + 1e-9)))
+
+
+def bootstrap_ci(pairs: list[tuple[float, float]], resamples: int = 10000) -> tuple[float, float] | None:
+    """Percentile CI for the mean paired difference (own − peers).
+
+    Resamples the paired cells, not the individual judgments: the two numbers in a
+    cell describe the same comparison, so they have to move together.
+    """
+    if len(pairs) < 2:
+        return None
+    rng = random.Random(20260728)  # fixed so the reported interval is reproducible
+    n = len(pairs)
+    means = []
+    for _ in range(resamples):
+        sample = [pairs[rng.randrange(n)] for _ in range(n)]
+        means.append(sum(o - p for o, p in sample) / n)
+    means.sort()
+    return means[int(0.025 * resamples)], means[int(0.975 * resamples) - 1]
+
+
 def kappa(a: list[str], b: list[str]) -> float | None:
     if not a:
         return None
@@ -110,44 +142,111 @@ def main() -> int:
     print(f"tasks: {len(data['tasks'])}   outputs: {len(data['outputs'])}   "
           f"judgments: {len(data['judgments'])}")
 
+    # --- 0. ranking ----------------------------------------------------------
+    #
+    # The question the whole harness exists to answer: does swapping the judge
+    # swap the ranking? Everything below is diagnosis; this is the symptom.
+    print("\n## Ranking (win score: 1 = won the comparison, 0.5 = tie/flip/unstable)")
+    gens = data["meta"]["generators"]
+    header = f"{'generator':<34} {'overall':>8}" + "".join(
+        f" {('by ' + j.split(':')[-1])[:12]:>13}" for j in judges) + f" {'mean words':>11}"
+    print(header)
+    for g in gens:
+        overall, per_judge = [], []
+        for j in judges:
+            got = [score(resolve(v), g)
+                   for (t, m1, m2, jj), v in C.items() if jj == j and g in (m1, m2)]
+            per_judge.append(sum(got) / len(got) if got else None)
+            overall += got
+        mw = [w for (t, m), w in words.items() if m == g]
+        print(f"{g:<34} {pct(sum(overall) / len(overall) if overall else None):>8}"
+              + "".join(f" {pct(x):>13}" for x in per_judge)
+              + f" {sum(mw) / len(mw):>10.0f}")
+    print("  If the columns disagree on the order, the judge is part of the result.")
+
     # --- 1 & 2. position -----------------------------------------------------
     print("\n## Position")
-    print(f"{'judge':<34} {'slot-A rate':>12} {'flip rate':>11} {'n cells':>8}")
+    print(f"{'judge':<34} {'slot-A rate':>12} {'p':>7} {'flip rate':>11} {'n cells':>8}")
     for j in judges:
         raw = [x for x in data["judgments"] if x["judge"] == j and x["verdict"] in {"a", "b"}]
-        slot_a = sum(1 for x in raw if x["verdict"] == "a") / len(raw) if raw else None
+        a_hits = sum(1 for x in raw if x["verdict"] == "a")
+        slot_a = a_hits / len(raw) if raw else None
+        p = binom_p(a_hits, len(raw))
         cs = [resolve(v) for (t, m1, m2, jj), v in C.items() if jj == j]
         decided = [c for c in cs if c not in {"incomplete"}]
         flips = sum(1 for c in decided if c == "flip")
-        print(f"{j:<34} {pct(slot_a):>12} "
+        print(f"{j:<34} {pct(slot_a):>12} {('  n/a' if p is None else f'{p:5.3f}'):>7} "
               f"{pct(flips / len(decided) if decided else None):>11} {len(decided):>8}")
-    print("  slot-A rate: 50% = no position preference.")
+    print("  slot-A rate: 50% = no position preference; p = exact binomial vs 50%.")
     print("  flip rate:   fraction of comparisons the judge reversed when slots were swapped.")
 
     # --- 3. self-preference --------------------------------------------------
     print("\n## Self-preference (the delta is the finding, not the raw rate)")
-    print(f"{'judge = generator':<34} {'own rate':>9} {'others':>9} {'delta':>9} {'n':>5}")
+    print(f"{'judge = generator':<34} {'own rate':>9} {'others':>9} {'delta':>9} "
+          f"{'95% CI':>18} {'vs neutral judge only':>24} {'n':>5}")
     for j in judges:
         if j not in data["meta"]["generators"]:
             continue
-        own, others = [], []
+        paired, neutral_paired = [], []
         seen = {(t, m1, m2) for (t, m1, m2, jj) in C if jj == j and j in (m1, m2)}
         for (t, m1, m2) in sorted(seen):
-            own.append(score(resolve(C[(t, m1, m2, j)]), j))
+            own_score = score(resolve(C[(t, m1, m2, j)]), j)
             peer = [score(resolve(C[(t, m1, m2, k)]), j)
                     for k in judges if k != j and (t, m1, m2, k) in C]
             if peer:
-                others.append(sum(peer) / len(peer))
-        if not own:
+                paired.append((own_score, sum(peer) / len(peer)))
+            # The strict baseline: only judges with no stake in this pair. With
+            # three judges that is one model — the peer set above also contains
+            # the *opponent*, whose own self-preference pushes the other way and
+            # inflates the delta.
+            uninvolved = [score(resolve(C[(t, m1, m2, k)]), j) for k in judges
+                          if k not in (m1, m2) and (t, m1, m2, k) in C]
+            if uninvolved:
+                neutral_paired.append((own_score, sum(uninvolved) / len(uninvolved)))
+        if not paired:
             continue
-        o = sum(own) / len(own)
-        p = sum(others) / len(others) if others else None
-        d = None if p is None else o - p
-        print(f"{j:<34} {pct(o):>9} {pct(p):>9} "
-              f"{('  n/a' if d is None else f'{100 * d:+5.1f}pp'):>9} {len(own):>5}")
+        o = sum(x for x, _ in paired) / len(paired)
+        p = sum(y for _, y in paired) / len(paired)
+        ci = bootstrap_ci(paired)
+        ci_txt = "n/a" if ci is None else f"[{100 * ci[0]:+.1f}, {100 * ci[1]:+.1f}]"
+        nd = (sum(x - y for x, y in neutral_paired) / len(neutral_paired)
+              if neutral_paired else None)
+        nci = bootstrap_ci(neutral_paired)
+        nd_txt = "n/a" if nd is None else f"{100 * nd:+.1f}pp"
+        if nci is not None:
+            nd_txt += f" [{100 * nci[0]:+.1f}, {100 * nci[1]:+.1f}]"
+        print(f"{j:<34} {pct(o):>9} {pct(p):>9} {100 * (o - p):+5.1f}pp    "
+              f"{ci_txt:>18} {nd_txt:>24} {len(paired):>5}")
     print("  own rate:  how often this judge picks its own output.")
     print("  others:    how often the OTHER judges pick that same output, same pairs.")
     print("  delta:     positive = self-preference beyond what peers see in the output.")
+    print("  95% CI:    percentile bootstrap over the paired cells (10k resamples, fixed seed).")
+
+    # Where does self-preference live? A delta that survives on tasks with a
+    # checkable answer is a different, worse problem than one that only shows up
+    # where taste is all there is.
+    print(f"\n{'same delta, split by subjectivity':<34} "
+          + " ".join(f"{lvl:>12}" for lvl in ["low", "medium", "high"]))
+    for j in judges:
+        if j not in data["meta"]["generators"]:
+            continue
+        row = []
+        for lvl in ["low", "medium", "high"]:
+            paired = []
+            seen = {(t, m1, m2) for (t, m1, m2, jj) in C
+                    if jj == j and j in (m1, m2) and subj.get(t) == lvl}
+            for (t, m1, m2) in sorted(seen):
+                peer = [score(resolve(C[(t, m1, m2, k)]), j)
+                        for k in judges if k != j and (t, m1, m2, k) in C]
+                if peer:
+                    paired.append((score(resolve(C[(t, m1, m2, j)]), j),
+                                   sum(peer) / len(peer)))
+            if not paired:
+                row.append("         n/a")
+                continue
+            d = sum(o - p for o, p in paired) / len(paired)
+            row.append(f"{100 * d:+8.1f}pp")
+        print(f"{j:<34} " + " ".join(f"{r:>12}" for r in row))
 
     # --- 4. length -----------------------------------------------------------
     print("\n## Length")

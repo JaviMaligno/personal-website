@@ -14,6 +14,12 @@ the design and its limits.
 **This is a pilot.** n is small enough that most of what follows is a hypothesis for the
 cross-family run, not a result. Where a number is not distinguishable from noise, it says so.
 
+> **The cross-family run has since happened** — see `cross-family-findings.md`. Two of the
+> hypotheses below did not survive it: position bias *does* show up across families (badly,
+> in one judge), and the length inversion in §3 turned out to be one model's habit rather
+> than a general property of judges. Read this document as the pilot it is, and the
+> cross-family one for what replicated.
+
 ## Overall ranking
 
 | Generator | Win score | Mean words (low / med / high subjectivity) |
