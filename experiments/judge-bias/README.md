@@ -46,9 +46,27 @@ sentence ("Answer in roughly N words"). The judge sees the **base prompt only**,
 directive, so it grades which answer is better rather than which one hit a word count it
 was told about.
 
-Keep both kinds of probe task in the set. In the pilot the controlled preference was
-unanimous for the long variant on explanation tasks and reversed on summarization — a task
-set containing only one kind would have produced a confident and wrong headline number.
+**Keep the probe set balanced between the two kinds of task.** Each entry declares
+`rewards: "elaboration" | "concision"`, and `analyze.py` reports the split by that field
+*above* the split by subjectivity, because that is the axis the effect lives on.
+
+This is the pilot's main lesson, and it reframes what the metric is for. The received
+claim is "LLM judges equate longer with better". The controlled measurement says something
+narrower: judges reward **elaboration**, and the reward **inverts** when the task's
+implicit success criterion is compression — on summarization the short variant won even
+though every variant preserved all the source numbers, with judges citing "condensed form"
+against "full paraphrase" in their own reasons. Nobody told them the summary had a length
+limit; the word "summarize" was enough.
+
+So "watch out for length bias" is the wrong instruction — on an explanation task the
+longer answer plausibly *was* better and penalising it would be the error. The right
+question is whether your task rewards elaboration or compression, and whether your judge
+inferred the same thing from the prompt you gave it. That is a **Dimension** question in
+the three-decisions sense, not a bias to correct away.
+
+An unbalanced probe set hides this completely: the pilot ran 2 elaboration tasks against 1
+concision task, and with one more elaboration task the aggregate would have read "long
+wins 100%" with the reversal invisible. `tasks-length.json` is balanced 3/3.
 
 ## Running it across families — the actual experiment
 
@@ -81,9 +99,12 @@ Four things to get right, learned the hard way in the pilot:
    vendor's comparable tier.
 3. **Do not pass `--skip-length`.** The uncontrolled longer-wins rate is the single most
    misleading number the harness produces.
-4. **Expand the task set first.** 6 main tasks + 3 length probes is thin. The metrics are
-   per-judge over ~12–36 observations, which is why the pilot reports bootstrap CIs and
-   calls most of its numbers underpowered. Aim for 4–6 tasks per subjectivity level.
+4. **The task set is already sized for this.** `tasks.json` holds 5 tasks per subjectivity
+   level (15 total) and `tasks-length.json` holds 6 probes balanced 3/3 by what they
+   reward. With 3 generators that is 45 comparisons × 2 orders × 3 judges = 270 main
+   judgments plus 108 length-control ones. Budget accordingly, and don't shrink the set to
+   save tokens — the pilot's numbers were underpowered at 6 tasks, which is why it reports
+   bootstrap CIs and calls most of them directional.
 
 Then compare against `results/pilot-findings.md`: the interesting question is which of the
 pilot's within-family findings survive when the judges come from different vendors.
@@ -109,7 +130,10 @@ Read it with its limits in mind:
   low-subjectivity tasks were graded by reading. That is deliberate — the point is to
   measure the *LLM judge*, not to replace it with a test runner (which, where you can,
   you should).
-- **Small.** 6 tasks + 3 length probes, 162 judgments total. Directional, not conclusive.
+- **Small.** It ran on 6 tasks + 3 length probes, 162 judgments. Directional, not
+  conclusive — and smaller than the set now in `tasks.json`, which grew in response to it.
+  The pilot scripts filter to the tasks their raw data covers, so re-running
+  `pilot/assemble.py` still reproduces these numbers.
 
 Findings and the notes for the eventual article: `results/pilot-findings.md`.
 Source discussion: `docs/research/llm-judge-bias-conversation.md`.
@@ -119,6 +143,6 @@ Source discussion: `docs/research/llm-judge-bias-conversation.md`.
 - [x] Harness, provider-agnostic, stdlib only
 - [x] Within-family pilot (Opus 5 / Sonnet 5 / Haiku 4.5), 162 judgments
 - [x] Length control, with both elaboration- and concision-rewarding probes
+- [x] Expanded task set — 15 main (5 per level), 6 length probes (3/3 by reward)
 - [ ] **Cross-family run** — blocked on API keys, see above
-- [ ] Expanded task set (4–6 per subjectivity level)
 - [ ] Article — deliberately not written until the cross-family data exists

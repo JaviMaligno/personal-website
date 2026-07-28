@@ -36,12 +36,16 @@ def build_length() -> None:
     words' directive — so it grades which answer is better, not which one hit a
     word count it was told about.
     """
-    tasks = json.loads((ROOT / "tasks-length.json").read_text())
     outputs = {
         m: {(o["task_id"], o["variant"]): o["text"]
             for o in json.loads((RAW / f"len-{m}.json").read_text())}
         for m in MODELS
     }
+    # The task files grow over time; the raw pilot data does not. Only build
+    # comparisons for tasks every model actually generated, so a pilot stays
+    # reproducible from its own raw data after the set is expanded.
+    tasks = [t for t in json.loads((ROOT / "tasks-length.json").read_text())
+             if all((t["id"], v) in outputs[m] for m in MODELS for v in ("short", "long"))]
 
     sl, ls, key = [], [], {}
     for task in tasks:
@@ -67,11 +71,12 @@ def build_length() -> None:
 
 
 def main() -> int:
-    tasks = json.loads((ROOT / "tasks.json").read_text())
     outputs = {
         m: {o["task_id"]: o["text"] for o in json.loads((RAW / f"gen-{m}.json").read_text())}
         for m in MODELS
     }
+    tasks = [t for t in json.loads((ROOT / "tasks.json").read_text())
+             if all(t["id"] in outputs[m] for m in MODELS)]
 
     ab, ba, key = [], [], {}
     for task in tasks:

@@ -205,18 +205,38 @@ def main() -> int:
         print("  Compare against the confounded number above; a large gap means that")
         print("  number was measuring quality, not verbosity.")
 
-        print(f"\n{'by subjectivity':<34} {'long wins':>10} {'n':>5}")
-        for lvl in ["low", "medium", "high"]:
-            psubj = {t["id"]: t["subjectivity"] for t in probe["tasks"]}
+        def long_rate(predicate):
             vals = []
             for (t, m, jj), cell in pc.items():
-                if psubj.get(t) != lvl or len(cell) < 2:
+                if not predicate(t) or len(cell) < 2:
                     continue
                 x, y = cell["sl"], cell["ls"]
                 vals.append((1.0 if x == "long" else 0.0 if x == "short" else 0.5)
                             if x == y else 0.5)
-            if vals:
-                print(f"{lvl:<34} {pct(sum(vals)/len(vals)):>10} {len(vals):>5}")
+            return (sum(vals) / len(vals), len(vals)) if vals else None
+
+        # The split that matters, and the reason the aggregate above is not the
+        # finding. The pilot found a reversal hiding inside it: judges reward
+        # elaboration where the task invites it and penalise it where the task's
+        # implicit goal is compression. A probe set containing only one kind of
+        # task produces a confident, wrong headline number either way.
+        rewards = {t["id"]: t.get("rewards") for t in probe["tasks"]}
+        if any(rewards.values()):
+            print(f"\n{'by what the task rewards':<34} {'long wins':>10} {'n':>5}")
+            for r in ["elaboration", "concision"]:
+                got = long_rate(lambda t, r=r: rewards.get(t) == r)
+                if got:
+                    print(f"{r:<34} {pct(got[0]):>10} {got[1]:>5}")
+            print("  The GAP between these two rows is the finding — not the aggregate.")
+            print("  Near-identical rows would mean a genuine length preference;")
+            print("  a wide gap means the judge is tracking the task's goal, not word count.")
+
+        psubj = {t["id"]: t["subjectivity"] for t in probe["tasks"]}
+        print(f"\n{'by subjectivity':<34} {'long wins':>10} {'n':>5}")
+        for lvl in ["low", "medium", "high"]:
+            got = long_rate(lambda t, lvl=lvl: psubj.get(t) == lvl)
+            if got:
+                print(f"{lvl:<34} {pct(got[0]):>10} {got[1]:>5}")
 
     # --- 5. agreement --------------------------------------------------------
     print("\n## Inter-judge agreement (Cohen's kappa), by subjectivity")

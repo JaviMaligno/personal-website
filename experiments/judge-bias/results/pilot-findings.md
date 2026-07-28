@@ -1,7 +1,15 @@
 # Pilot findings — within-family (Opus 5 / Sonnet 5 / Haiku 4.5)
 
-6 tasks × 3 generators × 3 judges × 2 presentation orders = 108 judgments, 18 comparisons.
-Blinded, pairwise, ties allowed. See `../README.md` for the design and its limits.
+6 tasks × 3 generators × 3 judges × 2 presentation orders = 108 judgments, 18 comparisons,
+plus 54 length-control judgments. Blinded, pairwise, ties allowed. See `../README.md` for
+the design and its limits.
+
+> **The task set has since grown.** This pilot ran on 2 tasks per subjectivity level and 3
+> length probes. `tasks.json` now holds 5 per level (15) and `tasks-length.json` holds 6,
+> balanced 3 elaboration-rewarding / 3 concision-rewarding, precisely because of §3 below.
+> The pilot scripts filter to the tasks their raw data actually covers, so these numbers
+> stay reproducible; the cross-family run will use the full set and is not comparable
+> task-for-task.
 
 **This is a pilot.** n is small enough that most of what follows is a hypothesis for the
 cross-family run, not a result. Where a number is not distinguishable from noise, it says so.
@@ -107,6 +115,19 @@ variant, short and long, preserved all 9 numbers from the source.** The judges' 
 reasons are explicit about why they went short — "genuinely condensed form, whereas B is
 essentially a full paraphrase", "reads as narrative retelling rather than a summary",
 "unnecessary editorializing".
+
+Split by what the task rewards rather than by subjectivity, the same data reads:
+
+| What the task rewards | Long wins | n |
+|---|---|---|
+| elaboration | **100.0%** | 18 |
+| concision | **38.9%** | 9 |
+
+Note the unbalanced n — the pilot's probe set happened to be 2 elaboration tasks against
+1 concision task. Had it been 3 elaboration tasks, the aggregate would have read "judges
+prefer longer answers 100% of the time" and the reversal would have been invisible.
+`tasks-length.json` is now balanced 3/3, and `analyze.py` reports this split above the
+subjectivity one, because this is the axis the effect actually lives on.
 
 ### What this actually means
 

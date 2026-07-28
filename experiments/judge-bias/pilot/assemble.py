@@ -27,8 +27,10 @@ def assemble_length(missing: list) -> dict | None:
     """The length control, in the shape run.py's length_probe() emits."""
     if not (RAW / "lenkey.json").exists():
         return None
-    tasks = json.loads((ROOT / "tasks-length.json").read_text())
     key = json.loads((RAW / "lenkey.json").read_text())
+    # Only the tasks this pilot actually ran — the task file grows, the raw data doesn't.
+    ran = {k["task_id"] for k in key.values()}
+    tasks = [t for t in json.loads((ROOT / "tasks-length.json").read_text()) if t["id"] in ran]
 
     outputs = []
     for short, name in NAMES.items():
@@ -70,8 +72,9 @@ def assemble_length(missing: list) -> dict | None:
 
 
 def main() -> int:
-    tasks = json.loads((ROOT / "tasks.json").read_text())
     key = json.loads((RAW / "key.json").read_text())
+    ran = {k["task_id"] for k in key.values()}
+    tasks = [t for t in json.loads((ROOT / "tasks.json").read_text()) if t["id"] in ran]
 
     outputs = []
     for short, name in NAMES.items():
