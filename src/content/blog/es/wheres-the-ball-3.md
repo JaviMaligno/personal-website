@@ -69,7 +69,7 @@ Aquí está el punto ciego: en esos balones sueltos más difíciles, el modelo d
 
 ¿Y qué pinta tiene el mapa del campo? Si dibujas el error mediano por zonas, el balón se determina mejor junto a las bandas y en el medio campo abierto, y peor en la congestión frente a ambas porterías — córners, centros y rechaces de área donde los jugadores se amontonan y el truco de la convergencia se rompe.
 
-![Dónde es inferible el balón a partir de los jugadores](/blog/wtb3-inferability-map.png)
+![Dónde es inferible el balón a partir de los jugadores](/blog/wtb3-inferability-map-pitch.png)
 
 ## Conclusiones
 

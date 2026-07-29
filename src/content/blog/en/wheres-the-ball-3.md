@@ -69,7 +69,7 @@ Here's the blind spot: on those harder loose balls, the model declares *lower* u
 
 Where does that leave the map of the pitch? If you plot the median error across the field, the ball is best determined near the touchlines and in open midfield, and worst in the congestion in front of both goals — the corners, crosses, and goalmouth scrambles where players pile up and the convergence trick breaks down.
 
-![Where the ball is inferable from the players](/blog/wtb3-inferability-map.png)
+![Where the ball is inferable from the players](/blog/wtb3-inferability-map-pitch.png)
 
 ## Takeaways
 
