@@ -189,3 +189,21 @@ Render the amber status chip text exactly as "missing: 2 fields" and end the tex
 ```
 
 Lesson worth reusing: when an image model mangles a short label, re-run the same prompt with an explicit "end the text after this character, add nothing further" instruction. No need to redesign the composition.
+## wheres-the-ball-3 (2026-07-26)
+
+- Article: `src/content/blog/en/wheres-the-ball-3.md`
+- Image: `public/blog/wheres-the-ball-3.png`
+- Generated with: Codex (gpt-image), prompt delegated to Codex from style constraints
+
+```text
+Use case: infographic-diagram. Asset type: 1020 × 510 pixel landscape blog hero image (exact 2:1 aspect ratio).
+Primary request: A refined technical editorial illustration that opens a machine-learning "black box" and reveals that it is computing interpretable geometry: a velocity-weighted centroid, where the running mass of players is heading. Show that elaborate topology is secondary and that the model has one overconfident blind spot around a loose ball in open space.
+Scene/backdrop: A stylized top-down sports pitch on a deep graphite-blue field, with restrained pitch markings and generous clean margins. No stadium, crowd, or realistic people.
+Subject: Abstract player dots distributed across the pitch, each with a crisp motion-vector arrow. Their arrows and visual weight converge toward a bright weighted-centroid crosshair. A small dark translucent rectangular "black box" is opening or peeling apart and transitioning seamlessly into a clean geometric diagram; inside/revealed from it are the centroid construction, weighted guide lines, and the inferred ball marker sitting precisely where the dominant arrows point. Include a very faint Voronoi/Delaunay-style triangulation mesh across part of the player cloud, visibly subordinate to the centroid. In a separate patch of open pitch, place a loose-ball marker ahead of trailing player vectors and flag that region with a subtle amber uncertainty/warning motif: a thin dashed halo or small caution notch, understated rather than alarmist.
+Style/medium: Crisp bitmap illustration with vector-like precision; refined technical editorial art; professional AI/developer research blog aesthetic; diagrammatic but concrete.
+Composition/framing: Wide 2:1 top-down composition. Make the box-opening-into-diagram transition the central visual idea. Keep the weighted-centroid crosshair as the strongest focal point, the topology mesh light and secondary, and the open-space warning region small but legible.
+Lighting/mood: Dark, analytical, high contrast, quietly cinematic, precise; not monochrome.
+Color palette: Deep graphite and blue-black background, balanced teal motion vectors, warm amber centroid and warning accents, off-white construction lines and pitch marks. No purple.
+Text: at most one tiny compact legend-like label reading exactly "WEIGHTED CENTROID", clean uppercase technical sans-serif. No other text.
+Avoid: purple gradient blobs, bokeh, glossy 3D rendering, photorealism, neon cyberpunk overload, clutter, illegible microtext, decorative topology dominating the image, large warning icons, generic circuit-board imagery.
+```
