@@ -27,7 +27,7 @@ That is a testable claim, and "several papers have found this" is not the same a
 
 Fifteen tasks, split evenly across three levels of subjectivity: objective ones with a checkable answer (parse a duration string, fix a median bug, merge intervals), medium ones (summarize, extract to JSON, classify tickets), and subjective ones (error-message copy, a postmortem opening, explaining eventual consistency to a PM). Three models answer all fifteen: **GPT-5.5**, **Grok-4.3** and **Claude Sonnet 4.6**. Then each of those three models judges every pair of answers, blinded — no model names anywhere in the prompt, which the harness asserts before sending. Every comparison is judged **twice, with the two answers swapped**, because the rate at which a judge reverses itself when you swap the slots *is* the position bias, measured rather than assumed. Ties are allowed: forcing a binary choice between two equally good answers manufactures coin flips that later get misread as bias.
 
-All three families ran through a single Azure AI Foundry subscription, which is the cheap trick that made this affordable — one billing relationship instead of three vendor accounts. (It also cost me an afternoon: Anthropic models on Foundry answer on the native Messages API and 404 on the OpenAI-compatible route, GPT-5.5 refuses `temperature=0` outright, and Grok-4.3 spends ~350 tokens thinking before it emits a one-line verdict, which silently truncates your answer if you budgeted 512. The README has the full list of scars.)
+All three families ran through a single Azure AI Foundry subscription, which is the cheap trick that made this affordable — one billing relationship instead of three vendor accounts.
 
 ## 1. The ranking depends on who is holding the clipboard
 
