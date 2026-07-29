@@ -101,6 +101,14 @@
         "medicalDocParser": {
             "title": "Parser de Documentos Médicos",
             "description": "Extracción de diagnósticos y codificación CIE-10 de documentos médicos."
+        },
+        "mcpVitaminD": {
+            "title": "MCP Server: Vitamina D",
+            "description": "Servidor MCP remoto detrás de getvitamind.app. Diez herramientas que responden, para una ubicación y un fototipo reales, si el sol puede sintetizar vitamina D ahora mismo."
+        },
+        "vitaminD": {
+            "title": "Vitamin D Explorer",
+            "description": "Producto en producción: una PWA calculadora de vitamina D solar en seis idiomas. Calcula ventanas de síntesis a partir de geometría solar, UV en vivo y fototipo — y expone el mismo motor a los agentes vía MCP."
         }
     },
     "skills": {
@@ -420,6 +428,7 @@
         "outcomes": "Resultados",
         "viewSource": "Ver Código",
         "bookCall": "Reservar Llamada",
+        "viewLive": "Ver en Vivo",
         "viewDetails": "Ver Detalles",
         "legendLabels": {
             "agent": "Agente IA",
@@ -559,6 +568,24 @@
                 ">95% precisión OCR, >90% mapeo CIE-10 correcto",
                 "Soporte multiidioma: Español, Catalán, Gallego",
                 "Procesamiento en menos de 2 min/doc, desplegado para Tirea"
+            ]
+        },
+        "mcpVitaminD": {
+            "problem": "Un asistente al que le preguntan \"¿puedo coger vitamina D hoy?\" responde con el genérico \"15 minutos de sol\". Esa respuesta es incorrecta la mayor parte del tiempo: un fototipo I en Londres y un fototipo V en Madrid necesitan exposiciones completamente distintas, y por encima de los ~40° de latitud hay meses en los que la síntesis es físicamente imposible por mucho tiempo que se pase fuera.",
+            "solution": "Un servidor MCP remoto que pone el motor de cálculo detrás de getvitamind.app directamente en el asistente. Seis herramientas públicas no requieren cuenta — búsqueda de ciudad, horas solares, ventana de síntesis del día, el año completo, estado en vivo a partir de UV y nubosidad reales, y estimación de sesión. Otras cuatro leen el perfil, las ciudades guardadas y el historial del usuario vía OAuth. Un puente publicado en npm (vitamind-mcp) cubre los clientes que solo pueden lanzar comandos locales.",
+            "outcomes": [
+                "10 herramientas; las seis públicas no requieren API key ni cuenta",
+                "Transporte hospedado más un puente stdio en npm para clientes locales",
+                "Respuestas calculadas con geometría solar NOAA, UV de Madronich y síntesis de Holick — no una tabla de consulta"
+            ]
+        },
+        "vitaminD": {
+            "problem": "El consejo público sobre exposición solar es un único número aplicado a todo el mundo. Ignora latitud, estación, altitud, fototipo, edad y cuánta piel queda descubierta — las variables que de verdad deciden si se sintetiza algo de vitamina D. Por debajo de índice UV 3 no se sintetiza nada, y ningún tiempo al sol cambia eso.",
+            "solution": "Una PWA que calcula la respuesta en lugar de consultarla: declinación y elevación solar NOAA, UV de cielo despejado de Madronich con ozono de van Heuklon y corrección por altitud, y síntesis de Holick con MED por fototipo Fitzpatrick y factor de edad. El UV y la nubosidad en vivo vienen de Open-Meteo. Construida sobre Next.js y Supabase con cuentas, ciudades guardadas, historial de sesiones, web push y un cron diario — y publicada en seis idiomas.",
+            "outcomes": [
+                "En producción en getvitamind.app, código abierto con licencia MIT",
+                "Seis idiomas (es/en/fr/de/ru/lt), PWA instalable con web push",
+                "Quality gate en CI en cada push: lint, typecheck, tests y build"
             ]
         }
     }
