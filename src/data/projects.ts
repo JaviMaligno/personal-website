@@ -1,9 +1,10 @@
 export interface Project {
   slug: string;
   key: string;
-  category: 'automation' | 'assistants' | 'mcp' | 'domainSystems';
+  category: 'automation' | 'assistants' | 'mcp' | 'domainSystems' | 'products';
   tags: string[];
   github: string | null;
+  liveUrl?: string;
   hasDiagram: boolean;
   featured?: boolean;
 }
@@ -60,7 +61,8 @@ export const projects: Project[] = [
     category: 'mcp',
     tags: ['TypeScript', 'Python', 'Bitbucket API'],
     github: 'https://github.com/JaviMaligno/mcp-server-bitbucket',
-    hasDiagram: true
+    hasDiagram: true,
+    featured: true
   },
   {
     slug: 'mcp-postgres',
@@ -94,6 +96,15 @@ export const projects: Project[] = [
     github: null,
     hasDiagram: false
   },
+  {
+    slug: 'mcp-vitamin-d',
+    key: 'mcpVitaminD',
+    category: 'mcp',
+    tags: ['TypeScript', 'npm', 'OAuth', 'Remote MCP'],
+    github: 'https://github.com/JaviMaligno/vitamind-mcp',
+    liveUrl: 'https://getvitamind.app/connect',
+    hasDiagram: false
+  },
   // Domain Systems
   {
     slug: 'steel-pricing-platform',
@@ -101,7 +112,8 @@ export const projects: Project[] = [
     category: 'domainSystems',
     tags: ['Next.js', 'Python', 'Azure OpenAI', 'OCR'],
     github: null,
-    hasDiagram: false
+    hasDiagram: false,
+    featured: true
   },
   {
     slug: 'purchasing-management-platform',
@@ -127,6 +139,17 @@ export const projects: Project[] = [
     tags: ['TypeScript', 'NLP', 'ICD-10'],
     github: null,
     hasDiagram: true
+  },
+  // Products
+  {
+    slug: 'vitamin-d-explorer',
+    key: 'vitaminD',
+    category: 'products',
+    tags: ['Next.js', 'Supabase', 'PWA', 'D3', 'i18n', 'Web Push'],
+    github: 'https://github.com/JaviMaligno/vitamind',
+    liveUrl: 'https://getvitamind.app',
+    hasDiagram: false,
+    featured: true
   }
 ];
 
