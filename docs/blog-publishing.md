@@ -39,6 +39,10 @@ Pattern (copy an existing one, e.g. `scheduled-publish-internal-context-leakage.
   `main`, it exits 0 as a no-op (published by hand, branch deleted). It only errors
   when the branch is missing *and* the article is absent — i.e. a real typo.
 - Opens a GitHub issue on success/failure as a notification.
+- **Deletes the article branch** once the merge is pushed (`published == 'true'`).
+  Safe because the article is in `main` by then, and a failed cross-post is always
+  retried from `main`, never from the branch. The delete is non-fatal: if it fails
+  it emits a `::warning::` instead of failing an otherwise successful publication.
 
 ### The cron runs late, it does not get dropped
 
@@ -103,6 +107,17 @@ Checklist when scheduling:
    `fix/blog-pubdates`). If the schedule is later moved, move the `pubDate` too.
 
 ## Retrying a failed cross-post
+
+**You get told when this happens.** `devto-post.yml` and `linkedin-post.yml` each
+open a GitHub issue on failure (`❌ Dev.to cross-post FAILED` / `❌ LinkedIn
+cross-post FAILED`) carrying the article path, the run URL and the retry
+instructions. This matters because an article only reaches `main` once: the push
+is already done, so nothing retries by itself and a red run would otherwise sit
+unnoticed among the green ones.
+
+Note the asymmetry in what you can do about it: Dev.to has `workflow_dispatch`
+and can be replayed from `main` (see below), while LinkedIn is push-only — there
+the options are re-running the failed run or posting by hand.
 
 The three publish workflows are independent, so one can fail while the others
 succeed — on 2026-07-28 `expensive-form` went out to Vercel and LinkedIn but

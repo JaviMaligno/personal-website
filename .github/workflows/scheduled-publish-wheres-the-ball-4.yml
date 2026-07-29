@@ -67,6 +67,15 @@ jobs:
           git push origin main
           echo "published=true" >> "$GITHUB_OUTPUT"
 
+      # Only after the merge is pushed. The article now lives in main, so the
+      # branch carries nothing unique: a failed Dev.to/LinkedIn run is retried
+      # from main via workflow_dispatch, never from this branch.
+      - name: Delete the published branch
+        if: success() && steps.merge.outputs.published == 'true'
+        run: |
+          git push origin --delete blog/wheres-the-ball-4 \
+            || echo "::warning::Could not delete blog/wheres-the-ball-4 — remove it by hand (non-fatal)"
+
       - name: Notify success
         if: success() && steps.merge.outputs.published == 'true'
         env:
@@ -74,7 +83,7 @@ jobs:
         run: |
           gh issue create \
             --title "✅ Where's-the-ball Part 4 published (scheduled)" \
-            --body "blog/wheres-the-ball-4 was merged into main on schedule. Deploy + Dev.to + LinkedIn should be running now. Verify: https://www.javieraguilar.ai/en/blog/wheres-the-ball-4" \
+            --body "blog/wheres-the-ball-4 was merged into main on schedule and the branch was deleted. Deploy + Dev.to + LinkedIn should be running now. Verify: https://www.javieraguilar.ai/en/blog/wheres-the-ball-4" \
             || echo "issue creation failed (non-fatal)"
 
       - name: Notify failure
