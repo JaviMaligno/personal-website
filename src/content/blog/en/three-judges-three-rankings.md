@@ -162,8 +162,8 @@ This is the number to keep if you keep only one. A judge panel is supposed to av
 
 - **Match the judge to the dimension, not to a leaderboard.** Objective, checkable dimension → any competent judge, self-preference is near zero. Subjective dimension → assume the judge is a participant.
 - **Never use a judge from a family you're evaluating on a subjective dimension.** +30 to +48 percentage points is not a rounding error, and blinding does not remove it.
-- **Run both orders. Always.** Not because all judges lean first, but because one in three of these did, and the swap is what tells you which.
-- **Screen the judge before trusting it.** Flip rate on ~20 comparisons costs almost nothing and would have disqualified Grok-4.3 in ten minutes.
+- **Screen every judge in both orders once; keep both orders only where they pay.** Twenty comparisons run both ways gives you the slot-A rate and the flip rate, and would have disqualified Grok-4.3 in ten minutes. A judge that comes back clean doesn't need a permanent 2× tax after that — for an aggregate ranking, simply randomising the order per comparison is free and neutralises a systematic lean.
+- **Keep both orders when you act on individual verdicts.** Gating a PR or routing a sample to human review is a per-item decision, and a lean isn't the only failure: Claude Sonnet 4.6 showed no slot preference at all (51.5%, p = 0.90) and still reversed itself on one comparison in five. Running the swap is the cheapest way to know whether *this* verdict is reproducible.
 - **Distrust any length statistic that isn't controlled** — including one that says your judge has no length bias.
 - **If your judges agree at chance, the problem is the dimension, not the panel.**
 

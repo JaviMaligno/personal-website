@@ -162,8 +162,8 @@ Este es el número que hay que quedarse si solo te quedas con uno. Un panel de j
 
 - **Empareja el juez con la dimensión, no con un leaderboard.** Dimensión objetiva y comprobable → cualquier juez competente, el self-preference es casi cero. Dimensión subjetiva → asume que el juez es un participante.
 - **Nunca uses un juez de una familia que estás evaluando en una dimensión subjetiva.** De +30 a +48 puntos porcentuales no es un error de redondeo, y el cegado no lo elimina.
-- **Corre los dos órdenes. Siempre.** No porque todos los jueces prefieran lo primero, sino porque uno de cada tres aquí lo hizo, y el intercambio es lo que te dice cuál.
-- **Criba al juez antes de fiarte de él.** La tasa de vuelco sobre ~20 comparaciones cuesta casi nada y habría descalificado a Grok-4.3 en diez minutos.
+- **Criba a cada juez una vez con los dos órdenes; consérvalos solo donde compensen.** Veinte comparaciones corridas en ambos sentidos te dan la tasa de hueco A y la tasa de vuelco, y habrían descalificado a Grok-4.3 en diez minutos. Un juez que sale limpio de esa criba no necesita un impuesto permanente del 2×: para un ranking agregado, basta con aleatorizar el orden en cada comparación, que es gratis y neutraliza una inclinación sistemática.
+- **Mantén los dos órdenes cuando actúes sobre veredictos individuales.** Bloquear una PR o mandar una muestra a revisión humana es una decisión por ítem, y la inclinación no es el único fallo: Claude Sonnet 4.6 no mostró preferencia de hueco alguna (51,5%, p = 0,90) y aun así se contradijo en una de cada cinco comparaciones. El intercambio es la forma más barata de saber si *ese* veredicto es reproducible.
 - **Desconfía de cualquier estadístico de longitud sin control** — incluido uno que diga que tu juez no tiene sesgo de longitud.
 - **Si tus jueces coinciden al nivel del azar, el problema es la dimensión, no el panel.**
 
