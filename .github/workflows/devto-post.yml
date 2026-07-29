@@ -17,6 +17,10 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+  issues: write   # the failure notification opens an issue
+
 jobs:
   publish-devto:
     runs-on: ubuntu-latest
@@ -86,3 +90,27 @@ jobs:
           echo "✅ Dev.to post published successfully!"
           echo "Post: ${{ steps.resolve.outputs.post_title }}"
           echo "Status: Draft (review and publish manually on Dev.to)"
+
+      # An article reaches main once. If cross-posting fails the push is already
+      # done, so nothing retries on its own — this issue is the only signal.
+      - name: Notify failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_BODY: |
+            The article was merged into `main` but **Dev.to cross-posting failed**, so it is not on Dev.to.
+
+            - Article: `${{ steps.resolve.outputs.post_path }}` (empty means the failure happened during detection)
+            - Failed run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Commit: ${{ github.sha }}
+
+            **Retry:** run the *Publish to Dev.to* workflow via `workflow_dispatch` with `post_path` set to the
+            article above. `publish-to-devto.js` is idempotent — it looks the article up by `canonical_url` and
+            PUTs, so a retry updates instead of duplicating.
+
+            Usual causes: an expired `DEVTO_API_KEY`, or a Dev.to outage.
+        run: |
+          gh issue create \
+            --title "❌ Dev.to cross-post FAILED" \
+            --body "$ISSUE_BODY" \
+            || echo "issue creation failed (non-fatal)"

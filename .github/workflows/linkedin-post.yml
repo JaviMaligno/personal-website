@@ -7,6 +7,10 @@ on:
     paths:
       - 'src/content/blog/en/**/*.md'
 
+permissions:
+  contents: read
+  issues: write   # the failure notification opens an issue
+
 jobs:
   publish-linkedin:
     runs-on: ubuntu-latest
@@ -43,8 +47,38 @@ jobs:
           NEW_POST_PATH: ${{ steps.detect.outputs.post_path }}
           SITE_URL: 'https://javieraguilar.ai'
 
+      # Guarded on has_new_posts: without it this claimed success on pushes that
+      # only edited an existing article, where publishing nothing is correct.
       - name: Report success
-        if: success()
+        if: success() && steps.detect.outputs.has_new_posts == 'true'
         run: |
           echo "✅ LinkedIn post published successfully!"
           echo "Post: ${{ steps.detect.outputs.post_title }}"
+
+      - name: Report no-op
+        if: success() && steps.detect.outputs.has_new_posts != 'true'
+        run: echo "ℹ️ No new English article in this push — nothing to post to LinkedIn."
+
+      # An article reaches main once. If cross-posting fails the push is already
+      # done, so nothing retries on its own — this issue is the only signal.
+      - name: Notify failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_BODY: |
+            The article was merged into `main` but **LinkedIn cross-posting failed**, so nothing was posted.
+
+            - Article: `${{ steps.detect.outputs.post_path }}` (empty means the failure happened during detection)
+            - Failed run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Commit: ${{ github.sha }}
+
+            **Retry:** this workflow only runs on push, so it cannot be re-run against `main` from the UI.
+            Post by hand, or re-run the failed run once the cause is fixed.
+
+            Usual causes: an expired `LINKEDIN_ACCESS_TOKEN` (see the `linkedin-token-check` workflow),
+            or a `GEMINI_API_KEY` problem while generating the summary.
+        run: |
+          gh issue create \
+            --title "❌ LinkedIn cross-post FAILED" \
+            --body "$ISSUE_BODY" \
+            || echo "issue creation failed (non-fatal)"
