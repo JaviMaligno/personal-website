@@ -1,0 +1,32 @@
+[
+  {
+    "task_id": "len-index",
+    "variant": "short",
+    "text": "A database index is a data structure (like a B-tree) that speeds up data retrieval by pre-sorting columns. Instead of scanning every row, queries can jump directly to relevant data. However, indexes slow writes because the database must update both the table and all its indexes. More indexes mean more write overhead, creating a trade-off between read speed and write performance."
+  },
+  {
+    "task_id": "len-index",
+    "variant": "long",
+    "text": "A database index is a specialized data structure, typically a B-tree or hash table, that enables the database to quickly locate rows without scanning the entire table. When you index a column, the database creates a separate sorted structure pointing back to the original rows. For queries, this is enormously efficient—instead of checking millions of rows, the database can use the index to find matching records in logarithmic time.\n\nHowever, this comes at a cost for write operations. When you insert, update, or delete a row, the database must maintain not just the main table but every index on that table. Each index needs to be updated to reflect the change, which takes additional I/O operations and computational resources. A table with five indexes requires roughly five times the write work of an unindexed table.\n\nThe slowdown becomes particularly noticeable during bulk operations like large imports or batch updates. Moreover, indexes consume disk space, which has implications for caching efficiency and backup times.\n\nThis trade-off is why database design requires careful planning: you index columns frequently used in WHERE clauses and joins, but avoid over-indexing write-heavy tables. The goal is to balance query performance against write latency and storage costs."
+  },
+  {
+    "task_id": "len-summarize",
+    "variant": "short",
+    "text": "The pipeline processes 4.2 million events daily across 37 systems. Schema breakages dropped from 3 per month (4-hour MTTR) to 0.4 per month (25-minute MTTR) after replacing bespoke parsers with a declarative YAML mapping layer. The 6-week migration cost 11% more due to per-event validation. Two legacy SOAP sources remain unstable and will sunset in Q4."
+  },
+  {
+    "task_id": "len-summarize",
+    "variant": "long",
+    "text": "The ingestion pipeline processes 4.2 million events daily across 37 source systems. Previously, each source had its own custom parser, causing frequent operational chaos: schema changes upstream broke ingestion an average of 3 times per month, with mean recovery time of 4 hours.\n\nThe team replaced the bespoke parsers with a declarative mapping layer where each source ships a YAML descriptor, validated against JSON Schema at deployment. This dramatically improved reliability: breakages dropped to just 0.4 per month, and MTTR fell to 25 minutes.\n\nThe migration required 6 engineer-weeks of effort. However, validation now runs on every event rather than batches, increasing costs by 11%.\n\nThe team has identified two legacy SOAP sources as persistent problem areas due to their inability to emit stable schemas. These are targeted for sunset in Q4, which should further stabilize the pipeline."
+  },
+  {
+    "task_id": "len-idempotency",
+    "variant": "short",
+    "text": "Idempotency means an operation produces the same result regardless of how many times you execute it. Think of it like pressing an elevator button: pressing once or ten times still takes you to the same floor. For customers, this is crucial: if a payment request is accidentally sent twice, idempotency ensures they're only charged once. It's a reliability promise that makes systems predictable and safe."
+  },
+  {
+    "task_id": "len-idempotency",
+    "variant": "long",
+    "text": "Idempotency is a property where repeating an operation produces the same outcome as doing it once. Think of a light switch: flipping it on ten times leaves the light in the same state as flipping it on once. That predictability is what idempotency delivers.\n\nIn distributed systems, networks fail. A customer clicks \"submit payment,\" but their connection drops—they don't know if it went through, so they click again. Without idempotency, both requests hit your system, and they're charged twice. With it, the second request gets caught and safely ignored because you recognize it as a duplicate.\n\nFrom a product perspective, idempotency is about building trust. Customers can retry without fear. They can instruct other systems to retry automatically. Your service becomes dependable in the face of real-world unreliability.\n\nThe tradeoff is that idempotency requires you to track which operations you've already processed—via request IDs, transaction deduplication, or similar mechanisms. This adds storage and computation.\n\nBut the benefit is enormous: you can promise customers that critical operations won't mysteriously duplicate. A transfer of funds always transfers exactly once, no matter how many retries happen underneath. That kind of safety is what transforms unreliable networks into systems people can actually trust with their business."
+  }
+]

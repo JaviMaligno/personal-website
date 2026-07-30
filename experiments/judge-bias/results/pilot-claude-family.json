@@ -1,0 +1,1710 @@
+{
+  "meta": {
+    "generators": [
+      "opus-5",
+      "sonnet-5",
+      "haiku-4.5"
+    ],
+    "judges": [
+      "opus-5",
+      "sonnet-5",
+      "haiku-4.5"
+    ],
+    "execution": "claude-code-subagents",
+    "notes": "Within-family pilot. Generation and judging ran through Claude Code subagents, not raw API calls, so each model carried a coding-agent system prompt. Judges saw 18 blinded comparisons per batch in one context, and the two presentation orders were separate contexts. Judges were forbidden from executing code, so even the low-subjectivity tasks were graded by reading, not by running tests."
+  },
+  "tasks": [
+    {
+      "id": "obj-parse-duration",
+      "subjectivity": "low",
+      "prompt": "Write a Python function `parse_duration(s: str) -> int` that converts a duration string like \"1h30m\", \"45s\", \"2h\", \"90m\", \"1h2m3s\" into a total number of seconds. Invalid input must raise ValueError. Return only the function and any imports it needs, in a single ```python code block. No explanation."
+    },
+    {
+      "id": "obj-fix-bug",
+      "subjectivity": "low",
+      "prompt": "This function is supposed to return the median of a list of numbers, but it is wrong for some inputs:\n\n```python\ndef median(xs):\n    xs.sort()\n    return xs[len(xs) // 2]\n```\n\nReturn a corrected version in a single ```python code block. It must handle even-length lists, must not mutate the caller's list, and must raise ValueError on empty input. No explanation."
+    },
+    {
+      "id": "med-summarize",
+      "subjectivity": "medium",
+      "prompt": "Summarize the following text in at most 100 words, preserving every concrete number and constraint.\n\n---\nOur ingestion pipeline processes roughly 4.2 million events per day across 37 source systems. Until March, each source had its own bespoke parser, which meant a schema change upstream broke ingestion an average of 3 times per month, with a mean time to recovery of 4 hours. We replaced the bespoke parsers with a declarative mapping layer: each source now ships a YAML descriptor, validated against a JSON Schema at deploy time. Breakages dropped to 0.4 per month and MTTR to 25 minutes. The migration took 6 engineer-weeks. The remaining failures are concentrated in 2 legacy SOAP sources that cannot emit a stable schema; we plan to sunset them in Q4. Cost went up 11% because validation runs on every event rather than every batch.\n---"
+    },
+    {
+      "id": "med-extract",
+      "subjectivity": "medium",
+      "prompt": "Extract the following changelog into a JSON array. Each element must have exactly these keys: `version` (string), `date` (ISO 8601 YYYY-MM-DD), `type` (one of \"feature\", \"fix\", \"breaking\"), `summary` (string). Return only a single ```json code block.\n\n---\nv2.3.1 - Mar 4 2025 - fixed a race in the token refresher\nv2.4.0 (2025-03-19): added webhook retries with exponential backoff\n2.5.0, released April 2nd 2025 -- BREAKING: renamed `client.fetch()` to `client.request()`\nv2.5.1 / 2025-04-07 / patch: null pointer when config file absent\n---"
+    },
+    {
+      "id": "subj-empty-state",
+      "subjectivity": "high",
+      "prompt": "Write the empty-state copy for a CI dashboard: the screen a user sees when they have connected their repository but no pipeline has ever run. Include a headline, one or two lines of body copy, and the label for a single primary button. Return only the copy."
+    },
+    {
+      "id": "subj-explain",
+      "subjectivity": "high",
+      "prompt": "Explain \"eventual consistency\" in one paragraph to a product manager with no distributed systems background, in a way that helps them reason about what to promise customers. No bullet points, no headings."
+    }
+  ],
+  "outputs": [
+    {
+      "task_id": "obj-parse-duration",
+      "model": "opus-5",
+      "text": "```python\nimport re\n\n_DURATION_RE = re.compile(r\"^(?:(\\d+)h)?(?:(\\d+)m)?(?:(\\d+)s)?$\")\n\n\ndef parse_duration(s: str) -> int:\n    if not isinstance(s, str):\n        raise ValueError(f\"invalid duration: {s!r}\")\n    text = s.strip()\n    match = _DURATION_RE.match(text)\n    if not match or not any(match.groups()):\n        raise ValueError(f\"invalid duration: {s!r}\")\n    hours, minutes, seconds = (int(g) if g is not None else 0 for g in match.groups())\n    return hours * 3600 + minutes * 60 + seconds\n```",
+      "chars": 503,
+      "words": 62
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "model": "opus-5",
+      "text": "```python\ndef median(xs):\n    ys = sorted(xs)\n    n = len(ys)\n    if n == 0:\n        raise ValueError(\"median() arg is an empty sequence\")\n    mid = n // 2\n    if n % 2:\n        return ys[mid]\n    return (ys[mid - 1] + ys[mid]) / 2\n```",
+      "chars": 235,
+      "words": 40
+    },
+    {
+      "task_id": "med-summarize",
+      "model": "opus-5",
+      "text": "The pipeline handles roughly 4.2 million events daily across 37 source systems. Before March, each source had a bespoke parser, so upstream schema changes broke ingestion about 3 times monthly, with a 4-hour mean time to recovery. A declarative mapping layer replaced them: each source ships a YAML descriptor, validated against a JSON Schema at deploy time. Breakages fell to 0.4 per month and MTTR to 25 minutes; the migration took 6 engineer-weeks. Remaining failures come from 2 legacy SOAP sources that cannot emit a stable schema; they will be sunset in Q4. Cost rose 11% because validation runs per event, not per batch.",
+      "chars": 627,
+      "words": 104
+    },
+    {
+      "task_id": "med-extract",
+      "model": "opus-5",
+      "text": "```json\n[\n  {\n    \"version\": \"2.3.1\",\n    \"date\": \"2025-03-04\",\n    \"type\": \"fix\",\n    \"summary\": \"Fixed a race in the token refresher\"\n  },\n  {\n    \"version\": \"2.4.0\",\n    \"date\": \"2025-03-19\",\n    \"type\": \"feature\",\n    \"summary\": \"Added webhook retries with exponential backoff\"\n  },\n  {\n    \"version\": \"2.5.0\",\n    \"date\": \"2025-04-02\",\n    \"type\": \"breaking\",\n    \"summary\": \"Renamed client.fetch() to client.request()\"\n  },\n  {\n    \"version\": \"2.5.1\",\n    \"date\": \"2025-04-07\",\n    \"type\": \"fix\",\n    \"summary\": \"Fixed null pointer when config file is absent\"\n  }\n]\n```",
+      "chars": 575,
+      "words": 65
+    },
+    {
+      "task_id": "subj-empty-state",
+      "model": "opus-5",
+      "text": "No pipelines have run yet\n\nYour repository is connected and ready. Run your first pipeline to start seeing build times, test results, and failures here.\n\nRun first pipeline",
+      "chars": 172,
+      "words": 28
+    },
+    {
+      "task_id": "subj-explain",
+      "model": "opus-5",
+      "text": "Eventual consistency means that when something changes in one part of the system, the change is guaranteed to reach everywhere it needs to go, but not instantly and not everywhere at the same moment, so for a brief window different users or different screens can legitimately see slightly different versions of the truth. Think of it like an announcement spreading through a large office: the news is definitely correct and everyone will have it shortly, but for a few seconds some people are still working off what they heard a moment ago. Practically, this means you can safely promise customers that their change was accepted and will be reflected everywhere, and you can usually promise a typical settling time measured in milliseconds or seconds, but you should avoid promising that a change is visible to every user the instant they make it, and you should avoid designing flows that assume a write can be read back immediately from a different device or region. Where that instant guarantee genuinely matters, such as account balances, inventory counts, or permission revocations, flag it early, because the engineering cost of strong consistency is real and it is better to pay it deliberately in a few places than to imply it everywhere.",
+      "chars": 1246,
+      "words": 207
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "model": "sonnet-5",
+      "text": "```python\nimport re\n\ndef parse_duration(s: str) -> int:\n    if not isinstance(s, str) or not s:\n        raise ValueError(f\"Invalid duration: {s!r}\")\n\n    matches = re.findall(r'(\\d+)([hms])', s)\n    if not matches:\n        raise ValueError(f\"Invalid duration: {s!r}\")\n\n    # Ensure the whole string is consumed by valid tokens (no garbage characters)\n    reconstructed = ''.join(f\"{num}{unit}\" for num, unit in matches)\n    if reconstructed != s:\n        raise ValueError(f\"Invalid duration: {s!r}\")\n\n    seconds_per_unit = {'h': 3600, 'm': 60, 's': 1}\n    order = {'h': 0, 'm': 1, 's': 2}\n\n    seen_units = set()\n    total = 0\n    last_order = -1\n    for num, unit in matches:\n        if unit in seen_units:\n            raise ValueError(f\"Invalid duration: {s!r}\")\n        if order[unit] < last_order:\n            raise ValueError(f\"Invalid duration: {s!r}\")\n        seen_units.add(unit)\n        last_order = order[unit]\n        total += int(num) * seconds_per_unit[unit]\n\n    return total\n```",
+      "chars": 994,
+      "words": 117
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "model": "sonnet-5",
+      "text": "```python\ndef median(xs):\n    if not xs:\n        raise ValueError(\"median() arg is an empty sequence\")\n    xs_sorted = sorted(xs)\n    n = len(xs_sorted)\n    mid = n // 2\n    if n % 2 == 1:\n        return xs_sorted[mid]\n    return (xs_sorted[mid - 1] + xs_sorted[mid]) / 2\n```",
+      "chars": 275,
+      "words": 41
+    },
+    {
+      "task_id": "med-summarize",
+      "model": "sonnet-5",
+      "text": "The pipeline ingests ~4.2 million events/day from 37 source systems. Before March, bespoke per-source parsers caused ~3 breakages/month with a 4-hour mean time to recovery (MTTR). A declarative mapping layer replaced them: each source ships a YAML descriptor, validated against a JSON Schema at deploy time. This cut breakages to 0.4/month and MTTR to 25 minutes. The migration took 6 engineer-weeks. Remaining failures cluster in 2 legacy SOAP sources that cannot emit a stable schema, slated for sunset in Q4. Cost rose 11%, since validation now runs per-event rather than per-batch.",
+      "chars": 585,
+      "words": 91
+    },
+    {
+      "task_id": "med-extract",
+      "model": "sonnet-5",
+      "text": "```json\n[\n  {\n    \"version\": \"v2.3.1\",\n    \"date\": \"2025-03-04\",\n    \"type\": \"fix\",\n    \"summary\": \"fixed a race in the token refresher\"\n  },\n  {\n    \"version\": \"v2.4.0\",\n    \"date\": \"2025-03-19\",\n    \"type\": \"feature\",\n    \"summary\": \"added webhook retries with exponential backoff\"\n  },\n  {\n    \"version\": \"2.5.0\",\n    \"date\": \"2025-04-02\",\n    \"type\": \"breaking\",\n    \"summary\": \"renamed client.fetch() to client.request()\"\n  },\n  {\n    \"version\": \"v2.5.1\",\n    \"date\": \"2025-04-07\",\n    \"type\": \"fix\",\n    \"summary\": \"null pointer when config file absent\"\n  }\n]\n```",
+      "chars": 569,
+      "words": 63
+    },
+    {
+      "task_id": "subj-empty-state",
+      "model": "sonnet-5",
+      "text": "No pipelines have run yet\n\nYour repository is connected and ready to go. Push a commit or trigger a run manually to see your first pipeline in action.\n\n[Run your first pipeline]",
+      "chars": 177,
+      "words": 32
+    },
+    {
+      "task_id": "subj-explain",
+      "model": "sonnet-5",
+      "text": "Eventual consistency means that when data changes in a distributed system, not every part of the system sees that change at the exact same instant, but if you stop making new changes, all parts will eventually agree on the same value within a short window of time, usually milliseconds to a few seconds. For product decisions, this means you should avoid promising customers that an action is reflected everywhere \"instantly\" or that two people looking at the same data at the same moment are guaranteed to see identical results; instead you can promise that the system is highly available and fast, and that any temporary mismatch will resolve itself very quickly without the customer needing to do anything, so it is safe to say \"your change will be visible within moments\" but risky to say \"your change is visible immediately everywhere, guaranteed.\"",
+      "chars": 853,
+      "words": 142
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "model": "haiku-4.5",
+      "text": "```python\nimport re\n\ndef parse_duration(s: str) -> int:\n    pattern = r'(\\d+)([hms])'\n    matches = re.findall(pattern, s)\n    \n    if not matches:\n        raise ValueError(f\"Invalid duration format: {s}\")\n    \n    total_seconds = 0\n    for value, unit in matches:\n        value = int(value)\n        if unit == 'h':\n            total_seconds += value * 3600\n        elif unit == 'm':\n            total_seconds += value * 60\n        elif unit == 's':\n            total_seconds += value\n    \n    return total_seconds\n```",
+      "chars": 518,
+      "words": 62
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "model": "haiku-4.5",
+      "text": "```python\ndef median(xs):\n    sorted_xs = sorted(xs)\n    if not sorted_xs:\n        raise ValueError(\"Cannot compute median of empty list\")\n    \n    n = len(sorted_xs)\n    if n % 2 == 1:\n        return sorted_xs[n // 2]\n    else:\n        return (sorted_xs[n // 2 - 1] + sorted_xs[n // 2]) / 2\n```",
+      "chars": 295,
+      "words": 43
+    },
+    {
+      "task_id": "med-summarize",
+      "model": "haiku-4.5",
+      "text": "The ingestion pipeline processes 4.2 million events daily from 37 source systems. Previously, bespoke parsers caused schema changes to break ingestion an average of 3 times monthly with 4-hour recovery time. A declarative YAML-based mapping layer, validated against JSON Schema at deploy time, reduced breakages to 0.4 per month and MTTR to 25 minutes. The migration required 6 engineer-weeks. Two legacy SOAP sources remain problematic due to unstable schemas; sunset is planned for Q4. Validation now runs on every event, increasing costs by 11%.",
+      "chars": 548,
+      "words": 84
+    },
+    {
+      "task_id": "med-extract",
+      "model": "haiku-4.5",
+      "text": "```json\n[\n  {\n    \"version\": \"2.3.1\",\n    \"date\": \"2025-03-04\",\n    \"type\": \"fix\",\n    \"summary\": \"fixed a race in the token refresher\"\n  },\n  {\n    \"version\": \"2.4.0\",\n    \"date\": \"2025-03-19\",\n    \"type\": \"feature\",\n    \"summary\": \"added webhook retries with exponential backoff\"\n  },\n  {\n    \"version\": \"2.5.0\",\n    \"date\": \"2025-04-02\",\n    \"type\": \"breaking\",\n    \"summary\": \"renamed `client.fetch()` to `client.request()`\"\n  },\n  {\n    \"version\": \"2.5.1\",\n    \"date\": \"2025-04-07\",\n    \"type\": \"fix\",\n    \"summary\": \"null pointer when config file absent\"\n  }\n]\n```",
+      "chars": 570,
+      "words": 63
+    },
+    {
+      "task_id": "subj-empty-state",
+      "model": "haiku-4.5",
+      "text": "**No pipelines yet**\n\nPush a commit to your connected repository to trigger your first pipeline and start building.\n\n[Push Your Code]",
+      "chars": 133,
+      "words": 21
+    },
+    {
+      "task_id": "subj-explain",
+      "model": "haiku-4.5",
+      "text": "Eventual consistency means that when you make a change in one part of a system, it might not appear everywhere instantly\u2014there's a brief delay as the system synchronizes. Think of it like when you change your social media profile photo: not all servers see the update immediately, but within seconds or minutes, everyone gets the latest version. This differs from immediate consistency, which guarantees changes appear everywhere at once but becomes expensive and slow as you grow. Eventual consistency lets you serve customers faster and more reliably, though it means different users might see slightly different information for a short window. For product planning, this means you should set expectations that real-time consistency isn't guaranteed for distributed data, but all information will synchronize within a specific timeframe you can promise.",
+      "chars": 855,
+      "words": 130
+    }
+  ],
+  "judgments": [
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B anchors the pattern so malformed input like \"1h30x\" or \"5x\" is rejected, while A silently ignores garbage and accepts repeated or out-of-order units."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B validates that the whole string is consumed and that units are unique and ordered, whereas A silently ignores trailing or interleaved garbage instead of raising ValueError."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "Both validate correctly, but A achieves the same strictness with one anchored regex instead of B's reconstruction plus duplicate and ordering bookkeeping."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both are functionally identical correct fixes that copy the list, handle even lengths, and raise ValueError on empty input."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both correctly avoid mutation, average the two middle values, and raise ValueError on empty input, differing only in trivial style and check ordering."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "The two implementations are semantically equivalent and both satisfy every stated requirement."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B preserves every constraint including the pre-March baseline and the per-event-rather-than-per-batch cause of the 11% cost rise, both of which A drops, at only a marginal length cost."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B stays comfortably under 100 words while retaining details A omits, notably the March baseline and the per-event versus per-batch validation contrast."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Both preserve all numbers and constraints, but B does so in roughly 90 words while A sits at or slightly over the 100-word ceiling."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "A extracts the summaries faithfully from the source, while B rewrites and re-capitalizes them and strips the code formatting around client.fetch()/client.request()."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A normalizes version strings consistently, whereas B inconsistently keeps the \"v\" prefix on three entries but not on 2.5.0."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A gives consistently formatted version strings while B mixes \"v2.3.1\" with \"2.5.0\", an inconsistency worse than A's light summary rewording."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B's button is an action the dashboard can actually perform and its body explains the payoff, while A's \"Push Your Code\" button label points at work done outside the product."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B confirms the connected state, offers both ways to start a run, and pairs them with an in-product button label, whereas A's button asks the user to do something the UI cannot do."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both use the same headline and a clear primary action, trading A's payoff framing for B's how-to-start guidance with no clear overall winner."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B gives the same intuition plus concrete guidance on which promises are safe and which cases warrant strong consistency, while A ends on a vague assurance about a timeframe it never grounds."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B translates the concept directly into safe versus risky customer promises, whereas A stays generic and its closing advice about promising a timeframe is unsupported."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A pairs an accessible analogy with concrete promise guidance and names the cases where strong consistency must be flagged, making it more useful to a non-technical PM than B's denser, analogy-free paragraph."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A's anchored regex rejects malformed input like \"abc1h\" or \"1h1h\", while B's findall silently accepts garbage and repeated units, failing the ValueError requirement."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A validates that the whole string is consumed and that units are unique and ordered, whereas B accepts malformed inputs like \"x1h2h\" without raising ValueError."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "Both validate correctly, but B achieves the same strictness (order, uniqueness, no stray characters) in a single anchored regex with far less code."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both are functionally identical: non-mutating sorted copy, correct even-length averaging, and ValueError on empty input."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both fix all three requirements identically, differing only in whether the emptiness check precedes or follows the sort."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both are correct and equivalent in behavior, style, and handling of the empty, odd, and even cases."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A preserves every detail including the \"until March\" cutoff and the per-event vs per-batch contrast, which B drops, at only a marginal length cost."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A stays well under 100 words while retaining every number plus the March cutoff and the per-event vs per-batch cost cause, both of which B loses."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Both preserve all the facts, but A does so more compactly and comfortably within the 100-word limit that B strains against."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A normalizes versions and summaries consistently and cleanly, while B leaves markdown backticks embedded in a JSON string field."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "A is internally inconsistent, prefixing three versions with \"v\" but not the fourth, while B normalizes all four uniformly."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B uses consistent version strings and clean, uniformly phrased summaries, whereas A mixes \"v2.3.1\" with \"2.5.0\" in the same array."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A is clean plain copy that tells the user what value the dashboard will show, while B wraps the copy in markdown and its \"Push Your Code\" label does not describe a button action."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A gives both ways to start (push or manual trigger) and a button label that names a real in-app action, unlike B's \"Push Your Code\"."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "A's body is more actionable by naming both trigger paths, and it avoids B's redundancy between body copy and button label."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A gives a clearer analogy plus concrete guidance on what is safe to promise and which cases (balances, inventory, permissions) need strong consistency, while B is vaguer and slightly overstates the alternative."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A directly supplies safe versus risky promise wording for the PM, whereas B ends on a vague assurance of a \"specific timeframe you can promise\"."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "opus-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B matches A's promise guidance and adds an intuitive analogy plus the crucial flag that some domains genuinely need strong consistency."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B's anchored regex validates the entire string and rejects garbage or malformed input that A's unanchored findall would silently accept."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B rejects duplicate units, wrong ordering, and stray characters via a full-string reconstruction check, while A accepts garbage between valid tokens."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "Both correctly validate structure and reject malformed input, but A's anchored compiled regex is more concise and equally robust."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both corrected functions are logically equivalent: non-mutating, correct even/odd median, and raise ValueError on empty input."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both avoid mutating the input, raise ValueError on empty lists, and compute the median identically for even and odd lengths."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "The two implementations differ only in variable naming and check ordering, with identical correctness and behavior."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B preserves the 'before March' timing context and the 'per event, not per batch' cost driver that A drops."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B retains both the pre-March timeframe and the per-event-vs-per-batch distinction that A omits."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both preserve every number and constraint from the source text, differing only in minor cosmetic phrasing."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B's summaries are cleaner (consistent capitalization, no stray markdown backticks) while both handle dates and types identically."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A keeps a consistent version string format across all entries, whereas B inconsistently prefixes some versions with 'v' and not others."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A is consistent in both version formatting and summary style, while B mixes 'v'-prefixed and bare version strings."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B's body copy previews concrete value (build times, test results, failures), giving the user a stronger reason to act."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B's copy accounts for both push-triggered and manually-triggered pipelines rather than assuming push is the only option."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both are well-crafted empty-state copy taking equally valid but different angles, one benefit-focused and one mechanism-focused."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B gives concrete, actionable promise/don't-promise guidance plus domain examples that directly serve the stated goal better than A's vaguer closing advice."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "B translates the concept into explicit 'safe to say / risky to say' promise language, more directly useful to a PM than A's generic closing."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "A additionally flags concrete domains needing strong consistency (balances, inventory, permissions) and the engineering cost tradeoff, giving the PM more to act on."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A's anchored regex rejects trailing garbage (e.g. \"1hfoo\") while B's re.findall silently ignores unmatched characters and fails to raise ValueError on such invalid input."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A validates that the entire string is consumed by valid tokens and rejects duplicate/out-of-order units, whereas B's findall-based approach silently ignores trailing garbage instead of raising ValueError."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both use a fully-anchored/whole-string validation strategy (regex anchors vs. reconstruction+order checks) that correctly rejects malformed input and produce equivalent results on all valid and invalid cases."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both implementations are functionally identical: they sort a copy, raise ValueError on empty input, and correctly average the two middle elements for even-length lists."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both implementations are functionally identical, differing only in variable names and the order of the empty-check versus sort."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both implementations are functionally identical in correctness, non-mutation, and empty-list handling, differing only in cosmetic style."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "Response A runs to roughly 104 words, exceeding the 100-word limit, while B preserves all the same numbers/constraints in about 84 words."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both stay under the 100-word cap and preserve every number and constraint from the source with only minor, offsetting stylistic trade-offs."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A stays within the 100-word limit (~91 words) while preserving all constraints, whereas B runs to roughly 104 words, violating the stated limit."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "tie",
+      "raw": "Both use a consistent version format and correct dates/types; the only differences are cosmetic (capitalization and backtick retention in the summary text), a matter of style rather than correctness."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "B uses a consistent version format across all entries, while A inconsistently keeps a \"v\" prefix on some versions (v2.3.1, v2.4.0, v2.5.1) but not others (2.5.0), which is less usable for downstream parsing."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B has a consistent version string format across all entries and clean, complete-sentence summaries, while A inconsistently mixes \"v\"-prefixed and unprefixed version strings."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A's button label \"Run first pipeline\" is a plausible dashboard action, whereas B's \"[Push Your Code]\" mislabels a button with an action (pushing code) that can't actually be performed by clicking it."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A's CTA \"Run your first pipeline\" is an actionable dashboard button, whereas B's \"[Push Your Code]\" describes a git action that a UI button click cannot perform."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both provide a clear headline, concise body copy, and an actionable, sensible primary button label, differing only in minor emphasis (mechanism vs. benefit)."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A gives concrete, business-relevant guidance (including when NOT to promise instant consistency, e.g. account balances, inventory, permissions) that is more directly useful for reasoning about customer promises than B's more generic analogy-based explanation."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "A offers precise, quotable \"safe to promise X / risky to promise Y\" language tailored to the task, while B's explanation is more generic and less directly tied to what can be promised."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "sonnet-5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "B additionally flags concrete cases (account balances, inventory, permission revocations) where eventual consistency is not an acceptable promise, giving a more complete framework for reasoning about customer commitments than A's otherwise crisp explanation."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "Response B uses anchored regex and validates full string format, while Response A only partially validates and would accept malformed inputs like embedded garbage."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B comprehensively validates input with string reconstruction, duplicate-unit checking, and ordering enforcement, while Response A only finds matches without checking for garbage characters."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "Response A's anchored regex pattern cleanly validates the entire format with no overhead, while Response B adds unnecessary checks (ordering, duplicate detection) not specified in the task."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "tie",
+      "raw": "Both solutions correctly handle even-length lists, avoid mutation, and raise ValueError on empty input; they differ only in style and variable naming."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B checks emptiness before creating the sorted copy, making it more efficient than Response A which sorts before checking."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B checks emptiness before sorting, improving efficiency over Response A which incurs the cost of sorting an empty list."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A stays within the 100-word limit (84 words) while Response B exceeds it (104 words), violating the primary constraint."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "tie",
+      "raw": "Both summaries preserve all concrete numbers and stay within the 100-word limit; they differ only in style (Response B uses abbreviations like events/day)."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B stays within the 100-word limit (91 words) while Response A exceeds it by 4 words, violating the strict word-count constraint."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A preserves the original summary text exactly, while Response B modifies them by capitalizing, which adds unnecessary transformation to the extraction task."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "Response B has inconsistent version formatting (v-prefix on some but not all entries) and removes backticks from summaries, while Response A extracts consistently."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "a",
+      "raw": "Response A maintains consistent version formatting without the v-prefix, while Response B inconsistently adds v-prefixes to only some versions."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "Response B's button label 'Run first pipeline' is more specific and actionable than Response A's generic 'Push Your Code'."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B offers two trigger methods (push commit or manual trigger) and uses a clearer button label, while Response A only suggests pushing."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B acknowledges user agency by offering multiple trigger options (push or manual), while Response A prescriptively tells them to run a pipeline."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "Response B provides concrete examples (account balances, inventory, permissions) and explains engineering trade-offs clearly, offering deeper guidance for PM decision-making."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "haiku-4.5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B provides a more technically precise definition while maintaining clarity, and offers concise, actionable guidance on what to promise customers."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "sonnet-5",
+      "verdict": "b",
+      "raw": "Response B respects the 'one paragraph' constraint better while providing clear, concise guidance; Response A significantly exceeds one paragraph in length."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A validates string consumption and enforces ordering/no-duplicates, while Response B accepts invalid inputs like '1h30m45' or '1h1h'."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A comprehensively validates for empty strings, string consumption, ordering, and duplicate units, while Response B accepts invalid formats."
+    },
+    {
+      "task_id": "obj-parse-duration",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "b",
+      "raw": "Response B's compiled regex elegantly enforces format and ordering in a single pass, while Response A is correct but more verbose through explicit validation steps."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A uses more idiomatic Python with 'if n % 2:' for odd check and is slightly more concise while remaining equally correct."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A checks for empty input before sorting, avoiding unnecessary work, while Response B wastes a sort call on empty input."
+    },
+    {
+      "task_id": "obj-fix-bug",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A checks for empty input before sorting for efficiency, while Response B performs an unnecessary sort of an empty list."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "Response A exceeds the 100-word limit at ~112 words, while Response B stays within the constraint at ~95 words."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "Response A is at ~102 words, slightly over limit, while Response B is at ~95 words and comfortably within the 100-word constraint."
+    },
+    {
+      "task_id": "med-summarize",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A is at ~102 words, just barely over, while Response B is at ~112 words and significantly exceeds the 100-word limit."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A provides complete, properly capitalized summaries with full context, while Response B omits important words like 'Fixed' in the last summary."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A preserves the original inconsistent 'v' prefixes from the source (v2.3.1, v2.4.0, 2.5.0, v2.5.1), while Response B normalizes them away."
+    },
+    {
+      "task_id": "med-extract",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A preserves the original version format with selective 'v' prefixes, while Response B both normalizes versions and alters summary wording and formatting."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A is plain text and clearly formatted, while Response B includes markdown formatting (**bold**, [brackets]) that shouldn't be in plain copy output."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A offers users two actions (push or manual trigger) with clear button text, while Response B includes unwanted markdown formatting and only suggests one path."
+    },
+    {
+      "task_id": "subj-empty-state",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A provides more user guidance by offering multiple paths (push commit or manually trigger), making it more helpful for the empty state."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "opus-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "a",
+      "raw": "Response A provides thorough guidance with office analogy, practical implications, and specific cases where strong consistency is needed (accounts, inventory, permissions)."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "haiku-4.5",
+      "verdict": "b",
+      "raw": "Response B's social media example and explicit contrast with immediate consistency makes the tradeoff clearer for a product manager."
+    },
+    {
+      "task_id": "subj-explain",
+      "judge": "haiku-4.5",
+      "slot_a": "sonnet-5",
+      "slot_b": "opus-5",
+      "verdict": "a",
+      "raw": "Response A provides specific domain examples (account balances, inventory, permissions) that help a PM decide where to enforce strong consistency, while Response B is more generic."
+    }
+  ],
+  "length_probe": {
+    "tasks": [
+      {
+        "id": "len-index",
+        "subjectivity": "low",
+        "rewards": "elaboration",
+        "base": "Explain what a database index is and why adding one can make writes slower.",
+        "variants": {
+          "short": "Answer in roughly 60 words.",
+          "long": "Answer in roughly 220 words."
+        }
+      },
+      {
+        "id": "len-summarize",
+        "subjectivity": "medium",
+        "rewards": "concision",
+        "base": "Summarize the following text, preserving every concrete number and constraint.\n\n---\nOur ingestion pipeline processes roughly 4.2 million events per day across 37 source systems. Until March, each source had its own bespoke parser, which meant a schema change upstream broke ingestion an average of 3 times per month, with a mean time to recovery of 4 hours. We replaced the bespoke parsers with a declarative mapping layer: each source now ships a YAML descriptor, validated against a JSON Schema at deploy time. Breakages dropped to 0.4 per month and MTTR to 25 minutes. The migration took 6 engineer-weeks. The remaining failures are concentrated in 2 legacy SOAP sources that cannot emit a stable schema; we plan to sunset them in Q4. Cost went up 11% because validation runs on every event rather than every batch.\n---",
+        "variants": {
+          "short": "Answer in roughly 50 words.",
+          "long": "Answer in roughly 150 words."
+        }
+      },
+      {
+        "id": "len-idempotency",
+        "subjectivity": "high",
+        "rewards": "elaboration",
+        "base": "Explain idempotency to a product manager with no distributed systems background, in a way that helps them reason about what to promise customers. No bullet points, no headings.",
+        "variants": {
+          "short": "Answer in roughly 60 words.",
+          "long": "Answer in roughly 220 words."
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "task_id": "len-index",
+        "model": "opus-5",
+        "variant": "short",
+        "text": "An index is a separate, sorted data structure \u2014 usually a B-tree \u2014 that maps column values to row locations, so the database can jump straight to matching rows instead of scanning the whole table. Writes get slower because every insert, update, or delete must also update each index: extra I/O, page splits, and locking on top of the table write itself.",
+        "chars": 353,
+        "words": 62
+      },
+      {
+        "task_id": "len-index",
+        "model": "opus-5",
+        "variant": "long",
+        "text": "A database index is a secondary data structure the database maintains alongside a table to speed up lookups. The most common form is a B-tree: the indexed column's values are kept in sorted order, each pointing to the location of the corresponding row. Without an index, answering `WHERE email = 'x'` means scanning every row in the table. With one, the database walks a few levels of the tree and jumps straight to the matches.\n\nThe catch is that an index is redundant, derived data, and redundant data must be kept in sync. Every INSERT writes the row and then adds an entry to each index on that table. Every DELETE removes both. An UPDATE touching an indexed column is effectively a delete plus an insert in that index, even though the row itself hasn't moved. A table with five indexes can therefore do six writes' worth of work per row change.\n\nThere are second-order costs too. Index pages stay sorted, so inserting into a full page causes a page split \u2014 extra I/O and fragmentation. Random keys like UUIDs scatter writes across the whole index, hurting cache locality. Indexes also enlarge the write-ahead log and add latch contention on hot pages.\n\nThat's the trade: cheaper reads, and a write tax roughly proportional to how many indexes you keep.",
+        "chars": 1257,
+        "words": 219
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "opus-5",
+        "variant": "short",
+        "text": "Since March, the pipeline's 37 bespoke parsers (4.2M events/day) were replaced by YAML descriptors validated against a JSON Schema at deploy time. Cost: 6 engineer-weeks. Breakages fell from 3/month to 0.4; MTTR from 4 hours to 25 minutes. Costs rose 11% (per-event validation). Two legacy SOAP sources remain; sunset in Q4.",
+        "chars": 324,
+        "words": 51
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "opus-5",
+        "variant": "long",
+        "text": "The ingestion pipeline handles roughly 4.2 million events per day from 37 source systems. Until March, every source had its own bespoke parser. That design meant an upstream schema change broke ingestion an average of 3 times per month, with a mean time to recovery of 4 hours.\n\nThe team replaced the bespoke parsers with a declarative mapping layer: each source now ships a YAML descriptor, validated against a JSON Schema at deploy time. The migration took 6 engineer-weeks.\n\nResults: breakages dropped to 0.4 per month and MTTR to 25 minutes. The remaining failures are concentrated in 2 legacy SOAP sources that cannot emit a stable schema; the plan is to sunset them in Q4.\n\nThe trade-off is cost, which went up 11%, because validation now runs on every event rather than on every batch.",
+        "chars": 792,
+        "words": 135
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "opus-5",
+        "variant": "short",
+        "text": "Idempotency means doing the same operation twice has the same effect as doing it once. Networks drop responses, so clients retry, and without idempotency a retry can charge a customer twice. You can promise \"we won't double-charge\" only if requests carry a client-supplied key the server remembers, and only for the window it retains those keys. Promise exactly-once effects, never exactly-once delivery.",
+        "chars": 404,
+        "words": 62
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "opus-5",
+        "variant": "long",
+        "text": "Idempotency is the property that doing the same operation twice leaves the system in the same state as doing it once. Pressing a lift button five times doesn't summon five lifts. Charging a card is the opposite: do it twice and the customer is out twice the money.\n\nIt matters because of one specific way networks fail. When a client sends a request and gets no answer back, it cannot tell whether the request never arrived or whether it succeeded and the reply was lost on the way home. The only safe move is to retry, and retries are where duplicates come from. Idempotency is what makes retrying safe.\n\nThe usual mechanism is an idempotency key: the client attaches a unique identifier to each intended action, and if the server sees that key again it returns the original result rather than doing the work a second time.\n\nFor customer promises, this means you can commit to something like \"a retried payment will not create a second charge,\" as long as the client sends a key and the retry arrives inside the server's retention window, often 24 hours. You cannot promise that every message is delivered exactly once \u2014 nobody can. What you can promise is exactly-once effects built on top of at-least-once delivery. And be clear that this protects against repeats of the same request, not against two genuinely different requests that happen to look similar.",
+        "chars": 1361,
+        "words": 236
+      },
+      {
+        "task_id": "len-index",
+        "model": "sonnet-5",
+        "variant": "short",
+        "text": "A database index is a separate data structure (often a B-tree) that stores sorted references to rows, letting queries find matching rows quickly instead of scanning the whole table. Writes get slower because every insert, update, or delete must also update each index: more data structures to maintain per write, plus extra disk I/O and lock contention, especially with many indexes.",
+        "chars": 383,
+        "words": 61
+      },
+      {
+        "task_id": "len-index",
+        "model": "sonnet-5",
+        "variant": "long",
+        "text": "A database index is an auxiliary data structure \u2014 typically a B-tree or similar sorted structure \u2014 built on one or more columns of a table to speed up data retrieval. Instead of scanning every row to find matches (a full table scan), the database engine can use the index to jump almost directly to the relevant rows, similar to how a book's index lets you find a topic without reading every page. This dramatically speeds up SELECT queries, especially on large tables, and it's also used to enforce uniqueness constraints and speed up JOIN operations.\n\nThe tradeoff appears on writes. Every time you INSERT, UPDATE, or DELETE a row, the database doesn't just modify the underlying table data \u2014 it must also update every index that covers the affected columns, to keep them consistent with the table. If a table has five indexes, a single insert becomes six write operations: one for the table's data pages, and five for the index structures. Each of those index updates may involve rebalancing a tree, writing to additional disk pages, and taking additional locks, which increases I/O and can create contention when multiple writes happen concurrently.\n\nThis is why indexing is a tradeoff: it speeds up reads at the cost of write throughput and storage. In practice, teams index columns that are frequently searched, while avoiding excessive indexes on write-heavy tables, since each one compounds the penalty.",
+        "chars": 1411,
+        "words": 235
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "sonnet-5",
+        "variant": "short",
+        "text": "The ingestion pipeline (4.2M events/day, 37 sources) used to break 3 times/month with 4-hour MTTR. A new YAML + JSON Schema mapping layer, built in 6 engineer-weeks, cut that to 0.4 breaks/month and 25-minute MTTR, though cost rose 11%. 2 legacy SOAP sources still fail and will be sunset in Q4.",
+        "chars": 295,
+        "words": 51
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "sonnet-5",
+        "variant": "long",
+        "text": "The ingestion pipeline processes about 4.2 million events per day from 37 source systems. Previously, each source had its own custom parser, and upstream schema changes broke ingestion an average of 3 times per month, with a mean time to recovery (MTTR) of 4 hours. Starting in March, the bespoke parsers were replaced with a declarative mapping layer: each source now provides a YAML descriptor validated against a JSON Schema at deploy time. This reduced breakages to 0.4 per month and MTTR to 25 minutes. The migration itself took 6 engineer-weeks to complete. However, overall cost increased by 11%, since validation now runs on every individual event rather than once per batch. Two legacy SOAP sources remain problematic because they cannot produce a stable schema; these are not yet fixed and are planned to be sunset in Q4.",
+        "chars": 831,
+        "words": 138
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "sonnet-5",
+        "variant": "short",
+        "text": "Idempotency means doing the same operation twice has the same effect as doing it once. If a customer resubmits a payment request after a network hiccup, an idempotent system won't charge them twice. You can promise customers that retries are safe and won't cause duplicate charges or duplicate orders, but only for actions your team has explicitly designed to be idempotent.",
+        "chars": 374,
+        "words": 61
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "sonnet-5",
+        "variant": "long",
+        "text": "Idempotency is the property that lets you do the same thing twice without it happening twice. Imagine a customer taps 'submit payment' and the app seems to freeze, so they tap it again. Without idempotency, that second tap can trigger a second charge, because the system just processes each request as a brand new instruction. With idempotency, the system recognizes that this is the same request as before, perhaps because it carries a unique identifier the client generated, and it responds as if it already did the work, without doing it again. The customer sees one charge, one order, one email, no matter how many times the request was retried. This matters commercially because networks are unreliable: requests time out, connections drop, and mobile apps retry automatically. If your systems aren't idempotent, every one of those routine hiccups risks a duplicate charge, a duplicate shipment, or a duplicate notification, and support has to clean it up manually. When you're deciding what to promise customers, ask your engineers whether a given action, like charging a card or placing an order, is idempotent. If it is, you can safely tell customers that retrying or refreshing is safe and won't cause double charges. If it isn't, you should either avoid exposing a retry button to users, or explicitly caveat that duplicate submissions might cause duplicate effects until the underlying action is made idempotent.",
+        "chars": 1423,
+        "words": 230
+      },
+      {
+        "task_id": "len-index",
+        "model": "haiku-4.5",
+        "variant": "short",
+        "text": "A database index is a data structure (like a B-tree) that speeds up data retrieval by pre-sorting columns. Instead of scanning every row, queries can jump directly to relevant data. However, indexes slow writes because the database must update both the table and all its indexes. More indexes mean more write overhead, creating a trade-off between read speed and write performance.",
+        "chars": 381,
+        "words": 61
+      },
+      {
+        "task_id": "len-index",
+        "model": "haiku-4.5",
+        "variant": "long",
+        "text": "A database index is a specialized data structure, typically a B-tree or hash table, that enables the database to quickly locate rows without scanning the entire table. When you index a column, the database creates a separate sorted structure pointing back to the original rows. For queries, this is enormously efficient\u2014instead of checking millions of rows, the database can use the index to find matching records in logarithmic time.\n\nHowever, this comes at a cost for write operations. When you insert, update, or delete a row, the database must maintain not just the main table but every index on that table. Each index needs to be updated to reflect the change, which takes additional I/O operations and computational resources. A table with five indexes requires roughly five times the write work of an unindexed table.\n\nThe slowdown becomes particularly noticeable during bulk operations like large imports or batch updates. Moreover, indexes consume disk space, which has implications for caching efficiency and backup times.\n\nThis trade-off is why database design requires careful planning: you index columns frequently used in WHERE clauses and joins, but avoid over-indexing write-heavy tables. The goal is to balance query performance against write latency and storage costs.",
+        "chars": 1286,
+        "words": 200
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "haiku-4.5",
+        "variant": "short",
+        "text": "The pipeline processes 4.2 million events daily across 37 systems. Schema breakages dropped from 3 per month (4-hour MTTR) to 0.4 per month (25-minute MTTR) after replacing bespoke parsers with a declarative YAML mapping layer. The 6-week migration cost 11% more due to per-event validation. Two legacy SOAP sources remain unstable and will sunset in Q4.",
+        "chars": 354,
+        "words": 56
+      },
+      {
+        "task_id": "len-summarize",
+        "model": "haiku-4.5",
+        "variant": "long",
+        "text": "The ingestion pipeline processes 4.2 million events daily across 37 source systems. Previously, each source had its own custom parser, causing frequent operational chaos: schema changes upstream broke ingestion an average of 3 times per month, with mean recovery time of 4 hours.\n\nThe team replaced the bespoke parsers with a declarative mapping layer where each source ships a YAML descriptor, validated against JSON Schema at deployment. This dramatically improved reliability: breakages dropped to just 0.4 per month, and MTTR fell to 25 minutes.\n\nThe migration required 6 engineer-weeks of effort. However, validation now runs on every event rather than batches, increasing costs by 11%.\n\nThe team has identified two legacy SOAP sources as persistent problem areas due to their inability to emit stable schemas. These are targeted for sunset in Q4, which should further stabilize the pipeline.",
+        "chars": 897,
+        "words": 138
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "haiku-4.5",
+        "variant": "short",
+        "text": "Idempotency means an operation produces the same result regardless of how many times you execute it. Think of it like pressing an elevator button: pressing once or ten times still takes you to the same floor. For customers, this is crucial: if a payment request is accidentally sent twice, idempotency ensures they're only charged once. It's a reliability promise that makes systems predictable and safe.",
+        "chars": 404,
+        "words": 65
+      },
+      {
+        "task_id": "len-idempotency",
+        "model": "haiku-4.5",
+        "variant": "long",
+        "text": "Idempotency is a property where repeating an operation produces the same outcome as doing it once. Think of a light switch: flipping it on ten times leaves the light in the same state as flipping it on once. That predictability is what idempotency delivers.\n\nIn distributed systems, networks fail. A customer clicks \"submit payment,\" but their connection drops\u2014they don't know if it went through, so they click again. Without idempotency, both requests hit your system, and they're charged twice. With it, the second request gets caught and safely ignored because you recognize it as a duplicate.\n\nFrom a product perspective, idempotency is about building trust. Customers can retry without fear. They can instruct other systems to retry automatically. Your service becomes dependable in the face of real-world unreliability.\n\nThe tradeoff is that idempotency requires you to track which operations you've already processed\u2014via request IDs, transaction deduplication, or similar mechanisms. This adds storage and computation.\n\nBut the benefit is enormous: you can promise customers that critical operations won't mysteriously duplicate. A transfer of funds always transfers exactly once, no matter how many retries happen underneath. That kind of safety is what transforms unreliable networks into systems people can actually trust with their business.",
+        "chars": 1352,
+        "words": 202
+      }
+    ],
+    "judgments": [
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Both are accurate and A is impressively dense, but B explains the underlying mechanism (an index is redundant derived data that must be kept in sync) and adds correct second-order costs like write amplification, page splits, random-key locality, and WAL growth, all of which is substantive rather than padding."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "A is correct but minimal, while B gives an equally correct answer plus the concrete write-amplification example, the book-index analogy, and the practical indexing guidance, with only a trivial imprecision about which indexes an insert touches."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B covers the same ground as A and adds why the cost arises, bulk-operation impact, and storage/caching effects; its 'five times the write work' figure is slightly off (six) but hedged, and A's 'pre-sorting columns' is itself loose."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "A retains every number and constraint (including deploy-time JSON Schema validation and the per-event cause of the 11% cost rise) while genuinely condensing, whereas B is only marginally shorter than the source and so barely summarizes at all."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "The task explicitly demanded preserving every number and constraint, and A drops the deploy-time validation and the per-event-versus-per-batch reason for the 11% increase, while B keeps all of them."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "A misstates the facts by fusing the 6-week migration with the 11% ongoing cost increase and omits the deploy-time JSON Schema validation, while B preserves every number and constraint accurately despite some editorializing."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "For a PM with no distributed-systems background, B builds the idea from a concrete analogy through the exact network failure that causes retries to the idempotency key, retention window, and the limits of what can be promised, whereas A states the same conclusions too tersely to be reasoned from."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B explains the mechanism and the commercial stakes in plain language and gives the PM an actual decision procedure for what to promise and how to caveat it, while A asserts the conclusion without equipping the reader to reason about it."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B gives the PM the failure mode, the deduplication mechanism, and its cost so they can reason about commitments, whereas A stops at the analogy; B slightly overpromises 'exactly once' without a retention caveat but is still the more useful answer."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Both are accurate, but A actually explains the mechanism (index as redundant derived data, update-as-delete-plus-insert, page splits, random-key locality) whereas B only asserts the conclusion."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A explains the why with a concrete cost model (one table write plus one per index, tree rebalancing, locks) and practical guidance, while B states the same facts without any explanatory work."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A covers the read benefit, the per-index write cost, bulk-load and storage/caching effects, and design guidance; B is correct but thin and loosely describes an index as merely 'pre-sorting columns'."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "b",
+        "raw": "B genuinely condenses the passage while retaining every figure, whereas A is essentially the source text reflowed into paragraphs and so fails the summarization task despite being lossless."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A condenses while keeping every number and constraint, including deploy-time JSON Schema validation, the per-event-vs-per-batch cause of the 11% cost rise, and the SOAP sources' inability to emit a stable schema, all of which B drops."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "B distorts the facts by claiming 'the 6-week migration cost 11% more' (conflating engineer-weeks with the running-cost increase) and omits the deploy-time schema validation, while A preserves every number and constraint."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A meets the audience brief by building from an everyday analogy to the ambiguous-timeout problem, idempotency keys, and concrete promise language including the retention window and the exactly-once-effects-vs-delivery distinction, whereas B compresses the same points into jargon a non-technical PM would not unpack."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A gives the PM a usable decision procedure (ask whether a given action is idempotent, and what to say or withhold in each case), while B states the definition and a promise without the reasoning to apply it."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "opus-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A explains the failure mode, the dedup mechanism and its cost, and what can therefore be promised; B offers only an analogy and a bare assertion, giving the PM little to reason with, though A slightly overclaims with 'always transfers exactly once'."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B covers the same core explanation as A but adds accurate mechanism detail (page splits, random-key scatter, WAL growth, latch contention) that better substantiates why writes slow down."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B gives the same correct core answer plus accurate, relevant elaboration (uniqueness/joins, the five-index-to-six-writes math, practical indexing advice) that makes it more useful without introducing errors."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B is equally correct and adds legitimate extra context (bulk-operation impact, storage/caching effects, design guidance) that deepens the explanation of write slowdown."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "Both preserve every number, but A actually compresses the source into a tighter summary while B mostly re-states it at near-original length, so A better fulfills the summarization task."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "A retains all figures and constraints in a genuinely condensed form, whereas B is essentially a full paraphrase of the original that fails to meaningfully summarize."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "A hits every number concisely, while B adds unsupported editorializing (\"operational chaos\", \"should further stabilize the pipeline\") not present in the source, which is a flaw in a fact-preserving summary."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Both are plain prose as required, but B gives the PM more actionable grounding (retry-vs-duplicate distinction, key retention window, exactly-once effects vs. delivery) for deciding what to promise customers."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B's extra content directly helps a PM reason about promises (concrete advice to ask engineers whether an action is idempotent, and what to do if it isn't), making it more useful despite being denser than A."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "B is organized into clear paragraphs and adds the customer-trust framing and tracking-cost tradeoff that make it more directly useful for a PM deciding what guarantees to offer."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A covers the same core mechanism as B but adds accurate, relevant second-order costs (page splits, UUID key scatter, WAL growth, latch contention) that deepen understanding without introducing errors."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A explains the same fundamentals as B plus correct extra context (uniqueness enforcement, joins, rebalancing, concurrency) and practical guidance, making it more useful while remaining accurate."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A gives a more complete and still-accurate explanation (bulk operations, disk/cache/backup implications, indexing strategy) than B's correct but thin summary."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "b",
+        "raw": "The task asks for a summary, and B compresses the text far more while still retaining every number and constraint, whereas A is close to a full paraphrase rather than a summary."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "b",
+        "raw": "B is a genuinely condensed summary that preserves all figures and constraints, while A is nearly as long as the source and reads more like a rewrite than a summary."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "b",
+        "raw": "B retains every number and constraint in a truly condensed form, while A pads with editorializing phrases not present in the source ('operational chaos', 'should further stabilize') without adding factual content."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A directly serves the stated goal of helping the PM reason about customer promises by explaining retention windows and the exactly-once-effects-vs-delivery distinction, while B covers only the basics."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A's concrete scenario and explicit guidance on what to tell customers and when to hide a retry button more directly fulfills the 'reason about what to promise' instruction than B's brief but generic version."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "sonnet-5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "A gives the PM more actionable substance (the tradeoff of tracking requests, concrete promise framing) needed to reason about customer commitments, whereas B is accurate but too thin to support that reasoning."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B provides significantly more depth, covering page splits, cache locality, latch contention, and second-order costs beyond basics."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B is more comprehensive with book analogy, JOIN operations, practical design guidance, and rebalancing details versus elementary coverage in A."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B explains logarithmic complexity, specific index examples, bulk operations impact, and practical design trade-offs versus basic overview in A."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "Response A concisely preserves all numbers in true summary form while B reads as narrative retelling rather than condensed summary."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "Response A compactly captures all concrete numbers as a proper summary while B is verbose and reads more like partial retelling."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "a",
+        "raw": "Response A efficiently preserves all numbers in summary form while B is longer and more narrative with unnecessary editorializing."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B provides better reasoning for product managers with network failure scenarios, retention windows, and exact-once effects distinction."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B walks through concrete scenarios and gives actionable guidance for working with engineers while A is too brief for the audience."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "short",
+        "slot_b_variant": "long",
+        "verdict": "b",
+        "raw": "Response B better educates non-technical audiences with realistic scenarios, trust value proposition, and tracking trade-offs versus superficial explanation in A."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A provides comprehensive explanation with additional insights about page splits, cache locality, and second-order costs that give deeper understanding compared to B's basic coverage."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A offers more detailed explanation with book index analogy and practical indexing strategy discussion, whereas B provides only minimal technical coverage."
+      },
+      {
+        "task_id": "len-index",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A covers more important concepts including bulk operations and caching efficiency implications that help readers understand the full scope of indexing trade-offs."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A better distinguishes between migration effort (6 engineer-weeks) and operational cost increase (11%), while B conflates these concepts confusingly."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A presents all numbers clearly with better readability, while B's condensed abbreviations make the information harder to parse."
+      },
+      {
+        "task_id": "len-summarize",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A preserves the full detail about engineer-weeks and clearly separates the migration effort from its cost impact, while B loses specificity with 'six-week migration' phrasing."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "opus-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A provides better framing with concrete analogies and more practical guidance for product managers on what can actually be promised to customers."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "sonnet-5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A offers significantly more detailed explanation with concrete scenarios and extensive actionable guidance for product managers about when to make and how to frame promises."
+      },
+      {
+        "task_id": "len-idempotency",
+        "judge": "haiku-4.5",
+        "model": "haiku-4.5",
+        "slot_a_variant": "long",
+        "slot_b_variant": "short",
+        "verdict": "a",
+        "raw": "Response A provides thorough explanation of implementation trade-offs and benefits, better equipping product managers to understand and reason about idempotency commitments."
+      }
+    ]
+  }
+}

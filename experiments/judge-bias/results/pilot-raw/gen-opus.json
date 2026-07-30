@@ -1,0 +1,26 @@
+[
+  {
+    "task_id": "obj-parse-duration",
+    "text": "```python\nimport re\n\n_DURATION_RE = re.compile(r\"^(?:(\\d+)h)?(?:(\\d+)m)?(?:(\\d+)s)?$\")\n\n\ndef parse_duration(s: str) -> int:\n    if not isinstance(s, str):\n        raise ValueError(f\"invalid duration: {s!r}\")\n    text = s.strip()\n    match = _DURATION_RE.match(text)\n    if not match or not any(match.groups()):\n        raise ValueError(f\"invalid duration: {s!r}\")\n    hours, minutes, seconds = (int(g) if g is not None else 0 for g in match.groups())\n    return hours * 3600 + minutes * 60 + seconds\n```"
+  },
+  {
+    "task_id": "obj-fix-bug",
+    "text": "```python\ndef median(xs):\n    ys = sorted(xs)\n    n = len(ys)\n    if n == 0:\n        raise ValueError(\"median() arg is an empty sequence\")\n    mid = n // 2\n    if n % 2:\n        return ys[mid]\n    return (ys[mid - 1] + ys[mid]) / 2\n```"
+  },
+  {
+    "task_id": "med-summarize",
+    "text": "The pipeline handles roughly 4.2 million events daily across 37 source systems. Before March, each source had a bespoke parser, so upstream schema changes broke ingestion about 3 times monthly, with a 4-hour mean time to recovery. A declarative mapping layer replaced them: each source ships a YAML descriptor, validated against a JSON Schema at deploy time. Breakages fell to 0.4 per month and MTTR to 25 minutes; the migration took 6 engineer-weeks. Remaining failures come from 2 legacy SOAP sources that cannot emit a stable schema; they will be sunset in Q4. Cost rose 11% because validation runs per event, not per batch."
+  },
+  {
+    "task_id": "med-extract",
+    "text": "```json\n[\n  {\n    \"version\": \"2.3.1\",\n    \"date\": \"2025-03-04\",\n    \"type\": \"fix\",\n    \"summary\": \"Fixed a race in the token refresher\"\n  },\n  {\n    \"version\": \"2.4.0\",\n    \"date\": \"2025-03-19\",\n    \"type\": \"feature\",\n    \"summary\": \"Added webhook retries with exponential backoff\"\n  },\n  {\n    \"version\": \"2.5.0\",\n    \"date\": \"2025-04-02\",\n    \"type\": \"breaking\",\n    \"summary\": \"Renamed client.fetch() to client.request()\"\n  },\n  {\n    \"version\": \"2.5.1\",\n    \"date\": \"2025-04-07\",\n    \"type\": \"fix\",\n    \"summary\": \"Fixed null pointer when config file is absent\"\n  }\n]\n```"
+  },
+  {
+    "task_id": "subj-empty-state",
+    "text": "No pipelines have run yet\n\nYour repository is connected and ready. Run your first pipeline to start seeing build times, test results, and failures here.\n\nRun first pipeline"
+  },
+  {
+    "task_id": "subj-explain",
+    "text": "Eventual consistency means that when something changes in one part of the system, the change is guaranteed to reach everywhere it needs to go, but not instantly and not everywhere at the same moment, so for a brief window different users or different screens can legitimately see slightly different versions of the truth. Think of it like an announcement spreading through a large office: the news is definitely correct and everyone will have it shortly, but for a few seconds some people are still working off what they heard a moment ago. Practically, this means you can safely promise customers that their change was accepted and will be reflected everywhere, and you can usually promise a typical settling time measured in milliseconds or seconds, but you should avoid promising that a change is visible to every user the instant they make it, and you should avoid designing flows that assume a write can be read back immediately from a different device or region. Where that instant guarantee genuinely matters, such as account balances, inventory counts, or permission revocations, flag it early, because the engineering cost of strong consistency is real and it is better to pay it deliberately in a few places than to imply it everywhere."
+  }
+]

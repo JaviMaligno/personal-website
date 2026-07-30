@@ -1,0 +1,32 @@
+[
+  {
+    "task_id": "len-index",
+    "variant": "short",
+    "text": "A database index is a separate data structure (often a B-tree) that stores sorted references to rows, letting queries find matching rows quickly instead of scanning the whole table. Writes get slower because every insert, update, or delete must also update each index: more data structures to maintain per write, plus extra disk I/O and lock contention, especially with many indexes."
+  },
+  {
+    "task_id": "len-index",
+    "variant": "long",
+    "text": "A database index is an auxiliary data structure — typically a B-tree or similar sorted structure — built on one or more columns of a table to speed up data retrieval. Instead of scanning every row to find matches (a full table scan), the database engine can use the index to jump almost directly to the relevant rows, similar to how a book's index lets you find a topic without reading every page. This dramatically speeds up SELECT queries, especially on large tables, and it's also used to enforce uniqueness constraints and speed up JOIN operations.\n\nThe tradeoff appears on writes. Every time you INSERT, UPDATE, or DELETE a row, the database doesn't just modify the underlying table data — it must also update every index that covers the affected columns, to keep them consistent with the table. If a table has five indexes, a single insert becomes six write operations: one for the table's data pages, and five for the index structures. Each of those index updates may involve rebalancing a tree, writing to additional disk pages, and taking additional locks, which increases I/O and can create contention when multiple writes happen concurrently.\n\nThis is why indexing is a tradeoff: it speeds up reads at the cost of write throughput and storage. In practice, teams index columns that are frequently searched, while avoiding excessive indexes on write-heavy tables, since each one compounds the penalty."
+  },
+  {
+    "task_id": "len-summarize",
+    "variant": "short",
+    "text": "The ingestion pipeline (4.2M events/day, 37 sources) used to break 3 times/month with 4-hour MTTR. A new YAML + JSON Schema mapping layer, built in 6 engineer-weeks, cut that to 0.4 breaks/month and 25-minute MTTR, though cost rose 11%. 2 legacy SOAP sources still fail and will be sunset in Q4."
+  },
+  {
+    "task_id": "len-summarize",
+    "variant": "long",
+    "text": "The ingestion pipeline processes about 4.2 million events per day from 37 source systems. Previously, each source had its own custom parser, and upstream schema changes broke ingestion an average of 3 times per month, with a mean time to recovery (MTTR) of 4 hours. Starting in March, the bespoke parsers were replaced with a declarative mapping layer: each source now provides a YAML descriptor validated against a JSON Schema at deploy time. This reduced breakages to 0.4 per month and MTTR to 25 minutes. The migration itself took 6 engineer-weeks to complete. However, overall cost increased by 11%, since validation now runs on every individual event rather than once per batch. Two legacy SOAP sources remain problematic because they cannot produce a stable schema; these are not yet fixed and are planned to be sunset in Q4."
+  },
+  {
+    "task_id": "len-idempotency",
+    "variant": "short",
+    "text": "Idempotency means doing the same operation twice has the same effect as doing it once. If a customer resubmits a payment request after a network hiccup, an idempotent system won't charge them twice. You can promise customers that retries are safe and won't cause duplicate charges or duplicate orders, but only for actions your team has explicitly designed to be idempotent."
+  },
+  {
+    "task_id": "len-idempotency",
+    "variant": "long",
+    "text": "Idempotency is the property that lets you do the same thing twice without it happening twice. Imagine a customer taps 'submit payment' and the app seems to freeze, so they tap it again. Without idempotency, that second tap can trigger a second charge, because the system just processes each request as a brand new instruction. With idempotency, the system recognizes that this is the same request as before, perhaps because it carries a unique identifier the client generated, and it responds as if it already did the work, without doing it again. The customer sees one charge, one order, one email, no matter how many times the request was retried. This matters commercially because networks are unreliable: requests time out, connections drop, and mobile apps retry automatically. If your systems aren't idempotent, every one of those routine hiccups risks a duplicate charge, a duplicate shipment, or a duplicate notification, and support has to clean it up manually. When you're deciding what to promise customers, ask your engineers whether a given action, like charging a card or placing an order, is idempotent. If it is, you can safely tell customers that retrying or refreshing is safe and won't cause double charges. If it isn't, you should either avoid exposing a retry button to users, or explicitly caveat that duplicate submissions might cause duplicate effects until the underlying action is made idempotent."
+  }
+]
