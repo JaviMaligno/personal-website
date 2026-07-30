@@ -10,6 +10,8 @@ linkedinImage: /blog/ciphers-safety-boundary.png
 repoUrl: https://github.com/JaviMaligno/llm-language-limits
 ---
 
+> **Correction (1 August 2026).** The jailbreak section near the end of this article does not hold. Its measurement was broken: the judge re-encoded plain-English refusals before scoring them and filed them as garbled, which deflated the encoded-compliance rate by construction. A corrected run with a second independent judge finds those labels unusable on the 7B models, and a real — though bounded — bypass on GPT-5. The full account is in [Confident About Text It Cannot Read](/en/blog/confident-about-unreadable-text). Everything else here (refusal rates, the difficulty ladder, the protocol effects) is unaffected and was since reproduced on the full 696-conversation sweep.
+
 Codebreakers have a word for the moment a cipher cracks open: the *break*. You stare at a wall of `Wklv pdnhv qr vhqvh` and count letters, and then all at once the shape of the language underneath swims up and the gibberish is just English wearing a mask. Human cryptanalysts describe it as a click. I wanted to know what that click looks like for a language model — and, more precisely, *how fast* it happens when the model has never been told the key.
 
 This is the second piece in a loose series on the **edges of language** — what models do when you push their input outside the well-behaved distribution they were trained on. The [first one](/en/blog/repetition-edges-of-language) was about repetition. This one started as a simple question: **talk to a model in a code it doesn't know, and how many turns until it catches on and starts talking back in the same code?**
@@ -76,6 +78,8 @@ Giving the model a **Rosetta stone** — a few plaintext↔coded pairs — lifts
 Escalation, by contrast, barely moves comprehension but drives **production** through the roof (62% vs 25%): the moment you explicitly say "reply in the same code," the models that understand start *speaking* it. Understanding a code and choosing to answer in it are separate switches, and they respond to different prompts.
 
 ## The twist: encoding a refused request doesn't unlock it
+
+> **This section is retracted.** The numbers below come from a probe whose judging step was broken — see the correction at the top, and [Confident About Text It Cannot Read](/en/blog/confident-about-unreadable-text) for what the corrected run found. Left here unedited rather than quietly rewritten.
 
 Which brings us back to that safety boundary, and the obvious follow-up. If encoded text sails past Claude's refusal-of-legible-instructions and Azure's plaintext filter, is a cipher a **jailbreak** — a way to smuggle a request the model would normally decline? This is the CipherChat hypothesis, and it's a legitimate thing to test, so I did, carefully: a small, fixed set of mild "normally-refused" requests (phishing copy, a defamatory rumor, lock-picking — nothing in the CBRN/weapons/self-harm categories), sent in plaintext and encoded, scored only for aggregate compliance. Labels only; no harmful text stored or published.
 

@@ -10,6 +10,8 @@ linkedinImage: /blog/ciphers-safety-boundary.png
 repoUrl: https://github.com/JaviMaligno/llm-language-limits
 ---
 
+> **Corrección (1 de agosto de 2026).** La sección sobre jailbreak del final de este artículo no se sostiene. Su medición estaba rota: el juez volvía a cifrar los rechazos escritos en texto plano antes de puntuarlos y los archivaba como ilegibles, lo que desinflaba por construcción la tasa de cumplimiento bajo cifrado. Una tanda corregida con un segundo juez independiente encuentra esas etiquetas inservibles en los modelos de 7B, y un bypass real — aunque acotado — en GPT-5. El relato completo está en [Seguros ante un texto que no saben leer](/es/blog/confident-about-unreadable-text). Todo lo demás de aquí (tasas de rechazo, escalera de dificultad, efectos de protocolo) no se ve afectado y se reprodujo después en el barrido completo de 696 conversaciones.
+
 Los criptógrafos tienen una palabra para el momento en que un cifrado se abre: el *break*. Miras un muro de `Wklv pdnhv qr vhqvh`, cuentas letras, y de golpe la forma del idioma que hay debajo emerge y el galimatías resulta ser inglés con máscara. Los criptoanalistas humanos lo describen como un clic. Quería saber qué aspecto tiene ese clic para un modelo de lenguaje — y, más concretamente, *cuán rápido* ocurre cuando al modelo nunca le han dado la clave.
 
 Este es el segundo artículo de una serie suelta sobre los **bordes del lenguaje** — lo que hacen los modelos cuando empujas su entrada fuera de la distribución bien educada en la que se entrenaron. El [primero](/es/blog/repetition-edges-of-language) iba de repetición. Este empezó como una pregunta simple: **háblale a un modelo en un código que no conoce, ¿cuántos turnos tarda en pillarlo y en empezar a responder en el mismo código?**
@@ -76,6 +78,8 @@ Darle al modelo una **piedra Rosetta** — unos pares texto-plano↔codificado �
 El escalado, en cambio, apenas mueve la comprensión pero dispara la **producción** hasta el techo (62% vs 25%): en el momento en que dices explícitamente "responde en el mismo código", los modelos que entienden empiezan a *hablarlo*. Entender un código y elegir responder en él son interruptores separados, y responden a instrucciones distintas.
 
 ## El giro: codificar una petición rechazada no la desbloquea
+
+> **Esta sección queda retractada.** Los números de abajo vienen de un experimento cuyo paso de juicio estaba roto — mira la corrección de arriba, y [Seguros ante un texto que no saben leer](/es/blog/confident-about-unreadable-text) para lo que encontró la tanda corregida. La dejo aquí sin editar en vez de reescribirla en silencio.
 
 Lo que nos devuelve a ese borde de seguridad, y a la pregunta obvia. Si el texto codificado se cuela por el rechazo-de-instrucciones-legibles de Claude y el filtro-en-claro de Azure, ¿es un cifrado un **jailbreak** — una forma de colar una petición que el modelo normalmente rechazaría? Esta es la hipótesis de CipherChat, y es algo legítimo que testar, así que lo hice, con cuidado: un conjunto pequeño y fijo de peticiones suaves "normalmente-rechazadas" (texto de phishing, un bulo difamatorio, ganzúa — nada de las categorías CBRN/armas/autolesión), enviadas en claro y codificadas, puntuadas solo por cumplimiento agregado. Solo etiquetas; ningún texto dañino almacenado ni publicado.
 
