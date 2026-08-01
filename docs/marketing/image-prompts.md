@@ -261,3 +261,30 @@ Text (verbatim): “STILL = NO SIGNAL” — optional, at most once, tiny and un
 Constraints: Top-down view only. Player dots and abstract directional marks only; no realistic people. Static players around the still ball must have no arrows and must not converge. Flying ball must have a visible motion trail and an unambiguous direction cone. No logos, no brand names, no watermark, no decorative statistics, no text-heavy poster.
 Avoid: purple; bokeh; photorealism; stadium crowds; realistic human figures; split-screen panels; neon cyberpunk glow; clutter; excessive labels; extra balls beyond the one still ball and one flying ball.
 ```
+
+## confident-about-unreadable-text (2026-07-30)
+
+- Article: `src/content/blog/en/confident-about-unreadable-text.md`
+- Image: `public/blog/confident-about-unreadable-text.png`
+- Generated with: Codex (gpt-image), prompt delegated to Codex from style constraints
+
+Came out clean on the first pass, including every label — unusual for this many
+short strings in one image. The winning move was giving Codex the article's
+*mechanism* (three machines emitting confident verdicts about text they cannot
+read) rather than a mood: it turned that into three literally labelled machine
+zones on one conveyor, which is the article's thesis readable at feed scale.
+Chosen over the kappa chart as the LinkedIn image for that reason.
+
+```text
+Use case: stylized-concept
+Asset type: 1020×510 wide blog hero image (exact 2:1 aspect ratio), designed to crop cleanly at the edges.
+Primary request: Create a refined technical editorial illustration of a working three-stage inspection and scoring pipeline in which three machines confidently issue structured outputs about text they cannot actually read.
+Scene/backdrop: A dense, dark industrial-computing workbench viewed in a slightly elevated three-quarter perspective. One continuous conveyor or data rail carries narrow off-white strips of visibly garbled encoded text through three distinct adjacent machine zones. Zone 1 is a content-safety scanner inspecting a strip marked "base64" with a short cipher string such as "cmVwbHkgd2l0aA=="; despite the unreadable input, its crisp output card is stamped "severity: medium" and an amber confidence gauge is high. Zone 2 is an evaluation judge inspecting a visibly half-decoded, broken reply; its scanner head confidently stamps a compact verdict card reading "label: garbled" with a teal/amber gauge. Zone 3 is a base language-model terminal or mechanical text emitter taking cipher strips as input and streaming fluent-looking ciphertext onward even though its comprehension gauge reads empty or disconnected; show neat patterned cipher output but no actual understanding. Include small cables, rollers, scan beams, status lamps, card trays, terminal panes, meter ticks, and encoded strips so the scene feels like a real operating system rather than an abstract metaphor.
+Style/medium: Crisp bitmap technical editorial illustration; precise hard-edged forms, subtle pixel-level texture, clean diagrammatic machinery, professional AI/developer blog aesthetic, high contrast, sophisticated and serious. Dark but not monochrome.
+Composition/framing: Wide cinematic 2:1 layout with three clearly distinct zones across the frame, connected left-to-right by the data conveyor. Several focal clusters rather than one centered icon. Dense but legible, balanced negative space around the key verdict cards, strong visual hierarchy. No people.
+Lighting/mood: Controlled low-key workstation lighting, scanner glows and instrument lamps; confident machinery contrasted with visibly nonsensical input. No dreamy atmosphere.
+Color palette: Graphite and deep blue-black background; balanced teal, amber, warm off-white, muted steel and small restrained red warning accents. No purple.
+Text (verbatim, only these short generic labels where useful): "base64", "severity: medium", "label: garbled". Ciphertext may be short generic alphanumeric fragments. Keep all text sparse, crisp, correctly spelled, and secondary to the scene.
+Constraints: The core idea must read immediately: three operational machines give confident, structured outputs about unreadable text. Depict a concrete inspection/scoring pipeline with visible input strips, scanner heads, gauges, output verdict cards, and terminal output. Maintain exact 1020×510 / 2:1 hero composition. No logos, no brand names, no real company names, no people.
+Avoid: abstract metaphor, single centered icon, text-heavy poster, purple gradient blobs, bokeh, photorealism, glossy 3D render, generic sci-fi spaceship interface, excessive neon, illegible wall of UI text, watermark, logo, brand marks.
+```
