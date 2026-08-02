@@ -326,8 +326,19 @@ Constraints: diagram, not decorative illustration; spell every label exactly; ag
 Avoid: logos, brand names, people, hands, faces, characters, purple gradient blobs, bokeh, photorealism, 3D objects, ornamental clutter, dense prose, poster styling, extra labels, illegible microtext, watermarks.
 ```
 
-Minor artefact, left as-is: "Fully delegated" renders twice (inside the Build
-node and in the side callout).
+**Regenerated once, for a conceptual correction.** The first pass marked only
+Build as fully delegated. Correcting is building again — the agent does it end
+to end — so `Correct` is delegated too, and a failure that makes you rebuild or
+drop the whole thing isn't a correction, it's a return to Specify. The loop
+therefore halves: Specify and Check keep a human residue, Build and Correct
+don't. The regeneration brief asked for that halving to be *visible*, and the
+model resolved it well: the two delegated nodes on the horizontal axis in teal
+with a shared FULLY DELEGATED bracket each side, the two residue nodes on the
+vertical axis in dark with amber labels, joined by a dashed line, plus a legend.
+
+The first version also rendered "Fully delegated" twice on the same node
+(inside it and in a side callout); the regeneration brief named that duplication
+explicitly and it went away.
 
 ### 2. The map — regenerated once, for a colour-coding fault
 

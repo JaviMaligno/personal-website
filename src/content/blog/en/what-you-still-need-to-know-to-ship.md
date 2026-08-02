@@ -37,11 +37,13 @@ The default failure mode without it isn't dramatic. You ask, you receive, you be
 **The agent is in all four phases**, which is what makes this confusing. It helps you specify. It builds. It runs checks and tells you what to look at. It proposes the fix. So what's left? The useful question isn't where the agent is — it's always there — but what human residue each phase leaves:
 
 - **Specify** — the intent is yours. The agent will write down what you want far better than you would. It does not know what you want.
-- **Build** — nothing is left. This is the one phase that delegates completely.
+- **Build** — nothing is left. Delegates completely.
 - **Check** — the agent runs things and reports. What stays yours is knowing *which categories need checking at all*, and calling it done.
-- **Correct** — yours to decide whether this gets fixed, rebuilt, or dropped.
+- **Correct** — nothing is left either. Correcting is building again, and the agent does it. When a failure makes you decide the whole thing should be rebuilt or dropped instead, that isn't correcting — that's going back to Specify with a different intent.
 
-Which is why "you don't need to know how to program anymore" is both true and trivial. Building was one phase of four, and it's the only one that vanishes entirely.
+So the loop splits in half. Two phases hand over completely, two keep something human — and the two that vanish are exactly the ones people mean when they say "programming". What's left is saying what you want, and knowing whether you got it.
+
+Which is why "you don't need to know how to program anymore" is both true and unhelpful. It's true about half the loop and silent about the other half, which is the half that was never taught to anyone.
 
 Notice where checking sits: **inside the loop, from day one.** It isn't a level you reach — it's a phase you're already in. What grows with experience isn't *whether* you check, it's *what you're able to check*. It comes in three ranges: the agent tells you what to look at and you look; you check what you know to ask about; or you also know whether the check was any good and what it missed. The first range is available to a complete beginner on their first afternoon, and it's enough more often than you'd think.
 
@@ -89,7 +91,7 @@ Twelve where things can go wrong, and one that's a different animal. Read down a
 
 ### Where it is and how I get it back
 
-**2. Where your app lives.** The environment question is where the genuinely scary mistakes live. Almost nobody deletes production data on purpose — they delete it believing they're in the test copy.
+**2. Where your app lives.** The environment question is where the genuinely scary mistakes live. Almost nobody deletes production data on purpose — they delete it believing they're in the test copy. And the separation you think you have may not exist: I've had pipelines that didn't distinguish environments at all, running CI against dev and prod alike, with no real separation behind the names. I found out by looking at the deployment dashboard, not by reading configuration — and then wrote the separation down so it stayed true.
 
 - **Aware** — "running on my laptop" and "running on the internet" are different things. Close the laptop: is it still alive?
 - **Fluent** — ask for a deploy, understand the difference between the test site and the real one, run a command you're handed without freezing, and know which of the two you're touching right now
@@ -109,7 +111,7 @@ Twelve where things can go wrong, and one that's a different animal. Read down a
 
 ### Who gets hurt if this fails
 
-**5. Secrets.** You do not need to be able to read a `.env` file. You need to know it exists and that keys belong in it.
+**5. Secrets.** You do not need to be able to read a `.env` file. You need to know it exists and that keys belong in it. What isn't obvious: taking a key out of the code doesn't remove it from the project's history, and I've had to scrub keys out of that history more than once. There are tools that watch for this — GitGuardian and similar — and, depending on how critical the key is, safe ways to hand one to someone that aren't a chat message.
 
 - **Aware** — keys don't live in the code, they live somewhere separate; a key that's been seen once is no longer secret
 - **Fluent** — ask for a key to be moved out of the code, understand why that file isn't uploaded, know where a key comes from when you're asked for one, and know that a server key and a public client key are different animals
@@ -129,13 +131,13 @@ Twelve where things can go wrong, and one that's a different animal. Read down a
 
 ### What's going to surprise me
 
-**8. What this costs.** Surprise bills are more common than breaches, easier to prevent, and almost nobody prevents them — because "there is no default limit" isn't something you'd think to ask about.
+**8. What this costs.** Surprise bills are more common than breaches, easier to prevent, and almost nobody prevents them — because "there is no default limit" isn't something you'd think to ask about. Early on I built agentic systems without asking for token costs to be tracked, which meant I had no cost estimate at the end and had to run the whole batch again just to measure it. Not measuring cost has a cost, and it's paid in exactly the currency you were trying to find out about. Ask for it in the spec and it's free.
 
 - **Aware** — this generates a bill and by default nothing caps it
 - **Fluent** — understand the shape of the bill (model and API usage, hosting, database, storage, traffic), fixed versus per-use, that CPU and GPU aren't priced alike; ask for a cap and look at real consumption
 - **Opinionated** — alerts, your own rate limits, bot protection, designing for cost
 
-**9. Who you depend on.** Separate from cost because the failure isn't financial. It's that something which worked stops existing.
+**9. Who you depend on.** Separate from cost because the failure isn't financial. It's that something which worked stops existing. I've run a migration between platforms that the agent reported as complete, and which fell over the moment I tried to run on the new one alone — the old platform was still quietly holding it up, and became the backup I hadn't planned for. "Migration complete" and "the old thing can be switched off" are different claims, and only the second one is testable.
 
 - **Aware** — your app leans on other people's services, and they can raise prices, change, or shut down
 - **Fluent** — know which pieces are someone else's and which are yours, and ask what happens when one goes away
@@ -155,7 +157,7 @@ Twelve where things can go wrong, and one that's a different animal. Read down a
 - **Fluent** — understand what you're told when someone says frontend or backend, run the tests and see them pass, and know where to look for an error depending on which side it's on
 - **Opinionated** — which kind of test for which risk
 
-**12. Still working in six months.** As a project grows messy and undocumented, **the agent starts failing more.** That's the argument — not architectural purity, but your own tool getting worse at helping you.
+**12. Still working in six months.** As a project grows messy and undocumented, **the agent starts failing more.** That's the argument — not architectural purity, but your own tool getting worse at helping you. The failure mode is specific and easy to miss: documentation drifts out of date, the agent trusts it completely, and you get confident work built on a description that stopped being true months ago. Documentation only stays true if something reviews it against the code — and that something can be the agent itself, if you ask.
 
 - **Aware** — mess degrades the thing you're relying on
 - **Fluent** — ask for documentation, and understand the difference between docs for people and instructions for the agent, and notice when the project's own summary no longer matches what it does
