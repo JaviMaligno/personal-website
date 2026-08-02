@@ -75,7 +75,7 @@ Two things about this that matter more than the levels themselves.
 
 **Opinionated is optional — until it isn't.** You can ship most categories without ever forming a view of your own. But wherever the project is actually betting something, the top level stops being a luxury: if you charge money, you need a view on cost; if you hold other people's data, you need one on access.
 
-![The map: twelve risk categories in five families, plus one of taste](https://www.javieraguilar.ai/blog/what-you-still-need-to-know-map.png)
+![The map: twelve risk categories in five families, plus one of taste](/blog/what-you-still-need-to-know-map.png)
 
 ## Twelve categories, plus one
 
@@ -185,7 +185,7 @@ That's the same conclusion I reached from the engineering side: you don't need t
 
 Which is what Aware is actually for. It doesn't let you check anything. It lets you see that the box is **empty**. An empty box you know about is a managed risk. An empty box you don't know exists is the thing that ends up in the news.
 
-![The same project as a toy and as a production system](https://www.javieraguilar.ai/blog/what-you-still-need-to-know-toy-vs-production.png)
+![The same project as a toy and as a production system](/blog/what-you-still-need-to-know-toy-vs-production.png)
 
 ## Where you're starting from
 

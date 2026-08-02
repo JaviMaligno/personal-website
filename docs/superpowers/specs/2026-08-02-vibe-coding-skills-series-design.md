@@ -407,6 +407,15 @@ de quién dependes, aguantar carga).
 
 Ideas surgidas al validar el sistema v2, para cuando la serie esté en marcha:
 
+- **Automatizar en vez de pedir.** El paso siguiente al bucle: dejar de pedirle
+  cada cosa al agente y montar que ocurran solas — revisión periódica de la
+  documentación contra el código, vigilancia de logs buscando fallos, informes
+  de actividad. Es un salto de naturaleza distinta al de los tres niveles: no es
+  entender más, es dejar de ser el disparador. Encaja como material de la pieza
+  3 o como cierre de la serie; decidir dónde cuando lleguemos. Conecta con el
+  caso de la documentación desactualizada (categoría 12), donde la solución que
+  Javi ya aplica es precisamente que la revisión la dispare algo, no él.
+
 - **Minicurso.** El sistema (bucle + mapa 12+1 + los tres niveles) tiene forma de
   producto vendible por su cuenta, del tipo que se comercializa online. Los tres
   artículos serían el material de entrada.
