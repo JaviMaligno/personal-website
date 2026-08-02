@@ -395,3 +395,27 @@ in teal. Legible at LinkedIn card size.
 
 Giving one row an explicit "this is the thesis" instruction worked: the model
 boxed and brightened row 5 without being told how.
+
+### Spanish versions (2026-08-02)
+
+All three regenerated with Spanish text rather than reused, because a map full
+of English labels inside a Spanish article reads badly. Files carry an `-es`
+suffix. The briefs are the English ones translated, with one instruction added
+that turned out to matter: **point Codex at the English PNG as the visual
+reference** ("look at that file: reproduce the same concept, layout, palette and
+quality, with all text in Spanish"). The map and the comparison came out right
+first time that way.
+
+The loop needed one regeneration, for two faults worth remembering:
+
+1. **It drew a cartoon robot** for the agent. "No people" does not imply "no
+   robots" — the English version's abstract node glyph had to be asked for by
+   name. Ban mascots explicitly when a diagram has an agent in it.
+2. **Amber leaked onto the cycle arrows**, where it meant nothing, while the
+   legend used amber for "human residue". Same class of fault as the map's first
+   pass: a reserved colour has to be reserved *out loud*, naming the elements
+   that must not use it.
+
+Fixed with: "Cycle arrows must be neutral off-white/grey. Amber is reserved
+exclusively for the two human-residue phases and their labels. Teal is reserved
+exclusively for the two fully delegated phases."
