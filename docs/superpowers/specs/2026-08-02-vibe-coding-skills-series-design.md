@@ -3,7 +3,7 @@
 Date: 2026-08-02
 Branch: `blog/vibe-coding-skills-core`
 Status: approved in brainstorming (core + rampas; cuatro verbos N0–N3; nueve
-bloques; dos líneas de flotación; gráfico y tabla demo/producción como activos)
+bloques; dos líneas de flotación; un solo gráfico y dos tablas)
 
 ## Propósito y audiencia
 
@@ -27,7 +27,7 @@ destino, sino en el punto de partida y en el fallo característico. De ahí el
 reparto:
 
 1. **Pieza 1 — el core (esta).** Qué necesitas para vibe-codear algo real,
-   vengas de donde vengas. Contiene la escala N0–N3, la tabla y el gráfico.
+   vengas de donde vengas. Contiene la escala N0–N3, el gráfico y las tablas.
    Evergreen y citable; las otras dos piezas y la página de mentoría apuntan
    aquí.
 2. **Pieza 2 — desde cero.** La rampa de quien no tiene background: miedo a la
@@ -72,17 +72,26 @@ La granularidad no es "cuánto sabes", es qué puedes hacer con ello:
   mal. No sabes nombrarla. Efecto: no te pilla por sorpresa.
 - **N1 · Conversar** — sabes formular la pregunta **y entender la respuesta**.
   La frontera con N0 no es la pregunta, es la comprensión de lo que te
-  contestan.
-- **N2 · Comprobar** — lo verificas tú, sin fiarte de la respuesta.
+  contestan. Incluye ejecutar un comando que el agente te dicta.
+- **N2 · Comprobar** — lo verificas **tú, mirando el sistema**, sin fiarte de lo
+  que te han contestado.
 - **N3 · Decidir** — eliges entre opciones.
 
-El verbo es lo que hace que cada nivel sea distinguible caso a caso, y filtra
-solo: toda decisión técnica (modelo, proveedor, tipo de base de datos, tipo de
-test, arquitectura) cae en N3 sin discusión.
+Regla de asignación, para que ninguna celda se cuele de nivel:
+
+| Si la celda dice… | El nivel es |
+|---|---|
+| "sé que existe / que puede pasar" | N0 |
+| "sé pedirlo, entiendo qué me contestan, ejecuto lo que me dictan" | N1 |
+| "lo miro yo y confirmo que es cierto" | N2 |
+| "elijo entre A y B" | N3 |
+
+Todo vocabulario ("qué es una clave de cliente", "qué es el backend") es **N1**:
+sirve para entender la respuesta, no para verificar nada. Toda elección técnica
+(modelo, proveedor, tipo de base de datos, tipo de test, arquitectura) es **N3**
+sin discusión.
 
 ## Las dos líneas de flotación
-
-Sustituyen a la idea inicial de una sola línea demo/producción:
 
 - **Fin de N1 — puedes construir algo que funcione.** Un juguete honesto.
 - **Fin de N2 — puedes ponerlo delante de usuarios reales.** Aquí está la
@@ -97,78 +106,80 @@ Tres estados, no dos. Es lo que el lector usa para situarse.
 Techo de todo lo demás; abre el artículo.
 - **N0** un agente construye software entero, no solo escribe texto
 - **N1** describir lo que quiero por resultado; pedirle que investigue y proponga
-  antes de hacer
-- **N2** conozco el espacio (herramientas, servicios, integraciones) y elijo en
-  vez de aceptar lo primero
-- **N3** elección de modelo, herramienta y hardware — *solo mencionar que la
-  elección existe; el desarrollo es la pieza 3*
+  antes de hacer; **entender la respuesta cuando dice que algo no se puede o
+  propone otra cosa**
+- **N2** comprobar que lo entregado es lo que pedí, no algo que se le parece:
+  abrir la app y contrastar contra lo que dije
+- **N3** elección de modelo, herramienta y hardware — *una línea; el desarrollo
+  es la pieza 3*
 
 ### 2. Dónde vive tu app
 - **N0** local vs internet; si cierro el portátil, ¿sigue vivo?
-- **N1** pedir que se despliegue; saber que existe un sitio de pruebas separado
-  del real
-- **N2** distinguir local / preview / producción y saber en cuál estoy tocando;
-  usar la terminal sin miedo cuando el agente pide ejecutar algo
+- **N1** pedir que se despliegue; entender la diferencia entre el sitio de
+  pruebas y el real cuando me la nombran; **ejecutar sin bloquearme un comando
+  que el agente me dicta**
+- **N2** saber en cuál de los tres entornos estoy tocando ahora mismo, y leer la
+  salida de ese comando lo justo para saber si fue bien o mal
 - **N3** dominios, variables por entorno, logs del hosting, deshacer un
   despliegue; proveedores (Vercel, Railway, AWS, Azure) *en una línea, sin
   comparativa — envejece en seis meses*
 
-Aquí vive el miedo a la terminal y por qué hay que perderlo: el modelo a veces
-te pide que ejecutes tú.
-
 ### 3. Código vs datos
 - **N0** el código se recrea, los datos no; hay datos escritos dentro del código
-  que no deberían
+  que no deberían; los datos necesitan copia de seguridad
 - **N1** preguntar "¿dónde queda guardado esto?" y entender la respuesta
-  ("está en la base de datos" vs "está en el código")
-- **N2** base de datos local vs remota, saber cuál uso y que recrear el entorno
-  se lleva la local; saber que hace falta backup
+  ("está en la base de datos" vs "está escrito en el código"); entender qué
+  significa que la base de datos sea local o remota
+- **N2** confirmar cuál de las dos estoy usando, y que la copia de seguridad
+  existe de verdad — no que alguien dijo que existe
 - **N3** migraciones, datos de prueba vs reales, restaurar un backup; tipo de
   base de datos y esquema (SQL vs NoSQL) *en una línea — para este perfil la
   decide el agente y casi siempre bien*
 
 ### 4. Secretos
-- **N0** las claves no van en el código, van en un sitio aparte
-- **N1** ese fichero no se sube al repo; de dónde saco una clave cuando me la
-  piden
-- **N2** clave de servidor vs clave pública de cliente; una clave filtrada se
-  **rota**, no se borra del código
-- **N3** gestor de secretos (Bitwarden, 1Password, el del hosting), secretos por
-  entorno
+- **N0** las claves no van en el código, van en un sitio aparte; una clave que
+  se ve una vez ya no vuelve a ser secreta
+- **N1** pedir que la clave salga del código; entender qué es el fichero de
+  secretos y por qué no se sube al repositorio; saber de dónde saco una clave
+  cuando me la piden; distinguir clave de servidor de clave pública de cliente
+- **N2** mirar si la clave acabó en el repositorio o viaja al navegador
+- **N3** rotar una clave filtrada, gestor de secretos (Bitwarden, 1Password, el
+  del hosting), secretos por entorno
 
 No hace falta saber leer un `.env`. Basta saber que existe y que ahí van.
 
 ### 5. Quién puede entrar
 - **N0** tener login no es estar protegido
-- **N1** preguntar "¿esto lo puede llamar cualquiera?" y entender la respuesta
-- **N2** autenticación vs autorización — quién eres vs qué puedes tocar;
-  comprobar que un usuario no ve los datos de otro
+- **N1** preguntar "¿esto lo puede llamar cualquiera?" y entender la respuesta;
+  vocabulario mínimo: autenticación es quién eres, autorización es qué puedes
+  tocar
+- **N2** comprobarlo yo: entrar como un usuario y verificar que no veo los datos
+  de otro
 - **N3** roles y permisos, RLS, tokens, revisar la superficie expuesta
 
 ### 6. Qué te puede costar
 - **N0** esto genera factura y por defecto no hay tope
-- **N1** los tipos de coste: modelo/API por uso, hosting, base de datos,
-  almacenamiento, tráfico
-- **N2** mirar el consumo; coste fijo vs coste por uso; CPU y GPU no cuestan
-  igual
+- **N1** entender la factura: modelo/API por uso, hosting, base de datos,
+  almacenamiento, tráfico; coste fijo vs coste por uso; CPU y GPU no cuestan
+  igual; pedir un tope
+- **N2** mirar el consumo real y contrastarlo con lo que esperaba
 - **N3** alertas, límites propios, protección anti-bots, elegir arquitectura por
   coste
 
 ### 7. Poder volver atrás
 - **N0** existe forma de recuperar la versión de ayer y no es Ctrl+Z
 - **N1** pedir un punto de guardado antes de un cambio grande, y pedir volver
-- **N2** ramas para probar sin romper lo que funciona; etiquetar "esta versión
-  iba bien"
-- **N3** pull requests, leer un diff, conflictos
+- **N2** mirar el historial y confirmar que el punto al que quiero volver existe
+  de verdad
+- **N3** ramas, etiquetas, pull requests, leer un diff, conflictos
 
 Awareness puro en N0: el agente ya hace commits solo. Lo que falta es que el
 usuario sepa que el rescate existe y se pueda pedir.
 
 ### 8. Saber si funciona
 - **N0** "funciona" lo decides tú probándolo, no el agente diciéndolo
-- **N1** reportar con precisión (qué hice, qué esperaba, qué salió) y entender
-  qué te dicen cuando hablan de frontend o backend; saber que tiene que haber
-  tests
+- **N1** reportar con precisión (qué hice, qué esperaba, qué salió); entender qué
+  te dicen cuando hablan de frontend o backend; saber que tiene que haber tests
 - **N2** ejecutar los tests y ver si pasan; saber dónde mirar el error según sea
   navegador o servidor
 - **N3** qué tipo de test para qué riesgo
@@ -185,8 +196,8 @@ final y adivinar qué pasó por el medio. Enlaza con el punto 2 de
 ### 9. Que siga funcionando dentro de seis meses
 - **N0** cuando el proyecto crece desordenado y sin nada escrito, **el agente
   empieza a fallar más** — ese es el argumento, no la pureza arquitectónica
-- **N1** pedir que documente; distinguir documentación para personas de
-  instrucciones para el agente (`CLAUDE.md`, `AGENTS.md`)
+- **N1** pedir que documente; entender la diferencia entre documentación para
+  personas e instrucciones para el agente (`CLAUDE.md`, `AGENTS.md`)
 - **N2** leer el resumen del proyecto y detectar que ya no describe lo que la
   app hace
 - **N3** qué va en instrucciones permanentes y qué en la conversación; cómo se
@@ -204,26 +215,76 @@ documentación que solo leen las máquinas).
   variable y los dos fallos simétricos (el de cero delega por encima de su
   nivel, el técnico por debajo) y deja la resolución a las piezas 2 y 3.
 - **Demo vs producción.** No es un bloque: es el marco entero, materializado en
-  las dos líneas de flotación y en la tabla comparativa (abajo).
+  las dos líneas de flotación y en la Tabla A.
 
-## Activos visuales
+## Fronteras con las piezas 2 y 3
 
-1. **Gráfico de la escala** (imagen principal, candidata a portada de LinkedIn).
-   Escalera de cuatro peldaños (Reconocer / Conversar / Comprobar / Decidir) con
-   las **dos líneas de flotación** marcadas, y color por bloque atravesando los
-   peldaños para que se vea que el mismo tema reaparece con otra exigencia. Lo
-   que la tabla no comunica de un vistazo.
-2. **Tabla "mismo proyecto, dos versiones"** — juguete vs productivo. Seis
-   filas: corre en mi portátil / vive en internet · clave en el código / en
-   gestor de secretos · datos en fichero local / base de datos remota con backup
-   · cualquiera llama la API / hay auth y límites · si se rompe me entero yo /
-   hay tests y logs · nada escrito / documentación que el agente lee.
-   Candidata a segunda imagen.
-3. **Tabla bloques × niveles** al final del artículo: el roadmap completo y el
-   activo reutilizable fuera del artículo.
+Cuatro temas aparecen en el core y son además el material de las rampas. Dónde
+para el core:
 
-Las imágenes se generan con **Codex** (modelo de imagen), que rotula texto
-dentro de la imagen con fiabilidad.
+| Tema | En el core | En la rampa |
+|---|---|---|
+| Miedo a la terminal | solo el hecho funcional: a veces el agente te pide ejecutar algo y hay que poder hacerlo (bloque 2, N1) | pieza 2: por qué asusta, Claude Desktop vs CLI, cómo se vence |
+| No saber qué pedir | el techo existe y limita todo lo demás (bloque 1, N0) | pieza 2: cómo se sale de ahí, qué mirar para descubrir el espacio |
+| Elección de modelo y herramienta | una línea diciendo que la elección existe (bloque 1, N3) | pieza 3: Codex vs Claude Code vs open source, cuál para qué |
+| Cuánto delegar | se plantea la variable y los dos fallos simétricos | piezas 2 y 3: la corrección concreta de cada perfil |
+
+Los perfiles semi-técnico (WordPress, no-code) y old school **no se mencionan en
+el core** más allá de las dos secciones de anuncio. Son material de las rampas.
+
+## Activos visuales: qué es imagen y qué es tabla
+
+**Una sola imagen generada. Todo lo demás, tabla markdown o texto.** Cada imagen
+con texto dentro necesita versión EN y ES — son dos generaciones, dos ficheros y
+dos puntos de desincronización cada vez que se retoca una palabra. Ese coste
+solo lo justifica el activo que se comparte fuera del artículo.
+
+### Imagen 1 — la escalera (única imagen; hero + portada de LinkedIn)
+
+Generada con **Codex** (modelo de imagen), que rotula texto dentro de la imagen
+con fiabilidad. Dos versiones: `-en` y `-es`.
+
+Contenido: cuatro peldaños etiquetados con los verbos — Reconocer, Conversar,
+Comprobar, Decidir — y las **dos líneas de flotación** cruzando la escalera con
+su rótulo ("aquí ya construyes algo que funciona" / "aquí ya puedes ponerlo
+delante de gente"). En cada peldaño, **tres o cuatro etiquetas de una o dos
+palabras** de los bloques que lo pueblan, con color por bloque mantenido entre
+peldaños para que se vea que el mismo tema reaparece con otra exigencia.
+
+Restricción dura: **no caben los nueve bloques × cuatro niveles**. Si se
+intentan meter frases, la imagen deja de leerse en móvil y no sirve para
+LinkedIn, que es lo único para lo que existe.
+
+### Tabla A — "mismo proyecto, dos versiones" (tabla markdown, en el cuerpo)
+
+Juguete vs productivo, dos columnas, seis filas: corre en mi portátil / vive en
+internet · clave en el código / en gestor de secretos · datos en fichero local /
+base de datos remota con copia · cualquiera llama la API / hay auth y límites ·
+si se rompe me entero yo / hay tests y logs · nada escrito / documentación que
+el agente lee.
+
+Tabla y no imagen: dos columnas se leen bien en móvil, se traduce sin
+regenerar nada y el lector puede copiarla.
+
+### Tabla B — bloques × niveles (tabla markdown, al final)
+
+Nueve filas × cuatro columnas, **tres a cinco palabras por celda**. Es el
+resumen, no el contenido: el desarrollo de cada celda vive en el cuerpo del
+artículo, un bloque por subsección con sus cuatro niveles en lista.
+
+Restricción dura: si las celdas llevan frases completas, la tabla se sale de
+ancho y es ilegible en móvil. Frases en el cuerpo, etiquetas en la tabla.
+
+## Estructura del artículo (pieza 1)
+
+1. Apertura: el techo — no puedes pedir lo que no sabes que existe
+2. La escala: los cuatro verbos + imagen 1
+3. Los nueve bloques, uno por subsección, cuatro niveles en lista
+4. Las dos líneas de flotación + Tabla A (juguete vs productivo)
+5. Diseño: lo funcional lo acierta el agente, el gusto es tuyo
+6. Dos secciones cortas de perfil, anunciando las piezas 2 y 3
+7. Cierre: cuánto delegar — la bisagra y los dos fallos simétricos
+8. Tabla B como resumen final
 
 ## Base empírica y cómo se declara
 
