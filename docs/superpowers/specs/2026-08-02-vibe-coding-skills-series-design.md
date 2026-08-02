@@ -215,7 +215,7 @@ documentación que solo leen las máquinas).
   variable y los dos fallos simétricos (el de cero delega por encima de su
   nivel, el técnico por debajo) y deja la resolución a las piezas 2 y 3.
 - **Demo vs producción.** No es un bloque: es el marco entero, materializado en
-  las dos líneas de flotación y en la Tabla A.
+  las dos líneas de flotación y en la imagen 2.
 
 ## Fronteras con las piezas 2 y 3
 
@@ -234,12 +234,13 @@ el core** más allá de las dos secciones de anuncio. Son material de las rampas
 
 ## Activos visuales: qué es imagen y qué es tabla
 
-**Una sola imagen generada. Todo lo demás, tabla markdown o texto.** Cada imagen
-con texto dentro necesita versión EN y ES — son dos generaciones, dos ficheros y
-dos puntos de desincronización cada vez que se retoca una palabra. Ese coste
-solo lo justifica el activo que se comparte fuera del artículo.
+**Dos imágenes generadas, una tabla markdown.** El criterio es la legibilidad en
+móvil, no el coste de mantenerlas: una comparativa de dos columnas se lee
+perfectamente como imagen, una matriz de treinta y seis celdas no.
 
-### Imagen 1 — la escalera (única imagen; hero + portada de LinkedIn)
+Toda imagen con texto lleva versión EN y ES (`-en`, `-es`).
+
+### Imagen 1 — la escalera (hero + portada de LinkedIn)
 
 Generada con **Codex** (modelo de imagen), que rotula texto dentro de la imagen
 con fiabilidad. Dos versiones: `-en` y `-es`.
@@ -255,16 +256,20 @@ Restricción dura: **no caben los nueve bloques × cuatro niveles**. Si se
 intentan meter frases, la imagen deja de leerse en móvil y no sirve para
 LinkedIn, que es lo único para lo que existe.
 
-### Tabla A — "mismo proyecto, dos versiones" (tabla markdown, en el cuerpo)
+### Imagen 2 — "mismo proyecto, dos versiones" (en el cuerpo, sección 4)
 
-Juguete vs productivo, dos columnas, seis filas: corre en mi portátil / vive en
-internet · clave en el código / en gestor de secretos · datos en fichero local /
-base de datos remota con copia · cualquiera llama la API / hay auth y límites ·
-si se rompe me entero yo / hay tests y logs · nada escrito / documentación que
-el agente lee.
+Juguete vs productivo, dos columnas enfrentadas, seis filas: corre en mi
+portátil / vive en internet · clave en el código / en gestor de secretos · datos
+en fichero local / base de datos remota con copia · cualquiera llama la API /
+hay auth y límites · si se rompe me entero yo / hay tests y logs · nada escrito
+/ documentación que el agente lee.
 
-Tabla y no imagen: dos columnas se leen bien en móvil, se traduce sin
-regenerar nada y el lector puede copiarla.
+Imagen y no tabla: es una comparativa binaria que debe entrarle al lector de
+golpe, y dos columnas se leen bien en móvil. No sustituye contenido — las seis
+filas ya están desarrolladas en el cuerpo del artículo; esto las resume. Segunda
+candidata a compartir en LinkedIn.
+
+Requisito de accesibilidad: `alt` que enumere las seis filas.
 
 ### Tabla B — bloques × niveles (tabla markdown, al final)
 
@@ -280,7 +285,7 @@ ancho y es ilegible en móvil. Frases en el cuerpo, etiquetas en la tabla.
 1. Apertura: el techo — no puedes pedir lo que no sabes que existe
 2. La escala: los cuatro verbos + imagen 1
 3. Los nueve bloques, uno por subsección, cuatro niveles en lista
-4. Las dos líneas de flotación + Tabla A (juguete vs productivo)
+4. Las dos líneas de flotación + imagen 2 (juguete vs productivo)
 5. Diseño: lo funcional lo acierta el agente, el gusto es tuyo
 6. Dos secciones cortas de perfil, anunciando las piezas 2 y 3
 7. Cierre: cuánto delegar — la bisagra y los dos fallos simétricos
