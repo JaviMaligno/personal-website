@@ -61,11 +61,26 @@ la v1.
 
 Especificar → construir → comprobar → corregir.
 
-No es nada nuevo: es spec / develop / test de toda la vida, con un agente en la
-casilla de construir. Quien viene de software o de un dominio técnico lo tiene
-interiorizado y no necesita que se lo cuenten. Quien no viene de ahí **no sabe
-que existe**, y por defecto trata al agente como un chat: pide, recibe, se lo
-cree, sigue pidiendo. Sin bucle no hay producto, solo una conversación larga.
+No es nada nuevo: es spec / develop / test de toda la vida. Quien viene de
+software o de un dominio técnico lo tiene interiorizado y no necesita que se lo
+cuenten. Quien no viene de ahí **no sabe que existe**, y por defecto trata al
+agente como un chat: pide, recibe, se lo cree, sigue pidiendo. Sin bucle no hay
+producto, solo una conversación larga.
+
+**El agente participa en las cuatro fases**, no en una. Ayuda a especificar,
+construye, ejecuta comprobaciones y te dice qué mirar, y propone la corrección.
+Lo que distingue a cada fase no es si el agente está — está siempre — sino
+**qué residuo humano queda**:
+
+- *Especificar* — la intención es tuya. El agente redacta mejor que tú lo que
+  quieres, pero no sabe qué quieres.
+- *Construir* — **la única fase que se delega entera.** No queda residuo.
+- *Comprobar* — el agente ejecuta y reporta; queda tuyo saber **qué categorías
+  hay que comprobar** y declarar que ya está.
+- *Corregir* — queda tuyo decidir si se arregla, se rehace o se descarta.
+
+De ahí que "ya no hace falta saber programar" sea cierto y a la vez trivial:
+construir era una fase de cuatro, y es la única que desaparece del todo.
 
 Consecuencia de diseño que arregla la v1: **comprobar es una fase del bucle, no
 un nivel de conocimiento.** Lo que cambia con el conocimiento no es *si*
@@ -78,7 +93,7 @@ compruebas, es *qué eres capaz de comprobar*:
 - comprobación **con criterio** — sabes además si la comprobación es válida y
   qué no cubre.
 
-## Parte 2 — El mapa: trece categorías
+## Parte 2 — El mapa: doce más una
 
 Para cada categoría, tres niveles de comprensión:
 
@@ -101,24 +116,24 @@ tu proyecto no se juega nada, y obligatorio donde sí: si cobras, en costes; si
 guardas datos ajenos, en accesos y en datos personales. La v1 lo despachaba como
 "el nivel que no necesitas" y eso era falso fuera de su caso concreto.
 
-### Familia A — Qué puedo construir
+**Doce categorías de riesgo, más una de criterio.** La decimotercera —el gusto—
+no comparte naturaleza con las otras doce: en las doce el fallo tiene víctima
+(tú, tu bolsillo, tus usuarios), en la de criterio no hay fallo, solo ausencia.
+Va aparte y se anuncia como aparte; el guiño "12 + 1" es el que ordena la
+sección.
 
-**A1. Qué se puede pedir.** El techo de todo lo demás: no puedes preguntar por
-un espacio cuya existencia desconoces.
+Las familias no tienen el mismo tamaño y no pasa nada. La primera tiene una sola
+categoría porque es el techo de todas las demás, no un tema más.
+
+### Familia A — El techo
+
+**A1. Qué se puede pedir.** No puedes preguntar por un espacio cuya existencia
+desconoces. Va sola: limita a las doce restantes.
 - *Aware* un agente construye sistemas enteros, no solo textos
 - *Fluent* describir por resultado, pedir que investigue y proponga, entender
   cuando dice que algo no se puede o propone otra ruta
 - *Opinionated* qué modelo, qué herramienta, qué hardware — *una línea; el
   desarrollo es la pieza 3*
-
-**A2. Criterio propio.** Lo único que no es cuestión de riesgo sino de gusto.
-- *Aware* lo que sale por defecto funciona y es anónimo; nadie te dirá que está
-  mal, porque no lo está
-- *Fluent* sé nombrar qué no me gusta con precisión suficiente para que se
-  corrija
-- *Opinionated* tengo una dirección propia y la sostengo
-
-Es la categoría donde no tener background es una desventaja real y no hay atajo.
 
 ### Familia B — Dónde está y cómo lo recupero
 
@@ -231,6 +246,21 @@ bucle, no aquí)*
 
 Cierra el círculo con el final de `how-much-should-you-still-know`.
 
+### La +1 — Criterio propio
+
+**Fuera de las doce, y por eso al final.** En las doce categorías anteriores el
+fallo tiene víctima. Aquí no hay fallo: hay ausencia. Nadie te dirá nunca que
+está mal, porque no lo está — está bien y es anónimo.
+
+- *Aware* lo que sale por defecto funciona y se parece a todo lo demás
+- *Fluent* sé nombrar qué no me gusta con precisión suficiente para que se
+  corrija
+- *Opinionated* tengo una dirección propia y la sostengo
+
+Es la única donde no tener background es una desventaja real sin atajo: en las
+doce basta saber que la categoría existe para poder preguntar; aquí hay que
+mirar y decidir que no te gusta, y eso no se delega ni se pregunta.
+
 ## La línea de producción: propiedad del sistema, no de la persona
 
 Sustituye a las dos líneas de flotación de la v1, que ataban producción a un
@@ -283,7 +313,7 @@ matriz de treinta y nueve celdas no.
    especificar, construir, comprobar, corregir — con quién hace qué en cada uno,
    y los tres alcances de la comprobación (guiada / dirigida / con criterio) como
    anotación. Es el activo más universal de la serie.
-2. **El mapa dentado.** Cinco familias con sus categorías, mostrando un perfil
+2. **El mapa dentado.** Las cinco familias con sus categorías, y la +1 aparte,, mostrando un perfil
    ejemplo desigual (fuerte en unas, Aware en otras) para que se vea de un
    vistazo que el nivel es un vector. Sin las celdas de texto — esas van en la
    tabla.
@@ -294,7 +324,8 @@ matriz de treinta y nueve celdas no.
    quien la comprueba · nada escrito / documentación que el agente lee. `alt`
    que enumere las seis filas.
 
-**Tabla markdown al final del artículo**: trece categorías × tres niveles, tres
+**Tabla markdown al final del artículo**: las doce categorías más la +1, por
+tres niveles, tres
 a cinco palabras por celda, agrupada por familia. El desarrollo va en el cuerpo.
 
 ## Estructura del artículo (pieza 1)
@@ -303,13 +334,14 @@ a cinco palabras por celda, agrupada por familia. El desarrollo va en el cuerpo.
 2. De dónde viene esto (base empírica, un párrafo)
 3. El bucle: la metodología, y por qué comprobar no es un nivel + imagen 1
 4. Los tres niveles, y por qué tu nivel es un vector + imagen 2
-5. Las trece categorías, agrupadas en cinco familias, en prosa compacta
+5. Las doce categorías en cinco familias, en prosa compacta, y la +1 al cierre
+   de la sección
 6. La línea de producción como propiedad del sistema + imagen 3
 7. Dos secciones cortas de perfil, anunciando las piezas 2 y 3
 8. Cierre: cuánto delegar — los dos fallos simétricos
 9. Tabla final
 
-Nota de redacción: con trece categorías, cada una va en **prosa compacta**, no
+Nota de redacción: con trece fichas, cada una va en **prosa compacta**, no
 en cuatro viñetas. Las listas largas inflan el texto y se leen peor.
 
 ## Base empírica y cómo se declara
@@ -370,6 +402,24 @@ Añadido en v2: el bucle como parte 1 del sistema; el nivel como vector y no com
 escalar; el agente como vía barata de subir a Fluent; la línea de producción
 como propiedad del sistema; y tres categorías nuevas (datos de otras personas,
 de quién dependes, aguantar carga).
+
+## Extensiones futuras del sistema (anotado 2026-08-02, no comprometido)
+
+Ideas surgidas al validar el sistema v2, para cuando la serie esté en marcha:
+
+- **Minicurso.** El sistema (bucle + mapa 12+1 + los tres niveles) tiene forma de
+  producto vendible por su cuenta, del tipo que se comercializa online. Los tres
+  artículos serían el material de entrada.
+- **Artículos de transición**, uno por salto de nivel:
+  - *de 0 a Aware* — el catálogo de categorías que ni sabes que existen
+  - *de Aware a Fluent* — cómo usar al propio agente para subir, que es la ruta
+    barata que casi nadie usa a propósito
+  - *de Fluent a Opinionated* — **el más flojo de los tres tal cual**, porque en
+    una categoría concreta equivale a "hazte experto en ese dominio", que no es
+    enseñable en un artículo. Reformulación que sí funciona: ser Opinionated
+    **sobre el propio vibe coding** — formas de trabajar, decisiones de
+    herramienta y método. Es un concepto distinto del resto del eje y hay que
+    decidir si cabe en el mismo marco o es otra cosa.
 
 ## Pendientes fuera de la serie
 
