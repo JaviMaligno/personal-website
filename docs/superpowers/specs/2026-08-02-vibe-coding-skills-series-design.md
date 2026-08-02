@@ -2,8 +2,9 @@
 
 Date: 2026-08-02
 Branch: `blog/vibe-coding-skills-core`
-Status: approved in brainstorming (core + rampas; cuatro verbos N0–N3; nueve
-bloques; dos líneas de flotación; un solo gráfico y dos tablas)
+Status: sistema rehecho tras revisión del primer borrador (v2). El eje de cuatro
+niveles con Verify como peldaño queda **descartado**; ver "Historial de
+decisiones".
 
 ## Propósito y audiencia
 
@@ -20,328 +21,363 @@ captación real, no la búsqueda orgánica.
 Objetivo secundario declarado: alimentar una **oferta de mentoría** en
 javieraguilar.ai (ver "Pendientes fuera de la serie").
 
+El sistema tiene que aguantar **fuera del artículo**: es el esqueleto de la
+mentoría, no solo el índice de una pieza. Cuando artículo y sistema entren en
+conflicto, gana el sistema.
+
 ## Arquitectura de la serie: un core + dos rampas
 
 Un artículo por perfil se repetiría solo: los perfiles no difieren en el
-destino, sino en el punto de partida y en el fallo característico. De ahí el
-reparto:
+destino, sino en el punto de partida y en el fallo característico.
 
-1. **Pieza 1 — el core (esta).** Qué necesitas para vibe-codear algo real,
-   vengas de donde vengas. Contiene la escala N0–N3, el gráfico y las tablas.
-   Evergreen y citable; las otras dos piezas y la página de mentoría apuntan
-   aquí.
+1. **Pieza 1 — el core (esta).** El bucle y el mapa. Evergreen y citable; las
+   otras dos piezas y la página de mentoría apuntan aquí.
 2. **Pieza 2 — desde cero.** La rampa de quien no tiene background: miedo a la
-   terminal, no saber qué se puede pedir, delegar sin poder verificar. Los
+   terminal, no saber qué se puede pedir, el bucle como novedad absoluta. Los
    semi-técnicos (WordPress, no-code, automatizaciones) son una variante del
    mismo perfil con menos huecos, no un perfil aparte.
-3. **Pieza 3 — desde el oficio.** La rampa del técnico: delega demasiado poco,
-   verifica a mano lo que debería verificar una máquina, y no conoce el harness.
+3. **Pieza 3 — desde el oficio.** La rampa del técnico: ya tiene el bucle, le
+   sobra desconfianza y le falta harness.
 
-**Alcance del plan de implementación que sigue a este spec: solo la pieza 1.**
-Las piezas 2 y 3 tendrán su propio ciclo spec → plan → implementación.
+**Alcance del plan de implementación: solo la pieza 1.** Las piezas 2 y 3
+tendrán su propio ciclo.
 
-La pieza 1 incluye **dos secciones cortas de perfil** (desde cero / desde el
-oficio) que anuncian las siguientes piezas sin desarrollarlas: "más detalle en
-próximos artículos".
+La pieza 1 incluye **dos secciones cortas de perfil** que anuncian las
+siguientes piezas sin desarrollarlas.
 
-**No habrá artículo de taxonomía de perfiles.** Una taxonomía sin nada
-accionable es contenido vacío. En su lugar: **post recopilatorio de LinkedIn**
-al cierre de la serie, que enlaza las tres piezas y la mentoría bajo la idea
-"vengas de donde vengas, puedo ayudarte por aquí". Ese post es el que convierte.
+**No habrá artículo de taxonomía de perfiles.** En su lugar, **post
+recopilatorio de LinkedIn** al cierre de la serie, enlazando las tres piezas y
+la mentoría. Ese post es el que convierte.
+
+---
+
+# El sistema
+
+Dos partes independientes. Una es una **metodología** (cómo trabajas), la otra
+es un **mapa** (qué tienes que saber que existe). Confundirlas fue el error de
+la v1.
+
+## Parte 1 — El bucle
+
+Especificar → construir → comprobar → corregir.
+
+No es nada nuevo: es spec / develop / test de toda la vida, con un agente en la
+casilla de construir. Quien viene de software o de un dominio técnico lo tiene
+interiorizado y no necesita que se lo cuenten. Quien no viene de ahí **no sabe
+que existe**, y por defecto trata al agente como un chat: pide, recibe, se lo
+cree, sigue pidiendo. Sin bucle no hay producto, solo una conversación larga.
+
+Consecuencia de diseño que arregla la v1: **comprobar es una fase del bucle, no
+un nivel de conocimiento.** Lo que cambia con el conocimiento no es *si*
+compruebas, es *qué eres capaz de comprobar*:
+
+- comprobación **guiada** — el agente te dice qué mirar y tú miras. Barata,
+  disponible desde el minuto cero, y suficiente más a menudo de lo que parece.
+- comprobación **dirigida** — compruebas lo que sabes preguntar. Acoplada a tu
+  nivel en esa categoría, no a un peldaño aparte.
+- comprobación **con criterio** — sabes además si la comprobación es válida y
+  qué no cubre.
+
+## Parte 2 — El mapa: trece categorías
+
+Para cada categoría, tres niveles de comprensión:
+
+- **Aware** — sé que esta categoría existe y puede fallar. No necesito saber
+  cómo funciona ni cómo se llama; necesito saber que está ahí, porque es lo que
+  me hace preguntar.
+- **Fluent** — entiendo el vocabulario, sé formular la pregunta y sé si la
+  respuesta tiene sentido. **Es el nivel al que se llega preguntándole al propio
+  agente**, con paciencia y a propósito: la ruta más barata que existe y casi
+  nadie la usa deliberadamente.
+- **Opinionated** — tengo criterio propio para elegir entre opciones.
+
+**Tu nivel no es un número, es un vector.** Nadie está en el mismo peldaño en
+las trece: se puede ser Opinionated en accesos y Aware en costes. El perfil es
+dentado, y el gráfico tiene que reflejarlo. La escalera de la v1 mentía al
+sugerir que se sube entero.
+
+**Opinionated no es opcional en abstracto.** Es opcional en las categorías donde
+tu proyecto no se juega nada, y obligatorio donde sí: si cobras, en costes; si
+guardas datos ajenos, en accesos y en datos personales. La v1 lo despachaba como
+"el nivel que no necesitas" y eso era falso fuera de su caso concreto.
+
+### Familia A — Qué puedo construir
+
+**A1. Qué se puede pedir.** El techo de todo lo demás: no puedes preguntar por
+un espacio cuya existencia desconoces.
+- *Aware* un agente construye sistemas enteros, no solo textos
+- *Fluent* describir por resultado, pedir que investigue y proponga, entender
+  cuando dice que algo no se puede o propone otra ruta
+- *Opinionated* qué modelo, qué herramienta, qué hardware — *una línea; el
+  desarrollo es la pieza 3*
+
+**A2. Criterio propio.** Lo único que no es cuestión de riesgo sino de gusto.
+- *Aware* lo que sale por defecto funciona y es anónimo; nadie te dirá que está
+  mal, porque no lo está
+- *Fluent* sé nombrar qué no me gusta con precisión suficiente para que se
+  corrija
+- *Opinionated* tengo una dirección propia y la sostengo
+
+Es la categoría donde no tener background es una desventaja real y no hay atajo.
+
+### Familia B — Dónde está y cómo lo recupero
+
+**B1. Dónde vive tu app.**
+- *Aware* "en mi portátil" y "en internet" no son lo mismo; si cierro el
+  portátil, ¿sigue vivo?
+- *Fluent* pedir que se despliegue, entender la diferencia entre el sitio de
+  pruebas y el real, ejecutar sin bloquearme un comando que me dictan, saber en
+  cuál de los entornos estoy tocando
+- *Opinionated* dominios, variables por entorno, logs del hosting, deshacer un
+  despliegue, proveedores *(sin comparativa: envejece en seis meses)*
+
+Casi nadie borra datos de producción a propósito; los borra creyendo que está en
+el entorno de pruebas.
+
+**B2. Código vs datos.**
+- *Aware* el código se regenera, los datos no; hay datos escritos dentro del
+  código que no deberían; los datos necesitan copia
+- *Fluent* preguntar dónde queda guardado esto y entender la respuesta; base de
+  datos local vs remota; confirmar que la copia existe en vez de que se haya
+  mencionado
+- *Opinionated* migraciones, datos de prueba vs reales, restaurar, tipo de base
+  de datos y esquema
+
+**B3. Poder volver atrás.**
+- *Aware* existe forma de recuperar la versión de ayer y no es Ctrl+Z
+- *Fluent* pedir un punto de guardado antes de un cambio grande, pedir volver,
+  mirar el historial y confirmar que ese punto existe
+- *Opinionated* ramas, etiquetas, pull requests, leer un diff
+
+El agente ya hace commits solo. Lo que falta es saber que el rescate existe.
+
+### Familia C — Quién sale herido si falla
+
+**C1. Secretos.**
+- *Aware* las claves no van en el código; una clave vista una vez ya no es
+  secreta
+- *Fluent* pedir que salga del código, entender qué es el fichero de secretos y
+  por qué no se sube, saber de dónde sale una clave, distinguir clave de
+  servidor de clave pública de cliente, mirar si acabó en el repositorio o viaja
+  al navegador
+- *Opinionated* rotación, gestor de secretos, secretos por entorno
+
+No hace falta saber leer un `.env`. Basta saber que existe.
+
+**C2. Quién puede entrar.**
+- *Aware* tener login no es estar protegido
+- *Fluent* preguntar si esto lo puede llamar cualquiera y entender la respuesta;
+  autenticación es quién eres, autorización es qué puedes tocar; entrar como un
+  usuario y comprobar que no ve los datos de otro
+- *Opinionated* roles y permisos, RLS, tokens, revisar la superficie expuesta
+
+**C3. Datos de otras personas.** *(nueva en v2)*
+- *Aware* si guardas datos de terceros, el daño de un fallo no lo pagas tú
+- *Fluent* saber qué datos estás recogiendo y por qué, que hay obligaciones
+  legales, y pedir que no se guarde lo que no hace falta
+- *Opinionated* consentimiento, retención, minimización, dónde residen los datos
+
+Es la categoría con asimetría moral: el resto te cuesta dinero o vergüenza,
+esta se la cuesta a otro.
+
+### Familia D — Qué me va a sorprender
+
+**D1. Qué te puede costar.**
+- *Aware* esto genera factura y por defecto no hay tope
+- *Fluent* entender la factura (modelo y API por uso, hosting, base de datos,
+  almacenamiento, tráfico), coste fijo vs por uso, CPU y GPU no cuestan igual,
+  pedir un tope y mirar el consumo real
+- *Opinionated* alertas, límites propios, protección anti-bots, arquitectura por
+  coste
+
+Las facturas sorpresa son más frecuentes que las brechas.
+
+**D2. De quién dependes.** *(nueva en v2)*
+- *Aware* tu app se apoya en servicios de otros que pueden subir de precio,
+  cambiar o cerrar — y no es solo dinero, es infraestructura que desaparece
+- *Fluent* saber qué piezas son de terceros y cuáles son tuyas, y preguntar qué
+  pasa si una falla
+- *Opinionated* elegir por acoplamiento, no solo por precio; plan de salida
+
+Separada de D1 porque el fallo no es económico: es que algo que funcionaba deja
+de existir.
+
+**D3. Aguantar más de lo que probaste.** *(nueva en v2)*
+- *Aware* funciona con tres usuarios y puede caerse con trescientos
+- *Fluent* saber que existe la diferencia entre probar y aguantar carga, y
+  preguntar qué se rompe primero
+- *Opinionated* medir, dimensionar, decidir qué optimizar
+
+### Familia E — Cómo sé que sigue bien
+
+**E1. Tests y dónde falla.** *(la parte de "probar y reportar" vive ahora en el
+bucle, no aquí)*
+- *Aware* tiene que haber tests; sin ellos toda comprobación se reduce a
+  clicar la app final y adivinar qué pasó por el medio
+- *Fluent* entender qué te dicen cuando hablan de frontend o backend, ejecutar
+  los tests y ver si pasan, saber dónde mirar el error según sea navegador o
+  servidor
+- *Opinionated* qué tipo de test para qué riesgo
+
+**E2. Que siga funcionando en seis meses.**
+- *Aware* si el proyecto crece desordenado y sin nada escrito, **el agente
+  empieza a fallar más** — el argumento no es pureza arquitectónica, es que tu
+  herramienta empeora
+- *Fluent* pedir que documente, distinguir documentación para personas de
+  instrucciones para el agente (`CLAUDE.md`, `AGENTS.md`), leer el resumen del
+  proyecto y detectar que ya no describe lo que la app hace
+- *Opinionated* qué va en instrucciones permanentes y qué en la conversación,
+  cómo se parte el proyecto
+
+Cierra el círculo con el final de `how-much-should-you-still-know`.
+
+## La línea de producción: propiedad del sistema, no de la persona
+
+Sustituye a las dos líneas de flotación de la v1, que ataban producción a un
+nivel personal.
+
+> Producción no exige que estés en un nivel. Exige que **ninguna categoría quede
+> sin comprobar por nadie** — por ti, por un test, por un servicio o por otra
+> persona — y que sepas cuál es cuál.
+
+Es literalmente la tesis de
+[`how-much-should-you-still-know`](../../../src/content/blog/en/how-much-should-you-still-know.md)
+aplicada a quien nunca fue ingeniero: no hace falta tener el conocimiento, hace
+falta tener el mecanismo. La serie se cierra sobre sí misma.
+
+Lo que *Aware* garantiza no es que puedas comprobar; es que **sabes que la
+casilla existe**, y por tanto puedes ver que está vacía. Una casilla vacía que
+sabes vacía es un riesgo gestionado. Una que ignoras es el problema.
 
 ## Tesis del core
 
 > Tu nivel no mide lo que sabes hacer. Mide **cuánto puedes soltar sin quedarte
-> ciego.**
+> ciego** — y no es un número, es un mapa con huecos que puedes ver.
 
-Cada peldaño habilita a delegar más, no a teclear más. Eso convierte la tabla en
-un medidor de delegación en vez de un temario.
-
-Hermano directo del artículo ya publicado
-[`how-much-should-you-still-know`](../../../src/content/blog/en/how-much-should-you-still-know.md),
-que mira el mismo problema desde el ingeniero que delega. Este lo mira desde
-quien nunca fue ingeniero. Enlazar en ambos sentidos. La frase "no puedes
-preguntar por un espacio cuya existencia desconoces" es el puente literal entre
-los dos.
-
-## La escala: cuatro verbos
-
-La granularidad no es "cuánto sabes", es qué puedes hacer con ello:
-
-- **N0 · Reconocer** — sabes que existe una categoría de cosa que puede salir
-  mal. No sabes nombrarla. Efecto: no te pilla por sorpresa.
-- **N1 · Conversar** — sabes formular la pregunta **y entender la respuesta**.
-  La frontera con N0 no es la pregunta, es la comprensión de lo que te
-  contestan. Incluye ejecutar un comando que el agente te dicta.
-- **N2 · Comprobar** — lo verificas **tú, mirando el sistema**, sin fiarte de lo
-  que te han contestado.
-- **N3 · Decidir** — eliges entre opciones.
-
-Regla de asignación, para que ninguna celda se cuele de nivel:
-
-| Si la celda dice… | El nivel es |
-|---|---|
-| "sé que existe / que puede pasar" | N0 |
-| "sé pedirlo, entiendo qué me contestan, ejecuto lo que me dictan" | N1 |
-| "lo miro yo y confirmo que es cierto" | N2 |
-| "elijo entre A y B" | N3 |
-
-Todo vocabulario ("qué es una clave de cliente", "qué es el backend") es **N1**:
-sirve para entender la respuesta, no para verificar nada. Toda elección técnica
-(modelo, proveedor, tipo de base de datos, tipo de test, arquitectura) es **N3**
-sin discusión.
-
-## Las dos líneas de flotación
-
-- **Fin de N1 — puedes construir algo que funcione.** Un juguete honesto.
-- **Fin de N2 — puedes ponerlo delante de usuarios reales.** Aquí está la
-  frontera demo/producción de verdad.
-- **N3 — ya no necesitas mentoría.** Buena parte es material de la pieza 3.
-
-Tres estados, no dos. Es lo que el lector usa para situarse.
-
-## Los nueve bloques
-
-### 1. Qué se puede pedir
-Techo de todo lo demás; abre el artículo.
-- **N0** un agente construye software entero, no solo escribe texto
-- **N1** describir lo que quiero por resultado; pedirle que investigue y proponga
-  antes de hacer; **entender la respuesta cuando dice que algo no se puede o
-  propone otra cosa**
-- **N2** comprobar que lo entregado es lo que pedí, no algo que se le parece:
-  abrir la app y contrastar contra lo que dije
-- **N3** elección de modelo, herramienta y hardware — *una línea; el desarrollo
-  es la pieza 3*
-
-### 2. Dónde vive tu app
-- **N0** local vs internet; si cierro el portátil, ¿sigue vivo?
-- **N1** pedir que se despliegue; entender la diferencia entre el sitio de
-  pruebas y el real cuando me la nombran; **ejecutar sin bloquearme un comando
-  que el agente me dicta**
-- **N2** saber en cuál de los tres entornos estoy tocando ahora mismo, y leer la
-  salida de ese comando lo justo para saber si fue bien o mal
-- **N3** dominios, variables por entorno, logs del hosting, deshacer un
-  despliegue; proveedores (Vercel, Railway, AWS, Azure) *en una línea, sin
-  comparativa — envejece en seis meses*
-
-### 3. Código vs datos
-- **N0** el código se recrea, los datos no; hay datos escritos dentro del código
-  que no deberían; los datos necesitan copia de seguridad
-- **N1** preguntar "¿dónde queda guardado esto?" y entender la respuesta
-  ("está en la base de datos" vs "está escrito en el código"); entender qué
-  significa que la base de datos sea local o remota
-- **N2** confirmar cuál de las dos estoy usando, y que la copia de seguridad
-  existe de verdad — no que alguien dijo que existe
-- **N3** migraciones, datos de prueba vs reales, restaurar un backup; tipo de
-  base de datos y esquema (SQL vs NoSQL) *en una línea — para este perfil la
-  decide el agente y casi siempre bien*
-
-### 4. Secretos
-- **N0** las claves no van en el código, van en un sitio aparte; una clave que
-  se ve una vez ya no vuelve a ser secreta
-- **N1** pedir que la clave salga del código; entender qué es el fichero de
-  secretos y por qué no se sube al repositorio; saber de dónde saco una clave
-  cuando me la piden; distinguir clave de servidor de clave pública de cliente
-- **N2** mirar si la clave acabó en el repositorio o viaja al navegador
-- **N3** rotar una clave filtrada, gestor de secretos (Bitwarden, 1Password, el
-  del hosting), secretos por entorno
-
-No hace falta saber leer un `.env`. Basta saber que existe y que ahí van.
-
-### 5. Quién puede entrar
-- **N0** tener login no es estar protegido
-- **N1** preguntar "¿esto lo puede llamar cualquiera?" y entender la respuesta;
-  vocabulario mínimo: autenticación es quién eres, autorización es qué puedes
-  tocar
-- **N2** comprobarlo yo: entrar como un usuario y verificar que no veo los datos
-  de otro
-- **N3** roles y permisos, RLS, tokens, revisar la superficie expuesta
-
-### 6. Qué te puede costar
-- **N0** esto genera factura y por defecto no hay tope
-- **N1** entender la factura: modelo/API por uso, hosting, base de datos,
-  almacenamiento, tráfico; coste fijo vs coste por uso; CPU y GPU no cuestan
-  igual; pedir un tope
-- **N2** mirar el consumo real y contrastarlo con lo que esperaba
-- **N3** alertas, límites propios, protección anti-bots, elegir arquitectura por
-  coste
-
-### 7. Poder volver atrás
-- **N0** existe forma de recuperar la versión de ayer y no es Ctrl+Z
-- **N1** pedir un punto de guardado antes de un cambio grande, y pedir volver
-- **N2** mirar el historial y confirmar que el punto al que quiero volver existe
-  de verdad
-- **N3** ramas, etiquetas, pull requests, leer un diff, conflictos
-
-Awareness puro en N0: el agente ya hace commits solo. Lo que falta es que el
-usuario sepa que el rescate existe y se pueda pedir.
-
-### 8. Saber si funciona
-- **N0** "funciona" lo decides tú probándolo, no el agente diciéndolo
-- **N1** reportar con precisión (qué hice, qué esperaba, qué salió); entender qué
-  te dicen cuando hablan de frontend o backend; saber que tiene que haber tests
-- **N2** ejecutar los tests y ver si pasan; saber dónde mirar el error según sea
-  navegador o servidor
-- **N3** qué tipo de test para qué riesgo
-
-Probar es *menos* técnico que saber que hay tests: por eso probar es N0 y los
-tests son N1. **Frontend vs backend** no es bloque propio: es el vocabulario
-mínimo de N1, porque sin él no se entiende ninguna respuesta sobre dónde falla
-algo.
-
-Argumento del testing: sin tests, toda la verificación recae en probar la app
-final y adivinar qué pasó por el medio. Enlaza con el punto 2 de
-`how-much-should-you-still-know`: delegar la validación a algo determinista.
-
-### 9. Que siga funcionando dentro de seis meses
-- **N0** cuando el proyecto crece desordenado y sin nada escrito, **el agente
-  empieza a fallar más** — ese es el argumento, no la pureza arquitectónica
-- **N1** pedir que documente; entender la diferencia entre documentación para
-  personas e instrucciones para el agente (`CLAUDE.md`, `AGENTS.md`)
-- **N2** leer el resumen del proyecto y detectar que ya no describe lo que la
-  app hace
-- **N3** qué va en instrucciones permanentes y qué en la conversación; cómo se
-  parte el proyecto
-
-Cierra el círculo con el final de `how-much-should-you-still-know` (la
-documentación que solo leen las máquinas).
-
-## Secciones fuera de la tabla
-
-- **Diseño.** No encaja en una escala de riesgo: es criterio, no seguridad.
-  Sección propia — *lo funcional lo acierta el agente, el gusto sigue siendo
-  tuyo*.
-- **Cuánto delegar.** Es la bisagra del cierre, no un bloque. Plantea la
-  variable y los dos fallos simétricos (el de cero delega por encima de su
-  nivel, el técnico por debajo) y deja la resolución a las piezas 2 y 3.
-- **Demo vs producción.** No es un bloque: es el marco entero, materializado en
-  las dos líneas de flotación y en la imagen 2.
+Los dos fallos simétricos siguen siendo la bisagra del cierre: quien viene de
+cero delega por encima de su nivel (entrega lo que no puede comprobar ni sabe
+que habría que comprobar); quien viene del oficio delega por debajo (se niega a
+entregar lo que sí podría). Resolución en las piezas 2 y 3.
 
 ## Fronteras con las piezas 2 y 3
 
-Cuatro temas aparecen en el core y son además el material de las rampas. Dónde
-para el core:
-
 | Tema | En el core | En la rampa |
 |---|---|---|
-| Miedo a la terminal | solo el hecho funcional: a veces el agente te pide ejecutar algo y hay que poder hacerlo (bloque 2, N1) | pieza 2: por qué asusta, Claude Desktop vs CLI, cómo se vence |
-| No saber qué pedir | el techo existe y limita todo lo demás (bloque 1, N0) | pieza 2: cómo se sale de ahí, qué mirar para descubrir el espacio |
-| Elección de modelo y herramienta | una línea diciendo que la elección existe (bloque 1, N3) | pieza 3: Codex vs Claude Code vs open source, cuál para qué |
-| Cuánto delegar | se plantea la variable y los dos fallos simétricos | piezas 2 y 3: la corrección concreta de cada perfil |
+| Miedo a la terminal | el hecho funcional: a veces hay que ejecutar algo (B1, Fluent) | pieza 2: por qué asusta, Claude Desktop vs CLI, cómo se vence |
+| No saber qué pedir | el techo existe y limita lo demás (A1, Aware) | pieza 2: cómo se sale de ahí |
+| El bucle | se enuncia como metodología y por qué es novedoso | pieza 2: cómo adoptarlo sin background |
+| Elección de modelo y herramienta | una línea (A1, Opinionated) | pieza 3: Codex vs Claude Code vs open source |
+| Cuánto delegar | la variable y los dos fallos simétricos | piezas 2 y 3: la corrección de cada perfil |
 
-Los perfiles semi-técnico (WordPress, no-code) y old school **no se mencionan en
-el core** más allá de las dos secciones de anuncio. Son material de las rampas.
+Los perfiles semi-técnico y old school **no se mencionan en el core** fuera de
+las dos secciones de anuncio.
 
-## Activos visuales: qué es imagen y qué es tabla
+## Activos visuales
 
-**Dos imágenes generadas, una tabla markdown.** El criterio es la legibilidad en
-móvil, no el coste de mantenerlas: una comparativa de dos columnas se lee
-perfectamente como imagen, una matriz de treinta y seis celdas no.
+Tres imágenes generadas con **Codex** (rotula texto con fiabilidad), cada una en
+EN y ES. El criterio para imagen vs tabla es la legibilidad en móvil: una
+comparativa de dos columnas o un diagrama de cuatro nodos se leen bien; una
+matriz de treinta y nueve celdas no.
 
-Toda imagen con texto lleva versión EN y ES (`-en`, `-es`).
+1. **El bucle** (hero + portada de LinkedIn). Cuatro nodos en ciclo —
+   especificar, construir, comprobar, corregir — con quién hace qué en cada uno,
+   y los tres alcances de la comprobación (guiada / dirigida / con criterio) como
+   anotación. Es el activo más universal de la serie.
+2. **El mapa dentado.** Cinco familias con sus categorías, mostrando un perfil
+   ejemplo desigual (fuerte en unas, Aware en otras) para que se vea de un
+   vistazo que el nivel es un vector. Sin las celdas de texto — esas van en la
+   tabla.
+3. **Juguete vs producción.** Dos columnas enfrentadas, seis filas: corre en mi
+   portátil / vive en internet · clave en el código / en gestor de secretos ·
+   datos en fichero local / base de datos remota con copia · cualquiera llama la
+   API / hay auth y límites · nadie comprueba esta casilla / cada casilla tiene
+   quien la comprueba · nada escrito / documentación que el agente lee. `alt`
+   que enumere las seis filas.
 
-### Imagen 1 — la escalera (hero + portada de LinkedIn)
-
-Generada con **Codex** (modelo de imagen), que rotula texto dentro de la imagen
-con fiabilidad. Dos versiones: `-en` y `-es`.
-
-Contenido: cuatro peldaños etiquetados con los verbos — Reconocer, Conversar,
-Comprobar, Decidir — y las **dos líneas de flotación** cruzando la escalera con
-su rótulo ("aquí ya construyes algo que funciona" / "aquí ya puedes ponerlo
-delante de gente"). En cada peldaño, **tres o cuatro etiquetas de una o dos
-palabras** de los bloques que lo pueblan, con color por bloque mantenido entre
-peldaños para que se vea que el mismo tema reaparece con otra exigencia.
-
-Restricción dura: **no caben los nueve bloques × cuatro niveles**. Si se
-intentan meter frases, la imagen deja de leerse en móvil y no sirve para
-LinkedIn, que es lo único para lo que existe.
-
-### Imagen 2 — "mismo proyecto, dos versiones" (en el cuerpo, sección 4)
-
-Juguete vs productivo, dos columnas enfrentadas, seis filas: corre en mi
-portátil / vive en internet · clave en el código / en gestor de secretos · datos
-en fichero local / base de datos remota con copia · cualquiera llama la API /
-hay auth y límites · si se rompe me entero yo / hay tests y logs · nada escrito
-/ documentación que el agente lee.
-
-Imagen y no tabla: es una comparativa binaria que debe entrarle al lector de
-golpe, y dos columnas se leen bien en móvil. No sustituye contenido — las seis
-filas ya están desarrolladas en el cuerpo del artículo; esto las resume. Segunda
-candidata a compartir en LinkedIn.
-
-Requisito de accesibilidad: `alt` que enumere las seis filas.
-
-### Tabla B — bloques × niveles (tabla markdown, al final)
-
-Nueve filas × cuatro columnas, **tres a cinco palabras por celda**. Es el
-resumen, no el contenido: el desarrollo de cada celda vive en el cuerpo del
-artículo, un bloque por subsección con sus cuatro niveles en lista.
-
-Restricción dura: si las celdas llevan frases completas, la tabla se sale de
-ancho y es ilegible en móvil. Frases en el cuerpo, etiquetas en la tabla.
+**Tabla markdown al final del artículo**: trece categorías × tres niveles, tres
+a cinco palabras por celda, agrupada por familia. El desarrollo va en el cuerpo.
 
 ## Estructura del artículo (pieza 1)
 
 1. Apertura: el techo — no puedes pedir lo que no sabes que existe
-2. La escala: los cuatro verbos + imagen 1
-3. Los nueve bloques, uno por subsección, cuatro niveles en lista
-4. Las dos líneas de flotación + imagen 2 (juguete vs productivo)
-5. Diseño: lo funcional lo acierta el agente, el gusto es tuyo
-6. Dos secciones cortas de perfil, anunciando las piezas 2 y 3
-7. Cierre: cuánto delegar — la bisagra y los dos fallos simétricos
-8. Tabla B como resumen final
+2. De dónde viene esto (base empírica, un párrafo)
+3. El bucle: la metodología, y por qué comprobar no es un nivel + imagen 1
+4. Los tres niveles, y por qué tu nivel es un vector + imagen 2
+5. Las trece categorías, agrupadas en cinco familias, en prosa compacta
+6. La línea de producción como propiedad del sistema + imagen 3
+7. Dos secciones cortas de perfil, anunciando las piezas 2 y 3
+8. Cierre: cuánto delegar — los dos fallos simétricos
+9. Tabla final
+
+Nota de redacción: con trece categorías, cada una va en **prosa compacta**, no
+en cuatro viñetas. Las listas largas inflan el texto y se leen peor.
 
 ## Base empírica y cómo se declara
 
-La autoridad viene de tres sitios desiguales y el artículo lo dice una vez, sin
-postureo:
+Tres fuentes desiguales, declaradas una vez y sin postureo:
 
-1. **Formación a compañeros técnicos** — la mayor parte de la experiencia. Es
-   material de la pieza 3, no del core.
-2. **Observación de no técnicos** (amigos): la terminal asusta; no saben qué
-   pedir porque no saben qué se puede hacer; quien viene de WordPress/no-code se
-   adapta bien porque solo hay que rellenar huecos.
-3. **Experiencia propia construyendo con agentes**: un endpoint que quedó
-   abierto cuando no debía, datos hardcodeados que debían salir de base de
-   datos. Detectados **probando y preguntando, no leyendo código** — que es la
-   demostración del eje entero del artículo.
+1. **Formación a compañeros técnicos** — la mayor parte de la experiencia, pero
+   es material de la pieza 3.
+2. **Observación de no técnicos** (amigos, muestra pequeña e informal): la
+   terminal asusta; no saben qué pedir; quien viene de WordPress/no-code se
+   adapta bien porque solo hay huecos que rellenar.
+3. **Construir así él mismo**, incluyendo lo que ha cazado haciendo a los
+   agentes.
 
-Regla vinculante (ver memoria `blog-article-scope`): ninguna recomendación puede
-ir más allá de lo que sostiene la evidencia de arriba. Sin listas de cicatrices
-de implementación propia; los dos casos entran porque *demuestran el mecanismo*,
-no como anecdotario.
+**Encuadre obligatorio de los dos casos concretos** (endpoint abierto, valores
+hardcodeados): **no son cicatrices propias de mala implementación.** Son cosas
+que los agentes hacen por defecto y que él detectó — el endpoint haciendo
+testing, los hardcodeados escribiéndolo en el spec por adelantado o preguntando
+después ante la sospecha. Entran porque demuestran el mecanismo (se cazan usando
+y preguntando, no leyendo código), nunca como anecdotario. Ver memoria
+`blog-article-scope`.
+
+Regla vinculante: ninguna recomendación puede ir más allá de lo que sostiene esa
+evidencia.
 
 ## Parking: material reservado para la pieza 3
 
-No quemar en el core:
-
-- Elección de modelo, herramienta y hardware: Codex vs Claude Code vs
-  alternativas open source, cuál para qué caso.
+- Elección de modelo, herramienta y hardware: Codex vs Claude Code vs open
+  source, cuál para qué caso.
 - Gestión del harness: skills, MCP, cuándo abrir sesión nueva, cuándo compactar,
   cómo paralelizar, herramientas tipo ultracode.
-- Cuánto scope dar a una tarea según modelo y herramienta; qué herramientas de
-  verificación darle al agente para no tener que verificar tú.
-- El patrón del perfil old school: pasos diminutos y verificación manual de
-  todo, hasta que aprende a soltar.
-- Arquitectura: monorepo vs microservicios y otras formas de modularidad. Un
-  vibe coder sin background no toma esa decisión ni debe.
+- Cuánto scope dar según modelo y herramienta; qué herramientas de verificación
+  darle al agente para no verificar tú.
+- El patrón old school: pasos diminutos y verificación manual de todo.
+- Arquitectura: monorepo vs microservicios y otras formas de modularidad.
 
 ## Fuera de alcance (todas las piezas)
 
-- Comparativa de proveedores de hosting. Envejece rápido y es otro artículo.
-- Tutorial de git, de la terminal o de cualquier herramienta concreta. La serie
-  enseña qué necesitas saber, no cómo se teclea.
+- Comparativa de proveedores de hosting. Envejece rápido.
+- Tutorial de git, de la terminal o de cualquier herramienta concreta.
 - Cualquier recomendación de "aprende a programar de verdad". No es la tesis.
+
+## Historial de decisiones
+
+**v1 → v2 (2026-08-02, tras el primer borrador).** El eje era Reconocer →
+Conversar → Comprobar → Decidir, con dos líneas de flotación atadas a Conversar
+y Comprobar. Descartado por tres fallos:
+
+1. **Comprobar no está por encima de Conversar.** La comprobación guiada (mirar
+   lo que te dicen que mires) es más barata que formular la pregunta correcta.
+   Estaban en el mismo casillero dos cosas de coste opuesto.
+2. **Comprobar no era un nivel**, era una fase del bucle de trabajo. Mezclar
+   "cuánto entiendes" con "qué papel juegas en el ciclo" fue el error de raíz.
+3. **"Decidir es el nivel que no necesitas"** solo era cierto en el caso más
+   simple. Hay contextos donde es obligatorio.
+
+Añadido en v2: el bucle como parte 1 del sistema; el nivel como vector y no como
+escalar; el agente como vía barata de subir a Fluent; la línea de producción
+como propiedad del sistema; y tres categorías nuevas (datos de otras personas,
+de quién dependes, aguantar carga).
 
 ## Pendientes fuera de la serie
 
 Anotado el 2026-08-02, a abordar **después** de publicar los artículos (ver
 memoria `website-mentoring-teaching-section`):
 
-- Sección de **mentoría** en javieraguilar.ai, con al menos dos líneas: vibe
-  coding (alimentada por esta serie) y diseño de arquitectura de agentes (sin
-  definir).
-- Centralizar el **trabajo académico y docente** en la web. Sin investigar
-  todavía: falta decidir forma y encaje en la estructura actual del sitio.
-- Decidir si el post de LinkedIn de estas piezas se genera automático o se
-  escribe a mano (el recopilatorio de perfiles, en concreto, pide mano).
+- Sección de **mentoría** en javieraguilar.ai: vibe coding (alimentada por esta
+  serie) y diseño de arquitectura de agentes (sin definir).
+- Centralizar el **trabajo académico y docente** en la web.
+- Decidir si el post recopilatorio de LinkedIn se genera automático o a mano
+  (pide mano).
