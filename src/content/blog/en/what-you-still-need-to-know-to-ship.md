@@ -45,6 +45,18 @@ Which is why "you don't need to know how to program anymore" is both true and tr
 
 Notice where checking sits: **inside the loop, from day one.** It isn't a level you reach — it's a phase you're already in. What grows with experience isn't *whether* you check, it's *what you're able to check*. It comes in three ranges: the agent tells you what to look at and you look; you check what you know to ask about; or you also know whether the check was any good and what it missed. The first range is available to a complete beginner on their first afternoon, and it's enough more often than you'd think.
 
+### Three ways to catch things, none of which involve reading code
+
+This is the part people assume is impossible without a technical background, and it isn't. Everything I catch, I catch one of three ways, and they apply to every category further down.
+
+**Write it into the spec up front.** The cheapest one, because you don't catch the problem — you prevent it. If you say at the start that these values must come from the database and nothing may be hardcoded, you don't have to find the hardcoded value later. Most of what an agent gets "wrong" is a reasonable default it chose because you didn't state a preference.
+
+**Use the running thing.** Not the code — the app. Click it, poke it, try the thing a user would try and then the thing they shouldn't. This is how I found an endpoint sitting open that shouldn't have been: it surfaced during testing, not during any code review.
+
+**Ask when something smells.** A number that never changes when it should. A page that loads suspiciously fast. A screen that works when you're logged out. You don't need to know what's wrong to say "why does this never change?" — and the agent is genuinely excellent at going from that to a cause.
+
+None of these require reading a line of code. All of them require knowing that the category exists, which is the entire point of the map below.
+
 ## Part two: the map, and how to read your level
 
 For each category below there are three levels:
@@ -83,7 +95,7 @@ Twelve where things can go wrong, and one that's a different animal. Read down a
 - **Fluent** — ask for a deploy, understand the difference between the test site and the real one, run a command you're handed without freezing, and know which of the two you're touching right now
 - **Opinionated** — domains, per-environment settings, host logs, rolling back a deploy, choosing where it runs
 
-**3. Code versus data.** Agents hardcode constantly — a value written into the code where it should have been read from the database. It's a reasonable shortcut when the goal is something that runs, and it's wrong the moment the data is meant to change. I catch it two ways: writing it into the spec up front so it doesn't happen, or asking afterwards when a number looks suspiciously stable. Neither involves reading code.
+**3. Code versus data.** Agents hardcode constantly — a value written into the code where it should have been read from the database. It's a reasonable shortcut when the goal is something that runs, and it's wrong the moment that data is meant to change. It's the standard case for the first and third techniques above: say up front that it mustn't happen, and ask later when a number looks suspiciously stable.
 
 - **Aware** — code can be regenerated, data cannot; some data is sitting inside the code; data needs backups
 - **Fluent** — ask where something gets stored and understand the answer, know whether the database is local or remote, and confirm a backup exists rather than having been mentioned
@@ -103,7 +115,7 @@ Twelve where things can go wrong, and one that's a different animal. Read down a
 - **Fluent** — ask for a key to be moved out of the code, understand why that file isn't uploaded, know where a key comes from when you're asked for one, and know that a server key and a public client key are different animals
 - **Opinionated** — rotating a leaked key, secret managers, per-environment secrets
 
-**6. Who can get in.** I've had an endpoint sitting open that shouldn't have been. It surfaced during testing, not during a code review: poking at the running thing and checking something I only thought to check because I knew the category existed. The check was cheap. Knowing to run it wasn't.
+**6. Who can get in.** The open endpoint above is this category. Worth restating what actually did the work there: the check was cheap and took a minute. Knowing it was a check worth running is the part that isn't free.
 
 - **Aware** — having a login does not mean being protected
 - **Fluent** — ask "can anyone call this?" and understand the answer; authentication is who you are, authorization is what you're allowed to touch; log in as one user and confirm you can't see another's data
