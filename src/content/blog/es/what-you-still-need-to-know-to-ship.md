@@ -1,7 +1,7 @@
 ---
 title: "Lo que todavía necesitas saber para lanzar algo real"
 description: "Hoy puedes construir software sin escribir una línea. Lo que queda no es programar: es una forma de trabajar y una lista de cosas que tienes que saber que existen o nunca se te ocurrirá preguntar. Aquí están las dos."
-pubDate: 2026-08-02
+pubDate: 2026-08-03
 tags: ["IA", "Vibe Coding", "Software", "Ingeniería", "Mentoría"]
 lang: es
 translationKey: what-you-still-need-to-know-to-ship

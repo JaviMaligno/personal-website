@@ -1,7 +1,7 @@
 ---
 title: "What You Still Need to Know to Ship"
 description: "You can build software now without writing a line of it. What's left isn't coding — it's a way of working, and a list of things you have to know exist or you'll never think to ask. Here's both."
-pubDate: 2026-08-02
+pubDate: 2026-08-03
 tags: ["AI", "Vibe Coding", "Software", "Engineering", "Mentoring"]
 lang: en
 translationKey: what-you-still-need-to-know-to-ship
