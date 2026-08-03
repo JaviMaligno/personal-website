@@ -288,3 +288,134 @@ Text (verbatim, only these short generic labels where useful): "base64", "severi
 Constraints: The core idea must read immediately: three operational machines give confident, structured outputs about unreadable text. Depict a concrete inspection/scoring pipeline with visible input strips, scanner heads, gauges, output verdict cards, and terminal output. Maintain exact 1020×510 / 2:1 hero composition. No logos, no brand names, no real company names, no people.
 Avoid: abstract metaphor, single centered icon, text-heavy poster, purple gradient blobs, bokeh, photorealism, glossy 3D render, generic sci-fi spaceship interface, excessive neon, illegible wall of UI text, watermark, logo, brand marks.
 ```
+
+## what-you-still-need-to-know-to-ship (2026-08-02)
+
+- Article: `src/content/blog/en/what-you-still-need-to-know-to-ship.md`
+- Images: `public/blog/what-you-still-need-to-know-to-ship.png` (hero, the loop),
+  `public/blog/what-you-still-need-to-know-map.png`,
+  `public/blog/what-you-still-need-to-know-toy-vs-production.png`
+- Generated with: Codex (gpt-image), prompt delegated to Codex from a brief
+
+Three **diagrams**, not editorial illustrations — a different job from the usual
+hero. The style constraints that carried over: 1020x510, dark but not
+monochrome, teal/amber/graphite/off-white, no logos, no people, no purple blobs,
+no bokeh. The constraint that mattered most and is worth reusing for diagrams:
+*legibility at small size beats density — this is a diagram people will
+screenshot*. All three came out with correctly spelled labels on the first pass.
+
+### 1. Hero — the loop
+
+Codex's full prompt (delegated from the brief below):
+
+```text
+Use case: infographic-diagram
+Asset type: hero image and LinkedIn social card for a technical editorial article, final canvas 1020x510 (2:1 landscape)
+Primary request: Create a refined technical editorial DIAGRAM of a four-phase clockwise working loop: "Specify" -> "Build" -> "Check" -> "Correct" -> back to "Specify". The central idea must be instantly clear: the agent participates in ALL FOUR phases, while each phase leaves a different human residue. Show one continuous agent-presence track or visual system running through all four nodes. Pair each phase with exactly one concise human-residue label:
+Specify — "Intent stays human"
+Build — "Fully delegated"
+Check — "Know what to check"
+Correct — "Fix / rebuild / drop"
+Visually mark Build as the unique phase fully handed over: a filled or strongly highlighted teal node, a clear handover marker, and the small label "FULLY DELEGATED". The other three nodes retain a subtle human-residue marker. Do not depict people.
+Scene/backdrop: deep graphite editorial canvas with restrained grid or fine technical linework only if useful.
+Style/medium: polished flat vector-like systems diagram, crisp geometric forms, precise arrows, modern editorial typography, sophisticated but minimal.
+Composition/framing: wide 2:1 canvas; a large balanced clockwise loop centered on the page; four generously spaced phase nodes; unambiguous arrow returning Correct to Specify; clear hierarchy; ample negative space; all text comfortably inside safe margins and readable at LinkedIn-card size.
+Color palette: dark graphite background, balanced teal, amber, warm off-white, and muted graphite-gray accents; not monochrome.
+Text (verbatim): "Specify", "Build", "Check", "Correct", "Intent stays human", "Fully delegated", "Know what to check", "Fix / rebuild / drop", "FULLY DELEGATED"
+Constraints: diagram, not decorative illustration; spell every label exactly; agent visibly participates in all four phases; Build is visibly the only fully handed-over phase; concise labels only; clean line weights; strong contrast; screenshot-worthy at small size.
+Avoid: logos, brand names, people, hands, faces, characters, purple gradient blobs, bokeh, photorealism, 3D objects, ornamental clutter, dense prose, poster styling, extra labels, illegible microtext, watermarks.
+```
+
+**Regenerated once, for a conceptual correction.** The first pass marked only
+Build as fully delegated. Correcting is building again — the agent does it end
+to end — so `Correct` is delegated too, and a failure that makes you rebuild or
+drop the whole thing isn't a correction, it's a return to Specify. The loop
+therefore halves: Specify and Check keep a human residue, Build and Correct
+don't. The regeneration brief asked for that halving to be *visible*, and the
+model resolved it well: the two delegated nodes on the horizontal axis in teal
+with a shared FULLY DELEGATED bracket each side, the two residue nodes on the
+vertical axis in dark with amber labels, joined by a dashed line, plus a legend.
+
+The first version also rendered "Fully delegated" twice on the same node
+(inside it and in a side callout); the regeneration brief named that duplication
+explicitly and it went away.
+
+### 2. The map — regenerated once, for a colour-coding fault
+
+The first pass was compositionally good (the title *"Your level is a vector, not
+a number"* carries the thesis without the article, five grouped family cards,
+the Taste row detached below a dashed rule) but **colour encoded two
+contradictory things at once**: the legend assigned colours to levels while the
+meters used a different colour per row, and one colour (blue) appeared in the
+meters but not in the legend.
+
+The regeneration brief, whose fix is the reusable part:
+
+```text
+Colour and level must be strictly separated:
+- EVERY meter is three equal segments. The NUMBER of filled segments — and
+  nothing else — encodes the level: 1 = Aware, 2 = Fluent, 3 = Opinionated.
+- ALL filled segments across the whole image use the SAME single colour (teal).
+  Empty segments are dark grey outlines. No amber, no blue, no other colour
+  anywhere in any meter.
+- The legend shows three example meters with 1, 2 and 3 teal segments filled,
+  labelled Aware / Fluent / Opinionated. Same teal as the meters.
+- Family header colours may still differ from each other to group the cards, but
+  no family colour may ever appear inside a meter.
+Fill levels unevenly on purpose so the profile reads as jagged.
+```
+
+Lesson worth reusing: when a diagram carries both a *grouping* dimension and a
+*magnitude* dimension, say explicitly which visual channel owns which, and ban
+the other channel by name. "Use colour consistently" is not enough — the model
+will happily invent a second, contradictory colour scheme.
+
+### 3. Toy vs production
+
+Brief given to Codex (its expanded prompt was not captured in full):
+
+```text
+A two-column comparison DIAGRAM: the same project as a toy versus as a
+production system. Six rows, each contrasting left (toy) with right (production):
+1. runs on my laptop -> lives on the internet
+2. key inside the code -> key in a secret manager
+3. data in a local file -> remote database with backups
+4. anyone can call the API -> auth and limits in place
+5. nobody checks this box -> every box has someone checking it
+6. nothing written down -> documentation the agent reads
+
+Row 5 is the thesis of the whole image and should read as the most important
+one: production is not better code, it is that no category is left unchecked.
+Give that row visual emphasis.
+
+Two clearly separated columns with headers 'TOY' and 'PRODUCTION'; short
+readable labels; the toy column in muted graphite/amber, the production column
+in teal. Legible at LinkedIn card size.
+```
+
+Giving one row an explicit "this is the thesis" instruction worked: the model
+boxed and brightened row 5 without being told how.
+
+### Spanish versions (2026-08-02)
+
+All three regenerated with Spanish text rather than reused, because a map full
+of English labels inside a Spanish article reads badly. Files carry an `-es`
+suffix. The briefs are the English ones translated, with one instruction added
+that turned out to matter: **point Codex at the English PNG as the visual
+reference** ("look at that file: reproduce the same concept, layout, palette and
+quality, with all text in Spanish"). The map and the comparison came out right
+first time that way.
+
+The loop needed one regeneration, for two faults worth remembering:
+
+1. **It drew a cartoon robot** for the agent. "No people" does not imply "no
+   robots" — the English version's abstract node glyph had to be asked for by
+   name. Ban mascots explicitly when a diagram has an agent in it.
+2. **Amber leaked onto the cycle arrows**, where it meant nothing, while the
+   legend used amber for "human residue". Same class of fault as the map's first
+   pass: a reserved colour has to be reserved *out loud*, naming the elements
+   that must not use it.
+
+Fixed with: "Cycle arrows must be neutral off-white/grey. Amber is reserved
+exclusively for the two human-residue phases and their labels. Teal is reserved
+exclusively for the two fully delegated phases."
