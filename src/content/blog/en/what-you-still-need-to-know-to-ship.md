@@ -73,6 +73,8 @@ Two things about this that matter more than the levels themselves.
 
 **Your level is a vector, not a number.** Nobody sits on the same rung across the board. You can be Opinionated about access control and completely unaware of what your hosting costs. The profile is jagged, and that's normal — it's a map with holes in it, not a ladder you climb whole.
 
+If you want your own version of that jagged profile before reading on, there's a [thirteen-question version of this](/en/assessment) that takes about two minutes.
+
 **Opinionated is optional — until it isn't.** You can ship most categories without ever forming a view of your own. But wherever the project is actually betting something, the top level stops being a luxury: if you charge money, you need a view on cost; if you hold other people's data, you need one on access.
 
 ![The map: twelve risk categories in five families, plus one of taste](/blog/what-you-still-need-to-know-map.png)
@@ -113,8 +115,10 @@ Twelve where things can go wrong, and one that's a different animal. Read down a
 
 **5. Secrets.** You do not need to be able to read a `.env` file. You need to know it exists and that keys belong in it. What isn't obvious: taking a key out of the code doesn't remove it from the project's history, and I've had to scrub keys out of that history more than once. There are tools that watch for this — GitGuardian and similar — and, depending on how critical the key is, safe ways to hand one to someone that aren't a chat message.
 
+There's a second confusion worth naming, because it runs the other way. Not everything that lives in environment variables is a secret. Feature flags, timeouts, which region to use — settings drift into that file because it's the place things go, and then get treated with the ceremony a password deserves while the actual passwords get lost among them. Knowing which of your variables are secret and which are merely configuration is part of being fluent here.
+
 - **Aware** — keys don't live in the code, they live somewhere separate; a key that's been seen once is no longer secret
-- **Fluent** — ask for a key to be moved out of the code, understand why that file isn't uploaded, know where a key comes from when you're asked for one, and know that a server key and a public client key are different animals
+- **Fluent** — ask for a key to be moved out of the code, understand why that file isn't uploaded, know where a key comes from when you're asked for one, know that a server key and a public client key are different animals, and tell a secret from a setting that merely ended up next to one
 - **Opinionated** — rotating a leaked key, secret managers, per-environment secrets
 
 **6. Who can get in.** The open endpoint above is this category. Worth restating what actually did the work there: the check was cheap and took a minute. Knowing it was a check worth running is the part that isn't free.
@@ -228,6 +232,10 @@ You don't need to learn to code. You need a loop, a map of what exists, and enou
 | **11. Tests and breakage** | there have to be tests | frontend vs backend, run them, read the failure | which test for which risk |
 | **12. Six months on** | mess degrades the agent | docs for people vs for agents | permanent instructions, structure |
 | **+1. Taste** | the default is anonymous | name what you don't like | a direction of your own |
+
+---
+
+**Want your own map?** [Answer the thirteen questions](/en/assessment) and you'll get the same grid filled in for your project, along with which gap is worth closing first.
 
 ---
 
