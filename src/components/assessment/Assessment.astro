@@ -24,10 +24,25 @@ const clientData = {
   questions,
   levelNames: a.ui.levelNames,
   verdicts: a.result.verdicts,
+  lang,
+  // Turns the score into something specific: which gap to close first, and why.
+  detail: {
+    priority: a.result.priority,
+    why: a.result.why,
+    startHere: a.result.startHere,
+    harmPattern: a.result.harmPattern,
+    harmCategories: a.result.harmCategories,
+    spreadPattern: a.result.spreadPattern
+  },
   labels: {
     of: a.ui.of,
     unknownLabel: a.result.unknownLabel,
-    emptyBoxes: a.result.emptyBoxes
+    unknownLabelOne: a.result.unknownLabelOne,
+    emptyBoxes: a.result.emptyBoxes,
+    send: a.result.send,
+    sending: a.result.sending,
+    sent: a.result.sent,
+    error: a.result.error
   }
 };
 ---
@@ -67,11 +82,16 @@ const clientData = {
       <div class="share">
         <h3>{a.result.shareTitle}</h3>
         <p>{a.result.shareBody}</p>
-        <form action="https://formspree.io/f/xkgrbqad" method="POST" id="share-form">
-          <input type="email" name="email" placeholder={a.result.emailPlaceholder} required />
-          <input type="hidden" name="_subject" value="Assessment result" />
-          <input type="hidden" name="result" id="result-field" />
-          <button type="submit" class="btn btn-primary">{a.result.send}</button>
+        <form id="share-form">
+          <div class="share-row">
+            <input type="email" name="email" id="share-email" placeholder={a.result.emailPlaceholder} required />
+            <button type="submit" class="btn btn-primary" id="share-submit">{a.result.send}</button>
+          </div>
+          <label class="share-consent">
+            <input type="checkbox" id="share-subscribe" checked />
+            <span>{a.result.subscribe}</span>
+          </label>
+          <p class="share-status" id="share-status" role="status"></p>
         </form>
       </div>
 
@@ -85,7 +105,8 @@ const clientData = {
 
 <script is:inline define:vars={{ clientData }}>
   (() => {
-    const { questions, levelNames, verdicts, labels } = clientData;
+    const { questions, levelNames, verdicts, labels, lang, detail } = clientData;
+    let lastResult = { text: '', unknown: 0, headline: '' };
     const answers = new Array(questions.length).fill(null);
     const order = new Array(questions.length).fill(null);
     let current = 0;
@@ -144,13 +165,37 @@ const clientData = {
     function renderResult() {
       show(result);
 
-      const unknown = answers.filter((level) => level === 0);
-      const count = unknown.length;
+      const scored = questions.map((q, i) => ({ category: q.category, level: answers[i] ?? 0 }));
+      const count = scored.filter((row) => row.level === 0).length;
       const verdict =
         count === 0 ? verdicts.none : count <= 2 ? verdicts.few : count <= 4 ? verdicts.some : verdicts.many;
 
-      $('verdict').textContent =
-        count > 0 ? `${count} ${labels.unknownLabel}. ${verdict}` : verdict;
+      // Name the single gap worth closing first, ranked by who pays when it
+      // fails rather than by the order the questions happened to come in.
+      const weakest = Math.min(...scored.map((row) => row.level));
+      const candidates = scored.filter((row) => row.level === weakest).map((row) => row.category);
+      const first = detail.priority.find((category) => candidates.includes(category));
+
+      const parts = [];
+      const noun = count === 1 ? labels.unknownLabelOne : labels.unknownLabel;
+      parts.push(count > 0 ? `${count} ${noun}. ${verdict}` : verdict);
+
+      if (first && weakest < 3) {
+        parts.push(detail.startHere.replace('{name}', first).replace('{why}', detail.why[first]));
+      }
+
+      // Two patterns worth calling out beyond the count itself.
+      const harmGaps = scored.filter(
+        (row) => row.level <= 1 && detail.harmCategories.includes(row.category)
+      ).length;
+      if (harmGaps >= 2) {
+        parts.push(detail.harmPattern);
+      } else if (weakest === 0 && Math.max(...scored.map((row) => row.level)) === 3) {
+        parts.push(detail.spreadPattern);
+      }
+
+      const headline = parts.join(' ');
+      $('verdict').textContent = headline;
 
       // The map: every category with the level chosen, unknowns first so the
       // gaps are what you read, not what you have to hunt for.
@@ -184,11 +229,48 @@ const clientData = {
         map.appendChild(el);
       });
 
-      // What actually reaches the inbox: a lead with the diagnosis attached.
-      $('result-field').value = rows
-        .map((r) => `${r.category}: ${levelNames[r.level]}`)
-        .join('\n');
+      // What gets emailed, and what reaches the inbox as a lead: the diagnosis.
+      lastResult = {
+        text: rows.map((r) => `${r.category}: ${levelNames[r.level]}`).join('\n'),
+        unknown: count,
+        // Sent along so the email says exactly what the screen said, instead of
+        // recomputing the same logic server-side and risking a mismatch.
+        headline
+      };
     }
+
+    $('share-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const button = $('share-submit');
+      const status = $('share-status');
+      button.disabled = true;
+      status.textContent = labels.sending;
+      status.className = 'share-status';
+
+      try {
+        const response = await fetch('/api/assessment', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            email: $('share-email').value.trim(),
+            lang,
+            result: lastResult.text,
+            unknown: lastResult.unknown,
+            headline: lastResult.headline,
+            subscribe: $('share-subscribe').checked
+          })
+        });
+        if (!response.ok) throw new Error('request failed');
+        status.textContent = labels.sent;
+        status.className = 'share-status ok';
+      } catch {
+        status.textContent = labels.error;
+        status.className = 'share-status failed';
+        button.disabled = false;
+        return;
+      }
+      button.textContent = labels.sent;
+    });
 
     $('start').addEventListener('click', () => {
       show(quiz);
@@ -444,10 +526,41 @@ const clientData = {
     margin-bottom: var(--space-md);
   }
 
-  .share form {
+  .share-row {
     display: flex;
     gap: var(--space-sm);
     flex-wrap: wrap;
+  }
+
+  .share-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: var(--space-md);
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    cursor: pointer;
+  }
+
+  .share-consent input {
+    margin-top: 0.2rem;
+    accent-color: var(--accent-primary);
+  }
+
+  .share-status {
+    margin-top: var(--space-sm);
+    font-size: 0.9375rem;
+    min-height: 1.4em;
+    color: var(--text-muted);
+  }
+
+  .share-status.ok {
+    color: var(--accent-primary);
+  }
+
+  .share-status.failed {
+    color: #f59e9e;
   }
 
   .share input[type='email'] {
