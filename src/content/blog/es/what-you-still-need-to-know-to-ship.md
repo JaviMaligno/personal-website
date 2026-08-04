@@ -73,6 +73,8 @@ Dos cosas sobre esto que importan más que los niveles en sí.
 
 **Tu nivel es un vector, no un número.** Nadie está en el mismo peldaño en todo. Puedes tener criterio sobre control de acceso y no tener ni idea de lo que te cuesta el hosting. El perfil sale dentado, y eso es lo normal: es un mapa con agujeros, no una escalera que se sube entera.
 
+Si quieres tu propia versión de ese perfil dentado antes de seguir leyendo, hay una [versión de trece preguntas de esto](/es/assessment) que lleva unos dos minutos.
+
 **Con criterio es opcional, hasta que deja de serlo.** Puedes lanzar la mayoría de categorías sin formarte nunca una opinión propia. Pero allí donde el proyecto se está jugando algo de verdad, el nivel de arriba deja de ser un lujo: si cobras dinero, necesitas criterio sobre coste; si guardas datos de otras personas, sobre acceso.
 
 ![El mapa: doce categorías de riesgo en cinco familias, más una de criterio](/blog/what-you-still-need-to-know-map-es.png)
@@ -113,8 +115,10 @@ Doce donde las cosas pueden salir mal, y una que es de otra naturaleza. Recórre
 
 **5. Secretos.** No necesitas saber leer un fichero `.env`. Necesitas saber que existe y que las claves van ahí. Lo que no es obvio: sacar una clave del código no la saca del historial del proyecto, y he tenido que limpiar claves de ese historial más de una vez. Hay herramientas que vigilan esto — GitGuardian y similares — y, según lo crítica que sea la clave, formas seguras de pasársela a alguien que no son un mensaje de chat.
 
+Hay una segunda confusión que merece nombrarse, porque va en dirección contraria. No todo lo que vive en variables de entorno es un secreto. Feature flags, tiempos de espera, qué región usar — la configuración se va colando en ese fichero porque es el sitio donde van las cosas, y acaba tratándose con la ceremonia que merece una contraseña mientras las contraseñas de verdad se pierden entre medias. Saber cuáles de tus variables son secretas y cuáles son simple configuración es parte de tener soltura aquí.
+
 - **Consciente** — las claves no viven en el código, viven aparte; una clave que se ha visto una vez ya no es secreta
-- **Con soltura** — pedir que una clave salga del código, entender por qué ese fichero no se sube, saber de dónde sale una clave cuando te la piden, y saber que una clave de servidor y una clave pública de cliente son animales distintos
+- **Con soltura** — pedir que una clave salga del código, entender por qué ese fichero no se sube, saber de dónde sale una clave cuando te la piden, saber que una clave de servidor y una clave pública de cliente son animales distintos, y distinguir un secreto de un ajuste que simplemente acabó al lado de uno
 - **Con criterio** — rotar una clave filtrada, gestores de secretos, secretos por entorno
 
 **6. Quién puede entrar.** El endpoint abierto de más arriba es esta categoría. Merece repetirse qué hizo el trabajo allí: la comprobación fue barata y llevó un minuto. Saber que era una comprobación que merecía la pena hacer es la parte que no sale gratis.
@@ -228,6 +232,10 @@ No necesitas aprender a programar. Necesitas un bucle, un mapa de lo que existe,
 | **11. Tests y fallos** | tiene que haber tests | frontend o backend, ejecutarlos, leer el fallo | qué test para qué riesgo |
 | **12. Seis meses después** | el desorden degrada al agente | documentación para personas o para agentes | instrucciones permanentes, estructura |
 | **+1. Criterio** | lo que sale por defecto es anónimo | nombrar lo que no te gusta | una dirección propia |
+
+---
+
+**¿Quieres tu propio mapa?** [Responde a las trece preguntas](/es/assessment) y tendrás esta misma rejilla rellena para tu proyecto, junto con qué hueco conviene cerrar primero.
 
 ---
 
