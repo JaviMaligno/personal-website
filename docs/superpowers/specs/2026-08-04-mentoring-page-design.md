@@ -205,13 +205,68 @@ Cuesta poco y evita las conversaciones que no van a ningún sitio.
   publicada, puede recibirlo en la web (la copia de Dev.to no se actualiza, y es
   la menos importante).
 
+## Estrategia comercial (lo que la página por sí sola no resuelve)
+
+La página es material de apoyo y es barata de hacer, pero **no es el cuello de
+botella del negocio**. Lo que sigue es tan parte del diseño como el HTML.
+
+### El canal y el mercado no coinciden
+
+El tráfico de la serie viene de un blog leído por **técnicos**. El segmento
+definido es **no técnico dentro de una empresa**, y el comprador es dirección.
+Son tres personas distintas: quien lee no es quien aprende ni quien paga. El
+"reenvío del técnico a su fundador" es una hipótesis, no un canal probado.
+
+Canales que sí operan en formación B2B, por orden de coste de arranque:
+
+1. **Red propia** — clientes actuales y anteriores, gente a la que Javi ya formó.
+   Es la vía más rápida a la primera entrega y a la primera referencia.
+2. **LinkedIn**, hablándole al comprador de riesgo y no al lector técnico. Los
+   artículos captan al técnico; los posts pueden captar a dirección si el
+   encuadre es el riesgo, no la herramienta.
+3. **Partners** — consultoras sin capacidad de formación, asociaciones
+   empresariales, entidades organizadoras de FUNDAE (que además resuelven la
+   acreditación).
+
+### Posicionamiento: puerta a la consultoría, no negocio aislado
+
+Un taller de diagnóstico mete a Javi un día entero dentro de una empresa, viendo
+sus problemas reales, con dirección delante. Es el mejor origen de proyecto que
+existe, y es el modelo clásico de consultora: la formación abre la puerta, el
+proyecto la cruza.
+
+**Consecuencia sobre las métricas:** el éxito no son los ingresos por talleres,
+son los proyectos que salen de ellos. Con esa métrica, tirar los precios a la
+baja no es una concesión: es la estrategia correcta.
+
+### Lo que falta para poder entregar
+
+- **El taller no existe todavía.** Existe el *contenido* (el sistema), pero no
+  la agenda, los ejercicios, la plantilla del diagnóstico, ni el método para
+  levantar el mapa de un equipo en una sesión. La primera entrega es la que
+  produce el único caso, así que no puede improvisarse.
+- **Cero prueba social**, que en B2B bloquea. El piloto a mitad de precio está
+  escrito pero no ejecutado; la vía rápida es la red propia, no la página.
+- **Operativa sin resolver:** facturación a empresas de España y UK, IVA, y
+  FUNDAE (que exige entidad acreditada — o se busca partner o esa palanca no
+  existe).
+- **Capacidad:** cuántos talleres al mes caben sin comerse horas facturables. Si
+  son uno o dos, esto es un producto complementario y hay que dimensionarlo como
+  tal, no como línea principal.
+
 ## Fase 2 — comprometida, no opcional
 
 **Autoevaluación interactiva:** el visitante se puntúa en las trece categorías y
-obtiene su vector. Reutiliza íntegro el contenido del mapa. Se deja fuera del
-primer lanzamiento porque es una funcionalidad y no una página, y retrasaría
-esto lo bastante como para comerse la pieza 2 — pero entra justo después, antes
-o en paralelo a la pieza 2.
+obtiene su vector. Reutiliza íntegro el contenido del mapa.
+
+**No es un adorno: es la herramienta de captación.** Alguien se puntúa, ve sus
+casillas vacías, y ahí es donde deja el correo — convierte tráfico anónimo en
+contacto, y le da un motivo para escribir que no es "quiero comprar formación".
+Comercialmente mueve más que la propia página de oferta, así que su prioridad no
+debe fijarse por criterios estéticos.
+
+Se deja fuera del primer lanzamiento solo porque es una funcionalidad y no una
+página. Entra inmediatamente después, antes o en paralelo a la pieza 2.
 
 ## Refinamientos pendientes del sistema (no tocar el artículo aún)
 
