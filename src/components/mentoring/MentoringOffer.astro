@@ -1,0 +1,113 @@
+---
+import { getLangFromUrl, useTranslations, type Language } from '../../i18n';
+
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+const offer = t('mentoring').offer;
+
+// 'workshop' is the product; the other two frame it on either side.
+const tiers = ['individual', 'workshop', 'ongoing'] as const;
+---
+
+<section class="mentoring-offer" id="offer">
+  <div class="container">
+    <div class="section-header">
+      <h2>{offer.title}</h2>
+      <p>{offer.subtitle}</p>
+    </div>
+
+    <div class="tiers">
+      {tiers.map((key) => (
+        <article class:list={['tier', { featured: key === 'workshop' }]}>
+          <h3>{offer.tiers[key].name}</h3>
+          <div class="price">{offer.tiers[key].price}</div>
+          <div class="meta">{offer.tiers[key].meta}</div>
+          <p class="description">{offer.tiers[key].description}</p>
+          <p class="for">{offer.tiers[key].for}</p>
+        </article>
+      ))}
+    </div>
+
+    <p class="note">{offer.note}</p>
+  </div>
+</section>
+
+<style>
+  .mentoring-offer {
+    padding: var(--space-2xl) 0;
+  }
+
+  .section-header {
+    max-width: 720px;
+    margin: 0 auto var(--space-xl);
+    text-align: center;
+  }
+
+  .section-header h2 {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    margin-bottom: var(--space-sm);
+  }
+
+  .section-header p {
+    color: var(--text-secondary);
+  }
+
+  .tiers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    align-items: start;
+  }
+
+  .tier {
+    padding: var(--space-lg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    background: var(--glass-bg, rgba(255, 255, 255, 0.02));
+    height: 100%;
+  }
+
+  .tier.featured {
+    border-color: var(--accent-primary);
+  }
+
+  .tier h3 {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  .price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+  }
+
+  .meta {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-md);
+  }
+
+  .description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+  }
+
+  .for {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .note {
+    max-width: 720px;
+    margin: var(--space-xl) auto 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+</style>

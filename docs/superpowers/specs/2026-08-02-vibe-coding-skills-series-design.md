@@ -179,6 +179,14 @@ El agente ya hace commits solo. Lo que falta es saber que el rescate existe.
 
 No hace falta saber leer un `.env`. Basta saber que existe.
 
+**Refinamiento pendiente (2026-08-04), para la pieza 2:** el nivel *Fluent*
+incluye distinguir **secreto de configuración**. No todo lo que va en variables
+de entorno es secreto, y no toda configuración debería ir ahí: los feature flags
+son el caso típico que acaba mal colocado. Saber cuáles son las variables de
+entorno de tu proyecto y cuáles de ellas son realmente secretas es parte de
+tener soltura aquí. No se retrofitea al artículo publicado por sí solo (ver
+política de refinamientos en el spec de la página de mentoría).
+
 **C2. Quién puede entrar.**
 - *Aware* tener login no es estar protegido
 - *Fluent* preguntar si esto lo puede llamar cualquiera y entender la respuesta;
