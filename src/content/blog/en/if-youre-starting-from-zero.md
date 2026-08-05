@@ -42,7 +42,7 @@ One difference that isn't obvious and causes real confusion: **the browser versi
 
 There's also Claude Cowork, which is worth knowing about precisely because it was built for people who don't code — you point it at a folder, describe what you want, and it works through the steps on your own machine. Its home ground is knowledge work rather than building an app: sorting files, pulling numbers out of a pile of documents, producing a report. If what you want is a working product, Claude Code or Codex is the tool. But Cowork is the clearest demonstration that "agent" and "terminal" were never the same thing, and it's a gentle way to get the feel of directing one.
 
-Two reasons not to make it permanent, though. The terminal is where the full set of capabilities lives — the apps tend to trail on the newer features, so eventually you'll want something the app hasn't got. And when something goes wrong, the terminal shows you the whole conversation between the agent and your machine, which is exactly the information you want when you're trying to work out what happened.
+If you do start somewhere other than the terminal, two reasons to keep it as a starting point rather than a permanent home. The terminal is where the full set of capabilities lives — the apps trail on newer features, so sooner or later you'll want something yours hasn't got. And when things go wrong, it shows you the entire exchange between the agent and your machine, which is exactly what you want when you're trying to work out what happened.
 
 So: start wherever you'll actually start. Just know you're choosing the gentler door and not a different building.
 

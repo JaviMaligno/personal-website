@@ -95,9 +95,11 @@ Twelve where things can go wrong, and one that's a different animal. Read down a
 
 **2. Where your app lives.** The environment question is where the genuinely scary mistakes live. Almost nobody deletes production data on purpose — they delete it believing they're in the test copy. And the separation you think you have may not exist: I've had pipelines that didn't distinguish environments at all, running CI against dev and prod alike, with no real separation behind the names. I found out by looking at the deployment dashboard, not by reading configuration — and then wrote the separation down so it stayed true.
 
-- **Aware** — "running on my laptop" and "running on the internet" are different things. Close the laptop: is it still alive?
-- **Fluent** — ask for a deploy, understand the difference between the test site and the real one, run a command you're handed without freezing, and know which of the two you're touching right now
-- **Opinionated** — domains, per-environment settings, host logs, rolling back a deploy, choosing where it runs
+The same question applies to the agent itself, and catches people out. The browser versions of these tools don't run on your computer — they run on someone else's, so they can't see your files, don't have your keys, and don't have whatever you've installed. "It worked on my machine but not in the browser" isn't inconsistency; it's two environments with two sets of configuration.
+
+- **Aware** — "running on my laptop" and "running on the internet" are different things. Close the laptop: is it still alive? And the browser version of your agent isn't on your laptop either.
+- **Fluent** — ask for a deploy, understand the difference between the test site and the real one, run a command you're handed without freezing, know which of the two you're touching right now, and know what kind of thing gets left behind when you work in the cloud — local files, keys, installed tooling — so you know when you have to come back to your own machine
+- **Opinionated** — domains, per-environment settings, host logs, rolling back a deploy, choosing where it runs, and configuring the remote one so it works there too
 
 **3. Code versus data.** Agents hardcode constantly — a value written into the code where it should have been read from the database. It's a reasonable shortcut when the goal is something that runs, and it's wrong the moment that data is meant to change. It's the standard case for the first and third techniques above: say up front that it mustn't happen, and ask later when a number looks suspiciously stable.
 

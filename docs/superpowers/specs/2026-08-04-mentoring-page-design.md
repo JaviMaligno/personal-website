@@ -275,10 +275,14 @@ página. Entra inmediatamente después, antes o en paralelo a la pieza 2.
   configuración debería ir ahí — los feature flags son el caso típico que acaba
   mal colocado. Distinguir secreto de configuración.
 
-Política: **no editar el artículo publicado por un refinamiento suelto.** No
-corrige un error, añade matiz, y editarlo desincroniza la copia de Dev.to. Se
-acumulan y, si salen dos o tres, se hace una pasada. En la pieza 2 se desarrolla
-sin coste.
+Política **(revisada 2026-08-05)**: el motivo original para acumular
+refinamientos era que editar el artículo desincronizaba la copia de Dev.to. Con
+`DEVTO_API_KEY` disponible en local eso deja de ser cierto — el script de
+publicación detecta el artículo existente y hace `PUT`, así que **la copia se
+resincroniza en la misma pasada**. Por tanto: un refinamiento que mejore el
+artículo entra cuando surge, y se sincroniza Dev.to acto seguido. Lo que sigue
+en pie es el criterio de fondo: solo entra si mejora el artículo para quien lo
+lee, no por completismo.
 
 ## Fuentes de precios
 
