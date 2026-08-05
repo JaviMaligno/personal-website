@@ -149,6 +149,23 @@ desconoces. Va sola: limita a las doce restantes.
 Casi nadie borra datos de producción a propósito; los borra creyendo que está en
 el entorno de pruebas.
 
+**Ampliación (2026-08-05): la categoría cubre también *dónde vive tu agente*.**
+Las versiones de navegador de Claude Code y Codex no corren en tu máquina: no
+ven tus ficheros, no tienen tus claves ni lo que tengas instalado. Terminal y
+app de escritorio sí trabajan sobre tu ordenador. "Funciona en mi portátil pero
+no en la web" no es que el agente sea inconsistente: son dos entornos con dos
+configuraciones distintas. Gradación acordada, que encaja en los tres niveles
+existentes sin añadir uno cuarto:
+
+- *Aware* — el agente del navegador no está en mi ordenador
+- *Fluent* — sé **qué tipo de cosas** se quedan fuera (ficheros locales, claves,
+  herramientas instaladas) y por tanto cuándo tengo que volver a local
+- *Opinionated* — sé configurarlo para que funcione también allí
+
+Ya escrito en la pieza 2. **Pendiente menor:** el artículo core no lo recoge; no
+se retrofitea por sí solo (ver política de refinamientos), pero entra si se
+acumula otra pasada.
+
 **B2. Código vs datos.**
 - *Aware* el código se regenera, los datos no; hay datos escritos dentro del
   código que no deberían; los datos necesitan copia
