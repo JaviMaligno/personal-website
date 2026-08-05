@@ -419,3 +419,27 @@ The loop needed one regeneration, for two faults worth remembering:
 Fixed with: "Cycle arrows must be neutral off-white/grey. Amber is reserved
 exclusively for the two human-residue phases and their labels. Teal is reserved
 exclusively for the two fully delegated phases."
+
+## if-youre-starting-from-zero (2026-08-05)
+
+- Article: `src/content/blog/en/if-youre-starting-from-zero.md`
+- Images: `public/blog/if-youre-starting-from-zero.png`, `...-es.png`
+- Generated with: Codex (gpt-image), prompt delegated from a brief
+
+The brief described the article's *structure* rather than its topic: four tiers
+in priority order, derived from "when this goes wrong, who pays", with the
+irreversible group weighted heaviest. That is what made the image carry an idea
+instead of decorating one — the hierarchy is the content.
+
+Per-tier motifs were specified concretely (database with a restore arrow, key
+and padlock and users, invoice with a rising curve and a warning sign,
+checklist), which is what keeps a diagram from drifting into generic icons.
+
+Both came out right first time. The Spanish one leans more typographic than the
+English one — heavier labels, thinner icons — but the hierarchy and colour
+coding match, so they were kept as they are.
+
+**Codex failed once mid-run** with `stream disconnected before completion` after
+exhausting five reconnect attempts against its own backend. Nothing to fix: the
+same command re-run produced the image. Worth knowing so a failed generation
+isn't mistaken for a bad prompt.

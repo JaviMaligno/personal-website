@@ -1,7 +1,7 @@
 ---
 title: "If You're Starting From Zero"
 description: "You described what you wanted, an agent built it, and it works. Here's what to learn first — not the whole list, the order. Written for people who never wrote software and don't intend to start."
-pubDate: 2026-08-06
+pubDate: 2026-08-10
 tags: ["AI", "Vibe Coding", "Software", "Mentoring", "Beginners"]
 lang: en
 translationKey: if-youre-starting-from-zero
