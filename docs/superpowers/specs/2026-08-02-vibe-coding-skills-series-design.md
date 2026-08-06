@@ -411,6 +411,40 @@ escalar; el agente como vía barata de subir a Fluent; la línea de producción
 como propiedad del sistema; y tres categorías nuevas (datos de otras personas,
 de quién dependes, aguantar carga).
 
+## Pieza 4 candidata: la herramienta que te dejan usar (anotado 2026-08-06)
+
+Salió al revisar la pieza 3, que asume un agente potente a mano — asunción que
+no es gratis y que delata que Javi es freelance. Es **material para una pieza
+propia**, no un párrafo: en la 3 queda solo una salvedad de un párrafo con
+puente a esto.
+
+Son en realidad dos enfoques distintos y hay que decidir si es una pieza o dos:
+
+1. **A quien puede influir en la decisión** — argumentar que la empresa adopte
+   herramientas de alto nivel. El argumento fuerte no es capacidad, es **política
+   de datos**: los planes de pago y business (Claude, OpenAI, Cursor) tienen
+   políticas de retención y entrenamiento que sirven precisamente para responder
+   a compliance y a "el código no sale del repo". Hay que consultar y citar las
+   políticas reales, no afirmarlas de memoria.
+2. **A quien no decide y vive con lo que hay** — Copilot, autocompletado,
+   modelos open source. Ahí el consejo cambia de forma: subdividir más, currarse
+   más el harness, quedarse más cerca del trabajo. Javi tiene **menos
+   experiencia** aquí (los inicios: copiar y pegar de ChatGPT como un
+   StackOverflow en vivo, autocompletado donde seguías escribiendo tú, el chat
+   de Copilot limitado). Si se escribe, hay que comparar de verdad el estado
+   actual en vez de tirar de recuerdo.
+
+**Herramientas no mencionadas en ninguna pieza y que deberían aparecer:**
+**Cursor** (editor; la v3 más chat que editor, y por eso resulta user-friendly)
+y **Antigravity** (encaja en empresas que ya trabajan con Google). Sirven además
+para más que código. Cursor se añade a la pieza 2, donde se habla de puertas de
+entrada amables.
+
+**Nota sobre procesos vs herramientas:** lo que parecía restricción de proceso
+casi todo se reduce a herramienta o a política de datos. La revisión obligatoria
+por PR se puede hacer con IA; compliance y "el código no sale de aquí" se
+responden con la política del proveedor.
+
 ## Extensiones futuras del sistema (anotado 2026-08-02, no comprometido)
 
 Ideas surgidas al validar el sistema v2, para cuando la serie esté en marcha:
