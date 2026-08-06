@@ -6,6 +6,7 @@ tags: ["IA", "Machine Learning", "Evaluación", "Seguridad", "Multimodal"]
 lang: es
 translationKey: perception-edges-of-language
 heroImage: "/blog/perception-edges-of-language.png"
+linkedinImage: /blog/perception-edges-of-language.png
 repoUrl: https://github.com/JaviMaligno/llm-language-limits
 ---
 
