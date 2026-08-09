@@ -59,6 +59,10 @@ Aquí pasa lo mismo. Los pagos son el ejemplo evidente. Cualquier cosa en la que
 
 Lo que no se la ha ganado es *entender*. Si quieres saber cómo funciona algo, pedirle al agente que te lo explique es más rápido y mejor que leerlo tú: puede contarte el porqué, algo que el código no puede hacer.
 
+Y hay un movimiento que le gana tanto a leer como a no leer: **hacer que haya menos que leer.** Un cambio que toca seis ficheros porque nadie dijo dónde vivía el código es irrevisable en la práctica, así que se ojea y se mergea. La misma petición, señalando la zona que toca y con una instrucción permanente de mantener los cambios mínimos, vuelve con la mitad de tamaño y se puede leer de verdad en un minuto. Eso es tender vías otra vez: no estás decidiendo si inspeccionas, estás decidiendo cuánto hay que inspeccionar.
+
+Conviene ser honesto sobre el límite, porque es lo único que los tests no cubren: un cambio parásito que no rompe nada. Un valor de configuración alterado sin motivo pasa todos los tests que tengas, y aparece tres semanas después en producción. Ese es justo el caso que caza un diff pequeño y no caza un pipeline en verde — que es un argumento para mantener los diffs pequeños, no para leer los grandes.
+
 ## La precisión y la parte que merece la pena conservar
 
 El primer síntoma de delegar por debajo de tu nivel es especificar de más.

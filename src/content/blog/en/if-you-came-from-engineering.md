@@ -59,6 +59,10 @@ Same here. Payments is the obvious example. Anything where a subtle error is exp
 
 What doesn't earn a read is *understanding*. If you want to know how something works, having the agent explain it to you is faster and better than reading it yourself — it can tell you why, which the code can't.
 
+And there's a move that beats both reading and not reading: **make there be less to read.** A change that touches six files because nobody said where the code lived is unreviewable in practice, so it gets skimmed and merged. The same request, with the relevant area named and a standing instruction to keep changes minimal, comes back half the size and can genuinely be read in a minute. That's laying rails again — you're not deciding whether to inspect, you're deciding how much there is to inspect.
+
+Worth being honest about the limit here, because it's the one thing tests don't cover: a stray change that breaks nothing. A config value altered for no reason passes every test you have, and turns up three weeks later in production. That is exactly the case a small diff catches and a green pipeline doesn't — which is the argument for keeping diffs small rather than for reading big ones.
+
 ## Precision, and the part worth keeping
 
 The first symptom of delegating below your level is over-specification.
