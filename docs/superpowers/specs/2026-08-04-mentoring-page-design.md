@@ -228,6 +228,37 @@ Canales que sí operan en formación B2B, por orden de coste de arranque:
    empresariales, entidades organizadoras de FUNDAE (que además resuelven la
    acreditación).
 
+### Dos puertas de entrada, no una (revisado 2026-08-06)
+
+Hallazgo al leer un artículo de un CEO de implantación de agentes en grandes
+empresas: **el dolor que tiene presupuesto asignado no es el riesgo, es la
+productividad que no llegó.** Su caso típico es un directivo que compró licencias
+para miles de personas y cuyo equipo sigue yendo a la misma velocidad.
+
+Comparación de las dos puertas:
+
+| | Riesgo | Productividad |
+|---|---|---|
+| Qué duele | lo que su gente puede estar exponiendo | pagué y no pasó nada |
+| Urgencia | hipotética hasta que ocurre | factura reciente |
+| Diferenciación | alta, casi nadie lo plantea así | baja, todos prometen productividad |
+
+**Decisión: el hero sigue siendo el de riesgo**, porque es lo que diferencia y
+nadie más lo dice así; la productividad entra como **tercera situación** en la
+página, que es donde recoge al comprador que llega con esa factura en la mano.
+Liderar con productividad convertiría la oferta en una más del montón.
+
+**Dato que conviene no contradecir:** la distribución de uso en una organización
+es una barra de pesas — un grupo pequeño la usa a diario y le saca mucho, otro
+la usa de vez en cuando y mal, y una parte grande no la ha abierto. Ocurre
+incluso con despliegues bien hechos. Consecuencias para la oferta:
+
+1. **El público real es el grupo intermedio**, el que ya la usa y obtiene poco.
+   El que no la ha abierto no va a venir a un taller.
+2. **No prometer adopción general.** Añadido a "qué no es esto": no es una forma
+   de conseguir que toda la empresa use IA. Prometerlo es lo que produce la
+   ilusión de adopción que el propio comprador ya ha sufrido.
+
 ### Posicionamiento: puerta a la consultoría, no negocio aislado
 
 Un taller de diagnóstico mete a Javi un día entero dentro de una empresa, viendo
