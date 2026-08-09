@@ -253,11 +253,43 @@ es una barra de pesas — un grupo pequeño la usa a diario y le saca mucho, otr
 la usa de vez en cuando y mal, y una parte grande no la ha abierto. Ocurre
 incluso con despliegues bien hechos. Consecuencias para la oferta:
 
-1. **El público real es el grupo intermedio**, el que ya la usa y obtiene poco.
-   El que no la ha abierto no va a venir a un taller.
-2. **No prometer adopción general.** Añadido a "qué no es esto": no es una forma
-   de conseguir que toda la empresa use IA. Prometerlo es lo que produce la
-   ilusión de adopción que el propio comprador ya ha sufrido.
+1. **El público del taller actual es el grupo intermedio**, el que ya la usa y
+   obtiene poco. **Ojo: eso acota el producto, no el mercado.** La primera
+   versión de esta nota decía que el 70% "no va a venir a un taller" y de ahí
+   concluía que no era público nuestro. Es un salto injustificado, y Javi lo
+   cortó: dar por perdido al 70% condena a la empresa al estancamiento y carga al
+   30% restante con tirar de todos los demás.
+2. **El 70% falla por la misma raíz que el 20%.** No usan la herramienta porque
+   no saben qué pedirle — que es la categoría 1 del mapa, el techo. Uno no la
+   abre y el otro la usa mal, pero el agujero es idéntico. El sistema ya los
+   explica; lo que falta es producto.
+3. **No prometer adopción general con este taller.** El filtro de "qué no es
+   esto" acota el producto actual, no renuncia al mercado: prometer que un taller
+   de diagnóstico convertirá a quien nunca ha abierto la herramienta reproduce la
+   decepción que el comprador ya pagó.
+
+### Cuarta línea de oferta: la sesión de arranque (candidata)
+
+Para el 70% que no ha empezado. **El taller de diagnóstico no les sirve, y no por
+desinterés: está construido sobre un proyecto que ellos no tienen.** Sin proyecto
+no hay casillas que auditar ni miedo que nombrar en el cuestionario.
+
+Forma que sí encajaría:
+
+- **Una hora, no un día.** Su objeción es "no tengo tiempo para esto", así que el
+  formato tiene que desmentirla antes que el contenido.
+- **Sin mapa y sin riesgo.** Solo la categoría 1: qué se le puede pedir, con
+  ejemplos sacados de **su propio trabajo de esa semana**, y nada de programar.
+- **Una única meta medible:** que salgan habiendo hecho una cosa real y útil con
+  la herramienta antes de terminar. Eso convierte a un no-usuario; una
+  demostración no.
+- El mapa viene después, para quien siga.
+
+Argumento comercial además del evidente: es el segmento más grande y nadie lo
+ataca bien, porque el discurso dominante ya lo ha dado por irrecuperable.
+
+Pendiente: **un post propio para este grupo**, distinto del resto de la serie —
+que hasta ahora habla siempre a quien ya construye.
 
 ### Posicionamiento: puerta a la consultoría, no negocio aislado
 
