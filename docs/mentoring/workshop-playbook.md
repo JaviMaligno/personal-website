@@ -30,6 +30,26 @@ curso.
    averiguar qué han construido, que es justo lo que en el mercado se cobra como
    "preparación incluida".
 
+## La regla que sostiene todo lo demás: el facilitador no toca el teclado
+
+El riesgo real de este taller no es quedarse corto de contenido. Es que se
+convierta en **Javi resolviéndoles los problemas técnicos**, con el equipo
+mirando. Si eso pasa:
+
+- no aprenden nada, porque la sesión la ejecuta otro;
+- el producto deja de ser un diagnóstico y pasa a ser consultoría regalada;
+- y el posicionamiento se invierte: pasas a ser el técnico que arregla cosas, no
+  quien enseña a que no vuelvan a pasar.
+
+**Regla: teclean ellos, siempre.** También cuando sea más lento, también cuando
+la solución sea obvia, también si aparece algo urgente. Se dirige, se pregunta,
+se señala dónde mirar. No se toca su proyecto.
+
+Corolario que además demuestra el método: cuando alguien pregunta *"¿y cómo se
+hace esto?"*, la respuesta no es la solución — es **"pregúntaselo al agente y
+vemos qué contesta"**. Eso es literalmente el nivel *con soltura* del sistema, y
+verlo funcionar en vivo vale más que explicarlo.
+
 ## Antes: el cuestionario previo
 
 Se envía al contacto con una semana de margen. Respuestas cortas; el objetivo no
@@ -106,9 +126,12 @@ se sigue. La incomodidad de no saber es el mecanismo de aprendizaje del día.
 
 ### 4. Cerrar dos agujeros — 60 min
 
-Se eligen dos o tres casillas y **se arreglan en vivo**, empezando siempre por la
-familia "quién sale herido". Salir con algo arreglado y no solo diagnosticado es
-lo que convierte el taller en algo que se recomienda.
+Se eligen dos o tres casillas y **las cierran ellos en vivo**, con su agente,
+empezando siempre por la familia "quién sale herido". Salir con algo arreglado y
+no solo diagnosticado es lo que convierte el taller en algo que se recomienda —
+pero solo si lo han arreglado ellos. Si lo arregla el facilitador, el equipo sale
+con el problema resuelto y sin haber aprendido a resolverlo, que es el peor de
+los dos resultados posibles.
 
 Candidatas habituales, por orden de qué suele estar peor:
 
@@ -196,9 +219,12 @@ categorías existían, y el agente no las menciona por su cuenta. El fallo es de
 formación, no de cabeza.
 
 **Si aparece algo grave en vivo** — una clave de producción expuesta, datos de
-clientes accesibles. Se para el recorrido y se arregla en ese momento. Retomar la
-agenda después. Un taller que descubre una fuga y sigue con el guion como si nada
-no vuelve a venderse.
+clientes accesibles. Se para el recorrido y se arregla en ese momento; un taller
+que descubre una fuga y sigue con el guion como si nada no vuelve a venderse.
+Pero **lo arreglan ellos igualmente**, dirigidos paso a paso. La urgencia es la
+excusa más tentadora para saltarse la regla del teclado, y es justo cuando más
+caro sale: el equipo se queda con la sensación de que estas cosas las arregla
+alguien de fuera.
 
 **Si hay alguien técnico en la sala.** Es un aliado, no un obstáculo: normalmente
 es quien hereda el problema. Conviene darle un papel explícito — que sea quien
@@ -215,7 +241,14 @@ permisos no hay bucle.
 - **Decidir la herramienta de pizarra** para rellenar el mapa en pantalla y que
   todos lo vean.
 - **Probar los tiempos** con alguien de confianza antes de cobrarlo. Los bloques
-  están estimados, no medidos.
+  están estimados, no medidos. Criterio acordado mientras tanto: los tiempos
+  dependen mucho del caso, así que se ajustan sobre la marcha y **lo que no cabe
+  se convierte en follow-up**, no en prisa. Vale más cerrar bien dos casillas que
+  recorrer trece de pasada.
+- **Probar el orden en las dos variantes.** El guion practica el bucle antes de
+  diagnosticar, para que la evaluación se apoye en algo que acaba de pasar. La
+  alternativa — diagnosticar primero y practicar después sobre un agujero real —
+  no está descartada; hay que verla en vivo antes de decidir.
 - **Preparar el caso del equipo que no tiene nada construido todavía** — quiere
   empezar bien. El mapa sigue sirviendo, pero el recorrido cambia: se pregunta en
   futuro y el entregable es una lista de guardas por poner, no de agujeros por
