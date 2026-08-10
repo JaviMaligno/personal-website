@@ -1,7 +1,7 @@
 ---
 title: "The Tool You're Allowed to Use"
 description: "Every piece of advice about working with agents assumes you picked the tool. Plenty of people didn't. Here's what changes when the choice isn't yours — and the argument to make if it partly is."
-pubDate: 2026-08-21
+pubDate: 2026-08-27
 tags: ["AI", "Enterprise", "Software", "Engineering", "Tooling"]
 lang: en
 translationKey: the-tool-youre-allowed-to-use
