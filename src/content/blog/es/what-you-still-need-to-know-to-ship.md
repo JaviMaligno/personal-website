@@ -95,9 +95,11 @@ Doce donde las cosas pueden salir mal, y una que es de otra naturaleza. Recórre
 
 **2. Dónde vive tu app.** La cuestión del entorno es donde viven los errores realmente feos. Casi nadie borra datos de producción a propósito: los borra creyendo que está en la copia de pruebas. Y la separación que crees tener puede no existir: he tenido pipelines que no distinguían entornos en absoluto, ejecutando CI contra dev y contra prod por igual, sin separación real detrás de los nombres. Me enteré mirando el panel de despliegue, no leyendo configuración — y luego dejé la separación documentada para que siguiera siendo cierta.
 
-- **Consciente** — "corre en mi portátil" y "corre en internet" no son lo mismo. Cierra el portátil: ¿sigue vivo?
-- **Con soltura** — pedir un despliegue, entender la diferencia entre el sitio de pruebas y el real, ejecutar sin bloquearte un comando que te dictan, y saber en cuál de los dos estás tocando ahora mismo
-- **Con criterio** — dominios, ajustes por entorno, logs del hosting, deshacer un despliegue, elegir dónde corre
+La misma pregunta se aplica al propio agente, y ahí es donde pilla a la gente. Las versiones de navegador de estas herramientas no corren en tu ordenador: corren en el de otro, así que no ven tus ficheros, no tienen tus claves ni lo que tengas instalado. "Funcionaba en mi máquina pero no en el navegador" no es inconsistencia; son dos entornos con dos configuraciones.
+
+- **Consciente** — "corre en mi portátil" y "corre en internet" no son lo mismo. Cierra el portátil: ¿sigue vivo? Y la versión de navegador de tu agente tampoco está en tu portátil.
+- **Con soltura** — pedir un despliegue, entender la diferencia entre el sitio de pruebas y el real, ejecutar sin bloquearte un comando que te dictan, saber en cuál de los dos estás tocando ahora mismo, y saber qué tipo de cosas se quedan fuera cuando trabajas en la nube — ficheros locales, claves, herramientas instaladas — para saber cuándo tienes que volver a tu propia máquina
+- **Con criterio** — dominios, ajustes por entorno, logs del hosting, deshacer un despliegue, elegir dónde corre, y configurar el remoto para que funcione también allí
 
 **3. Código y datos.** Los agentes escriben valores a fuego constantemente: un dato metido en el código que debería salir de la base de datos. Es un atajo razonable cuando el objetivo es que algo funcione, y está mal en el momento en que ese dato tiene que cambiar. Es el caso típico de la primera y la tercera técnica de arriba: decir por adelantado que no pase, y preguntar después cuando un número parece sospechosamente estable.
 
