@@ -93,8 +93,18 @@ proyecto real. Sale con su vector y sus casillas vacías.
 técnico que ya construye. Entregable: el mapa de su proyecto.
 
 **3. Acompañamiento — la continuación.** Sesiones periódicas mientras construyen
-de verdad, revisando su trabajo real. No se vende en frío; se vende al final del
-taller.
+de verdad, revisando su trabajo real. No se vende en frío — pero tampoco al
+terminar el taller, que era la idea inicial y es el peor momento: acaban
+saturados y sin haber intentado nada por su cuenta todavía. **Se vende en la
+sesión de seguimiento a las dos semanas**, cuando ya saben si lo necesitan.
+Ver `docs/mentoring/workshop-playbook.md`.
+
+**Añadido al alcance del taller (2026-08-10):** una **sesión corta de seguimiento
+a las dos semanas** incluida en el precio. Cumple dos funciones — sin ella el plan
+de cuatro semanas se evapora, y es la conversación natural hacia el
+acompañamiento. También hay que **pedir tiempo protegido** (una hora semanal
+durante esas cuatro semanas) como condición en la venta, no como excusa al final:
+sin eso el plan no se ejecuta.
 
 ## Precios
 
