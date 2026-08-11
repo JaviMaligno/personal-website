@@ -1,7 +1,7 @@
 # Cross-session messaging: ¿canal o estructura?
 
 **Fecha:** 2026-08-11 (revisado el mismo día tras cerrar el pre-flight §3.4)
-**Estado:** diseño aprobado, capa 0 en ejecución
+**Estado:** capa 0 completada; capa 1 rediseñada sobre el cross-check, pendiente de ejecución
 **Artículo predecesor:** [Coding Agents and Teamwork: Social Skills, or Structure?](../../../src/content/blog/en/coding-agents-structure.md) (2026-07-12)
 **Ejecución:** máquina principal. El pre-flight encontró la feature disponible aquí desde el
 2026-08-07, con corpus local minable. La restricción original (§2) queda anulada.
@@ -159,7 +159,7 @@ evolución del uso, y el artículo no puede insinuarlas.
 - **Tasas base.** Cuántas peticiones con forma de delegación (A necesita que B haga algo y depende
   del resultado) aparecen por sesión y por hora de trabajo. Si son raras, la feature casi nunca es
   portante — y eso es un hallazgo, no un relleno.
-- **Taxonomía observacional** (§4.3) aplicada a peticiones reales: cumplido / silencio / acuse sin
+- **Taxonomía observacional** (§4.4) aplicada a peticiones reales: cumplido / silencio / acuse sin
   acción / acción incorrecta / deriva.
 - **Morfología del merge emergente:** cómo se formaron las secuencias, quién mergeó con quién,
   cuántos hand-offs hubo, si alguien acabó teniendo vista del estado integrado.
@@ -268,7 +268,7 @@ un caso: *"Coordinación cerrada por ese lado (no necesita respuesta: confirma q
 hallazgo con sus propios lectores antes de afirmarlo en su spec…)"*. En otros: *"Correcciones
 aceptadas"*, *"El compañero ha empujado los dos tenants. Sigo con lo dicho"*.
 
-Esto obliga a partir en dos la categoría **Silencio** de §4.3, que tal como está no distingue el
+Esto obliga a partir en dos la categoría **Silencio** de la taxonomía original (hoy §4.4), que tal como está no distingue el
 fallo del comportamiento correcto:
 
 | Categoría nueva | Definición |
@@ -437,7 +437,7 @@ cuántos intercambios mueren en el primer mensaje.
 
 ### 3.5.8 Catálogo de escenarios para el repo semilla
 
-Cumple el requisito de §4.1: los bloqueos que reproduce la capa 1 son los observados, no inventados.
+Cumple el requisito de §4.1: los episodios que reproduce la capa 1 son los observados, no inventados.
 Los cuatro primeros son delegaciones puras —A bloqueada, acción pequeña e inequívoca en manos de
 B—; el quinto es el tipo nuevo que abre §3.5.5b.
 
@@ -564,72 +564,136 @@ sección deja la pieza con algo que decir sobre estructura.
 
 ---
 
-## 4. Capa 1 — Núcleo: follow-through, interrupción vs buzón
+## 4. Capa 1 — Núcleo: el cross-check
 
-### 4.1 Unidad de medida
+*(Rediseñada el 2026-08-11 a la vista de las tasas base de la capa 0. La versión anterior
+medía el follow-through de una petición; ver §4.0 para el porqué del cambio.)*
 
-Una **petición que obliga a la otra sesión a actuar en tu nombre**: la forma exacta del mensaje que
-recibió silencio en el artículo anterior ("estoy bloqueado en la región que posees, añade tú la
-línea de export").
+### 4.0 Por qué el núcleo deja de ser el follow-through
 
-Repo semilla en el que la sesión A queda **estructuralmente bloqueada** y necesita de B una acción
-pequeña, inequívoca y **verificable por script** (existe la línea / pasa el test). Cero juicio
-humano en el scoring.
+El diseño original medía el follow-through de una petición: A bloqueada, B tiene que actuar. La capa
+0 dice que eso es **el 8,9 %** del tráfico, mientras que el contenido técnico sobre la zona del otro
+—rectificaciones y avisos de defecto ajeno— es el **36,1 %** (§3.5.9).
 
-Los escenarios de bloqueo salen del catálogo de la capa 0, no de la imaginación.
+Gastar el presupuesto de máquina en medir con mucho cuidado el 9 % y dejar fuera el 36 % es mal
+reparto. El núcleo pasa a ser lo que el canal **sí** hace: una sesión comprobando desde fuera el
+trabajo de otra.
 
-### 4.2 Brazos, y el problema del envío agéntico
+Esto además cambia la pregunta a una que el artículo de julio no pudo hacerse. Allí se midió si un
+canal ayuda a **repartir trabajo**, y la respuesta fue que no; la palanca era la propiedad de la
+integración. Aquí se mide si un canal ayuda a **detectar un error**, que es un mecanismo distinto y
+sin explorar.
 
-Como el envío lo decide A, los brazos no comparan solo el mecanismo de entrega: comparan también dos
-textos distintos. Confundido. Solución: **replay**.
+### 4.1 Unidad de medida: el fallo silencioso
+
+Un episodio en el que **A cree haber entregado algo que no ha entregado**, y la discrepancia es
+visible desde fuera pero no desde dentro.
+
+Es la familia que el corpus produce sola, y que uno de los agentes formula mejor que cualquier
+definición: *"la comprobación que se hace sobre algo distinto de lo que se entrega"* (§3.5.8). Los
+ejemplares reales —checkout que falla y deja pasar los tests de la rama vieja, `sed` que produce un
+commit vacío, commit contado como publicado sin push, suite corrida antes del bump— son los que se
+reproducen en el repo semilla. Nada inventado.
+
+**Ventaja decisiva sobre el diseño anterior: el scoring es totalmente mecánico.** No hace falta
+juzgar si B "cumplió". Basta comparar, al final del episodio, **lo que A afirma** contra **el estado
+publicado del repositorio**. Existe o no existe el commit en `origin`. La afirmación es verdadera o
+falsa. Cero juicio humano, que era la exigencia de §7.1.
+
+### 4.2 El repo semilla
+
+Requisitos, todos derivados del corpus:
+
+1. La tarea de A contiene un paso que **puede fallar en silencio** dejando una señal local verde.
+2. La tarea de B, por su propio trabajo, **le hace mirar el estado publicado** que delata la
+   discrepancia — igual que en el corpus, donde ambos trabajan sobre los mismos repos. B no recibe
+   ninguna instrucción de auditar a A: si mira, es porque su tarea le lleva.
+3. El desenlace se verifica por script sobre el estado final del repo.
+
+El punto 2 es el más delicado y hay que declararlo: si se le dijera a B "vigila a A", el experimento
+mediría obediencia, no cross-check.
+
+### 4.3 Brazos
+
+El mensaje ahora lo origina **B**, el observador, no A. El replay se mantiene, invertido:
 
 | Brazo | Procedimiento |
 |---|---|
-| **Interrupción** | A usa el canal nuevo. Se captura el texto exacto que A envió. |
-| **Buzón** | Se inyecta *ese mismo texto capturado* en un fichero que B tiene instrucción de consultar. Replica la entrega de CooperBench. |
-| **Sin canal** | A bloqueada, sin forma de pedir. Línea base: ¿se hace la tarea igual? |
+| **Canal** | B usa el canal entre sesiones. Se captura el texto exacto que B envió. |
+| **Buzón** | Se inyecta *ese mismo texto capturado* en un fichero que A consulta. Replica la entrega de CooperBench. |
+| **Sin canal** | B no tiene forma de avisar. Línea base imprescindible: **¿corrige A su error por su cuenta?** |
+
+El brazo sin canal deja de ser un control pobre y pasa a ser el más informativo: da la tasa de
+autocorrección, sin la cual cualquier mejora atribuida al canal está sin contrafactual.
 
 **La instrucción de sondeo va en los tres brazos.** Si solo el brazo buzón lleva "consulta este
-fichero periódicamente", no se compara entrega contra entrega: se compara interrupción contra
-buzón-más-instrucción-explícita-de-sondear, y la instrucción es tratamiento. B recibe la misma
-instrucción en todos los brazos; en interrupción y sin canal el fichero simplemente permanece
-vacío. Así lo único que varía entre brazos es el mecanismo de entrega.
+fichero periódicamente", se compara canal contra buzón-más-instrucción-de-sondear, y la instrucción
+es tratamiento. En canal y sin canal el fichero permanece vacío. Así lo único que varía es el
+mecanismo de entrega.
 
-El replay deja los brazos **pareados por construcción** (mismo mensaje, entrega distinta) y es más
-barato que generar dos mensajes. Consecuencia operativa: dentro de un escenario los brazos son
-**secuenciales**, no paralelos — buzón depende del texto capturado en interrupción. Encaja con el
-límite de concurrencia de la máquina.
+El replay deja los brazos **pareados por construcción** y obliga a que dentro de un escenario sean
+**secuenciales**, no paralelos: el buzón depende del texto capturado en el brazo de canal. Encaja
+con el límite de concurrencia de la máquina.
 
-Que A componga el mensaje deja de ser un obstáculo: convierte la primera arista de §5 en una
-variable real y medida en vez de un artefacto del montaje.
+### 4.4 Taxonomía de resultado: la cadena de detección
 
-### 4.3 Taxonomía de resultado
+El fallo puede escaparse en cuatro sitios, y el diseño mide los cuatro por separado. Ninguna
+métrica agregada sustituye a esto: decir "el canal ayuda" sin saber **dónde** ayuda es lo que la
+pieza anterior evitó y esta también debe evitar.
 
-El resultado no es binario. Se puntúa con la taxonomía derivada del artículo anterior:
+| Eslabón | Pregunta | Se observa en |
+|---|---|---|
+| 1. **Mirada** | ¿B llega a ver el estado que delata el fallo? | Transcript de B |
+| 2. **Detección** | Habiéndolo visto, ¿B reconoce que hay discrepancia? | Transcript de B |
+| 3. **Comunicación** | ¿B se lo dice a A? | Envío por el canal / buzón |
+| 4. **Corrección** | ¿A abandona su creencia falsa y arregla? | Estado final del repo |
+
+Desenlaces terminales, todos verificables por script:
 
 | Categoría | Definición |
 |---|---|
-| Cumplido | B ejecutó la acción pedida |
-| ~~Silencio~~ | Se parte en dos, ver abajo — la capa 0 mostró que casi nunca es silencio real |
-| **Acuse interno con cierre** | B integró el mensaje en su razonamiento y con razón no respondió: no había acción que le tocara |
-| **Acuse interno con caída** | B integró el mensaje, había acción que le tocaba, y no la hizo ni lo dijo ← el fallo de julio, §3.5.2 |
-| **Acuse sin acción** | B respondió que sí y no lo hizo ← el fallo documentado |
-| Acción incorrecta | B hizo algo, pero no lo pedido |
-| Deriva | B lo hizo y rompió su propia tarea |
+| **Corregido** | A rectifica y el estado publicado acaba siendo el que A afirma |
+| **Falso «hecho»** | A termina afirmando algo que el repo desmiente ← el fallo que la pieza persigue |
+| **Autocorregido** | A lo caza solo, sin intervención de B (posible en los tres brazos) |
+| **Corrección rechazada** | B avisa, A responde, y A mantiene su creencia ← el follow-through de julio, en su forma más nítida |
+| **Deriva** | A corrige y rompe su propia tarea al hacerlo |
 
-La distinción entre las dos formas de acuse interno es semántica y no admite regex; es el trabajo
-pendiente de la capa 0. Sin ella, cualquier "tasa de silencio" mezcla un fallo con un acierto.
+La categoría *corrección rechazada* es la que conecta esta capa con el artículo anterior: es el
+acuse sin acción, pero sobre una creencia en vez de sobre una petición.
 
-### 4.4 Métrica en dirección contraria: el coste de interrumpir
+### 4.5 Predicción registrada (antes de correr)
 
-Obligatoria. Si el mensaje entra a mitad de edición, ¿B lo atiende y pierde el hilo de lo suyo? La
-interrupción puede arreglar el follow-through y pagarlo en coherencia. Medir solo lo primero sería
-vender en vez de medir.
+> **La corrección se acepta; el cuello de botella está antes.** En el corpus, todas las
+> rectificaciones observadas aterrizan —*"Tenías razón y era mi fallo"*, *"RECTIFICO"*— sin un solo
+> caso de creencia defendida contra evidencia. Así que el eslabón 4 no fallará casi nunca, y lo que
+> separe al brazo con canal del brazo sin canal será **la mirada y la detección** (eslabones 1 y 2),
+> no la obediencia.
+>
+> Y una consecuencia que va contra el prior de julio: si esto se confirma, el canal **sí** compra
+> corrección, porque el fallo silencioso es por construcción invisible desde dentro. Sería el primer
+> resultado de esta serie en que un canal compra resultado y no solo orden.
 
-Instrumentos: turnos de B entre recepción y acción; si B retoma su propia tarea al nivel donde
-estaba; si la suite propia de B se degrada respecto al brazo sin canal.
+Si sale al revés —A defiende su creencia falsa contra la evidencia de un par— es mejor artículo
+todavía, y encaja con el fallo documentado en julio.
 
-### 4.5 Réplicas
+### 4.6 Métrica en dirección contraria: el coste de mirar hacia fuera
+
+Obligatoria, y reformulada. La versión original medía el coste de **interrumpir**, pero la capa 0
+mostró que el canal encola en frontera de turno (§3.5.1): no hay interrupción que costear. El coste
+real del cross-check es otro y va en la misma dirección: **B gasta turnos auditando lo ajeno en vez
+de hacer lo suyo**.
+
+Instrumentos:
+
+- Turnos que B dedica al asunto de A, y si retoma su propia tarea donde la dejó.
+- **Si la suite propia de B se degrada respecto al brazo sin canal.** Es la medida que puede tumbar
+  la conclusión entera: un canal que salva la tarea de A hundiendo la de B no compra nada.
+- Falsos positivos: ¿cuántas veces avisa B de un fallo que no existe? Un cross-check ruidoso tiene
+  coste aunque acierte a veces.
+
+Medir solo la detección sería vender en vez de medir.
+
+### 4.7 Réplicas
 
 Tres semillas por celda. Es el estándar ya establecido en el artículo anterior, y existe
 precisamente para cazar el tipo de sobre-afirmación que allí ya se cazó (el 42% de
@@ -644,21 +708,29 @@ entendió.
 
 ### 5.1 La cadena de cuatro nodos
 
+Invertida respecto al diseño original, porque ahora el emisor es el observador:
+
 ```
-intención de A  →  texto que A decide enviar  →  lo que B entiende  →  lo que B hace
+lo que B ha detectado  →  texto que B decide enviar  →  lo que A entiende  →  si A corrige
 ```
 
 Tres aristas, tres sitios donde perder. Se miden las tres:
 
-1. **Compresión de A.** La intención existe y es conocida: A está bloqueada por una causa concreta y
-   necesita una acción concreta, definida por el escenario. Se compara la lista de elementos de la
-   intención (fichero, símbolo exacto, restricción, motivo, orden requerido) contra los que
-   aparecen en el texto que A envió.
-2. **Recepción de B.** Tras la entrega, se sondea a B pidiéndole que reformule lo que le han pedido,
-   antes de dejarle actuar. Se puntúa qué elementos sobrevivieron. El sondeo lo escribe el operador
-   directamente en la sesión de B (el envío entre sesiones no es disparable por script, pero
-   escribir en una sesión sí), con un texto fijo idéntico en todos los brazos.
-3. **Acción de B.** La taxonomía de §4.3.
+1. **Compresión de B.** La discrepancia existe y es conocida: la define el escenario (el commit no
+   está en `origin`, el merge no ocurrió, la suite corrió sobre otro árbol). Se compara la lista de
+   elementos de la discrepancia —qué está mal, dónde se ve, con qué comando se comprueba, qué
+   consecuencia tiene— contra los que aparecen en el texto que B envió. Un aviso que dice *"algo va
+   mal en tu rama"* y otro que dice *"`git branch -r --contains 6549ae4` no devuelve nada"* no son
+   el mismo aviso, y el corpus sugiere que la diferencia importa: las rectificaciones que aterrizan
+   traen el comando.
+2. **Recepción de A.** Tras la entrega, se sondea a A pidiéndole que reformule qué le están diciendo
+   y **qué cree ahora sobre el estado de su trabajo**, antes de dejarle actuar. Se puntúa qué
+   elementos sobrevivieron y si la creencia ya ha cambiado en ese punto. El sondeo lo escribe el
+   operador directamente en la sesión de A, con un texto fijo idéntico en todos los brazos.
+3. **Corrección de A.** La taxonomía de §4.4.
+
+El nodo 2 es donde esta capa gana su sitio: separa *no entendió el aviso* de *lo entendió y siguió
+creyendo lo suyo*. Sin ese sondeo, ambas cosas se ven igual desde fuera.
 
 ### 5.2 Por qué esto importa
 
@@ -745,12 +817,26 @@ silencioso.
    no chocan. Sin ironía.
 2. **El prior incómodo.** Mi propio experimento de julio dice que el canal no era el problema, y que
    la capa donde estoy viendo mejoras es la que ya demostré que no compra aprobados.
-3. **Lo que sí es nuevo.** Interrupción vs buzón; resumen con pérdida; ausencia de lead.
-4. **Tasas base** (capa 0): con qué frecuencia esto es siquiera portante en trabajo real.
-5. **Predicciones registradas.**
-6. **Resultados** por capa, con la cadena de cuatro nodos como hilo.
-7. **El coste de interrumpir** — la métrica que va en contra.
-8. **Qué dice y qué no dice.** Cobertura vs confianza, igual que en la pieza anterior.
+3. **Lo que creía que era nuevo, y no lo era.** La entrega no interrumpe: encola en frontera de
+   turno, 138 de 138 (§3.5.1). Se cae el pilar con el que empecé a diseñar. Contarlo, no esconderlo.
+4. **Tres mecanismos confundidos.** Peer, teams y subagentes comparten preámbulo; el primer minado
+   los mezclaba. Es a la vez advertencia metodológica para quien replique y el hallazgo que regala
+   el contraste estructura-sí / estructura-no (§3.6).
+5. **Tasas base.** Con qué frecuencia esto es siquiera portante: delegación 8,9 %, capa semántica
+   36,1 %, con kappa entre codificadores y la salvedad de que los codificadores son LLM.
+6. **El giro.** El canal casi nunca se usa para pedir y muy a menudo para decirle al otro algo
+   verdadero sobre su propio trabajo. De ahí el cross-check como núcleo (§4.0).
+7. **Nadie tiene el mapa.** Topología bilateral, difusión solo por repetición, sin conocimiento
+   común. La cita del *"si eres tú, es tuyo entero"* (§3.5.6).
+8. **Un hallazgo mío retirado.** El mutex "se abre más de lo que se cierra" era un artefacto del
+   detector léxico; recontado sobre categorías codificadas, las tres aperturas reales se cierran
+   (§3.5.7). Es la auditoría del harness de §7.1 aplicada a mí mismo, y va en el cuerpo del
+   artículo, no en una nota al pie.
+9. **Predicciones registradas** (§4.5, §6.3).
+10. **Resultados** por capa, con la cadena de cuatro nodos como hilo.
+11. **El coste de mirar hacia fuera** — la métrica que va en contra (§4.6).
+12. **Qué dice y qué no dice.** Cobertura vs confianza, igual que en la pieza anterior. Cinco días
+    de corpus, una sola persona, un solo equipo de repos.
 
 ### 7.1 Reglas de honestidad heredadas
 
@@ -762,7 +848,7 @@ silencioso.
   §6.1.1.
 - Declarar explícitamente el techo: cobertura, no confianza.
 - **Nada que ya se publicó vuelve a venderse como hallazgo.** El brazo integrador se presenta como
-  calibración y enlaza al artículo de julio; la taxonomía §4.3 y el método de comparación pareada se
+  calibración y enlaza al artículo de julio; la taxonomía de resultado y el método de comparación pareada se
   presentan como instrumento heredado. Reutilizar instrumento hace la serie acumulativa; repetir una
   medición ya respondida y presentarla como nueva, no.
 - Declarar la ventana del corpus (cinco días, §3.0) allí donde aparezcan sus cifras.
