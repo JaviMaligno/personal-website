@@ -345,6 +345,52 @@ verificable (el test rojo es culpa de B) que B puede falsar con información que
 puntúa mecánicamente: ¿corrige A su creencia? Es tan verificable por script como la petición de
 acción, y ataca la pregunta que de verdad quedó abierta en julio.
 
+### 3.5.6 Topología: la coordinación es bilateral, nunca de grupo
+
+Reconstruidas 84 aristas dirigidas emparejando cada recepción con su envío.
+
+| | |
+|---|---|
+| Pares de sesiones que se hablan | 8 |
+| Concentración | un solo par (`09d6fba6 ↔ aa19dfdf`) acumula **43 de 84**, el 51 % |
+| Ráfagas (mensajes seguidos con < 20 min) | 30; p50 = 2, p90 = 6, máx = 8 |
+| Ráfagas de un solo mensaje, sin réplica | 8 de 30 |
+
+**No existe canal de grupo.** La difusión aparece solo como unicast repetido: 4 casos, 9 envíos, con
+fan-out máximo de 3 destinos en 23 segundos (*"Aviso de alcance: cojo DATS-772, 774 y 775"*). Cada
+receptor lo recibe, y **ninguno sabe que los demás lo recibieron**. No hay conocimiento común, solo
+copias.
+
+**Y nadie tiene el mapa.** Solo 20 de 179 mensajes mencionan a una tercera sesión, y el caso más
+elocuente muestra que el emisor ni siquiera sabe con quién habla respecto al trabajo:
+
+> *"Lo que NO toco: **DATS-790** (lo lleva otra sesión — **si eres tú**, es tuyo entero…)"*
+
+Esto es evidencia estructural directa de la premisa de §1.3 —*nadie llega a poseer el estado
+integrado final*— y es el mejor apoyo empírico disponible para la predicción registrada de §6.3.
+Conviene decirlo con cuidado: describe la topología, no el resultado. Que nadie tenga el mapa no
+demuestra todavía que el trabajo salga peor.
+
+### 3.5.7 Mutex: cuántas secuencias se cierran
+
+Detector léxico sobre las ráfagas, buscando petición-de-espera → bloqueo reconocido → liberación →
+consumo:
+
+| Forma | n |
+|---|---|
+| Petición de espera **sin cierre** | 6 |
+| Petición → liberación → consumo (completa) | 5 |
+| Petición → liberación (sin consumo trazado) | 5 |
+| Petición → bloqueo reconocido (se queda ahí) | 3 |
+
+**5 de 19 llegan al final.** Pero el detector tiene falsos positivos visibles (marca *"Gracias por el
+dato del hub; frontend v0.7.103 en build"* como petición de espera), así que la cifra vale como
+magnitud, no como medida. La codificación definitiva es la de doble pase.
+
+La lectura provisional, que hay que confirmar: el protocolo de exclusión mutua **se abre mucho más
+de lo que se cierra**. Si aguanta, es el hallazgo que conecta con julio — el mismo hand-off pequeño
+y repetido que hundió el modo `team` de CooperBench, con muchos sitios donde fumarla.
+
 ### 3.6 El experimento natural que el corpus regala
 
 Peer y teams son la misma máquina, los mismos días, el mismo trabajo, y difieren justo en lo que el
