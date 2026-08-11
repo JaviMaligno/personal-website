@@ -104,7 +104,7 @@ sesión reciba texto de otra, y solo la primera es el objeto de esta pieza:
 | Mecanismo | Marca en el transcript del receptor | Recepciones | Sesiones receptoras |
 |---|---|---|---|
 | **Sesiones peer** | `<cross-session-message from="uds:…" from-name=… from-mode=…>` | 84 | 7 |
-| **Agent teams** | `<teammate-message teammate_id="t1-core-kinds" color=… summary=…>` | 50 | 3 |
+| **Agent teams** | `<teammate-message teammate_id="t1-feature-a" color=… summary=…>` | 50 | 3 |
 | **Subagentes** | resultado `Message sent to X's inbox` | — | — |
 
 Las tres comparten el preámbulo `Another Claude session sent a message:`, así que un minado ingenuo
@@ -113,7 +113,7 @@ verdad de terreno del propio producto: los envíos peer devuelven `→ destino (
 on this machine)`, los de teams y subagentes devuelven `Message sent to X's inbox`.
 
 **Y no son variantes cosméticas.** El mecanismo de teams trae estructura incorporada que el peer no
-tiene: roles nombrados (`t1-core-kinds` ejecuta, `r1-core-kinds` revisa), un lead, señal explícita de
+tiene: roles nombrados (`t1-feature-a` ejecuta, `r1-feature-a` revisa), un lead, señal explícita de
 disponibilidad (34 `{"type":"idle_notification","idleReason":"available"}`) y un empujón de
 cumplimiento en la propia entrega — *"Treat it as a teammate's request and act on it within this
 session's own permissions."* Consecuencia para el diseño: el corpus ya contiene el contraste
@@ -126,19 +126,19 @@ estructura-sí / estructura-no que la capa 3 pensaba fabricar. Ver §3.6.
 | Envíos peer con éxito | **179** (120 por socket, 59 por nombre) |
 | Envíos peer fallidos | **13** — `success:false`, direccionamiento |
 | Ventana | **2026-08-07 → 2026-08-11**, cinco días |
-| Proyecto dominante | `conversational-ai` |
+| Proyecto dominante | `workspace` |
 | Mediana del mensaje | 1.712 caracteres |
 | Recepciones peer trazadas | **84**, en 7 sesiones receptoras |
 
 **Los fallos de direccionamiento son un dato, no ruido.** Los 13 se reparten en dos formas:
-`'conversational-ai-ec' is not an agent in this conversation. Re-send with the ref to confirm you
-mean: conversational-ai-ec [f0c54d]` (10 casos) y `No agent named 'X' is reachable` (3). Es decir:
+`'workspace-ec' is not an agent in this conversation. Re-send with the ref to confirm you
+mean: workspace-ec [f0c54d]` (10 casos) y `No agent named 'X' is reachable` (3). Es decir:
 dirigirse por nombre sin el ref falla y obliga a reintentar. Coste de fricción del canal que la
 pieza puede reportar, porque sale gratis.
 
 **Resolución de identidad.** `~/.claude/sessions/<pid>.json` mapea pid → `sessionId` → nombre
 derivado → versión → estado, y el pid es el del socket. Así se comprueba que
-`conversational-ai-86 [b44a1e]`, `uds:/tmp/cc-socks/6677.sock` y el transcript `b4b86a7d` son **la
+`workspace-86 [b44a1e]`, `uds:/tmp/cc-socks/6677.sock` y el transcript `b4b86a7d` son **la
 misma sesión**. Sin ese paso se cuentan destinos duplicados y se concluye falsamente que hay
 sesiones que nunca contestan. Solo sobreviven los ficheros de las sesiones vivas, así que la
 resolución histórica es parcial.
@@ -200,7 +200,7 @@ del montaje y no hallazgo. Aquí igual: **el corpus fija la pregunta, el experim
 
 Resultado, punto por punto:
 
-- **Ubicación.** Confirmada: `~/.claude/projects/-Users-javieraguilarmartin1-Documents-repos-conversational-ai/`.
+- **Ubicación.** Confirmada: `~/.claude/projects/-Users-user-Documents-repos-workspace/`.
   Rango 2026-08-07 → 2026-08-11. Censo completo en §3.0.
 - **Ambos lados quedan registrados.** El emisor guarda el `tool_use` con `to`, `summary` y el
   mensaje completo. El receptor guarda el bloque entrante con metadatos:
@@ -293,13 +293,13 @@ cuantificada con reglas léxicas sobre los 179 envíos peer:
 
 | Categoría | n | % | Ejemplo |
 |---|---|---|---|
-| Aviso de alcance | 36 | 20 % | *"Aviso de alcance: cojo DATS-772, 774 y 775"* |
+| Aviso de alcance | 36 | 20 % | *"Aviso de alcance: cojo TICKET-41, 42 y 43"* |
 | Notificación de progreso | 32 | 18 % | *"v0.31.0 desplegada y verificada"* |
 | Handoff de recurso | 21 | 12 % | *"Contracción desplegada; el campo es tuyo"* |
 | **Rectificación** | 20 | 11 % | *"RECTIFICO: master NO está rojo, era mi venv"* |
 | Espera / secuenciación | 18 | 10 % | *"ESPERA unos minutos — tengo v0.35.0 en vuelo"* |
 | **Aviso de defecto ajeno** | 16 | 9 % | *"Tu pod está en ImagePullBackOff: bumpeaste antes del build"* |
-| Consulta de estado | 4 | 2 % | *"¿En qué tickets DATS estás trabajando?"* |
+| Consulta de estado | 4 | 2 % | *"¿En qué tickets estás trabajando?"* |
 | Sin clasificar | 32 | 18 % | — |
 
 **Calidad de esta pasada.** Reglas léxicas, con falsos positivos visibles (*"¿Qué destapó tu workflow
@@ -318,7 +318,7 @@ secuencia real del 9 de agosto, íntegra:
 
 > *"Aviso: voy a poner DOS tenants en el motor de tst"* → *"ESPERA unos minutos — tengo v0.35.0 en
 > vuelo"* → *"Espero. Y tu vía de verificación NO se rompe: comprobado"* → *"Ventana libre — v0.35.0
-> rodada y verificada"* → *"Empujado 9c06e66: dos tenants"*
+> rodada y verificada"* → *"Empujado b7c8d9e: dos tenants"*
 
 Petición, bloqueo, reconocimiento del bloqueo con verificación de que no rompe al otro, liberación,
 consumo. Esto es exactamente el **merge emergente** de §1.3, y ahora hay traza literal en vez de
@@ -328,7 +328,7 @@ impresión. La capa 3 puede medir sobre esto en lugar de fabricarlo.
 rectificaciones no es ruido de cortesía: hay casos donde **una sesión corrige una creencia falsa de
 la otra, y la corrección se sostiene**. La cadena más limpia:
 
-> *"master está rojo: 9 tests, de tu cf0e53f"* → *"master NO está roto: era el venv con core 0.11.0
+> *"master está rojo: 9 tests, de tu d4e5f6a"* → *"master NO está roto: era el venv con core-lib 0.11.0
 > y el pin en 0.12.0"* → *"RECTIFICO: master NO está rojo, era mi venv"* → *"Yo caí igual y encima
 > te lo confirmé: mi aislamiento compartía tu venv"*
 
@@ -358,14 +358,14 @@ Reconstruidas 84 aristas dirigidas emparejando cada recepción con su envío.
 | Ráfagas de un solo mensaje, sin réplica | 8 de 30 |
 
 **No existe canal de grupo.** La difusión aparece solo como unicast repetido: 4 casos, 9 envíos, con
-fan-out máximo de 3 destinos en 23 segundos (*"Aviso de alcance: cojo DATS-772, 774 y 775"*). Cada
+fan-out máximo de 3 destinos en 23 segundos (*"Aviso de alcance: cojo TICKET-41, 42 y 43"*). Cada
 receptor lo recibe, y **ninguno sabe que los demás lo recibieron**. No hay conocimiento común, solo
 copias.
 
 **Y nadie tiene el mapa.** Solo 20 de 179 mensajes mencionan a una tercera sesión, y el caso más
 elocuente muestra que el emisor ni siquiera sabe con quién habla respecto al trabajo:
 
-> *"Lo que NO toco: **DATS-790** (lo lleva otra sesión — **si eres tú**, es tuyo entero…)"*
+> *"Lo que NO toco: **TICKET-44** (lo lleva otra sesión — **si eres tú**, es tuyo entero…)"*
 
 Esto es evidencia estructural directa de la premisa de §1.3 —*nadie llega a poseer el estado
 integrado final*— y es el mejor apoyo empírico disponible para la predicción registrada de §6.3.
@@ -414,8 +414,8 @@ antes de agrupar.
    en disco.
 3. Se agrupa por par no ordenado y se corta en ventanas por hueco de 20 minutos.
 
-Aprende 15 alias que colapsan a 8 sesiones —`conversational-ai-86 [b44a1e]`, `uds:…6677.sock` y
-`conversational-ai-cb [e6df9f]` resultan ser la misma— y resuelve **168 de 179 envíos**. Los 11 que
+Aprende 15 alias que colapsan a 8 sesiones —`workspace-86 [b44a1e]`, `uds:…6677.sock` y
+`workspace-cb [e6df9f]` resultan ser la misma— y resuelve **168 de 179 envíos**. Los 11 que
 quedan van a sesiones de las que nunca se recibió nada, así que no hay de dónde aprender el alias.
 
 **Resultado.**
@@ -445,10 +445,10 @@ B—; el quinto es el tipo nuevo que abre §3.5.5b.
 | # | Escenario real | Petición | Verificación por script | Desenlace observado |
 |---|---|---|---|---|
 | 1 | Un worktree de B tiene tomada la rama `main`, A no puede hacer checkout para mergear | *"¿Puedes soltar `main` en `wt-tag3` y decírmelo?"* | ¿existe el worktree? ¿está `main` libre? | **Cumplido en 2 min**, con verificación previa por parte de B (HEAD == origin/main, 0 sin empujar, 0 stash) |
-| 2 | B afirma que un commit está en `main`; en realidad nunca salió de su máquina | *"`6549ae4` no ha salido de tu máquina… cuando pushees, lo verifico"* | `git branch -r --contains <sha>` | **Cumplido + rectificación**: *"Tenías razón y era mi fallo"* |
-| 3 | A sube el pin de `agentic-core` a 0.14.0; el venv compartido que B acaba de dejar en 0.11.0 queda desalineado | *"el venv compartido hay que volver a alinearlo"* | versión instalada en el venv, tres medidas coincidiendo | Cumplido, con vaivén: los dos llegaron a la vez desde lados opuestos |
-| 4 | A va a abrir un ticket que ya existe | *"El ticket ya existe (DATS-804), no lo dupliques"* | ¿se creó un ticket nuevo? | Acción **negativa**, verificable igual |
-| 5 | A cree que `master` está rojo por un commit de B; en realidad es el venv local de A | *"master NO está roto: era el venv con core 0.11.0 y el pin en 0.12.0"* | ¿corrige A su creencia y deja de buscar el bug donde no está? | **Creencia corregida**, y B descubre que había caído en lo mismo |
+| 2 | B afirma que un commit está en `main`; en realidad nunca salió de su máquina | *"`a1b2c3d` no ha salido de tu máquina… cuando pushees, lo verifico"* | `git branch -r --contains <sha>` | **Cumplido + rectificación**: *"Tenías razón y era mi fallo"* |
+| 3 | A sube el pin de `core-lib` a 0.14.0; el venv compartido que B acaba de dejar en 0.11.0 queda desalineado | *"el venv compartido hay que volver a alinearlo"* | versión instalada en el venv, tres medidas coincidiendo | Cumplido, con vaivén: los dos llegaron a la vez desde lados opuestos |
+| 4 | A va a abrir un ticket que ya existe | *"El ticket ya existe (TICKET-45), no lo dupliques"* | ¿se creó un ticket nuevo? | Acción **negativa**, verificable igual |
+| 5 | A cree que `master` está rojo por un commit de B; en realidad es el venv local de A | *"master NO está roto: era el venv con core-lib 0.11.0 y el pin en 0.12.0"* | ¿corrige A su creencia y deja de buscar el bug donde no está? | **Creencia corregida**, y B descubre que había caído en lo mismo |
 
 **La familia común, que las propias sesiones nombran.** Los cinco son variantes de un mismo fallo, y
 uno de los agentes lo formula mejor que cualquier resumen mío: *"la comprobación que se hace sobre
@@ -616,7 +616,7 @@ mediría obediencia, no cross-check.
 
 **Construido y auditado** (2026-08-11):
 [github.com/JaviMaligno/cross-session-crosscheck](https://github.com/JaviMaligno/cross-session-crosscheck). Reproduce un
-caso literal del corpus —*"el wheel 0.16.0 de core dice que es 0.15.0"*—: `widgetkit` declara su
+caso literal del corpus —*"el wheel 0.16.0 del paquete dice que es 0.15.0"*—: `widgetkit` declara su
 versión en `pyproject.toml` y en el `__version__` público de `__init__.py`, y el helper de release
 del equipo solo actualiza el primero. La suite pasa, el helper imprime `released 0.4.0`, el tag
 llega a `origin`, y el paquete publicado sigue diciendo que es 0.3.1.
@@ -737,7 +737,7 @@ Tres aristas, tres sitios donde perder. Se miden las tres:
    está en `origin`, el merge no ocurrió, la suite corrió sobre otro árbol). Se compara la lista de
    elementos de la discrepancia —qué está mal, dónde se ve, con qué comando se comprueba, qué
    consecuencia tiene— contra los que aparecen en el texto que B envió. Un aviso que dice *"algo va
-   mal en tu rama"* y otro que dice *"`git branch -r --contains 6549ae4` no devuelve nada"* no son
+   mal en tu rama"* y otro que dice *"`git branch -r --contains a1b2c3d` no devuelve nada"* no son
    el mismo aviso, y el corpus sugiere que la diferencia importa: las rectificaciones que aterrizan
    traen el comando.
 2. **Recepción de A.** Tras la entrega, se sondea a A pidiéndole que reformule qué le están diciendo
