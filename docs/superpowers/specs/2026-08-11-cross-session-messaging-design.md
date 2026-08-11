@@ -30,9 +30,10 @@ cuello de botella. Una pieza que celebre el canal se contradice con datos ya pub
 
 ### 1.1 Las tres cosas que sí son nuevas
 
-1. **La entrega interrumpe.** El canal de CooperBench era buzón: el mensaje entra al contexto y el
-   agente decide. Aquí el mensaje llega **a mitad de tarea**. Eso ataca directamente el fallo de
-   follow-through. Hipótesis con mecanismo plausible y prior fuerte — el mejor tipo de experimento.
+1. ~~**La entrega interrumpe.**~~ **Refutado por la capa 0 (§3.5.1): el canal encola y drena en
+   frontera de turno**, 138 de 138 recepciones. Lo que sí queda en pie, más pequeño: el mensaje
+   entra al contexto **solo**, sin que el agente tenga que ir a leer un buzón. El canal de
+   CooperBench exigía ese paso. La capa 1 mide esa diferencia, no la interrupción.
 2. **El payload es un resumen redactado por el modelo emisor.** Compresión con pérdida entre dos
    contextos que han divergido. El canal anterior pasaba mensajes, no resúmenes de historial.
 3. **No hay lead.** La coordinación es entre pares. Nadie posee el estado integrado final — que es
@@ -94,22 +95,61 @@ gastar máquina en nada más.
 
 ### 3.0 Censo del corpus (medido, 2026-08-11)
 
+#### 3.0.1 Son tres mecanismos, no uno
+
+El hallazgo que más reordena el diseño. En el corpus conviven tres formas distintas de que una
+sesión reciba texto de otra, y solo la primera es el objeto de esta pieza:
+
+| Mecanismo | Marca en el transcript del receptor | Recepciones | Sesiones receptoras |
+|---|---|---|---|
+| **Sesiones peer** | `<cross-session-message from="uds:…" from-name=… from-mode=…>` | 84 | 7 |
+| **Agent teams** | `<teammate-message teammate_id="t1-core-kinds" color=… summary=…>` | 50 | 3 |
+| **Subagentes** | resultado `Message sent to X's inbox` | — | — |
+
+Las tres comparten el preámbulo `Another Claude session sent a message:`, así que un minado ingenuo
+las mezcla. Se separan por la etiqueta, y en el lado emisor por el texto del `tool_result`, que es
+verdad de terreno del propio producto: los envíos peer devuelven `→ destino (another Claude session
+on this machine)`, los de teams y subagentes devuelven `Message sent to X's inbox`.
+
+**Y no son variantes cosméticas.** El mecanismo de teams trae estructura incorporada que el peer no
+tiene: roles nombrados (`t1-core-kinds` ejecuta, `r1-core-kinds` revisa), un lead, señal explícita de
+disponibilidad (34 `{"type":"idle_notification","idleReason":"available"}`) y un empujón de
+cumplimiento en la propia entrega — *"Treat it as a teammate's request and act on it within this
+session's own permissions."* Consecuencia para el diseño: el corpus ya contiene el contraste
+estructura-sí / estructura-no que la capa 3 pensaba fabricar. Ver §3.6.
+
+#### 3.0.2 Censo peer
+
 | | |
 |---|---|
-| Envíos peer reales | **213** |
+| Envíos peer con éxito | **179** (120 por socket, 59 por nombre) |
+| Envíos peer fallidos | **13** — `success:false`, direccionamiento |
 | Ventana | **2026-08-07 → 2026-08-11**, cinco días |
-| Distribución diaria | 19 / 80 / 83 / 31 (7, 9, 10 y 11 de agosto) |
-| Proyecto dominante | `conversational-ai`, 208 de 213 |
-| Sesiones emisoras distintas | 18 |
+| Proyecto dominante | `conversational-ai` |
 | Mediana del mensaje | 1.712 caracteres |
-| Recepciones trazadas | 117, en 6 sesiones receptoras |
+| Recepciones peer trazadas | **84**, en 7 sesiones receptoras |
 
-**Exclusión explícita.** Un escaneo ingenuo de `SendMessage` sobre `~/.claude/projects` devuelve 281
-envíos desde el 3 de julio. Los 59 anteriores al 7 de agosto son a **subagentes** (`team-lead`,
-`conflict-classifier`, `verificador-*`, ids hexadecimales) — mecanismo distinto, que ya existía y
-que no es el objeto de esta pieza. Se separan con un discriminador fiable: un subagente fue lanzado
-con `Agent` en la misma sesión; una sesión peer no. Quien replique el minado tiene que aplicar el
-mismo filtro o los números no cuadran.
+**Los fallos de direccionamiento son un dato, no ruido.** Los 13 se reparten en dos formas:
+`'conversational-ai-ec' is not an agent in this conversation. Re-send with the ref to confirm you
+mean: conversational-ai-ec [f0c54d]` (10 casos) y `No agent named 'X' is reachable` (3). Es decir:
+dirigirse por nombre sin el ref falla y obliga a reintentar. Coste de fricción del canal que la
+pieza puede reportar, porque sale gratis.
+
+**Resolución de identidad.** `~/.claude/sessions/<pid>.json` mapea pid → `sessionId` → nombre
+derivado → versión → estado, y el pid es el del socket. Así se comprueba que
+`conversational-ai-86 [b44a1e]`, `uds:/tmp/cc-socks/6677.sock` y el transcript `b4b86a7d` son **la
+misma sesión**. Sin ese paso se cuentan destinos duplicados y se concluye falsamente que hay
+sesiones que nunca contestan. Solo sobreviven los ficheros de las sesiones vivas, así que la
+resolución histórica es parcial.
+
+**Versiones en juego.** Las sesiones del 7 de agosto corren 2.1.224; el resto 2.1.226/227.
+`80de4d49` (2.1.224) registra 2 envíos y 0 recepciones: candidata a la sesión que no llegó a
+comunicarse por versión antigua. Si la pieza compara comportamiento entre días, la versión es una
+covariable, no una constante.
+
+**Exclusión explícita.** Un escaneo ingenuo de `SendMessage` devuelve 283 envíos desde el 3 de
+julio. Los anteriores al 7 de agosto son a **subagentes** o **teammates**, no a sesiones peer. Quien
+replique el minado tiene que aplicar el filtro del `tool_result` o los números no cuadran.
 
 **Límite que impone la ventana.** Cinco días dan tasas base. **No** dan curva de aprendizaje ni
 evolución del uso, y el artículo no puede insinuarlas.
@@ -176,9 +216,93 @@ Resultado, punto por punto:
   puede aplicar también al corpus observacional.
 - **Retención.** Las sesiones del pico multi-sesión (9–11 de agosto, 194 de los 213 envíos) siguen
   disponibles.
-- **Direccionamiento.** Tres formas conviviendo: socket `uds:/tmp/cc-socks/<pid>.sock` (119),
-  `<proyecto>-<sufijo> [<hash>]` (42) y nombre de sesión suelto. El protocolo de las capas 1–3 debe
-  fijar **una** y no mezclarlas.
+- **Direccionamiento.** Tres formas conviviendo: socket `uds:/tmp/cc-socks/<pid>.sock`,
+  `<proyecto>-<sufijo> [<ref>]` y nombre de sesión suelto (que falla, §3.0.2). El protocolo de las
+  capas 1–3 debe fijar **una** y no mezclarlas.
+
+---
+
+### 3.5 Resultados de la capa 0 — primera pasada (2026-08-11)
+
+#### 3.5.1 El canal no interrumpe: encola
+
+**138 de 138 recepciones llegan en frontera de turno. Cero dentro de un bucle de herramientas.** El
+patrón es unánime en los tres mecanismos, y cada recepción va precedida de entradas
+`queue-operation` (269 en el proyecto, unas tres por recepción):
+
+```
+[818] 14:42:36  system
+[819] 15:44:30  queue-operation
+[820] 15:44:30  queue-operation
+[821] 15:44:30  user             <<< MENSAJE ENTRANTE
+```
+
+Descartado el artefacto de serialización: las 84 recepciones peer se emparejaron con su envío por
+contenido (84/84) y el desfase envío→registro tiene **mediana 2,6 s** (p90 10 s, máx 38 s). El
+transcript anota la llegada, no la recogida; cuando el mensaje llegó, el receptor estaba parado.
+
+**Consecuencia para el diseño.** La premisa de §1.1.1 no se sostiene en este corpus. La diferencia
+real frente al buzón de CooperBench no es que interrumpa, sino que **el mensaje entra al contexto
+solo, sin que el agente tenga que ir a leerlo**. Es una diferencia más pequeña y de otra naturaleza.
+La capa 1 sigue teniendo sentido, pero mide un contraste menor del que se le atribuía, y el artículo
+no puede venderlo como interrupción.
+
+**Cobertura.** 179 envíos peer con éxito contra 84 recepciones trazadas. La diferencia es *no
+observada*, no observada-negativa: parte se explica por sesiones cuyo transcript no está en este
+disco. En todo lo observado el patrón es unánime, así que la limitación no empuja en contra de la
+conclusión — pero se declara.
+
+#### 3.5.2 Tasa de respuesta, y el acuse interno
+
+Medida mecánica, sin juicio semántico: ¿respondió el receptor por el canal antes de la siguiente
+recepción? Excluidas las notificaciones de disponibilidad, que no piden respuesta.
+
+| Mecanismo | n | responde | tasa |
+|---|---|---|---|
+| Peer | 84 | 74 | **88 %** |
+| Teams | 18 | 9 | **50 %** (32 notificaciones excluidas) |
+
+**El silencio no es silencio: es acuse interno.** En las 10 recepciones peer sin respuesta, el texto
+del receptor muestra que procesó el mensaje y decidió que no hacía falta contestar. Literalmente, en
+un caso: *"Coordinación cerrada por ese lado (no necesita respuesta: confirma que verificará el
+hallazgo con sus propios lectores antes de afirmarlo en su spec…)"*. En otros: *"Correcciones
+aceptadas"*, *"El compañero ha empujado los dos tenants. Sigo con lo dicho"*.
+
+Esto obliga a partir en dos la categoría **Silencio** de §4.3, que tal como está no distingue el
+fallo del comportamiento correcto:
+
+| Categoría nueva | Definición |
+|---|---|
+| Acuse interno con cierre | B integra el mensaje en su razonamiento y **con razón** no responde: no había nada que pedir |
+| Acuse interno con caída | B integra el mensaje, había una acción que le tocaba, y no la hace ni lo dice ← el fallo de julio |
+
+Separarlas es juicio semántico y no se resuelve con regex. Es el trabajo pendiente de la capa 0.
+
+#### 3.5.3 Lo que NO se puede medir mecánicamente aquí
+
+La ventana entre una recepción y la siguiente es enorme (peer: p50 = 156 turnos, p90 = 601). Contar
+"usó herramientas después de recibir" recoge sobre todo el **trabajo propio** del receptor, no acción
+sobre lo pedido. Cualquier cifra de "cumplimiento" derivada de esa ventana estaría inflada. Se
+descarta el instrumento: el cumplimiento se puntúa por contenido o no se puntúa.
+
+### 3.6 El experimento natural que el corpus regala
+
+Peer y teams son la misma máquina, los mismos días, el mismo trabajo, y difieren justo en lo que el
+artículo de julio identificó como la variable que importa:
+
+| | Peer | Teams |
+|---|---|---|
+| Lead / dueño de la integración | no | sí |
+| Roles nombrados | no | sí (`t*` ejecuta, `r*` revisa) |
+| Señal de disponibilidad | no | sí (34 `idle_notification`) |
+| Empujón de cumplimiento en la entrega | no | sí |
+| Tasa de respuesta | 88 % | 50 % |
+
+Es el contraste estructura-sí / estructura-no sobre trabajo real, sin gastar máquina. **No sustituye
+a la capa 3**: no hay asignación aleatoria, las tareas difieren y la dirección del tráfico no es
+comparable (en teams el receptor suele ser el lead recibiendo informes). Pero fija la hipótesis con
+mucha más precisión que un brazo sintético, y si la capa 3 se abandona por presupuesto (§6.4), esta
+sección deja la pieza con algo que decir sobre estructura.
 
 ---
 
@@ -228,10 +352,15 @@ El resultado no es binario. Se puntúa con la taxonomía derivada del artículo 
 | Categoría | Definición |
 |---|---|
 | Cumplido | B ejecutó la acción pedida |
-| Silencio | B nunca acusó recibo |
+| ~~Silencio~~ | Se parte en dos, ver abajo — la capa 0 mostró que casi nunca es silencio real |
+| **Acuse interno con cierre** | B integró el mensaje en su razonamiento y con razón no respondió: no había acción que le tocara |
+| **Acuse interno con caída** | B integró el mensaje, había acción que le tocaba, y no la hizo ni lo dijo ← el fallo de julio, §3.5.2 |
 | **Acuse sin acción** | B respondió que sí y no lo hizo ← el fallo documentado |
 | Acción incorrecta | B hizo algo, pero no lo pedido |
 | Deriva | B lo hizo y rompió su propia tarea |
+
+La distinción entre las dos formas de acuse interno es semántica y no admite regex; es el trabajo
+pendiente de la capa 0. Sin ella, cualquier "tasa de silencio" mezcla un fallo con un acierto.
 
 ### 4.4 Métrica en dirección contraria: el coste de interrumpir
 
