@@ -285,6 +285,66 @@ La ventana entre una recepción y la siguiente es enorme (peer: p50 = 156 turnos
 sobre lo pedido. Cualquier cifra de "cumplimiento" derivada de esa ventana estaría inflada. Se
 descarta el instrumento: el cumplimiento se puntúa por contenido o no se puntúa.
 
+### 3.5.4 Rejilla de categorías, derivada del corpus
+
+Las categorías salen de leer los 174 `summary` distintos, no de imaginarlas. Primera pasada
+cuantificada con reglas léxicas sobre los 179 envíos peer:
+
+| Categoría | n | % | Ejemplo |
+|---|---|---|---|
+| Aviso de alcance | 36 | 20 % | *"Aviso de alcance: cojo DATS-772, 774 y 775"* |
+| Notificación de progreso | 32 | 18 % | *"v0.31.0 desplegada y verificada"* |
+| Handoff de recurso | 21 | 12 % | *"Contracción desplegada; el campo es tuyo"* |
+| **Rectificación** | 20 | 11 % | *"RECTIFICO: master NO está rojo, era mi venv"* |
+| Espera / secuenciación | 18 | 10 % | *"ESPERA unos minutos — tengo v0.35.0 en vuelo"* |
+| **Aviso de defecto ajeno** | 16 | 9 % | *"Tu pod está en ImagePullBackOff: bumpeaste antes del build"* |
+| Consulta de estado | 4 | 2 % | *"¿En qué tickets DATS estás trabajando?"* |
+| Sin clasificar | 32 | 18 % | — |
+
+**Calidad de esta pasada.** Reglas léxicas, con falsos positivos visibles (*"¿Qué destapó tu workflow
+del 747?"* cae en rectificación). Vale para magnitudes, no para publicar. La codificación definitiva
+es la de doble pase. Y no es ciega: la rejilla se derivó tras leer el corpus, así que por §3.2 esto
+es generación de hipótesis, no evidencia.
+
+**Agrupada por capa:** coordinación (alcance + progreso + handoff + espera + consulta) ≈ **62 %**;
+contenido técnico sobre la zona del otro (rectificación + defecto ajeno) ≈ **20 %**.
+
+### 3.5.5 Dos patrones que el diseño no había previsto
+
+**a) El mutex negociado en lenguaje natural.** La categoría espera/secuenciación no son avisos
+sueltos: forman un protocolo completo de exclusión mutua, negociado y cerrado entre pares. Una
+secuencia real del 9 de agosto, íntegra:
+
+> *"Aviso: voy a poner DOS tenants en el motor de tst"* → *"ESPERA unos minutos — tengo v0.35.0 en
+> vuelo"* → *"Espero. Y tu vía de verificación NO se rompe: comprobado"* → *"Ventana libre — v0.35.0
+> rodada y verificada"* → *"Empujado 9c06e66: dos tenants"*
+
+Petición, bloqueo, reconocimiento del bloqueo con verificación de que no rompe al otro, liberación,
+consumo. Esto es exactamente el **merge emergente** de §1.3, y ahora hay traza literal en vez de
+impresión. La capa 3 puede medir sobre esto en lugar de fabricarlo.
+
+**b) La falsificación cruzada — el patrón incómodo para la tesis de julio.** El 11 % de
+rectificaciones no es ruido de cortesía: hay casos donde **una sesión corrige una creencia falsa de
+la otra, y la corrección se sostiene**. La cadena más limpia:
+
+> *"master está rojo: 9 tests, de tu cf0e53f"* → *"master NO está roto: era el venv con core 0.11.0
+> y el pin en 0.12.0"* → *"RECTIFICO: master NO está rojo, era mi venv"* → *"Yo caí igual y encima
+> te lo confirmé: mi aislamiento compartía tu venv"*
+
+Dos sesiones convergen a un diagnóstico correcto que una sola tenía mal, y la segunda descubre que
+había cometido el mismo error. Eso es **capa semántica**, no sintáctica: el canal no está evitando
+una colisión, está corrigiendo una creencia.
+
+El artículo de julio concluyó que el canal no compra aprobados y que la palanca era la propiedad de
+la integración. Este patrón no lo contradice —no hay contrafactual: nadie sabe si la sesión habría
+llegado sola— pero **sí es un mecanismo por el que un canal podría comprar resultado**, y el diseño
+actual no lo mide en ninguna capa.
+
+**Consecuencia para la capa 1.** Añadir un tipo de escenario: A sostiene una creencia falsa
+verificable (el test rojo es culpa de B) que B puede falsar con información que solo B tiene. Se
+puntúa mecánicamente: ¿corrige A su creencia? Es tan verificable por script como la petición de
+acción, y ataca la pregunta que de verdad quedó abierta en julio.
+
 ### 3.6 El experimento natural que el corpus regala
 
 Peer y teams son la misma máquina, los mismos días, el mismo trabajo, y difieren justo en lo que el
