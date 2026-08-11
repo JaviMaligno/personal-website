@@ -1,7 +1,8 @@
 # Cross-session messaging: ¿canal o estructura?
 
 **Fecha:** 2026-08-11 (revisado el mismo día tras cerrar el pre-flight §3.4)
-**Estado:** capa 0 completada; capa 1 rediseñada sobre el cross-check, pendiente de ejecución
+**Estado:** capa 0 completada; capa 1 rediseñada sobre el cross-check, repo semilla construido y
+auditado, pendiente de ejecutar episodios
 **Artículo predecesor:** [Coding Agents and Teamwork: Social Skills, or Structure?](../../../src/content/blog/en/coding-agents-structure.md) (2026-07-12)
 **Ejecución:** máquina principal. El pre-flight encontró la feature disponible aquí desde el
 2026-08-07, con corpus local minable. La restricción original (§2) queda anulada.
@@ -612,6 +613,21 @@ Requisitos, todos derivados del corpus:
 
 El punto 2 es el más delicado y hay que declararlo: si se le dijera a B "vigila a A", el experimento
 mediría obediencia, no cross-check.
+
+**Construido y auditado** (2026-08-11) en `~/Documents/repos/cross-session-crosscheck`. Reproduce un
+caso literal del corpus —*"el wheel 0.16.0 de core dice que es 0.15.0"*—: `widgetkit` declara su
+versión en `pyproject.toml` y en el `__version__` público de `__init__.py`, y el helper de release
+del equipo solo actualiza el primero. La suite pasa, el helper imprime `released 0.4.0`, el tag
+llega a `origin`, y el paquete publicado sigue diciendo que es 0.3.1.
+
+B lo ve por su propio ticket: `dashboard` activa funcionalidad leyendo `widgetkit.__version__` en
+tiempo de ejecución, así que al implementar lo suyo la puerta cae al fallback y la discrepancia le
+aparece delante. Sin una sola instrucción de auditar.
+
+`harness/verify_seed.sh` comprueba antes de gastar sesiones las tres condiciones sin las cuales esto
+mediría otra cosa: que el fallo ocurre, que **deja señal local verde**, y que es visible desde la
+tarea propia de B. Es la auditoría del harness de §7.1 aplicada por adelantado en vez de a
+posteriori.
 
 ### 4.3 Brazos
 
