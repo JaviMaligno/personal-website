@@ -614,7 +614,8 @@ Requisitos, todos derivados del corpus:
 El punto 2 es el más delicado y hay que declararlo: si se le dijera a B "vigila a A", el experimento
 mediría obediencia, no cross-check.
 
-**Construido y auditado** (2026-08-11) en `~/Documents/repos/cross-session-crosscheck`. Reproduce un
+**Construido y auditado** (2026-08-11):
+[github.com/JaviMaligno/cross-session-crosscheck](https://github.com/JaviMaligno/cross-session-crosscheck). Reproduce un
 caso literal del corpus —*"el wheel 0.16.0 de core dice que es 0.15.0"*—: `widgetkit` declara su
 versión en `pyproject.toml` y en el `__version__` público de `__init__.py`, y el helper de release
 del equipo solo actualiza el primero. La suite pasa, el helper imprime `released 0.4.0`, el tag
