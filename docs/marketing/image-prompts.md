@@ -443,3 +443,29 @@ coding match, so they were kept as they are.
 exhausting five reconnect attempts against its own backend. Nothing to fix: the
 same command re-run produced the image. Worth knowing so a failed generation
 isn't mistaken for a bad prompt.
+
+## `what-has-already-happened` — Your Agent Doesn't Know What Has Already Happened
+
+- Article: `src/content/blog/{en,es}/what-has-already-happened.md`
+- Image: `public/blog/what-has-already-happened.png`
+- Generated: 2026-08-11
+- **Not generated with Codex** — the workspace spend cap was hit (`ERROR: You hit
+  your spend cap set by the owner of your workspace`). Built as HTML and
+  rasterised with headless Chrome instead.
+
+Source kept at `docs/marketing/hero-sources/what-has-already-happened.html`.
+Regenerate with:
+
+```bash
+"/c/Program Files/Google/Chrome/Application/chrome.exe" --headless --disable-gpu \
+  --hide-scrollbars --force-device-scale-factor=2 --window-size=1020,510 \
+  --screenshot="public/blog/what-has-already-happened.png" \
+  "file:///<abs-path>/docs/marketing/hero-sources/what-has-already-happened.html"
+```
+
+Why this route is worth keeping for data-heavy articles: the hero carries four
+real numbers and two verbatim strings from the study. Image models mangle text,
+and the skill's own checklist warns to inspect generated images for text
+artefacts — here the text is typeset, so there are none. Same palette rules as
+the Codex prompts (teal / amber / graphite / off-white on dark, no purple blobs,
+no bokeh), same 1020x510, rendered at 2x for retina.
