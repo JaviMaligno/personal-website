@@ -1,0 +1,97 @@
+name: Scheduled publish — what-has-already-happened article
+
+# One-shot: merge the "Your Agent Doesn't Know What Has Already Happened" article branch into main on
+# 2026-08-13 so the existing deploy + Dev.to + LinkedIn workflows fire on the
+# resulting push. The push MUST use a user PAT (secret PUBLISH_PAT) — a push made
+# with the default GITHUB_TOKEN does NOT re-trigger other workflows.
+on:
+  # MEASURED (see docs/blog-publishing.md): GitHub's schedule queue runs these
+  # LATE, not dropped; lateness shrinks through the day. Times below are DEPARTURE
+  # times. Retries sit ~45min apart; the merge is idempotent (early exit once the
+  # branch is in main) so the extra runs are silent no-ops.
+  schedule:
+    - cron: '19 8 13 8 *'   # 08:19 UTC — primary
+    - cron: '7 9 13 8 *'    # 09:07 UTC — retry (+48m)
+    - cron: '59 9 13 8 *'   # 09:59 UTC — retry (+52m)
+    - cron: '53 13 13 8 *'  # 13:53 UTC — final safety net
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency: publish-what-has-already-happened
+
+jobs:
+  merge-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (with PAT so the push re-triggers publish workflows)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.PUBLISH_PAT }}
+
+      - name: Merge article branch and push
+        id: merge
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH=blog/what-has-already-happened
+          ARTICLE=src/content/blog/en/what-has-already-happened.md
+          if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            # Branch gone. If the article is already in main it was published by hand
+            # and the branch deleted — a no-op, not a failure.
+            if [ -f "$ARTICLE" ]; then
+              echo "Branch '$BRANCH' is gone and $ARTICLE is already in main —"
+              echo "already published (manual merge + branch deleted). Nothing to do."
+              echo "published=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::Branch '$BRANCH' does not exist on origin and $ARTICLE is not"
+            echo "::error::in main either — the branch name in this workflow is likely wrong."
+            echo 'Existing blog branches:'
+            git ls-remote --heads origin 'refs/heads/blog/*' | sed 's#.*refs/heads/#  - #' || true
+            exit 1
+          fi
+          git fetch origin "$BRANCH"
+          if git merge-base --is-ancestor "origin/$BRANCH" HEAD; then
+            echo "Branch already merged into main — nothing to do."
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git merge --no-ff "origin/$BRANCH" \
+            -m "Publish: what-has-already-happened article (scheduled 2026-08-13)"
+          git push origin main
+          echo "published=true" >> "$GITHUB_OUTPUT"
+
+      # Only after the merge is pushed. The article now lives in main, so the
+      # branch carries nothing unique: a failed Dev.to/LinkedIn run is retried
+      # from main via workflow_dispatch, never from this branch.
+      - name: Delete the published branch
+        if: success() && steps.merge.outputs.published == 'true'
+        run: |
+          git push origin --delete blog/what-has-already-happened \
+            || echo "::warning::Could not delete blog/what-has-already-happened — remove it by hand (non-fatal)"
+
+      - name: Notify success
+        if: success() && steps.merge.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "✅ What Has Already Happened published (scheduled)" \
+            --body "blog/what-has-already-happened was merged into main on schedule and the branch was deleted. Deploy + Dev.to + LinkedIn should be running now. Verify: https://www.javieraguilar.ai/en/blog/what-has-already-happened" \
+            || echo "issue creation failed (non-fatal)"
+
+      - name: Notify failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "❌ Scheduled what-has-already-happened publish FAILED" \
+            --body "The scheduled merge did not complete. Check the run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} — you may need to merge blog/what-has-already-happened into main manually (or run the workflow_dispatch)." \
+            || echo "issue creation failed (non-fatal)"
