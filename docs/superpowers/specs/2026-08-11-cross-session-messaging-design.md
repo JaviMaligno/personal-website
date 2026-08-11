@@ -391,6 +391,43 @@ La lectura provisional, que hay que confirmar: el protocolo de exclusión mutua 
 de lo que se cierra**. Si aguanta, es el hallazgo que conecta con julio — el mismo hand-off pequeño
 y repetido que hundió el modo `team` de CooperBench, con muchos sitios donde fumarla.
 
+### 3.5.7b Emparejamiento por par de sesiones y ventana temporal
+
+**El obstáculo, que no es menor.** La misma sesión se direcciona de tres formas —socket `uds:`,
+nombre con ref, nombre suelto— así que agrupar por la cadena `to` parte un mismo hilo en varios y
+produce el falso hallazgo de "sesiones que nunca contestan" (§3.5.1). Hay que resolver identidad
+antes de agrupar.
+
+**Método, en tres pasos.** Es reutilizable y conviene dejarlo escrito:
+
+1. Cada recepción se empareja con su envío **por contenido**, lo que da una arista emisor→receptor
+   verificada. Esa arista *enseña* que la cadena `to` de ese envío equivale a la sesión receptora.
+2. El diccionario aprendido se aplica al resto de envíos, incluidos aquellos cuya recepción no está
+   en disco.
+3. Se agrupa por par no ordenado y se corta en ventanas por hueco de 20 minutos.
+
+Aprende 15 alias que colapsan a 8 sesiones —`conversational-ai-86 [b44a1e]`, `uds:…6677.sock` y
+`conversational-ai-cb [e6df9f]` resultan ser la misma— y resuelve **168 de 179 envíos**. Los 11 que
+quedan van a sesiones de las que nunca se recibió nada, así que no hay de dónde aprender el alias.
+
+**Resultado.**
+
+| | |
+|---|---|
+| Ventanas de conversación | **40**, sobre 11 pares |
+| Mensajes por ventana | p50 = 3, p90 = 10, máx = 18 |
+| Alternancias por ventana | p50 = 2, máx = 13 |
+| **Ventanas unilaterales** (nadie contesta) | **13 de 40** |
+
+Las dos más largas son negociaciones sostenidas: 18 mensajes con 13 alternancias en 58 minutos
+(`09d6fba6 ↔ aa19dfdf`, 9 de agosto) y 15 con 11 alternancias en 64 minutos (`b4b86a7d ↔ ffc27c4f`).
+El artefacto `pair_windows.json` lleva los identificadores `M###` de cada mensaje, así que la
+codificación de §3.5.4 se une encima y el mutex se puede recontar sobre categorías codificadas en
+lugar de sobre coincidencias léxicas.
+
+Que **una de cada tres ventanas sea unilateral** es el dato que hay que llevar a la capa 1: mide
+cuántos intercambios mueren en el primer mensaje.
+
 ### 3.5.8 Catálogo de escenarios para el repo semilla
 
 Cumple el requisito de §4.1: los bloqueos que reproduce la capa 1 son los observados, no inventados.
