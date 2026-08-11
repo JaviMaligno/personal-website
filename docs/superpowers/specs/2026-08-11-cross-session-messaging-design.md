@@ -371,25 +371,32 @@ integrado final*— y es el mejor apoyo empírico disponible para la predicción
 Conviene decirlo con cuidado: describe la topología, no el resultado. Que nadie tenga el mapa no
 demuestra todavía que el trabajo salga peor.
 
-### 3.5.7 Mutex: cuántas secuencias se cierran
+### 3.5.7 Mutex: el recuento léxico estaba mal
 
-Detector léxico sobre las ráfagas, buscando petición-de-espera → bloqueo reconocido → liberación →
-consumo:
+Una primera pasada con detector léxico dio 19 secuencias candidatas, de las que solo 5 llegaban al
+final, y se anotó aquí la lectura provisional de que *"el protocolo se abre mucho más de lo que se
+cierra"*.
 
-| Forma | n |
-|---|---|
-| Petición de espera **sin cierre** | 6 |
-| Petición → liberación → consumo (completa) | 5 |
-| Petición → liberación (sin consumo trazado) | 5 |
-| Petición → bloqueo reconocido (se queda ahí) | 3 |
+**Recontado sobre las categorías codificadas (§3.5.9), sale lo contrario.** Peticiones de espera
+reales dentro de una ventana de conversación: **3**. Que llegan a `handoff-recurso` en la misma
+ventana: **3**. Las tres, cerradas:
 
-**5 de 19 llegan al final.** Pero el detector tiene falsos positivos visibles (marca *"Gracias por el
-dato del hub; frontend v0.7.103 en build"* como petición de espera), así que la cifra vale como
-magnitud, no como medida. La codificación definitiva es la de doble pase.
+| Ventana | Petición | Cierre |
+|---|---|---|
+| W004 | *"Espera ~10 min: hay un camino de v0.28.0 que no he ejercitado"* | ✅ |
+| W009 | *"ESPERA unos minutos — tengo v0.35.0 en vuelo"* | ✅ |
+| W036 | *"Dame ~10 min: verificando el frontend en TST"* | ✅ |
 
-La lectura provisional, que hay que confirmar: el protocolo de exclusión mutua **se abre mucho más
-de lo que se cierra**. Si aguanta, es el hallazgo que conecta con julio — el mismo hand-off pequeño
-y repetido que hundió el modo `team` de CooperBench, con muchos sitios donde fumarla.
+Las otras 16 "candidatas" del detector léxico eran falsos positivos: cualquier mensaje con *espera*,
+*para* o *adelante* entraba. **El hallazgo provisional queda retirado**, y la cifra corregida apunta
+en dirección opuesta: cuando el protocolo de exclusión mutua se abre de verdad, se cierra siempre.
+
+Es un ejemplar de la propia tesis del artículo anterior sobre auditar el harness (§7.1): la primera
+medida no estaba midiendo lo que decía medir. Vale la pena contarlo en la pieza.
+
+**Y un dato que solo aparece al codificar.** Hay **20 `handoff-recurso`** y solo 3 vienen precedidos
+de una petición. Es decir, **17 cesiones espontáneas**: las sesiones sueltan recursos sin que nadie
+se los pida. Eso es cooperación proactiva, y no estaba en ninguna hipótesis del diseño.
 
 ### 3.5.7b Emparejamiento por par de sesiones y ventana temporal
 
@@ -458,6 +465,83 @@ Esto le da al repo semilla algo mejor que un bloqueo artificial: un **fallo sile
 donde la señal local dice verde y el estado publicado dice otra cosa. Es exactamente el terreno
 donde un canal entre sesiones podría comprar resultado — porque el otro mira desde fuera — y por eso
 merece ser el eje de la capa 1 en lugar de un `export` que falta.
+
+### 3.5.9 Codificación definitiva: dos pases independientes
+
+Los 179 mensajes se codificaron **dos veces por codificadores independientes** que no vieron el
+trabajo del otro, con el libro de códigos de §3.5.4 en sus tres ejes.
+
+#### Fiabilidad
+
+| Eje | Acuerdo bruto | Kappa de Cohen |
+|---|---|---|
+| Categoría (10 valores) | 91,1 % | **0,90** |
+| Delegación (sí/no) | 97,8 % | **0,88** |
+| Capa (sintáctica/semántica) | 92,7 % | **0,84** |
+
+Los desacuerdos se concentran en fronteras que el libro ya señalaba: alcance ↔ progreso (3),
+progreso ↔ petición (2). **Los ítems en disputa se cuentan aparte, no se resuelven a favor de
+ninguna hipótesis.**
+
+**Salvedad que hay que declarar en el artículo.** Los dos codificadores son agentes LLM, no
+personas. Una kappa alta entre dos LLM mide consistencia, **no** validez: pueden compartir el mismo
+sesgo y coincidir en el mismo error. Es mejor que las regex y peor que dos codificadores humanos, y
+así hay que presentarlo.
+
+#### Tasas base (163 ítems donde ambos pases coinciden)
+
+| Categoría | n | % |
+|---|---|---|
+| Notificación de progreso | 38 | 23,3 % |
+| Aviso de alcance | 30 | 18,4 % |
+| Handoff de recurso | 21 | 12,9 % |
+| Aviso de defecto ajeno | 20 | 12,3 % |
+| Rectificación | 18 | 11,0 % |
+| Respuesta de estado | 17 | 10,4 % |
+| Consulta de estado | 10 | 6,1 % |
+| Petición de acción | 5 | 3,1 % |
+| Petición de espera | 3 | 1,8 % |
+| Otro | 1 | 0,6 % |
+
+#### Los dos números que deciden la pieza
+
+**1. La delegación es rara: 16 de 179, un 8,9 %** (4 en disputa). La unidad de medida de §4.1 —A
+bloqueada necesitando que B actúe— ocurre en menos de uno de cada diez mensajes. Esto dispara la
+primera fila de riesgos de §8, cuya mitigación era reencuadrar la pieza hacia **cuándo importa esto
+siquiera**.
+
+**2. Pero la capa semántica es mucho mayor de lo estimado: 36,1 %** frente al 20 % que daban las
+regex. Rectificación (11 %) y aviso de defecto ajeno (12,3 %) suman ya 23 puntos por sí solos.
+
+**La tensión entre ambos es el hallazgo.** El canal casi nunca se usa para **pedir**, y muy a menudo
+para **decirle al otro algo verdadero sobre su propio trabajo**. La capa 1, tal como está diseñada,
+mide el 9 % y deja fuera el 36 %.
+
+Reorientación que se propone: el eje de la pieza deja de ser el follow-through de una petición y
+pasa a ser **el cross-check** — una sesión mirando el trabajo de otra desde fuera. Encaja con el
+catálogo de escenarios de §3.5.8, cuya familia común es precisamente *"la comprobación que se hace
+sobre algo distinto de lo que se entrega"*, y con la falsificación cruzada de §3.5.5b.
+
+#### Qué le pasa a las 16 delegaciones
+
+Localizadas 15 en ventanas de conversación. **14 reciben respuesta; 1 se queda sin ella** (M080, la
+realineación del venv, con la ventana ya cerrada). Las respuestas se reparten así:
+
+| Respuesta del receptor | n |
+|---|---|
+| `handoff-recurso` (cede lo pedido) | 5 |
+| `rectificacion` (corrige la premisa de la petición) | 4 |
+| `notificacion-progreso` (informa de que lo hizo) | 4 |
+| `aviso-defecto-ajeno` | 1 |
+
+Que 4 de 15 delegaciones se contesten **rectificando la premisa** —*"master NO está roto: era el
+venv"*, *"No es el pod: la imagen aún no existe. No busques el bug todavía"*— refuerza la
+reorientación de arriba: incluso cuando alguien pide algo, lo que a menudo devuelve el canal es una
+corrección.
+
+**Cuidado con la lectura fácil.** 14 de 15 respondidas no es una tasa de cumplimiento: responder no
+es hacer. Distinguirlas exige el juicio semántico de §3.5.2, y con n = 15 cualquier porcentaje
+tendría un intervalo inútil. Se reporta como conteo, no como tasa.
 
 ### 3.6 El experimento natural que el corpus regala
 
