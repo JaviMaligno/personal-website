@@ -1,9 +1,10 @@
 # Cross-session messaging: ¿canal o estructura?
 
-**Fecha:** 2026-08-11
-**Estado:** diseño aprobado, pendiente de ejecución
+**Fecha:** 2026-08-11 (revisado el mismo día tras cerrar el pre-flight §3.4)
+**Estado:** diseño aprobado, capa 0 en ejecución
 **Artículo predecesor:** [Coding Agents and Teamwork: Social Skills, or Structure?](../../../src/content/blog/en/coding-agents-structure.md) (2026-07-12)
-**Ejecución:** portátil secundario (única máquina con la feature disponible)
+**Ejecución:** máquina principal. El pre-flight encontró la feature disponible aquí desde el
+2026-08-07, con corpus local minable. La restricción original (§2) queda anulada.
 
 ---
 
@@ -71,13 +72,15 @@ integrador, o es otra vez la ilusión de la capa sintáctica?
 
 Estas restricciones son vinculantes y el protocolo debe respetarlas.
 
-- **La feature solo existe en el portátil secundario, con otra cuenta.** El diseño se cierra aquí;
-  la ejecución ocurre allí. El protocolo debe ser **mecánico**: scripts y pasos, sin depender de
-  criterio en caliente.
+- ~~**La feature solo existe en el portátil secundario, con otra cuenta.**~~ **Anulada por el
+  pre-flight §3.4.** La feature está disponible en la máquina principal desde el 2026-08-07 y hay
+  corpus local. Diseño y ejecución ocurren en la misma máquina, con protocolo interactivo. Se
+  conserva la exigencia de que el scoring sea mecánico y verificable por script (§4.1), que era lo
+  valioso de esta restricción; se descarta la de operar a ciegas, que era solo su coste.
 - **El envío lo inicia el agente, no se puede disparar deterministamente por script.** Consecuencia
   de diseño en §4.2 (replay).
 - **La máquina principal se satura y mata procesos.** N=8 sesiones simultáneas queda fuera del
-  diseño: no es un parámetro, es un apagón. Techo en N=4, suites en serie.
+  diseño: no es un parámetro, es un apagón. Techo en N=4, suites en serie. Esta sí sigue vigente.
 - **Presupuesto degradable.** Las capas se ejecutan en orden 0 → 1+2 → 3. Las capas 0+1+2 son una
   pieza publicable completa por sí solas. La capa 3 se puede abandonar sin dejar agujero
   argumental.
@@ -86,8 +89,30 @@ Estas restricciones son vinculantes y el protocolo debe respetarlas.
 
 ## 3. Capa 0 — Minado del corpus existente (primero, y barato)
 
-Ya existen sesiones reales en el portátil secundario con hasta 4 sesiones simultáneas usando el
-canal. Se minan **antes** de gastar máquina en nada más.
+Ya existen sesiones reales con hasta 4 sesiones simultáneas usando el canal. Se minan **antes** de
+gastar máquina en nada más.
+
+### 3.0 Censo del corpus (medido, 2026-08-11)
+
+| | |
+|---|---|
+| Envíos peer reales | **213** |
+| Ventana | **2026-08-07 → 2026-08-11**, cinco días |
+| Distribución diaria | 19 / 80 / 83 / 31 (7, 9, 10 y 11 de agosto) |
+| Proyecto dominante | `conversational-ai`, 208 de 213 |
+| Sesiones emisoras distintas | 18 |
+| Mediana del mensaje | 1.712 caracteres |
+| Recepciones trazadas | 117, en 6 sesiones receptoras |
+
+**Exclusión explícita.** Un escaneo ingenuo de `SendMessage` sobre `~/.claude/projects` devuelve 281
+envíos desde el 3 de julio. Los 59 anteriores al 7 de agosto son a **subagentes** (`team-lead`,
+`conflict-classifier`, `verificador-*`, ids hexadecimales) — mecanismo distinto, que ya existía y
+que no es el objeto de esta pieza. Se separan con un discriminador fiable: un subagente fue lanzado
+con `Agent` en la misma sesión; una sesión peer no. Quien replique el minado tiene que aplicar el
+mismo filtro o los números no cuadran.
+
+**Límite que impone la ventana.** Cinco días dan tasas base. **No** dan curva de aprendizaje ni
+evolución del uso, y el artículo no puede insinuarlas.
 
 ### 3.1 Qué produce
 
@@ -100,6 +125,16 @@ canal. Se minan **antes** de gastar máquina en nada más.
   cuántos hand-offs hubo, si alguien acabó teniendo vista del estado integrado.
 - **Catálogo de escenarios** que alimenta el repo semilla de las capas 1–3: los bloqueos reales
   observados son los que se reproducen, no bloqueos inventados.
+- **Verificación del pilar de §1.1.1: ¿la entrega interrumpe de verdad?** Es la afirmación que
+  sostiene la capa 1 entera y hasta ahora estaba asumida, no medida. En el transcript del receptor
+  el mensaje entrante aparece como bloque de usuario; su **posición** dice si llegó a mitad de tarea
+  (entre un `tool_use` del asistente y su continuación) o con el turno ya cerrado y la sesión parada
+  — es decir, buzón de facto con otro envoltorio.
+
+  Si la mayoría de las entregas caen con la sesión parada, el contraste interrupción-vs-buzón de la
+  capa 1 es mucho más pequeño de lo que el diseño supone, y conviene saberlo **antes** de gastar
+  máquina. Este chequeo es la puerta de la capa 1, igual que las tasas base son la puerta de la
+  pieza entera.
 
 ### 3.2 Qué NO produce, y por qué no basta
 
@@ -120,18 +155,30 @@ Es el mismo movimiento que en la pieza anterior con las 1.806 trayectorias minad
 restart-vs-iterate: el corpus se minó, dio cero, y se reportó honestamente que el cero era artefacto
 del montaje y no hallazgo. Aquí igual: **el corpus fija la pregunta, el experimento la contesta.**
 
-### 3.4 Pre-flight técnico
+### 3.4 Pre-flight técnico — CERRADO (2026-08-11)
 
-Antes de nada, verificar en el portátil secundario:
+Resultado, punto por punto:
 
-- **Las sesiones a minar ocurrieron en `Documents/repos/conversational-ai`.** Claude Code guarda los
-  transcripts bajo `~/.claude/projects/<ruta-slugificada>/*.jsonl`, así que el directorio a abrir es
-  el slug de esa ruta. Confirmar que existe y qué rango de fechas cubre.
-- Si los mensajes entre sesiones aparecen en esos transcripts con emisor, receptor y timestamp, o
-  solo se ve el lado que recibe.
-- Retención: cuántas de las sesiones de hasta 4 simultáneas siguen disponibles.
-- Cómo se direcciona una sesión a otra (nombre, id, registro) — necesario para el protocolo de las
-  capas 1–3.
+- **Ubicación.** Confirmada: `~/.claude/projects/-Users-javieraguilarmartin1-Documents-repos-conversational-ai/`.
+  Rango 2026-08-07 → 2026-08-11. Censo completo en §3.0.
+- **Ambos lados quedan registrados.** El emisor guarda el `tool_use` con `to`, `summary` y el
+  mensaje completo. El receptor guarda el bloque entrante con metadatos:
+
+  ```
+  Another Claude session sent a message:
+  <cross-session-message from="uds:/tmp/cc-socks/97778.sock"
+                         from-name="Seleccionar siguiente ticket de conversational AI"
+                         from-mode="prompting">
+  ```
+
+  Consecuencia de diseño: **la cadena de cuatro nodos de §5.1 es reconstruible desde los
+  transcripts**, sin instrumentación adicional. La capa 2 deja de ser exclusiva del experimento y se
+  puede aplicar también al corpus observacional.
+- **Retención.** Las sesiones del pico multi-sesión (9–11 de agosto, 194 de los 213 envíos) siguen
+  disponibles.
+- **Direccionamiento.** Tres formas conviviendo: socket `uds:/tmp/cc-socks/<pid>.sock` (119),
+  `<proyecto>-<sufijo> [<hash>]` (42) y nombre de sesión suelto. El protocolo de las capas 1–3 debe
+  fijar **una** y no mezclarlas.
 
 ---
 
@@ -159,6 +206,12 @@ textos distintos. Confundido. Solución: **replay**.
 | **Interrupción** | A usa el canal nuevo. Se captura el texto exacto que A envió. |
 | **Buzón** | Se inyecta *ese mismo texto capturado* en un fichero que B tiene instrucción de consultar. Replica la entrega de CooperBench. |
 | **Sin canal** | A bloqueada, sin forma de pedir. Línea base: ¿se hace la tarea igual? |
+
+**La instrucción de sondeo va en los tres brazos.** Si solo el brazo buzón lleva "consulta este
+fichero periódicamente", no se compara entrega contra entrega: se compara interrupción contra
+buzón-más-instrucción-explícita-de-sondear, y la instrucción es tratamiento. B recibe la misma
+instrucción en todos los brazos; en interrupción y sin canal el fichero simplemente permanece
+vacío. Así lo único que varía entre brazos es el mecanismo de entrega.
 
 El replay deja los brazos **pareados por construcción** (mismo mensaje, entrega distinta) y es más
 barato que generar dos mensajes. Consecuencia operativa: dentro de un escenario los brazos son
@@ -227,6 +280,15 @@ actuó*. Allí la fontanería se verificó a mano, caso por caso, para declararl
 instrumentada y automática. Es una mejora metodológica sobre la propia pieza previa, y conviene
 decirlo en el artículo.
 
+### 5.3 La cadena también se mide sobre el corpus
+
+El pre-flight (§3.4) encontró que emisor y receptor registran su lado. Eso permite aplicar las dos
+primeras aristas —intención comprimida a texto, y texto entendido por B— a los 213 envíos reales,
+no solo a los escenarios fabricados. Con una diferencia que hay que declarar: en el corpus la
+*intención* de A no está definida por un escenario, así que la primera arista solo se puede puntuar
+donde el propio mensaje de A o su transcript la hagan explícita. Donde no, se marca como no
+puntuable en vez de estimarla.
+
 ---
 
 ## 6. Capa 3 — Validación externa: la épica (desechable)
@@ -237,9 +299,25 @@ Repo semilla, 4 tickets, **colisiones registradas antes de correr**. N=2 y N=4. 
 
 | Brazo | Descripción |
 |---|---|
-| **Aislado** | Sin canal, merge al final. Control. |
-| **Emergente** | Con canal, comportamiento natural. Lo que el autor ya hace: secuencias espontáneas, merge por colisión. |
-| **Integrador impuesto** | Con canal, más una sesión dueña del estado integrado final. La palanca conocida del artículo anterior. |
+| **Aislado** | Sin canal, merge al final. Control negativo. |
+| **Emergente** | Con canal, comportamiento natural. Lo que el autor ya hace: secuencias espontáneas, merge por colisión. **El único brazo que produce hallazgo.** |
+| **Integrador impuesto** | Con canal, más una sesión dueña del estado integrado final. **Control positivo**, ver §6.1.1. |
+
+#### 6.1.1 Por qué el integrador es control positivo y no hallazgo
+
+Este brazo es C4 del artículo anterior. Su respuesta ya está publicada, así que correrlo otra vez no
+descubre nada — pero **no se puede citar en su lugar**: la cifra de julio salió de CooperBench, no
+del repo semilla de aquí, y no son comparables. O se re-corre o se cae la comparación.
+
+Se re-corre, cambiándole el papel. El integrador impuesto no está aquí para demostrar que funciona;
+está para demostrar que **este montaje reproduce un efecto conocido**. Si no lo reproduce, el
+sospechoso es el harness, no el brazo emergente, y las cifras de la pieza no se publican hasta
+entenderlo. Cuesta lo mismo que en el diseño original y compra validez en vez de duplicar un
+hallazgo. Es además la forma concreta que toma aquí la auditoría adversarial del harness que exige
+§7.1.
+
+Regla que se deriva: en el artículo, el número del integrador se presenta como **calibración**, no
+como resultado, y con enlace explícito al artículo de julio.
 
 ### 6.2 Métricas: dos columnas que nunca se mezclan
 
@@ -249,12 +327,22 @@ Repo semilla, 4 tickets, **colisiones registradas antes de correr**. N=2 y N=4. 
 
 ### 6.3 Predicción registrada (antes de correr)
 
-> El canal hunde la columna sintáctica y **no mueve** la semántica. El merge emergente se parecerá
-> más a aislado que a integrador impuesto en la columna semántica, porque nadie llega a poseer el
-> estado integrado final.
+La versión anterior de esta sección predecía que *"el canal hunde la columna sintáctica y no mueve
+la semántica"*. Eso no es una predicción: es la conclusión publicada en julio. Registrarla como
+predicción y luego confirmarla no aporta nada, y hace parecer riesgo lo que era expectativa.
 
-Publicar la predicción antes del resultado es lo que convierte una confirmación aburrida en un
-artículo. Si sale al revés, mejor artículo todavía.
+La única pregunta abierta es **dónde cae el merge emergente**:
+
+> En la columna semántica, el brazo emergente quedará más cerca de **aislado** que de **integrador
+> impuesto**, porque en el merge negociado por colisión la propiedad del estado integrado es
+> transitoria y nadie termina con la vista del conjunto. En la columna sintáctica quedará cerca del
+> integrador: pocas colisiones, pocos conflictos. La disociación entre ambas columnas es el
+> resultado esperado.
+
+Corolario que hay que registrar igual, porque es el desenlace más incómodo: si emergente **iguala**
+a integrador impuesto en la columna semántica, entonces el hand-off pequeño y repetido basta, el
+lead dedicado es prescindible, y una parte de la conclusión de julio necesita matiz. Ese es el
+resultado que haría el mejor artículo, y por eso conviene dejarlo escrito antes de correr.
 
 ### 6.4 Condición de abandono
 
@@ -283,8 +371,14 @@ silencioso.
 - Rangos [min–max] sobre semillas, no números sueltos.
 - Auditoría adversarial del propio harness antes de publicar cifras. En la pieza anterior dos
   condiciones puntuaron un 0% falso por bugs de composición del eval; la fontanería de scoring
-  merece tanto test como las condiciones.
+  merece tanto test como las condiciones. Aquí toma la forma concreta del control positivo de
+  §6.1.1.
 - Declarar explícitamente el techo: cobertura, no confianza.
+- **Nada que ya se publicó vuelve a venderse como hallazgo.** El brazo integrador se presenta como
+  calibración y enlaza al artículo de julio; la taxonomía §4.3 y el método de comparación pareada se
+  presentan como instrumento heredado. Reutilizar instrumento hace la serie acumulativa; repetir una
+  medición ya respondida y presentarla como nueva, no.
+- Declarar la ventana del corpus (cinco días, §3.0) allí donde aparezcan sus cifras.
 
 ---
 
@@ -295,8 +389,10 @@ silencioso.
 | Las tasas base de la capa 0 salen ridículas: la feature casi nunca es portante | Es un hallazgo publicable. Reencuadra la pieza hacia "cuándo importa esto siquiera" y ahorra las capas 2–3. |
 | El envío agéntico no ocurre cuando el escenario lo requiere (A no pide ayuda) | Es un dato, no un fallo: "A ni siquiera pidió" entra en la taxonomía como categoría cero. |
 | La capa 3 se come el presupuesto y queda a medias | Orden de ejecución 0 → 1+2 → 3; condición de abandono en §6.4. |
-| Los transcripts de las sesiones antiguas ya no existen | Pre-flight §3.4 antes de comprometer el diseño de la capa 0. |
 | El scoring de "fallo semántico" requiere juicio | Suite por ticket + suite integrada, definidas en el repo semilla antes de correr. |
+| ~~Los transcripts de las sesiones antiguas ya no existen~~ | **Resuelto.** Pre-flight cerrado: 213 envíos y 117 recepciones disponibles con ambos lados registrados (§3.0, §3.4). |
+| **La entrega no interrumpe de verdad**: la mayoría de mensajes llegan con la sesión parada y el canal es un buzón con otro envoltorio | Se mide en la capa 0 antes de gastar en la capa 1 (§3.1). Si sale así, el contraste de la capa 1 se declara pequeño y la pieza se apoya en las capas 0 y 3. |
+| El corpus es de cinco días y se lee como si fuera práctica establecida | Declarar la ventana en el artículo y no insinuar tendencia temporal (§3.0). |
 
 ---
 
