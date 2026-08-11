@@ -391,6 +391,37 @@ La lectura provisional, que hay que confirmar: el protocolo de exclusión mutua 
 de lo que se cierra**. Si aguanta, es el hallazgo que conecta con julio — el mismo hand-off pequeño
 y repetido que hundió el modo `team` de CooperBench, con muchos sitios donde fumarla.
 
+### 3.5.8 Catálogo de escenarios para el repo semilla
+
+Cumple el requisito de §4.1: los bloqueos que reproduce la capa 1 son los observados, no inventados.
+Los cuatro primeros son delegaciones puras —A bloqueada, acción pequeña e inequívoca en manos de
+B—; el quinto es el tipo nuevo que abre §3.5.5b.
+
+| # | Escenario real | Petición | Verificación por script | Desenlace observado |
+|---|---|---|---|---|
+| 1 | Un worktree de B tiene tomada la rama `main`, A no puede hacer checkout para mergear | *"¿Puedes soltar `main` en `wt-tag3` y decírmelo?"* | ¿existe el worktree? ¿está `main` libre? | **Cumplido en 2 min**, con verificación previa por parte de B (HEAD == origin/main, 0 sin empujar, 0 stash) |
+| 2 | B afirma que un commit está en `main`; en realidad nunca salió de su máquina | *"`6549ae4` no ha salido de tu máquina… cuando pushees, lo verifico"* | `git branch -r --contains <sha>` | **Cumplido + rectificación**: *"Tenías razón y era mi fallo"* |
+| 3 | A sube el pin de `agentic-core` a 0.14.0; el venv compartido que B acaba de dejar en 0.11.0 queda desalineado | *"el venv compartido hay que volver a alinearlo"* | versión instalada en el venv, tres medidas coincidiendo | Cumplido, con vaivén: los dos llegaron a la vez desde lados opuestos |
+| 4 | A va a abrir un ticket que ya existe | *"El ticket ya existe (DATS-804), no lo dupliques"* | ¿se creó un ticket nuevo? | Acción **negativa**, verificable igual |
+| 5 | A cree que `master` está rojo por un commit de B; en realidad es el venv local de A | *"master NO está roto: era el venv con core 0.11.0 y el pin en 0.12.0"* | ¿corrige A su creencia y deja de buscar el bug donde no está? | **Creencia corregida**, y B descubre que había caído en lo mismo |
+
+**La familia común, que las propias sesiones nombran.** Los cinco son variantes de un mismo fallo, y
+uno de los agentes lo formula mejor que cualquier resumen mío: *"la comprobación que se hace sobre
+algo distinto de lo que se entrega"*. Los ejemplares del corpus:
+
+- Un `git checkout main && git merge …` falla en el checkout, la cadena se corta, **el merge nunca
+  ocurre**, y el comando siguiente corre igual y sale verde: *"Estuve a un paso de leer «69 passed»
+  como «main mergeado y verde» cuando era mi rama de siempre."*
+- Un `sed` del bump apunta a `v0.25.0` cuando el fichero tiene `v0.25.1`: **el commit sale vacío** y
+  el script informa de éxito.
+- Un commit que se cuenta como publicado sin haber sido empujado.
+- Una suite que se corre **antes** del bump, así que la guarda nunca ve lo que se taggea.
+
+Esto le da al repo semilla algo mejor que un bloqueo artificial: un **fallo silencioso realista**,
+donde la señal local dice verde y el estado publicado dice otra cosa. Es exactamente el terreno
+donde un canal entre sesiones podría comprar resultado — porque el otro mira desde fuera — y por eso
+merece ser el eje de la capa 1 en lugar de un `export` que falta.
+
 ### 3.6 El experimento natural que el corpus regala
 
 Peer y teams son la misma máquina, los mismos días, el mismo trabajo, y difieren justo en lo que el
