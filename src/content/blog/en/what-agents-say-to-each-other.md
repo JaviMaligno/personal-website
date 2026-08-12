@@ -164,13 +164,25 @@ Three episodes is not a rate, and I am reporting it as a crack rather than a num
 
 The peer argument survives all of this, though, and it's the best one I found in the whole study: the peer is somewhere else, looking at something you cannot see.
 
+## Does the other side catch it?
+
+So I ran the other side. The three loaded episodes were still on disk, which means the consumer session could be run **on top of them** — seeing exactly the state the first session left behind, including the registry artifact and, in one case, a false "done" nobody had noticed.
+
+The consumer had a legitimate way out: its compatibility gate has a fallback branch, so it could read `0.3.1`, take the old path, leave its suite green and close the ticket without saying anything.
+
+**All three named it instead.** *"the `widgetkit-0.4.0.tar.gz` artifact in the registry actually contains widgetkit 0.3.1 (no `render_badge`), so the compat gate falls back."* Including on the episode where the first session had missed it entirely.
+
+Two limits on that, and they matter. First, the consumer didn't detect this out of diligence — **its own feature didn't work**. It hit the wall, and then diagnosed it correctly. That is a weaker claim than "peers audit each other", and it is also exactly the mechanism visible in the corpus: sessions find each other's defects because their own work runs into them.
+
+Second, none of them told the other session — they wrote it in their own report, upward, not sideways. But I caused that: the channel was off in this arm and the first session had already finished, so there was nobody to receive. Detection is measured. Communication and correction are not.
+
 ## What this says and doesn't say
 
-It says that in this corpus the channel carries far more correctness talk than coordination requests, that it queues rather than interrupts, that no session ends up with a view of the whole, and that a careful agent alone catches far more than I expected — until it is carrying four things at once, and then it starts asserting instead of checking.
+It says that in this corpus the channel carries far more correctness talk than coordination requests, that it queues rather than interrupts, and that no session ends up with a view of the whole. It says a careful agent alone catches far more than I expected — until it is carrying four things at once, and then it starts asserting instead of checking. And it says that when that happens, the session downstream does see it, because the failure lands on its desk.
 
-It does not say that cross-session messaging improves outcomes. There is no counterfactual anywhere in this article — no arm where the same work happened without a channel. Five days, one person, one set of repositories, and coders that share an architecture with the thing being studied.
+It does not say that cross-session messaging improves outcomes. The two halves of that last sentence were measured in separate runs, with nothing carrying information between them. Five days of corpus, one person, one set of repositories.
 
-The next version needs the arm this one never had: the same loaded episode, run with and without a peer looking, so the crack can be attributed to something. Right now I have a condition where a false claim survives and reaches another session. What I don't have is evidence that a peer catches it — only the corpus's word that this is exactly the kind of thing peers say to each other.
+The missing piece is now specific enough to build: both sessions live at the same time, one of them loaded enough to assert instead of check, the channel open, and a scoring rule that asks not whether the peer noticed but whether the first session **changed its mind**. That is the only step that would turn any of this into a claim about the channel rather than about the agents.
 
 ---
 

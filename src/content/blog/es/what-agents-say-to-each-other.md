@@ -164,13 +164,25 @@ Tres episodios no son una tasa, y lo reporto como una grieta y no como un númer
 
 El argumento a favor del par sobrevive a todo esto, y es el mejor que he encontrado en el estudio: el par está en otro sitio, mirando algo que tú no puedes ver.
 
+## ¿Lo caza el otro lado?
+
+Así que corrí el otro lado. Los tres episodios con carga seguían en disco, así que la sesión consumidora se pudo correr **encima de ellos** — viendo exactamente el estado que dejó la primera, incluido el artefacto del registro y, en un caso, un falso "hecho" que nadie había notado.
+
+La consumidora tenía una salida legítima: su puerta de compatibilidad tiene rama de fallback, así que podía leer `0.3.1`, tomar el camino viejo, dejar su suite en verde y cerrar el ticket sin decir nada.
+
+**Las tres lo nombraron.** *"el artefacto `widgetkit-0.4.0.tar.gz` del registro contiene en realidad widgetkit 0.3.1 (sin `render_badge`), así que la puerta de compat cae al fallback."* Incluida la del episodio donde la primera sesión no lo había visto.
+
+Dos límites, y pesan. El primero: la consumidora no lo detectó por diligencia, sino porque **su propia feature no funcionaba**. Se dio contra el muro y luego diagnosticó bien. Eso es una afirmación más débil que "los pares se auditan entre ellos", y es también el mecanismo que se ve en el corpus: las sesiones encuentran los defectos de las otras porque su propio trabajo se topa con ellos.
+
+El segundo: ninguna se lo dijo a la otra sesión — lo escribieron en su propio informe, hacia arriba, no de lado. Pero eso lo causé yo: el canal estaba desactivado en este brazo y la primera sesión ya había terminado, así que no había a quién avisar. La detección está medida. La comunicación y la corrección, no.
+
 ## Qué dice y qué no dice
 
-Dice que en este corpus el canal lleva mucho más contenido sobre corrección que peticiones de coordinación, que encola en vez de interrumpir, que ninguna sesión acaba con una vista del conjunto, y que un agente cuidadoso a solas caza mucho más de lo que yo esperaba — hasta que lleva cuatro cosas a la vez, y entonces empieza a afirmar en lugar de comprobar.
+Dice que en este corpus el canal lleva mucho más contenido sobre corrección que peticiones de coordinación, que encola en vez de interrumpir, y que ninguna sesión acaba con una vista del conjunto. Dice que un agente cuidadoso a solas caza mucho más de lo que yo esperaba — hasta que lleva cuatro cosas a la vez, y entonces empieza a afirmar en lugar de comprobar. Y dice que cuando eso pasa, la sesión de abajo sí lo ve, porque el fallo le aterriza en la mesa.
 
-No dice que la mensajería entre sesiones mejore los resultados. No hay contrafactual en ninguna parte de este artículo: ningún brazo donde el mismo trabajo ocurriera sin canal. Cinco días, una persona, un conjunto de repositorios, y codificadores que comparten arquitectura con lo que se estudia.
+No dice que la mensajería entre sesiones mejore los resultados. Las dos mitades de esa última frase se midieron en corridas separadas, sin nada que llevara información de una a otra. Cinco días de corpus, una persona, un conjunto de repositorios.
 
-La siguiente versión necesita el brazo que a esta le falta: el mismo episodio con carga, corrido con y sin un par mirando, para poder atribuir la grieta a algo. Ahora mismo tengo una condición donde una afirmación falsa sobrevive y llega a otra sesión. Lo que no tengo es evidencia de que un par la cace: solo la palabra del corpus de que esto es exactamente lo que los pares se dicen entre ellos.
+Lo que falta ya es lo bastante concreto como para construirlo: las dos sesiones vivas a la vez, una con carga suficiente para afirmar en vez de comprobar, el canal abierto, y una regla de puntuación que no pregunte si el par se dio cuenta sino si la primera sesión **cambió de opinión**. Ese es el único paso que convertiría algo de esto en una afirmación sobre el canal y no sobre los agentes.
 
 ---
 
