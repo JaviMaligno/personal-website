@@ -6,6 +6,7 @@ tags: ["IA", "Agentes", "Evaluación", "Contexto", "Investigación"]
 lang: es
 translationKey: what-has-already-happened
 heroImage: "/blog/what-has-already-happened.png"
+linkedinImage: /blog/what-has-already-happened-data.png
 ---
 Llevo unos meses trabajando a diario con agentes de código en un proyecto con mucho *estado*: un curso universitario que tengo que grabar en un estudio cuatro días seguidos, con guiones, tiempos y una fecha de entrega antes. Y había un tipo de sugerencia que volvía una y otra vez: **consejos de orden que no se sostenían.**
 

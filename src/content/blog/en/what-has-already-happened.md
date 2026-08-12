@@ -6,6 +6,7 @@ tags: ["AI", "Agents", "Evaluation", "Context Engineering", "Research"]
 lang: en
 translationKey: what-has-already-happened
 heroImage: "/blog/what-has-already-happened.png"
+linkedinImage: /blog/what-has-already-happened-data.png
 ---
 I've spent a few months working daily with coding agents on a project with a lot of *state*: a university course I have to record in a studio on four consecutive days, with scripts, timings and a delivery deadline before it. And one kind of suggestion kept coming back — **ordering advice that didn't hold up.**
 
