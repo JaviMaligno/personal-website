@@ -1,7 +1,7 @@
 ---
 title: "Qué se dicen los agentes de código cuando hablan entre ellos"
 description: "Leí 179 mensajes reales entre sesiones paralelas de Claude Code. El canal casi nunca se usa para pedir cosas: se usa para decirle al otro algo verdadero sobre su propio trabajo. Por el camino refuté mi propia premisa y retiré uno de mis propios hallazgos."
-pubDate: 2026-08-13
+pubDate: 2026-08-15
 tags: ["IA", "Agentes", "Evaluación"]
 lang: es
 translationKey: what-agents-say-to-each-other

@@ -1,7 +1,7 @@
 ---
 title: "What Coding Agents Say When They Talk to Each Other"
 description: "I read 179 real messages between parallel Claude Code sessions. The channel is almost never used to ask for things — it is used to tell the other one something true about their own work. Along the way I refuted my own premise and withdrew one of my own findings."
-pubDate: 2026-08-13
+pubDate: 2026-08-15
 tags: ["AI", "Agents", "Evaluation"]
 lang: en
 translationKey: what-agents-say-to-each-other
