@@ -1,6 +1,6 @@
 ---
 title: "Qué se dicen los agentes de código cuando hablan entre ellos"
-description: "Leí 179 mensajes reales entre sesiones paralelas de Claude Code. El canal casi nunca se usa para pedir cosas: se usa para decirle al otro algo verdadero sobre su propio trabajo. Por el camino refuté mi propia premisa y retiré uno de mis propios hallazgos."
+description: "Leí 179 mensajes reales entre sesiones paralelas de Claude Code: el canal casi nunca se usa para pedir cosas, sino para decirle al otro algo verdadero sobre su propio trabajo. Luego monté el experimento, y vi a una sesión cazar a otra publicando una release que no existía."
 pubDate: 2026-08-15
 tags: ["IA", "Agentes", "Evaluación"]
 lang: es
@@ -182,7 +182,29 @@ Dice que en este corpus el canal lleva mucho más contenido sobre corrección qu
 
 No dice que la mensajería entre sesiones mejore los resultados. Las dos mitades de esa última frase se midieron en corridas separadas, sin nada que llevara información de una a otra. Cinco días de corpus, una persona, un conjunto de repositorios.
 
-Lo que falta ya es lo bastante concreto como para construirlo: las dos sesiones vivas a la vez, una con carga suficiente para afirmar en vez de comprobar, el canal abierto, y una regla de puntuación que no pregunte si el par se dio cuenta sino si la primera sesión **cambió de opinión**. Ese es el único paso que convertiría algo de esto en una afirmación sobre el canal y no sobre los agentes.
+## Así que construí lo que faltaba
+
+Las dos sesiones vivas a la vez. La primera con carga suficiente para afirmar en vez de comprobar. El canal abierto. Y una regla de puntuación que no pregunta si el par se dio cuenta, sino si la primera sesión **cambió de opinión** — leída de los transcripts, no del informe de nadie.
+
+El primer intento falló por tiempo: la consumidora mandó su aviso dieciocho segundos después de que la otra sesión ya hubiera salido. Así que le di más trabajo posterior a la sesión que publicaba —sacar la documentación, luego un ticket de tipado— y lo corrí otra vez.
+
+**Tres episodios con ventana suficiente, tres cadenas cerradas.** Todas con la misma forma: release falsa, la consumidora lo detecta al instalar, avisa a la publicadora, la publicadora confirma y saca una versión corregida.
+
+La sesión que publicaba sacó una release falsa y no lo notó. La consumidora la instaló, encontró `0.3.1` donde debía haber `0.4.0`, y escribió a la sesión que la había publicado. Esa sesión confirmó la causa raíz y **cortó una release correctiva**. Y no a ciegas:
+
+> *"Sacar un 0.4.1 correctivo en vez de reescribir el 0.4.0. Dos motivos: no tengo permiso en esta sesión para borrar del registry compartido […] y reescribir una versión ya consumida es peor que publicar la siguiente."*
+
+También dejó documentado el fallo de tooling que quedaba vivo —el publicador sale con éxito cuando no sube nada— señalando que el script vive fuera de su repo y no lo había tocado.
+
+**Eso es un canal comprando una corrección**, que es justo lo que mi artículo de julio decía que el canal no hacía. Tres episodios tampoco son una tasa, y el que falló lo hizo por mi cronometraje, no por el comportamiento de nadie. Pero el mecanismo queda demostrado de punta a punta, y repetido, en las condiciones exactas en las que el corpus decía que vive: algo publicado mal, invisible desde dentro, evidente para quien lo consume.
+
+Y el último mensaje cerró el círculo fallando igual que el primer intento. El *"0.4.1 ya está publicado, reinstala"* nunca llegó: la sesión consumidora ya había salido. La publicadora lo notó y lo dejó escrito: *"alguien tiene que decirle que reinstale."*
+
+## Qué me llevaría yo de todo esto
+
+Un canal entre sesiones no vale gran cosa para repartir trabajo; el corpus dice que eso es el 9% de para lo que se usa. Vale para lo que nadie puede hacer solo: comprobar lo que has publicado de verdad, en vez de lo que crees que has publicado.
+
+Y todos y cada uno de los instrumentos que construí en este estudio fallaron al menos una vez — el detector del mutex, el parseo del informe, la búsqueda de transcripts, la comprobación del registro. Todos los fallos apuntaban en la misma dirección: hacia el resultado que yo esperaba. No es una casualidad que quiera dejar sin decir al final de un artículo sobre agentes que afirman en lugar de comprobar.
 
 ---
 

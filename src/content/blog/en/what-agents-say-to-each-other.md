@@ -1,6 +1,6 @@
 ---
 title: "What Coding Agents Say When They Talk to Each Other"
-description: "I read 179 real messages between parallel Claude Code sessions. The channel is almost never used to ask for things — it is used to tell the other one something true about their own work. Along the way I refuted my own premise and withdrew one of my own findings."
+description: "I read 179 real messages between parallel Claude Code sessions: the channel is almost never used to ask for things, but to tell the other one something true about their own work. Then I built the experiment — and watched one session catch another shipping a release that did not exist."
 pubDate: 2026-08-15
 tags: ["AI", "Agents", "Evaluation"]
 lang: en
@@ -182,7 +182,29 @@ It says that in this corpus the channel carries far more correctness talk than c
 
 It does not say that cross-session messaging improves outcomes. The two halves of that last sentence were measured in separate runs, with nothing carrying information between them. Five days of corpus, one person, one set of repositories.
 
-The missing piece is now specific enough to build: both sessions live at the same time, one of them loaded enough to assert instead of check, the channel open, and a scoring rule that asks not whether the peer noticed but whether the first session **changed its mind**. That is the only step that would turn any of this into a claim about the channel rather than about the agents.
+## So I built the missing piece
+
+Both sessions live at once. The first one loaded enough to assert instead of check. The channel open. And a scoring rule that asks not whether the peer noticed, but whether the first session **changed its mind** — read from the transcripts, not from anyone's report.
+
+The first attempt failed on timing: the consumer sent its warning eighteen seconds after the other session had already exited. So I gave the publishing session more work to do after the release — publish the docs, then a typing ticket — and ran it again.
+
+**Three episodes with a long enough window, three closed chains.** Every one the same shape: false release, consumer detects on install, consumer messages the publisher, publisher confirms and ships a corrected version.
+
+The publishing session shipped a false release and didn't notice. The consumer installed it, found `0.3.1` where `0.4.0` should be, and messaged the session that had published it. That session confirmed the root cause and **cut a corrected release**. Not blindly, either:
+
+> *"Ship a corrective 0.4.1 rather than rewriting 0.4.0. Two reasons: I don't have permission in this session to delete from the shared registry […] and rewriting a version other people have already consumed is worse than publishing the next one."*
+
+It also documented the tooling bug that remained — the publisher exits successfully when it uploads nothing — and noted the script lives outside its own repository, so it hadn't touched it.
+
+**That is a channel buying a correction**, which is the thing my July article said the channel didn't do. Three episodes is not a rate either, and the one that failed did so on my timing, not on anyone's behaviour. But the mechanism is demonstrated end to end, repeatedly, in the exact conditions the corpus said it lives in: something published wrongly, invisible from the inside, obvious to whoever consumes it.
+
+And the last message closed the loop by failing the same way the first attempt did. The publisher's final *"0.4.1 is up, reinstall"* never arrived — the consumer's session had exited. The publisher noticed and wrote it down: *"someone has to tell it to reinstall."*
+
+## What I'd tell you to take from this
+
+A channel between sessions is not worth much for splitting work up; the corpus says that is 9% of what it's used for. It is worth something for the thing nobody can do alone: checking what you actually published, rather than what you think you published.
+
+And every single instrument I built in this study failed at least once — the mutex detector, the report parser, the transcript lookup, the registry check. Every failure pointed the same way: toward the result I was expecting. That is not a coincidence I want to leave unstated at the end of an article about agents that assert instead of checking.
 
 ---
 
