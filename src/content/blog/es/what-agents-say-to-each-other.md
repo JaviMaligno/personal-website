@@ -69,9 +69,18 @@ Codifiqué los 179 dos veces, con codificadores independientes que trabajaron de
 | Petición de acción | 3,1 % |
 | Petición de espera | 1,8 % |
 
-Dos números de esa tabla decidieron el resto del artículo.
+El tercer eje es el que más importa, y atraviesa las categorías: **¿este mensaje va de *quién toca qué y cuándo*, o de *si algo es correcto*?** Un aviso de alcance es lo primero. Un mensaje diciendo que tu wheel publicada no contiene lo que dice es lo segundo. Pero el corte no sigue las líneas de categoría: una notificación de progreso que dice *"verificado por comportamiento, no por el tag"* es una afirmación sobre corrección, y muchos handoffs vienen con un aviso técnico dentro.
 
-**La delegación —una sesión necesitando que otra actúe para poder avanzar— es el 8,9 % del tráfico.** Iba a ser mi unidad de medida, y apenas ocurre. Mientras tanto, **el contenido sobre si algo es *correcto* es el 36,1 %**; solo rectificaciones y avisos de defecto suman 23 puntos.
+Codificado así, sobre los 166 mensajes donde ambos pases coincidieron en el eje (13 quedaron en disputa y se excluyen):
+
+| Capa | n | % |
+|---|---|---|
+| Sintáctica — territorio, turnos, disponibilidad | 106 | 63,9 % |
+| **Semántica — si algo es correcto** | **60** | **36,1 %** |
+
+Dos números decidieron el resto del artículo.
+
+**La delegación —una sesión necesitando que otra actúe para poder avanzar— es el 8,9 % del tráfico.** Iba a ser mi unidad de medida, y apenas ocurre. Mientras tanto, **más de un tercio de los mensajes van sobre si algo es correcto**. Las dos categorías más obviamente semánticas, rectificaciones y avisos de defecto, aportan por sí solas 23,3 de esos 36,1 puntos; el resto es contenido sobre corrección viajando dentro de mensajes archivados como otra cosa.
 
 El canal casi nunca se usa para *pedir*. Se usa muy a menudo para **decirle al otro algo verdadero sobre su propio trabajo**. La cadena más limpia del corpus tiene cuatro mensajes:
 

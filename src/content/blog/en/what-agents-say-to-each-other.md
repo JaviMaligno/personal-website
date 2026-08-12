@@ -69,9 +69,18 @@ I coded all 179 messages twice, with independent coders working from the same co
 | Action request | 3.1 % |
 | Wait request | 1.8 % |
 
-Two numbers out of that table decided the rest of this article.
+The third axis is the one that matters most, and it cuts across the categories: **is this message about *who touches what and when*, or about *whether something is correct*?** A scope announcement is the first kind. A message saying your published wheel doesn't contain what it says is the second. But the split doesn't follow category lines — a progress notification carrying *"verified by behaviour, not by the tag"* is a claim about correctness, and plenty of handoffs come with a technical warning attached.
 
-**Delegation — one session needing another to act so it can proceed — is 8.9 % of the traffic.** That was going to be my unit of measurement, and it barely happens. Meanwhile **content about whether something is *correct* is 36.1 %**; corrections and defect reports alone account for 23 points of it.
+Coded that way, over the 166 messages where both passes agreed on the axis (13 were disputed and are excluded):
+
+| Layer | n | % |
+|---|---|---|
+| Syntactic — territory, turns, availability | 106 | 63.9 % |
+| **Semantic — whether something is correct** | **60** | **36.1 %** |
+
+Two numbers decided the rest of this article.
+
+**Delegation — one session needing another to act so it can proceed — is 8.9 % of the traffic.** That was going to be my unit of measurement, and it barely happens. Meanwhile **more than a third of the messages are about whether something is correct**. The two most obviously semantic categories, corrections and defect reports, account for 23.3 points of that 36.1 by themselves; the rest is correctness talk riding inside messages filed under something else.
 
 The channel is almost never used to *ask*. It is very often used to **tell the other one something true about their own work**. The clearest chain in the corpus runs four messages:
 
