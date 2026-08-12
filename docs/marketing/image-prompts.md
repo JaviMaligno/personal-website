@@ -443,3 +443,44 @@ coding match, so they were kept as they are.
 exhausting five reconnect attempts against its own backend. Nothing to fix: the
 same command re-run produced the image. Worth knowing so a failed generation
 isn't mistaken for a bad prompt.
+
+---
+
+## what-agents-say-to-each-other — hero (2026-08-12)
+
+`public/blog/what-agents-say-to-each-other.png`, generada con Codex
+(`codex exec --approve-for-me`). Escena de escritorio con dos terminales
+etiquetadas `session A` / `session B`, una cola de mensajes en frontera de turno
+y una estantería de registro donde `v0.4.0` publicado contradice a `v0.3.1`.
+Prompt completo en el historial de la sesión; las tres ideas que tenía que
+recoger eran: dos sesiones, la cola que no interrumpe, y el desacuerdo entre lo
+publicado y lo real.
+
+## what-agents-say-to-each-other — tarjetas de LinkedIn (2026-08-12)
+
+`public/blog/what-agents-say-to-each-other-li-{en,es}.png`.
+
+**No están generadas con un modelo de imagen, y no deben estarlo.** Reproducen
+texto literal de una conversación real entre sesiones, así que el texto tiene
+que salir exacto: los modelos de imagen lo mutilan. Se montan en HTML y se
+capturan con Chrome headless.
+
+Fuentes: `docs/marketing/li-cards/what-agents-say-to-each-other-{en,es}.html`.
+
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless --disable-gpu --hide-scrollbars --force-device-scale-factor=2 \
+  --screenshot=out.png --window-size=1200,627 \
+  "file://$PWD/docs/marketing/li-cards/what-agents-say-to-each-other-en.html"
+```
+
+1200×627 es la proporción de LinkedIn; `--force-device-scale-factor=2` da el 2×
+que hace falta para que el texto no se vea blando en el feed.
+
+Dos decisiones que conviene mantener si se repite el formato:
+
+- **No imita la interfaz de Claude Code.** Si fuera pixel-perfect, cualquiera
+  podría tomarla por una captura auténtica del producto. Lleva el rótulo
+  "Intercambio real · anonimizado" y un cromo propio, deliberadamente distinto.
+- **El texto va anonimizado con las mismas reglas que el artículo** (sesiones
+  como `·65`, `·86`, `·6e`; sin hosts, tickets ni nombres de repo internos).

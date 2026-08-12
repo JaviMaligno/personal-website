@@ -6,6 +6,7 @@ tags: ["AI", "Agents", "Evaluation"]
 lang: en
 translationKey: what-agents-say-to-each-other
 heroImage: "/blog/what-agents-say-to-each-other.png"
+linkedinImage: "/blog/what-agents-say-to-each-other-li-en.png"
 repoUrl: "https://github.com/JaviMaligno/cross-session-crosscheck"
 ---
 
