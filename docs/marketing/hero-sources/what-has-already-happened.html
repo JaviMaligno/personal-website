@@ -1,0 +1,145 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{width:1020px;height:510px;overflow:hidden;
+       background:#12151c;
+       font-family:Inter,-apple-system,system-ui,sans-serif;color:#e8eaed}
+  .wrap{width:1020px;height:510px;padding:30px 34px;display:grid;
+        grid-template-columns:352px 1fr;grid-template-rows:auto 1fr;gap:22px 26px;
+        background:
+          radial-gradient(900px 420px at 78% -12%, rgba(45,212,191,.09), transparent 60%),
+          radial-gradient(620px 320px at 6% 112%, rgba(245,158,11,.07), transparent 62%);}
+  .kicker{grid-column:1/3;display:flex;align-items:baseline;gap:14px}
+  .kicker h1{font-size:25px;font-weight:700;letter-spacing:-.5px;color:#f4f6f8}
+  .kicker span{font-family:'JetBrains Mono',monospace;font-size:12px;color:#5eead4;
+               border:1px solid rgba(94,234,212,.35);border-radius:5px;padding:3px 8px;white-space:nowrap}
+
+  .panel{background:#181c25;border:1px solid rgba(255,255,255,.09);border-radius:10px}
+  .lbl{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1.4px;
+       text-transform:uppercase;color:#7d8798}
+
+  /* izquierda: la tabla de estado */
+  .status{padding:15px 17px;position:relative;display:flex;flex-direction:column}
+  .status .file{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#94a3b8;margin-bottom:11px}
+  table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:14px}
+  td{padding:6.5px 0;border-bottom:1px solid rgba(255,255,255,.07);color:#cbd5e1}
+  td.n{text-align:right;color:#f4f6f8;font-weight:700}
+  tr.hit td{color:#fca5a5}
+  tr.hit td.n{color:#f87171}
+  .quote{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.95;
+         color:#cbd5e1;margin-bottom:16px}
+  .quote b{color:#f4f6f8}
+  .quote .ex{color:#0b0e13;background:#fbbf24;border-radius:3px;padding:1px 5px;font-weight:700}
+  .verdict{border-top:1px solid rgba(255,255,255,.09);padding-top:13px}
+  .vlabel{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1.4px;
+          text-transform:uppercase;color:#7d8798;margin-bottom:8px}
+  .vout{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:#fca5a5;
+        border-left:3px solid #f87171;padding-left:11px}
+  .stamp{margin-top:14px;align-self:flex-start;transform:rotate(-3deg);
+         border:2px solid #f87171;color:#f87171;border-radius:6px;
+         font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;
+         letter-spacing:.5px;padding:6px 11px;background:rgba(248,113,113,.08)}
+  .truth{margin-top:15px;font-size:12.5px;line-height:1.72;color:#94a3b8}
+  .truth b{color:#e8eaed;font-weight:600}
+  .truth .q{color:#fca5a5;font-family:'JetBrains Mono',monospace;font-size:11.5px}
+  .second{margin-top:15px;border-top:1px solid rgba(255,255,255,.09);padding-top:13px}
+  .sline{font-size:12px;line-height:1.75;color:#94a3b8}
+  .sline b{color:#e8eaed}
+  .sline b.bad2{color:#fbbf24}
+  .studio{margin-top:auto;display:flex;align-items:center;gap:9px;color:#64748b;font-size:12px}
+  .studio .box{width:38px;height:24px;border:1.5px dashed rgba(148,163,184,.5);border-radius:3px}
+
+  /* derecha arriba: la exención */
+  .right{display:flex;flex-direction:column;gap:18px}
+  .doc{padding:15px 17px}
+  .doc .line{font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.95;color:#cbd5e1}
+  .doc .ex{color:#0b0e13;background:#fbbf24;border-radius:3px;padding:1px 6px;font-weight:700}
+  .flow{margin-top:13px;display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12.5px}
+  .chip{border:1px solid rgba(148,163,184,.4);border-radius:5px;padding:4px 9px;color:#94a3b8}
+  .arc{flex:1;height:22px;position:relative}
+  .arc svg{position:absolute;inset:0;width:100%;height:22px;overflow:visible}
+  .out{border:1px solid #f87171;color:#fca5a5;border-radius:5px;padding:4px 9px;background:rgba(248,113,113,.08)}
+  .skip{font-size:10.5px;color:#f87171;font-family:'JetBrains Mono',monospace}
+
+  /* derecha abajo: las barras */
+  .grid{display:grid;grid-template-columns:1fr auto;gap:6.5px 14px;align-items:center}
+  .mn{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#a9b4c4}
+  .mn.good{color:#5eead4;font-weight:700}
+  .mv{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;text-align:right}
+  .mv.bad{color:#fbbf24}
+  .mv.ok{color:#5eead4}
+  .note{margin-top:11px;font-size:11px;color:#6b7686;font-style:italic}
+  .bars{padding:14px 17px 13px;display:flex;flex-direction:column;gap:9px}
+  .row{display:grid;grid-template-columns:158px 1fr 84px;align-items:center;gap:11px}
+  .row .name{font-size:12px;color:#a9b4c4}
+  .track{height:15px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+  .fill{height:100%;border-radius:3px}
+  .pct{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;text-align:right;white-space:nowrap}
+  .teal{background:linear-gradient(90deg,#0d9488,#2dd4bf)}
+  .amb{background:linear-gradient(90deg,#b45309,#fbbf24)}
+  .pt{color:#5eead4}.pa{color:#fbbf24}
+  .cap{margin-top:5px;font-size:11px;color:#6b7686;font-style:italic}
+</style>
+<div class="wrap">
+  <div class="kicker">
+    <h1>Your agent doesn't know what has already happened</h1>
+    <span>572 responses · 6 models</span>
+  </div>
+
+  <div class="panel status">
+    <div class="file">the material, verbatim</div>
+    <div class="quote">
+      "<b>auth-api</b> reads the table that <b>auth-db-migrator</b> rewrites.<br>
+      The migration is <b>idempotent and backward-compatible</b>:<br>
+      it starts against the old schema or the new one,<br>
+      <span class="ex">without touching anything.</span>"
+    </div>
+    <div class="verdict">
+      <div class="vlabel">what the model answers</div>
+      <div class="vout">"Always deploy auth-db-migrator<br>before auth-api."</div>
+    </div>
+    <div class="second">
+      <div class="vlabel" style="margin-bottom:7px">same trap, unrelated domain</div>
+      <div class="sline">a course script that says <b>"I'll rewrite them for you"</b></div>
+      <div class="sline">&nbsp;&nbsp;&#8594; five models assert the dependency: <b class="bad2">96%</b></div>
+    </div>
+    <div class="studio"><span>no constraint was ever stated, in either one</span></div>
+  </div>
+
+  <div class="right">
+    <div class="panel doc">
+      <div class="lbl" style="margin-bottom:11px">ignores the written exception</div>
+      <div class="grid">
+        <span class="mn">gpt-4.1-mini</span><span class="mv bad">100%</span>
+        <span class="mn">gpt-4o</span><span class="mv bad">100%</span>
+        <span class="mn">claude-haiku-4.5</span><span class="mv bad">100%</span>
+        <span class="mn">gpt-5.4-mini</span><span class="mv bad">100%</span>
+        <span class="mn">claude-sonnet-4.6</span><span class="mv bad">100%</span>
+        <span class="mn good">claude-opus-5</span><span class="mv ok">52%</span>
+      </div>
+      <div class="note">92 of 92 responses, course domain &middot; a threshold, not a gradient</div>
+    </div>
+
+    <div class="panel bars">
+      <div class="lbl" style="margin-bottom:9px">what fixes it</div>
+      <div class="row">
+        <span class="name">+ today's date</span>
+        <div class="track"><div class="fill amb" style="width:100%"></div></div>
+        <span class="pct pa">no change</span>
+      </div>
+      <div class="row">
+        <span class="name">+ "these are rehearsals"</span>
+        <div class="track"><div class="fill amb" style="width:100%"></div></div>
+        <span class="pct pa">no change</span>
+      </div>
+      <div class="row">
+        <span class="name">+ "don't invent constraints"</span>
+        <div class="track"><div class="fill amb" style="width:96%"></div></div>
+        <span class="pct pa">96%</span>
+      </div>
+      <div class="cap">the fact was never missing — its scope was</div>
+    </div>
+  </div>
+</div>

@@ -443,3 +443,72 @@ coding match, so they were kept as they are.
 exhausting five reconnect attempts against its own backend. Nothing to fix: the
 same command re-run produced the image. Worth knowing so a failed generation
 isn't mistaken for a bad prompt.
+
+## `what-has-already-happened` — Your Agent Doesn't Know What Has Already Happened
+
+- Article: `src/content/blog/{en,es}/what-has-already-happened.md`
+- Hero: `public/blog/what-has-already-happened.png` — **generated with ChatGPT**
+  (gpt-image), 12-ago-2026, from the prompt below. Codex was unavailable (workspace
+  spend cap), so the prompt was written here and run there by hand.
+- LinkedIn: `public/blog/what-has-already-happened-data.png` — a typeset HTML card
+  with the study's actual numbers, source at
+  `docs/marketing/hero-sources/what-has-already-happened.html`.
+
+**Why two images.** The hero is an editorial illustration, consistent with the rest
+of the blog. The LinkedIn card carries the four real percentages and two verbatim
+strings from the study, because in the feed a concrete number stops the scroll
+better than an illustration — same split as `forgetting-you-dont-measure`.
+
+The prompt, verbatim:
+
+```
+Create a 1536x1024 blog hero image for a technical article titled "Your Agent
+Doesn't Know What Has Already Happened".
+
+Style: refined technical editorial illustration, dark but not monochrome. Concrete
+scene: a project workspace where a coding agent is reasoning about a schedule and
+getting the sequence wrong.
+
+Composition, left to right:
+- A horizontal timeline dividing the board: the left half solid and stamped
+  "FROZEN — JULY" over a small stack of bound documents; the right half drawn only
+  in outline, an empty booked studio slot still ahead.
+- In the centre, a document page with one sentence highlighted in amber, and a red
+  dotted arrow that jumps over the highlighted sentence instead of through it.
+- Two numbered cards, "V3" and "V4", joined by a red dotted dependency arrow that
+  clearly should not be there — the cards are already stamped as finished.
+- Top right, a small wall calendar with a date, drawn faded and set aside, visibly
+  not connected to anything else on the board.
+
+Keep text extremely sparse: only the short labels FROZEN, JULY, V3, V4. No
+paragraphs, no dense UI text, no poster of words.
+
+No logos, no brand names, no people, no faces, no purple gradient blobs, no bokeh.
+Crisp bitmap illustration, high contrast, professional AI/developer blog aesthetic,
+balanced teal, amber, graphite and off-white accents on a dark background.
+```
+
+What worked, worth reusing:
+
+- **Asking for four short labels only.** FROZEN, JULY, V3, V4 all rendered
+  perfectly, no artefacts. The failure mode of image models is dense text, not text
+  as such — naming the exact strings allowed is what keeps them clean.
+- **Describing the composition left-to-right** instead of listing motifs. The
+  timeline going from solid to dashed, and the arrow *jumping over* the highlighted
+  sentence rather than through it, both came out exactly as specified.
+- **Stating the semantics of each element** ("a dependency arrow that clearly should
+  not be there", "already stamped as finished") rather than just its appearance.
+
+Crop: the source is 3:2 (1536x1024) and the hero needs 2:1, so 256px of height come
+off. Crop from `top=100`, keeping the full width:
+
+```python
+from PIL import Image
+src = Image.open("<downloaded>.png")
+W, _ = src.size
+src.crop((0, 100, W, 100 + W // 2)).resize((1020, 510), Image.LANCZOS)    .save("public/blog/what-has-already-happened.png", optimize=True)
+```
+
+`top=100` over `top=30`: the higher crop keeps the whole wall calendar but cuts the
+V3/V4 cards off at the bottom edge, and those cards are the article's central image
+while the calendar is the secondary finding.
