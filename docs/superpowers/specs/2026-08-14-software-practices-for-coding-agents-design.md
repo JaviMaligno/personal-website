@@ -3,7 +3,8 @@
 **Fecha:** 2026-08-14
 **Estado:** diseño aprobado, pendiente de pre-flight
 **Artículo predecesor:** [Coding Agents and Teamwork: Social Skills, or Structure?](../../../src/content/blog/en/coding-agents-structure.md) (2026-07-12)
-**Ejecución:** máquina principal. Corridas secuenciales, copias de repo desechables, limpieza obligatoria (§2).
+**Ejecución:** herramienta desarrollada en Windows (sin Docker), campaña en Mac (con Docker). Corridas secuenciales, copias de repo desechables, limpieza obligatoria (§2).
+**Código:** https://github.com/JaviMaligno/agent-code-practices
 
 ---
 
@@ -65,11 +66,16 @@ no la estructura del equipo, sino la estructura del código.
 La máquina se satura con facilidad y ya se han perdido tandas de trabajo por ello. Reglas
 vinculantes para este experimento:
 
-- **Sin Docker.** Los contenedores están prohibidos en esta máquina: tumban el equipo. El
-  aislamiento se consigue con **copia desechable del árbol más entorno virtual propio**, que
-  aísla dependencias aunque no aísle el sistema. La consecuencia es que instalar y ejecutar la
-  suite de un repo de terceros ocurre directamente sobre la máquina, así que los candidatos se
-  limitan a repositorios públicos y conocidos.
+- **Dos máquinas, y la campaña corre en la de contenedores.** El equipo Windows donde se
+  desarrolla la herramienta no admite Docker —lo tumba—, así que allí el aislamiento es copia
+  desechable del árbol más entorno virtual propio. La campaña se ejecuta en el Mac, con
+  contenedores. El motivo del reparto no es solo Docker: el sustrato son repos Python de terceros
+  y su hábitat natural es POSIX, así que en Windows varios candidatos caerían por compilación de
+  wheels o dependencias del sistema — razones que no dicen nada sobre si el repo sirve. Un
+  candidato descartado por no compilar en Windows se pierde por la razón equivocada.
+- **Los dos ejecutores se conservan**, seleccionables. El de entorno virtual está verificado y
+  sirve de alternativa si el contenedor falla; las decisiones que toma la capa de preparación
+  —qué instalar, si la suite llegó a colectarse— son las mismas en los dos (§5.6).
 - **Corridas secuenciales.** Como mucho dos condiciones en vuelo a la vez, nunca más.
 - **Una copia de repo viva por condición en curso.** Cada condición trabaja sobre una copia
   desechable; al cerrar la condición se borra la copia. Nunca acumular árboles transformados.
@@ -457,12 +463,27 @@ y se declara en el artículo.
 No es una celda del diseño: es el control que descarta que el efecto sea un artefacto de un
 harness pobre.
 
-### 5.6 Aislamiento sin contenedores
+### 5.6 Aislamiento y preparación del entorno
 
-Docker está prohibido en la máquina de ejecución (§2), así que el aislamiento es de dependencias
-y no de sistema: **copia desechable del árbol, más un entorno virtual por repositorio**.
+La campaña corre con contenedores en el Mac; el ejecutor de entorno virtual se conserva como
+alternativa verificada para la máquina que no los admite (§2). Con contenedor el aislamiento es de
+sistema; con entorno virtual es solo de dependencias, y entonces instalar y ejecutar la suite de un
+repo de terceros ocurre directamente sobre la máquina — razón por la que solo entran repositorios
+públicos y conocidos.
 
-Eso obliga a resolver un problema que con contenedores no aparecía. Un repo se instala en modo
+Lo que **no** cambia entre los dos es la capa de preparación, y ahí hay dos trampas verificadas
+empíricamente. La primera: `pip install -e '.[test]'` sobre un repo que no declara ese extra
+imprime un aviso y **sale con código 0**, así que una cadena de fallbacks encadenada con `||` nunca
+dispara y la suite acaba corriendo sin sus dependencias, con errores de colección que se leen como
+suite en rojo. Por eso solo se intenta lo que el repo declara de verdad —extras, grupos de
+dependencias, ficheros de requisitos, `deps` de `[testenv]` en `tox.ini`— y el éxito se comprueba
+**funcionalmente, colectando los tests**, no leyendo códigos de salida. La segunda: los `addopts`
+de un proyecto pueden exigir plugins que no declara en ninguna parte; se deducen de los argumentos
+que pytest rechaza y se instalan en un reintento. Neutralizar los `addopts` no es opción, porque a
+veces incluyen `--doctest-modules` y los doctests son media suite.
+
+El aislamiento obliga además a resolver un problema que con contenedores no aparecía, y que hay
+que respetar igual en los dos ejecutores. Un repo se instala en modo
 editable a partir de la estructura que declara su `pyproject.toml`, y B2 —aplanar directorios y
 renombrar ficheros— destruye precisamente esa estructura. Con la instalación editable rota, los
 tests de validación no encontrarían nada que importar, y la condición se leería como un fracaso
@@ -479,10 +500,13 @@ Las dos decisiones que lo resuelven:
    comando de test. No afecta a la hipótesis: lo que se mide es la organización interna del
    repositorio, no cómo se llama el paquete visto desde fuera.
 
-Coste declarado: al no haber aislamiento de sistema, un repo que ensucie el entorno global o que
-dependa de bibliotecas del sistema puede contaminar corridas posteriores. La mitigación es el
-criterio de admisión —solo entran repos que instalen limpio en esta máquina— y la verificación de
-equivalencia antes de cada bloque (§3.6.3), que detectaría el desvío.
+Coste declarado, solo del ejecutor sin contenedor: al no haber aislamiento de sistema, un repo que
+ensucie el entorno global o que dependa de bibliotecas del sistema puede contaminar corridas
+posteriores. La mitigación es el criterio de admisión —solo entran repos que instalen limpio— y la
+verificación de equivalencia antes de cada bloque (§3.6.3), que detectaría el desvío. Con
+contenedor el coste desaparece, pero aparece otro: la imagen `slim` no trae git, y varios
+candidatos derivan su versión del repositorio en tiempo de instalación, así que la imagen tiene que
+traerlo o `pip install -e .` aborta.
 
 ---
 
