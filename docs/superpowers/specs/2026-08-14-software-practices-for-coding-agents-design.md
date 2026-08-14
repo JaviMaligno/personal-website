@@ -144,10 +144,11 @@ Por orden de dureza:
 2. **Tamaño mediano**, del orden de miles a decenas de miles de líneas. Por debajo, el agente lee
    el repo entero y todas las transformaciones de familia B dan cero por construcción. Por
    encima, el barrido no cabe en el presupuesto.
-3. **Dependencias instalables sin pelea en esta máquina**: Windows, sin contenedores, con un
-   entorno virtual. Un repo que solo instale limpio dentro de una imagen Linux no es candidato,
-   por bueno que sea en las demás dimensiones — el experimento corre aquí. El criterio se
-   verifica ejecutando, no leyendo la documentación del repo.
+3. **Dependencias instalables sin pelea en el sustrato de ejecución**: una imagen Linux con
+   Python y git (§5.6). El criterio se verifica ejecutando, no leyendo la documentación del repo.
+   Con contenedores deja de ser un filtro por la plataforma de desarrollo: un candidato que no
+   compilara en Windows se habría perdido por la razón equivocada, porque el hábitat natural de
+   estos repos es POSIX.
 4. **Sin tipado en runtime.** Repos que usan anotaciones para validar en ejecución (pydantic,
    dataclasses con conversión, `typing.get_type_hints`) quedan fuera: ahí A1 no es
    semánticamente equivalente.
@@ -493,7 +494,11 @@ Las dos decisiones que lo resuelven:
 
 1. **En el entorno se instalan las dependencias del repo, no el repo.** El árbol transformado se
    pone al alcance de pytest por ruta, no por instalación, así que ninguna transformación puede
-   invalidar el entorno. El entorno se crea una vez por repositorio y sobrevive a las 54 corridas.
+   invalidar el entorno. Con el ejecutor de entorno virtual, ese entorno se crea una vez por
+   repositorio y sobrevive a las 54 corridas. Con contenedores no: el contenedor se destruye al
+   cerrar la corrida, y la instalación se repite (44 s medidos en python-stdnum). Conservar la
+   propiedad exige congelar una imagen por repositorio con las dependencias ya dentro, y se
+   decide al planificar la campaña — en la fase 0, con un perfilado por candidato, no compensa.
 2. **El nombre del paquete raíz no se transforma nunca.** Todo lo de dentro sí: subpaquetes,
    módulos, jerarquía, símbolos. Pero el punto de entrada se conserva, porque es lo único que
    mantiene válidos a la vez la instalación de dependencias, los imports desde fuera y el
@@ -507,6 +512,14 @@ verificación de equivalencia antes de cada bloque (§3.6.3), que detectaría el
 contenedor el coste desaparece, pero aparece otro: la imagen `slim` no trae git, y varios
 candidatos derivan su versión del repositorio en tiempo de instalación, así que la imagen tiene que
 traerlo o `pip install -e .` aborta.
+
+**El repo se copia dentro del contenedor, no se monta.** Medido sobre python-stdnum en el mismo
+contenedor y con el mismo entorno instalado: 113 s de suite sobre el volumen montado frente a 43 s
+con el repo dentro. Multiplicado por 54 corridas eso son horas, y el coste de entorno es además una
+de las dimensiones de examen de la fase 0 (§3.2), así que medirlo inflado por el sistema de
+ficheros del anfitrión distorsionaría también la selección de repos. La copia tiene un segundo
+efecto útil: el clon del anfitrión queda intacto, sin `.egg-info` ni artefactos de la suite, que es
+lo que permite reutilizarlo entre condiciones sin arrastrar estado.
 
 ---
 

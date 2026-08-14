@@ -73,6 +73,25 @@ para romper cohesión y concatenar.
 finalistas, y no existe nada de las fases siguientes (transformadores, generación de tareas,
 harness de agente, campaña).
 
+## 4.1 Añadido en el Mac — 2026-08-14, misma fecha
+
+**Los ocho hallazgos abiertos de §9 están cerrados**, cada uno con su test que falló primero.
+Los cuatro de severidad media medían mal las dimensiones que deciden la admisión; al arreglar el
+del BOM apareció una variante peor que la descrita: `runtime_typing.py` tenía su propio lector, así
+que un fichero con marca de orden de bytes que importara pydantic **colaba el repo por el criterio
+de exclusión**. De los bajos salieron dos decisiones nuevas: el coste se publica unificado
+(entorno + suite) y el tipado en ejecución lleva alcance (`n de m ficheros`), porque un decorador
+suelto y un repo construido sobre pydantic no son el mismo candidato.
+
+**El runner Docker funciona y es el ejecutor por defecto** (`--runner docker|venv`). El repo se
+**copia** dentro del contenedor en vez de montarse: medido sobre python-stdnum en el mismo
+contenedor y con el mismo entorno, 113 s de suite montado frente a 43 s copiado. El perfilado
+completo de python-stdnum en contenedor sale ADMITIDO con `413 passed / 9 skipped`, idéntico a
+Windows, y **67 s por corrida** (44 de entorno + 23 de suite) frente a los 89 s de Windows.
+
+Estado de la suite: `104 passed`, más `3 passed` de integración con entorno virtual y `3 passed`
+de integración con Docker (marcador `docker`, deseleccionable donde no lo haya).
+
 ---
 
 ## 5. Montar el entorno en el Mac
@@ -85,15 +104,14 @@ python3 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-Esperado: `68 passed, 3 deselected`.
+Esperado: `104 passed, 6 deselected`.
 
 Y los de integración, que sí tocan la red y crean entornos:
 
 ```bash
-.venv/bin/python -m pytest -m integration -q
+.venv/bin/python -m pytest -m integration -q   # 3 passed, ~2 min (entorno virtual)
+.venv/bin/python -m pytest -m docker -q        # 3 passed, ~1 min (contenedores)
 ```
-
-Esperado: `3 passed`, alrededor de dos minutos.
 
 El código detecta la plataforma para localizar el intérprete del entorno virtual
 (`Scripts/python.exe` en Windows, `bin/python` fuera), así que no hay nada que adaptar a mano.
@@ -111,20 +129,19 @@ compilación de wheels, symlinks o dependencias del sistema — razones que no d
 repo sirve para el experimento. Un candidato descartado por no compilar en Windows es un candidato
 perdido por la razón equivocada.
 
-**Lo que hay que hacer allí:** añadir un runner Docker junto al de entorno virtual. La lógica ya
-está separada y es reutilizable tal cual — `install_strategies`, `plugins_for_unrecognised`,
-`collection_failed` y `parse_pytest_summary` no saben nada de dónde se ejecuta. Cambia quién
-ejecuta, no qué se decide. Conviene conservar el runner de entorno virtual como alternativa
-verificada, seleccionable por flag.
+**Hecho.** El runner Docker convive con el de entorno virtual y es el de por defecto
+(`--runner docker|venv`). La predicción se cumplió: `install_strategies`,
+`plugins_for_unrecognised`, `collection_failed` y `parse_pytest_summary` no se tocaron — cambia
+quién ejecuta, no qué se decide.
 
 **Ojo con esto**, que ya mordió una vez: la imagen `python:3.12-slim` **no trae git**, y pint,
 jsonschema, dateutil y sqlglot derivan su versión del repositorio en tiempo de instalación. Sin
-git, `pip install -e .` aborta. Hace falta una imagen con git y `git config --global --add
-safe.directory` por el uid del montaje.
+git, `pip install -e .` aborta. Por eso la imagen es `python:3.12` a secas, y hay un test de
+integración que lo fija: un repo con `setuptools-scm` que no instalaría sin git.
 
-**El spec hay que ajustarlo** cuando el runner Docker funcione: la sección §2 y la §5.6 describen
-ahora mismo el aislamiento por entorno virtual. Con contenedores, el aislamiento vuelve a ser de
-sistema, aunque las dos decisiones de §5.6 siguen siendo necesarias igual (ver §7 abajo).
+**Lo que no se anticipó:** montar el repo como volumen es carísimo en macOS. Se copia dentro del
+contenedor con `docker cp`, y la suite de python-stdnum baja de 113 s a 43 s. El spec ya recoge la
+decisión y su medida (§5.6).
 
 ---
 
@@ -160,12 +177,11 @@ sistema, aunque las dos decisiones de §5.6 siguen siendo necesarias igual (ver 
 
 ## 8. Trabajo pendiente, en orden
 
-1. **Runner Docker** junto al de entorno virtual, con imagen que traiga git (§6).
-2. **Hallazgos de severidad media** que siguen abiertos (§9). Los cuatro primeros sesgan justo las
-   dimensiones que deciden cuánto margen de degradación tiene un repo, así que conviene cerrarlos
-   antes de perfilar y no después.
+1. ~~**Runner Docker**~~ — hecho (§4.1). Imagen `python:3.12`, no `slim`, porque trae git.
+2. ~~**Hallazgos de severidad media**~~ — hechos, y los de severidad baja también (§4.1).
 3. **Perfilar los siete candidatos** y elegir tres finalistas: es la Task 11 del plan de fase 0, con
-   babel fuera. Uno cada vez, con limpieza de clones al terminar.
+   babel fuera. Uno cada vez, con limpieza de clones al terminar. El plan está escrito en
+   PowerShell y con rutas `C:/Users/...`: hay que traducirlo a zsh y añadir `--runner docker`.
 4. **Inspección manual de la muestra de dominio** de cada finalista: abrir cinco funciones y
    contestar por escrito si ahí se puede inyectar un fallo que solo se detecte entendiendo la regla
    de negocio y que obligue a leer más de un fichero. Ninguna métrica da ese juicio, y de él depende
@@ -181,11 +197,12 @@ dateutil, py-moneyed, jsonschema.
 
 ---
 
-## 9. Hallazgos abiertos
+## 9. Hallazgos — todos cerrados (2026-08-14, en el Mac)
 
-Salieron de una revisión con tres lentes sobre el código de la fase 0. Los de severidad alta ya se
-arreglaron; estos no. Ninguno rompe nada de forma visible — todos devuelven un número plausible y
-equivocado, que es el modo de fallo peligroso aquí.
+Salieron de una revisión con tres lentes sobre el código de la fase 0. Ninguno rompía nada de forma
+visible — todos devolvían un número plausible y equivocado, que es el modo de fallo peligroso aquí.
+Se conserva la lista porque describe qué medía mal la herramienta antes de las cifras que ya se
+apuntaron en §4 y §9 con ella.
 
 **Media:**
 
@@ -211,6 +228,13 @@ spec pide medir (ya se registra aparte como `install_seconds`, falta unificarlo 
 `uses_runtime_typing` es booleano de repo, sin noción de alcance; la evidencia usa el nombre del
 fichero en vez de la ruta relativa; un `__init__.py` en la raíz del clon produce un nombre de módulo
 vacío que nunca casa.
+
+**Consecuencia sobre las cifras de §4.** Las de python-stdnum se midieron con la herramienta
+sesgada, así que la ficha buena es la de §4.1: la densidad de dominio sube de 26,5% a 27,6% (340
+candidatas en vez de 327) y el ratio de comentarios de 22,7% a 24,3%. El 97,6% de funciones
+anotadas no se mueve, pero por una propiedad del repo y no de la métrica: python-stdnum anota de
+forma completa, así que exigir todos los parámetros o solo uno da lo mismo. En un candidato con
+anotación parcial la diferencia sí aparecerá, y es de las que deciden cuánto puede quitar A1.
 
 **Caveat operativo verificado:** la ruta que se pasa al CLI tiene que ser la raíz del repo que
 *contiene* el paquete, no el directorio del paquete. Pasando el directorio del paquete, los imports
