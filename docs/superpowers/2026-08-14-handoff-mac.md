@@ -89,8 +89,20 @@ contenedor y con el mismo entorno, 113 s de suite montado frente a 43 s copiado.
 completo de python-stdnum en contenedor sale ADMITIDO con `413 passed / 9 skipped`, idéntico a
 Windows, y **67 s por corrida** (44 de entorno + 23 de suite) frente a los 89 s de Windows.
 
-Estado de la suite: `104 passed`, más `3 passed` de integración con entorno virtual y `3 passed`
+Estado de la suite: `118 passed`, más `3 passed` de integración con entorno virtual y `8 passed`
 de integración con Docker (marcador `docker`, deseleccionable donde no lo haya).
+
+**Segunda tanda de hallazgos, salidos de perfilar candidatos de verdad.** El primer perfilado dejó
+cinco de seis repos sin evaluar, y ninguno por sus propiedades. El más grave: **una dependencia de
+test puede desinstalar el repo bajo prueba** y dejar la versión de PyPI (verificado con dateutil,
+donde freezegun arrastra python-dateutil); la suite saldría verde midiendo el paquete publicado y en
+la campaña las transformaciones no tendrían efecto sobre lo que se prueba. Ahora se comprueba
+funcionalmente contra `pip list` y se repara. Los demás: colectar no prueba que estén las
+dependencias (pint colectaba y luego fallaba 332 veces sin `pytest-subtests`, que sí declaraba), la
+imagen traía pip 25.0.1 y `pip install --group` necesita 25.1, faltaba leer `extras_require` de
+`setup.py`/`setup.cfg`, el patrón de plugins no reconocía flags compuestos como `--cov-fail-under`,
+se contaban benchmarks y scripts de CI como código del repo, y la muestra de dominio eran las quince
+primeras por orden alfabético — quince países que empiezan por A.
 
 ---
 
@@ -179,9 +191,8 @@ decisión y su medida (§5.6).
 
 1. ~~**Runner Docker**~~ — hecho (§4.1). Imagen `python:3.12`, no `slim`, porque trae git.
 2. ~~**Hallazgos de severidad media**~~ — hechos, y los de severidad baja también (§4.1).
-3. **Perfilar los siete candidatos** y elegir tres finalistas: es la Task 11 del plan de fase 0, con
-   babel fuera. Uno cada vez, con limpieza de clones al terminar. El plan está escrito en
-   PowerShell y con rutas `C:/Users/...`: hay que traducirlo a zsh y añadir `--runner docker`.
+3. ~~**Perfilar los siete candidatos**~~ — hecho. Finalistas: **python-stdnum, sqlglot, holidays**.
+   Resultados en [`specs/2026-08-14-fase-0-resultados.md`](specs/2026-08-14-fase-0-resultados.md).
 4. **Inspección manual de la muestra de dominio** de cada finalista: abrir cinco funciones y
    contestar por escrito si ahí se puede inyectar un fallo que solo se detecte entendiendo la regla
    de negocio y que obligue a leer más de un fichero. Ninguna métrica da ese juicio, y de él depende

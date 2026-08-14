@@ -118,7 +118,10 @@ degradar la jerarquía. Incluso la decisión de lenguaje queda sujeta a revisió
 revela que los candidatos buenos están en otro sitio.
 
 **Entregable**: una ficha por candidato con las dimensiones de abajo medidas, no estimadas, y una
-recomendación de tres finalistas con su razón.
+recomendación de tres finalistas con su razón. **Cerrada**: los resultados y los tres finalistas
+—python-stdnum, sqlglot, holidays— están en
+[`2026-08-14-fase-0-resultados.md`](2026-08-14-fase-0-resultados.md), incluido el coste declarado de
+que los tres sean de jerarquía plana, que deja a B2 con poco recorrido.
 
 **Dimensiones de examen**, más allá de los criterios de admisión:
 
@@ -149,6 +152,13 @@ Por orden de dureza:
    Con contenedores deja de ser un filtro por la plataforma de desarrollo: un candidato que no
    compilara en Windows se habría perdido por la razón equivocada, porque el hábitat natural de
    estos repos es POSIX.
+   Un repo puede además exigir un **paso de preparación propio** —artefactos que genera su build y
+   que su suite necesita: holidays compila traducciones, babel descarga el CLDR, dateutil genera su
+   base de zonas—. No es una dependencia, así que no lo cubre ninguna estrategia de instalación, y
+   sin él la suite se lee como rota cuando no lo está: holidays falla 515 tests. Se declara por
+   repositorio, se ejecuta después de instalar lo declarado —el script de holidays importa `polib`,
+   que viene en su grupo de tests—, queda registrado en la ficha y forma parte de la receta de cada
+   corrida. Que un repo lo necesite no lo excluye; que ese paso sea caro, sí puede excluirlo.
 4. **Sin tipado en runtime.** Repos que usan anotaciones para validar en ejecución (pydantic,
    dataclasses con conversión, `typing.get_type_hints`) quedan fuera: ahí A1 no es
    semánticamente equivalente.
