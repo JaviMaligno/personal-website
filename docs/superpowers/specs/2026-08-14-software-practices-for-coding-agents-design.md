@@ -65,12 +65,21 @@ no la estructura del equipo, sino la estructura del código.
 La máquina se satura con facilidad y ya se han perdido tandas de trabajo por ello. Reglas
 vinculantes para este experimento:
 
+- **Sin Docker.** Los contenedores están prohibidos en esta máquina: tumban el equipo. El
+  aislamiento se consigue con **copia desechable del árbol más entorno virtual propio**, que
+  aísla dependencias aunque no aísle el sistema. La consecuencia es que instalar y ejecutar la
+  suite de un repo de terceros ocurre directamente sobre la máquina, así que los candidatos se
+  limitan a repositorios públicos y conocidos.
 - **Corridas secuenciales.** Como mucho dos condiciones en vuelo a la vez, nunca más.
 - **Una copia de repo viva por condición en curso.** Cada condición trabaja sobre una copia
   desechable; al cerrar la condición se borra la copia. Nunca acumular árboles transformados.
-- **Limpieza obligatoria al cerrar cada bloque**: copias de repos, clones de SWE-bench,
-  entornos virtuales y contenedores fuera. Comprobación de disco libre **antes** de arrancar
-  cada bloque, y registro de lo que se borró.
+- **Un entorno virtual por repo, no por condición.** Las transformaciones no tocan las
+  dependencias declaradas, solo el código, así que el entorno se crea una vez por repositorio y
+  se reutiliza entre condiciones. Lo que sí cambia por condición es cómo se pone el árbol
+  transformado al alcance de pytest (§5.6).
+- **Limpieza obligatoria al cerrar cada bloque**: copias de repos, clones de SWE-bench y
+  entornos virtuales fuera. Comprobación de disco libre **antes** de arrancar cada bloque, y
+  registro de lo que se borró.
 - **Las suites de test del experimento no compiten con otras.** Nada de correr una suite del
   usuario mientras hay corridas en vuelo.
 - **Los repos de cliente quedan excluidos por completo**, también como copias locales. El
@@ -129,7 +138,10 @@ Por orden de dureza:
 2. **Tamaño mediano**, del orden de miles a decenas de miles de líneas. Por debajo, el agente lee
    el repo entero y todas las transformaciones de familia B dan cero por construcción. Por
    encima, el barrido no cabe en el presupuesto.
-3. **Dependencias instalables sin pelea**, porque el entorno se rehace una vez por condición.
+3. **Dependencias instalables sin pelea en esta máquina**: Windows, sin contenedores, con un
+   entorno virtual. Un repo que solo instale limpio dentro de una imagen Linux no es candidato,
+   por bueno que sea en las demás dimensiones — el experimento corre aquí. El criterio se
+   verifica ejecutando, no leyendo la documentación del repo.
 4. **Sin tipado en runtime.** Repos que usan anotaciones para validar en ejecución (pydantic,
    dataclasses con conversión, `typing.get_type_hints`) quedan fuera: ahí A1 no es
    semánticamente equivalente.
@@ -399,7 +411,8 @@ declara en el artículo como corrido con otra versión.
 
 #### 5.4.5 Los fallos de infraestructura no son fallos del agente
 
-Rate limits, timeouts de red, contenedores caídos, cortes del proveedor: se clasifican aparte, se
+Rate limits, timeouts de red, entornos que no llegan a instalarse, cortes del proveedor: se
+clasifican aparte, se
 reintentan hasta un número fijo de veces, y **se cuentan**. Un experimento donde el 8% de las
 ejecuciones murió por rate limit y se contabilizó como fracaso del agente está midiendo otra cosa.
 El artículo reporta la tasa de descartes por condición; si es asimétrica entre condiciones, eso es
@@ -443,6 +456,33 @@ y se declara en el artículo.
 **Claude Code** corre las cuatro condiciones de titular, una pasada, con su modelo por defecto.
 No es una celda del diseño: es el control que descarta que el efecto sea un artefacto de un
 harness pobre.
+
+### 5.6 Aislamiento sin contenedores
+
+Docker está prohibido en la máquina de ejecución (§2), así que el aislamiento es de dependencias
+y no de sistema: **copia desechable del árbol, más un entorno virtual por repositorio**.
+
+Eso obliga a resolver un problema que con contenedores no aparecía. Un repo se instala en modo
+editable a partir de la estructura que declara su `pyproject.toml`, y B2 —aplanar directorios y
+renombrar ficheros— destruye precisamente esa estructura. Con la instalación editable rota, los
+tests de validación no encontrarían nada que importar, y la condición se leería como un fracaso
+total del agente cuando en realidad es fontanería rota.
+
+Las dos decisiones que lo resuelven:
+
+1. **En el entorno se instalan las dependencias del repo, no el repo.** El árbol transformado se
+   pone al alcance de pytest por ruta, no por instalación, así que ninguna transformación puede
+   invalidar el entorno. El entorno se crea una vez por repositorio y sobrevive a las 54 corridas.
+2. **El nombre del paquete raíz no se transforma nunca.** Todo lo de dentro sí: subpaquetes,
+   módulos, jerarquía, símbolos. Pero el punto de entrada se conserva, porque es lo único que
+   mantiene válidos a la vez la instalación de dependencias, los imports desde fuera y el
+   comando de test. No afecta a la hipótesis: lo que se mide es la organización interna del
+   repositorio, no cómo se llama el paquete visto desde fuera.
+
+Coste declarado: al no haber aislamiento de sistema, un repo que ensucie el entorno global o que
+dependa de bibliotecas del sistema puede contaminar corridas posteriores. La mitigación es el
+criterio de admisión —solo entran repos que instalen limpio en esta máquina— y la verificación de
+equivalencia antes de cada bloque (§3.6.3), que detectaría el desvío.
 
 ---
 
@@ -619,6 +659,8 @@ no dejan sitio donde medir una caída.
 | Renombrado que rompe reflexión o API pública | Solo símbolos resolubles estáticamente, verificado por suite (§4.3.3) |
 | Repos con tipado en runtime invalidan A1 | Criterio de exclusión 4 (§3.2) |
 | La máquina se satura y se pierde la tanda | Corridas secuenciales, una copia viva por condición, limpieza por bloque (§2) |
+| Sin contenedores no hay aislamiento de sistema: un repo puede contaminar corridas posteriores | Solo entran repos que instalen limpio aquí; verificación de equivalencia antes de cada bloque (§5.6, §3.6.3) |
+| Una transformación rompe la instalación editable y se lee como fracaso del agente | Se instalan las dependencias, no el repo; el nombre del paquete raíz nunca se transforma (§5.6) |
 | Disco lleno por acumulación de copias y clones | Comprobación de disco antes de cada bloque, borrado registrado (§2) |
 
 ---
