@@ -959,6 +959,12 @@ git commit -m "feat: domain-logic density proxy"
 
 ## Task 8: Ejecución y parseo de la suite
 
+> **Superada el 2026-08-14.** Docker resultó estar prohibido en la máquina de ejecución, así que
+> esta tarea se rehízo: el aislamiento es un entorno virtual por repositorio, no un contenedor, y
+> la cadena de instalación deriva de lo que el repo declara en vez de probar extras a ciegas. Lo
+> que sigue abajo es el texto original; el estado real está en `src/acp/suite.py` y en §5.6 del
+> spec.
+
 Criterio de admisión 1 y 3 del spec: sin suite verde no hay medida, y el tiempo se multiplica por 54 corridas. Se ejecuta en Docker porque muchos repos Python no corren en Windows y porque el aislamiento hará falta igualmente después. Solo se testea el parseo; la ejecución lleva un test de humo marcado como `integration`.
 
 **Files:**
