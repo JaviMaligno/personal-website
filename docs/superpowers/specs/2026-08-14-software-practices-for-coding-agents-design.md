@@ -93,7 +93,33 @@ artículo. Con un repo memorizado:
 Los dos sesgos empujan en contra de la tesis y en direcciones opuestas. Sobre ese sustrato el
 resultado no es interpretable. SWE-bench entra solo como réplica de control (§3.4).
 
-### 3.2 Criterios de selección de repos
+### 3.2 Selección de repos — fase 0, previa a todo lo demás
+
+La selección de repos es una fase de trabajo con entregable propio, no un criterio que se aplica
+de pasada durante el pre-flight. Va **antes** que la construcción del harness y antes de fijar
+nada más, porque de ella depende qué se puede medir: un repo sin lógica de dominio propia no
+admite el estrato de bugs específicos (§3.3), y un repo con módulos ya planos no deja sitio para
+degradar la jerarquía. Incluso la decisión de lenguaje queda sujeta a revisión si el examen
+revela que los candidatos buenos están en otro sitio.
+
+**Entregable**: una ficha por candidato con las dimensiones de abajo medidas, no estimadas, y una
+recomendación de tres finalistas con su razón.
+
+**Dimensiones de examen**, más allá de los criterios de admisión:
+
+- **Margen de degradación.** Cuánta estructura hay que destruir. Un repo con jerarquía profunda,
+  módulos cohesionados y README útil da recorrido a la familia B; uno que ya es plano y sin
+  documentar parte degradado y no puede caer más.
+- **Densidad de lógica de dominio.** Si el repo es sobre todo pegamento y utilidades genéricas,
+  no se pueden fabricar bugs que exijan entender el negocio. Se necesitan reglas propias —
+  precedencias, invariantes, estados, unidades, políticas — que solo se conozcan leyendo.
+- **Acoplamiento entre módulos.** Un repo donde cada fallo se arregla en un solo fichero mide
+  poco de navegación. Interesan repos donde entender un fallo obligue a leer dos o tres sitios.
+- **Coste de entorno.** Tiempo de instalación y de suite, medidos, porque se multiplican por 54.
+- **Riesgo de contaminación.** Popularidad y antigüedad como proxy: entre dos candidatos
+  equivalentes, gana el menos visto.
+
+### 3.2.1 Criterios de admisión
 
 Por orden de dureza:
 
@@ -109,10 +135,11 @@ Por orden de dureza:
    semánticamente equivalente.
 5. **Sin código de cliente.**
 
-Selección: **tres repos Python** de terceros que cumplan lo anterior, más la opción de uno propio
-si encaja. Los de terceros evitan que el resultado se lea como dependiente del estilo del autor;
-uno propio aporta un sustrato garantizado no visto. La lista concreta se cierra en el pre-flight
-(§3.5), no aquí, porque el criterio 1 solo se verifica ejecutando.
+Objetivo: **tres repos Python** de terceros, más la opción de uno propio si encaja. Los de
+terceros evitan que el resultado se lea como dependiente del estilo del autor; uno propio aporta
+un sustrato garantizado no visto. Los finalistas salen de la fase 0, no de este documento: los
+criterios 1 y 3 solo se verifican ejecutando, y el margen de degradación solo se ve mirando el
+árbol.
 
 ### 3.3 Las tareas se generan, no se buscan
 
@@ -129,8 +156,42 @@ SWE-smith, y aporta dos cosas:
 `fail_to_pass` y `pass_to_pass`, y el fichero o ficheros que toca el parche de referencia — esto
 último es lo que permite medir localización (§7).
 
-Los bugs inyectados deben repartirse entre tipos (condición invertida, argumento mal pasado,
-caso límite eliminado, estado no actualizado) para que el set no mida una sola habilidad.
+### 3.3.1 Dos estratos de fallo, y por qué no es un detalle
+
+Un fallo genérico —condición invertida, off-by-one, comprobación de nulo que falta, argumento
+cambiado de orden— **se reconoce por patrón sin entender el código**. El agente no necesita saber
+qué hace el sistema: la forma del bug es la pista. Y esas formas están sobrerrepresentadas en todo
+lo que el modelo ha visto, así que en la práctica también son las más memorizadas.
+
+Un fallo de dominio solo es un fallo a la luz de la lógica del sistema. La propiedad que lo define
+es que **nadie que lea la función aislada diría que está mal**: es sintácticamente impecable y
+localmente coherente, y solo resulta incorrecto respecto a la intención. Aplicar el descuento
+antes del impuesto en vez de después. Invalidar la caché con la clave del padre en lugar de la del
+hijo. Usar la zona horaria del servidor donde el dominio exige la del usuario. Redondear en el
+paso intermedio en lugar de al final. Para saber que eso está mal hay que leer **más de un sitio**.
+
+Por eso el estrato no es una variable de control sino un moderador de primer orden, y con toda
+probabilidad un resultado por sí mismo:
+
+- Los fallos genéricos deberían ser casi insensibles a la degradación, sobre todo a la de familia
+  A: el patrón sobrevive a nombres opacos y a formato destruido.
+- Los fallos de dominio deberían ser mucho más sensibles, y **especialmente a la familia B**,
+  porque exigen leer varios sitios y por tanto encontrarlos.
+
+Si eso se confirma, explica de paso por qué circula la idea de que a los agentes les da igual el
+código feo: porque se mide con benchmarks poblados de fallos reconocibles por patrón.
+
+**Estratificación: 12 tareas genéricas y 12 de dominio**, equilibradas dentro de cada repo. No
+añade ni una corrida: el estrato es un corte del análisis dentro de cada ejecución del set. El
+coste está en fabricar bien las de dominio, que es trabajo de diseño y no automatizable del todo.
+
+Dentro de cada estrato, los fallos se reparten entre formas distintas para que el set no mida una
+sola habilidad. Y cada tarea de dominio lleva anotado **cuántos ficheros hay que leer como mínimo
+para poder juzgar que es un fallo** — que es la variable que hace de puente con la métrica de
+localización (§7).
+
+Con 12 tareas por estrato el poder es limitado en las celdas de una sola pasada; en las de titular
+son 36 observaciones por estrato y tier. El artículo lo declara en lugar de disimularlo.
 
 ### 3.4 Réplica de control en SWE-bench Verified
 
@@ -154,10 +215,16 @@ Python son opcionales. No se generaliza más allá de eso.
 
 Bloqueante. Ninguna corrida arranca sin esto:
 
+0. **Fase 0 cerrada** (§3.2): tres repos finalistas con su ficha de examen.
 1. **Selección de repos verificada**: suite verde, tiempo de suite medido, ausencia de tipado en
    runtime comprobada.
 2. **24 tareas generadas y validadas**: cada una falla los tests que debe y pasa los demás, en el
-   repo original.
+   repo original, con el reparto 12/12 entre estratos.
+2b. **Estrato de dominio validado por aislamiento**: a cada tarea de dominio se le pasa al modelo
+   **solo la función modificada, fuera de contexto**, preguntando si contiene un fallo. Si lo
+   detecta, la tarea no es de dominio y se descarta o se reclasifica. Es el filtro que impide que
+   el estrato se llene de bugs genéricos disfrazados, que es el modo de fallo más probable al
+   fabricarlos.
 3. **Equivalencia de cada transformación verificada por repo**: en el árbol transformado, la
    suite completa da **el mismo resultado** que en el original. Una transformación que rompe el
    repo se lee exactamente igual que un agente que falla, y es el error más caro de descubrir
@@ -167,6 +234,8 @@ Bloqueante. Ninguna corrida arranca sin esto:
    ninguno de los dos tiers. Si lo está, no hay margen para medir caídas y hay que retocar la
    dificultad de las tareas antes de seguir.
 6. **Modelos disponibles confirmados** en el despliegue de Azure (§5.5).
+7. **Oráculos de control en verde** (§5.4.6): no-op al 0% y oráculo al 100% en todas las
+   condiciones.
 
 ---
 
@@ -276,11 +345,93 @@ experimento concluiría erróneamente que la organización da igual. Con un tech
 aparece en las dos dimensiones y ambas se reportan por separado. El techo se elige en el
 pre-flight como el que deja el baseline T0 en zona discriminante (§3.6.5).
 
-### 5.4 Instrumentación
+### 5.4 El sistema de medición
 
-Por cada ejecución se registra: secuencia completa de herramientas invocadas con sus argumentos,
-ficheros abiertos en orden, turno del primer edit, tokens de entrada y salida por turno,
-diff final, y resultado de los tests `fail_to_pass` y `pass_to_pass`.
+Es la pieza donde se juega la comparabilidad, y merece tanto diseño como el agente. Un harness de
+agente mediocre produce resultados pobres, que se ven; un sistema de medición mediocre produce
+resultados falsos, que no.
+
+#### 5.4.1 Registro por ejecución
+
+Traza completa de herramientas invocadas con sus argumentos **y con los rangos de líneas que
+devolvieron**; turno del primer edit; tokens de entrada y salida por turno; diff final; resultado
+de `fail_to_pass` y `pass_to_pass`. Y la procedencia: versión del harness, versión del
+transformador, hash del árbol transformado, modelo, parámetros de muestreo y seed.
+
+Sin procedencia registrada, un cambio a mitad de campaña deja el conjunto de datos sin
+interpretación posible y no hay forma de saberlo después.
+
+#### 5.4.2 Localización: identidad de símbolo, no de fichero
+
+Medir localización como "¿abrió el fichero correcto?" se rompe en las condiciones que más
+importan. Con B2 el fichero se llama distinto. Con B1 el símbolo se ha mudado a otro fichero. Y
+con B5, cuando todo está concatenado, **solo hay un fichero, así que la métrica marca acierto
+siempre** — justo en la condición donde queremos ver si el agente se pierde.
+
+La definición correcta es por símbolo. El objetivo de una tarea es el conjunto de símbolos que
+toca el parche de referencia. El transformador mantiene, por condición, un mapa de identidad de
+cada símbolo a su fichero y rango de líneas. Del lado del agente se registran los rangos que
+**realmente ha visto** — lecturas parciales y resultados de grep incluidos, no solo ficheros
+abiertos enteros — y se proyectan sobre ese mapa.
+
+De ahí salen tres medidas comparables entre todas las condiciones: si llegó a ver la región
+objetivo, cuántos símbolos distintos vio antes de verla, y en qué punto de su secuencia de
+lecturas apareció.
+
+#### 5.4.3 Normalización del coste
+
+Las transformaciones cambian el tamaño del repositorio. A4 quita comentarios y docstrings, así que
+el árbol degradado es **más pequeño**: el agente ve más código por token y llega más lejos con el
+mismo presupuesto. Sin normalizar, esa ventaja artificial se leería como "quitar los comentarios
+no duele, incluso ayuda".
+
+Se registra el tamaño en tokens de cada repo bajo cada condición, y el coste de exploración se
+reporta en dos unidades: tokens absolutos y **fracción del repo vista** antes del primer edit.
+Cuando las dos discrepen, manda la fracción y se explica la discrepancia.
+
+#### 5.4.4 Aislamiento y reproducibilidad
+
+Cada ejecución arranca de una copia fresca, sin estado compartido con la anterior y sin reutilizar
+caché de proveedor que pueda sesgar entre condiciones. Temperatura fija y seed donde el proveedor
+la respete. Orden de tareas fijado, para que ningún corte dependa de él. Versiones congeladas
+durante toda la campaña: si algo cambia a mitad, el bloque afectado se vuelve a correr o se
+declara en el artículo como corrido con otra versión.
+
+#### 5.4.5 Los fallos de infraestructura no son fallos del agente
+
+Rate limits, timeouts de red, contenedores caídos, cortes del proveedor: se clasifican aparte, se
+reintentan hasta un número fijo de veces, y **se cuentan**. Un experimento donde el 8% de las
+ejecuciones murió por rate limit y se contabilizó como fracaso del agente está midiendo otra cosa.
+El artículo reporta la tasa de descartes por condición; si es asimétrica entre condiciones, eso es
+en sí mismo un problema que hay que explicar antes de leer los resultados.
+
+#### 5.4.6 Oráculos de control
+
+Dos agentes falsos que recorren el pipeline entero en todas las condiciones sin gastar un token de
+modelo:
+
+- **No-op**: no edita nada. Debe dar 0% en todas las condiciones. Si da más, hay tareas cuyos
+  tests no discriminan.
+- **Oráculo**: aplica el parche de referencia traducido a la condición. Debe dar 100% en todas. Si
+  da menos, o la transformación rompió el repo, o el mapa de identidad de símbolos está mal.
+
+Es la comprobación más barata del diseño y la que atrapa los errores más caros — los que hacen que
+una transformación rota se lea exactamente igual que un agente que fracasa. Se corre **antes de
+cada bloque**, no una sola vez al principio.
+
+#### 5.4.7 Ninguna métrica depende de un juez
+
+Las tres categorías de modo de fallo se derivan mecánicamente de los tests y de la traza: no
+localizó (nunca vio la región objetivo), localizó pero editó mal (la vio y los `fail_to_pass`
+siguen rojos), rompió otra cosa (`pass_to_pass` en rojo). No hay LLM evaluador en ninguna parte
+del circuito, lo que elimina de raíz una familia entera de sesgos.
+
+#### 5.4.8 Agregación
+
+Las celdas con réplicas se reportan como media con rango observado entre seeds, igual que en el
+artículo previo. Las de una sola pasada se reportan como una sola pasada, sin intervalo. Las
+comparaciones que sostienen las predicciones de §8 se hacen sobre las celdas con réplicas; el
+desglose de una pasada se presenta como indicativo y se dice así.
 
 ### 5.5 Modelos y control externo
 
@@ -368,18 +519,21 @@ contabilizadas aparte porque su coste por tarea es distinto.
 Si el artículo se queda en la tabla de porcentajes, describe pero no explica. Lo que lo convierte
 en explicación son tres medidas de proceso que el harness registra sin coste extra:
 
-- **Localización.** ¿Llegó a abrir el fichero que toca el parche de referencia, y cuántos ficheros
-  abrió antes? Es la hipótesis medida directamente, sin pasar por el resultado final. Se reporta
-  como tasa de acierto de localización y como posición mediana del fichero correcto en la
-  secuencia de aperturas.
-- **Coste de exploración.** Turnos y tokens de entrada consumidos antes del primer edit.
+- **Localización**, definida por símbolo y no por fichero (§5.4.2). ¿Llegó a ver la región que
+  toca el parche de referencia, y cuánto vio antes de verla? Es la hipótesis medida directamente,
+  sin pasar por el resultado final.
+- **Coste de exploración.** Turnos, tokens de entrada y fracción del repo vista antes del primer
+  edit (§5.4.3).
 - **Modo de fallo**, en tres categorías excluyentes:
-  1. **No localizó** — nunca abrió el fichero correcto.
+  1. **No localizó** — nunca vio la región objetivo.
   2. **Localizó pero editó mal** — lo abrió, editó, y los `fail_to_pass` siguen rojos.
   3. **Rompió otra cosa** — arregló el fallo objetivo pero tumbó `pass_to_pass`.
 
 Esa taxonomía es la que sostiene el argumento: separa "no encuentra" de "no entiende", que es
 exactamente la partición entre las dos familias.
+
+**Todas las métricas se reportan además partidas por estrato de fallo** (§3.3.1), genérico contra
+dominio. Es el corte que más probablemente cambie la lectura de la tabla principal.
 
 ---
 
@@ -399,6 +553,10 @@ correlaciones.
   brecha entre tiers es menor, porque navegar depende del tooling y no de la capacidad.
 - **P6.** El daño de B2 (jerarquía) es sustancialmente mayor con dotación pobre que con dotación
   rica. Si no lo es, el grep no compensa la mala organización tanto como se supone.
+- **P7.** El efecto de toda la degradación se concentra en el estrato de fallos de dominio. Los
+  fallos genéricos son casi insensibles, y muy en particular a la familia A.
+- **P8.** Dentro del estrato de dominio, la familia B pesa más que en el conjunto global, porque
+  esos fallos exigen leer varios sitios para poder juzgarlos.
 
 ---
 
@@ -411,6 +569,8 @@ Resultados que refutan la hipótesis del autor, y que se publican igual si salen
   la frontera útil no sería escritura contra organización, sino encontrar contra entender (§4.4).
 - **La curva de tamaño sale plana en todo el rango probado.** El umbral no existe dentro de lo
   que un repo mediano puede producir.
+- **Los dos estratos de fallo se comportan igual.** Refutaría P7 y P8, y dejaría sin base la
+  explicación de por qué los benchmarks actuales no ven este efecto.
 
 **Condición de abandono**: si tras el pre-flight el baseline T0 no es discriminante en ninguno de
 los dos tiers después de ajustar la dificultad, el experimento no se corre. Un suelo o un techo
@@ -428,8 +588,9 @@ no dejan sitio donde medir una caída.
 4. Knock-out contra add-back: la tabla de qué se pierde y qué se recupera.
 5. La curva de tamaño.
 6. Localización y modos de fallo: por qué pasa lo que pasa.
-7. El caso de los nombres, y la frontera entre encontrar y entender.
-8. Qué se traduce en práctica, sin ir más lejos de lo que aguanten los datos.
+7. Los dos estratos de fallo, y qué dice de cómo se miden hoy estas cosas.
+8. El caso de los nombres, y la frontera entre encontrar y entender.
+9. Qué se traduce en práctica, sin ir más lejos de lo que aguanten los datos.
 
 ### 10.1 Reglas de honestidad heredadas
 
@@ -447,7 +608,11 @@ no dejan sitio donde medir una caída.
 
 | Riesgo | Mitigación |
 |---|---|
-| Una transformación rompe el repo y se lee como fallo del agente | Verificación de equivalencia por repo y condición, bloqueante (§3.6.3) |
+| Una transformación rompe el repo y se lee como fallo del agente | Verificación de equivalencia por repo y condición, más oráculos de control antes de cada bloque (§3.6.3, §5.4.6) |
+| A4 encoge el repo y regala presupuesto de lectura, leyéndose como "los comentarios no ayudan" | Coste reportado también como fracción del repo vista (§5.4.3) |
+| La localización se satura en B5, donde solo hay un fichero | Localización definida por símbolo y rango, no por fichero (§5.4.2) |
+| Los fallos de dominio fabricados resultan reconocibles por patrón | Filtro de aislamiento en el pre-flight: si el modelo lo detecta viendo la función sola, no es de dominio (§3.6.2b) |
+| Fallos de infraestructura contados como fracasos del agente | Clasificación aparte, reintentos y tasa de descarte reportada por condición (§5.4.5) |
 | El enunciado deja de casar con el código renombrado | Diccionario de renombrado aplicado también al enunciado, trazas y logs (§4.3.2) |
 | Baseline pegado al suelo o al techo | Pre-flight con condición de abandono (§9) |
 | El presupuesto por tarea esconde el efecto en coste en vez de en éxito | Techo fijo elegido en pre-flight; se reportan las dos dimensiones (§5.3) |
