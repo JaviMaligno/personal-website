@@ -296,9 +296,17 @@ todas las demás señales visuales. Es el equivalente operativo a un repo sin fo
 |---|---|---|
 | B1 | Cohesión | Reparte funciones y clases entre ficheros al azar, con imports corregidos. Mismo número de ficheros y mismo tamaño: solo se rompe la lógica de qué vive con qué |
 | B2 | Jerarquía | Aplana todos los directorios y renombra los ficheros a `m1.py`, `m2.py`… |
+
 | B3 | Documentación de repo | Borra README, `docs/`, docstrings de módulo |
 | B4 | Tests visibles | Oculta al agente la suite existente del repo |
 | B5 | Tamaño | Concatena módulos. Curva de dosis, no celda: original / ~500 / ~2.000 / ~10.000 líneas por fichero |
+
+**B2 corre además sobre un repo propio.** Los tres finalistas de la fase 0 tienen jerarquía de
+profundidad 2, así que aplanarlos no destruye casi nada y un B2 plano no distinguiría "la jerarquía
+no importa" de "no había jerarquía que quitar". pint —profundidad 3, retirado del sustrato principal
+por el coste de su suite— vuelve **solo para las celdas de B2**, donde el número de corridas es
+pequeño. No entra en el 2×2 ni en el resto del desglose, y el artículo declara que ese eje se mide
+sobre un repositorio distinto de los demás.
 
 Tres decisiones de reparto, con su razón:
 

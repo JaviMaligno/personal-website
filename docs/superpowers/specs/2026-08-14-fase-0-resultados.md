@@ -249,9 +249,12 @@ Para holidays, el paso es `python scripts/l10n/generate_mo_files.py`.
 La fase 0 termina aquí, con sus tres finalistas y su inspección de dominio hecha. Lo que la fase 1
 hereda como decisiones abiertas:
 
-1. **B2 se queda sin sustrato.** Los tres finalistas son planos (profundidad 2). O se acepta medir
-   aplanamiento de jerarquía con poco recorrido y se declara en el artículo, o entra un cuarto repo
-   con jerarquía profunda solo para ese eje.
+1. **B2 se queda sin sustrato — resuelto: pint vuelve solo para ese eje.** Los tres finalistas son
+   planos (profundidad 2), y pint es el único candidato con profundidad 3. Se retiró del sustrato
+   principal por coste de suite (317 s por corrida), pero el eje B2 son pocas celdas —knock-out y
+   add-back, una pasada, un tier—, así que el coste queda acotado y B2 se mide donde tiene algo que
+   destruir. pint no entra en el 2×2 ni en el resto del desglose: su papel es exclusivamente dar
+   jerarquía profunda a B2, y el artículo lo dice así.
 2. **Dónde se inyecta en holidays.** En su maquinaria, no en sus tablas de países (§6.1). Eso reduce
    la superficie útil del repo y conviene comprobar que da para ocho tareas.
 3. **El coste manda en el reparto de tareas.** python-stdnum cuesta 96 s por corrida, sqlglot 246 s y
