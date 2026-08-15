@@ -194,7 +194,15 @@ lo que el modelo ha visto, así que en la práctica también son las más memori
 
 Un fallo de dominio solo es un fallo a la luz de la lógica del sistema. La propiedad que lo define
 es que **nadie que lea la función aislada diría que está mal**: es sintácticamente impecable y
-localmente coherente, y solo resulta incorrecto respecto a la intención. Aplicar el descuento
+localmente coherente, y solo resulta incorrecto respecto a la intención.
+
+Con una precisión que salió de inspeccionar los finalistas (fase 0, §6.1): no basta con que el fallo
+exija **conocimiento del mundo**; tiene que exigir **leer varios sitios del repositorio**. Cambiar el
+año en que Eslovenia dejó de celebrar el 2 de enero es indetectable sin saber historia eslovena, pero
+se juzga en una sola línea: pasaría el filtro de aislamiento de §3.6.2b y aun así no sirve, porque
+rompe el puente con la métrica de localización. Los fallos de dominio se inyectan donde la regla
+correcta viva repartida —un verificador compartido, una jerarquía de dialectos, una regla de
+observancia—, no en tablas de datos. Aplicar el descuento
 antes del impuesto en vez de después. Invalidar la caché con la clave del padre en lugar de la del
 hijo. Usar la zona horaria del servidor donde el dominio exige la del usuario. Redondear en el
 paso intermedio en lugar de al final. Para saber que eso está mal hay que leer **más de un sitio**.

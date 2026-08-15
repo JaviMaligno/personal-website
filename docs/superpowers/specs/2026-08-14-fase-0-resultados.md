@@ -136,9 +136,8 @@ bloque homogéneo.
   otra; la de sqlglot, 121 s y 193 s. Son medidas de una sola pasada en una máquina compartida.
   Sirven para ordenar candidatos, no como presupuesto fino.
 - **La densidad de dominio es un proxy**, no un juicio. Cuenta funciones con ramas que llaman a otras
-  del propio repo. El paso 7 de la Task 11 —abrir cinco funciones de la muestra de cada finalista y
-  decidir por escrito si ahí cabe un fallo que solo se detecte entendiendo la regla de negocio— sigue
-  pendiente, es juicio humano y de él depende que el estrato de dominio sea viable.
+  del propio repo. El juicio está en §6, hecho leyendo el código; queda pendiente la confirmación
+  del autor.
 - **Las cifras anteriores a esta tanda estaban sesgadas.** Se corrigieron ocho defectos de medición y
   cinco de preparación de entorno; entre ellos, que se contaban los benchmarks y los scripts de CI
   como código del repo, y que una dependencia de test podía desinstalar el repo bajo prueba y dejar
@@ -147,7 +146,62 @@ bloque homogéneo.
 
 ---
 
-## 6. Muestras para la inspección manual (paso 7, pendiente)
+## 6. Inspección de la muestra de dominio (paso 7)
+
+Leídas quince funciones, cinco por finalista, con el criterio de §3.3.1 del spec: que **nadie que lea
+la función aislada diría que está mal**, y que juzgarlo **obligue a leer más de un sitio**.
+Análisis hecho sobre el código; pendiente de confirmación del autor.
+
+**Los tres finalistas admiten el estrato de dominio.** Casos representativos:
+
+- **`stdnum/mx/curp.py:91` — `get_gender`.** El mejor del lote. `H` → `'M'`, `M` → `'F'` es correcto:
+  en el CURP la entrada está en español (Hombre/Mujer) y la salida en convención inglesa (M/F).
+  Invertir el mapeo produce código que **parece más correcto que el original**, porque `M` → `'M'`
+  lee de maravilla. El fallo se disfraza de arreglo.
+- **`stdnum/iso11649.py:59` — `validate`.** `mod_97_10.validate(number[4:] + number[:4])`: la norma
+  exige rotar los cuatro primeros caracteres al final. Cambiarlo a `number[2:] + number[:2]` es
+  plausible —"muevo el prefijo RF"— y obliga a abrir `stdnum/iso7064/mod_97_10.py` para juzgarlo.
+- **`sqlglot/parsers/mysql.py:354` — `_parse_generated_as_identity`.**
+  `persisted = self._prev.text.upper() == "STORED"`. Invertirlo a `"VIRTUAL"` es localmente
+  coherente; solo se ve sabiendo cuál de las dos persiste en MySQL.
+- **`sqlglot/generators/spark2.py:243` — `altercolumn_sql`.** `super(HiveGenerator, self)` salta a la
+  clase posterior a Hive en el MRO. Sustituirlo por `super()` es invisible dentro de la función y
+  exige entender la jerarquía de dialectos: tres ficheros para juzgarlo.
+- **`holidays/calendars/burmese.py:126` — `_get_start_date`.** +30 días para un año *little watat*,
+  +31 para *big watat*. Intercambiar los números, o las dos constantes, no lo detecta nadie que no
+  conozca el calendario birmano.
+
+### 6.1 Distinción que hay que añadir al diseño
+
+Leyendo holidays aparece una diferencia que el spec trata como una sola cosa: **fallos que exigen
+conocimiento del mundo** y **fallos que exigen leer varios sitios del repositorio**. En
+`holidays/countries/slovenia.py:44`:
+
+```python
+if self._year <= 2012 or self._year >= 2017:
+    self._add_new_years_day_two(name)
+```
+
+Es exacto: Eslovenia suprimió el 2 de enero de 2013 a 2016. Cambiar `2017` por `2016` da un dato
+incorrecto que ningún modelo detecta sin saber historia eslovena — pero se juzga **en esa única
+línea**. Pasaría el filtro de aislamiento del pre-flight (§3.6.2b) y aun así no sirve: rompe el
+puente con la métrica de localización, que es lo que da sentido al estrato (§3.3.1 pide anotar
+cuántos ficheros hay que leer como mínimo). El estrato de dominio necesita lo segundo, no lo primero.
+
+**Consecuencia para holidays**: los fallos se inyectan en su maquinaria —`calendars/`,
+`holiday_base`, y las reglas de observancia tipo `_add_observed(..., rule=SAT_SUN_TO_NONE)`, donde
+cambiar la regla obliga a abrir `observed_holiday_base`—, no en las tablas de países. Buena parte del
+repo son datos, no lógica, y ahí los fallos son de dato.
+
+### 6.2 Un contraste aprovechable para A4
+
+Varias funciones de sqlglot tienen su *porqué* solo en un comentario. `_replace_int_predicate`
+(`sqlglot/optimizer/canonicalize.py:253`) lleva encima tres líneas explicando que solo aplica a
+enteros porque Presto tiene booleanos y T-SQL no. Con A4 —eliminar comentarios— esa justificación
+desaparece y el código queda idéntico: mismo fichero, misma tarea, con y sin el motivo escrito al
+lado. Es el contraste más limpio que puede darse para medir A4 dentro del estrato de dominio.
+
+### 6.3 Las quince funciones
 
 Repartidas por el árbol con paso determinista, no las primeras por orden alfabético.
 
@@ -192,6 +246,14 @@ Para holidays, el paso es `python scripts/l10n/generate_mo_files.py`.
 
 ## 8. Checkpoint
 
-La fase 0 termina aquí. Antes de planificar la fase 1 hay dos cosas que decidir a la vista de esta
-tabla: qué se hace con B2 dado que los tres finalistas son planos (§3), y si el paso 7 confirma que
-los tres admiten fallos de dominio de verdad (§5).
+La fase 0 termina aquí, con sus tres finalistas y su inspección de dominio hecha. Lo que la fase 1
+hereda como decisiones abiertas:
+
+1. **B2 se queda sin sustrato.** Los tres finalistas son planos (profundidad 2). O se acepta medir
+   aplanamiento de jerarquía con poco recorrido y se declara en el artículo, o entra un cuarto repo
+   con jerarquía profunda solo para ese eje.
+2. **Dónde se inyecta en holidays.** En su maquinaria, no en sus tablas de países (§6.1). Eso reduce
+   la superficie útil del repo y conviene comprobar que da para ocho tareas.
+3. **El coste manda en el reparto de tareas.** python-stdnum cuesta 96 s por corrida, sqlglot 246 s y
+   holidays 228 s. Cargar el set hacia python-stdnum abarata la campaña, pero concentra el resultado
+   en el repo de módulos más pequeños y homogéneos.
