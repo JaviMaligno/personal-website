@@ -512,3 +512,51 @@ src.crop((0, 100, W, 100 + W // 2)).resize((1020, 510), Image.LANCZOS)    .save(
 `top=100` over `top=30`: the higher crop keeps the whole wall calendar but cuts the
 V3/V4 cards off at the bottom edge, and those cards are the article's central image
 while the calendar is the secondary finding.
+---
+
+## `perception-edges-of-language` — "One Grey Level Out of 255"
+
+- **Article**: `src/content/blog/en/perception-edges-of-language.md`
+- **Image**: `public/blog/perception-edges-of-language.png` (also used as `linkedinImage`)
+- **Generated**: 2026-08-06
+- **Generator**: none — **rendered programmatically from the experiment's own code**, not
+  from an image model.
+
+Every automated route was unavailable that day, which is worth recording because two of the
+three are still broken:
+
+- **Codex**: `ERROR: Your workspace is out of credits.`
+- **Hugging Face**: `scripts/generate-thumbnails.py` targets `FLUX.1-schnell` on
+  `hf-inference`, which now returns *"The requested model is deprecated and no longer
+  supported by provider hf-inference"*. FLUX.1-dev and SDXL return the same; Qwen-Image and
+  SD 3.5 return *"Model not supported by provider"*. **That script is dead as written** and
+  needs a different provider route before it works again.
+- **Gemini**: no `GEMINI_API_KEY` present in `.env` or the environment (the key the LinkedIn
+  scripts expect is for text summaries and was not set).
+
+So the hero is the stimulus itself: the seven contrast levels of the study rendered by
+`llm_language_limits.render`, with the human threshold and the faintest machine-readable row
+marked. Two rules made it work, both learned by getting them wrong first:
+
+1. **Crop, never resize.** Rescaling averages neighbouring pixels and destroys precisely the
+   faint grey the image exists to show — the first attempt rescaled 768x192 panels to 580x40
+   and made every level below 0.04 invisible *because of the hero*, not because of the data.
+2. **The annotation has to match the published number.** The first version drew the human
+   threshold between 0.02 and 0.012, which is the contaminated batch-1 figure (0.016) that
+   the article itself spends a section retracting. The correct 0.030 sits between 0.04 and
+   0.02.
+
+The prompt drafted for the image models, kept here in case one of those routes comes back:
+
+```
+A 1020x510 blog hero image, refined technical editorial illustration, dark but not
+monochrome. A psychophysics reading bench: stacked white panels each showing the same
+short line of text at descending contrast, crisp black at the top fading to a blank
+panel at the bottom. Small labelled tags reading "contrast 0.004", "grey 254/255",
+"threshold 50%". To the right, a threshold curve crossing a dashed 50% line, and two
+small boxes marked OCR and MODEL with arrows pointing at the faintest panel. A magnifier
+resting on the desk. Clean geometric composition, several distinct zones. No logos, no
+brand names, no people, no text-heavy poster. Crisp bitmap illustration, high contrast,
+professional AI/developer blog aesthetic, balanced teal, amber, graphite and off-white
+accents on dark, no purple gradient blobs, no bokeh.
+```
