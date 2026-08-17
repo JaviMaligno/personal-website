@@ -183,6 +183,35 @@ Wrap up with actionable takeaways or links.
 - **Code**: Include relevant code snippets with language identifiers
 - **Images**: Always use **absolute URLs** for inline images: `https://www.javieraguilar.ai/blog/image-name.png`. Dev.to cannot resolve relative paths (`/blog/...`), and the publish script auto-converts relative paths but using absolute URLs from the start avoids issues. The `heroImage` frontmatter field can remain a relative path (it's converted by the publish script).
 
+## Link Javier's Own Work — Every Mention Is a Link
+
+**Whenever the draft refers to something Javier has made, that mention must be a link.** Not a
+"nice to have": a naked reference to his own work is a bug in the draft. Sweep for it before
+handing the article over, because it is the single most common thing missing from first drafts.
+
+What counts, and where it points:
+
+| The draft says… | Link to |
+|---|---|
+| a previous article, "as I wrote before", "the previous article", any of its findings | `/en/blog/<slug>` · `/es/blog/<slug>` |
+| "I've written some skills", any named skill of his | `/en/skills` · `/es/skills` |
+| a project or case study | `/en/projects/<slug>` · `/es/projects/<slug>` |
+| mentoring, teaching, the starter session | `/en/mentoring` · `/es/mentoring` |
+| an experiment's code or data | the public repo, plus `repoUrl:` in the frontmatter |
+
+Rules:
+
+- **Use language-matched paths.** `/en/...` in the English file, `/es/...` in the Spanish one.
+  Copy-pasting the English link into the Spanish article sends Spanish readers to English pages.
+- **Link the first substantive mention**, not every one. Two links to the same article in one
+  post is noise; zero is a lost reader.
+- **Link the claim, not the boilerplate.** `[the previous article](/en/blog/slug), where
+  declaring provenance only moved the strongest model` beats a bare "see my previous post".
+- **Verify the slug exists** (`ls src/content/blog/en/`) before linking. A 404 in your own
+  article is worse than no link.
+- Series articles should link **backwards to their predecessor**; when a new one supersedes or
+  qualifies an older finding, say so at the point where it does.
+
 ## Video Embeds
 
 ### For the Website (javieraguilar.ai)
@@ -329,3 +358,4 @@ Rules:
 - [ ] **`linkedinImage` decidido antes de publicar** — revisadas todas las imágenes del artículo (gráficos, memes, capturas) y puesta la más llamativa en EN y ES si supera al hero. Sin este campo se publica el hero (`linkedinImage || heroImage`), y cambiarlo después obliga a borrar el post y repostearlo a mano.
 - [ ] **If the article involves code, `repoUrl:` set in both EN and ES frontmatter** — the LinkedIn auto-post (`scripts/linkedin/utils.js`) adds a "💻 Code:" line only when this field is present. Omitting it means editing the LinkedIn post by hand after publish.
 - [ ] Links are valid and functional
+- [ ] **Every mention of Javier's own work is a link** — previous articles, skills, projects, mentoring, experiment repos — with language-matched paths (`/en/...` in EN, `/es/...` in ES) and slugs verified to exist
