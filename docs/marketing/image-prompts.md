@@ -419,3 +419,144 @@ The loop needed one regeneration, for two faults worth remembering:
 Fixed with: "Cycle arrows must be neutral off-white/grey. Amber is reserved
 exclusively for the two human-residue phases and their labels. Teal is reserved
 exclusively for the two fully delegated phases."
+
+## if-youre-starting-from-zero (2026-08-05)
+
+- Article: `src/content/blog/en/if-youre-starting-from-zero.md`
+- Images: `public/blog/if-youre-starting-from-zero.png`, `...-es.png`
+- Generated with: Codex (gpt-image), prompt delegated from a brief
+
+The brief described the article's *structure* rather than its topic: four tiers
+in priority order, derived from "when this goes wrong, who pays", with the
+irreversible group weighted heaviest. That is what made the image carry an idea
+instead of decorating one — the hierarchy is the content.
+
+Per-tier motifs were specified concretely (database with a restore arrow, key
+and padlock and users, invoice with a rising curve and a warning sign,
+checklist), which is what keeps a diagram from drifting into generic icons.
+
+Both came out right first time. The Spanish one leans more typographic than the
+English one — heavier labels, thinner icons — but the hierarchy and colour
+coding match, so they were kept as they are.
+
+**Codex failed once mid-run** with `stream disconnected before completion` after
+exhausting five reconnect attempts against its own backend. Nothing to fix: the
+same command re-run produced the image. Worth knowing so a failed generation
+isn't mistaken for a bad prompt.
+
+## `what-has-already-happened` — Your Agent Doesn't Know What Has Already Happened
+
+- Article: `src/content/blog/{en,es}/what-has-already-happened.md`
+- Hero: `public/blog/what-has-already-happened.png` — **generated with ChatGPT**
+  (gpt-image), 12-ago-2026, from the prompt below. Codex was unavailable (workspace
+  spend cap), so the prompt was written here and run there by hand.
+- LinkedIn: `public/blog/what-has-already-happened-data.png` — a typeset HTML card
+  with the study's actual numbers, source at
+  `docs/marketing/hero-sources/what-has-already-happened.html`.
+
+**Why two images.** The hero is an editorial illustration, consistent with the rest
+of the blog. The LinkedIn card carries the four real percentages and two verbatim
+strings from the study, because in the feed a concrete number stops the scroll
+better than an illustration — same split as `forgetting-you-dont-measure`.
+
+The prompt, verbatim:
+
+```
+Create a 1536x1024 blog hero image for a technical article titled "Your Agent
+Doesn't Know What Has Already Happened".
+
+Style: refined technical editorial illustration, dark but not monochrome. Concrete
+scene: a project workspace where a coding agent is reasoning about a schedule and
+getting the sequence wrong.
+
+Composition, left to right:
+- A horizontal timeline dividing the board: the left half solid and stamped
+  "FROZEN — JULY" over a small stack of bound documents; the right half drawn only
+  in outline, an empty booked studio slot still ahead.
+- In the centre, a document page with one sentence highlighted in amber, and a red
+  dotted arrow that jumps over the highlighted sentence instead of through it.
+- Two numbered cards, "V3" and "V4", joined by a red dotted dependency arrow that
+  clearly should not be there — the cards are already stamped as finished.
+- Top right, a small wall calendar with a date, drawn faded and set aside, visibly
+  not connected to anything else on the board.
+
+Keep text extremely sparse: only the short labels FROZEN, JULY, V3, V4. No
+paragraphs, no dense UI text, no poster of words.
+
+No logos, no brand names, no people, no faces, no purple gradient blobs, no bokeh.
+Crisp bitmap illustration, high contrast, professional AI/developer blog aesthetic,
+balanced teal, amber, graphite and off-white accents on a dark background.
+```
+
+What worked, worth reusing:
+
+- **Asking for four short labels only.** FROZEN, JULY, V3, V4 all rendered
+  perfectly, no artefacts. The failure mode of image models is dense text, not text
+  as such — naming the exact strings allowed is what keeps them clean.
+- **Describing the composition left-to-right** instead of listing motifs. The
+  timeline going from solid to dashed, and the arrow *jumping over* the highlighted
+  sentence rather than through it, both came out exactly as specified.
+- **Stating the semantics of each element** ("a dependency arrow that clearly should
+  not be there", "already stamped as finished") rather than just its appearance.
+
+Crop: the source is 3:2 (1536x1024) and the hero needs 2:1, so 256px of height come
+off. Crop from `top=100`, keeping the full width:
+
+```python
+from PIL import Image
+src = Image.open("<downloaded>.png")
+W, _ = src.size
+src.crop((0, 100, W, 100 + W // 2)).resize((1020, 510), Image.LANCZOS)    .save("public/blog/what-has-already-happened.png", optimize=True)
+```
+
+`top=100` over `top=30`: the higher crop keeps the whole wall calendar but cuts the
+V3/V4 cards off at the bottom edge, and those cards are the article's central image
+while the calendar is the secondary finding.
+---
+
+## `perception-edges-of-language` — "One Grey Level Out of 255"
+
+- **Article**: `src/content/blog/en/perception-edges-of-language.md`
+- **Image**: `public/blog/perception-edges-of-language.png` (also used as `linkedinImage`)
+- **Generated**: 2026-08-06
+- **Generator**: none — **rendered programmatically from the experiment's own code**, not
+  from an image model.
+
+Every automated route was unavailable that day, which is worth recording because two of the
+three are still broken:
+
+- **Codex**: `ERROR: Your workspace is out of credits.`
+- **Hugging Face**: `scripts/generate-thumbnails.py` targets `FLUX.1-schnell` on
+  `hf-inference`, which now returns *"The requested model is deprecated and no longer
+  supported by provider hf-inference"*. FLUX.1-dev and SDXL return the same; Qwen-Image and
+  SD 3.5 return *"Model not supported by provider"*. **That script is dead as written** and
+  needs a different provider route before it works again.
+- **Gemini**: no `GEMINI_API_KEY` present in `.env` or the environment (the key the LinkedIn
+  scripts expect is for text summaries and was not set).
+
+So the hero is the stimulus itself: the seven contrast levels of the study rendered by
+`llm_language_limits.render`, with the human threshold and the faintest machine-readable row
+marked. Two rules made it work, both learned by getting them wrong first:
+
+1. **Crop, never resize.** Rescaling averages neighbouring pixels and destroys precisely the
+   faint grey the image exists to show — the first attempt rescaled 768x192 panels to 580x40
+   and made every level below 0.04 invisible *because of the hero*, not because of the data.
+2. **The annotation has to match the published number.** The first version drew the human
+   threshold between 0.02 and 0.012, which is the contaminated batch-1 figure (0.016) that
+   the article itself spends a section retracting. The correct 0.030 sits between 0.04 and
+   0.02.
+
+The prompt drafted for the image models, kept here in case one of those routes comes back:
+
+```
+A 1020x510 blog hero image, refined technical editorial illustration, dark but not
+monochrome. A psychophysics reading bench: stacked white panels each showing the same
+short line of text at descending contrast, crisp black at the top fading to a blank
+panel at the bottom. Small labelled tags reading "contrast 0.004", "grey 254/255",
+"threshold 50%". To the right, a threshold curve crossing a dashed 50% line, and two
+small boxes marked OCR and MODEL with arrows pointing at the faintest panel. A magnifier
+resting on the desk. Clean geometric composition, several distinct zones. No logos, no
+brand names, no people, no text-heavy poster. Crisp bitmap illustration, high contrast,
+professional AI/developer blog aesthetic, balanced teal, amber, graphite and off-white
+accents on dark, no purple gradient blobs, no bokeh.
+```

@@ -1,0 +1,274 @@
+---
+import { getLangFromUrl, useTranslations, type Language } from '../../i18n';
+
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+const w = t('workshop');
+const mentoringUrl = `/${lang}/mentoring`;
+
+interface Named {
+  name: string;
+  body: string;
+}
+
+// The "what I need from you" items carry **bold** lead-ins; render them without
+// pulling in a markdown dependency for three strings.
+function withBold(value: string): string {
+  return value.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+---
+
+<section class="workshop">
+  <div class="container">
+    <header class="page-head">
+      <h1>{w.hero.title}</h1>
+      <p class="lead">{w.hero.subtitle}</p>
+    </header>
+
+    <div class="prose">
+      <h2>{w.intro.title}</h2>
+      {w.intro.body.map((p: string) => <p>{p}</p>)}
+    </div>
+
+    <h2 class="section-title">{w.day.title}</h2>
+    <ol class="blocks">
+      {w.day.blocks.map((block: Named) => (
+        <li>
+          <h3>{block.name}</h3>
+          <p>{block.body}</p>
+        </li>
+      ))}
+    </ol>
+
+    <h2 class="section-title">{w.rules.title}</h2>
+    <div class="rules">
+      {w.rules.items.map((rule: Named) => (
+        <article class="rule">
+          <h3>{rule.name}</h3>
+          <p>{rule.body}</p>
+        </article>
+      ))}
+    </div>
+
+    <div class="two-up">
+      <section class="panel">
+        <h2>{w.youget.title}</h2>
+        <p class="panel-lead">{w.youget.body}</p>
+        <ul>
+          {w.youget.items.map((item: string) => <li>{item}</li>)}
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>{w.need.title}</h2>
+        <ul>
+          {w.need.items.map((item: string) => <li set:html={withBold(item)} />)}
+        </ul>
+      </section>
+    </div>
+
+    <div class="prose after">
+      <h2>{w.after.title}</h2>
+      <p>{w.after.body}</p>
+    </div>
+
+    <div class="cta">
+      <h2>{w.cta.title}</h2>
+      <p>{w.cta.body}</p>
+      <div class="cta-actions">
+        <a href="#" onclick="Calendly.initPopupWidget({url: 'https://calendly.com/javiecija96/discovery-call?hide_landing_page_details=1&hide_gdpr_banner=1&primary_color=6366f1'});return false;" class="btn btn-primary btn-large">
+          {w.cta.button}
+        </a>
+        <a href={mentoringUrl} class="btn btn-secondary">{w.cta.back}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .workshop {
+    padding-top: 120px;
+    padding-bottom: var(--space-2xl);
+  }
+
+  .page-head {
+    max-width: 760px;
+    margin: 0 auto var(--space-2xl);
+    text-align: center;
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+    margin-bottom: var(--space-md);
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+  }
+
+  .lead {
+    color: var(--text-secondary);
+    font-size: clamp(1.0625rem, 1.6vw, 1.25rem);
+    line-height: 1.6;
+  }
+
+  .prose {
+    max-width: 720px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .prose p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--space-md);
+  }
+
+  .section-title {
+    max-width: 720px;
+    margin: 0 auto var(--space-lg);
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+  }
+
+  .prose h2 {
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    margin-bottom: var(--space-md);
+  }
+
+  /* The day, as a numbered sequence — the order is the content. */
+  .blocks {
+    max-width: 720px;
+    margin: 0 auto var(--space-2xl);
+    padding: 0;
+    list-style: none;
+    counter-reset: block;
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  .blocks li {
+    counter-increment: block;
+    padding-left: 3rem;
+    position: relative;
+  }
+
+  .blocks li::before {
+    content: counter(block);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--accent-primary);
+    border-radius: 50%;
+    color: var(--accent-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .blocks h3 {
+    font-size: 1.125rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  .blocks p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .rules {
+    display: grid;
+    gap: var(--space-md);
+    max-width: 900px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .rule {
+    padding: var(--space-lg);
+    border: 1px solid var(--glass-border);
+    border-left: 3px solid var(--accent-primary);
+    border-radius: var(--radius-md);
+  }
+
+  .rule h3 {
+    font-size: 1.0625rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  .rule p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .two-up {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-lg);
+    max-width: 900px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .panel {
+    padding: var(--space-lg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+  }
+
+  .panel h2 {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .panel-lead {
+    color: var(--text-muted);
+    margin-bottom: var(--space-md);
+  }
+
+  .panel ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: var(--space-sm);
+  }
+
+  .panel li {
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .after {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .cta {
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .cta h2 {
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    margin-bottom: var(--space-sm);
+  }
+
+  .cta p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-xl);
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-large {
+    padding: 1rem 2.5rem;
+    font-size: 1.125rem;
+  }
+</style>

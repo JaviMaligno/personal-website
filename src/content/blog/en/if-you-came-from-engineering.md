@@ -1,7 +1,7 @@
 ---
 title: "If You Came From Engineering"
 description: "You already know how to verify work at scale — tests, CI, pipelines. You're just not applying any of it to the agent. You're checking its output with your eyes, which is the one thing you spent a career learning doesn't work."
-pubDate: 2026-08-14
+pubDate: 2026-08-19
 tags: ["AI", "Vibe Coding", "Software", "Engineering", "Mentoring"]
 lang: en
 translationKey: if-you-came-from-engineering

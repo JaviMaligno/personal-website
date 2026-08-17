@@ -1,7 +1,7 @@
 ---
 title: "Si vienes de la ingeniería"
 description: "Ya sabes comprobar trabajo a escala: tests, CI, pipelines. Lo único es que no estás aplicando nada de eso al agente. Estás comprobando lo que produce a ojo, justo lo que llevas toda una carrera aprendiendo que no funciona."
-pubDate: 2026-08-14
+pubDate: 2026-08-19
 tags: ["IA", "Vibe Coding", "Software", "Ingeniería", "Mentoría"]
 lang: es
 translationKey: if-you-came-from-engineering
