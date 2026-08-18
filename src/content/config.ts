@@ -21,6 +21,11 @@ const blog = defineCollection({
     linkedinLinks: z
       .array(z.object({ label: z.string().optional(), url: z.string() }))
       .optional(),
+    // Hand-written LinkedIn body. When present it is used verbatim and Gemini is
+    // not called, so the post reads exactly as written instead of as a summary of
+    // the article. The links, "💻 Code" line and hashtags are still appended by
+    // buildPostText, so write only the body here.
+    linkedinSummary: z.string().optional(),
   }),
 });
 
