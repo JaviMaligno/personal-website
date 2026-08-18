@@ -600,3 +600,66 @@ procedural lane is roughly 2.3x the tokens and 1.6x the cost, NOT ten times.
 Everything else stays: same 1020x510 size, same dark graphite + teal + amber
 palette, same readable generic terminal lines and file trees, no logos, no people.
 ```
+
+---
+
+## `infer-the-rule-in-one-dimension` — PENDIENTE DE GENERAR
+
+- Artículo: `src/content/blog/en/infer-the-rule-in-one-dimension.md`
+- Imagen destino: `public/blog/infer-the-rule-in-one-dimension.png`
+- Estado: **no generada**. El intento con Codex falló con *"Your workspace is out
+  of credits"*, así que el prompt queda escrito para ejecutarlo desde otra cuenta.
+
+Las cifras van explícitas en el prompt siguiendo la lección del artículo anterior
+(el modelo rellena huecos numéricos con lo que le resulta vistoso). Las dos que
+aparecen son las reales del paper: **105/111** en la regla 1D y **0/156** en la 2D.
+El `8.0` del panel izquierdo es la constante verdadera del muro y el `2.0` del
+derecho es el semiplano que los artefactos escriben de verdad, en el borde oeste
+del disco — conviene mantenerlos.
+
+Comando (desde la raíz del repo, con créditos disponibles):
+
+```bash
+codex exec -s workspace-write "$(cat docs/marketing/prompt-infer-the-rule.txt)"
+```
+
+Prompt:
+
+```text
+Create a 1020x510 blog hero image for a technical article titled "An LLM Can Infer
+the Rule You Forgot - in One Dimension". Save it to
+public/blog/infer-the-rule-in-one-dimension.png
+
+Style: refined technical editorial illustration, dark but not monochrome. A
+CONCRETE SCENE contrasting two control experiments side by side, split down the
+middle.
+
+LEFT PANEL - "1D", the success:
+A cart on a straight horizontal rail meeting a solid vertical wall. Above it a
+small code panel with the readable line:  if x >= 8.0: stop()  marked with a green
+check. A short caption strip reading  105 / 111.
+
+RIGHT PANEL - "2D", the failure:
+A top-down view of a plane with a circular region. A moving dot enters the circle.
+Contact dots are scattered around only ONE arc of the circle, leaving the rest of
+the circumference bare. A small code panel with the readable line:
+if x >= 2.0:  marked with a red cross, and a straight dashed line cutting the plane
+to show a half-plane guessed where a circle belongs. A caption strip reading  0 / 156.
+
+Those two figures, 105/111 and 0/156, are real measured results and must appear
+exactly as written. Do not invent any other numbers or statistics anywhere in the
+image.
+
+Visual motifs: the rail and the wall, the circle with contacts on a partial arc,
+the two small code panels with readable but generic text, thin measurement
+annotations with tick marks.
+No logos, no brand names, no people, no text-heavy poster.
+Crisp bitmap illustration, high contrast, professional AI/developer blog
+aesthetic, balanced teal, amber, graphite and off-white accents on dark. No purple
+gradient blobs, no bokeh.
+```
+
+Al recibir la imagen: revisarla (sobre todo que `105 / 111`, `0 / 156`, `8.0` y
+`2.0` estén bien escritos — los modelos de imagen destrozan etiquetas), colocarla
+en `public/blog/infer-the-rule-in-one-dimension.png` y mover esta entrada a
+generada con la fecha.
