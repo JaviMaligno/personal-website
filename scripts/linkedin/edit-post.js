@@ -58,19 +58,22 @@ async function main() {
   // Two APIs, tried in order. The versioned /rest/posts endpoint is the one
   // LinkedIn documents for editing; the old v2/ugcPosts PARTIAL_UPDATE is kept
   // as a fallback because some tokens only work against it.
+  // LinkedIn retira las versiones mensuales al cabo de un tiempo y devuelve 426
+  // si pides una inactiva, sin decir cual vale: se prueban varias.
+  const VERSIONES = ['202506', '202504', '202502', '202412', '202410', '202408'];
   const intentos = [
-    {
-      nombre: 'rest/posts (versioned)',
+    ...VERSIONES.map(v => ({
+      nombre: `rest/posts (${v})`,
       url: `https://api.linkedin.com/rest/posts/${encodeURIComponent(urn)}`,
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
         'X-Restli-Protocol-Version': '2.0.0',
         'X-RestLi-Method': 'PARTIAL_UPDATE',
-        'LinkedIn-Version': '202508',
+        'LinkedIn-Version': v,
       },
       body: { patch: { $set: { commentary: text } } },
-    },
+    })),
     {
       nombre: 'v2/ugcPosts',
       url: `https://api.linkedin.com/v2/ugcPosts/${encodeURIComponent(urn)}`,
@@ -100,7 +103,8 @@ async function main() {
       console.log(`✅ Post updated via ${intento.nombre}. Reload it on LinkedIn to confirm.`);
       return;
     }
-    console.error(`  ✗ ${intento.nombre} -> ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const cuerpo = (await res.text()).slice(0, 160);
+    if (res.status !== 426) console.error(`  ✗ ${intento.nombre} -> ${res.status}: ${cuerpo}`);
   }
   console.error('❌ Could not edit the post through the API. Edit it by hand on LinkedIn:');
   console.error('   the corrected text is in the file passed as the second argument.');
