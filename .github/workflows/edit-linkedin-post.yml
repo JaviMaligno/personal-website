@@ -1,0 +1,41 @@
+name: Edit a published LinkedIn post
+
+# Manual only. The auto-generated post can land with wrong facts, and once it has
+# a comment you cannot delete and repost without losing the thread — so the text
+# has to be edited in place. Runs here rather than locally because the valid
+# access token lives in this repo's secrets.
+on:
+  workflow_dispatch:
+    inputs:
+      urn:
+        description: 'Post URN (e.g. urn:li:share:7495402758574043136)'
+        required: true
+      file:
+        description: 'Path to the corrected text file, relative to the repo root'
+        required: true
+        default: scripts/linkedin/posts/scaffolding-corrected-en.txt
+      dry_run:
+        description: 'Print the text without sending it'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Edit the post
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+        run: |
+          node scripts/linkedin/edit-post.js \
+            "${{ inputs.urn }}" \
+            "${{ inputs.file }}" \
+            ${{ inputs.dry_run && '--dry-run' || '' }}
