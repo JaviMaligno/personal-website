@@ -20,12 +20,7 @@ placeholders that only resolve once arXiv announces the preprint (submitted
    to the actual merge date — the blog index sorts by it, so a stale date buries the
    post under older ones.
 
-3. **Hero image.** `heroImage: /blog/infer-the-rule-in-one-dimension.png` is
-   referenced but **not generated yet**: the Codex route in the `blog-writer` skill
-   failed with "workspace is out of credits". Refill and re-run the command in that
-   skill, then review the PNG and record the prompt in `docs/marketing/image-prompts.md`.
-
-4. **`linkedinImage`.** Not set, so the hero is used. Consider the first figure of the
+3. **`linkedinImage`.** Not set, so the hero is used. Consider the first figure of the
    article (105/111 vs 0/156) as a stronger feed image — it is a single number contrast.
    It only exists as inline SVG, so it would need exporting to PNG first. Decide
    **before** merging: the LinkedIn post is generated on the merge push and its image
@@ -33,6 +28,9 @@ placeholders that only resolve once arXiv announces the preprint (submitted
 
 ## Already done
 
+- Hero image generated, reviewed at 1020x510 and saved to
+  `public/blog/infer-the-rule-in-one-dimension.png`; exact prompt recorded in
+  `docs/marketing/image-prompts.md`.
 - Both language files written, `npm run build` passes, both pages generated.
 - Every number in the article checked against the paper's result JSONs in the
   `code-world-models` repo (one error caught and fixed that way: the blind planner's
