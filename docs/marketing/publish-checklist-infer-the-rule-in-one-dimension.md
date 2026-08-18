@@ -20,11 +20,14 @@ placeholders that only resolve once arXiv announces the preprint (submitted
    to the actual merge date — the blog index sorts by it, so a stale date buries the
    post under older ones.
 
-3. **`linkedinImage`.** Not set, so the hero is used. Consider the first figure of the
-   article (105/111 vs 0/156) as a stronger feed image — it is a single number contrast.
-   It only exists as inline SVG, so it would need exporting to PNG first. Decide
-   **before** merging: the LinkedIn post is generated on the merge push and its image
-   cannot be changed afterwards without deleting and re-posting by hand.
+## Decided
+
+3. **`linkedinImage`: leave it unset — the hero is the right feed image.** The plan was
+   to export the article's first figure (105/111 vs 0/156) because a concrete number
+   beats an illustration in the feed. The generated hero already *is* that contrast:
+   it carries both figures in large type beside the two experiments. Exporting the SVG
+   would add a weaker duplicate, so the fallback (`linkedinImage || heroImage`) is the
+   correct outcome here rather than an omission.
 
 ## Already done
 
