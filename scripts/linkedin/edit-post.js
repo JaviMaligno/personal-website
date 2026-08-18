@@ -102,8 +102,7 @@ async function main() {
     }
     console.error(`  ✗ ${intento.nombre} -> ${res.status}: ${(await res.text()).slice(0, 200)}`);
   }
-  console.error('
-❌ Could not edit the post through the API. Edit it by hand on LinkedIn:');
+  console.error('❌ Could not edit the post through the API. Edit it by hand on LinkedIn:');
   console.error('   the corrected text is in the file passed as the second argument.');
   process.exit(1);
 }
