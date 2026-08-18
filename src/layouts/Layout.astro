@@ -7,9 +7,10 @@ interface Props {
   title?: string;
   description?: string;
   langSwitchOverride?: string;
+  structuredData?: Record<string, unknown>[];
 }
 
-const { title = 'AGILabs - AI Agent Architecture & Multi-Agent Systems', description = 'I design AI systems that actually work. Multi-agent orchestration, MCP development, and compliance automation.', langSwitchOverride } = Astro.props;
+const { title = 'AGILabs - AI Agent Architecture & Multi-Agent Systems', description = 'I design AI systems that actually work. Multi-agent orchestration, MCP development, and compliance automation.', langSwitchOverride, structuredData = [] } = Astro.props;
 
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
@@ -144,6 +145,9 @@ const organizationSchema = {
     <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
     <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
     <script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />
+    {structuredData.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
 
     <!-- Fonts - use system font stack with Inter as enhancement -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -188,6 +192,7 @@ const organizationSchema = {
           <a href={getLocalizedPath('/mentoring', lang)}>{t('nav').mentoring}</a>
           <a href={`${getLocalizedPath('/', lang)}#projects`}>{t('nav').projects}</a>
           <a href={getLocalizedPath('/blog/', lang)}>{t('nav').blog}</a>
+          <a href={getLocalizedPath('/publications/', lang)}>{t('nav').publications}</a>
           <a href={`${getLocalizedPath('/', lang)}#process`}>{t('nav').process}</a>
           <a href={`${getLocalizedPath('/', lang)}#contact`}>{t('nav').contact}</a>
           <a href="#" onclick="window.loadCalendlyPopup && window.loadCalendlyPopup('https://calendly.com/javiecija96/discovery-call?hide_landing_page_details=1&hide_gdpr_banner=1&primary_color=6366f1');return false;" class="btn btn-primary btn-sm">{t('cta').bookCall}</a>
