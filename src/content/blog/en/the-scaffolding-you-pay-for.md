@@ -1,6 +1,6 @@
 ---
 title: "The Scaffolding You Pay For"
-description: "I was convinced that prescriptive skills get in the way of a frontier model, so I measured it: ~640 responses and 99 agent runs. I was wrong about where the damage is — and once the agent has tools, the benefit disappears and only the bill stays."
+description: "I was convinced that prescriptive skills get in the way of a frontier model, so I measured it: ~640 responses and 147 agent runs. I was wrong about where the damage is — and once the agent has tools, the benefit disappears and only the bill stays."
 pubDate: 2026-08-18
 tags: ["AI", "Agents", "Evaluation", "Context Engineering", "Research"]
 lang: en
@@ -27,7 +27,7 @@ Four axes, in the order I ran them:
 | 3 | both, but inside a **real agent with tools** | three skills | tests, plus the whole path it took |
 | 4 | requests where the deciding is the hard part | three skills | blind judge: does it flag the decision? |
 
-Axes 1 and 2 are one turn, no tools: the skill as *text*. Six models. Axes 3 and 4 are Claude Code with a tool loop, a scratch repository, and 99 runs.
+Axes 1 and 2 are one turn, no tools: the skill as *text*. Six models. Axes 3 and 4 are Claude Code with a tool loop, a scratch repository, and 147 runs across two models.
 
 Axis 1 has visible tests the model sees failing, and hidden tests it never sees. A patch that treats the symptom passes the visible ones and fails the hidden ones — which is precisely what `systematic-debugging` promises to prevent.
 
@@ -81,7 +81,7 @@ Result is in three separate pieces, because they move differently:
 
 That is the finding that most limits my previous article and this one. The attention damage of axis 2 — the skill pulling focus away from the facts — **is an artefact of forcing a model to answer from memory.** Give it somewhere to look and it looks.
 
-What survives is the bill: 32%, 35% and 133% more output tokens, and more money, in the three conditions, for no measurable improvement in anything.
+What survives is the bill: 32%, 35% and 133% more output tokens, and more money, in the three conditions, for no measurable improvement in anything. (That last part holds up on a second model; the first doesn't, and I come back to it below.)
 
 ## The skill that wrote a plan instead of the code
 
@@ -133,6 +133,47 @@ That's the finding. Whether the model notices there's a business decision in fro
 
 I'd hold this one loosely: ten runs per condition detects only large effects, and the free baseline already flags half the time, which leaves little room to improve. But the direction is clear enough to say that **if a planning skill has a home, I haven't found it — and this was the test designed to let it win.**
 
+## The same test on a smaller model
+
+One repository, one model is a thin basis for "scaffolding costs you". So I ran the whole of axis 3 again on Sonnet 5 — same repository, same three requests, same four conditions, 48 more runs.
+
+It corrects one of my claims and sharpens another.
+
+**The correction: the surcharge is not universal.** On Opus every skill cost more. On Sonnet only one does.
+
+| condition | Opus: output tokens vs free | Sonnet: output tokens vs free |
+|---|---|---|
+| `systematic-debugging` | +32% (p=0.035) | **−18%** (p=0.371) |
+| `test-driven-development` | +35% (p=0.026) | +21% (p=0.544) |
+| `writing-plans` | +133% (p<0.001) | **+203%** (p<0.001) |
+
+So "scaffolding always costs" was too strong, and it was drawn from a single model. What holds across both is narrower: **a planning skill costs a lot, everywhere.** The other two are noise on the smaller model.
+
+**The sharpening: the planning failure is far worse on the weaker model.**
+
+| delivers what was asked | Opus | Sonnet |
+|---|---|---|
+| free | 12/12 | 7/12 |
+| `writing-plans` | 8/12 | **2/12** |
+
+Sonnet delivers less across the board — 24/48 against 44/48 (p=1·10⁻⁵), so part of this is simply a model that struggles with these tasks, and the comparison sits on a shakier floor. But look at the gap *within* Sonnet: 7/12 free against 2/12 with the planning skill. The thing that made Opus occasionally write a plan instead of the code makes Sonnet do it most of the time.
+
+And the one result that doesn't move at all, in either model:
+
+**And the half of my original hunch I hadn't checked.** My hunch had two parts: strong models don't need the scaffolding, weaker ones do. Everything above tests the first part. The second one has exactly one piece of evidence in its favour, and it's in the condition I'd have bet against:
+
+| Sonnet: delivers what was asked | rate |
+|---|---|
+| free | 14/23 (61%) |
+| `test-driven-development` | 18/23 (78%) |
+
+**+17 points, p=0.337.** On Opus the same comparison is 12/12 against 12/12 — no room to move. So the direction fits the hunch: the imposed test-first sequence helps the model that needs the structure and does nothing for the one that doesn't. I doubled the cell to check, and the effect went from +25 points to +17 — shrinking the way the axis-2 effect shrank, and still not significant.
+
+Two reasons I won't call this a win for the hunch. One of three skills points that way; the other two make Sonnet *worse*. And the other half of the claim isn't measurable here at all: **Opus sits at the ceiling**, delivering 12/12 in three conditions out of four, so "the strong model doesn't need it" and "the task is too easy to tell" are the same data. Testing that properly needs tasks the strong model doesn't ace, which is a different experiment.
+
+
+**Domain rules: 48/48 on Opus. 48/48 on Sonnet.** Ninety-six agent runs, two capability tiers, four conditions, and not one broke a rule the repository had written down — including on the request built to bait exactly that. Given somewhere to look, both models look. That is the most robust finding in the study, and it's the one I'd bet on outliving the models it was measured against.
+
 ## Prescribed cost is not accidental cost
 
 If a skill makes an agent take more turns, that's only damning if the turns are wasted. TDD writing a failing test first is extra work *by design*. So I measured the two separately, and they separate cleanly:
@@ -143,7 +184,7 @@ If a skill makes an agent take more turns, that's only damning if the turns are 
 
 ## What I'd actually do
 
-**Stop paying for scaffolding you can't name a benefit for.** The clearest result here is the cost, and it's the one that survives correction for multiple comparisons. If a skill is in your context on every task, it is charging you between a third and well over double the output tokens per task. That's fine if you know what it buys. In this study, on these tasks, it mostly bought nothing.
+**Stop paying for scaffolding you can't name a benefit for.** A planning skill in your context is charging you double to triple the output tokens per task, on both models I tested, and buying nothing I could measure. The procedural ones are cheaper than that and their cost didn't replicate on the smaller model — but neither did they buy anything either. The rule I'd apply isn't "strip it all out": it's that a skill riding along on every task should have a benefit you can name, and most of mine couldn't.
 
 **Prefer skills that create slots over skills that prescribe procedures.** The only positive effect I measured came from a heading the model had to fill in — *hard ordering constraints* — which forced it to check a fact it would otherwise have skimmed. The four-phase method around that heading contributed nothing I can detect.
 
@@ -153,7 +194,7 @@ If a skill makes an agent take more turns, that's only damning if the turns are 
 
 ## Limits
 
-Axis 3 is one repository, three requests, one model — no generalisation to other languages or to large codebases. There are many comparisons and no correction applied; what survives a reasonable Bonferroni is the cost block (tokens and money, p ≤ 0.001 for `writing-plans`) and the pooled −16 points of axis 2 (p=0.017). The +35 points for Opus (p=0.054) and its interaction (p=0.041) are **indications, not confirmed results** — and after watching that effect shrink when I added runs, I'd treat them as the weakest claims in the piece.
+Axis 3 is one repository and three requests, run on two models; axis 4 only on one. No generalisation to other languages or to large codebases. There are many comparisons and no correction applied; what survives a reasonable Bonferroni is the cost block (tokens and money, p ≤ 0.001 for `writing-plans`) and the pooled −16 points of axis 2 (p=0.017). The +35 points for Opus (p=0.054) and its interaction (p=0.041) are **indications, not confirmed results** — and after watching that effect shrink when I added runs, I'd treat them as the weakest claims in the piece.
 
 The skills go in via the system prompt, which keeps axis 3 comparable with axis 2 but isn't identical to an agent invoking a skill mid-task. The turn ceiling I declared didn't actually bite — five runs exceeded it — so turns are observed cost, not consumption of a fixed budget.
 
