@@ -1,0 +1,106 @@
+---
+import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../../i18n';
+import { research } from '../../data/publications';
+
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+const p = t('publications');
+---
+
+<section id="papers" class="publications-papers">
+  <div class="container">
+    <h2>{p.papers.title}</h2>
+    <ul class="paper-list">
+      {research.map((item) => (
+        <li class="card paper">
+          <div class="paper-head">
+            <span class="kind" data-kind={item.kind}>
+              {item.kind === 'thesis' ? p.papers.thesisLabel : p.papers.preprintLabel}
+            </span>
+            <span class="meta">{item.venue} · {item.year}</span>
+          </div>
+          <h3>{item.title}</h3>
+          <p class="authors">{item.authors.join(', ')}</p>
+          <p class="summary">{p.researchItems[item.key].summary}</p>
+          <div class="paper-links">
+            <a href={item.url} target="_blank" rel="noopener" class="paper-link">{p.papers.readPaper}</a>
+            {item.relatedArticle && (
+              <a href={`${getLocalizedPath('/blog/', lang)}${item.relatedArticle}/`} class="paper-link">
+                {p.papers.readArticle}
+              </a>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .publications-papers {
+    padding: var(--space-xl) 0;
+  }
+  h2 {
+    font-size: 1.75rem;
+    margin-bottom: var(--space-lg);
+  }
+  .paper-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-md);
+  }
+  .paper-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+  }
+  .kind {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+  }
+  .kind[data-kind='thesis'] {
+    color: var(--accent-text);
+    border-color: var(--accent-text);
+  }
+  .meta {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+  .paper h3 {
+    font-size: 1.125rem;
+    line-height: 1.4;
+    margin-bottom: var(--space-xs);
+  }
+  .authors {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+  }
+  .summary {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+  }
+  .paper-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+  .paper-link {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    text-decoration: none;
+    transition: color var(--transition-base);
+  }
+  .paper-link:hover {
+    color: var(--accent-text);
+  }
+</style>
