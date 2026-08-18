@@ -6,6 +6,15 @@
  * allows a PARTIAL_UPDATE on the ugcPost's shareCommentary; media and links stay
  * as they are.
  *
+ * STATUS (2026-08-18): this does NOT work with the token this repo holds.
+ *   - v2/ugcPosts PARTIAL_UPDATE -> 403 ACCESS_DENIED. The token can create
+ *     posts (w_member_social) but not modify them.
+ *   - /rest/posts -> 426 NONEXISTENT_VERSION for every monthly version tried
+ *     (202408 through 202506).
+ * Editing a published post therefore has to be done by hand in the LinkedIn UI
+ * (post menu -> Edit post). Kept because it is one scope away from working, and
+ * because the failure modes above are worth not rediscovering.
+ *
  * Usage:
  *   export LINKEDIN_ACCESS_TOKEN=...            (or have it in .env)
  *   node scripts/linkedin/edit-post.js <urn> <text-file> [--dry-run]
