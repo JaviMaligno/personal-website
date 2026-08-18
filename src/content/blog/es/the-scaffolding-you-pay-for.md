@@ -1,6 +1,6 @@
 ---
 title: "El andamiaje que pagas"
-description: "Estaba convencido de que las skills prescriptivas le estorban a un modelo puntero, así que lo medí: ~640 respuestas y 99 ejecuciones de agente. Me equivocaba sobre dónde está el daño — y en cuanto el agente tiene herramientas, el beneficio desaparece y solo queda la factura."
+description: "Estaba convencido de que las skills prescriptivas le estorban a un modelo puntero, así que lo medí: ~640 respuestas y 147 ejecuciones de agente. Me equivocaba sobre dónde está el daño — y en cuanto el agente tiene herramientas, el beneficio desaparece y solo queda la factura."
 pubDate: 2026-08-18
 tags: ["IA", "Agentes", "Evaluación", "Context Engineering", "Investigación"]
 lang: es
@@ -27,7 +27,7 @@ Cuatro ejes, en el orden en que los corrí:
 | 3 | las dos, pero dentro de un **agente real con herramientas** | tres skills | tests, más el camino completo que recorre |
 | 4 | encargos donde lo difícil es decidir | tres skills | juez ciego: ¿señala la decisión? |
 
-Los ejes 1 y 2 son de un turno y sin herramientas: la skill como *texto*. Seis modelos. Los ejes 3 y 4 son Claude Code con bucle de herramientas, un repositorio de trabajo y 99 ejecuciones.
+Los ejes 1 y 2 son de un turno y sin herramientas: la skill como *texto*. Seis modelos. Los ejes 3 y 4 son Claude Code con bucle de herramientas, un repositorio de trabajo y 147 ejecuciones repartidas en dos modelos.
 
 El eje 1 tiene tests visibles que el modelo ve fallar, y tests ocultos que no ve nunca. Un parche que trata el síntoma pasa los visibles y falla los ocultos — que es exactamente lo que `systematic-debugging` promete evitar.
 
@@ -81,7 +81,7 @@ El resultado va en tres piezas separadas, porque se mueven de forma distinta:
 
 Ese es el hallazgo que más limita el artículo anterior y también este. El daño a la atención del eje 2 — la skill llevándose el foco lejos de los hechos — **es un artefacto de obligar al modelo a responder de memoria.** Dale dónde mirar y mira.
 
-Lo que sobrevive es la factura: un 32 %, un 35 % y un 133 % más de tokens de salida, y más dinero, en las tres condiciones, sin mejora medible en nada.
+Lo que sobrevive es la factura: un 32 %, un 35 % y un 133 % más de tokens de salida, y más dinero, en las tres condiciones, sin mejora medible en nada. (Lo segundo aguanta en un segundo modelo; lo primero no, y vuelvo sobre ello más abajo.)
 
 ## La skill que escribió un plan en vez del código
 
@@ -133,6 +133,47 @@ Ese es el hallazgo. Que el modelo se dé cuenta de que tiene delante una decisi�
 
 Lo cogería con pinzas: diez ejecuciones por condición solo detectan efectos grandes, y la línea base sin skill ya señala la mitad de las veces, lo que deja poco margen de mejora. Pero la dirección es lo bastante clara como para decir que **si una skill de planificación tiene un sitio donde ganar, yo no lo he encontrado — y esta era la prueba diseñada para que lo tuviera.**
 
+## La misma prueba en un modelo menor
+
+Un repositorio y un modelo es poca base para decir «el andamiaje cuesta». Así que corrí el eje 3 entero otra vez con Sonnet 5 — mismo repositorio, mismos tres encargos, mismas cuatro condiciones, 48 ejecuciones más.
+
+Corrige una de mis afirmaciones y afila otra.
+
+**La corrección: el sobrecoste no es universal.** En Opus todas las skills costaban más. En Sonnet solo una.
+
+| condición | Opus: tokens de salida vs libre | Sonnet: tokens de salida vs libre |
+|---|---|---|
+| `systematic-debugging` | +32 % (p=0,035) | **−18 %** (p=0,371) |
+| `test-driven-development` | +35 % (p=0,026) | +21 % (p=0,544) |
+| `writing-plans` | +133 % (p<0,001) | **+203 %** (p<0,001) |
+
+Así que «el andamiaje siempre se paga» era demasiado fuerte, y salía de un solo modelo. Lo que aguanta en los dos es más estrecho: **una skill de planificación cuesta mucho, en todas partes.** Las otras dos son ruido en el modelo menor.
+
+**El afilado: el fallo de la planificación es mucho peor en el modelo débil.**
+
+| entrega lo pedido | Opus | Sonnet |
+|---|---|---|
+| libre | 12/12 | 7/12 |
+| `writing-plans` | 8/12 | **2/12** |
+
+Sonnet entrega menos en general —24/48 contra 44/48 (p=1·10⁻⁵)—, así que parte de esto es sencillamente un modelo al que estas tareas le vienen grandes, y la comparación se apoya en un suelo más frágil. Pero mira la diferencia *dentro* de Sonnet: 7/12 libre contra 2/12 con la skill de planificación. Lo que hacía que Opus escribiera de vez en cuando un plan en lugar del código hace que Sonnet lo haga casi siempre.
+
+Y el único resultado que no se mueve nada, en ninguno de los dos modelos:
+
+**Y la mitad de mi corazonada que no había comprobado.** Mi corazonada tenía dos partes: los modelos fuertes no necesitan el andamiaje, los débiles sí. Todo lo anterior prueba la primera. La segunda tiene exactamente una prueba a favor, y está en la condición contra la que yo habría apostado:
+
+| Sonnet: entrega lo pedido | tasa |
+|---|---|
+| libre | 14/23 (61 %) |
+| `test-driven-development` | 18/23 (78 %) |
+
+**+17 puntos, p=0,337.** En Opus esa misma comparación es 12/12 contra 12/12 — no hay margen donde moverse. Así que la dirección encaja con la corazonada: la secuencia impuesta de test primero ayuda al modelo que necesita la estructura y no hace nada por el que no. Dupliqué la celda para comprobarlo y el efecto pasó de +25 puntos a +17 — encogiendo igual que encogió el del eje 2, y sin alcanzar significación.
+
+Dos razones para no cantar victoria. Una de tres skills apunta en esa dirección; las otras dos dejan a Sonnet *peor*. Y la otra mitad de la afirmación no es medible aquí: **Opus está en el techo**, entregando 12/12 en tres condiciones de cuatro, así que «el modelo fuerte no lo necesita» y «la tarea es demasiado fácil para saberlo» son los mismos datos. Medir eso en serio pide tareas que el modelo fuerte no se coma de un bocado, y eso es otro experimento.
+
+
+**Reglas del dominio: 48/48 en Opus. 48/48 en Sonnet.** Noventa y seis ejecuciones de agente, dos niveles de capacidad, cuatro condiciones, y ni una sola rompió una regla que el repositorio tenía escrita — incluido el encargo montado para provocar justo eso. Si tienen dónde mirar, los dos miran. Es el hallazgo más robusto del estudio, y el único por el que apostaría que sobrevive a los modelos con los que se midió.
+
 ## El coste prescrito no es el coste accidental
 
 Si una skill hace que el agente dé más vueltas, eso solo es condenatorio si las vueltas se pierden. Que TDD escriba primero un test que falla es trabajo extra *por diseño*. Así que medí las dos cosas por separado, y se separan solas:
@@ -143,7 +184,7 @@ Si una skill hace que el agente dé más vueltas, eso solo es condenatorio si la
 
 ## Qué haría yo
 
-**Deja de pagar andamiaje cuyo beneficio no sepas nombrar.** El resultado más claro de aquí es el coste, y es el que sobrevive a la corrección por comparaciones múltiples. Si una skill está en tu contexto en cada tarea, te está cobrando entre un tercio y bastante más del doble de tokens de salida por tarea. Perfecto, si sabes qué compra. En este estudio, en estas tareas, casi siempre no compraba nada.
+**Deja de pagar andamiaje cuyo beneficio no sepas nombrar.** Una skill de planificación en tu contexto te cobra entre el doble y el triple de tokens de salida por tarea, en los dos modelos que probé, y no compra nada que yo haya podido medir. Las procedimentales cuestan menos que eso y su coste no replicó en el modelo menor — pero tampoco compraron nada. La regla que aplicaría no es «quítalo todo»: es que una skill que viaja en cada tarea debería tener un beneficio que sepas nombrar, y la mayoría de las mías no lo tenían.
 
 **Prefiere skills que abran huecos a skills que prescriban procedimientos.** El único efecto positivo que medí vino de un epígrafe que el modelo tenía que rellenar —*restricciones duras de orden*— y que le obligó a comprobar un hecho que si no habría hojeado. El método de cuatro fases alrededor de ese epígrafe no aportó nada detectable.
 
@@ -153,7 +194,7 @@ Si una skill hace que el agente dé más vueltas, eso solo es condenatorio si la
 
 ## Límites
 
-El eje 3 es un repositorio, tres encargos, un modelo — nada de generalizar a otros lenguajes ni a codebases grandes. Hay muchas comparaciones y ninguna corrección aplicada; lo que aguanta un Bonferroni razonable es el bloque de coste (tokens y dinero, p ≤ 0,001 en `writing-plans`) y los −16 puntos agregados del eje 2 (p=0,017). Los +35 puntos de Opus (p=0,054) y su interacción (p=0,041) son **indicios, no resultados confirmados** — y después de ver ese efecto encoger al añadir ejecuciones, los trataría como lo más flojo del artículo.
+El eje 3 es un repositorio y tres encargos, corridos en dos modelos; el eje 4 solo en uno. Nada de generalizar a otros lenguajes ni a codebases grandes. Hay muchas comparaciones y ninguna corrección aplicada; lo que aguanta un Bonferroni razonable es el bloque de coste (tokens y dinero, p ≤ 0,001 en `writing-plans`) y los −16 puntos agregados del eje 2 (p=0,017). Los +35 puntos de Opus (p=0,054) y su interacción (p=0,041) son **indicios, no resultados confirmados** — y después de ver ese efecto encoger al añadir ejecuciones, los trataría como lo más flojo del artículo.
 
 Las skills entran por el system prompt, lo que mantiene el eje 3 comparable con el eje 2 pero no es idéntico a que un agente invoque una skill a mitad de tarea. El techo de turnos que declaré no llegó a morder — cinco ejecuciones lo superaron —, así que los turnos son coste observado y no consumo de un presupuesto fijo.
 
