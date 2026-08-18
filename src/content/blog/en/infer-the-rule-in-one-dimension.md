@@ -76,7 +76,7 @@ Repair does not survive the move.
     <line x1="170" y1="30" x2="170" y2="175" stroke="rgba(255,255,255,0.1)"/>
     <line x1="380" y1="30" x2="380" y2="175" stroke="rgba(255,255,255,0.1)" stroke-dasharray="3 4"/>
     <line x1="590" y1="30" x2="590" y2="175" stroke="rgba(255,255,255,0.1)" stroke-dasharray="3 4"/>
-    <text x="170" y="193">0%</text><text x="380" y="193">50%</text><text x="590" y="193">100%</text>
+    <text x="170" y="193">0%</text><text x="380" y="193">50%</text><text x="590" y="193" text-anchor="end">100%</text>
   </g>
   <text x="160" y="70" text-anchor="end" fill="#f8fafc" font-size="13">1D rule (wall, stop)</text>
   <rect x="170" y="56" width="397" height="26" rx="4" fill="#6366f1"/>
