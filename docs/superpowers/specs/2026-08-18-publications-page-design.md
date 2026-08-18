@@ -87,26 +87,48 @@ repo's own metadata files lag reality — they still describe *The Logic of Sacr
 as blocked from Payhip by KDP Select. Optional fields make a partially-known edition
 the normal case rather than an exception, and adding a store later is one line of data.
 
-**Amazon URLs are built from the ASIN, not stored whole.** An ASIN is the same
-across marketplaces, so the page composes `amazon.es/dp/<ASIN>` on `/es` and
-`amazon.com/dp/<ASIN>` on `/en`. One field per format, two working links.
+**One Amazon link per edition, built from the Kindle ASIN.** A Kindle ASIN is the
+same in every marketplace, so the page composes `amazon.es/dp/<ASIN>` on `/es` and
+`amazon.com/dp/<ASIN>` on `/en`. Print ASINs are **not** portable: the `amazon.es`
+listing Javier sent (`B0GSVFPF2N`) does not appear anywhere in his KDP shelf, which
+means Amazon assigns print editions a separate ASIN per marketplace and the KDP
+dashboard only shows the US one. Composing a print link from a KDP ASIN would send
+Spanish readers to a page that does not exist in their store.
+
+So the page links the Kindle edition and lets Amazon's own format selector carry
+paperback and hardcover — it renders them in whichever marketplace the reader
+landed in, which is exactly the thing this page cannot do. The print ASINs are
+still recorded in the data file: if a direct hardcover button is wanted later, the
+data is already there and only the rendering changes.
 
 ### Confirmed data (2026-08-18)
 
 Payhip store: <https://payhip.com/DrJavierAguilarMartn>
 
-| Book | Lang | Title | Payhip |
-| --- | --- | --- | --- |
-| The Logic of Sacrifice | en | *The Logic of Sacrifice* | `payhip.com/b/sVI15` |
-| La lógica del sacrificio | es | *La lógica del sacrificio* | `payhip.com/b/ux0mB` |
-| Science Catch-Up | en | *Science Catch-Up: When Science Finally Meets Reality* | `payhip.com/b/KHMxr` |
-| Science Catch-Up | es | *Science Catch-Up: Cuando la ciencia se pone al día con la realidad* | `payhip.com/b/M4bjR` |
+Every edition, with its store data as of 2026-08-18 (Amazon figures from Javier's
+KDP shelf):
 
-Amazon ASINs known so far: `B0GSVFPF2N` (Science Catch-Up, edition language to
-confirm), `B0HBLBGHPF` (The Logic of Sacrifice EN, Kindle), `B0HBLPHZD9` (same,
-paperback). Both books also have a hardcover on sale; those ASINs are still missing.
+| Edition | Payhip | Kindle ASIN | Paperback ASIN | Hardcover ASIN |
+| --- | --- | --- | --- | --- |
+| *The Logic of Sacrifice* (en) | `b/sVI15` | `B0HBLBGHPF` | `B0HBLPHZD9` | `B0HBNJ4MRD` |
+| *La lógica del sacrificio* (es) | `b/ux0mB` | `B0H8M1W9SR` | `B0H958KHNW` | `B0H961RXY2` |
+| *Science Catch-Up: When Science Finally Meets Reality* (en) | `b/KHMxr` | — | — | — |
+| *Science Catch-Up: Cuando la ciencia se pone al día con la realidad* (es) | `b/M4bjR` | `B0GSLHDCTK` | `B0GSS3224N` | `B0GT3TS16R` |
+
+**The English *Science Catch-Up* is not on Amazon at all** — Payhip only. This is
+the case that justifies optional store fields, and it is live today rather than
+hypothetical.
+
 Print ISBNs for the English *Logic of Sacrifice*: 9798188990602 (paperback),
 9798189013126 (hardcover).
+
+All Kindle editions are enrolled in KDP Select, which requires digital exclusivity
+for the term — and the same ebooks are on sale on Payhip. His own book repo records
+that conflict (`docs/publicacion_metadata_en.md`: "Payhip — Blocked by KDP Select").
+This page does not create the exposure, but it does publicise it: linking both
+stores side by side makes the overlap easy for anyone, Amazon included, to see.
+Flagged for Javier as a business decision; the page ships either way, and dropping
+one store per edition is a data-file edit.
 
 ## Page structure
 
@@ -198,16 +220,8 @@ The site has no test suite for pages; verification is a build plus a visual chec
 
 ## Open data gaps
 
-These block content, not design. Amazon blocks automated fetching and the books are
-too recent to be indexed by search engines, so the remaining ASINs have to come from
-Javier's KDP bookshelf:
+All store data is closed as of 2026-08-18. Two open items, neither blocking:
 
-1. Which edition is `B0GSVFPF2N` — the English or the Spanish *Science Catch-Up*?
-2. The ASIN of the other *Science Catch-Up* edition.
-3. The ASIN of *La lógica del sacrificio* (ES) on Amazon, if it is there.
-4. Hardcover ASINs for both books (he confirmed both have one on sale).
-5. Paperback ASIN for any edition beyond the English *Logic of Sacrifice*.
-
-Until each gap is closed, the corresponding format link stays absent from the data
-file — which the design already handles. Payhip covers all four editions today, so
-the page ships complete and sellable even with every Amazon gap still open.
+1. **English *Science Catch-Up* on Amazon** — not published there yet. When it is,
+   add the ASIN to the data file; nothing else changes.
+2. **KDP Select overlap** — see the note under the table. Javier's call.
