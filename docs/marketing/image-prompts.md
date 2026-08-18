@@ -559,4 +559,44 @@ resting on the desk. Clean geometric composition, several distinct zones. No log
 brand names, no people, no text-heavy poster. Crisp bitmap illustration, high contrast,
 professional AI/developer blog aesthetic, balanced teal, amber, graphite and off-white
 accents on dark, no purple gradient blobs, no bokeh.
+
+---
+
+## the-scaffolding-you-pay-for
+
+- **Artículo:** `src/content/blog/{en,es}/the-scaffolding-you-pay-for.md`
+- **Imagen:** `public/blog/the-scaffolding-you-pay-for.png` (1020×510)
+- **Generada:** 2026-08-15, Codex 0.147.0 (`codex exec -s workspace-write`)
+
+Dos pasadas. La primera salió compositivamente bien a la primera, pero **Codex se
+inventó las métricas** (5 vs 14 turnos, $0,04 vs $0,42 — una diferencia de 10×).
+En un artículo cuyo tema es medir, unas cifras inventadas en el hero se leen como
+resultados del estudio. La segunda pasada reusa la composición y sustituye los
+números por los reales, pidiendo además que la proporción visual sea honesta
+(2,3× en tokens y 1,6× en coste, no 10×).
+
+**Lección para el resto de artículos con datos: si el hero lleva cifras, hay que
+dárselas explícitamente y comprobarlas en la imagen final.** El modelo rellena
+huecos numéricos con lo que resulta visualmente vistoso.
+
+Prompt de la segunda pasada:
+
+```text
+The hero at public/blog/the-scaffolding-you-pay-for.png is very good
+compositionally: two lanes (LEAN vs PROCEDURAL), same task, terminals, metrics
+panels, file trees. Keep that exact composition and style.
+
+One thing must change: the numbers shown are invented, and this article is about
+measured results, so the figures in the image have to be the REAL ones:
+
+LEAN LANE (label it 'FREE'):   turns 26, tokens 9.7K, cost $1.16,
+                               outcome: source updated, '19 passed'
+PROCEDURAL LANE (label 'SKILL'): turns 31, tokens 22.5K, cost $1.88,
+                               outcome: docs/plans/plan.md written, source untouched
+
+Keep the difference visually legible but proportionate to those real values — the
+procedural lane is roughly 2.3x the tokens and 1.6x the cost, NOT ten times.
+
+Everything else stays: same 1020x510 size, same dark graphite + teal + amber
+palette, same readable generic terminal lines and file trees, no logos, no people.
 ```
