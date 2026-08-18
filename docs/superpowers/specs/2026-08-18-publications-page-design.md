@@ -47,12 +47,11 @@ interface BookEdition {
   lang: Lang;
   title: string;
   cover: string;          // path under /publications/
-  payhip?: string;
-  kindle?: string;
-  paperback?: string;
-  hardcover?: string;
+  payhip?: string;        // full URL
+  kindle?: string;        // ASIN
+  paperback?: string;     // ASIN
+  hardcover?: string;     // ASIN
   isbn?: string;
-  published: boolean;     // false = written but not on sale anywhere yet
 }
 
 interface Book {
@@ -81,12 +80,33 @@ interface TeachingItem {
 }
 ```
 
-**Why the store links are optional.** *The Logic of Sacrifice* (EN) is enrolled in
-KDP Select, which grants Amazon 90 days of digital exclusivity from 2026-07-25 and
-therefore blocks Payhip for that edition; the Spanish edition is not published
-anywhere yet; *Science Catch-Up* sells on Payhip in both languages. There is no
-common shape. Optional fields make today's reality the normal case rather than an
-exception, and adding a store later is one line of data.
+**Why the store links are optional.** All four editions are live on Payhip today
+(confirmed 2026-08-18 against the store page), but the Amazon side is uneven: the
+formats on sale differ per edition, some ASINs are still unknown, and the book
+repo's own metadata files lag reality — they still describe *The Logic of Sacrifice*
+as blocked from Payhip by KDP Select. Optional fields make a partially-known edition
+the normal case rather than an exception, and adding a store later is one line of data.
+
+**Amazon URLs are built from the ASIN, not stored whole.** An ASIN is the same
+across marketplaces, so the page composes `amazon.es/dp/<ASIN>` on `/es` and
+`amazon.com/dp/<ASIN>` on `/en`. One field per format, two working links.
+
+### Confirmed data (2026-08-18)
+
+Payhip store: <https://payhip.com/DrJavierAguilarMartn>
+
+| Book | Lang | Title | Payhip |
+| --- | --- | --- | --- |
+| The Logic of Sacrifice | en | *The Logic of Sacrifice* | `payhip.com/b/sVI15` |
+| La lógica del sacrificio | es | *La lógica del sacrificio* | `payhip.com/b/ux0mB` |
+| Science Catch-Up | en | *Science Catch-Up: When Science Finally Meets Reality* | `payhip.com/b/KHMxr` |
+| Science Catch-Up | es | *Science Catch-Up: Cuando la ciencia se pone al día con la realidad* | `payhip.com/b/M4bjR` |
+
+Amazon ASINs known so far: `B0GSVFPF2N` (Science Catch-Up, edition language to
+confirm), `B0HBLBGHPF` (The Logic of Sacrifice EN, Kindle), `B0HBLPHZD9` (same,
+paperback). Both books also have a hardcover on sale; those ASINs are still missing.
+Print ISBNs for the English *Logic of Sacrifice*: 9798188990602 (paperback),
+9798189013126 (hardcover).
 
 ## Page structure
 
@@ -97,12 +117,10 @@ Three sections, in this order, each with its own heading.
 Card per book: cover image, title, blurb, buy buttons.
 
 - The reader's language selects the edition. `/es/publications` shows the Spanish
-  edition; `/en/publications` the English one.
-- If an edition does not exist in the reader's language, the book still appears,
-  showing the other edition with a note ("English edition" / "edición en inglés").
-  It never silently disappears.
-- If an edition exists but `published: false`, the card shows the cover and blurb
-  with a "coming soon" label and no buy button.
+  edition; `/en/publications` the English one. Both books exist in both languages,
+  so there is no missing-edition fallback and no "coming soon" state — deliberately
+  left out rather than built for a case that does not exist. Add it the day a book
+  launches in one language only.
 - **Buy button order:** Payhip is the primary button (≈95% royalty vs 70% on
   Amazon); Amazon is a secondary link. When an edition has no Payhip link, Amazon
   becomes the primary button. Print formats (paperback, hardcover) are secondary
@@ -175,20 +193,21 @@ The site has no test suite for pages; verification is a build plus a visual chec
 - `npm run build` must pass with no new warnings.
 - Both `/en/publications/` and `/es/publications/` render, and the nav entry appears
   on every page in both languages.
-- Each buy button resolves to a live URL (manual click-through once).
-- The "edition missing in this language" path is exercised by the Spanish edition of
-  *The Logic of Sacrifice* while it remains unpublished.
+- Each buy button resolves to a live URL (manual click-through once), including the
+  composed `amazon.es` / `amazon.com` variants of every ASIN.
 
 ## Open data gaps
 
-These block content, not design. The book repo's metadata files may lag reality, so
-they need confirming with Javier before the page ships:
+These block content, not design. Amazon blocks automated fetching and the books are
+too recent to be indexed by search engines, so the remaining ASINs have to come from
+Javier's KDP bookshelf:
 
-1. *Science Catch-Up* — is it on Amazon? ASINs or URLs for ES and EN.
-2. *La lógica del sacrificio* (ES) — published anywhere yet?
-3. *The Logic of Sacrifice* (EN) — confirm ASINs `B0HBLBGHPF` (Kindle) and
-   `B0HBLPHZD9` (paperback); is the hardcover on sale?
-4. Confirm the cover files listed above are the ones to use.
+1. Which edition is `B0GSVFPF2N` — the English or the Spanish *Science Catch-Up*?
+2. The ASIN of the other *Science Catch-Up* edition.
+3. The ASIN of *La lógica del sacrificio* (ES) on Amazon, if it is there.
+4. Hardcover ASINs for both books (he confirmed both have one on sale).
+5. Paperback ASIN for any edition beyond the English *Logic of Sacrifice*.
 
-Until each gap is closed, the corresponding link stays absent from the data file —
-which the design already handles.
+Until each gap is closed, the corresponding format link stays absent from the data
+file — which the design already handles. Payhip covers all four editions today, so
+the page ships complete and sellable even with every Amazon gap still open.
