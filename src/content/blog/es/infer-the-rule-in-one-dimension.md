@@ -54,7 +54,9 @@ Eso es una reversión genuina del residuo de "traducción, no inferencia", y con
 
 ## Entonces hice la regla bidimensional
 
-La pregunta obvia es si esa capacidad va de *dimensión* o de *discontinuidad*. Así que construí un instrumento 4D: un móvil en un plano, dos parches circulares, y la regla es que entrar en un parche te congela. Mismo pipeline, mismo gate, misma tolerancia, mismos modelos. Ahora la regla es una región — tres constantes en lugar de una.
+La pregunta obvia es si esa capacidad va de *dimensión* o de *discontinuidad*. Así que construí el instrumento que las separa: un móvil sobre un plano, dos **regiones circulares** pintadas en él, y una regla que lo congela en cuanto entra en una. Mismo pipeline, mismo gate, misma tolerancia, mismos modelos.
+
+Lo que cambia es la forma de la regla, no la dificultad de la física. El muro era un número — un umbral sobre una sola coordenada. Un disco son tres: dos del centro y uno del radio. (El estado del móvil tiene cuatro componentes, posición y velocidad en cada eje, pero aquí nada depende de eso. Lo que importa es que la frontera es ahora una curva en el plano en vez de un punto en una recta.)
 
 La reparación no sobrevive al cambio.
 

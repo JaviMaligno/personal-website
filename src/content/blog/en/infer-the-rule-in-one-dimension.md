@@ -66,7 +66,9 @@ That is a genuine reversal of the "translation, not inference" residual, and it'
 
 ## Then I made the rule two-dimensional
 
-The obvious next question is whether that capability is about *dimension* or about *discontinuity*. So I built a 4D instrument: a mover in a plane, two circular patches, and the rule is that entering a patch freezes you. Same pipeline, same gate, same tolerance, same models. The rule is now a region — three constants instead of one.
+The obvious next question is whether that capability is about *dimension* or about *discontinuity*. So I built the instrument that separates them: a mover on a plane, two **circular regions** painted on it, and a rule that freezes the mover the moment it enters one. Same pipeline, same gate, same tolerance, same models.
+
+What changes is the shape of the rule, not the difficulty of the physics. The wall was one number — a threshold on a single coordinate. A disc is three: two for the centre, one for the radius. (The mover's state has four components, position and velocity on each axis, but nothing here turns on that. What matters is that the boundary is now a curve in the plane instead of a point on a line.)
 
 Repair does not survive the move.
 
