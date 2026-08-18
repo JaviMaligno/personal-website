@@ -55,30 +55,56 @@ async function main() {
     return;
   }
 
-  const res = await fetch(`https://api.linkedin.com/v2/ugcPosts/${encodeURIComponent(urn)}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'X-Restli-Protocol-Version': '2.0.0',
-      'X-RestLi-Method': 'PARTIAL_UPDATE',
+  // Two APIs, tried in order. The versioned /rest/posts endpoint is the one
+  // LinkedIn documents for editing; the old v2/ugcPosts PARTIAL_UPDATE is kept
+  // as a fallback because some tokens only work against it.
+  const intentos = [
+    {
+      nombre: 'rest/posts (versioned)',
+      url: `https://api.linkedin.com/rest/posts/${encodeURIComponent(urn)}`,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
+        'X-RestLi-Method': 'PARTIAL_UPDATE',
+        'LinkedIn-Version': '202508',
+      },
+      body: { patch: { $set: { commentary: text } } },
     },
-    body: JSON.stringify({
-      patch: {
-        'specificContent': {
-          'com.linkedin.ugc.ShareContent': {
-            'shareCommentary': { $set: { text } },
+    {
+      nombre: 'v2/ugcPosts',
+      url: `https://api.linkedin.com/v2/ugcPosts/${encodeURIComponent(urn)}`,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
+        'X-RestLi-Method': 'PARTIAL_UPDATE',
+      },
+      body: {
+        patch: {
+          specificContent: {
+            'com.linkedin.ugc.ShareContent': { shareCommentary: { $set: { text } } },
           },
         },
       },
-    }),
-  });
+    },
+  ];
 
-  if (res.ok || res.status === 204) {
-    console.log('✅ Post updated. Reload the post on LinkedIn to confirm.');
-    return;
+  for (const intento of intentos) {
+    const res = await fetch(intento.url, {
+      method: 'POST',
+      headers: intento.headers,
+      body: JSON.stringify(intento.body),
+    });
+    if (res.ok || res.status === 204) {
+      console.log(`✅ Post updated via ${intento.nombre}. Reload it on LinkedIn to confirm.`);
+      return;
+    }
+    console.error(`  ✗ ${intento.nombre} -> ${res.status}: ${(await res.text()).slice(0, 200)}`);
   }
-  console.error(`❌ LinkedIn API error (${res.status}): ${await res.text()}`);
+  console.error('
+❌ Could not edit the post through the API. Edit it by hand on LinkedIn:');
+  console.error('   the corrected text is in the file passed as the second argument.');
   process.exit(1);
 }
 
