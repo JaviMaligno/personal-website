@@ -2,10 +2,10 @@ import type { ImageMetadata } from 'astro';
 import type { Language } from '../i18n';
 import { amazonUrl, getEdition, getStoreLinks } from './publications-links.mjs';
 
-import logicOfSacrificeEn from '../assets/publications/logic-of-sacrifice-en.png';
-import logicOfSacrificeEs from '../assets/publications/logic-of-sacrifice-es.png';
-import scienceCatchUpEn from '../assets/publications/science-catch-up-en.png';
-import scienceCatchUpEs from '../assets/publications/science-catch-up-es.png';
+import logicOfSacrificeEn from '../assets/publications/logic-of-sacrifice-en.jpg';
+import logicOfSacrificeEs from '../assets/publications/logic-of-sacrifice-es.jpg';
+import scienceCatchUpEn from '../assets/publications/science-catch-up-en.jpg';
+import scienceCatchUpEs from '../assets/publications/science-catch-up-es.jpg';
 
 export { amazonUrl, getEdition, getStoreLinks };
 
@@ -44,6 +44,8 @@ export interface ResearchItem {
   venue: string;
   year: number;
   url: string;
+  /** arXiv identifier, e.g. 'arXiv:2307.11414'. Preprints only. */
+  arxivId?: string;
   doi?: string;
   relatedArticle?: string;
 }
@@ -119,6 +121,8 @@ export const research: ResearchItem[] = [
     venue: 'arXiv (cs.AI, cs.LG)',
     year: 2026,
     url: 'https://arxiv.org/abs/2607.14169',
+    arxivId: 'arXiv:2607.14169',
+    doi: 'https://doi.org/10.48550/arXiv.2607.14169',
     relatedArticle: 'verified-world-model-still-loses',
   },
   {
@@ -130,6 +134,7 @@ export const research: ResearchItem[] = [
     venue: 'arXiv (math.RA)',
     year: 2024,
     url: 'https://arxiv.org/abs/2307.11414',
+    arxivId: 'arXiv:2307.11414',
     doi: 'https://doi.org/10.48550/arXiv.2307.11414',
   },
   {
@@ -190,6 +195,7 @@ export function getPublicationsSchema(lang: Language): Record<string, unknown>[]
     author: item.authors.map((name) => ({ '@type': 'Person', name })),
     datePublished: String(item.year),
     url: item.url,
+    ...(item.arxivId ? { identifier: item.arxivId } : {}),
     ...(item.doi ? { sameAs: item.doi } : {}),
     ...(item.kind === 'thesis' ? { inSupportOf: 'PhD in Mathematics' } : {}),
   }));
