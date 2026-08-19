@@ -52,11 +52,9 @@ export interface ResearchItem {
 
 export interface TeachingItem {
   slug: string;
-  /** i18n key under `publications.teachingItems.<key>` */
+  /** i18n key under `publications.teachingItems.<key>` — carries role, detail and years. */
   key: string;
   institution: string;
-  /** Omitted where the exact span is not confirmed. */
-  years?: string;
 }
 
 export const books: Book[] = [
@@ -113,6 +111,18 @@ export const books: Book[] = [
 
 export const research: ResearchItem[] = [
   {
+    slug: 'omitted-mode-rare-rule',
+    key: 'omittedMode',
+    kind: 'preprint',
+    title: 'An Omitted Mode Is a Rare Rule: The Sampling-Verification Danger Law in Continuous Code World Models',
+    authors: ['Javier Aguilar Martín'],
+    venue: 'arXiv (cs.LG, cs.AI, eess.SY)',
+    year: 2026,
+    url: 'https://arxiv.org/abs/2608.17956',
+    arxivId: 'arXiv:2608.17956',
+    doi: 'https://doi.org/10.48550/arXiv.2608.17956',
+  },
+  {
     slug: 'verified-world-model',
     key: 'verifiedWorldModel',
     kind: 'preprint',
@@ -151,7 +161,7 @@ export const research: ResearchItem[] = [
 ];
 
 export const teaching: TeachingItem[] = [
-  { slug: 'hesperides', key: 'hesperides', institution: 'Universidad de las Hespérides', years: '2026–' },
+  { slug: 'hesperides', key: 'hesperides', institution: 'Universidad de las Hespérides' },
   { slug: 'kcl', key: 'kcl', institution: "King's College London" },
   { slug: 'kent', key: 'kent', institution: 'University of Kent' },
   { slug: 'keepcoding', key: 'keepcoding', institution: 'KeepCoding' },

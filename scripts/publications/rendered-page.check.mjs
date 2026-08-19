@@ -60,8 +60,20 @@ test('both pages carry the papers, the thesis and the teaching entries', () => {
     const html = read(path);
     assert.ok(html.includes('https://arxiv.org/abs/2607.14169'), `verified world model preprint in ${path}`);
     assert.ok(html.includes('https://arxiv.org/abs/2307.11414'), `derived Deligne preprint in ${path}`);
+    assert.ok(html.includes('https://arxiv.org/abs/2608.17956'), `omitted-mode preprint in ${path}`);
     assert.ok(html.includes('https://kar.kent.ac.uk/105426/'), `thesis in ${path}`);
     assert.ok(html.includes('KeepCoding'), `teaching list in ${path}`);
+  }
+});
+
+test('every teaching entry carries its years', () => {
+  const spans = { 'dist/client/en/publications/index.html': 'Summer 2024', 'dist/client/es/publications/index.html': 'Verano 2024' };
+  for (const [path, keepcoding] of Object.entries(spans)) {
+    const html = read(path);
+    for (const years of ['2026', '2020', '2025', '2024']) {
+      assert.ok(html.includes(years), `${years} present in ${path}`);
+    }
+    assert.ok(html.includes(keepcoding), `KeepCoding term localised in ${path}`);
   }
 });
 
