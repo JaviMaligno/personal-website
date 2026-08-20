@@ -600,3 +600,37 @@ procedural lane is roughly 2.3x the tokens and 1.6x the cost, NOT ten times.
 Everything else stays: same 1020x510 size, same dark graphite + teal + amber
 palette, same readable generic terminal lines and file trees, no logos, no people.
 ```
+
+## `the-grader-knew-less` — El evaluador sabía menos que el sistema evaluado (2026-08-20)
+
+- Artículo: `src/content/blog/{en,es}/the-grader-knew-less.md`
+- Imagen: `public/blog/the-grader-knew-less.png`
+- Generado con Codex (`codex exec --approve-for-me`, modelo de imagen de OpenAI).
+  Nota: los flags `--full-auto` de la skill ya no existen en Codex v0.147; el
+  equivalente actual es `--approve-for-me` (y no admite `-s` a la vez).
+
+Prompt de estilo entregado a Codex para que redacte y ejecute el prompt final:
+
+```text
+Create a 1020x510 blog hero image; style: refined technical editorial
+illustration, dark but not monochrome, showing a CONCRETE SCENE of the article's
+core idea — a company-classification evaluation where the grader had less
+information than the system it graded: on one side a research pipeline (browser
+window with a company website, official registry record card, magnifier, arrows
+into a taxonomy code tree), on the other side a bare spreadsheet column of
+generic company names being pasted into a chat box that emits labels directly
+from the names; a scorecard between them showing a low percentage crossed out and
+a higher one written next to it.
+
+Visual motifs: readable but generic text is GOOD (column headers like 'company
+name', 'code', a taxonomy tree with nodes, a score card reading '54%' struck
+through and '75%'), clean geometric composition, several distinct zones.
+
+No logos, no brand names, no real company names, no people, no text-heavy poster.
+Use crisp bitmap illustration, high contrast, professional AI/developer blog
+aesthetic, balanced teal, amber, graphite and off-white accents, no purple
+gradient blobs, no bokeh.
+```
+
+**Comprobar en la imagen final:** que las cifras salgan como `54%` (tachado) y
+`75%`, no inventadas — es el mismo fallo documentado en `the-scaffolding-you-pay-for`.
