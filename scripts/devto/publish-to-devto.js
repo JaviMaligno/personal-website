@@ -220,14 +220,23 @@ Want to see more AI agent projects? Check out my [portfolio](${siteUrl}) where I
     }
 
     const result = await response.json();
+    const wasUpdate = Boolean(existingArticle);
 
-    console.log(`\n✅ Successfully published to Dev.to!`);
+    // The PUT response does not always carry `published`. Reading it straight
+    // into a boolean turned "the field is absent" into "it is a draft", so an
+    // update of a live article printed "created as a DRAFT" and read like the
+    // post had been pulled. Distinguish absent from false.
+    const apiReportedStatus = typeof result.published === 'boolean';
+    const isPublished = apiReportedStatus ? result.published : published;
+
+    console.log(`\n✅ Successfully ${wasUpdate ? 'updated on' : 'published to'} Dev.to!`);
     console.log(`📍 Dev.to URL: ${result.url}`);
     console.log(`🆔 Article ID: ${result.id}`);
-    console.log(`📊 Status: ${result.published ? 'Published' : 'Draft'}`);
+    console.log(`📊 Status: ${isPublished ? 'Published' : 'Draft'}`
+      + (apiReportedStatus ? '' : ' (as requested — the API response did not report it)'));
 
-    if (!result.published) {
-      console.log(`\n💡 Tip: Your article was created as a DRAFT.`);
+    if (!isPublished) {
+      console.log(`\n💡 Tip: this article is a DRAFT${wasUpdate ? '' : ' — it was created as one'}.`);
       console.log(`   Visit ${result.url} to review and publish it manually.`);
     }
 
