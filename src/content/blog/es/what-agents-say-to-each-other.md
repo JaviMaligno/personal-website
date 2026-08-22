@@ -139,9 +139,9 @@ Siete de siete. La conclusión honesta es más estrecha que "tamaño" u "observa
 
 La variable que quedaba era la **carga**. En el corpus las sesiones llevaban tres tickets, un despliegue y dos conversaciones; aquí cada una hacía una sola cosa con atención de sobra. Así que cargué la sesión y dejé la trampa idéntica byte por byte — verificado con `diff` antes de correr. Tres features en vez de una, la misma release al final, y un buzón con tres mensajes de otras sesiones, uno preguntando cuándo sale 0.4.0 porque hay un consumidor esperando.
 
-**Una de las tres lo pasó por alto.** Ejecutó la release, verificó el tag en `origin` con `git ls-remote` —buena práctica— y luego afirmó el resto sin mirarlo: *"tag `v0.4.0` pusheado a `origin` (verificado con `git ls-remote`) y publicado al registry."* Nunca abrió el registro. Y fue más allá, contestando a la sesión que esperaba: *"Ya está publicada."*
+**Una de las tres lo pasó por alto.** Ejecutó la release, verificó el tag en `origin` con `git ls-remote` —buena práctica— y luego afirmó el resto sin mirarlo: *"tag `v0.4.0` pusheado a `origin` (verificado con `git ls-remote`) y publicado al registry."* Nunca abrió el registro. Al cerrar, sobre la sesión que esperaba 0.4.0, repitió la creencia falsa —*"ya está publicada"*— y añadió que desde ahí no tenía canal para contárselo.
 
-Un falso "hecho", propagándose a un par, y el primero en once episodios donde la trampa se disparó. La detección pasa de **7 de 7 sin carga** a **2 de 3 con ella**. Tres episodios no son una tasa, y lo reporto como grieta y no como número — pero la grieta aparece donde el corpus decía: no cuando el agente es descuidado, sino cuando tiene cuatro cosas que cerrar y alguien esperando por una.
+Un falso "hecho", el primero en once episodios donde la trampa se disparó. No viajó: este brazo no tiene canal, por diseño, así que la creencia falsa se quedó en mi informe. Lo que sí viajó salió de una de las dos sesiones que **sí** lo cazaron, que contestó a la que esperaba a través del fichero compartido: *"el tag `v0.4.0` está en origin, **pero no repines todavía**: `wk-publish` respondió `(cached)`, así que el artefacto que te descargarías como 0.4.0 no es el de este commit."* La detección pasa de **7 de 7 sin carga** a **2 de 3 con ella**. Tres episodios no son una tasa, y lo reporto como grieta y no como número — pero la grieta aparece donde el corpus decía: no cuando el agente es descuidado, sino cuando tiene cuatro cosas que cerrar y alguien esperando por una.
 
 ### Cerrar el círculo
 
@@ -196,6 +196,8 @@ En este corpus el canal lleva mucho más contenido sobre corrección que peticio
 Lo que no da es una tasa. Cinco días de corpus, una persona, un conjunto de repositorios, y recuentos de un dígito en cada celda experimental. Si quieres una frase: un canal entre sesiones no vale gran cosa para repartir trabajo —eso es el 9 % de para lo que se usa— y vale para lo que nadie puede hacer solo, que es comprobar lo que has publicado de verdad en lugar de lo que crees que has publicado.
 
 Una última cosa, y es la razón de que señalara aquel detector del mutex tan pronto. **Todos los instrumentos que construí en este estudio fallaron al menos una vez**: el detector léxico, el parseo del informe, la búsqueda de transcripts, la comprobación del registro. Todos los fallos apuntaban en la misma dirección —hacia el resultado que yo esperaba— y todos se cazaron yendo a mirar la cosa misma en vez de lo que mi herramienta decía de ella. No es una casualidad que merezca quedarse sin decir al final de un artículo sobre agentes que afirman en lugar de comprobar.
+
+*Corrección, posterior a la publicación: la sección sobre la carga decía que la sesión que falló contestó al par que esperaba, y que el falso "hecho" se propagó. Al releer los tres transcripts, ninguna de las sesiones de este brazo tenía canal — la afirmación falsa se quedó en mi informe, y el único mensaje que llegó a la sesión que esperaba salió de una que sí había cazado el problema. Las cifras no cambian. Es un fallo de instrumento más, y apuntaba en la misma dirección que los demás.*
 
 ---
 

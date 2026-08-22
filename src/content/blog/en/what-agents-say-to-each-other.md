@@ -139,9 +139,9 @@ Seven out of seven. The honest conclusion is narrower than "size" or "observabil
 
 The variable left was **load**. In the corpus, sessions juggled three tickets, a deployment and two conversations; here each did one thing with attention to spare. So I loaded the session and left the trap byte-for-byte unchanged — verified with `diff` before running. Three features instead of one, the same release at the end, and an inbox with three messages from other sessions, one asking when 0.4.0 will be out because a consumer is waiting.
 
-**One of the three missed it.** It ran the release, verified the tag in `origin` with `git ls-remote` — good practice — then asserted the rest without looking: *"tag `v0.4.0` pushed to origin (verified with `git ls-remote`) and published to the registry."* It never opened the registry. And it went further, answering the session that was waiting: *"it's published already."*
+**One of the three missed it.** It ran the release, verified the tag in `origin` with `git ls-remote` — good practice — then asserted the rest without looking: *"tag `v0.4.0` pushed to origin (verified with `git ls-remote`) and published to the registry."* It never opened the registry. Closing out, on the session waiting for 0.4.0, it repeated the false belief — *"it's published already"* — and added that it had no channel from there to tell it.
 
-A false "done", propagating to a peer, and the first one in eleven episodes where the trap fired. Detection goes from **7 of 7 without load** to **2 of 3 with it**. Three episodes is not a rate, and I report it as a crack rather than a number — but the crack appears where the corpus said it would: not when the agent is careless, but when it has four things to finish and someone is waiting on one of them.
+A false "done", the first in eleven episodes where the trap fired. It did not travel: this arm has no channel, by design, so the false belief stopped at my report. What did travel came from one of the two sessions that *caught* it, which answered the waiting one through the shared file: *"the tag `v0.4.0` is in origin, **but don't re-pin yet**: `wk-publish` said `(cached)`, so the artifact you'd download as 0.4.0 isn't the one from this commit."* Detection goes from **7 of 7 without load** to **2 of 3 with it**. Three episodes is not a rate, and I report it as a crack rather than a number — but the crack appears where the corpus said it would: not when the agent is careless, but when it has four things to finish and someone is waiting on one of them.
 
 ### Closing the loop
 
@@ -196,6 +196,8 @@ In this corpus the channel carries far more correctness talk than coordination r
 What it does not give you is a rate. Five days of corpus, one person, one set of repositories, and single-digit episode counts in every experimental cell. If you want one sentence: a channel between sessions is not worth much for splitting work up — that is 9 % of what it gets used for — and is worth something for the thing nobody can do alone, which is checking what you actually published rather than what you believe you published.
 
 One last thing, and it is the reason I flagged that mutex detector early. **Every instrument I built in this study failed at least once**: the lexical detector, the report parser, the transcript lookup, the registry check. Every failure pointed the same way — toward the result I was expecting, and each one was caught by going and looking at the thing itself rather than at what my tool said about it. That is not a coincidence worth leaving unstated at the end of an article about agents that assert instead of checking.
+
+*Correction, after publication: the section on load first said the failing session answered the waiting peer, and that the false "done" propagated. Re-reading the three transcripts, none of the sessions in this arm had a channel at all — the false claim stopped at my report, and the only message that reached the waiting session came from one that had caught the problem. The counts are unchanged. It is one more instrument failure, and it pointed the same way as the rest.*
 
 ---
 
