@@ -2160,6 +2160,22 @@ Al menos tres repositorios por escenario, siguiendo el criterio de
 descripción** en proporción parecida, porque A2 sólo se manifiesta en los que no
 la tienen.
 
+**Cada avería necesita repositorios con una forma distinta**, y esto se
+descubrió construyendo el arnés: no basta con que el corpus sea realista, tiene
+que dar dónde a la avería. Los fixtures de `tests/test_divergence.py` son la
+referencia de las dos formas que hacen falta:
+
+- **A1 y A3 necesitan empates**: varios documentos que puntúan igual en la
+  consulta inicial y compiten por los tres huecos de contexto, con la evidencia
+  decisiva en uno solo de ellos. Sin empates, barajar el orden no cambia nada.
+- **A2 y A4 necesitan evidencia tardía**: el README no dice a qué se dedica el
+  proyecto, y el documento que sí lo dice no menciona el nombre, así que no lo
+  alcanza ninguna de las tres consultas iniciales. Sin eso, quitar una consulta
+  o quedarse sin presupuesto no cambia lo que lee el modelo.
+
+Un repositorio que no tenga la forma que su avería necesita se descarta para
+esa avería, no para el corpus: puede servir perfectamente para otra.
+
 - [ ] **Step 2: Comprobar que cada avería produce su señal**
 
 Para cada avería y cada repositorio, con al menos 8 corridas y el modelo real:
