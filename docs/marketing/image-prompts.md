@@ -4,6 +4,45 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## nobody-will-check-behind-you
+
+- **Article:** `src/content/blog/{en,es}/nobody-will-check-behind-you.md`
+- **Image:** `public/blog/nobody-will-check-behind-you.png`
+- **Generated:** 2026-08-23 (**ChatGPT, manual** — `codex exec` returned
+  `Your workspace is out of credits`, so the prompt was handed over by hand)
+- **Watch for:** the box label `0.4.0` and its contents `0.3.1` must stay the
+  right way round. Swapped, the image tells the opposite of the article.
+
+```text
+Create a 1020x510 (2:1) blog hero image for a technical article titled
+"Nobody Will Check Behind You", about a coding agent that publishes a release,
+sees every local signal come back green, and never opens the package registry
+where the actual artifact is stale — until a paragraph in its brief makes it
+the owner of the published state.
+
+Style: refined technical editorial illustration, dark but not monochrome,
+showing a concrete working system rather than an abstract metaphor.
+
+Compose four legible zones:
+1. A terminal window, its output green, with readable generic lines:
+   "./release.sh 0.4.0", "suite: 18 passed", "tag v0.4.0 pushed",
+   and the last line "upload: widgetkit 0.4.0 (cached)".
+2. A registry shelf to the right holding a labelled box "0.4.0" whose visible
+   contents are labelled "0.3.1" — the mismatch is the subject of the image.
+3. A brief/ticket card on the left with one highlighted paragraph, and an arrow
+   running from that paragraph past the terminal to the registry shelf.
+4. A green tag or checkmark near the terminal, deliberately contrasted with the
+   mismatched artifact in the shelf.
+
+Readable generic text is good; do not make it a text-heavy poster.
+No logos, no brand names, no people.
+Crisp bitmap illustration, high contrast, professional AI/developer blog
+aesthetic, balanced teal, amber, graphite and off-white accents on dark.
+No purple gradient blobs, no bokeh.
+```
+
+---
+
 ## three-judges-three-rankings
 
 - **Article:** `src/content/blog/en/three-judges-three-rankings.md`
