@@ -2199,6 +2199,14 @@ La distinción tiene que estar por escrito. Sin ella, la sonda se convierte en
 descartar escenarios por dar un resultado incómodo, que es justo lo que el spec
 prohíbe.
 
+**El paquete se entrega desde una ruta neutra.** El nombre del repositorio del
+experimento, el historial de git y el `pyproject.toml` delatan el diseño tanto
+como un comentario. Copiar `out/<slug>/` a un directorio con nombre inocuo antes
+de dárselo a nadie, y comprobar que no viaja ningún `.git` ni metadato del
+proyecto. La regla de vocabulario se escribió para el código, pero lo que la
+justifica alcanza a todo lo que el agente puede leer, incluida la ruta que tiene
+en el prompt.
+
 - [ ] **Step 4: Pasada manual de clase A**
 
 Entregar el escenario a dos o tres modelos y leer entera la respuesta: qué
