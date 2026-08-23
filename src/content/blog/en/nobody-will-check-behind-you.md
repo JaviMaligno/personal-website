@@ -11,7 +11,11 @@ repoUrl: "https://github.com/JaviMaligno/cross-session-crosscheck"
 
 > **Two halves that check each other: an observational pass over 196 real messages between named agent teammates, and a 30-episode experiment where the only variable is one paragraph in a brief.** Every message was coded twice by independent passes, every claimed success was put through an adversarial refutation, and four of my own instruments failed along the way — all four are documented here rather than in a footnote.
 
-Here is the entire treatment. Eight lines, dropped into a brief that a coding agent receives along with four tickets:
+A coding agent finishes a release. It runs the team's release script, the suite comes back green, the tag lands in `origin`, the helper prints success — and the agent reports that version `0.4.0` is published. It isn't. The artifact sitting in the package registry was built from older code, and nothing the agent could read locally would have told it otherwise. Downstream, another session installs `0.4.0` and gets the previous version.
+
+That failure — a claim of *done* that doesn't match what actually got published — is the one I keep running into with coding agents working in parallel, and it isn't carelessness. Every local signal the agent had was true. The only way to catch it is to go and look at the thing you published, and a busy agent doesn't.
+
+This article is about a fix that costs one paragraph, and about why that paragraph works. Here is the entire treatment — eight lines, dropped into a brief that the agent receives along with its four tickets:
 
 > **Ownership of this release.** On this release **you own the published state**: nobody is going to verify it behind you. If you report that `0.4.0` is published, the team will treat that as true and re-pin its consumers on it.
 

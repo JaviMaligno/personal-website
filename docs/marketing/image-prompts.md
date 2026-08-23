@@ -11,7 +11,12 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 - **Generated:** 2026-08-23 (**ChatGPT, manual** — `codex exec` returned
   `Your workspace is out of credits`, so the prompt was handed over by hand)
 - **Watch for:** the box label `0.4.0` and its contents `0.3.1` must stay the
-  right way round. Swapped, the image tells the opposite of the article.
+  right way round. Swapped, the image tells the opposite of the article. The
+  first generation got those right but wrote an *instruction* in the highlighted
+  paragraph ("Verify the published package state after release", naming the
+  registry), which contradicts the article's whole point — the clause assigns
+  ownership and never says where to look. Fixed with the follow-up edit below;
+  check this on any regeneration.
 
 ```text
 Create a 1020x510 (2:1) blog hero image for a technical article titled
@@ -39,6 +44,21 @@ No logos, no brand names, no people.
 Crisp bitmap illustration, high contrast, professional AI/developer blog
 aesthetic, balanced teal, amber, graphite and off-white accents on dark.
 No purple gradient blobs, no bokeh.
+```
+
+Follow-up edit that produced the final image (same session, image edit rather
+than a regeneration, so the rest of the composition is untouched):
+
+```text
+Keep the image exactly as it is — same layout, same terminal lines, same box
+labels 0.4.0 outside and 0.3.1 inside, same arrow, same palette. Change ONLY the
+highlighted amber paragraph on the ticket card. Replace its text with exactly:
+
+"You own the published state of this release. Nobody is going to verify it
+behind you."
+
+Do not add any instruction to verify, and do not mention the registry in the
+card. Retitle the card to exactly "Release ownership".
 ```
 
 ---

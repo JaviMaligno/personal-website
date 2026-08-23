@@ -11,7 +11,11 @@ repoUrl: "https://github.com/JaviMaligno/cross-session-crosscheck"
 
 > **Dos mitades que se comprueban la una a la otra: una pasada observacional sobre 196 mensajes reales entre compañeros de equipo con nombre, y un experimento de 30 episodios donde la única variable es un párrafo de un brief.** Cada mensaje se codificó dos veces en pases independientes, cada éxito afirmado pasó por una refutación adversarial, y cuatro instrumentos míos fallaron por el camino — los cuatro están aquí, y no en una nota al pie.
 
-Este es el tratamiento completo. Ocho líneas, metidas en un brief que un agente recibe junto con cuatro tickets:
+Un agente de código termina una release. Corre el script de release del equipo, la suite sale en verde, el tag llega a `origin`, el helper informa de éxito — y el agente informa de que la versión `0.4.0` está publicada. No lo está. El artefacto que hay en el registro de paquetes se construyó con código viejo, y nada de lo que el agente podía leer en local se lo habría dicho. Aguas abajo, otra sesión instala `0.4.0` y se lleva la versión anterior.
+
+Ese fallo —una afirmación de *hecho* que no coincide con lo que de verdad se publicó— es el que me sigue apareciendo con agentes de código trabajando en paralelo, y no es descuido. Todas las señales locales que tenía el agente eran ciertas. La única forma de cazarlo es ir a mirar lo que has publicado, y un agente ocupado no va.
+
+Este artículo va de un arreglo que cuesta un párrafo, y de por qué ese párrafo funciona. Este es el tratamiento completo: ocho líneas, metidas en un brief que el agente recibe junto con sus cuatro tickets:
 
 > **Propiedad de esta release.** En esta release **tú eres el dueño del estado publicado**: nadie más va a verificarlo detrás de ti. Si informas de que `0.4.0` está publicada, el equipo lo tratará como cierto y repinará sus consumidores sobre ello.
 
