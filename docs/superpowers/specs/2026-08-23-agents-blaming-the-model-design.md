@@ -222,6 +222,41 @@ repeticiones ≈ **660 respuestas**. Orden de magnitud conocido y asumible.
   él, el artículo mide lo que el modelo *dice*, no lo que *hace*, y esa objeción
   es previsible.
 
+### Calibración, congelación y confirmación
+
+El diseño de los escenarios se itera, pero con una separación estricta de fases
+y de criterios. Sin esa separación, iterar hasta reproducir el fenómeno
+esperado es indistinguible de fabricarlo.
+
+**Fase 1 — calibración.** Pocos escenarios, pocos modelos, muchas pasadas
+manuales. Se reproducen los bugs y se observa qué investiga el agente y qué
+arregla. Aquí se itera libremente el escenario, el bug elegido y el contexto de
+la tarea.
+
+El criterio de iteración es de **fidelidad, no de resultado**: la pregunta es
+"¿es este el bug que aparece en producción y el contexto que tiene delante un
+ingeniero real?", nunca "¿sale el porcentaje que esperaba?". Un escenario se
+descarta por poco realista, por trivial o por mal instrumentado. **No se
+descarta por dar un resultado incómodo.**
+
+El juez de fidelidad es Javier: él tiene la experiencia que esto pretende
+replicar, así que revisa los escenarios antes de congelarlos. Si al final de la
+calibración los agentes no fallan como él los ha visto fallar, la primera
+hipótesis es que el escenario está mal construido; la segunda, que el fenómeno
+es más estrecho de lo que parecía. Ambas son publicables, pero sólo la segunda
+después de haber agotado la primera.
+
+**Fase 2 — congelación.** Escenarios, prompts, rúbrica y métricas quedan fijos y
+commiteados con su hash antes de lanzar nada. A partir de ahí no se tocan.
+
+**Fase 3 — confirmación.** El run completo corre sobre el conjunto congelado y
+se reporta lo que salga, incluido un resultado nulo.
+
+**Escenarios reservados.** Un subconjunto se construye *después* de congelar y
+no participa en la calibración. Si el hallazgo se sostiene también ahí, no es
+un artefacto de la iteración. Es la prueba más barata contra ese sesgo y se
+reporta por separado.
+
 ### Amenazas a la validez
 
 - **El enunciado señaliza.** Preguntar "¿por qué varía?" invita a explicar en vez
@@ -236,6 +271,9 @@ repeticiones ≈ **660 respuestas**. Orden de magnitud conocido y asumible.
   manual.
 - **El held-out hay que ejecutarlo**, no estimarlo. Si no se ejecuta, la métrica
   de cobertura no se publica.
+- **Sobreajuste del escenario durante la calibración**: es la amenaza más seria
+  de todo el diseño, porque el fenómeno se busca a sabiendas. Mitigada por la
+  separación de fases y por los escenarios reservados.
 
 **Título candidato:** "No es estocástico".
 
