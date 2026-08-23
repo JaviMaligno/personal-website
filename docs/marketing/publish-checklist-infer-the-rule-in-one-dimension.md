@@ -1,24 +1,26 @@
 # Publish checklist — "An LLM Can Infer the Rule You Forgot — in One Dimension"
 
-The article is written and builds, but it **must not be merged as-is**: it carries
-placeholders that only resolve once arXiv announces the preprint (submitted
-2026-08-18 as `submit/7965524`, primary cs.LG).
+The article is scheduled for **2026-08-30** via
+`.github/workflows/scheduled-publish-infer-the-rule-in-one-dimension.yml`. Both
+blockers below are resolved; what is left is the manual work after the merge.
 
-## Blocking, in order
+The date is the first day free in *both* calendars. 08-24 was the obvious slot,
+but `linkedin-scheduled-posts.yml` already holds `you-were-right-to-be-sceptical-en`
+that day, and publishing here fires `linkedin-post.yml` too — two LinkedIn posts on
+one day, against the alternation the schedule deliberately keeps. 08-25/27/29 carry
+other articles, 08-26/28/31 carry legacy LinkedIn posts.
 
-1. **arXiv ID.** Replace every `ARXIV_PENDING` and every `arXiv:PENDING` with the
-   real identifier. They appear in:
-   - `src/content/blog/en/infer-the-rule-in-one-dimension.md` (body, footer, `linkedinLinks`)
-   - `src/content/blog/es/infer-the-rule-in-one-dimension.md` (same places)
-   - `docs/marketing/x-thread-infer-the-rule-in-one-dimension.md`
+## Was blocking, now resolved
 
-   ```bash
-   grep -rn 'ARXIV_PENDING\|arXiv:PENDING' src/content/blog docs/marketing
-   ```
+1. **arXiv ID — done.** The preprint was announced as
+   [`arXiv:2608.17956`](https://arxiv.org/abs/2608.17956) (submitted 2026-08-18 as
+   `submit/7965524`, primary cs.LG). Every `ARXIV_PENDING` / `arXiv:PENDING`
+   placeholder was replaced with it in both language files (body, footer,
+   `linkedinLinks`) and in `x-thread-infer-the-rule-in-one-dimension.md`.
 
-2. **`pubDate`.** Currently `2026-08-20` in both languages as a placeholder. Set it
-   to the actual merge date — the blog index sorts by it, so a stale date buries the
-   post under older ones.
+2. **`pubDate` — done.** Set to `2026-08-30` in both languages, matching the cron
+   date, so the blog index sorts it at the top rather than burying it under older
+   posts.
 
 ## Decided
 
@@ -47,6 +49,10 @@ placeholders that only resolve once arXiv announces the preprint (submitted
 
 ## Order on the day
 
-Merge to `main` (this publishes the blog, dev.to and LinkedIn automatically) → then
-post the X thread by hand → then update the `code-world-models` README and paper 3's
-`references.bib` with the real arXiv ID.
+The cron merges to `main`, which publishes the blog, Dev.to and LinkedIn
+automatically. What still has to be done by hand, afterwards:
+
+- Post the X thread (`x-thread-infer-the-rule-in-one-dimension.md`, 11 tweets) — no
+  X automation exists.
+- Update the `code-world-models` README and paper 3's `references.bib` with
+  `arXiv:2608.17956`.

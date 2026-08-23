@@ -1,7 +1,7 @@
 # X thread — "An LLM Can Infer the Rule You Forgot — in One Dimension"
 
 Manual thread (there is no X automation in this repo). Post on announcement day,
-after the arXiv ID exists. **Replace `ARXIV_PENDING` before posting.**
+after the arXiv ID exists. **Replace `2608.17956` before posting.**
 
 Each tweet is kept under 280 characters so it works on a free account.
 
@@ -111,7 +111,7 @@ Anything with a shape, you still specify.
 **11/**
 
 ```
-Preprint: https://arxiv.org/abs/ARXIV_PENDING
+Preprint: https://arxiv.org/abs/2608.17956
 Code and every result artifact: https://github.com/JaviMaligno/code-world-models
 
 Long-form writeup: https://www.javieraguilar.ai/en/blog/infer-the-rule-in-one-dimension

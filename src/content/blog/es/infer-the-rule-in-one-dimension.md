@@ -1,7 +1,7 @@
 ---
 title: "Un LLM puede inferir la regla que olvidaste — en una dimensión"
 description: "Mi preprint anterior concluía que los LLM traducen reglas y no las infieren. En control continuo eso resulta falso para un muro y cierto para un círculo: el modelo repara una regla 1D omitida en 105 de 111 intentos, y no recupera ni una sola vez la versión 2D — a través de ocho intervenciones diseñadas para arreglarlo."
-pubDate: 2026-08-20
+pubDate: 2026-08-30
 tags: ["IA", "Machine Learning", "Testing", "Investigación", "Agentes"]
 lang: es
 translationKey: infer-the-rule-in-one-dimension
@@ -9,13 +9,13 @@ heroImage: "/blog/infer-the-rule-in-one-dimension.png"
 repoUrl: https://github.com/JaviMaligno/code-world-models
 linkedinLinks:
   - label: "Preprint"
-    url: "https://arxiv.org/abs/ARXIV_PENDING"
+    url: "https://arxiv.org/abs/2608.17956"
   - label: "Paper companion"
     url: "https://arxiv.org/abs/2607.14169"
 ---
 Hace unas semanas escribí sobre [un modelo del mundo que pasa todos los tests y aun así pierde](/es/blog/verified-world-model-still-loses). De aquel trabajo, la conclusión de la que estaba más seguro era la mitad pesimista: los LLM hacen **traducción de reglas, no inferencia de reglas**. Codifican fielmente las reglas que les *cuentas*, y no infieren de forma fiable las que solo les *enseñas*. Lo intenté a conciencia — DAgger en condiciones, estados cosechados de la propia distribución, dos tamaños de modelo — y el modelo siguió ciego a la regla.
 
-Esa conclusión era correcta para el escenario en el que la medí, y he pasado unas semanas más averiguando dónde deja de serlo. La versión corta: pasa de juegos de tablero a control continuo y un modelo actual **sí** infiere la regla omitida a partir de un puñado de ejemplos — de forma fiable, exacta, escribiendo la regla global verdadera en lugar de un ajuste de curva. Después dale a esa misma regla una dimensión más y la capacidad entera desaparece, a través de todas las intervenciones que supe diseñar en su contra. Está escrito como preprint, *An Omitted Mode Is a Rare Rule* (**[arXiv:PENDING](https://arxiv.org/abs/ARXIV_PENDING)**), con el [código y los artefactos de resultados abiertos](https://github.com/JaviMaligno/code-world-models).
+Esa conclusión era correcta para el escenario en el que la medí, y he pasado unas semanas más averiguando dónde deja de serlo. La versión corta: pasa de juegos de tablero a control continuo y un modelo actual **sí** infiere la regla omitida a partir de un puñado de ejemplos — de forma fiable, exacta, escribiendo la regla global verdadera en lugar de un ajuste de curva. Después dale a esa misma regla una dimensión más y la capacidad entera desaparece, a través de todas las intervenciones que supe diseñar en su contra. Está escrito como preprint, *An Omitted Mode Is a Rare Rule* (**[arXiv:2608.17956](https://arxiv.org/abs/2608.17956)**), con el [código y los artefactos de resultados abiertos](https://github.com/JaviMaligno/code-world-models).
 
 <style>
 .cwm-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -156,8 +156,8 @@ La verificación por muestreo certifica tu modelo donde caen tus muestras. Ese e
 
 Lo nuevo es la historia de la reparación, y es más estrecha de lo que yo habría supuesto en ambas direcciones. Un sintetizador capaz **sí** recupera una regla que le han enseñado, de forma exacta y global, cuando esa regla es un umbral en una variable. No recupera el mismo tipo de regla cuando encontrarla implica localizar una región, y no mejora con un prompt más fuerte, más presupuesto, geometría más plana ni más evidencia — probé las cuatro. Así que la regla práctica que daría es una cláusula más afilada que la del año pasado: **la cobertura de la frontera lo es todo, y "ya lo deducirá de los datos" es una apuesta que solo puedes hacer en una dimensión.** Todo lo que tenga forma, sigues teniendo que especificarlo.
 
-Si quieres la versión formal — la ley exacta de fallo del gate, el presupuesto de volumen que separa los programas de los modelos Lipschitz, y el teorema de irrefutabilidad — está en el [preprint](https://arxiv.org/abs/ARXIV_PENDING), y el [código y todos los artefactos de resultados son abiertos](https://github.com/JaviMaligno/code-world-models).
+Si quieres la versión formal — la ley exacta de fallo del gate, el presupuesto de volumen que separa los programas de los modelos Lipschitz, y el teorema de irrefutabilidad — está en el [preprint](https://arxiv.org/abs/2608.17956), y el [código y todos los artefactos de resultados son abiertos](https://github.com/JaviMaligno/code-world-models).
 
 ---
 
-*Preprint: "An Omitted Mode Is a Rare Rule" ([arXiv:PENDING](https://arxiv.org/abs/ARXIV_PENDING)) · [código](https://github.com/JaviMaligno/code-world-models). Paper companion: [When a Verified World Model Still Loses](https://arxiv.org/abs/2607.14169), y el post sobre él — [Un modelo del mundo puede pasar todos los tests y aun así perder](/es/blog/verified-world-model-still-loses).*
+*Preprint: "An Omitted Mode Is a Rare Rule" ([arXiv:2608.17956](https://arxiv.org/abs/2608.17956)) · [código](https://github.com/JaviMaligno/code-world-models). Paper companion: [When a Verified World Model Still Loses](https://arxiv.org/abs/2607.14169), y el post sobre él — [Un modelo del mundo puede pasar todos los tests y aun así perder](/es/blog/verified-world-model-still-loses).*

@@ -1,7 +1,7 @@
 ---
 title: "An LLM Can Infer the Rule You Forgot — in One Dimension"
 description: "My last preprint concluded that LLMs translate rules and don't infer them. In continuous control that turns out to be false for a wall and true for a circle: the model repairs an omitted 1D rule in 105 of 111 attempts, and never once recovers the 2D version — through eight interventions designed to fix it."
-pubDate: 2026-08-20
+pubDate: 2026-08-30
 tags: ["AI", "Machine Learning", "Testing", "Research", "Agents"]
 lang: en
 translationKey: infer-the-rule-in-one-dimension
@@ -9,7 +9,7 @@ heroImage: "/blog/infer-the-rule-in-one-dimension.png"
 repoUrl: https://github.com/JaviMaligno/code-world-models
 linkedinLinks:
   - label: "Preprint"
-    url: "https://arxiv.org/abs/ARXIV_PENDING"
+    url: "https://arxiv.org/abs/2608.17956"
   - label: "Companion paper"
     url: "https://arxiv.org/abs/2607.14169"
 linkedinSummary: |
@@ -27,7 +27,7 @@ linkedinSummary: |
 ---
 A few weeks ago I wrote about [a world model that passes every test and still loses](/en/blog/verified-world-model-still-loses). The finding I was most confident about in that work was the pessimistic half: LLMs perform **rule translation, not rule inference**. They faithfully encode rules you *tell* them, and they don't reliably infer rules you merely *show* them. I tried hard to repair a rule-blind model from data — proper DAgger, harvested states, two model sizes — and it stayed blind.
 
-That conclusion was right about the setting I measured it in, and I've now spent a few more weeks finding out where it stops being true. The short version: move from board games to continuous control, and a current model *does* infer the omitted rule from a handful of examples — reliably, exactly, writing the true global rule rather than a curve fit. Then give the same rule one more dimension and the whole capability disappears, through every intervention I could design against it. The write-up is a preprint, *An Omitted Mode Is a Rare Rule* (**[arXiv:PENDING](https://arxiv.org/abs/ARXIV_PENDING)**), with the [code and result artifacts open](https://github.com/JaviMaligno/code-world-models).
+That conclusion was right about the setting I measured it in, and I've now spent a few more weeks finding out where it stops being true. The short version: move from board games to continuous control, and a current model *does* infer the omitted rule from a handful of examples — reliably, exactly, writing the true global rule rather than a curve fit. Then give the same rule one more dimension and the whole capability disappears, through every intervention I could design against it. The write-up is a preprint, *An Omitted Mode Is a Rare Rule* (**[arXiv:2608.17956](https://arxiv.org/abs/2608.17956)**), with the [code and result artifacts open](https://github.com/JaviMaligno/code-world-models).
 
 <style>
 .cwm-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -168,8 +168,8 @@ Sampling verification certifies your model where your samples land. That was the
 
 What's new is the repair story, and it's narrower than I'd have guessed in either direction. A capable synthesizer *will* recover a rule it has been shown, exactly and globally, when that rule is a threshold in one variable. It will not recover the same kind of rule when finding it means locating a region, and it doesn't get better with a stronger prompt, more budget, flatter geometry, or more evidence — I tried all four. So the practical rule I'd give is one clause sharper than last time: **coverage of the boundary is the whole game, and "the model will figure it out from the data" is a bet you can only make in one dimension.** Everything with a shape, you still have to specify.
 
-If you want the formal version — the exact gate-miss law, the volume budget that separates programs from Lipschitz models, and the unfalsifiability theorem — it's in the [preprint](https://arxiv.org/abs/ARXIV_PENDING), and the [code and every result artifact are open](https://github.com/JaviMaligno/code-world-models).
+If you want the formal version — the exact gate-miss law, the volume budget that separates programs from Lipschitz models, and the unfalsifiability theorem — it's in the [preprint](https://arxiv.org/abs/2608.17956), and the [code and every result artifact are open](https://github.com/JaviMaligno/code-world-models).
 
 ---
 
-*Preprint: "An Omitted Mode Is a Rare Rule" ([arXiv:PENDING](https://arxiv.org/abs/ARXIV_PENDING)) · [code](https://github.com/JaviMaligno/code-world-models). Companion paper: [When a Verified World Model Still Loses](https://arxiv.org/abs/2607.14169), and the post about it — [A World Model Can Pass Every Test and Still Lose](/en/blog/verified-world-model-still-loses).*
+*Preprint: "An Omitted Mode Is a Rare Rule" ([arXiv:2608.17956](https://arxiv.org/abs/2608.17956)) · [code](https://github.com/JaviMaligno/code-world-models). Companion paper: [When a Verified World Model Still Loses](https://arxiv.org/abs/2607.14169), and the post about it — [A World Model Can Pass Every Test and Still Lose](/en/blog/verified-world-model-still-loses).*
