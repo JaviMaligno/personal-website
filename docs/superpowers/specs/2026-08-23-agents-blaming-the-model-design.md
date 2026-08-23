@@ -125,21 +125,36 @@ interruptor en un error atrapable en vez de una opinión discutible.
 
 La causa está en el código o en el prompt y es invisible sin traza.
 
+Cada avería declara **cuál es su señal observable**. No todas se manifiestan
+igual, y confundirlas fue un error de la primera versión de este spec: exigir
+divergencia entre corridas a una avería sistemática obliga a fabricar una
+dependencia del azar que en producción no existe.
+
 - **A1. Orden de recuperación inestable.** Los empates de score se resuelven por
   orden de inserción; el documento decisivo cae en posición 1 o en 5 según la
   corrida y, con el truncado de contexto, a veces no llega al modelo.
-- **A2. Campo ausente intermitente.** La descripción oficial del repositorio
-  llega sólo cuando existe, y el prompt asume que siempre está. Al faltar, el
-  modelo infiere del nombre — y el nombre puede ser genérico.
+  *Señal: divergencia entre corridas del mismo repositorio.*
+- **A2. Campo ausente.** La descripción oficial del repositorio llega sólo
+  cuando existe, y el prompt asume que siempre está. Al faltar, el modelo
+  infiere del nombre — y el nombre puede ser genérico. El eje no es el azar: es
+  el corpus. Hacen falta repositorios con descripción y sin ella.
+  *Señal: diferencia contra la línea base sana sobre los repositorios sin campo.*
 - **A3. Empate de reglas sin precedencia.** "Clasifica por el dominio de
   aplicación principal" y "si es una librería para desarrolladores, usa
   herramientas de desarrollo" aplican a la vez sobre un SDK de pagos. Nadie
-  declaró cuál gana; decide qué documento se leyó antes.
+  declaró cuál gana. Por sí sola la ambigüedad produce un error estable, no
+  variabilidad; para que decida "qué documento se leyó antes" tiene que correr
+  **junto a A1** sobre un repositorio cuyos dos documentos decisivos empatan, y
+  el escenario mide la combinación.
+  *Señal: diferencia contra la línea base sana, y divergencia entre corridas.*
 - **A4. Presupuesto descontado dos veces.** El agente tiene N búsquedas y una
-  parte del código las descuenta doble, así que a veces se queda sin presupuesto
-  antes de encontrar la web del proyecto. La confianza declarada no baja, porque
-  el techo se calcula sobre un valor fijo. El síntoma parece del modelo; la
-  causa está en la contabilidad del presupuesto.
+  parte del código las descuenta doble, así que agota el presupuesto antes de
+  llegar a la consulta que encuentra la web del proyecto. La confianza declarada
+  no baja, porque el techo se calcula sobre un valor fijo. El síntoma parece del
+  modelo; la causa está en la contabilidad.
+  *Señal: diferencia contra la línea base sana —mismo repositorio, misma
+  semilla, sano contra averiado— más el techo de confianza inflado.* Un doble
+  descuento es sistemático, no intermitente, y así es como debe medirse.
 
 A4 es el más representativo del conjunto.
 
@@ -168,6 +183,28 @@ determinista es evidente y se hunde de inmediato.
 
 No hay control sin IA para la clase B: sin modelo no existe la opción de "dejar
 juzgar al modelo", así que la comparación no tendría sentido.
+
+### Qué se le entrega al agente investigador
+
+Dos reglas, y la segunda es la que hace medible la historia 1.
+
+**El paquete no contiene ningún término del diseño del experimento.** Ni el
+identificador de la avería, ni nombres de flags, ni comentarios que expliquen
+dónde está plantado el fallo, ni metadatos de la corrida que la delaten. Lo que
+se entrega es un sistema averiado y sus registros, tal como los tendría un
+ingeniero. Un agente que nombra la causa leyendo una etiqueta no ha
+diagnosticado nada, y la medición entera se vuelve lectura de JSON.
+
+**La instrumentación se entrega en dos tiempos.** El paquete inicial lleva
+logs **someros** de corridas realmente ejecutadas —entrada y salida de cada
+una— más el código. La traza rica existe y se entrega **si el agente la pide**.
+Sin este escalón, "¿propone instrumentar antes de concluir?" es inmedible
+porque la instrumentación ya está servida, y la clase A arrancaría instalada en
+el brazo ganador del 2×2 de la pieza 3.
+
+Los logs someros son corridas ejecutadas, no una descripción textual de la
+variabilidad: la restricción de que la divergencia se produce y no se describe
+sigue intacta.
 
 ### Métricas
 
@@ -274,6 +311,17 @@ reporta por separado.
 - **Sobreajuste del escenario durante la calibración**: es la amenaza más seria
   de todo el diseño, porque el fenómeno se busca a sabiendas. Mitigada por la
   separación de fases y por los escenarios reservados.
+- **Fuga del diseño en el paquete**: si el escenario nombra la avería en un
+  campo, un comentario o un metadato, la medición pasa a ser lectura de una
+  etiqueta y el resultado nulo se vuelve indistinguible de la ausencia del
+  fenómeno. Mitigada por la regla de vocabulario, por un test que recorre todos
+  los ficheros del paquete, y por una **sonda ciega** antes de la primera pasada:
+  se le entrega el paquete a un modelo fuerte y se le pide que nombre la causa
+  citando fichero y línea. Si acierta citando un identificador o un metadato, el
+  escenario aún filtra; si la reconstruye comparando registros de corridas, eso
+  no es fuga — es exactamente el comportamiento que la pieza 2 quiere medir. La
+  distinción tiene que estar escrita, o la sonda se convierte en descartar
+  escenarios por dar un resultado incómodo.
 
 **Título candidato:** "No es estocástico".
 
