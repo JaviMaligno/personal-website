@@ -97,8 +97,23 @@ Checklist when scheduling:
    The workflow validates this with `git ls-remote` and fails with an explicit
    error listing the real `blog/*` branches — a typo here previously surfaced only
    on publication day as an opaque `couldn't find remote ref` (2026-07-23).
-3. Pick a **free date** — check the crons of the other `scheduled-publish-*.yml`
-   files first (one article per day).
+3. Pick a **free date** — and free means free in **two** calendars, not one:
+   - the crons of the other `scheduled-publish-*.yml` files (one article per day);
+   - the dates in `scripts/linkedin/posts/schedule.json`, read daily by
+     `linkedin-scheduled-posts.yml`. That workflow is legacy for *articles*, but it
+     is very much alive — it has fired every day without fail. Publishing an article
+     also fires `linkedin-post.yml`, so a date carrying a `schedule.json` entry puts
+     **two LinkedIn posts out the same day**, which the alternating pattern of those
+     dates exists to avoid.
+
+   ```bash
+   grep -h 'cron:' .github/workflows/scheduled-publish-*.yml | head -1  # per file
+   python -c "import json;[print(p['date'],p['file']) for p in json.load(open('scripts/linkedin/posts/schedule.json')) if p['date']>='$(date +%F)']"
+   ```
+
+   Caught on 2026-08-23 scheduling `infer-the-rule-in-one-dimension`: 08-24 looked
+   free against the article crons alone, but `schedule.json` held
+   `you-were-right-to-be-sceptical-en` that day. It went to 08-30 instead.
 4. **Set the article's `pubDate` to the cron date, in both EN and ES.** The blog
    index sorts *and displays* by `pubDate` (`src/pages/*/blog/index.astro`), not by
    the merge date, so a draft date left in the frontmatter makes the article show
