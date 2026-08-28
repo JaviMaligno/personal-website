@@ -4,6 +4,60 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## being-wrong-can-be-free
+
+- **Article:** `src/content/blog/{en,es}/being-wrong-can-be-free.md`
+- **Image:** `public/blog/being-wrong-can-be-free.png`
+- **Generated:** 2026-08-28 — **not** `image_gen`: this one is a deterministic
+  diagram, source at `docs/marketing/hero-sources/being-wrong-can-be-free.py`
+  (matplotlib, 1020x510 exact, site palette). Re-run with
+  `python docs/marketing/hero-sources/being-wrong-can-be-free.py`.
+
+**Why a diagram rather than an illustration.** The article's whole point is a
+contrast between two pictures that differ in one rotation: the same annular
+no-go band with the same channel width, once where the planner drives through
+it and once hidden behind the goal. An editorial illustration cannot carry
+"these two are geometrically identical" as reliably as drawing them to scale
+does, and both play costs (0.029 facing, 1.116 hidden, same gamma = 0.6, same
+arm) are on the image straight from the result JSON. If a generated hero is
+ever preferred for style consistency, the prompt to use is:
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 (exact 2:1 aspect ratio) blog hero image
+Primary request: Create a refined technical editorial illustration of one
+geometric contrast: two side-by-side plan views of the SAME annular no-go band
+around a small bright goal marker, where the band has an identical narrow gap
+in both panels, and the only difference is the gap's orientation — in the left
+panel the gap faces the entry point so a dashed straight path passes through it
+to the goal; in the right panel the gap is rotated to the far side so the dashed
+path is stopped at the band.
+Scene/backdrop: Dark graphite technical panel, subtle grid, crisp borders, two
+equal zones separated by a thin divider.
+Subject and composition: Left panel labelled exactly "CHANNEL FACING THE START",
+right panel labelled exactly "SAME CHANNEL, HIDDEN BEHIND THE GOAL". Each panel
+shows a thick ring with one clean gap, a small star at the centre, a dot at the
+left edge, and a dashed arrow from the dot toward the star. Left: the arrow
+passes through the gap and reaches the star. Right: the arrow stops at the ring
+with a small cross. Beneath each panel one monospace figure: "play cost 0.029"
+(left) and "play cost 1.116" (right). A single top line reads exactly
+"SAME BAND · SAME GAP WIDTH · SAME TOPOLOGY".
+Style/medium: Crisp bitmap illustration with vector-like precision, clean
+sans-serif and monospace UI typography, sharp edges, high contrast, publication
+ready.
+Color palette: Indigo for the reachable panel, rose for the unreachable one,
+amber for the goal, graphite and off-white; dark background.
+Lighting/mood: Controlled, analytical, serious.
+Text requirements: Render only the specified labels and figures, spelled
+exactly; no headline, no prose, no captions.
+Constraints: 2:1 landscape; the two rings must be visibly identical apart from
+the gap's orientation; no people, faces, hands, logos, brand names, watermarks.
+Avoid: purple gradient blobs, glow, bokeh, holograms, clutter, tiny unreadable
+text, photorealism, wall of text.
+```
+
+---
+
 ## three-judges-three-rankings
 
 - **Article:** `src/content/blog/en/three-judges-three-rankings.md`
