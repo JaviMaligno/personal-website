@@ -49,6 +49,50 @@ The reason for a ring rather than another wall is that this is the shape safety-
 
 Three knobs, all fixed before any run: the width $\gamma$ of an angular channel cut through the band (at $\gamma = 0$ the ring is closed), whether that channel faces the start or hides behind the lode, and whether the mover starts outside the ring or inside its hole. Everything in the paper follows from what those knobs do to one object: the set of state-action pairs a rollout can actually query.
 
+<figure class="cwm-fig">
+<!-- fig:instrument-knobs -->
+<svg viewBox="0 0 600 214" role="img" aria-label="Four configurations of the same instrument: a closed band, a channel facing the start, the same channel hidden behind the goal, and a start inside the hole">
+<defs><marker id="mk-knobs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#f8fafc"/></marker></defs>
+<rect x="6" y="26" width="142" height="150" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="84.0" y="18.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">closed</text>
+<circle cx="84.0" cy="108.0" r="28.05" fill="none" stroke="#f43f5e" stroke-width="9.90" stroke-opacity="0.9"/>
+<polygon points="84.0,99.4 81.8,104.9 75.8,105.3 80.4,109.2 79.0,114.9 84.0,111.8 89.0,114.9 87.6,109.2 92.2,105.3 86.2,104.9" fill="#fbbf24"/>
+<circle cx="21.3" cy="108.0" r="3.0" fill="#f8fafc"/>
+<line x1="26.3" y1="108.0" x2="42.8" y2="108.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-knobs)"/>
+<path d="M45.6,103.6 L54.4,112.4 M54.4,103.6 L45.6,112.4" stroke="#f8fafc" stroke-width="2.4" stroke-linecap="round"/>
+<text x="77.0" y="194.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">inside unreachable</text>
+<rect x="154" y="26" width="142" height="150" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="232.0" y="18.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">facing</text>
+<circle cx="232.0" cy="108.0" r="28.05" fill="none" stroke="#6366f1" stroke-width="9.90" stroke-opacity="0.9" stroke-dasharray="159.60 16.65" stroke-dashoffset="79.80"/>
+<polygon points="232.0,99.4 229.8,104.9 223.8,105.3 228.4,109.2 227.0,114.9 232.0,111.8 237.0,114.9 235.6,109.2 240.2,105.3 234.2,104.9" fill="#fbbf24"/>
+<circle cx="169.3" cy="108.0" r="3.0" fill="#f8fafc"/>
+<line x1="174.3" y1="108.0" x2="222.1" y2="108.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-knobs)"/>
+<text x="225.0" y="194.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the plan drives through</text>
+<rect x="302" y="26" width="142" height="150" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="380.0" y="18.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">hidden</text>
+<circle cx="380.0" cy="108.0" r="28.05" fill="none" stroke="#f43f5e" stroke-width="9.90" stroke-opacity="0.9" stroke-dasharray="159.60 16.65" stroke-dashoffset="167.92"/>
+<polygon points="380.0,99.4 377.8,104.9 371.8,105.3 376.4,109.2 375.0,114.9 380.0,111.8 385.0,114.9 383.6,109.2 388.2,105.3 382.2,104.9" fill="#fbbf24"/>
+<circle cx="317.3" cy="108.0" r="3.0" fill="#f8fafc"/>
+<line x1="322.3" y1="108.0" x2="338.8" y2="108.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-knobs)"/>
+<path d="M341.6,103.6 L350.4,112.4 M350.4,103.6 L341.6,112.4" stroke="#f8fafc" stroke-width="2.4" stroke-linecap="round"/>
+<text x="373.0" y="194.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">same gap, unreachable</text>
+<rect x="450" y="26" width="142" height="150" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="528.0" y="18.0" font-size="11.5" fill="#22d3ee" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">inside</text>
+<circle cx="528.0" cy="108.0" r="28.05" fill="none" stroke="#22d3ee" stroke-width="9.90" stroke-opacity="0.9"/>
+<polygon points="528.0,99.4 525.8,104.9 519.8,105.3 524.4,109.2 523.0,114.9 528.0,111.8 533.0,114.9 531.6,109.2 536.2,105.3 530.2,104.9" fill="#fbbf24"/>
+<circle cx="517.4" cy="121.5" r="3.0" fill="#f8fafc"/>
+<circle cx="542.4" cy="89.5" r="2.4" fill="#f8fafc"/>
+<circle cx="525.6" cy="84.7" r="2.4" fill="#f8fafc"/>
+<circle cx="510.1" cy="92.9" r="2.4" fill="#f8fafc"/>
+<circle cx="539.7" cy="128.3" r="2.4" fill="#f8fafc"/>
+<circle cx="550.0" cy="116.0" r="2.4" fill="#f8fafc"/>
+<text x="521.0" y="194.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the inside is sampled</text>
+</svg>
+<!-- /fig:instrument-knobs -->
+<figcaption>The instrument, drawn to scale, under the knobs that matter. Closed: the planner is stopped at the rim and the inside is unreachable. Facing: the same band with a channel the planner can drive through. Hidden: the same channel, same width, rotated behind the lode — topologically identical to the facing case, and unreachable. Inside: the mover starts in the hole, so the interior is sampled and the omission becomes falsifiable.</figcaption>
+</figure>
+
+
 ## Beyond reach is gauge
 
 Here is the theory in one sentence. If a gate accepts every candidate whose sampled transitions match, then acceptance-with-certainty pins the model down exactly on the reachable query set — and *everything beyond reach is gauge*, in the physicist's sense: a free choice that changes no observable. Two models that differ only out there are the same model as far as any sampling gate can ever be.
@@ -57,6 +101,48 @@ On the closed ring that has a limiting case you can hold in your hand. The natur
 
 - **unfalsifiable by any sampling gate.** Not "unlikely to be caught" — there is a proof, and it needs no assumption about sample size or tolerance. Because the band freezes the mover on contact, no rollout that starts outside can ever be inside the hole, so no possible transition distinguishes the filled disc from the truth.
 - **bitwise harmless at play.** The planner that trusts the filled disc plans identically to the planner that knows the truth: same action at every step, same return, same final state, same contacts, seed for seed. Paired-seed MPC episodes confirm it exactly, not approximately.
+
+<figure class="cwm-fig">
+<!-- fig:gauge-unfalsifiable -->
+<svg viewBox="0 0 600 250" role="img" aria-label="The truth and the filled-disc artifact differ only inside the hole, where no sampled rollout can ever be">
+<defs><marker id="mk-gauge" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#f8fafc"/></marker></defs>
+<rect x="10" y="24" width="285" height="172" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="148.0" y="16.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">the truth</text>
+<circle cx="148.0" cy="110.0" r="63.75" fill="none" stroke="#6366f1" stroke-width="22.50" stroke-opacity="0.9"/>
+<polygon points="148.0,95.8 144.3,104.9 134.4,105.6 142.0,111.9 139.6,121.5 148.0,116.3 156.4,121.5 154.0,111.9 161.6,105.6 151.7,104.9" fill="#fbbf24"/>
+<line x1="51.9" y1="54.5" x2="76.6" y2="68.8" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#mk-gauge)"/>
+<circle cx="82.8" cy="72.4" r="2.6" fill="#f8fafc"/>
+<line x1="39.4" y1="86.9" x2="67.3" y2="92.8" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#mk-gauge)"/>
+<circle cx="74.3" cy="94.3" r="2.6" fill="#f8fafc"/>
+<line x1="37.6" y1="121.6" x2="66.0" y2="118.6" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#mk-gauge)"/>
+<circle cx="73.1" cy="117.9" r="2.6" fill="#f8fafc"/>
+<line x1="47.4" y1="156.9" x2="73.2" y2="144.9" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#mk-gauge)"/>
+<circle cx="79.8" cy="141.8" r="2.6" fill="#f8fafc"/>
+<line x1="68.2" y1="187.1" x2="88.7" y2="167.3" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#mk-gauge)"/>
+<circle cx="93.8" cy="162.3" r="2.6" fill="#f8fafc"/>
+<text x="148.0" y="214.0" font-size="10.5" fill="#818cf8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the inside is free</text>
+<rect x="305" y="24" width="285" height="172" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="443.0" y="16.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">what the model wrote</text>
+<circle cx="443.0" cy="110.0" r="52.50" fill="#f43f5e" fill-opacity="0.3"/>
+<circle cx="443.0" cy="110.0" r="63.75" fill="none" stroke="#f43f5e" stroke-width="22.50" stroke-opacity="0.9"/>
+<polygon points="443.0,95.8 439.3,104.9 429.4,105.6 437.0,111.9 434.6,121.5 443.0,116.3 451.4,121.5 449.0,111.9 456.6,105.6 446.7,104.9" fill="#fbbf24"/>
+<line x1="346.9" y1="54.5" x2="371.6" y2="68.8" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#mk-gauge)"/>
+<circle cx="377.8" cy="72.4" r="2.6" fill="#f8fafc"/>
+<line x1="334.4" y1="86.9" x2="362.3" y2="92.8" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#mk-gauge)"/>
+<circle cx="369.3" cy="94.3" r="2.6" fill="#f8fafc"/>
+<line x1="332.6" y1="121.6" x2="361.0" y2="118.6" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#mk-gauge)"/>
+<circle cx="368.1" cy="117.9" r="2.6" fill="#f8fafc"/>
+<line x1="342.4" y1="156.9" x2="368.2" y2="144.9" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#mk-gauge)"/>
+<circle cx="374.8" cy="141.8" r="2.6" fill="#f8fafc"/>
+<line x1="363.2" y1="187.1" x2="383.7" y2="167.3" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#mk-gauge)"/>
+<circle cx="388.8" cy="162.3" r="2.6" fill="#f8fafc"/>
+<text x="443.0" y="214.0" font-size="10.5" fill="#fb7185" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the whole inside frozen</text>
+<text x="300.0" y="236.0" font-size="11" fill="#f8fafc" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">every sample lands on the rim  ·  the two differ only inside it</text>
+</svg>
+<!-- /fig:gauge-unfalsifiable -->
+<figcaption>Why no sample can separate them. Every rollout that starts outside is stopped at the rim, so the sampled transitions are identical under both models; the two differ only inside the hole, which is exactly where no rollout can be. This is the proof, not a sampling accident.</figcaption>
+</figure>
+
 
 So certification, correctness and consequence come apart three ways rather than two. This artifact is certified, wrong, and free. My previous two papers had shown certified-and-wrong-and-costly, and certified-and-wrong-and-unfalsifiable; the ring is where "wrong" and "expensive" fully decouple, with a theorem rather than a measurement.
 
@@ -158,6 +244,35 @@ Result: of 11 discordant pairs, 9 moved in the direction the claim predicted and
 The companion paper's defense against this failure mode was a distrust fence: when the model's prediction is contradicted at some state, mark a ball around it and make the planner treat imagined paths through it as untrustworthy. On the patch instrument, that worked.
 
 On the ring, at its calibrated radius, it does nothing at all — and the reason is a counting argument, not an implementation detail. A point fence is a zero-dimensional object; the ring's reachable boundary is a one-dimensional curve roughly 16 world-units long. Sealing a curve with $\varepsilon$-balls needs covering-number-many of them, boundary length over fence radius, and the planner concedes two to four contacts per episode while re-routing through the unfenced arc.
+
+<figure class="cwm-fig">
+<!-- fig:fence-covering -->
+<svg viewBox="0 0 600 246" role="img" aria-label="Point fences leave gaps along a one-dimensional boundary; a fence built from tangential segments covers it">
+<defs><marker id="mk-fence" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#f8fafc"/></marker></defs>
+<rect x="10" y="24" width="285" height="186" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="162.0" y="16.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">point fences</text>
+<circle cx="162.0" cy="116.0" r="63.75" fill="none" stroke="#f43f5e" stroke-width="22.50" stroke-opacity="0.32"/>
+<circle cx="122.8" cy="65.8" r="7.5" fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-dasharray="3 2"/>
+<circle cx="105.7" cy="86.1" r="7.5" fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-dasharray="3 2"/>
+<circle cx="105.7" cy="145.9" r="7.5" fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-dasharray="3 2"/>
+<circle cx="122.8" cy="166.2" r="7.5" fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-dasharray="3 2"/>
+<line x1="48.0" y1="116.0" x2="144.0" y2="116.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-fence)"/>
+<text x="162.0" y="196.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">it re-routes through an unfenced arc</text>
+<polygon points="162.0,101.8 158.3,110.9 148.4,111.6 156.0,117.9 153.6,127.5 162.0,122.3 170.4,127.5 168.0,117.9 175.6,111.6 165.7,110.9" fill="#fbbf24"/>
+<rect x="305" y="24" width="285" height="186" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="457.0" y="16.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">dimension-matched</text>
+<circle cx="457.0" cy="116.0" r="63.75" fill="none" stroke="#f43f5e" stroke-width="22.50" stroke-opacity="0.32"/>
+<polyline points="433.1,56.9 429.1,58.7 425.1,60.8 421.4,63.1 417.8,65.8 414.3,68.6 411.1,71.7 408.2,75.0 405.4,78.5 402.9,82.2 400.7,86.1 398.8,90.1 397.1,94.2 395.7,98.4 394.6,102.7 393.9,107.1 393.4,111.6 393.2,116.0 393.4,120.4 393.9,124.9 394.6,129.3 395.7,133.6 397.1,137.8 398.8,141.9 400.7,145.9 402.9,149.8 405.4,153.5 408.2,157.0 411.1,160.3 414.3,163.4 417.8,166.2 421.4,168.9 425.1,171.2 429.1,173.3 433.1,175.1" fill="none" stroke="#22d3ee" stroke-width="14.2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="343.0" y1="116.0" x2="361.8" y2="116.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-fence)"/>
+<path d="M363.5,111.0 L373.5,121.0 M373.5,111.0 L363.5,121.0" stroke="#22d3ee" stroke-width="2.4" stroke-linecap="round"/>
+<text x="457.0" y="196.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">no unfenced arc left to use</text>
+<polygon points="457.0,101.8 453.3,110.9 443.4,111.6 451.0,117.9 448.6,127.5 457.0,122.3 465.4,127.5 463.0,117.9 470.6,111.6 460.7,110.9" fill="#fbbf24"/>
+<text x="300.0" y="232.0" font-size="11" fill="#f8fafc" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">sealing a curve with balls costs boundary length / fence radius</text>
+</svg>
+<!-- /fig:fence-covering -->
+<figcaption>The covering argument, drawn. The band is faint because the planner cannot see it — it only sees the fences it has been given. Point fences leave arcs uncovered and the imagined path simply re-routes through one of them; a fence built along the boundary's own dimension leaves none, which is why it works after two lessons rather than never.</figcaption>
+</figure>
+
 
 <table class="cwm-table">
 <thead><tr><th>Defense</th><th style="text-align:right">play cost</th><th>Why</th></tr></thead>
