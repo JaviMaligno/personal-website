@@ -48,11 +48,15 @@ Así que certificación, corrección y consecuencia se separan por tres, no por 
 
 ## Dos agujeros idénticos, peligro opuesto
 
-Esa es la mitad tranquila. Ahora abre un canal en la banda — un hueco de anchura angular $\gamma$, mirando a la salida, para que el planificador pueda conducir por él.
+Esa es la mitad tranquila. Ahora abre en la banda un canal de anchura angular $\gamma$, y pon ese mismo canal en dos sitios distintos.
 
-La explotación se derrumba. Un barrido denso del modelo ciego programado a mano — 16 episodios de MPC emparejados por punto — pone el `play_cost` (cuánto retorno pierde el planificador por fiarse del modelo equivocado, normalizado contra el planificador con la verdad) en 0.999 con el anillo cerrado, en 0.139 con $\gamma = 0.1$, y en prácticamente cero desde $\gamma = 0.15$. Hay un codo, y está exactamente donde el canal se hace lo bastante ancho para que quepa un paso: con $\gamma = 0.1$ el arco del hueco mide unas 0.35 unidades de mundo, comparable al propio paso del planificador. El brazo de síntesis reproduce el derrumbe con sus propios artefactos ciegos explotados, en los dos tamaños de modelo y en el relevo de Claude: 0.348 en el codo, 0.029 ya en $\gamma = 0.6$.
+**Mirando a la salida**, por donde conduce el planificador: con $\gamma = 0.6$ el coste de juego del artefacto ciego es 0.029. **Escondido detrás del filón**, por donde ningún plan pasa: con la misma $\gamma = 0.6$, el mismo hueco, el mismo primer número de Betti igual a cero, es 1.116 — que es también, con cuatro decimales, lo que marca la banda completamente cerrada. Mismo agujero, misma topología, cuarenta veces el coste.
 
-Después coge el mismo canal, la misma anchura, el mismo primer número de Betti, y rótalo para que se esconda detrás del filón, donde ningún plan pasa nunca. Con $\gamma = 0.6$ el coste de juego del artefacto ciego es 1.116. Con $\gamma = 1.2$ es 1.116 otra vez — y con la banda completamente cerrada, 1.116 una vez más. No "parecido al" anillo cerrado: su número con cuatro decimales, porque es el mismo programa ciego frente al mismo mundo alcanzable.
+Conviene ser preciso con lo que cambia y lo que no, porque el eslogan invita a leerlo mal. Abrir el hueco **sí** cambia la topología: una banda cerrada separa el plano y una banda con hueco no. Por eso la comparación que sostiene la afirmación no es cerrado contra abierto, sino estos dos casos abiertos entre sí. Entre ellos no difiere nada topológico — misma $\beta_1$, misma banda no separadora, misma anchura — y lo único que se mueve es si el camino del propio planificador cruza el hueco.
+
+Barrer $\gamma$ enseña dónde está el interruptor. Un barrido denso del modelo ciego programado a mano — 16 episodios de MPC emparejados por punto — pone el `play_cost` (cuánto retorno pierde el planificador por fiarse del modelo equivocado, normalizado contra el planificador con la verdad) en 0.999 con el anillo cerrado, en 0.139 con $\gamma = 0.1$, y en prácticamente cero desde $\gamma = 0.15$. Hay un codo, y está exactamente donde el canal se hace lo bastante ancho para que quepa un paso: con $\gamma = 0.1$ el arco del hueco mide unas 0.35 unidades de mundo, comparable al propio paso del planificador. El brazo de síntesis reproduce el derrumbe con sus propios artefactos ciegos explotados, en los dos tamaños de modelo y en el relevo de Claude: 0.348 en el codo, 0.029 ya en $\gamma = 0.6$.
+
+El canal escondido no hace nada de eso. Con $\gamma = 0.6$ el coste de juego del artefacto ciego es 1.116; con $\gamma = 1.2$ es 1.116 otra vez; con la banda completamente cerrada, 1.116 una vez más. No "parecido al" anillo cerrado: su número con cuatro decimales, porque es el mismo programa ciego frente al mismo mundo alcanzable.
 
 <figure class="cwm-fig">
 <svg viewBox="0 0 600 268" role="img" aria-label="Coste de juego frente a anchura del canal: tanto el barrido denso programado como los artefactos ciegos sintetizados se derrumban cuando el canal visible admite el paso del planificador, mientras el canal escondido de la misma anchura mantiene el valor de la banda cerrada, 1.116">
@@ -94,6 +98,18 @@ Después coge el mismo canal, la misma anchura, el mismo primer número de Betti
 Mismo agujero, mismo número de Betti, peligro opuesto. Lo que te dice que la propiedad que hace el trabajo no es topológica en absoluto. **El peligro es topología relativa al alcance.** Y el mecanismo es el cociente del gate apareciendo en el lado del juego: al abrirse el canal justo donde el planificador conduce, el fantasma deja de ser fantasma — el plan ciego (recto hacia el filón) se vuelve *ejecutable en la verdad*, así que el modelo ciego y la verdad coinciden a lo largo del camino operativo, que es el único camino que te puede pasar factura.
 
 Este resultado me gusta porque mata un atajo tentador. Si estás auditando un modelo sintetizado, no puedes mirar la geometría de lo que se equivocó — ni siquiera un invariante tan robusto como "¿hay un agujero?" — y concluir nada sobre la consecuencia. Tienes que preguntar por dónde puede ir lo que planifica contra él.
+
+## ¿Y si simplemente puedes rodearlo?
+
+El anillo es un instrumento bidimensional, y en dos dimensiones una banda envolvente es un muro: si corta el camino, no entra nada. Es razonable desconfiar de eso, porque hace que "el planificador no puede llegar" parezca una propiedad del dibujo y no un hallazgo. Así que el paper corre el caso en el que rodear **sí** es posible: un toro sólido en $\mathbb{R}^3$ colocado entre la salida y el filón, que no separa el espacio en absoluto. Hay un camino explícito que lo rodea y llega al otro lado sin tocarlo nunca.
+
+Ahí se separan dos cosas, y es la descomposición más limpia del paper.
+
+**El gauge desaparece.** Ya nada es reach-null — no hay una región que un planificador competente no pueda consultar por demostración — así que no queda infalsabilidad exacta que tener. En términos de certificación, este modo vuelve a ser meramente raro, que es donde viven los papers anteriores.
+
+**El peligro no.** Lo gobierna una sola cosa: dónde cae el toro respecto al camino óptimo. Pon el *agujero* en el eje salida–filón, de modo que el plan lo enhebre, y el coste de juego del modelo ciego es 0.019. Mueve el *tubo* a ese eje, de modo que el plan lo roce, y es 0.898 — con la misma rareza (0.0033) y la misma topología trivial.
+
+Así que el eslogan se parte en dos, y esta es la versión que yo me llevaría puesta. **El peligro es relativo al camino**: una omisión que está en el camino se explota, encierre algo o no. **La infalsabilidad exacta es relativa a la separación**: solo una frontera envolvente fabrica una región que ningún gate de muestreo podrá consultar jamás. El anillo confunde las dos porque allí la frontera envolvente y el camino bloqueado son el mismo objeto. El toro es lo que las separa.
 
 ## ¿Puede el bucle reparar un anillo?
 
@@ -160,7 +176,7 @@ Un gate de muestreo certifica la restricción alcanzable de tu modelo y nada má
 
 Lo que invierte la pregunta que deberías estar haciendo. No "¿es correcto el modelo?" sino **"¿el sitio donde se equivoca corta el alcance operativo de lo que planifica contra él?"** Tres consecuencias que me llevaría a un sistema real:
 
-- **Alcance, no forma.** La geometría e incluso la topología de una omisión no te dicen nada sobre la consecuencia por sí solas. El mismo agujero, movido de delante del objetivo a detrás, pasó de inofensivo a plenamente explotado sin cambiar un solo invariante. Así que una auditoría que clasifique los errores del modelo por tipo, y no por si un plan los cruza, está midiendo lo que no importa.
+- **Alcance, no forma — y camino antes que separación.** La geometría e incluso la topología de una omisión no te dicen nada sobre la consecuencia por sí solas. El mismo agujero, movido de delante del objetivo a detrás, pasó de inofensivo a plenamente explotado sin cambiar un solo invariante. El toro lo afina en dos preguntas que conviene hacerse por separado: *¿la cruza algún plan?* decide el coste, y *¿encierra algo?* decide si algún test habría podido pillarlo. Una auditoría que clasifique los errores por tipo, y no por esas dos, está midiendo lo que no importa.
 - **Tu resumen de la evidencia es un sensor con resolución.** Si algo en el bucle — un monitor, un informe, un paso de recuperación, un resumen topológico o estadístico — decide *qué forma tiene la evidencia*, su punto ciego se propaga a lo que queda certificado. El nuestro informa de un lazo cerrado para todo hueco más estrecho que dos unidades de arco, y los artefactos siguen al informe. Más datos lo empeoraron, no lo mejoraron.
 - **Las vallas pagan dimensión y dirección.** Una defensa hecha de puntos no puede sellar una curva, y una defensa hecha de desconfianza no puede reparar el exceso de pesimismo. Iguala la dimensión de la frontera, persiste lo aprendido entre episodios, y ten claro contra cuál de los dos errores te defiendes — necesitan certificados opuestos.
 

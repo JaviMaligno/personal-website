@@ -62,11 +62,15 @@ So certification, correctness and consequence come apart three ways rather than 
 
 ## Two identical holes, opposite danger
 
-That is the calm half. Now open a channel in the band — a gap of angular width $\gamma$, facing the start, so the planner can drive through it.
+That is the calm half. Now cut a channel of angular width $\gamma$ through the band, and put the same channel in two different places.
 
-The exploitation collapses. A dense sweep of the scripted blind model — 16 paired MPC episodes per point — puts `play_cost` (how much return the planner loses by trusting the wrong model, normalised against the truth planner) at 0.999 with the ring closed, 0.139 at $\gamma = 0.1$, and essentially zero from $\gamma = 0.15$ on. There is a knee, and it sits exactly where the channel becomes wide enough for a step to fit through: at $\gamma = 0.1$ the gap's arc is about 0.35 world-units, comparable to the planner's own step. The synthesis arm reproduces the collapse on its own exploited blind artifacts, in both model sizes and in the Claude relay: 0.348 at the knee, 0.029 by $\gamma = 0.6$.
+**Facing the start**, where the planner drives: at $\gamma = 0.6$ the blind artifact's play cost is 0.029. **Hidden behind the lode**, where no plan ever goes: at the same $\gamma = 0.6$, the same gap, the same first Betti number of zero, it is 1.116 — which is also, to four decimals, what the band scores fully closed. Same hole, same topology, forty times the cost.
 
-Then take the same channel, the same width, the same first Betti number, and rotate it so it hides behind the lode, where no plan ever goes. At $\gamma = 0.6$ the blind artifact's play cost is 1.116. At $\gamma = 1.2$ it is 1.116 again — and with the band fully closed, 1.116 once more. Not "comparable to" the closed ring: its number to four decimals, because it is the same blind program facing the same reachable world.
+It is worth being precise about what does and does not change here, because the slogan invites a misreading. Opening the gap *at all* does change the topology: a closed band separates the plane and a band with a gap does not. That is exactly why the comparison carrying the claim is not closed-versus-open, but these two open cases against each other. Between them nothing topological differs — same $\beta_1$, same non-separating band, same width — and the only thing that moves is whether the planner's own path crosses the gap.
+
+Sweeping $\gamma$ shows where the switch happens. A dense sweep of the scripted blind model — 16 paired MPC episodes per point — puts `play_cost` (how much return the planner loses by trusting the wrong model, normalised against the truth planner) at 0.999 with the ring closed, 0.139 at $\gamma = 0.1$, and essentially zero from $\gamma = 0.15$ on. There is a knee, and it sits exactly where the channel becomes wide enough for a step to fit through: at $\gamma = 0.1$ the gap's arc is about 0.35 world-units, comparable to the planner's own step. The synthesis arm reproduces the collapse on its own exploited blind artifacts, in both model sizes and in the Claude relay: 0.348 at the knee, 0.029 by $\gamma = 0.6$.
+
+The hidden channel does none of that. At $\gamma = 0.6$ the blind artifact's play cost is 1.116; at $\gamma = 1.2$ it is 1.116 again; with the band fully closed, 1.116 once more. Not "comparable to" the closed ring: its number to four decimals, because it is the same blind program facing the same reachable world.
 
 <figure class="cwm-fig">
 <svg viewBox="0 0 600 268" role="img" aria-label="Play cost against channel width: both the dense scripted sweep and the synthesized blind artifacts collapse once the facing channel admits the planner's step, while the hidden channel of the same width holds the closed-band value of 1.116">
@@ -108,6 +112,18 @@ Then take the same channel, the same width, the same first Betti number, and rot
 Same hole, same Betti number, opposite danger. Which tells you that the property doing the work is not topological at all. **Danger is topology relative to reach.** And the mechanism is the gate quotient showing up on the play side: as the channel opens where the planner actually drives, the phantom stops being phantom — the blind plan (straight at the lode) becomes *executable in the truth*, so the blind model and the truth agree along the operative path, which is the only path that gets to bill you.
 
 I like this result because it kills a tempting shortcut. If you are auditing a synthesized model, you cannot look at the geometry of what it got wrong — not even at an invariant as robust as "is there a hole" — and conclude anything about consequence. You have to ask where the thing planning against it can go.
+
+## But what if you can simply go around it?
+
+The ring is a two-dimensional instrument, and in two dimensions an enclosing band is a wall: if it blocks the path, nothing gets in. That is a fair thing to be suspicious of, because it makes "the planner cannot reach it" look like a property of the drawing rather than a finding. So the paper runs the case where going around *is* possible: a solid torus in $\mathbb{R}^3$ placed between start and lode, which does not separate space at all. An explicit path goes around it and reaches the far side without ever touching it.
+
+Two things come apart there, and it is the cleanest decomposition in the paper.
+
+**The gauge disappears.** Nothing is reach-null any more — there is no region a competent planner provably cannot query — so there is no exact unfalsifiability to be had. Certification-wise this mode drops back to merely rare, which is where the companion papers live.
+
+**The danger does not.** It is governed by one thing: where the torus sits relative to the optimal path. Put the *hole* on the start–lode axis, so the plan threads it, and the blind model's play cost is 0.019. Move the *tube* onto that axis, so the plan clips it, and it is 0.898 — at the same rarity (0.0033) and the same trivial topology.
+
+So the slogan splits in two, and this is the version I would actually carry around. **Danger is path-relative**: an omission on the path is exploited whether or not it encloses anything. **Exact unfalsifiability is separation-relative**: only an enclosing boundary manufactures a region no sampling gate can ever query. The ring conflates the two because there the enclosing boundary and the blocked path are the same object. The torus is what pulls them apart.
 
 ## Can the loop repair a ring?
 
@@ -174,7 +190,7 @@ A sampling gate certifies the reachable restriction of your model and nothing el
 
 Which flips the question you should be asking. Not "is the model right?" but **"does the place where it is wrong intersect the operative reach of whatever is planning against it?"** Three consequences I would carry into a real system:
 
-- **Reach, not shape.** The geometry and even the topology of an omission tell you nothing about consequence on their own. The same hole, moved from in front of the goal to behind it, went from harmless to fully exploited without changing a single invariant. So an audit that classifies model errors by kind, and not by whether a plan crosses them, is measuring the wrong thing.
+- **Reach, not shape — and path before separation.** The geometry and even the topology of an omission tell you nothing about consequence on their own. The same hole, moved from in front of the goal to behind it, went from harmless to fully exploited without changing a single invariant. The torus sharpens it into two questions worth asking separately: *does a plan cross it?* decides the cost, and *does it enclose something?* decides whether any test could ever have caught it. An audit that classifies model errors by kind, rather than by those two, is measuring the wrong thing.
 - **Your evidence summary is a sensor with a resolution.** If anything in the loop — a monitor, a report, a retrieval step, a topological or statistical summary — decides *what shape the evidence has*, its blind spot propagates into what gets certified. Ours reports a closed loop for every gap narrower than two arc-units, and the artifacts follow the report. More data made it worse, not better.
 - **Fences pay for dimension and direction.** A defense built from points cannot seal a curve, and a defense built from distrust cannot repair over-pessimism. Match the boundary's dimension, persist what you learn across episodes, and know which of the two errors you are defending against — they need opposite certificates.
 
