@@ -74,7 +74,6 @@ Then take the same channel, the same width, the same first Betti number, and rot
     <line x1="98" y1="38" x2="98" y2="190" stroke="rgba(255,255,255,0.14)"/>
     <line x1="98" y1="190" x2="578" y2="190" stroke="rgba(255,255,255,0.14)"/>
     <text x="88" y="49" text-anchor="end">1.12</text>
-    <text x="88" y="64" text-anchor="end">1.00</text>
     <text x="88" y="194" text-anchor="end">0.00</text>
     <text x="120" y="210" text-anchor="middle">0</text>
     <text x="215" y="210" text-anchor="middle">0.1</text>
@@ -85,7 +84,7 @@ Then take the same channel, the same width, the same first Betti number, and rot
   </g>
   <polyline points="120,61 140,120 165,146 215,172 245,190 310,188 450,187 560,189" fill="none" stroke="#6366f1" stroke-width="2.4"/>
   <circle cx="120" cy="61" r="4" fill="#6366f1"/><circle cx="215" cy="172" r="4" fill="#6366f1"/>
-  <text x="132" y="55" fill="#818cf8" font-size="11.5" font-family="ui-monospace,monospace">0.999</text>
+  <text x="136" y="78" fill="#818cf8" font-size="11.5" font-family="ui-monospace,monospace">0.999</text>
   <text x="228" y="168" fill="#818cf8" font-size="11.5" font-family="ui-monospace,monospace">0.139</text>
   <circle cx="215" cy="145" r="5" fill="#22d3ee"/><circle cx="450" cy="186" r="5" fill="#22d3ee"/><circle cx="560" cy="187" r="5" fill="#22d3ee"/>
   <text x="228" y="141" fill="#22d3ee" font-size="11.5" font-family="ui-monospace,monospace">0.348</text>
@@ -93,7 +92,7 @@ Then take the same channel, the same width, the same first Betti number, and rot
   <circle cx="450" cy="46" r="5.5" fill="#f43f5e"/><circle cx="560" cy="46" r="5.5" fill="#f43f5e"/>
   <line x1="120" y1="46" x2="560" y2="46" stroke="#f43f5e" stroke-width="2.2" stroke-dasharray="5 4"/>
   <text x="470" y="38" fill="#fb7185" font-size="11.5" font-family="ui-monospace,monospace">1.116</text>
-  <text x="134" y="38" fill="#fb7185" font-size="11.5">closed band</text>
+  <text x="152" y="33" fill="#fb7185" font-size="11.5">closed band</text>
   <text x="300" y="63" fill="#fb7185" font-size="12">hidden channel, same γ: nothing changes</text>
   <text x="300" y="120" fill="#818cf8" font-size="12">facing channel: danger collapses</text>
   <g font-size="11" font-family="ui-monospace,'JetBrains Mono',monospace">
