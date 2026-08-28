@@ -17,11 +17,37 @@ He pasado unos meses haciendo precisa esa pregunta, y la respuesta resultó más
 
 Esta es la versión corta de un preprint ([arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)); el [post largo](/es/blog/being-wrong-can-be-free) cuenta lo mismo con los números, las demostraciones y las partes que salieron mal. Aquí quiero solo la idea, porque es la que yo usaría.
 
+<style>
+.cwm-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
+.cwm-fig svg{display:block;width:100%;height:auto;font-family:'Inter',-apple-system,system-ui,sans-serif}
+.cwm-fig figcaption{color:#94a3b8;font-size:.85rem;margin:.9rem .25rem;text-align:center;line-height:1.55}
+</style>
+
+
 ## El montaje, en un párrafo
 
 Un robot pequeño sobre un plano. En algún sitio de ese plano hay una banda que no debe cruzar — una valla alrededor de un punto de alto valor al que, si no, iría directo. A un modelo de lenguaje se le da la física y se le pide que escriba el simulador que usará el planificador, y la descripción que recibe simplemente **omite la valla**. Después se pone a prueba su simulador: ejecutar el sistema real unas decenas de veces y comprobar que el código escrito predice cada paso exactamente. Si lo hace, se acepta. Eso es todo lo que es aquí un "conjunto de tests", y es exactamente lo que es en la práctica.
 
 Vallas, recintos de contención, zonas de exclusión geovalladas: esa es la forma que tienen de verdad las omisiones críticas para la seguridad, y por eso dejé de usar muros y empecé a usar anillos.
+
+<figure class="cwm-fig">
+<!-- fig:plain-setup -->
+<svg viewBox="0 0 600 252" role="img" aria-label="The setup: a robot outside a fenced band, the high-value spot inside it, and the straight route the robot wants to take">
+<defs><marker id="mk-setup" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#f8fafc"/></marker></defs>
+<circle cx="300.0" cy="128.0" r="72.25" fill="none" stroke="#f43f5e" stroke-width="25.50" stroke-opacity="0.85"/>
+<polygon points="300.0,110.2 295.4,121.6 283.0,122.5 292.5,130.4 289.5,142.4 300.0,135.9 310.5,142.4 307.5,130.4 317.0,122.5 304.6,121.6" fill="#fbbf24"/>
+<circle cx="158.9" cy="128.0" r="4.2" fill="#f8fafc"/>
+<line x1="164.9" y1="128.0" x2="202.2" y2="128.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-setup)"/>
+<path d="M207.8,122.5 L218.8,133.5 M218.8,122.5 L207.8,133.5" stroke="#f8fafc" stroke-width="2.4" stroke-linecap="round"/>
+<text x="158.9" y="112.0" font-size="11" fill="#f8fafc" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the robot</text>
+<text x="396.0" y="133.0" font-size="11" fill="#fbbf24" text-anchor="start" font-family="ui-monospace,'JetBrains Mono',monospace">what it wants</text>
+<text x="300.0" y="32.0" font-size="11" fill="#fb7185" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the fence — not in the description it was given</text>
+<text x="30.0" y="226.0" font-size="10" fill="#64748b" text-anchor="start" font-family="ui-monospace,'JetBrains Mono',monospace">it stops here — and the model never mentioned it</text>
+</svg>
+<!-- /fig:plain-setup -->
+<figcaption>El montaje. El robot quiere el punto de alto valor; la valla que lo rodea es real pero no está en la descripción que recibió el modelo, así que el código que escribe dice que el camino está libre.</figcaption>
+</figure>
+
 
 ## Cuando equivocarse es gratis
 
@@ -48,6 +74,34 @@ Ahora cambia una cosa, y es una cosa del mundo, no del modelo: abre en la valla 
 Y para asegurarnos de que no fue el hueco en sí, pon ese mismo hueco — anchura idéntica, y en los dos casos la valla es igual de "no un anillo cerrado" — por detrás, por donde no pasa ninguna ruta. Coste: **1.116** otra vez, con cuatro decimales lo mismo que la valla completamente cerrada.
 
 Mismo modelo, mismo error, misma forma de agujero. Un número es 0.029 y el otro es 1.116, y lo único que los separa es si el camino del propio robot cruza el hueco.
+
+<figure class="cwm-fig">
+<!-- fig:plain-free-vs-costly -->
+<svg viewBox="0 0 600 244" role="img" aria-label="The same gap in the fence, in front of the robot and behind the goal, with the cost of the blind model in each case">
+<defs><marker id="mk-plain" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#f8fafc"/></marker></defs>
+<rect x="10" y="22" width="285" height="170" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="152.0" y="15.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">gap in front of the robot</text>
+<circle cx="152.0" cy="104.0" r="59.50" fill="none" stroke="#6366f1" stroke-width="21.00" stroke-opacity="0.9" stroke-dasharray="338.54 35.31" stroke-dashoffset="169.27"/>
+<polygon points="152.0,90.7 148.6,99.3 139.4,99.9 146.4,105.8 144.2,114.8 152.0,109.9 159.8,114.8 157.6,105.8 164.6,99.9 155.4,99.3" fill="#fbbf24"/>
+<circle cx="42.8" cy="104.0" r="3.6" fill="#f8fafc"/>
+<line x1="47.8" y1="104.0" x2="132.4" y2="104.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-plain)"/>
+<text x="152.0" y="180.0" font-size="15" fill="#6366f1" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">costs you  0.029</text>
+<text x="152.0" y="210.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the route goes through</text>
+<rect x="305" y="22" width="285" height="170" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="447.0" y="15.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">the same gap, round the back</text>
+<circle cx="447.0" cy="104.0" r="59.50" fill="none" stroke="#f43f5e" stroke-width="21.00" stroke-opacity="0.9" stroke-dasharray="338.54 35.31" stroke-dashoffset="356.20"/>
+<polygon points="447.0,90.7 443.6,99.3 434.4,99.9 441.4,105.8 439.2,114.8 447.0,109.9 454.8,114.8 452.6,105.8 459.6,99.9 450.4,99.3" fill="#fbbf24"/>
+<circle cx="337.8" cy="104.0" r="3.6" fill="#f8fafc"/>
+<line x1="342.8" y1="104.0" x2="367.2" y2="104.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-plain)"/>
+<path d="M371.3,99.0 L381.3,109.0 M381.3,99.0 L371.3,109.0" stroke="#f8fafc" stroke-width="2.4" stroke-linecap="round"/>
+<text x="447.0" y="180.0" font-size="15" fill="#f43f5e" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">costs you  1.116</text>
+<text x="447.0" y="210.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the fence still blocks it</text>
+<text x="300.0" y="232.0" font-size="11.5" fill="#f8fafc" text-anchor="middle" font-style="italic">same model, same fence, same size of gap</text>
+</svg>
+<!-- /fig:plain-free-vs-costly -->
+<figcaption>El mismo modelo ciego en dos mundos que se diferencian en una rotación. A la izquierda el hueco cae por donde el robot ya iba, así que su ruta equivocada y confiada resulta estar permitida. A la derecha el hueco idéntico está detrás del objetivo, la valla sigue cortando la ruta, y el modelo cuesta más que actuar al azar.</figcaption>
+</figure>
+
 
 Ese es el hallazgo entero, y la razón de que el eslogan sea *alcance* y no forma: no puedes mirar en qué se equivocó tu modelo — ni su tamaño, ni su geometría, ni siquiera una propiedad estructural tan robusta como "¿tiene un agujero?" — y concluir nada en absoluto sobre lo que te va a costar. Tienes que preguntar por dónde puede ir lo que planifica contra él.
 

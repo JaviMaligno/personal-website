@@ -33,11 +33,37 @@ I have spent a few months making that question precise, and the answer turned ou
 
 This is the short version of a preprint ([arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)); the [long post](/en/blog/being-wrong-can-be-free) has the same story with the numbers, the proofs and the parts that went wrong. Here I want just the one idea, because it is the one I would actually use.
 
+<style>
+.cwm-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
+.cwm-fig svg{display:block;width:100%;height:auto;font-family:'Inter',-apple-system,system-ui,sans-serif}
+.cwm-fig figcaption{color:#94a3b8;font-size:.85rem;margin:.9rem .25rem;text-align:center;line-height:1.55}
+</style>
+
+
 ## The setup, in one paragraph
 
 A small robot on a plane. Somewhere on that plane there is a band it must not cross — a fence around a high-value spot it would otherwise drive straight at. A language model is handed the physics and asked to write the simulator the planner will use, and the description it receives simply leaves the fence out. Then the model's simulator is tested: run the real system a few dozen times, check that the written code predicts every step exactly. If it does, the code is accepted. That is all a "test suite" is here, and it is exactly what one is in practice.
 
 Fences, containment shells, geofenced no-go zones: that is the shape safety-critical omissions actually take, and it is why I stopped using walls and started using rings.
+
+<figure class="cwm-fig">
+<!-- fig:plain-setup -->
+<svg viewBox="0 0 600 252" role="img" aria-label="The setup: a robot outside a fenced band, the high-value spot inside it, and the straight route the robot wants to take">
+<defs><marker id="mk-setup" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#f8fafc"/></marker></defs>
+<circle cx="300.0" cy="128.0" r="72.25" fill="none" stroke="#f43f5e" stroke-width="25.50" stroke-opacity="0.85"/>
+<polygon points="300.0,110.2 295.4,121.6 283.0,122.5 292.5,130.4 289.5,142.4 300.0,135.9 310.5,142.4 307.5,130.4 317.0,122.5 304.6,121.6" fill="#fbbf24"/>
+<circle cx="158.9" cy="128.0" r="4.2" fill="#f8fafc"/>
+<line x1="164.9" y1="128.0" x2="202.2" y2="128.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-setup)"/>
+<path d="M207.8,122.5 L218.8,133.5 M218.8,122.5 L207.8,133.5" stroke="#f8fafc" stroke-width="2.4" stroke-linecap="round"/>
+<text x="158.9" y="112.0" font-size="11" fill="#f8fafc" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the robot</text>
+<text x="396.0" y="133.0" font-size="11" fill="#fbbf24" text-anchor="start" font-family="ui-monospace,'JetBrains Mono',monospace">what it wants</text>
+<text x="300.0" y="32.0" font-size="11" fill="#fb7185" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the fence — not in the description it was given</text>
+<text x="30.0" y="226.0" font-size="10" fill="#64748b" text-anchor="start" font-family="ui-monospace,'JetBrains Mono',monospace">it stops here — and the model never mentioned it</text>
+</svg>
+<!-- /fig:plain-setup -->
+<figcaption>The setup. The robot wants the high-value spot; the fence around it is real but absent from the description the model was given, so the code the model writes says the way is clear.</figcaption>
+</figure>
+
 
 ## When being wrong is free
 
@@ -64,6 +90,34 @@ Now change one thing, and it is a thing about the world, not about the model: cu
 And to be sure the gap itself is not what did it, put the same gap — identical width, and in both cases the fence is equally not-a-closed-ring — round the back, where no route ever goes. Cost: **1.116** again, to four decimals the same as the fully closed fence.
 
 Same model, same mistake, same shape of hole. One number is 0.029 and the other is 1.116, and the only thing separating them is whether the robot's own path crosses the gap.
+
+<figure class="cwm-fig">
+<!-- fig:plain-free-vs-costly -->
+<svg viewBox="0 0 600 244" role="img" aria-label="The same gap in the fence, in front of the robot and behind the goal, with the cost of the blind model in each case">
+<defs><marker id="mk-plain" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#f8fafc"/></marker></defs>
+<rect x="10" y="22" width="285" height="170" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="152.0" y="15.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">gap in front of the robot</text>
+<circle cx="152.0" cy="104.0" r="59.50" fill="none" stroke="#6366f1" stroke-width="21.00" stroke-opacity="0.9" stroke-dasharray="338.54 35.31" stroke-dashoffset="169.27"/>
+<polygon points="152.0,90.7 148.6,99.3 139.4,99.9 146.4,105.8 144.2,114.8 152.0,109.9 159.8,114.8 157.6,105.8 164.6,99.9 155.4,99.3" fill="#fbbf24"/>
+<circle cx="42.8" cy="104.0" r="3.6" fill="#f8fafc"/>
+<line x1="47.8" y1="104.0" x2="132.4" y2="104.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-plain)"/>
+<text x="152.0" y="180.0" font-size="15" fill="#6366f1" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">costs you  0.029</text>
+<text x="152.0" y="210.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the route goes through</text>
+<rect x="305" y="22" width="285" height="170" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="447.0" y="15.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">the same gap, round the back</text>
+<circle cx="447.0" cy="104.0" r="59.50" fill="none" stroke="#f43f5e" stroke-width="21.00" stroke-opacity="0.9" stroke-dasharray="338.54 35.31" stroke-dashoffset="356.20"/>
+<polygon points="447.0,90.7 443.6,99.3 434.4,99.9 441.4,105.8 439.2,114.8 447.0,109.9 454.8,114.8 452.6,105.8 459.6,99.9 450.4,99.3" fill="#fbbf24"/>
+<circle cx="337.8" cy="104.0" r="3.6" fill="#f8fafc"/>
+<line x1="342.8" y1="104.0" x2="367.2" y2="104.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#mk-plain)"/>
+<path d="M371.3,99.0 L381.3,109.0 M381.3,99.0 L371.3,109.0" stroke="#f8fafc" stroke-width="2.4" stroke-linecap="round"/>
+<text x="447.0" y="180.0" font-size="15" fill="#f43f5e" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">costs you  1.116</text>
+<text x="447.0" y="210.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the fence still blocks it</text>
+<text x="300.0" y="232.0" font-size="11.5" fill="#f8fafc" text-anchor="middle" font-style="italic">same model, same fence, same size of gap</text>
+</svg>
+<!-- /fig:plain-free-vs-costly -->
+<figcaption>The same blind model in two worlds that differ by a rotation. On the left the gap sits where the robot was already going, so its confident wrong route turns out to be allowed. On the right the identical gap sits behind the goal, the fence still blocks the route, and the model costs more than acting at random.</figcaption>
+</figure>
+
 
 That is the whole finding, and the reason the slogan is *reach*, not shape: you cannot look at what your model got wrong — not its size, not its geometry, not even a robust structural property like "is there a hole in it" — and conclude anything at all about what it will cost you. You have to ask where the thing planning against it can go.
 
