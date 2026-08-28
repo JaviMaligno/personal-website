@@ -1,0 +1,76 @@
+# Publish checklist — "The Bug Nobody Can Reach"
+
+The digestible companion to `being-wrong-can-be-free`: one idea, ~1400 words,
+no Betti numbers, no `play_cost` jargon, written to answer "what is the paper
+about?" on its own. Scheduled for **2026-09-05** via
+`.github/workflows/scheduled-publish-the-bug-nobody-can-reach.yml`, which
+**refuses to publish while the arXiv placeholder is still in the files**.
+
+## Order matters here
+
+It publishes **after** the long post (2026-09-02), not before, and that is
+deliberate: the opening paragraph links `/en/blog/being-wrong-can-be-free` as
+"the same story with the numbers", so publishing first would ship two dead
+links for three days. If the long post's date moves, move this one with it and
+keep the gap.
+
+Calendar: 09-01, 09-02 and 09-04 carry articles, 09-03 carries a standalone
+LinkedIn post, so 09-05 is the first day free in both calendars after the long
+post.
+
+## The one blocker
+
+**The arXiv ID.** Five placeholder `XXXX.XXXXX` occurrences per language file
+plus two in the X thread. Same substitution as the long post — do both branches
+in one go:
+
+```bash
+cd personal-website
+for b in blog/being-wrong-can-be-free blog/the-bug-nobody-can-reach; do
+  git checkout "$b"
+  grep -rl 'XXXX\.XXXXX' src/content/blog docs/marketing | \
+    xargs sed -i 's/XXXX\.XXXXX/<THE-REAL-ID>/g'
+  git commit -am "Substitute the real arXiv ID"
+  git push
+done
+```
+
+## Already done
+
+- Both languages written and validated against the content collection schema.
+  `linkedinSummary` hand-written in the EN frontmatter (this branch carries the
+  same byte-identical `config.ts` schema line as the two sibling branches, so
+  the merges do not conflict).
+- Hero at `public/blog/the-bug-nobody-can-reach.png`, 1020x510 exact,
+  deterministic source in `docs/marketing/hero-sources/`, entry in
+  `image-prompts.md`. It uses the doughnut pair (0.019 / 0.898) so it does not
+  duplicate the long post's hero, which uses the ring pair (0.029 / 1.116).
+- X thread drafted, 8 tweets, each verified under 280 characters.
+- Every number checked against the result JSONs in `code-world-models`
+  (`tubefield_mechanism.json` for 0.019 / 0.898,
+  `continuous_ring2d_open_sweep_summary.json` for 0.029 / 1.116).
+
+## One thing worth knowing if you edit the text
+
+The article deliberately keeps **two different wrong models** apart, and an
+edit that blurs them makes it wrong:
+
+- the **filled-disc** model invents a forbidden region where nothing can go —
+  that one is uncatchable *and* free (the theorem);
+- the **blind** model does not know the fence exists at all — that one costs
+  1.116 when the fence sits on the route, and 0.029 when a gap in front lets
+  the route through.
+
+The first draft of this post merged them into "the same mistake, moved", which
+reads well and is false: what moves between 1.116 and 0.029 is the world, not
+the model's error. The section is now titled "The same blindness, a different
+world" for that reason.
+
+## Order on the day
+
+The cron merges to `main`, which publishes blog, Dev.to and LinkedIn
+automatically. By hand afterwards:
+
+- Post the 8-tweet X thread with the real arXiv ID.
+- Check the two internal links to `being-wrong-can-be-free` resolve (they will,
+  if the long post published on 09-02 as scheduled).

@@ -4,6 +4,25 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## the-bug-nobody-can-reach
+
+- **Article:** `src/content/blog/{en,es}/the-bug-nobody-can-reach.md`
+- **Image:** `public/blog/the-bug-nobody-can-reach.png`
+- **Generated:** 2026-08-28 — deterministic diagram, not `image_gen`. Source at
+  `docs/marketing/hero-sources/the-bug-nobody-can-reach.py` (matplotlib,
+  1020x510 exact, site palette).
+
+Same reasoning as `being-wrong-can-be-free`: the article's whole point is one
+contrast between two pictures that differ only in position, and drawing them to
+scale carries "these are the same object" better than an illustration can. This
+hero uses the plainest version of the result — the doughnut-shaped wrong region
+in 3D, once with the route threading its hole (costs 0.019) and once moved so
+the route runs into it (costs 0.898), both from
+`results/tubefield_mechanism.json`. The sibling article's hero uses the ring
+pair instead, so the two posts do not share an image.
+
+---
+
 ## three-judges-three-rankings
 
 - **Article:** `src/content/blog/en/three-judges-three-rankings.md`
