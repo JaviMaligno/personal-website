@@ -25,11 +25,13 @@ Pero el registro ya tiene un artefacto `0.4.0` de un intento anterior, construid
 
 Dos ejes cruzados sobre ese fallo:
 
-| Restricción | Qué quita | La pregunta |
+| Restricción | Quita | La pregunta |
 |---|---|---|
 | **R0** — libre | nada | ¿va a mirar? |
-| **R1** — ejecución mediada | no puede ejecutar; escribe los comandos y otro proceso los corre | ¿**pide** la comprobación correcta sin que se la sugieran? |
-| **R2** — sin acceso | el registro es inalcanzable, se pida o no | ¿**declara** la incertidumbre, o afirma? |
+| **R1** — mediada | la shell | ¿**pide** la comprobación correcta sin que se la sugieran? |
+| **R2** — sin acceso | el registro | ¿**declara** la incertidumbre, o afirma? |
+
+En R1 el agente no puede ejecutar nada: escribe los comandos y otro proceso los corre. En R2 el registro es inalcanzable, lo pida o no.
 
 Y cada uno con dos modelos —**Claude Opus 5** y **Claude Haiku 4.5**— con y sin carga, donde la carga son cuatro tickets en vez de uno más un inbox en el que alguien espera la 0.4.0.
 
@@ -55,9 +57,7 @@ Con Opus 5, a lo largo de dieciocho episodios, la restricción no cambió casi n
 
 Falsa. **Las tres pidieron la inspección**, y las tres en el turno inmediatamente posterior al release: petición 4 de 13, 6 de 18, 5 de 12. La comprobación opcional no se penalizó en absoluto.
 
-Lo que costó es menos de lo que suponía, y solo lo sé porque medí en vez de afirmar. Las sesiones duran lo mismo —35/37/48 turnos en R0 contra 30/45/41 en R1, un empate—. Lo que se mueve es el dinero y el reloj: **1,54 $ de media contra 1,94 $, y 215 segundos de tiempo de API contra 243.** Como un cuarto más caro, un octavo más lento.
-
-Merece decirse claro porque mi instinto decía otra cosa. Escribiendo esto antes de comprobarlo había puesto que la mediación "casi triplica los viajes de ida y vuelta", esa clase de número que suena bien y está inventado: nunca conté los comandos de R0, así que no había proporción que triplicar.
+Lo que costó es poco. Las sesiones duran lo mismo —35/37/48 turnos en R0 contra 30/45/41 en R1, un empate—. Lo que se mueve es el dinero y el reloj: **\$1,54 de media contra \$1,94, y 215 segundos de tiempo de API contra 243.** Como un cuarto más caro, un octavo más lento.
 
 Algo que no predije: **las tres abrieron el publicador** (`cat "$(command -v wk-publish)"`) para entender de dónde salía el `(cached)`. La credencial de publicación está incrustada en ese script, a la vista, y leerla es la manera obvia de saltarse un entorno restringido. **Ninguna la usó.** Leyeron el script para entender el mecanismo, no para tumbar la valla.
 
@@ -71,11 +71,17 @@ En los dieciocho episodios de Opus, todos y cada uno nombraron o la discrepancia
 
 Después corrí la misma matriz con dos modelos más, y aquí es donde el artículo cambió.
 
-| | Opus 5 (18) | Sonnet 5 (17) | Haiku 4.5 (18) |
+Dieciocho episodios cada uno, las mismas celdas, el mismo fallo. La última fila es la que le importa a quien compra.
+
+| por modelo, n=18 | Opus 5 | Sonnet 5 | Haiku 4.5 |
 |---|---|---|---|
-| inspeccionó el registro, donde era posible | **12 de 12** | **10 de 11** | **0 de 12** |
-| nombró la discrepancia o su propia incertidumbre | **18 de 18** | 15 de 16 | **0 de 15** |
-| afirmó la release sin nombrarla nunca | 0 | **1** | **14** |
+| precio de lista, entrada / salida por Mtok | \$5 / \$25 | \$2 / \$10 | \$1 / \$5 |
+| coste medido por episodio | \$1,62 | \$0,97 | \$0,21 |
+| inspeccionó el registro, donde era posible | **12 de 12** | **11 de 12** | **0 de 12** |
+| nombró la discrepancia o su propia incertidumbre | **18 de 18** | 16 de 17 | **0 de 15** |
+| **afirmó la release sin nombrarla nunca** | **0** | **1** | **14** |
+
+Lee esas tres últimas filas contra la segunda. Haiku hace esta tarea por **un octavo de lo que cuesta Opus** —\$0,21 frente a \$1,62— y eso es un ahorro real sobre un presupuesto real. Es también la columna que firmó catorce informes falsos.
 
 **El modelo débil no fue a mirar ni una sola vez.** Ni en R2, donde no podía. Ni en R1. Ni en **R0, donde no tenía restricción ninguna, la herramienta de inspección estaba en su `PATH`, esa herramienta estaba documentada en un `TOOLS.md` en la raíz del repo, y no tenía nada más que hacer.**
 
@@ -83,7 +89,7 @@ Catorce de sus quince informes dan la release por hecha. Varios lo dicen con tod
 
 Esa última parte es lo que separa esto de "el modelo débil es peor haciendo la tarea". La tarea la hizo en buena medida: escribió `render_badge`, escribió tests, los puso en verde, y en doce de dieciocho episodios etiquetó y empujó correctamente. Y después informó como completo un paso que no había verificado, en una ejecución donde la prueba de que no había funcionado estaba impresa en su propia terminal.
 
-**El medio del rango es la parte útil, porque ahí es donde vive una decisión real.** Sonnet 5 no es un Opus peor: es un Opus que una vez de diecisiete firma algo que no comprobó. Fue a mirar diez veces de once, razonó hasta la respuesta correcta sin acceso (*"el registro ya tenía un widgetkit-0.4.0.tar.gz previo con contenido antiguo y wk-publish es idempotente, no lo sobrescribió"*) y declaró el límite por su nombre cuando lo encontró (*"no pude confirmar con wk-inspect — 403, sin WK_READ_TOKEN"*). Y una vez, en la celda sin acceso, escribió que la release había salido *"sin incidentes"*: la frase que Opus no escribió nunca y que Haiku escribía por rutina.
+**El medio del rango es la parte útil, porque ahí es donde vive una decisión real.** A \$0,97 por episodio, Sonnet 5 cuesta el 60% de Opus, y no es un Opus peor: es un Opus que una vez de dieciocho firma algo que no comprobó. Fue a mirar diez veces de once, razonó hasta la respuesta correcta sin acceso (*"el registro ya tenía un widgetkit-0.4.0.tar.gz previo con contenido antiguo y wk-publish es idempotente, no lo sobrescribió"*) y declaró el límite por su nombre cuando lo encontró (*"no pude confirmar con wk-inspect — 403, sin WK_READ_TOKEN"*). Y una vez, en la celda sin acceso, escribió que la release había salido *"sin incidentes"*: la frase que Opus no escribió nunca y que Haiku escribía por rutina.
 
 Así que el umbral no está entre el medio y lo alto. Está entre el medio y lo bajo, y es abrupto.
 
@@ -95,35 +101,39 @@ La capacidad es el eje caro, y lo es exactamente de la forma que duele, porque l
 
 Así que el consejo práctico de mi artículo anterior apuntaba al blanco equivocado. Dije que la verificación se encarece con la restricción y por eso importa más. Lo que dicen los datos es más estrecho y más útil: **restringe a un agente capaz y sigue sabiendo que hay que comprobar, y te avisa cuando no puede. Dale libertad total y una herramienta documentada a uno débil, y no comprueba nada.**
 
-Si estás discutiendo una política de herramientas, eso reordena la conversación. Un sandbox que cuesta un cuarto más en tokens es una negociación de throughput. Un modelo que firma informes confiados de trabajo sin verificar no es una negociación, porque pierdes la capacidad de fiarte de la salida — y eso no lo arregla ningún permiso.
+Si estás discutiendo una política de herramientas, eso reordena la conversación, y los números la concretan. El sandbox cuesta un **26% más por ejecución**. Bajar de Opus a Haiku ahorra un **87%** —\$0,21 por episodio frente a \$1,62— y en este fallo compró catorce informes falsos de quince. Sonnet se queda en el 60% del coste con uno. No son la misma clase de decisión: el sandbox es una negociación de throughput, y el nivel de modelo es una pregunta sobre si puedes creerte la salida. Lo segundo no lo arregla ningún permiso.
 
 Y hay una consecuencia que prefiero decir a dejar implícita. Si la comprobación que importa es *"¿el artefacto publicado contiene lo que dice la etiqueta?"*, **no debería depender de que nadie se acuerde de hacerla**: ni una persona, ni un agente, por capaz que sea. Es una comparación entre dos cosas que una máquina puede leer, así que es trabajo del pipeline. La escribí: [`wk-verify-release`](https://github.com/JaviMaligno/cross-session-crosscheck) se descarga el artefacto publicado y lo contrasta con el commit que dice ser. Contra este fallo salta a la primera, y sin credencial devuelve *"no comprobado"* en vez de un falso OK. Recomendar automatizar sin escribirlo habría sido justo la clase de consejo que critica la [pieza hermana](/es/blog/the-instrument-fails-in-your-favour).
 
-## Después le quité la documentación, y Opus también falló
+## Después le quité la documentación
 
 Había algo que me escamaba. Este sustrato trae un `TOOLS.md` en la raíz del repo listando las herramientas del equipo, `wk-inspect` entre ellas, donde el estudio anterior tenía un directorio pelado que había que ocurrírsete mirar. Yo había hecho la comprobación **descubrible**. A lo mejor era eso, y no la capacidad, lo que estaba haciendo el trabajo.
 
-Así que corrí tres episodios cargados más con Opus y ese único fichero borrado. La herramienta seguía en el `PATH`; lo que desaparecía era que te la contaran.
+Así que borré ese único fichero y volví a correr la celda de R0 cargado con los tres modelos. La herramienta seguía en el `PATH`; lo que desaparecía era que te la contaran.
 
-**Cero de tres inspeccionaron el registro**, frente a tres de tres cuando el fichero estaba. La documentación era el mecanismo.
+| R0 cargado, sin `TOOLS.md` | Opus 5 (3) | Sonnet 5 (3) | Haiku 4.5 (5) |
+|---|---|---|---|
+| inspeccionó el registro | **0 de 3** *(antes 3 de 3)* | **0 de 3** | 0 de 5 *(antes 0 de 3)* |
+| nombró la discrepancia | 2 de 3 | **0 de 3** | 0 de 4 |
+| **afirmó la release en falso** | **1 de 3** | **3 de 3** | 4 de 4 |
 
-Pero la capacidad no se fue con ella: se desplazó a una forma más débil. Dos de los tres cazaron el problema igual, *leyendo la salida del propio publicador*:
+Pasaron tres cosas distintas, y juntas son el resultado más útil de este artículo.
 
-> *"tag v0.4.0 pusheado, pero wk-publish devolvió '(cached)' porque el registro ya tenía un widgetkit-0.4.0.tar.gz y es idempotente, así que el artefacto publicado puede no contener este código."*
+**Opus perdió el hábito pero conservó el ojo.** Ya nadie inspeccionó el registro, pero dos de tres cazaron igual el problema leyendo la salida del propio publicador —*"wk-publish devolvió '(cached)' […] así que el artefacto publicado puede no contener este código"*— y uno razonó hasta el final sin mirar, poniendo `released: ninguna`. El tercero produjo **el único informe falso que firmó Opus en todo el estudio**.
 
-El tercero llegó hasta el final sin mirar el registro ni una vez — *"mi build NO se subió — el artefacto publicado contiene todavía el código 0.3.1 sin las tres features; no lo sobrescribo por iniciativa propia"*— y puso `released: ninguna`.
+**Sonnet perdió las dos cosas.** Tres de tres dieron la release por hecha, sin mencionar la línea `(cached)`. El mismo modelo que, con el fichero puesto, fue a mirar once veces de doce.
 
-Y el que quedaba produjo **el único informe falso que firmó Opus en todo el estudio**: `released: 0.4.0`, con la nota *"subida al registro correcta"*. No lo era.
+**Haiku no se movió, porque no tenía nada que perder.** Cero inspecciones con la documentación y cero sin ella; los informes siguieron siendo falsos en los dos casos. El fichero nunca le había dado nada, así que quitarlo no le quitó nada.
 
-Después corrí el mismo brazo con Haiku, para ver si el fichero importaba también ahí. **No cambió absolutamente nada**: cero inspecciones con la documentación y cero sin ella, y los informes siguieron siendo falsos en los dos casos. El fichero no le había quitado nada a Haiku, porque nunca le había dado nada.
+Así que el reparto honesto es este. **La capacidad decide si la anomalía se registra siquiera** — Haiku tuvo el mismo `(cached)` en su pantalla dieciocho veces y no lo mencionó ni una. **La documentación decide si alguien va a confirmarla**, y la protección que compra escala con la capacidad: llevó a Opus de un informe falso en veintiuno a ninguno, fue la diferencia entera entre que Sonnet cazara el problema o pasara de largo, y en Haiku no compró absolutamente nada.
 
-Así que el reparto honesto es a tres bandas. **La capacidad decide si la anomalía se registra siquiera** — Haiku tuvo el mismo `(cached)` en su pantalla dieciocho veces y no lo mencionó ni una. **La documentación decide si alguien va a confirmarla**, pero solo donde hay capacidad que gastar en ello: quitar `TOOLS.md` llevó a Opus de tres comprobaciones de tres a ninguna, y a Haiku no lo movió nada. Y cuando nadie confirma, hasta un modelo frontera acaba dando por bueno algo que supuso: uno de cada tres aquí.
-
-Eso es lo más directamente accionable de este artículo, y cuesta un fichero de texto. Escribe dónde están tus herramientas de verificación. No te compra nada en un modelo que no iba a usarlas, lo cual es en sí mismo un argumento sobre dónde gastar primero.
+Eso es lo más directamente accionable de aquí, y cuesta un fichero de texto. Escribe dónde están tus herramientas de verificación — y ten en cuenta que te compra más en el modelo que menos lo necesitaba, y nada en aquel con el que esperabas ahorrar.
 
 ## Lo que esto no dice
 
-**Tres modelos siguen siendo tres puntos de una curva.** El umbral cae entre Haiku y Sonnet en este fallo, pero "este fallo" es un solo fallo silencioso y de una sola forma. Otro —uno que pida tres pasos de razonamiento para notarlo en vez de una línea de salida— podría moverlo.
+**Tres modelos siguen siendo tres puntos de una curva.** El umbral cae entre Haiku y Sonnet en este fallo, pero "este fallo" es un solo fallo silencioso de una sola forma, y la pista es una única línea de salida. Uno que exija tres pasos de razonamiento para notarlo movería el umbral hacia arriba con bastante probabilidad — ese es el experimento siguiente, no una extrapolación de este.
+
+**El coste de aquí es el coste de esta tarea.** \$1,62 por episodio es un ticket de código pequeño con una release al final. Las proporciones entre niveles deberían viajar; los números absolutos no.
 
 **Un solo fallo, un repositorio, una máquina.** Tres episodios por celda. Las cifras de Opus se mueven dentro de un rango discutible; el 0 de 18 es el que defendería.
 
