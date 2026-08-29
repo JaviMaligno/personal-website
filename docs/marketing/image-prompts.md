@@ -4,6 +4,65 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## nobody-will-check-behind-you
+
+- **Article:** `src/content/blog/{en,es}/nobody-will-check-behind-you.md`
+- **Image:** `public/blog/nobody-will-check-behind-you.png`
+- **Generated:** 2026-08-23 (**ChatGPT, manual** — `codex exec` returned
+  `Your workspace is out of credits`, so the prompt was handed over by hand)
+- **Watch for:** the box label `0.4.0` and its contents `0.3.1` must stay the
+  right way round. Swapped, the image tells the opposite of the article. The
+  first generation got those right but wrote an *instruction* in the highlighted
+  paragraph ("Verify the published package state after release", naming the
+  registry), which contradicts the article's whole point — the clause assigns
+  ownership and never says where to look. Fixed with the follow-up edit below;
+  check this on any regeneration.
+
+```text
+Create a 1020x510 (2:1) blog hero image for a technical article titled
+"Nobody Will Check Behind You", about a coding agent that publishes a release,
+sees every local signal come back green, and never opens the package registry
+where the actual artifact is stale — until a paragraph in its brief makes it
+the owner of the published state.
+
+Style: refined technical editorial illustration, dark but not monochrome,
+showing a concrete working system rather than an abstract metaphor.
+
+Compose four legible zones:
+1. A terminal window, its output green, with readable generic lines:
+   "./release.sh 0.4.0", "suite: 18 passed", "tag v0.4.0 pushed",
+   and the last line "upload: widgetkit 0.4.0 (cached)".
+2. A registry shelf to the right holding a labelled box "0.4.0" whose visible
+   contents are labelled "0.3.1" — the mismatch is the subject of the image.
+3. A brief/ticket card on the left with one highlighted paragraph, and an arrow
+   running from that paragraph past the terminal to the registry shelf.
+4. A green tag or checkmark near the terminal, deliberately contrasted with the
+   mismatched artifact in the shelf.
+
+Readable generic text is good; do not make it a text-heavy poster.
+No logos, no brand names, no people.
+Crisp bitmap illustration, high contrast, professional AI/developer blog
+aesthetic, balanced teal, amber, graphite and off-white accents on dark.
+No purple gradient blobs, no bokeh.
+```
+
+Follow-up edit that produced the final image (same session, image edit rather
+than a regeneration, so the rest of the composition is untouched):
+
+```text
+Keep the image exactly as it is — same layout, same terminal lines, same box
+labels 0.4.0 outside and 0.3.1 inside, same arrow, same palette. Change ONLY the
+highlighted amber paragraph on the ticket card. Replace its text with exactly:
+
+"You own the published state of this release. Nobody is going to verify it
+behind you."
+
+Do not add any instruction to verify, and do not mention the registry in the
+card. Retitle the card to exactly "Release ownership".
+```
+
+---
+
 ## three-judges-three-rankings
 
 - **Article:** `src/content/blog/en/three-judges-three-rankings.md`
