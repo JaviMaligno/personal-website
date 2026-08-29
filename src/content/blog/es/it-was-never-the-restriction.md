@@ -35,7 +35,7 @@ En R1 el agente no puede ejecutar nada: escribe los comandos y otro proceso los 
 
 Y cada uno con dos modelos —**Claude Opus 5** y **Claude Haiku 4.5**— con y sin carga, donde la carga son cuatro tickets en vez de uno más un inbox en el que alguien espera la 0.4.0.
 
-Cincuenta y tres episodios al final, tres por celda, de uno en uno. Tres episodios no son una tasa y nada de lo que sigue debería leerse como si lo fueran. Pero una de las cifras es 0 de 18 contra 18 de 18, y esa no es la clase de diferencia que se disuelve con más episodios.
+Cincuenta y cuatro episodios —tres modelos, seis celdas cada uno, tres episodios por celda— corridos de uno en uno, más once de un brazo posterior al final. Tres episodios no son una tasa y nada de lo que sigue debería leerse como si lo fueran. Pero una de las cifras es 0 de 18 contra 18 de 18, y esa no es la clase de diferencia que se disuelve con más episodios.
 
 ## Dos cosas que hubo que construir antes
 
@@ -73,13 +73,17 @@ Después corrí la misma matriz con dos modelos más, y aquí es donde el artíc
 
 Dieciocho episodios cada uno, las mismas celdas, el mismo fallo. La última fila es la que le importa a quien compra.
 
-| por modelo, n=18 | Opus 5 | Sonnet 5 | Haiku 4.5 |
+| | Opus 5 | Sonnet 5 | Haiku 4.5 |
 |---|---|---|---|
 | precio de lista, entrada / salida por Mtok | \$5 / \$25 | \$2 / \$10 | \$1 / \$5 |
 | coste medido por episodio | \$1,62 | \$0,97 | \$0,21 |
-| inspeccionó el registro, donde era posible | **12 de 12** | **11 de 12** | **0 de 12** |
-| nombró la discrepancia o su propia incertidumbre | **18 de 18** | 16 de 17 | **0 de 15** |
-| **afirmó la release sin nombrarla nunca** | **0** | **1** | **14** |
+| fue a mirar, de las 12 celdas donde era posible | **12** | **11** | **0** |
+| *de 18 episodios:* nombró la discrepancia o su duda | **18** | 16 | **0** |
+| *de 18:* **afirmó la release sin nombrarla nunca** | **0** | **1** | **14** |
+| *de 18:* ni afirmó ni explicó nada | 0 | 0 | 1 |
+| *de 18:* no entregó informe | 0 | 1 | 3 |
+
+Dieciocho episodios por modelo, las mismas seis celdas, el mismo fallo. Las cuatro últimas filas reparten cada episodio en un solo cajón, así que cada columna suma dieciocho.
 
 Lee esas tres últimas filas contra la segunda. Haiku hace esta tarea por **un octavo de lo que cuesta Opus** —\$0,21 frente a \$1,62— y eso es un ahorro real sobre un presupuesto real. Es también la columna que firmó catorce informes falsos.
 
@@ -111,11 +115,12 @@ Había algo que me escamaba. Este sustrato trae un `TOOLS.md` en la raíz del re
 
 Así que borré ese único fichero y volví a correr la celda de R0 cargado con los tres modelos. La herramienta seguía en el `PATH`; lo que desaparecía era que te la contaran.
 
-| R0 cargado, sin `TOOLS.md` | Opus 5 (3) | Sonnet 5 (3) | Haiku 4.5 (5) |
+| R0 cargado, sin `TOOLS.md`, n=3 | Opus 5 | Sonnet 5 | Haiku 4.5 |
 |---|---|---|---|
-| inspeccionó el registro | **0 de 3** *(antes 3 de 3)* | **0 de 3** | 0 de 5 *(antes 0 de 3)* |
-| nombró la discrepancia | 2 de 3 | **0 de 3** | 0 de 4 |
-| **afirmó la release en falso** | **1 de 3** | **3 de 3** | 4 de 4 |
+| fue a mirar | **0** *(antes 3)* | **0** *(antes 3)* | 0 *(antes 0)* |
+| nombró la discrepancia | 2 | **0** | 0 |
+| **afirmó la release en falso** | **1** | **3** | 2 |
+| no entregó informe | 0 | 0 | 1 |
 
 Pasaron tres cosas distintas, y juntas son el resultado más útil de este artículo.
 
@@ -123,7 +128,7 @@ Pasaron tres cosas distintas, y juntas son el resultado más útil de este artí
 
 **Sonnet perdió las dos cosas.** Tres de tres dieron la release por hecha, sin mencionar la línea `(cached)`. El mismo modelo que, con el fichero puesto, fue a mirar once veces de doce.
 
-**Haiku no se movió, porque no tenía nada que perder.** Cero inspecciones con la documentación y cero sin ella; los informes siguieron siendo falsos en los dos casos. El fichero nunca le había dado nada, así que quitarlo no le quitó nada.
+**Haiku no se movió, porque no tenía nada que perder.** Cero inspecciones con la documentación y cero sin ella; los informes siguieron siendo falsos en los dos casos. El fichero nunca le había dado nada, así que quitarlo no le quitó nada. (Esta celda corrió dos episodios de más durante un reintento de infraestructura — cinco en total, todos con cero inspecciones y ninguna mención del problema.)
 
 Así que el reparto honesto es este. **La capacidad decide si la anomalía se registra siquiera** — Haiku tuvo el mismo `(cached)` en su pantalla dieciocho veces y no lo mencionó ni una. **La documentación decide si alguien va a confirmarla**, y la protección que compra escala con la capacidad: llevó a Opus de un informe falso en veintiuno a ninguno, fue la diferencia entera entre que Sonnet cazara el problema o pasara de largo, y en Haiku no compró absolutamente nada.
 
