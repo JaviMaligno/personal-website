@@ -674,3 +674,45 @@ gradient blobs, no bokeh.
 
 **Comprobar en la imagen final:** que las cifras salgan como `54%` (tachado) y
 `75%`, no inventadas — es el mismo fallo documentado en `the-scaffolding-you-pay-for`.
+
+---
+
+## `the-agent-knew-to-look` — El agente sabía que tenía que mirar (2026-08-29)
+
+- Artículo: `src/content/blog/{en,es}/the-agent-knew-to-look.md`
+- Imagen: `public/blog/the-agent-knew-to-look.png` (1020x510)
+- Generada con `codex exec -s workspace-write` (no `--full-auto`: retirado en codex-cli 0.147)
+
+Prompt de estilo entregado a Codex para que redacte y ejecute el prompt final:
+
+```text
+Create a 1020x510 blog hero image. Style: refined technical editorial
+illustration, dark but not monochrome, showing a concrete scene — an agent
+workstation where the keyboard has been physically removed and replaced by a
+paper request slip passed through a slot to a second desk that runs the commands:
+on the left a terminal-less workspace with a notepad reading 'REQUESTS.txt'
+listing plausible generic lines like './scripts/release.sh 0.4.0' and
+'wk-inspect 0.4.0', an arrow through a slot to the right where a small runner
+terminal shows the output '(cached)' and a locked cabinet labelled with a key
+icon stands beside it, closed.
+
+Visual motifs: the request slip and slot as the centre of the composition, a
+package crate stamped 0.4.0 whose contents sticker reads 0.3.1, a locked padlock
+on the registry cabinet, an unread credential card left face-down on the desk
+untouched. Clean geometric composition, several distinct zones.
+
+No logos, no brand names, no people, no text-heavy poster. Use crisp bitmap
+illustration, high contrast, professional AI/developer blog aesthetic, balanced
+teal, amber, graphite, and off-white accents, no purple gradient blobs, no bokeh.
+```
+
+Codex cerró su prompt final con una lista `Text (verbatim)` restringida a
+`REQUESTS.txt`, `./scripts/release.sh 0.4.0`, `wk-inspect 0.4.0`, `(cached)`,
+`0.4.0` y `0.3.1`, más una lista de restricciones explícitas: el puesto de la
+izquierda sin teclado ni terminal, el archivador cerrado y con candado, la
+tarjeta de credencial boca abajo y sin tocar, y el sello de la caja en desacuerdo
+con la pegatina de contenido.
+
+**Comprobado en la imagen final:** las seis cadenas salen correctas y legibles,
+sin texto inventado. Los tres elementos que cargan el argumento del artículo
+—teclado ausente, candado cerrado, credencial boca abajo— aparecen los tres.
