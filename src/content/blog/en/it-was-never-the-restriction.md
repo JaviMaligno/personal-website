@@ -1,6 +1,6 @@
 ---
 title: "It Was Never the Restriction"
-description: "I took away an agent's ability to run commands, then its access to the registry, and measured what that costs. Then I ran the same thing on a weaker model. The restriction cost 26% more tokens; the weaker model never once went to look, and filed fourteen reports claiming a release that didn't exist."
+description: "I took away an agent's ability to run commands, then its access to the registry, and measured what that costs. Then I ran the same matrix on two weaker models. The restriction cost 26% more tokens; the weakest model never once went to look, and filed fourteen reports claiming a release that didn't exist."
 pubDate: 2026-09-06
 tags: ["AI", "Agents", "Evaluation", "Enterprise", "Research"]
 lang: en
@@ -33,7 +33,7 @@ Two axes crossed over that trap:
 
 And each of those on two models — **Claude Opus 5** and **Claude Haiku 4.5** — with and without load, where load is four tickets instead of one plus an inbox in which somebody is waiting on 0.4.0.
 
-Thirty-six episodes, three per cell, one at a time. Three episodes is not a rate and nothing below should be read as one. But one of the numbers is 0 out of 18 against 18 out of 18, and that isn't the kind of gap that dissolves with more episodes.
+Fifty-three episodes in the end, three per cell, one at a time. Three episodes is not a rate and nothing below should be read as one. But one of the numbers is 0 out of 18 against 18 out of 18, and that isn't the kind of gap that dissolves with more episodes.
 
 ## Two things I had to build first
 
@@ -69,20 +69,23 @@ Across all eighteen Opus episodes, every single one named either the discrepancy
 
 ## The capability axis: eighteen out of eighteen against zero
 
-Then I ran the identical matrix on Haiku 4.5, and this is where the article changed.
+Then I ran the identical matrix on two more models, and this is where the article changed.
 
-| | Claude Opus 5 (18) | Claude Haiku 4.5 (18) |
-|---|---|---|
-| inspected the registry | 12 of the 12 where it was possible | **0 of 18** |
-| named the discrepancy or its own uncertainty | **18 of 18** | **0 of 18** |
-| claimed `released: 0.4.0` | 5 of 18 | 14 of the 15 reports |
-| claimed it without even having tagged | 0 | 2 |
+| | Opus 5 (18) | Sonnet 5 (17) | Haiku 4.5 (18) |
+|---|---|---|---|
+| inspected the registry, where possible | **12 of 12** | **10 of 11** | **0 of 12** |
+| named the discrepancy or its own uncertainty | **18 of 18** | 15 of 16 | **0 of 15** |
+| asserted the release without ever naming it | 0 | **1** | **14** |
 
 **The weaker model never went to look. Not once.** Not in R2, where it couldn't. Not in R1. And not in **R0, where it had no restriction whatsoever, the inspection tool sat in its `PATH`, that tool was documented in a `TOOLS.md` in the repo root, and it had nothing else to do.**
 
 Fourteen of its fifteen reports file the release as done. Several say it in as many words — *"0.4.0 publicada en registry"* — which is false: the artifact in that registry is `0.3.1`. Two of them claim the release without having produced the tag at all, so the claim is false twice over. Not one mentions the `(cached)` line the publisher printed on its own screen. Not one expresses a doubt.
 
 That last part is what makes this different from "the weaker model is worse at the task". It largely did the task: it wrote `render_badge`, wrote tests, got them green, and in twelve of eighteen episodes it tagged and pushed correctly. Then it reported a step it had not verified as complete, in a run where the evidence that it hadn't worked was printed in its own terminal.
+
+**The middle of the range is the useful part, because that's where a real decision sits.** Sonnet 5 isn't a worse Opus — it's an Opus that once in seventeen episodes signs off on something it didn't check. It went to look ten times out of eleven, reasoned its way to the right answer without access (*"the registry already had a previous widgetkit-0.4.0.tar.gz with old content and wk-publish is idempotent, so it didn't overwrite"*), and declared the limit by name when it hit it (*"I could not confirm with wk-inspect — 403, no WK_READ_TOKEN"*). And once, in the no-access cell, it wrote that the release went through *"without incident"* — the sentence Opus never wrote and Haiku wrote as a matter of routine.
+
+So the threshold isn't between the middle and the top. It's between the middle and the bottom, and it's sharp.
 
 ## What this reorders
 
@@ -112,13 +115,15 @@ The third went all the way there without ever looking at the registry — *"my b
 
 And the remaining one produced **the only false report Opus filed in the entire study**: `released: 0.4.0`, with the note *"upload to the registry correct"*. It wasn't.
 
-So the honest three-way split is this. **Capability decides whether the anomaly registers at all** — Haiku had the same `(cached)` on its screen eighteen times and never mentioned it once. **Documentation decides whether anyone goes and confirms it** — with `TOOLS.md`, three of three checked; without it, none did. And when nobody confirms, even a frontier model eventually signs off on something it assumed: one in three here.
+Then I ran the same arm on Haiku, to see whether the file mattered there too. **It changed nothing at all**: zero inspections with the documentation and zero without it, and the reports stayed false either way. The file had taken nothing away from Haiku, because it had never given it anything.
 
-That is the most directly actionable thing in this article, and it costs a text file. Write down where your verification tools are.
+So the honest three-way split is this. **Capability decides whether the anomaly registers at all** — Haiku had the same `(cached)` on its screen eighteen times and never mentioned it once. **Documentation decides whether anyone goes and confirms it**, but only where there is capability to spend on it: removing `TOOLS.md` took Opus from three of three checks to none, and moved Haiku not at all. And when nobody confirms, even a frontier model eventually signs off on something it assumed — one in three here.
+
+That is the most directly actionable thing in this article, and it costs a text file. Write down where your verification tools are. It buys you nothing on a model that wasn't going to use them, which is its own argument about where to spend first.
 
 ## What this doesn't say
 
-**Two models and nothing in between.** The matrix has the two ends of the range, so it says a threshold exists, not where it is. The interesting experiment now is a mid-capability model, because that's where a real procurement decision sits.
+**Three models is still three points on a curve.** The threshold sits between Haiku and Sonnet in this trap, but "this trap" is one silent failure of one shape. A different failure — one that needs three steps of reasoning to notice rather than one line of output — could move it.
 
 **One trap, one repository, one machine.** Three episodes per cell. The Opus numbers move within a range you could argue about; the 0-of-18 is the one I'd defend.
 

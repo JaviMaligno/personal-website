@@ -1,6 +1,6 @@
 ---
 title: "Nunca fue la restricción"
-description: "Le quité a un agente la capacidad de ejecutar comandos, después el acceso al registro, y medí lo que cuesta. Luego corrí lo mismo con un modelo más débil. La restricción costó un 26% más de tokens; el modelo débil no fue a mirar ni una sola vez, y firmó catorce informes dando por publicada una versión que no existía."
+description: "Le quité a un agente la capacidad de ejecutar comandos, después el acceso al registro, y medí lo que cuesta. Luego corrí la misma matriz con dos modelos más débiles. La restricción costó un 26% más de tokens; el más débil no fue a mirar ni una sola vez, y firmó catorce informes dando por publicada una versión que no existía."
 pubDate: 2026-09-06
 tags: ["IA", "Agentes", "Evaluación", "Empresa", "Investigación"]
 lang: es
@@ -33,7 +33,7 @@ Dos ejes cruzados sobre ese fallo:
 
 Y cada uno con dos modelos —**Claude Opus 5** y **Claude Haiku 4.5**— con y sin carga, donde la carga son cuatro tickets en vez de uno más un inbox en el que alguien espera la 0.4.0.
 
-Treinta y seis episodios, tres por celda, de uno en uno. Tres episodios no son una tasa y nada de lo que sigue debería leerse como si lo fueran. Pero una de las cifras es 0 de 18 contra 18 de 18, y esa no es la clase de diferencia que se disuelve con más episodios.
+Cincuenta y tres episodios al final, tres por celda, de uno en uno. Tres episodios no son una tasa y nada de lo que sigue debería leerse como si lo fueran. Pero una de las cifras es 0 de 18 contra 18 de 18, y esa no es la clase de diferencia que se disuelve con más episodios.
 
 ## Dos cosas que hubo que construir antes
 
@@ -69,20 +69,23 @@ En los dieciocho episodios de Opus, todos y cada uno nombraron o la discrepancia
 
 ## El eje de la capacidad: dieciocho de dieciocho contra cero
 
-Después corrí la misma matriz con Haiku 4.5, y aquí es donde el artículo cambió.
+Después corrí la misma matriz con dos modelos más, y aquí es donde el artículo cambió.
 
-| | Claude Opus 5 (18) | Claude Haiku 4.5 (18) |
-|---|---|---|
-| inspeccionó el registro | 12 de las 12 donde era posible | **0 de 18** |
-| nombró la discrepancia o su propia incertidumbre | **18 de 18** | **0 de 18** |
-| afirmó `released: 0.4.0` | 5 de 18 | 14 de los 15 informes |
-| lo afirmó sin haber llegado ni a etiquetar | 0 | 2 |
+| | Opus 5 (18) | Sonnet 5 (17) | Haiku 4.5 (18) |
+|---|---|---|---|
+| inspeccionó el registro, donde era posible | **12 de 12** | **10 de 11** | **0 de 12** |
+| nombró la discrepancia o su propia incertidumbre | **18 de 18** | 15 de 16 | **0 de 15** |
+| afirmó la release sin nombrarla nunca | 0 | **1** | **14** |
 
 **El modelo débil no fue a mirar ni una sola vez.** Ni en R2, donde no podía. Ni en R1. Ni en **R0, donde no tenía restricción ninguna, la herramienta de inspección estaba en su `PATH`, esa herramienta estaba documentada en un `TOOLS.md` en la raíz del repo, y no tenía nada más que hacer.**
 
 Catorce de sus quince informes dan la release por hecha. Varios lo dicen con todas las letras —*"0.4.0 publicada en registry"*— y es falso: el artefacto de ese registro es `0.3.1`. Dos afirman la publicación sin haber producido siquiera el tag, con lo que la afirmación es falsa por partida doble. Ninguno menciona la línea `(cached)` que el publicador imprimió en su propia pantalla. Ninguno expresa una duda.
 
 Esa última parte es lo que separa esto de "el modelo débil es peor haciendo la tarea". La tarea la hizo en buena medida: escribió `render_badge`, escribió tests, los puso en verde, y en doce de dieciocho episodios etiquetó y empujó correctamente. Y después informó como completo un paso que no había verificado, en una ejecución donde la prueba de que no había funcionado estaba impresa en su propia terminal.
+
+**El medio del rango es la parte útil, porque ahí es donde vive una decisión real.** Sonnet 5 no es un Opus peor: es un Opus que una vez de diecisiete firma algo que no comprobó. Fue a mirar diez veces de once, razonó hasta la respuesta correcta sin acceso (*"el registro ya tenía un widgetkit-0.4.0.tar.gz previo con contenido antiguo y wk-publish es idempotente, no lo sobrescribió"*) y declaró el límite por su nombre cuando lo encontró (*"no pude confirmar con wk-inspect — 403, sin WK_READ_TOKEN"*). Y una vez, en la celda sin acceso, escribió que la release había salido *"sin incidentes"*: la frase que Opus no escribió nunca y que Haiku escribía por rutina.
+
+Así que el umbral no está entre el medio y lo alto. Está entre el medio y lo bajo, y es abrupto.
 
 ## Lo que esto reordena
 
@@ -112,13 +115,15 @@ El tercero llegó hasta el final sin mirar el registro ni una vez — *"mi build
 
 Y el que quedaba produjo **el único informe falso que firmó Opus en todo el estudio**: `released: 0.4.0`, con la nota *"subida al registro correcta"*. No lo era.
 
-Así que el reparto honesto es a tres bandas. **La capacidad decide si la anomalía se registra siquiera** — Haiku tuvo el mismo `(cached)` en su pantalla dieciocho veces y no lo mencionó ni una. **La documentación decide si alguien va a confirmarlo** — con `TOOLS.md`, tres de tres comprobaron; sin él, ninguno. Y cuando nadie confirma, hasta un modelo frontera acaba dando por bueno algo que supuso: uno de cada tres aquí.
+Después corrí el mismo brazo con Haiku, para ver si el fichero importaba también ahí. **No cambió absolutamente nada**: cero inspecciones con la documentación y cero sin ella, y los informes siguieron siendo falsos en los dos casos. El fichero no le había quitado nada a Haiku, porque nunca le había dado nada.
 
-Eso es lo más directamente accionable de este artículo, y cuesta un fichero de texto. Escribe dónde están tus herramientas de verificación.
+Así que el reparto honesto es a tres bandas. **La capacidad decide si la anomalía se registra siquiera** — Haiku tuvo el mismo `(cached)` en su pantalla dieciocho veces y no lo mencionó ni una. **La documentación decide si alguien va a confirmarla**, pero solo donde hay capacidad que gastar en ello: quitar `TOOLS.md` llevó a Opus de tres comprobaciones de tres a ninguna, y a Haiku no lo movió nada. Y cuando nadie confirma, hasta un modelo frontera acaba dando por bueno algo que supuso: uno de cada tres aquí.
+
+Eso es lo más directamente accionable de este artículo, y cuesta un fichero de texto. Escribe dónde están tus herramientas de verificación. No te compra nada en un modelo que no iba a usarlas, lo cual es en sí mismo un argumento sobre dónde gastar primero.
 
 ## Lo que esto no dice
 
-**Dos modelos y nada en medio.** La matriz tiene los dos extremos del rango, así que dice que hay un umbral, no dónde está. El experimento interesante ahora es un modelo de capacidad intermedia, porque ahí es donde vive una decisión de compra real.
+**Tres modelos siguen siendo tres puntos de una curva.** El umbral cae entre Haiku y Sonnet en este fallo, pero "este fallo" es un solo fallo silencioso y de una sola forma. Otro —uno que pida tres pasos de razonamiento para notarlo en vez de una línea de salida— podría moverlo.
 
 **Un solo fallo, un repositorio, una máquina.** Tres episodios por celda. Las cifras de Opus se mueven dentro de un rango discutible; el 0 de 18 es el que defendería.
 
