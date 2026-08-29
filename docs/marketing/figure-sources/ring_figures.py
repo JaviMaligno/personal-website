@@ -348,9 +348,12 @@ def preview(outdir: pathlib.Path) -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     for name, build in FIGURES.items():
         body, _ = build()
+        vb = re.search(r'viewBox="0 0 (\d+) (\d+)"', body)
+        w = int(vb.group(1)) if vb else 600
+        pad = 0 if name.startswith("hero") else 10
         html = (f'<!doctype html><meta charset="utf-8">'
                 f'<body style="margin:0;background:{PANEL}">'
-                f'<div style="width:620px;padding:10px">{body}</div></body>')
+                f'<div style="width:{w}px;padding:{pad}px">{body}</div></body>')
         (outdir / f"{name}.html").write_text(html, encoding="utf-8")
         (outdir / f"{name}.svg").write_text(
             body.replace("<svg ", f'<svg style="background:{PANEL}" ', 1),
@@ -374,6 +377,154 @@ def main() -> int:
         p = pathlib.Path(f)
         print(f"{f}: {write_into(p)} figure(s) patched")
     return 0
+
+
+# --- the 3D control (TubeField3D) ------------------------------------------
+def _ellipse_path(cx, cy, rx, ry) -> str:
+    return (f"M{cx - rx:.1f},{cy:.1f} A{rx:.1f},{ry:.1f} 0 1,0 {cx + rx:.1f},{cy:.1f} "
+            f"A{rx:.1f},{ry:.1f} 0 1,0 {cx - rx:.1f},{cy:.1f} Z")
+
+
+def hoop(cx, cy, rx, ry, tube, colour, uid, *, split="x"):
+    """A torus drawn as a stroked ellipse, split into far/near halves so a path
+    can be made to pass visibly through it. `split="x"` stands the ring up
+    (hole axis horizontal, i.e. a hoop); `split="y"` lays it flat.
+
+    Returns (defs, far, near) — draw far, then whatever passes through, then near.
+    """
+    pad = 40
+    if split == "x":
+        far_rect = (cx, cy - ry - pad, rx + pad, 2 * (ry + pad))
+        near_rect = (cx - rx - pad, cy - ry - pad, rx + pad, 2 * (ry + pad))
+    else:
+        far_rect = (cx - rx - pad, cy - ry - pad, 2 * (rx + pad), ry + pad)
+        near_rect = (cx - rx - pad, cy, 2 * (rx + pad), ry + pad)
+    defs = (f'<defs>'
+            f'<clipPath id="{uid}-far"><rect x="{far_rect[0]:.1f}" y="{far_rect[1]:.1f}" '
+            f'width="{far_rect[2]:.1f}" height="{far_rect[3]:.1f}"/></clipPath>'
+            f'<clipPath id="{uid}-near"><rect x="{near_rect[0]:.1f}" y="{near_rect[1]:.1f}" '
+            f'width="{near_rect[2]:.1f}" height="{near_rect[3]:.1f}"/></clipPath>'
+            f'</defs>')
+    path = _ellipse_path(cx, cy, rx, ry)
+    far = (f'<path d="{path}" fill="none" stroke="{colour}" stroke-width="{tube}" '
+           f'stroke-opacity="0.55" clip-path="url(#{uid}-far)"/>')
+    near = (f'<path d="{path}" fill="none" stroke="{colour}" stroke-width="{tube}" '
+            f'clip-path="url(#{uid}-near)"/>')
+    return defs, far, near
+
+
+def _torus_panel(out, x0, cx, cy, *, standing, colour, uid, cost, tag, note,
+                 around=False):
+    out.append(frame(x0, 22, 285, 176))
+    out.append(text(x0 + 142, 15, tag, size=11.5, weight="bold", colour=MUTED))
+    if standing:
+        defs, far, near = hoop(cx, cy, 32, 62, 20, colour, uid, split="x")
+    else:
+        defs, far, near = hoop(cx, cy, 84, 30, 21, colour, uid, split="y")
+    # a faint contact shadow, to say "this is a solid object in space"
+    out.append(f'<ellipse cx="{cx:.1f}" cy="{cy + 68:.1f}" rx="{86 if not standing else 46}" '
+               f'ry="7" fill="#000" fill-opacity="0.30"/>')
+    out.append(defs)
+    out.append(far)
+    sx, sy = x0 + 24, cy
+    gx, gy = x0 + 258, cy
+    out.append(dot(sx, sy, r=3.4))
+    if standing:
+        out.append(arrow(sx + 6, sy, gx - 14, gy, mid=uid + "-mk"))
+    else:
+        out.append(arrow(sx + 6, sy, cx - 82, cy, mid=uid + "-mk"))
+        out.append(cross(cx - 92, cy, size=5.0))
+        if around:
+            out.append(f'<path d="M{sx + 8:.1f},{sy:.1f} Q{cx:.1f},{cy - 88:.1f} '
+                       f'{gx - 14:.1f},{gy:.1f}" fill="none" stroke="{CYAN}" '
+                       f'stroke-width="2" stroke-dasharray="6 4" '
+                       f'marker-end="url(#{uid}-mk2)"/>')
+            out.append(text(cx, cy - 68, "a way around, contact-free", size=9.5,
+                            colour=CYAN))
+    out.append(near)
+    out.append(star(gx, gy, 1, r=13, halo=False))
+    out.append(text(x0 + 142, 186, f"costs you  {cost}", size=15, colour=colour,
+                    weight="bold"))
+    out.append(text(x0 + 142, 214, note, size=9.5, colour=DIM))
+
+
+def fig_torus_3d() -> tuple[str, str]:
+    label = ("The same solid torus in three dimensions: with the route through its "
+             "hole it costs 0.019, and moved so the route runs into the tube it "
+             "costs 0.898 — while a contact-free path around it still exists")
+    out = [marker_def("t3-mk"), marker_def("t3b-mk"), marker_def("t3b-mk2", CYAN)]
+    _torus_panel(out, 10, 152, 104, standing=True, colour=SAFE, uid="t3",
+                 cost="0.019", tag="the route threads the hole",
+                 note="it never touches the object")
+    _torus_panel(out, 305, 447, 104, standing=False, colour=DANGER, uid="t3b",
+                 cost="0.898", tag="the same torus, moved",
+                 note="the route runs into the tube", around=True)
+    out.append(text(300, 238,
+                    "nothing here is sealed off  ·  same object, same contact rarity 0.0033",
+                    size=11, colour=INK))
+    return svg("\n".join(out), w=600, h=250, label=label), label
+
+
+FIGURES["torus-3d"] = fig_torus_3d
+
+# --- the explainer's hero (rendered to PNG with headless Chrome) ------------
+def fig_hero_bug() -> tuple[str, str]:
+    """1020x510 hero for "The Bug Nobody Can Reach".
+
+    Rasterise it after regenerating:
+
+        python ring_figures.py --preview out/
+        chrome --headless=new --hide-scrollbars           --screenshot=public/blog/the-bug-nobody-can-reach.png           --window-size=1020,510 file://.../out/hero-bug.html
+    """
+    label = ("The same solid torus in three dimensions, moved: the route threads its "
+             "hole and costs 0.019, or runs into the tube and costs 0.898")
+    out = [marker_def("h-mk"), marker_def("hb-mk"), marker_def("hb-mk2", CYAN)]
+    out.append(text(510, 46, "THE SAME WRONG REGION · MOVED", size=19,
+                    colour=MUTED, weight="bold"))
+    cfg = [
+        (40, 250, True, SAFE, "h", "0.019", "the route threads the hole",
+         "it never touches the object"),
+        (525, 735, False, DANGER, "hb", "0.898", "the same torus, moved",
+         "the route runs into the tube"),
+    ]
+    for x0, cx, standing, colour, uid, cost, tag, note in cfg:
+        cy = 250
+        out.append(f'<rect x="{x0}" y="80" width="455" height="330" rx="14" '
+                   f'fill="none" stroke="{EDGE}"/>')
+        out.append(text(x0 + 227, 110, tag, size=17, colour=MUTED, weight="bold"))
+        if standing:
+            defs, far, near = hoop(cx, cy, 52, 104, 34, colour, uid, split="x")
+        else:
+            defs, far, near = hoop(cx, cy, 140, 50, 34, colour, uid, split="y")
+        out.append(f'<ellipse cx="{cx}" cy="{cy + 118}" rx="{78 if standing else 145}" '
+                   f'ry="11" fill="#000" fill-opacity="0.30"/>')
+        out.append(defs)
+        out.append(far)
+        sx, gx = x0 + 34, x0 + 415
+        out.append(dot(sx, cy, r=6))
+        if standing:
+            out.append(arrow(sx + 10, cy, gx - 24, cy, mid=uid + "-mk", w=3,
+                             dash="9 6"))
+        else:
+            out.append(arrow(sx + 10, cy, cx - 138, cy, mid=uid + "-mk", w=3,
+                             dash="9 6"))
+            out.append(cross(cx - 152, cy, size=9, w=4))
+            out.append(f'<path d="M{sx + 12},{cy} Q{cx},{cy - 150} {gx - 24},{cy}" '
+                       f'fill="none" stroke="{CYAN}" stroke-width="3" '
+                       f'stroke-dasharray="10 7" marker-end="url(#hb-mk2)"/>')
+            out.append(text(cx, cy - 116, "a way around, contact-free", size=15,
+                            colour=CYAN))
+        out.append(near)
+        out.append(star(gx, cy, 1, r=22, halo=False))
+        out.append(text(x0 + 227, 386, f"costs you  {cost}", size=25, colour=colour,
+                        weight="bold"))
+        out.append(text(x0 + 227, 440, note, size=15, colour=DIM))
+    out.append(text(510, 484, "what it costs is set by the path, not by the shape",
+                    size=21, colour=INK, mono=False, italic=True))
+    return svg("\n".join(out), w=1020, h=510, label=label), label
+
+
+FIGURES["hero-bug"] = fig_hero_bug
 
 
 if __name__ == "__main__":
