@@ -127,6 +127,44 @@ That was the first objection I got, and it is the right one. In two dimensions a
 
 So the paper runs the case where going around is genuinely possible: a doughnut-shaped region floating in three-dimensional space, between the robot and its target. Nothing is sealed off — there is an explicit route that goes around it without touching it at all.
 
+<figure class="cwm-fig">
+<!-- fig:torus-3d -->
+<svg viewBox="0 0 600 250" role="img" aria-label="The same solid torus in three dimensions: with the route through its hole it costs 0.019, and moved so the route runs into the tube it costs 0.898 — while a contact-free path around it still exists">
+<defs><marker id="t3-mk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#f8fafc"/></marker></defs>
+<defs><marker id="t3b-mk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#f8fafc"/></marker></defs>
+<defs><marker id="t3b-mk2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#22d3ee"/></marker></defs>
+<rect x="10" y="22" width="285" height="176" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="152.0" y="15.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">the route threads the hole</text>
+<ellipse cx="152.0" cy="172.0" rx="46" ry="7" fill="#000" fill-opacity="0.30"/>
+<defs><clipPath id="t3-far"><rect x="152.0" y="2.0" width="72.0" height="204.0"/></clipPath><clipPath id="t3-near"><rect x="80.0" y="2.0" width="72.0" height="204.0"/></clipPath></defs>
+<path d="M120.0,104.0 A32.0,62.0 0 1,0 184.0,104.0 A32.0,62.0 0 1,0 120.0,104.0 Z" fill="none" stroke="#6366f1" stroke-width="20" stroke-opacity="0.55" clip-path="url(#t3-far)"/>
+<circle cx="34.0" cy="104.0" r="3.4" fill="#f8fafc"/>
+<line x1="40.0" y1="104.0" x2="254.0" y2="104.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#t3-mk)"/>
+<path d="M120.0,104.0 A32.0,62.0 0 1,0 184.0,104.0 A32.0,62.0 0 1,0 120.0,104.0 Z" fill="none" stroke="#6366f1" stroke-width="20" clip-path="url(#t3-near)"/>
+<polygon points="268.0,91.0 264.6,99.4 255.6,100.0 262.6,105.8 260.4,114.5 268.0,109.7 275.6,114.5 273.4,105.8 280.4,100.0 271.4,99.4" fill="#fbbf24"/>
+<text x="152.0" y="186.0" font-size="15" fill="#6366f1" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">costs you  0.019</text>
+<text x="152.0" y="214.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">it never touches the object</text>
+<rect x="305" y="22" width="285" height="176" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="447.0" y="15.0" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">the same torus, moved</text>
+<ellipse cx="447.0" cy="172.0" rx="86" ry="7" fill="#000" fill-opacity="0.30"/>
+<defs><clipPath id="t3b-far"><rect x="323.0" y="34.0" width="248.0" height="70.0"/></clipPath><clipPath id="t3b-near"><rect x="323.0" y="104.0" width="248.0" height="70.0"/></clipPath></defs>
+<path d="M363.0,104.0 A84.0,30.0 0 1,0 531.0,104.0 A84.0,30.0 0 1,0 363.0,104.0 Z" fill="none" stroke="#f43f5e" stroke-width="21" stroke-opacity="0.55" clip-path="url(#t3b-far)"/>
+<circle cx="329.0" cy="104.0" r="3.4" fill="#f8fafc"/>
+<line x1="335.0" y1="104.0" x2="365.0" y2="104.0" stroke="#f8fafc" stroke-width="2.0" stroke-dasharray="5 3" marker-end="url(#t3b-mk)"/>
+<path d="M350.0,99.0 L360.0,109.0 M360.0,99.0 L350.0,109.0" stroke="#f8fafc" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M337.0,104.0 Q447.0,16.0 549.0,104.0" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#t3b-mk2)"/>
+<text x="447.0" y="36.0" font-size="9.5" fill="#22d3ee" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">a way around, contact-free</text>
+<path d="M363.0,104.0 A84.0,30.0 0 1,0 531.0,104.0 A84.0,30.0 0 1,0 363.0,104.0 Z" fill="none" stroke="#f43f5e" stroke-width="21" clip-path="url(#t3b-near)"/>
+<polygon points="563.0,91.0 559.6,99.4 550.6,100.0 557.6,105.8 555.4,114.5 563.0,109.7 570.6,114.5 568.4,105.8 575.4,100.0 566.4,99.4" fill="#fbbf24"/>
+<text x="447.0" y="186.0" font-size="15" fill="#f43f5e" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace" font-weight="bold">costs you  0.898</text>
+<text x="447.0" y="214.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">the route runs into the tube</text>
+<text x="300.0" y="238.0" font-size="11" fill="#f8fafc" text-anchor="middle" font-family="ui-monospace,'JetBrains Mono',monospace">nothing here is sealed off  ·  same object, same contact rarity 0.0033</text>
+</svg>
+<!-- /fig:torus-3d -->
+<figcaption>The doughnut in three dimensions. On the left the route passes through its hole and the wrong model costs almost nothing; on the right the same object has been moved so the route runs into it, and it costs nearly as much as acting at random. The dashed path arcing over the top is the one that matters for the second half of the story: it reaches the goal without touching anything, which is what makes the error catchable in principle again.</figcaption>
+</figure>
+
+
 The result splits in two, and this is the version I would carry into a real system.
 
 **The danger survives.** Put the doughnut so the planned route runs into its solid part and the cost is **0.898**. Move it so the route threads the hole instead and the cost is **0.019** — same object, same rarity of contact, same trivial shape. Being on the path is what costs you, whether or not the thing encloses anything.
