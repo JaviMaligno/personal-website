@@ -677,6 +677,8 @@ gradient blobs, no bokeh.
 
 ---
 
+---
+
 ## `it-was-never-the-restriction` — Nunca fue la restricción (2026-08-29)
 
 - Artículo: `src/content/blog/{en,es}/it-was-never-the-restriction.md`
@@ -689,60 +691,30 @@ Prompt de estilo entregado a Codex para que redacte y ejecute el prompt final:
 
 ```text
 Create a 1020x510 blog hero image. Style: refined technical editorial
-illustration, dark but not monochrome, showing a concrete scene — an agent
-workstation where the keyboard has been physically removed and replaced by a
-paper request slip passed through a slot to a second desk that runs the commands:
-on the left a terminal-less workspace with a notepad reading 'REQUESTS.txt'
-listing plausible generic lines like './scripts/release.sh 0.4.0' and
-'wk-inspect 0.4.0', an arrow through a slot to the right where a small runner
-terminal shows the output '(cached)' and a locked cabinet labelled with a key
-icon stands beside it, closed.
+illustration, dark but not monochrome, showing a concrete scene contrasting TWO
+desks side by side facing the same locked registry cabinet.
 
-Visual motifs: the request slip and slot as the centre of the composition, a
-package crate stamped 0.4.0 whose contents sticker reads 0.3.1, a locked padlock
-on the registry cabinet, an unread credential card left face-down on the desk
-untouched. Clean geometric composition, several distinct zones.
+Left desk: a heavy padlock and chain across the drawers and a hand-written note
+reading 'no shell', yet a magnifier lies ON the open logbook and a clipboard
+reads 'not verified' — the restricted-but-careful workstation.
 
-No logos, no brand names, no people, no text-heavy poster. Use crisp bitmap
-illustration, high contrast, professional AI/developer blog aesthetic, balanced
-teal, amber, graphite, and off-white accents, no purple gradient blobs, no bokeh.
+Right desk: completely unlocked and open, drawers ajar, nothing restraining it,
+but the magnifier still sits unused in its holder and the clipboard reads
+'released 0.4.0' with a green tick — the free-but-incurious workstation.
+
+Between them a shipping crate stamped '0.4.0' whose contents sticker reads
+'0.3.1'. Both desks have a small terminal showing the same line '(cached)'.
+
+Clean geometric composition, clear left-right symmetry so the contrast reads
+instantly. No logos, no brand names, no people, no text-heavy poster. Crisp
+bitmap illustration, high contrast, balanced teal, amber, graphite and off-white
+accents, no purple gradient blobs, no bokeh.
 ```
 
-Codex cerró su prompt final con una lista `Text (verbatim)` restringida a
-`REQUESTS.txt`, `./scripts/release.sh 0.4.0`, `wk-inspect 0.4.0`, `(cached)`,
-`0.4.0` y `0.3.1`, más una lista de restricciones explícitas: el puesto de la
-izquierda sin teclado ni terminal, el archivador cerrado y con candado, la
-tarjeta de credencial boca abajo y sin tocar, y el sello de la caja en desacuerdo
-con la pegatina de contenido.
+La composición es el argumento: el puesto restringido es el que verificó, el
+libre es el que firmó sin mirar, y la lupa sin usar en su soporte es el hallazgo
+del artículo.
 
-**Comprobado en la imagen final:** las seis cadenas salen correctas y legibles,
-sin texto inventado. Los tres elementos que cargan el argumento del artículo
-—teclado ausente, candado cerrado, credencial boca abajo— aparecen los tres.
-
----
-
-## `building-is-no-longer-the-bottleneck` — Construir ya no es el cuello de botella (2026-08-29)
-
-- Artículo: `src/content/blog/{en,es}/building-is-no-longer-the-bottleneck.md`
-- Imagen: `public/blog/building-is-no-longer-the-bottleneck.png`
-- Generada con la herramienta integrada de imágenes de Codex.
-
-Prompt final:
-
-```text
-Use case: stylized-concept
-Asset type: 2:1 hero image for a technical personal blog article titled conceptually “Building Is No Longer the Bottleneck”
-Primary request: Create a refined technical editorial illustration that makes one asymmetry immediately legible: software construction has become an extremely fast automated production line, while distribution and real validation still pass through a slow, narrow human doorway.
-Scene/backdrop: A dark graphite studio/workshop divided organically into two connected zones. On the left, a dense but orderly high-speed software factory: several luminous terminal panels, UI component cards, code modules, test checkmarks and small app windows moving rapidly along parallel conveyor tracks, assisted by compact abstract robotic arms. All streams converge on the right toward one modest real-world testing table at an open doorway, where a single blank product device waits for one human hand reaching in to try it. Include a small cluster of empty feedback chairs or unopened message cards beyond the doorway to suggest scarce attention, not failure.
-Style/medium: crisp bitmap technical editorial illustration, sophisticated magazine quality, concrete working system rather than abstract glowing cubes; no people shown in full, only one natural human hand at the validation point.
-Composition/framing: wide 2:1 landscape, strong left-to-right flow; left side visually fast, abundant and parallel; right side quiet, narrow and human-scale. Dense distinct zones but clean hierarchy. No split-screen line and no scales.
-Lighting/mood: high contrast, thoughtful rather than dystopian; the factory glows with controlled cool light while the human contact point has warmer natural light.
-Color palette: balanced teal, amber, graphite, muted navy, and off-white accents. Dark but not monochrome.
-Text: no title, no slogans, no prominent prose. Tiny generic interface marks or terminal glyphs are acceptable but should not need to be readable.
-Constraints: no logos, no brand names, no watermark, no purple gradient blobs, no bokeh, no humanoid robots, no stock-photo look, no literal bottleneck bottle, no money symbols, no social-media logos, no text-heavy poster. Intended crop must remain clear at blog-card thumbnail size.
-```
-
-**Comprobado en la imagen final:** la asimetría se lee incluso en pequeño: varias
-líneas automatizadas y paralelas convergen en una sola mesa, un solo dispositivo
-y una única mano humana. No hay título ni texto protagonista; los glifos de las
-pantallas son decorativos.
+**Comprobado en la imagen final:** las seis cadenas (`(cached)` ×2, `no shell`,
+`not verified`, `released 0.4.0`, `0.4.0`, `0.3.1`) salen correctas y legibles,
+sin texto inventado.
