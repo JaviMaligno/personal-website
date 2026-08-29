@@ -37,7 +37,9 @@ Tres regímenes, una variable cada uno:
 
 R2 es el de governance, porque *"no puedes salir del repo"* es la restricción que imponen las políticas reales. Y su métrica no puede ser la detección —detectar es imposible— así que pasa a ser algo mejor: ¿distingue el informe lo que verificó de lo que supone?
 
-Tres episodios por régimen, de uno en uno, sin carga. Tres episodios no son una tasa, y nada de lo que sigue debería leerse como si lo fueran.
+Tres episodios por régimen, de uno en uno. Tres episodios no son una tasa, y nada de lo que sigue debería leerse como si lo fueran. El grueso del artículo son los nueve episodios **sin carga**; al final está lo que dio tiempo a medir con carga antes de que el presupuesto de la cuenta se acabara.
+
+**Una cosa que conviene dejar clara antes de nada, porque decide lo que esto puede y no puede decir.** Todos los episodios corrieron con **Claude Opus 5**, un modelo frontera. Así que esto mide un agente capaz con las manos atadas, no un asistente más débil. Son ejes distintos, y el artículo anterior iba del segundo: a alguien le dieron licencia de una herramienta limitada. Lo que sigue aísla la restricción del entorno —no puede ejecutar, no puede llegar al registro— con la capacidad fijada en lo más alto del rango. Si un modelo más débil con las mismas restricciones se comporta igual es una pregunta que este experimento no toca, y esperaría que la respuesta fuese peor y no igual, porque el comportamiento que salvó todos los episodios aquí es darse cuenta de que un comando con pinta de haber funcionado no hizo lo que decía.
 
 ## Dos cosas que hubo que construir antes
 
@@ -67,7 +69,11 @@ La registré antes de correr, precisamente para que pudiera contradecirme:
 
 **Las tres pidieron la inspección**, y las tres en el turno inmediatamente posterior al release: petición 4 de 13, 6 de 18, 5 de 12. La comprobación opcional no se penalizó en absoluto. Lo que cueste un turno mediado, no sale de la diligencia.
 
-Lo que sí costó fueron **turnos**. Doce, trece y dieciocho peticiones mediadas para una tarea que en R0 es una sesión corrida. Y las tres quemaron su primera petición en el mismo sitio —`python3` no existe en esta máquina, solo `python`— porque un agente que no ejecuta tampoco tantea. En R0 esa fricción es invisible; aquí cada tanteo es un viaje de ida y vuelta.
+Lo que costó es menos de lo que yo suponía, y solo lo sé porque fui a medirlo en vez de afirmarlo. Doce, trece y dieciocho peticiones mediadas — pero las sesiones duran lo mismo. Los turnos de conversación salen 35/37/48 en R0 y 30/45/41 en R1, que es un empate. Lo que se mueve es el dinero y el reloj: **1,54 $ de media contra 1,94 $, y 215 segundos de tiempo de API contra 243** — como un cuarto más caro, como un octavo más lento.
+
+Merece decirse claro porque mi instinto decía otra cosa. Escribiendo esto antes de comprobarlo había puesto que la mediación "casi triplica los viajes de ida y vuelta", que es esa clase de número que suena bien y está inventado: nunca conté cuántos comandos ejecutó R0, así que no había ninguna proporción que triplicar. La mediación costó alrededor de un cuarto más en tokens. Nada más.
+
+Sí hay una fricción visible. Las tres quemaron su primera petición en el mismo sitio —`python3` no existe en esta máquina, solo `python`— porque un agente que no ejecuta tampoco tantea. En R0 ese tanteo es invisible; aquí cada tanteo es un viaje de ida y vuelta a través de un fichero.
 
 Y después algo que no predije. **Las tres abrieron el publicador** —`cat "$(command -v wk-publish)"`— para entender de dónde salía ese `(cached)`. La credencial de publicación está incrustada en ese script, a la vista, y leerla es la manera obvia de saltarse un entorno restringido. **Ninguna la usó.** Leyeron el script para entender el mecanismo, no para tumbar la valla. Una llegó a descargar el artefacto con `curl` directamente, primero sin token —el único 403 de todo R1— y después con el suyo.
 
@@ -97,13 +103,19 @@ En este sustrato costó **turnos** y costó **certeza**. No costó detección, y
 
 La hipótesis de partida era que quitar la ejecución quita el saber-que-hay-que-comprobar. Aquí es falsa. Lo sabían. Cuando pudieron comprobar, comprobaron sin que se lo dijeran; cuando no pudieron, lo pusieron en el informe en lugar de taparlo.
 
-Lo que invierte el consejo práctico que di en el artículo anterior. Dije que la verificación se encarece con la restricción y por eso importa más. La primera mitad se sostiene: cuesta turnos, y un montaje mediado casi triplica los viajes de ida y vuelta. La segunda mitad señalaba al riesgo equivocado. El peligro del que avisaba, un informe confiadamente falso, es lo único que no ocurrió en ninguno de los nueve episodios.
+Lo que invierte el consejo práctico que di en el artículo anterior. Dije que la verificación se encarece con la restricción y por eso importa más. La primera mitad sobrevive, pero más pequeña de lo que la vendí: un cuarto más en tokens, un octavo más en reloj, y los mismos turnos. La segunda mitad señalaba al riesgo equivocado. El peligro del que avisaba, un informe confiadamente falso, es lo único que no ocurrió en ninguno de los trece episodios que llegaron al final, cargados incluidos.
+
+Y hay una consecuencia que prefiero decir a dejar que la deduzca quien lee. Si la comprobación que importa es "¿el artefacto publicado contiene lo que dice la etiqueta?", **esa comprobación no debería depender de que alguien se acuerde de hacerla**: ni una persona, ni un agente, restringido o no. Es una comparación entre dos cosas que una máquina puede leer, y eso la convierte en trabajo del pipeline: un paso posterior a publicar que se descargue el artefacto y lo contraste con el commit que dice ser. Aquí todas las sesiones cazaron el problema a mano, que es el buen desenlace y también el frágil. La razón por la que he podido medir todo esto es que le puse un log al registro, y el mismo instinto es el arreglo: si una comprobación merece hacerse bajo presión, codifícala donde la presión no llega.
 
 Para quien esté discutiendo una política de herramientas, esa forma es más útil que "los agentes restringidos son peores". Una restricción que cuesta turnos es una conversación sobre throughput, y el throughput se negocia: puedes decidir que el sandbox vale tres veces los viajes. Una restricción que costara veracidad no se negociaría, porque dejarías de poder fiarte de la salida. Esta es de las primeras.
 
 ## Lo que esto no dice
 
-**Sin carga.** Esta es la importante, y la razón por la que no dejo que el resultado viaje más de lo que debe. El [artículo anterior](/es/blog/what-agents-say-to-each-other) situó el fallo justo ahí: una sesión trabajando sola cazó la misma familia de problema 7 veces de 7, y cargada con tres features y un par esperando, una de tres entregó un "hecho" falso sin abrir nunca el registro. Este experimento mueve una variable y la carga no es esa. Un R1 o un R2 cargados son el experimento siguiente, no una extrapolación de este — y dado dónde apareció la grieta la vez anterior, esperaría que fuese el interesante.
+**El brazo cargado está a medias.** El [artículo anterior](/es/blog/what-agents-say-to-each-other) situó el fallo justo bajo carga: sola, una sesión cazó esta familia de problema 7 veces de 7; cargada con tres features y un par esperando, una de tres entregó un "hecho" falso sin abrir nunca el registro. Así que volví a correr los tres regímenes con cuatro tickets y un inbox donde alguien espera la 0.4.0 — y llegué a R0 y a la mitad de R1 antes de que el límite semanal de gasto de la cuenta lo parara. Seis de nueve episodios volvieron con un mensaje de límite en vez de con una sesión.
+
+Lo que sí corrió: **R0 cargado, 3 de 3 inspeccionaron y detectaron**; R1 cargado, los dos episodios supervivientes inspeccionaron, aunque uno de ellos se topó con el límite después de inspeccionar y antes de escribir su informe, así que cuenta para "fue a mirar" y no para "qué afirmó". R2 cargado —sin acceso y con cuatro cosas encima— es la celda que más quiero y la que no tengo.
+
+Y prefiero señalar el confound a dejar que ese 3 de 3 viaje solo. Es tentador leerlo como que la carga importa menos que antes, y sería descuidado: **el sustrato cambió entre los dos experimentos.** Este trae un `TOOLS.md` en la raíz del repo documentando `wk-inspect` como herramienta del equipo, y el registro tiene ahora un inspector dedicado en vez de ser un directorio que había que ocurrírsete mirar. Hice la comprobación descubrible. La hipótesis más simple para la diferencia no es que la carga dejara de importar, sino que un agente usa la comprobación que tiene documentada, incluso ocupado. Separar las dos cosas pide un brazo cargado sin `TOOLS.md`, que no he corrido.
 
 **El runner no es una persona.** Ejecuta al instante y no se cansa. La latencia real de pedirle a un compañero que te ejecute algo —minutos, a veces horas, a veces mañana— es exactamente la fricción que hace que la gente se salte las comprobaciones opcionales, y no está en esta medición.
 
