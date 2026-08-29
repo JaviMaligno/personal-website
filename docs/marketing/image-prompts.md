@@ -677,10 +677,12 @@ gradient blobs, no bokeh.
 
 ---
 
-## `the-agent-knew-to-look` — El agente sabía que tenía que mirar (2026-08-29)
+## `it-was-never-the-restriction` — Nunca fue la restricción (2026-08-29)
 
-- Artículo: `src/content/blog/{en,es}/the-agent-knew-to-look.md`
-- Imagen: `public/blog/the-agent-knew-to-look.png` (1020x510)
+- Artículo: `src/content/blog/{en,es}/it-was-never-the-restriction.md`
+  (renombrado desde `the-agent-knew-to-look` al cambiar la tesis: el eje que
+  domina resultó ser la capacidad del modelo, no la restricción del entorno)
+- Imagen: `public/blog/it-was-never-the-restriction.png` (1020x510)
 - Generada con `codex exec -s workspace-write` (no `--full-auto`: retirado en codex-cli 0.147)
 
 Prompt de estilo entregado a Codex para que redacte y ejecute el prompt final:
@@ -716,3 +718,31 @@ con la pegatina de contenido.
 **Comprobado en la imagen final:** las seis cadenas salen correctas y legibles,
 sin texto inventado. Los tres elementos que cargan el argumento del artículo
 —teclado ausente, candado cerrado, credencial boca abajo— aparecen los tres.
+
+---
+
+## `building-is-no-longer-the-bottleneck` — Construir ya no es el cuello de botella (2026-08-29)
+
+- Artículo: `src/content/blog/{en,es}/building-is-no-longer-the-bottleneck.md`
+- Imagen: `public/blog/building-is-no-longer-the-bottleneck.png`
+- Generada con la herramienta integrada de imágenes de Codex.
+
+Prompt final:
+
+```text
+Use case: stylized-concept
+Asset type: 2:1 hero image for a technical personal blog article titled conceptually “Building Is No Longer the Bottleneck”
+Primary request: Create a refined technical editorial illustration that makes one asymmetry immediately legible: software construction has become an extremely fast automated production line, while distribution and real validation still pass through a slow, narrow human doorway.
+Scene/backdrop: A dark graphite studio/workshop divided organically into two connected zones. On the left, a dense but orderly high-speed software factory: several luminous terminal panels, UI component cards, code modules, test checkmarks and small app windows moving rapidly along parallel conveyor tracks, assisted by compact abstract robotic arms. All streams converge on the right toward one modest real-world testing table at an open doorway, where a single blank product device waits for one human hand reaching in to try it. Include a small cluster of empty feedback chairs or unopened message cards beyond the doorway to suggest scarce attention, not failure.
+Style/medium: crisp bitmap technical editorial illustration, sophisticated magazine quality, concrete working system rather than abstract glowing cubes; no people shown in full, only one natural human hand at the validation point.
+Composition/framing: wide 2:1 landscape, strong left-to-right flow; left side visually fast, abundant and parallel; right side quiet, narrow and human-scale. Dense distinct zones but clean hierarchy. No split-screen line and no scales.
+Lighting/mood: high contrast, thoughtful rather than dystopian; the factory glows with controlled cool light while the human contact point has warmer natural light.
+Color palette: balanced teal, amber, graphite, muted navy, and off-white accents. Dark but not monochrome.
+Text: no title, no slogans, no prominent prose. Tiny generic interface marks or terminal glyphs are acceptable but should not need to be readable.
+Constraints: no logos, no brand names, no watermark, no purple gradient blobs, no bokeh, no humanoid robots, no stock-photo look, no literal bottleneck bottle, no money symbols, no social-media logos, no text-heavy poster. Intended crop must remain clear at blog-card thumbnail size.
+```
+
+**Comprobado en la imagen final:** la asimetría se lee incluso en pequeño: varias
+líneas automatizadas y paralelas convergen en una sola mesa, un solo dispositivo
+y una única mano humana. No hay título ni texto protagonista; los glifos de las
+pantallas son decorativos.
