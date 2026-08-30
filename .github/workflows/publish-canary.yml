@@ -1,13 +1,13 @@
 name: Publish canary — dry-run every pending article merge
 
 # WHY THIS EXISTS
-# The scheduled-publish-<slug>.yml workflows publish by running
-# `git merge --no-ff origin/blog/<slug>` against main. If that merge conflicts,
-# the job fails and the article simply does not publish that morning — you find
-# out by noticing the silence, which is the worst possible moment.
+# scheduled-publish.yml publishes by running `git merge --no-ff <branch>` against
+# main for whatever entry of .github/publish-schedule.json is due. If that merge
+# conflicts, the job fails and the article simply does not publish that morning —
+# you find out by noticing the silence, which is the worst possible moment.
 #
-# This canary rehearses the whole queue every day: it merges every pending
-# blog/* branch into a throwaway copy of main, in publication order, and then
+# This canary rehearses the whole queue every day: it merges every unpublished
+# entry of the manifest into a throwaway copy of main, in date order, and then
 # builds the site. Any breakage shows up days before its publication date.
 #
 # It catches what `.gitattributes merge=union` cannot:
@@ -16,10 +16,14 @@ name: Publish canary — dry-run every pending article merge
 #   - failures that are not git's at all: a duplicate slug, an internal link to
 #     an article that is not in main yet, a schema violation in frontmatter.
 #
+# The manifest is the source of truth for what is BLOCKING, exactly as it is for
+# scheduled-publish.yml. A blog/* branch that no manifest entry points at cannot
+# be published by anything, so it is reported as an orphan, never as a failure.
+#
 # It NEVER pushes anything. Worst case it opens/updates one issue.
 on:
   schedule:
-    - cron: '0 6 * * *'   # 06:00 UTC — comfortably before the 08:19 publish slot
+    - cron: '0 6 * * *'   # 06:00 UTC — comfortably before the publish slot
   workflow_dispatch: {}
 
 permissions:
@@ -44,74 +48,76 @@ jobs:
           git config user.name "canary"
           git config user.email "canary@localhost"
 
-      - name: Merge every pending branch in publication order
+      - name: Merge every pending manifest entry in publication order
         id: rehearse
         run: |
           set -uo pipefail   # NOT -e: a failing merge is data, not a crash
+          MANIFEST=.github/publish-schedule.json
           REPORT=/tmp/canary-report.md
-          : > "$REPORT"
+          STATUS=/tmp/canary-status.txt
+          : > "$REPORT"; : > "$STATUS"
           FAILED=0
 
-          # Publication order = the article's own pubDate, which is the date the
-          # scheduled workflow is set to merge it. Fall back to commit date for a
-          # branch that carries no new EN article (infra-only branch).
-          ORDERED=$(
-            for b in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/blog/); do
-              if git merge-base --is-ancestor "$b" main; then continue; fi   # already published
-              base=$(git merge-base main "$b")
-              f=$(git diff --name-only --diff-filter=A "$base" "$b" -- 'src/content/blog/en/*.md' | head -1)
-              d=""
-              if [ -n "$f" ]; then
-                d=$(git show "$b:$f" 2>/dev/null | grep -m1 '^pubDate:' | awk '{print $2}' | tr -d '"')
-              fi
-              [ -z "$d" ] && d=$(git log -1 --format=%cs "$b")
-              echo "$d $b"
-            done | sort
-          )
-
-          if [ -z "$ORDERED" ]; then
-            echo "No pending blog branches — nothing to rehearse."
-            echo "failed=0" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          echo "Pending branches, in publication order:"
-          echo "$ORDERED" | sed 's/^/  /'
-          echo
-
-          # A dirty tree makes every merge fail before it starts, which would report
-          # eight false conflicts. Refuse to rehearse rather than lie.
+          # A dirty tree makes every merge fail before it starts, which would
+          # report a conflict for every branch. Refuse to rehearse rather than lie.
           if [ -n "$(git status --porcelain)" ]; then
             echo "::error::Working tree is not clean; the rehearsal would report false conflicts."
             git status --short
             exit 1
           fi
 
+          PENDING=$(jq -r '.articles[] | "\(.date)\t\(.branch)\t\(.article)"' "$MANIFEST" | sort)
+
           git checkout -q -b canary/rehearsal main
-          while read -r date branch; do
-            [ -z "$branch" ] && continue
-            if git merge --no-ff -m "canary: $branch" "$branch" >/tmp/merge.log 2>&1; then
-              echo "OK    $date  ${branch#origin/}" | tee -a /tmp/canary-status.txt
-            else
-              slug="${branch#origin/blog/}"
-              # A branch with no scheduled-publish workflow has no automatic merge
-              # to break: it is a stale/abandoned branch, worth reporting but not
-              # worth failing over. Only a branch that a cron will actually try to
-              # merge is a real blocker.
-              if [ -f ".github/workflows/scheduled-publish-$slug.yml" ]; then
-                FAILED=1
-                severity="**BLOCKER** — a cron will try this merge and fail"
-                tag="FAIL "
+          while IFS=$'\t' read -r date branch article; do
+            [ -z "${branch:-}" ] && continue
+
+            # "Already published" is the EN article being present — the same
+            # definition select-due-article.mjs uses, so there is no second
+            # marker that can drift. Checked against the ACCUMULATED tree, not
+            # main: by this date the earlier entries will have merged, and one of
+            # them may already carry this article. Checking main would rehearse a
+            # merge that scheduled-publish.yml will never attempt.
+            if git cat-file -e "HEAD:$article" 2>/dev/null; then
+              if git cat-file -e "main:$article" 2>/dev/null; then
+                echo "DONE  $date  $branch" | tee -a "$STATUS"
               else
-                severity="_Warning only_ — no \`scheduled-publish-$slug.yml\`, so nothing will try to merge it. Probably a stale branch that can be deleted."
-                tag="STALE"
+                echo "SUPER $date  $branch" | tee -a "$STATUS"
+                {
+                  echo "### \`$branch\` — scheduled $date, superseded"
+                  echo
+                  echo "_Not a failure_: \`$article\` is already brought in by an earlier"
+                  echo "entry in the queue, so this one will be skipped as published."
+                  echo "The manifest entry is leftover and can be removed."
+                  echo
+                } >> "$REPORT"
               fi
-              files=$(git diff --name-only --diff-filter=U | sed 's/^/  - `/;s/$/`/')
-              echo "$tag  $date  ${branch#origin/}" | tee -a /tmp/canary-status.txt
+              continue
+            fi
+
+            if ! git rev-parse --verify -q "origin/$branch" >/dev/null; then
+              FAILED=1
+              echo "GONE  $date  $branch" | tee -a "$STATUS"
               {
-                echo "### \`${branch#origin/}\` — scheduled $date"
+                echo "### \`$branch\` — scheduled $date"
                 echo
-                echo "$severity"
+                echo "**BLOCKER** — the manifest points at a branch that does not exist on origin,"
+                echo "and \`$article\` is not in main either. The publish will fail on $date."
+                echo
+              } >> "$REPORT"
+              continue
+            fi
+
+            if git merge --no-ff -m "canary: $branch" "origin/$branch" >/tmp/merge.log 2>&1; then
+              echo "OK    $date  $branch" | tee -a "$STATUS"
+            else
+              FAILED=1
+              files=$(git diff --name-only --diff-filter=U | sed 's/^/  - `/;s/$/`/')
+              echo "FAIL  $date  $branch" | tee -a "$STATUS"
+              {
+                echo "### \`$branch\` — scheduled $date"
+                echo
+                echo "**BLOCKER** — scheduled-publish.yml will attempt this merge and fail."
                 echo
                 if [ -n "$files" ]; then
                   echo "Conflicts in:"
@@ -130,10 +136,29 @@ jobs:
               } >> "$REPORT"
               echo "$files"
               # Only abort a merge that actually began, and leave the tree clean
-              # either way so the next branch in the queue is rehearsed honestly.
+              # either way so the next entry is rehearsed honestly.
               git merge --abort 2>/dev/null || git reset --hard -q HEAD
             fi
-          done <<< "$ORDERED"
+          done <<< "$PENDING"
+
+          # Branches nothing points at. Not a failure — nothing will try to merge
+          # them — but they are usually leftovers worth deleting, and one of them
+          # holding a duplicate article is how two branches end up fighting.
+          for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/blog/); do
+            b="${ref#origin/}"
+            if jq -e --arg b "$b" '.articles[] | select(.branch == $b)' "$MANIFEST" >/dev/null 2>&1; then
+              continue
+            fi
+            git merge-base --is-ancestor "$ref" main && continue   # already merged
+            echo "ORPHAN       $b" | tee -a "$STATUS"
+            {
+              echo "### \`$b\` — orphan branch"
+              echo
+              echo "_Not a failure_: no entry in \`$MANIFEST\` points at it, so nothing will"
+              echo "publish it. Delete it, or add it to the manifest if it is still wanted."
+              echo
+            } >> "$REPORT"
+          done
 
           echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
           {
@@ -142,18 +167,19 @@ jobs:
             echo 'CANARY_EOF'
           } >> "$GITHUB_OUTPUT"
 
-          # Always leave the outcome on the run summary, including STALE branches,
-          # which are worth seeing but not worth an issue every morning.
+          # Always leave the outcome on the run summary, including orphans and
+          # superseded entries, which are worth seeing but not worth an issue
+          # every morning.
           {
             echo "## Publish canary"
             echo
             echo '```'
-            cat /tmp/canary-status.txt 2>/dev/null || true
+            cat "$STATUS"
             echo '```'
             [ -s "$REPORT" ] && { echo; cat "$REPORT"; }
           } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
 
-      # Only meaningful when every branch merged: this is the site as it will
+      # Only meaningful when every entry merged: this is the site as it will
       # exist once the whole queue has published.
       - name: Set up Node
         if: steps.rehearse.outputs.failed == '0'
@@ -164,7 +190,6 @@ jobs:
 
       - name: Build the fully-merged site
         if: steps.rehearse.outputs.failed == '0'
-        id: build
         run: |
           npm ci --no-audit --no-fund
           npm run build
@@ -181,7 +206,7 @@ jobs:
 
           $REPORT
 
-          If the report above is empty the merges were fine and the **build** of the fully-merged site is what failed (duplicate slug, internal link to an unpublished article, frontmatter schema, …).
+          If the report above shows no blocker, the merges were fine and the **build** of the fully-merged site is what failed (duplicate slug, internal link to an unpublished article, frontmatter schema, …).
 
           Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
