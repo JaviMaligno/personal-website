@@ -63,6 +63,57 @@ card. Retitle the card to exactly "Release ownership".
 
 ---
 
+## practices-for-agents-substrate
+
+- **Artículo:** `src/content/blog/{en,es}/practices-for-agents-substrate.md`
+- **Imagen:** `public/blog/practices-for-agents-substrate.png`
+- **Estado (2026-08-21): GENERADA.** La hizo Javier en ChatGPT con el prompt de abajo, a
+  1774x887; se redimensionó a 1020x510 (`sips --resampleWidth 1020`) para igualar al resto de heros
+  del blog, y a ese tamaño los cuatro títulos y el contraste árbol/lista-plana siguen legibles.
+- **Verificado en la imagen final:** ninguna cifra ni porcentaje, los cuatro paneles distinguibles,
+  el de abajo-derecha el más degradado, README tachado y nombres de fichero genéricos.
+- **Nota:** el prompt es deliberadamente **independiente de los datos** — representa el diseño 2×2,
+  no los resultados, así que no hay que regenerarla si los números cambian al entrar pint. Y **no
+  pide ninguna cifra**: los modelos de imagen las inventan (documentado en
+  `the-scaffolding-you-pay-for` y en `the-grader-knew-less`).
+
+```
+Create a 1020x510 blog hero image for a technical article about measuring which software practices
+actually help an AI coding agent.
+
+Style: refined technical editorial illustration, dark but not monochrome, dense and concrete rather
+than abstract.
+
+Scene: a 2x2 grid of four panels showing THE SAME small Python repository in four states, like an
+experiment plate.
+- Top-left: pristine — a clean file tree with readable folder names, and a code panel with tidy
+  indentation and type annotations.
+- Top-right: same file tree, but the code panel is now mangled — no indentation structure, opaque
+  one-letter identifiers, comments stripped out.
+- Bottom-left: the code panel is tidy again, but the file tree has collapsed into a flat list of
+  identically-named files like m1.py, m2.py, m3.py, with a crossed-out README icon.
+- Bottom-right: both at once — flat m1.py/m2.py file list AND mangled code.
+Below the grid, a single narrow terminal strip showing a passing pytest summary line, connected to
+all four panels by thin arrows, conveying that the program behaves identically in all four.
+
+Visual motifs: readable but generic text is GOOD (file names like m1.py and utils.py, a pytest
+summary line, opaque identifiers like f7 and K25); clean geometric composition; the four panels
+clearly distinguishable at a glance; the bottom-right panel visibly the most degraded.
+
+Absolutely no percentages, no numbers, no charts, no scores — the image must not display any
+measurement figures.
+
+No logos, no brand names, no people, no text-heavy poster. Crisp bitmap illustration, high contrast,
+professional AI/developer blog aesthetic, balanced teal, amber, graphite and off-white accents on
+dark, no purple gradient blobs, no bokeh.
+```
+
+**Comprobar en la imagen final:** que los cuatro paneles se distingan (el de abajo-derecha debe ser
+el más degradado), que no aparezca ninguna cifra ni porcentaje, y que los nombres de fichero salgan
+legibles y genéricos.
+
+---
+
 ## three-judges-three-rankings
 
 - **Article:** `src/content/blog/en/three-judges-three-rankings.md`
