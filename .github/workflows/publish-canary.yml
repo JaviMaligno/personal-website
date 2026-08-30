@@ -91,13 +91,27 @@ jobs:
           while read -r date branch; do
             [ -z "$branch" ] && continue
             if git merge --no-ff -m "canary: $branch" "$branch" >/tmp/merge.log 2>&1; then
-              echo "OK    $date  ${branch#origin/}"
+              echo "OK    $date  ${branch#origin/}" | tee -a /tmp/canary-status.txt
             else
-              FAILED=1
+              slug="${branch#origin/blog/}"
+              # A branch with no scheduled-publish workflow has no automatic merge
+              # to break: it is a stale/abandoned branch, worth reporting but not
+              # worth failing over. Only a branch that a cron will actually try to
+              # merge is a real blocker.
+              if [ -f ".github/workflows/scheduled-publish-$slug.yml" ]; then
+                FAILED=1
+                severity="**BLOCKER** — a cron will try this merge and fail"
+                tag="FAIL "
+              else
+                severity="_Warning only_ — no \`scheduled-publish-$slug.yml\`, so nothing will try to merge it. Probably a stale branch that can be deleted."
+                tag="STALE"
+              fi
               files=$(git diff --name-only --diff-filter=U | sed 's/^/  - `/;s/$/`/')
-              echo "FAIL  $date  ${branch#origin/}"
+              echo "$tag  $date  ${branch#origin/}" | tee -a /tmp/canary-status.txt
               {
                 echo "### \`${branch#origin/}\` — scheduled $date"
+                echo
+                echo "$severity"
                 echo
                 if [ -n "$files" ]; then
                   echo "Conflicts in:"
@@ -127,6 +141,17 @@ jobs:
             cat "$REPORT"
             echo 'CANARY_EOF'
           } >> "$GITHUB_OUTPUT"
+
+          # Always leave the outcome on the run summary, including STALE branches,
+          # which are worth seeing but not worth an issue every morning.
+          {
+            echo "## Publish canary"
+            echo
+            echo '```'
+            cat /tmp/canary-status.txt 2>/dev/null || true
+            echo '```'
+            [ -s "$REPORT" ] && { echo; cat "$REPORT"; }
+          } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
 
       # Only meaningful when every branch merged: this is the site as it will
       # exist once the whole queue has published.
