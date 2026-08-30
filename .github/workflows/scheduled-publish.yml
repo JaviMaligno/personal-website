@@ -1,0 +1,172 @@
+name: Scheduled publish — blog articles
+
+# Un unico cron diario que publica lo que este VENCIDO segun
+# .github/publish-schedule.json. Sustituye a los workflows
+# scheduled-publish-<slug>.yml de un solo uso.
+#
+# POR QUE (2026-08-30): infer-the-rule-in-one-dimension no se publico. Su
+# workflow tenia 0 runs: la cola de GitHub no sirvio NINGUNA de sus cuatro
+# salidas. docs/blog-publishing.md afirmaba, medido sobre 20 dias, que estos
+# crons llegan tarde pero no se pierden; ese dia se perdieron los cuatro.
+#
+# La diferencia que importa no es tener menos crons, es que este publica lo
+# vencido (date <= hoy) en vez de lo que cae hoy exactamente. Un cron con fecha
+# fija que se salta su dia no tiene segunda oportunidad: se pierde y hay que
+# darse cuenta a mano. Este recoge el atraso al dia siguiente, y al siguiente,
+# hasta que el articulo esta en main.
+#
+# El push DEBE hacerse con un PAT de usuario (secrets.PUBLISH_PAT): un push con
+# el GITHUB_TOKEN por defecto NO re-dispara deploy.yml / devto-post.yml /
+# linkedin-post.yml, asi que el articulo se mergearia sin distribuirse.
+#
+# Los valores calculados viajan por env, nunca interpolados con ${{ }} dentro de
+# un `run`: un slug de workflow_dispatch es entrada libre, y ahi seria inyeccion.
+on:
+  schedule:
+    # MEDIDO (ver docs/blog-publishing.md): la cola de GitHub sirve estos crons
+    # con retraso, y el retraso encoge segun avanza el dia. Son horas de SALIDA,
+    # no de llegada. Cuatro salidas repartidas, no apretadas: si la cola se cae
+    # un rato, cuatro intentos en 45 minutos caen todos en el mismo agujero.
+    - cron: '19 8 * * *'    # 08:19 UTC
+    - cron: '7 11 * * *'    # 11:07 UTC
+    - cron: '53 13 * * *'   # 13:53 UTC
+    - cron: '41 16 * * *'   # 16:41 UTC
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Slug a publicar ahora, saltandose la fecha (vacio = lo que toque)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  issues: write
+
+# Nunca dos a la vez: dos merges simultaneos publicarian dos articulos.
+concurrency: scheduled-publish-blog
+
+jobs:
+  publish-due:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (con PAT para que el push re-dispare la distribucion)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.PUBLISH_PAT }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Elegir el articulo vencido
+        id: select
+        env:
+          FORCED_SLUG: ${{ inputs.slug }}
+        run: |
+          set -euo pipefail
+          TODAY=$(date -u +%Y-%m-%d)
+          # Un articulo al dia. Los merges de publicacion llevan siempre este
+          # asunto, asi que basta con mirar si main ya tiene uno fechado hoy.
+          if git log --since="${TODAY}T00:00:00Z" --grep='^Publish: ' --format=%H | grep -q .; then
+            PUBLISHED_TODAY=true
+          else
+            PUBLISHED_TODAY=false
+          fi
+          echo "Hoy es $TODAY; ya publicado hoy: $PUBLISHED_TODAY"
+          node scripts/publish/select-due-article.mjs \
+            --today "$TODAY" \
+            --published-today "$PUBLISHED_TODAY" \
+            --slug "${FORCED_SLUG:-}"
+
+      - name: Comprobar que la rama existe
+        if: steps.select.outputs.action == 'publish'
+        env:
+          BRANCH: ${{ steps.select.outputs.branch }}
+          ARTICLE: ${{ steps.select.outputs.article }}
+        run: |
+          set -euo pipefail
+          if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "::error::La rama '$BRANCH' no existe en origin, pero $ARTICLE"
+            echo "::error::tampoco esta en main. El nombre de rama en"
+            echo "::error::.github/publish-schedule.json esta mal."
+            echo 'Ramas blog/ que si existen:'
+            git ls-remote --heads origin 'refs/heads/blog/*' | sed 's#.*refs/heads/#  - #' || true
+            exit 1
+          fi
+          git fetch origin "$BRANCH"
+
+      # Guarda por articulo: un marcador sin resolver (p. ej. un arXiv sin ID)
+      # tiene que impedir la publicacion en voz alta, no colarse en el sitio.
+      - name: Guarda de marcadores sin resolver
+        if: steps.select.outputs.action == 'publish' && steps.select.outputs.block_if_matches != ''
+        env:
+          BRANCH: ${{ steps.select.outputs.branch }}
+          ARTICLE: ${{ steps.select.outputs.article }}
+          PATTERN: ${{ steps.select.outputs.block_if_matches }}
+          REASON: ${{ steps.select.outputs.block_reason }}
+        run: |
+          set -euo pipefail
+          if git show "origin/$BRANCH:$ARTICLE" | grep -Eq "$PATTERN"; then
+            echo "::error::$ARTICLE en $BRANCH sigue conteniendo /$PATTERN/."
+            echo "::error::$REASON"
+            exit 1
+          fi
+          echo "Marcador resuelto — se puede publicar."
+
+      - name: Mergear y publicar
+        id: merge
+        if: steps.select.outputs.action == 'publish'
+        env:
+          BRANCH: ${{ steps.select.outputs.branch }}
+          SLUG: ${{ steps.select.outputs.slug }}
+          DATE: ${{ steps.select.outputs.date }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Idempotente: si ya esta dentro, no hay nada que hacer.
+          if git merge-base --is-ancestor "origin/$BRANCH" HEAD; then
+            echo "La rama ya esta en main — nada que hacer."
+            exit 0
+          fi
+          # El conflicto recurrente en docs/marketing/image-prompts.md lo resuelve
+          # solo el driver "union" declarado en .gitattributes.
+          git merge --no-ff "origin/$BRANCH" -m "Publish: $SLUG article (scheduled $DATE)"
+          git push origin main
+          echo "published=true" >> "$GITHUB_OUTPUT"
+
+      # Solo si la rama no lleva nada que main no tenga. El 2026-08-30 aparecio
+      # una rama de articulo ya publicado con 6.759 lineas de documentacion de
+      # investigacion encima: borrarla a ciegas habria tirado ese trabajo.
+      - name: Borrar la rama publicada, si no lleva nada mas
+        if: steps.merge.outputs.published == 'true'
+        env:
+          BRANCH: ${{ steps.select.outputs.branch }}
+        run: |
+          set -euo pipefail
+          EXTRA=$(git log --oneline "HEAD..origin/$BRANCH" | wc -l)
+          if [ "$EXTRA" -ne 0 ]; then
+            echo "::warning::$BRANCH conserva $EXTRA commit(s) que no estan en main."
+            echo "::warning::No se borra. Revisa que hay ahi antes de tirarla:"
+            git log --oneline "HEAD..origin/$BRANCH" | head -20
+            exit 0
+          fi
+          git push origin --delete "$BRANCH" \
+            || echo "::warning::No se pudo borrar $BRANCH — quitala a mano (no es fatal)"
+
+      - name: Avisar del fallo
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLUG: ${{ steps.select.outputs.slug }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue create \
+            --title "❌ Publicacion programada FALLIDA: ${SLUG:-sin determinar}" \
+            --body "El publish diario no completo. Run: $RUN_URL
+
+          El manifiesto es .github/publish-schedule.json. Para reintentar en cuanto este arreglado, lanza este workflow con workflow_dispatch (opcionalmente con el slug). Es idempotente y publica lo vencido, asi que tambien se recupera solo en la siguiente salida del cron." \
+            || echo "issue creation failed (non-fatal)"
