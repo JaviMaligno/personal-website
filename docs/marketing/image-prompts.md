@@ -733,3 +733,69 @@ gradient blobs, no bokeh.
 
 **Comprobar en la imagen final:** que las cifras salgan como `54%` (tachado) y
 `75%`, no inventadas — es el mismo fallo documentado en `the-scaffolding-you-pay-for`.
+
+---
+
+## You Already Have an Ontology / Ya tienes una ontología
+
+- Artículo: `src/content/blog/en/you-already-have-an-ontology.md` · `src/content/blog/es/you-already-have-an-ontology.md`
+- Imagen: `public/blog/you-already-have-an-ontology.png`
+- Generada: 2026-08-30 (Codex CLI, `codex exec -s workspace-write`, herramienta `image_gen`)
+
+Prompt final redactado y ejecutado por Codex:
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 landscape blog hero image for the technical article "You Already Have an Ontology"
+
+Primary request: Create a refined technical editorial bitmap illustration showing the same domain concept defined three different times in one codebase and drifting apart, with a small consolidated definition as the resolution.
+
+Scene/backdrop: A dark graphite developer desk viewed from a slightly elevated oblique angle, with subtle off-white grid paper, a small magnifier, and a compact audit checklist. No people.
+
+Subject: Three distinct floating code panels/cards dominate the composition, staggered in depth with slightly misaligned overlapping layers:
+1. panel header "backend" with short enum-like values: captcha, file_upload, login_required, multi_step_form
+2. panel header "frontend" with short enum-like values: captcha, login_required, form_too_complex, unsupported_ats
+3. panel header "component" with short enum-like values: captcha, login_required, file_upload, custom_question
+Use clean monospace typography and render these short labels legibly. Draw thin teal connector lines between shared values such as captcha and login_required. Show amber broken or dangling connector lines for values found in only one or two panels. Add subtle offset registration marks and misaligned translucent layer edges to suggest semantic drift. Include one small neat panel labeled "shared schema" containing captcha and login_required, visually stable and consolidated, as the quiet resolution.
+
+Style/medium: Crisp bitmap illustration, refined technical editorial art, clean geometric composition, professional AI/developer blog aesthetic, precise edges, restrained isometric depth, not photorealistic and not a literal UI screenshot.
+
+Composition/framing: Exact 2:1 landscape composition intended for 1020x510 output. Three main panels form a balanced triangular cluster over the desk; connector lines remain easy to follow at thumbnail size. The small consolidated panel sits apart but visibly resolves the lines. Leave comfortable margins and avoid title-poster treatment.
+
+Lighting/mood: High contrast, focused desk-lamp atmosphere, analytical and slightly tense but polished.
+
+Color palette: Dark graphite background; balanced teal connectors and highlights; amber mismatch warnings; off-white text and paper accents. Dark but not monochrome.
+
+Text: Only the panel headers and short enum-like values specified above, plus tiny checklist marks. No article title inside the image and no additional prose.
+
+Constraints: One concrete coherent scene; readable generic code lines; clearly communicate duplicated definitions, partial agreement, and drift; thin connector arrows; magnifier or audit checklist; professional editorial finish.
+
+Avoid: logos, brand names, people, faces, hands, text-heavy poster layout, purple gradients, purple blob shapes, bokeh, neon cyberpunk glow, illegible pseudo-code, watermarks, excessive clutter, generic network graph imagery.
+```
+
+La imagen *es* el hallazgo del artículo: los tres paneles enumeran los valores
+reales de la auditoría, las líneas teal unen los dos únicos valores compartidos y
+las amarillas discontinuas quedan colgando en los que solo existen en una capa.
+
+**Comprobado en la imagen final:** las once cadenas (`backend`, `frontend`,
+`component`, `shared schema`, `captcha`, `file_upload`, `login_required`,
+`multi_step_form`, `form_too_complex`, `unsupported_ats`, `custom_question`)
+salen correctas y legibles, sin texto inventado.
+
+### Imagen de LinkedIn del mismo artículo (render, no generación)
+
+`public/blog/you-already-have-an-ontology-diagram.png` (1200x627) **no la generó un modelo**:
+es el primer SVG del artículo (el redibujo del diagrama original) renderizado a PNG. Receta,
+reutilizable para cualquier figura SVG inline que quiera llevarse al feed:
+
+```bash
+# 1) extraer el <svg> del .md y envolverlo en una tarjeta 1200x627 (fondo #12121a,
+#    marco #1a1a24, kicker con el título original + "redrawn")
+# 2) rasterizar con Chrome headless — sin dependencias extra:
+"/c/Program Files/Google/Chrome/Application/chrome.exe" --headless --disable-gpu \
+  --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,627 \
+  --screenshot=out.png "file:///ruta/card.html"
+```
+
+El HTML intermedio vive en el scratchpad, no en el repo: la fuente de verdad es el SVG del
+artículo, y la tarjeta se vuelve a generar si la figura cambia.
