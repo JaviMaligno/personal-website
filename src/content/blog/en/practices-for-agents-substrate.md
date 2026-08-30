@@ -1,6 +1,6 @@
 ---
-title: "Bad Code Doesn't Stop an Agent. It Runs It Out of Budget."
-description: "I degraded four repositories in nine semantically-equivalent ways and measured 750 agent runs. The degradations don't make the agent unable to fix the bug — they make it slower, and with a finite turn budget that becomes the same thing."
+title: "Bad Code Doesn't Hurt an Agent. Until the Repository Is Large."
+description: "I degraded four repositories in nine semantically-equivalent ways and measured 2,929 agent runs. In small code nothing measurable happens. In large interconnected code, degrading how it's written halves what the agent solves."
 pubDate: 2026-09-08
 tags: ["AI", "Agents", "Evaluation"]
 lang: en
@@ -14,221 +14,211 @@ formatting, modules with one responsibility, documentation that tells you where 
 a growing share of the reads of any repository are done by an agent, and I couldn't find a
 measurement of which of those practices help *it* and which only ever helped *us*.
 
-My hypothesis, written down before running anything:
+My hypothesis, written down before running anything, came from how a language model works:
 
-> For a coding agent, **knowing where to look** — organisation, file layout, documentation —
-> matters more than **how well-written the file is** once it's open.
+> An LLM is an excellent text processor. What it doesn't have is the repository in its head. So it
+> should care **more about knowing where to look** — organisation, file layout, documentation —
+> **than about how well-written the file is** once it's open.
 
-That turned out to be wrong, and the way it's wrong is more useful than if it had been right.
+The reasoning seemed sound and the result inverts it: the only thing that does measurable damage is
+**how the text already in front of it is written**. Knowing where to look it solves on its own, with
+the search tools every agent carries.
 
 ## The method: break the code without changing the program
 
 Take a working repository and degrade it in ways that are **semantically equivalent** — the program
 does exactly the same thing before and after, verified by the repo's own suite giving an identical
-result. Any difference in the agent's success rate is then attributable to readability or
-navigability, never to the task getting harder.
+result. Any difference in success rate is then attributable to readability or navigability, never to
+the task getting harder.
 
-Nine degradations in two families. **Family A, how it's written**: strip type annotations (A1),
-rename identifiers to opaque ones (A2), destroy formatting (A3), remove comments and docstrings
-(A4). **Family B, where to look**: break cohesion without changing size (B1), flatten the hierarchy
-to `m1.py`, `m2.py` (B2), delete README and module docstrings (B3), hide the test suite (B4),
-concatenate modules to vary file size (B5).
+Nine degradations in two families. **How it's written**: strip type annotations, rename identifiers
+to opaque ones, destroy formatting, remove comments and docstrings. **Where to look**: break cohesion
+without changing size, flatten the hierarchy to `m1.py`, `m2.py`, delete README and module
+docstrings, hide the test suite, concatenate modules to vary file size.
 
 The tasks are **manufactured**, not found: a bug is injected programmatically and only counts if it
 makes a specific set of tests fail and no others. These bugs don't exist on the internet, so there's
 no contamination, and resolution is objective — no LLM judge anywhere.
 
-**750 measured runs across four repositories**: a 2×2 (untouched, family A, family B, both) on two
-of them and two model tiers with three passes, plus each of the eight practices removed and restored
-one at a time, plus a file-size curve, plus a TypeScript probe. All of it
+And one condition the first version of this experiment lacked: **a task only enters if the untouched
+tree solves it with margin**. If the clean code already exhausts the turn budget, there is no room
+for a degradation to show, and the cell reads zero either way.
+
+**2,929 measured runs across four repositories**, at ten or fifteen passes per cell. All of it
 [in the repo](https://github.com/JaviMaligno/agent-code-practices).
 
-## The headline table
+## Where nothing happens
 
-python-stdnum, three passes per cell.
+python-stdnum: tax-number validators, small self-contained files.
 
-| Condition | Low tier | Median turns | High tier | Median turns |
+| Condition | Solves | 95% CI | Turns | Ceiling before→after | Distinct from baseline? |
+|---|---|---|---|---|---|
+| untouched (baseline) | 91/167 — 54% | [47%, 62%] | 30 | 62 | — |
+| how it's writtenᵃ | 45/155 — 29% | [22%, 37%] | 40 | 62→96 | **p=0.000** |
+| where to look | 76/161 — 47% | [40%, 55%] | 38 | 62→75 | n.s. (≥16% would be visible) |
+| bothᵃ | 37/157 — 24% | [18%, 31%] | 40 | 62→103 | **p=0.000** |
+
+Conditions sharing a mark (ᵃ) **cannot be told apart from each other**, only from the baseline.
+
+Nothing separates from the baseline. Not even degrading everything at once. And the last column
+carries what matters for reading this table: sixty cells per condition would have shown a
+twenty-point drop, so the claim is not "it makes no difference" but "if there is an effect, it is
+smaller than that".
+
+With the capable model the same thing happens for a different reason:
+
+| Condition | Solves | 95% CI | Turns | Ceiling before→after | Distinct from baseline? |
+|---|---|---|---|---|---|
+| untouched (baseline) | 59/60 — 98% | [91%, 100%] | 6 | 1 | — |
+| how it's writtenᵃ | 58/60 — 97% | [89%, 99%] | 6 | 1→2 | n.s. (≥7% would be visible) |
+| where to lookᵃ | 58/60 — 97% | [89%, 99%] | 6 | 1→1 | n.s. (≥7% would be visible) |
+| bothᵃ | 56/60 — 93% | [84%, 97%] | 6 | 1→2 | n.s. (≥7% would be visible) |
+
+Conditions sharing a mark (ᵃ) **cannot be told apart from each other**, only from the baseline.
+
+Here the baseline solves 98%. There is no room to fall from.
+
+## Where it does
+
+pint: physical units, large interconnected code where fixing anything means understanding several
+pieces at once.
+
+| Condition | Solves | 95% CI | Turns | Ceiling before→after | Distinct from baseline? |
+|---|---|---|---|---|---|
+| untouched (baseline) | 19/35 — 54% | [38%, 70%] | 30 | 12 | — |
+| how it's writtenᵃ | 7/26 — 27% | [14%, 46%] | 40 | 12→14 | **p=0.040** |
+| where to lookᵃ | 11/30 — 37% | [22%, 54%] | 38 | 12→15 | n.s. (≥36% would be visible) |
+| both | 0/25 — 0% | [0%, 13%] | 40 | 12→18 | **p=0.000** |
+
+Conditions sharing a mark (ᵃ) **cannot be told apart from each other**, only from the baseline.
+
+**From 54% to 24%.** Degrading both families at once takes away more than half of what the agent was
+solving, and degrading only *how it's written* costs almost as much, with the median turn count
+pinned at the ceiling. At nearly two hundred cells per condition both drops sit far below chance
+(p<0.001) and **they are also distinct from each other**: hiding *where to look* adds damage on top
+of dirtying the text, but on its own it does nothing this data separates from noise.
+
+That is the answer to the hypothesis, and it is the opposite of what I wrote down. Hiding *where to
+look* produces no effect this data can separate from noise. Dirtying the text does.
+
+The explanation I find most plausible turns on exactly the thing the hypothesis got right — that the
+agent is a text processor: **finding the file is a problem it has already solved** — it searches,
+lists, opens — and flattening the hierarchy or deleting the README removes help it wasn't using.
+Reading unreadable code it cannot delegate to any tool: it pays for that in full, line by line, and
+in a repository where there is a lot to read that accumulates until the budget is gone.
+
+## It is paid in turns before it is paid in failures
+
+The three runs lined up, comparing the untouched tree with its worst condition:
+
+| Run | Baseline | Worst condition | Turns | Runs at the ceiling |
 |---|---|---|---|---|
-| **T0** untouched | 14/18 — **78%** | 11 | 18/18 — **100%** | 6 |
-| **T1** family A | 15/17 — 88% | 10 | 18/18 — 100% | 6 |
-| **T2** family B | 12/15 — 80% | 12 | 14/14 — 100% | 18 |
-| **T3** both | 8/15 — **53%** | 19 | 13/15 — **87%** | 15 |
+| python-stdnum, high tier | 98% | 93% | 6 → 6 | 1/60 → 2/60 |
+| python-stdnum, low tier | 83% | 81% | 10 → 11 | 2/59 → 5/59 |
+| pint | 54% | 24% | 30 → 40 | 62/167 → 103/157 |
 
-Every condition is six tasks × three passes = 18 runs. The denominator drops to 15 in T2 and T3
-because three runs there **measured nothing**: the injected fault broke no test at all, so the cell
-says nothing about the agent and is excluded rather than scored as a failure. Why that happens, and
-why excluding it isn't charity, is [further down](#three-times-a-broken-transformation-looked-like-a-failing-agent).
+The capable model doesn't absorb the damage by being smarter: **it starts with margin**. It solves
+in 6 turns out of 40, and even if degradation tripled that it would still have budget to spare. pint
+starts at 30 out of 40, and any added cost pushes it through the ceiling.
 
-Read the turn columns, not just the percentages. That's where the finding is.
+That reframes the practical question. Not *"can the agent work in this codebase?"* but *"how much
+margin does it have left?"*. A small repository with a good model tolerates almost anything. A large
+one with a stretched model tolerates nothing.
 
-## What the degradations actually do
+## Which practice pays: the answer is in giving them back, not in removing them
 
-Neither family hurts alone: T1 (88%) and T2 (80%) sit at the baseline's 78%. Both together drop it to 53%. That's an
-interaction, and it's what I'd have reported if I'd stopped there.
+Removing each practice on its own from clean code, and giving each one back on its own to fully
+degraded code. Sixty cells per condition:
 
-But the same experiment on **pint** — real, large, interconnected code instead of small
-self-contained validators — says something the percentages alone hide:
-
-| | Untouched | Family A |
+| Practice | Removed from clean code | Given back to destroyed code |
 |---|---|---|
-| Resolved | 8/12 | **2/12** |
-| Median turns | 30 | **40 (the ceiling)** |
-| Runs that hit the ceiling | 3/12 | **10/12** |
+| *(baseline: 49/59 — 83%)* | | |
+| type annotations | 81% n.s. | 80% n.s. |
+| readable names | 81% n.s. | 97% **(p=0.016)** |
+| formatting | 85% n.s. | 80% n.s. |
+| comments and docstrings | 87% n.s. | 85% n.s. |
+| cohesion | 86% n.s. | 78% n.s. |
+| hierarchy | 84% n.s. | 82% n.s. |
+| README and module docs | 85% n.s. | 86% n.s. |
+| visible tests | 71% n.s. | 86% n.s. |
 
-The agent doesn't become incapable with degraded code. **It runs out of turns.** In pint under
-family A, ten of twelve runs exhaust the 40-turn budget, and three are recorded as "fixed it
-halfway" — a failure mode that doesn't occur at all in the untouched tree.
+Removing any practice **on its own** does nothing: all eight land inside the baseline's interval.
+But giving **readable names** back to otherwise destroyed code recovers 97%, and that does separate
+— from the baseline and from giving back almost anything else (p=0.002 against cohesion, 0.004
+against formatting, 0.007 against types; three survive a Bonferroni correction).
 
-Line the three regimes up and the mechanism is the same in all of them:
+The asymmetry is the finding: **names are not necessary while the rest of the context is intact, but
+they are sufficient when nothing else is left**. With the code formatted, commented and organised, it
+hardly matters that the functions are called `f1` and `f2`; there is plenty to infer from. Once
+everything else has been erased, identifiers are the only place the author's intent survives.
 
-Each row compares the untouched tree with the worst condition of that run: median turns before and
-after, how many runs hit the 40-turn ceiling, and what the resolution did.
+It is also a correction of my own. An earlier version of this section, at one pass per cell, said
+removing names cost 28 points, and I had a tidy mechanism ready to explain it. At three passes that
+vanished, and at ten it turns out the real effect is on the other side of the experiment.
 
-| Run | Median turns | Runs at the ceiling | Resolution |
-|---|---|---|---|
-| python-stdnum, high tier | 6 → 18 | 0 of 15 | 100% → 87% |
-| python-stdnum, low tier | 11 → 19 | 0 of 15 | 78% → 53% |
-| pint, low tier | 30 → **40** | **10 of 12** | 67% → 18% |
+## File size: no visible effect
 
-**The capable model doesn't absorb the damage by being smart — it absorbs it by starting with
-margin.** It pays the same toll, tripling its turns from 6 to 18, and can afford it. pint starts at
-30 out of 40 and the same toll puts it through the ceiling.
-
-So the degradations don't destroy the agent's ability. They make the work more expensive, and with a
-finite budget expensive becomes impossible. That reframes the practical question: not *"can the
-agent work in this codebase"* but *"how much margin does it have left"*.
-
-## Which practice pays: none of them, individually
-
-Removing each of the eight practices on its own, three passes, 18 runs per condition:
-
-| Removed | Resolution | Median turns |
+| File size | Solves | Distinct? |
 |---|---|---|
-| Baseline | 78% | 11 |
-| Type annotations | 83% | 10 |
-| Readable names | 67% | 12 |
-| Formatting | 78% | 10 |
-| Comments and docstrings | 72% | 10 |
-| Cohesion | 72% | 10 |
-| Hierarchy | 89% | 9 |
-| README and module docs | 83% | 14 |
-| Visible tests | 83% | 12 |
+| original | 91/167 — 54% | — |
+| ~500 lines | 41/71 — 58% | n.s. (p=0.67) |
+| ~2.000 lines | 33/70 — 47% | n.s. (p=0.32) |
 
-Everything lands between 67% and 89% around a 78% baseline, and every turn median
-between 9 and 14. **No single practice does damage this data can separate from
-noise.** Give any one of them back to fully-degraded code and it recovers most of
-the way — 72% to 94% against T3's 53% — which is the other face of the
-interaction: it isn't one practice carrying the effect, it's their absence
-together.
+Concatenating pint's modules up to ~500 and ~2,000 lines per file changes nothing detectable. The
+design was looking for a threshold; with these cells, neither threshold nor slope.
 
-I'm reporting this the way I am because the first version of this table said
-something else. Run once instead of three times, it showed naming costing 28
-points and doubling the turns, and I had a tidy mechanism ready for it: opaque
-names make finding the right function expensive. The evidence was that A2 broke a
-task the baseline solves every time. At three passes that cell is 3 out of 3
-solved, in 10, 11 and 7 turns. It was one unlucky run.
+## Where nothing can be measured, and whose fault that is
 
-Which is what this article says two sections down about variance being the same
-order as the effects. I wrote that sentence and then published a one-pass table
-anyway.
+**The domain stratum and sqlglot.** The first version of this experiment declared them
+"uninterpretable" and left it there. True, and an excuse: they were uninterpretable because I chose
+tasks the *untouched* tree already failed, and without margin there is no drop to measure. After
+adding the affordability filter — a task only enters if clean code solves it in under half the
+budget — and regenerating them, **sqlglot produced not one valid task in 56 attempts**. That is no
+longer a bad choice on my part: it is a fact about that repository and this model.
 
-## Where nothing can be measured, and why I'm showing it
+**The TypeScript probe.** It existed to check whether the result about types is an artefact of
+Python's being optional. Building it left a finding that depends on no cell: in TypeScript,
+**stripping annotations is not a semantically-equivalent transformation** — under `strict` the
+program stops compiling and the test script usually runs the compiler, so annotations are part of
+what the suite verifies. What works is replacing each annotation with `any`: still compiles, erased
+at emit, verified identical across hono's 4,968 runtime tests. Its cells, with the baseline on the
+floor, settle nothing.
 
-Five blocks of this campaign are uninterpretable, and they're published with the rest:
+## Variance, which is the reason for almost everything above
 
-- **The high tier's breakdown**: thirteen of its sixteen conditions at 100% and the other three at
-  83%, median 6 turns, one pass each. With the baseline at the ceiling there's no room for a drop.
-- **The high tier generally**: 18/18 untouched.
-- **pint's domain tasks**: 1/6 at baseline. I wrote those two by hand and made them too expensive —
-  five of their six baseline runs hit the turn ceiling before finishing.
-- **A third repository, sqlglot**: 0/3 at baseline. I brought it in for one reason — it is the only
-  one of the four candidates whose files can be concatenated into four genuinely different sizes,
-  which is what a threshold needs. Its tasks turned out to be beyond this model entirely, so the
-  curve it was there to provide can't be read: there's nothing to fall from.
-- **The TypeScript probe**: 1/12 at baseline, also on the floor. Built to check whether the result
-  about types is an artefact of Python's being optional; it can't answer that, and
-  [what it did settle](#what-this-doesnt-answer) is a fact about the transformation, not about agents.
+This experiment has produced, across three successive versions, three different conclusions about
+the same repositories:
 
-The first one is worth dwelling on. My original plan was to run the breakdown in **one** tier, the
-one where family A and family B were furthest apart — which is the high tier. Doing only that would
-have produced sixteen identical cells at 100% and no information. Running both tiers is the only
-reason there's a breakdown to show.
+| With | It said |
+|---|---|
+| 1 pass per cell | naming costs 28 points |
+| 3 passes | no practice does anything; degrading everything drops to 53% |
+| 10-15 passes | not that either; the effect is in pint and in giving names back |
 
-The size curve survives in pint: 67% → 50% at ~500 lines per file → 33% at ~2,000. Monotonic, and
-with three points and six runs each, no threshold is visible. The design wanted to find one; what
-there is, is a slope.
+Neither of the first two was dishonest and all three came out of the same code. What changed was
+statistical power. At eighteen cells per condition only drops of thirty-eight points or more are
+visible: a flat table did not mean "makes no difference", it meant "we cannot tell", and I read it
+as the former.
 
-## The variance that makes single-pass results fiction
-
-Four of 22 measurable cells gave different answers across three identical passes:
-
-```
-untouched, generic (a dropped None check)     no → OK → OK
-family A,  the same one degraded              no → OK → OK
-family A,  domain (an ISO checksum rotation)  no → no → OK
-both,      generic (an inverted condition)    OK → OK → no
-```
-
-Same task, same condition, same model, same prompt. One of those cells took 27 turns to fail, 17 to
-succeed, and 40 to succeed again.
-
-The single-pass version of the headline table — which I had, earlier the same day — showed family B
-at 100% and would have supported the opposite conclusion.
-
-## Three times a broken transformation looked like a failing agent
-
-The failure mode the whole design defends against, and it showed up three times, each producing
-numbers I would have published.
-
-**The first time, I had a complete table in which not one number was about an agent.** My runner
-injected each task's fault into the already-degraded tree, where it no longer fit; two conditions
-came out empty and a third came out as six agents that "broke something else". Nothing about that
-table looked broken. The fix was to invert the order — fault first, degradation on top — and then
-verify by running the code that the fault survived.
-
-**The second is why some conditions are scored out of 15 instead of 18 in [the headline
-table](#the-headline-table).** Which tests a fault breaks
-can't be read off the task file, because the degradations move the tests too. So every cell builds
-two degraded trees, clean and faulty, and asks the suite what changed. For one task under family B
-the answer was *nothing*: its only test was a doctest living in a module docstring, and family B
-deletes module docstrings. The fault was still there; no test was left to notice. Scoring those
-three as failures would have moved T3 from 53% to 44% on the strength of a missing doctest.
-
-**And for a while the result depended on which Python ran the experiment.** pint uses syntax only
-3.12 parses. Under 3.11 the transformer couldn't read one file and skipped it silently, renaming a
-class everywhere except where it was referenced — the package died on import and a whole condition
-read as an agent breaking things. Transforming now stops and names the files it can't read: a
-half-renamed tree isn't equivalent, and not producing it is the only honest option.
-
-Two of those three only appeared when I added the second repository.
+That is why every row in this article carries its interval and, where there is no difference, the
+drop that would have been visible. It is the only way a reader can tell those apart without running
+the experiment again.
 
 ## What this doesn't answer
 
-**The turn ceiling is a design choice.** Forty turns is where the budget bites; with a hundred, pint
-would probably look like python-stdnum. The finding isn't "degraded code can't be fixed", it's "it
-costs more, and budgets are finite" — which holds for any real agent, but the specific numbers here
-are tied to that ceiling.
+**The 40-turn ceiling is a design choice.** It is where the budget bites; at a hundred, pint would
+probably look like python-stdnum. The finding isn't "degraded code can't be fixed", it's "it costs
+more, and budgets are finite".
 
-**The two repositories the 2×2 runs on are both Python, and the probe meant to fix that didn't.** Types in Python are
-checked by nobody at runtime, so A1 measures them as documentation; in a language that checks them
-they are also a contract. Building the TypeScript probe turned up one thing worth keeping: **stripping
-annotations there is not a semantically-equivalent transformation** — under `strict` the program stops
-compiling (`TS7006`), and a repo's test script usually runs the compiler too, so the annotations are
-part of what the suite verifies. What works is replacing each annotation with `any`: still compiles,
-erased at emit, and verified identical across hono's 4,968 runtime tests.
+**One model per tier, and one pair of tiers.** The contrast between the model with margin and the one
+without is the most robust result here, and it rests on two models.
 
-Then the cells ran, and the block joins the dead zones. Baseline 1/12 — on the floor — so its 5/12
-with types erased says the baseline failed to discriminate, not that erasing types helps. A single
-earlier pass over the same four tasks had scored 2 of 4 and looked like it discriminated; those two
-tasks come out 0/3 and 1/3 at three passes, with the same turn counts. So the question this
-probe was built to answer is still open, and the machinery to answer it is
-[in the repo](https://github.com/JaviMaligno/agent-code-practices/tree/main/infra/ts).
-
-**The domain stratum rests on two tasks in one repository.** python-stdnum's held; pint's came out
-too hard to read.
+**Two repositories carry everything.** python-stdnum says where nothing happens; pint, where it does.
+The other two came in for the size curve and the type probe, and neither produced an interpretable
+block.
 
 I'd rather publish a table with its dead zones marked than a headline the data doesn't carry. The
-750 runs are [in the repo](https://github.com/JaviMaligno/agent-code-practices/tree/main/results),
+runs are [in the repo](https://github.com/JaviMaligno/agent-code-practices/tree/main/results),
 including the ones that measured nothing.
 
 ---
