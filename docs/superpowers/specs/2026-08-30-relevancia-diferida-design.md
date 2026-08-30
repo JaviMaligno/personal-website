@@ -9,16 +9,27 @@ permite cada entorno:
 | Bloque | Contenido | Entornos |
 |---|---|---|
 | **1. Réplica** | Los 4 runtimes originales + control de presupuesto igualado | Los **cuatro** suyos: Warehouse, Software Repository, InterCode CTF, τ-Bench (Retail y Airline) |
-| **2. Expansión** | Sondas A, B, C + eje de esquema | Solo los **dos sintéticos**, por la restricción de abajo |
+| **2. Expansión** | Sondas A, B, C + eje de esquema | Los dos sintéticos **+ τ-Bench Retail** (variante derivada, ver abajo) |
 | **3. Generalización** | Sondas sobre repositorio de código real | Posterior y condicionado al resultado del bloque 2 |
 
-**Por qué las sondas no corren en los cuatro.** Medir relevancia diferida exige inyectar un
-hecho en el paso `t` que se vuelva portante en `t+k`, con ground truth exacto de cuál era la
-acción correcta. Eso requiere control sobre la generación del entorno, que solo tenemos en
-los dos sintéticos. En InterCode CTF y τ-Bench podemos replicar sus números pero no
-manipular `k`: sus trayectorias no son nuestras. Es una restricción del método, no una
-concesión al presupuesto — y conviene decirlo así en el artículo, porque es la pregunta que
-hará el primer revisor.
+**Qué hace falta para manipular `k`.** No control sobre el entorno, como parecía a primera
+vista, sino control sobre **algún canal que transporte el hecho latente** hasta el agente, y
+un evaluador que sepa si la acción posterior fue correcta. Eso admite tres respuestas
+distintas según el entorno:
+
+- **Warehouse y Software Repository:** controlamos la generación entera. `k` se fija de
+  forma exacta y el ground truth es perfecto. Son el entorno principal de las sondas.
+- **τ-Bench:** no controlamos el entorno, pero **sí el simulador de usuario**, y ese es un
+  canal suficiente. Ver §4.5. `k` se fija en turnos de usuario, no en pasos, y el evaluador
+  oficial ya comprueba si el estado final viola la intención — que es exactamente la
+  pregunta que hace la sonda.
+- **InterCode CTF:** descartado para sondas. Se puede inyectar en la salida del shell, pero
+  la trayectoria la decide el modelo: no podemos garantizar que llegue al paso dependiente en
+  `t+k`, así que `k` sería una variable observada y dispersa, no fijada. Con 100 retos la
+  potencia estadística no da. Queda como plan B si τ-Bench se complica.
+
+Esta es la restricción real, y es del método. Conviene declararla así en el artículo, porque
+es la primera pregunta que hará un revisor.
 
 ## 1. Contexto y objetivo
 
@@ -86,12 +97,14 @@ blog. No es contribución de track principal y el diseño no debe pretenderlo.
 - **τ-Bench Retail y Airline** — integrados. Evaluador oficial programático que verifica que
   el estado final de la base de datos satisface la intención del usuario sin violar política.
 
-**Bloque 2 (sondas)** corre solo sobre Warehouse y Software Repository, por la restricción
-declarada arriba. Warehouse es el entorno principal —variables de estado independientes, más
-fácil aislar el efecto del lag—; Software Repository actúa como control de generalización
-dentro del bloque: si el efecto aparece en uno y no en el otro, eso acota la tesis.
+**Bloque 2 (sondas)** corre sobre Warehouse, Software Repository y τ-Bench Retail. Warehouse
+es el entorno principal —variables de estado independientes, más fácil aislar el efecto del
+lag—; Software Repository actúa como control de generalización dentro del bloque: si el
+efecto aparece en uno y no en el otro, eso acota la tesis. τ-Bench Retail es el que impide
+que la expansión entera sea sintética (ver §4.5).
 
-El determinismo de ambos permite puntuación programática sin LLM-judge.
+El determinismo de los dos primeros permite puntuación programática sin LLM-judge; τ-Bench
+trae su propio evaluador programático.
 
 **Ruido de fondo.** Reutilizamos su inyector de distractores (telemetría de sistema,
 actividad irrelevante, overrides de reglas). Diferencia central: en nuestras sondas
@@ -157,6 +170,40 @@ Solo aplica a los brazos de estado. Tres condiciones:
 **La condición interesante es la del medio.** Si la escotilla libre recupera la pérdida, la
 recupera reinventando la historia: Σ deja de estar acotado y se pierde el O(1) que era todo
 el punto. Medimos `|Σ_t|` frente a `t` para cuantificarlo, no solo para afirmarlo.
+
+### 4.5 Sonda A sobre τ-Bench Retail (variante derivada)
+
+El canal que transporta el hecho latente es **el simulador de usuario**, no el entorno. En
+τ-Bench el agente atiende a un usuario simulado mientras consulta y modifica una base de
+datos relacional bajo restricciones de política; el evaluador oficial verifica que el estado
+final satisface la intención sin violar política.
+
+**Construcción.** Partimos de tareas existentes de Retail y creamos pares de variantes que
+difieren en una sola cosa:
+
+- **Control:** el usuario enuncia su restricción (*"no me sirve si no llega antes del
+  viernes"*, *"no quiero que se cargue a la tarjeta que acaba en 4471"*) **en el turno de la
+  decisión**, donde es inmediatamente accionable.
+- **Diferida:** el usuario enuncia la misma restricción **`k` turnos antes**, enterrada bajo
+  gestiones intermedias que no la usan.
+
+La diferencia de éxito entre las dos variantes, con la misma tarea y el mismo evaluador, es
+el efecto de relevancia diferida en un benchmark público. `k` ∈ {2, 5, 10} turnos de usuario.
+
+**Diferencias que hay que declarar y no disimular:**
+
+- `k` se mide en **turnos de usuario**, no en pasos de entorno. Comparable dentro de τ-Bench,
+  no directamente comparable con la `k` de los sintéticos. Las dos curvas no se superponen
+  en la misma figura.
+- Controlamos cuándo se enuncia la restricción, pero no exactamente en qué paso el agente
+  llega a la decisión. El lag realizado se registra por episodio y los episodios se agrupan
+  por lag real, no por lag nominal.
+- Es **τ-Bench modificado**, no τ-Bench. Se etiqueta como variante derivada en todas las
+  tablas y se publican las variantes de tarea junto con el código.
+
+**Subconjunto por coste.** 30 tareas de Retail, no las ~115. La sonda completa sobre el
+benchmark entero multiplicaría por cuatro la partida más cara del proyecto sin cambiar la
+dirección del resultado. La reducción de potencia se declara.
 
 ## 5. Runtimes — 7 brazos
 
@@ -297,11 +344,12 @@ que los nuestros pueden desviarse. Tratar como orden de magnitud, no como presup
 | **1.** InterCode CTF (~3,5M tokens × 2 modelos) | ~$11 |
 | **1.** τ-Bench Retail + Airline (~34M tokens × 2 modelos) | ~$100 |
 | **1.** Control de presupuesto igualado a T=100 (§5.6) | ~$15 |
-| **2.** Sonda A (5 valores de `k` × 7 brazos × 5 seeds × 2 modelos × 2 entornos) | ~$185 |
-| **2.** Sonda B (2 entornos) | ~$38 |
+| **2.** Sonda A en los dos sintéticos (5 valores de `k` × 7 brazos × 5 seeds × 2 modelos) | ~$185 |
+| **2.** Sonda A en τ-Bench Retail derivado (3 valores de `k` × 7 brazos × 30 tareas × 2 modelos) | ~$70 |
+| **2.** Sonda B (2 entornos sintéticos) | ~$38 |
 | **2.** Sonda C (3 lags × 7 brazos × 5 seeds × 2 modelos × 2 entornos) | ~$115 |
 | Margen de depuración y recorridas | ~$150 |
-| **Total** | **$700–800** |
+| **Total** | **$800–900** |
 
 τ-Bench es la partida cara del bloque 1 y no admite recorte sin dejar de ser réplica: sus
 prompts llegan a 5.000 tokens por paso en Airline, y ese es justamente el caso donde su
@@ -331,10 +379,15 @@ Nada corre en local. Todo contra la API, en serie.
   importan, la sonda A queda invalidada. Mitigación: auditoría del prompt por lectura
   independiente antes de la primera corrida, y una condición de control donde el boletín
   nunca llega a ser portante (debe dar accuracy plana en todos los brazos).
-- **R4 — las sondas miden solo dominios sintéticos.** La réplica cubre cuatro entornos, pero
-  la expansión vive en dos, ambos generados por nosotros. Mitigación parcial: Software
-  Repository como control de generalización interna. Se declara como limitación en el
-  artículo; el bloque 3 existe precisamente para eso.
+- **R4 — generalización de las sondas.** Dos de los tres entornos de sondas los generamos
+  nosotros. Mitigación: τ-Bench Retail derivado aporta un entorno público con evaluador
+  ajeno, y Software Repository actúa como control de generalización interna. Sigue siendo
+  limitación declarable; el bloque 3 existe para cerrarla.
+- **R6 — benchmark modificado.** Las variantes de τ-Bench las escribimos nosotros, así que
+  podríamos construirlas —sin querer— de forma que favorezcan la hipótesis. Mitigaciones:
+  las variantes control y diferida son **la misma tarea con la restricción movida de sitio**,
+  no tareas distintas; se publican íntegras junto al código; y el par control/diferida a `k`
+  mínimo funciona como condición nula, donde no debe haber diferencia entre runtimes.
 - **R5 — la novedad no está verificada.** Damos por hecho que nadie ha medido relevancia
   diferida en runtimes de agente a partir de una búsqueda superficial. Para un blog basta;
   para un preprint no. **Paso previo obligatorio antes de escribir una línea de código:**
@@ -354,8 +407,12 @@ Nada corre en local. Todo contra la API, en serie.
 
 ## 12. Fuera de alcance
 
-- **Sondas** en InterCode CTF y τ-Bench: se replican (bloque 1) pero no se manipulan, por la
-  restricción de §Estructura. Sus trayectorias no son nuestras.
+- **Sondas en InterCode CTF:** se replica (bloque 1) pero no se manipula — la trayectoria la
+  decide el modelo y `k` no sería fijable. Plan B si τ-Bench se complica.
+- **Sondas B y C sobre τ-Bench:** solo la sonda A cruza a τ-Bench. B exige consultas de
+  trayectoria con respuesta comprobable por máquina y C exige procedencia sobre una
+  observación concreta; ninguna de las dos encaja en su bucle usuario-agente sin rehacer el
+  evaluador, que es más trabajo del que aportan.
 - Repositorio de código real (bloque 3).
 - Modelos de pesos abiertos: requieren ejecución local y la máquina está saturada.
 - Horizonte T=200.
