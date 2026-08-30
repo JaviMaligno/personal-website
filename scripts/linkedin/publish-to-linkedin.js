@@ -36,14 +36,22 @@ async function publishToLinkedIn() {
     console.log(`  Tags: ${frontmatter.tags?.join(', ')}`);
     console.log(`  LinkedIn Image: ${frontmatter.linkedinImage || 'None'}\n`);
 
-    // Generate LinkedIn summary using Gemini
-    console.log('🤖 Generating LinkedIn summary with Gemini...\n');
-    const summary = await generateSummary({
-      title: frontmatter.title,
-      description: frontmatter.description,
-      content: markdown,
-      tags: frontmatter.tags || [],
-    });
+    // A hand-written `linkedinSummary` wins over generation: some posts need the
+    // body to state a scoped claim or a number with its unit, which a summariser
+    // smooths away.
+    let summary;
+    if (frontmatter.linkedinSummary?.trim()) {
+      console.log('✍️  Using the hand-written linkedinSummary from frontmatter\n');
+      summary = frontmatter.linkedinSummary.trim();
+    } else {
+      console.log('🤖 Generating LinkedIn summary with Gemini...\n');
+      summary = await generateSummary({
+        title: frontmatter.title,
+        description: frontmatter.description,
+        content: markdown,
+        tags: frontmatter.tags || [],
+      });
+    }
 
     // Prepare post text with hashtags
     const hashtags = frontmatter.tags

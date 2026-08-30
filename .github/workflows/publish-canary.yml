@@ -1,0 +1,241 @@
+name: Publish canary — dry-run every pending article merge
+
+# WHY THIS EXISTS
+# scheduled-publish.yml publishes by running `git merge --no-ff <branch>` against
+# main for whatever entry of .github/publish-schedule.json is due. If that merge
+# conflicts, the job fails and the article simply does not publish that morning —
+# you find out by noticing the silence, which is the worst possible moment.
+#
+# This canary rehearses the whole queue every day: it merges every unpublished
+# entry of the manifest into a throwaway copy of main, in date order, and then
+# builds the site. Any breakage shows up days before its publication date.
+#
+# It catches what `.gitattributes merge=union` cannot:
+#   - conflicts in files where union would be dangerous and is deliberately not
+#     configured (src/content/config.ts, scripts/**, *.py, *.json)
+#   - failures that are not git's at all: a duplicate slug, an internal link to
+#     an article that is not in main yet, a schema violation in frontmatter.
+#
+# The manifest is the source of truth for what is BLOCKING, exactly as it is for
+# scheduled-publish.yml. A blog/* branch that no manifest entry points at cannot
+# be published by anything, so it is reported as an orphan, never as a failure.
+#
+# It NEVER pushes anything. Worst case it opens/updates one issue.
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 06:00 UTC — comfortably before the publish slot
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency: publish-canary
+
+jobs:
+  rehearse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main with all blog branches
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fetch every blog/* branch
+        run: |
+          git fetch origin '+refs/heads/blog/*:refs/remotes/origin/blog/*' --quiet
+          git config user.name "canary"
+          git config user.email "canary@localhost"
+
+      - name: Merge every pending manifest entry in publication order
+        id: rehearse
+        run: |
+          # GitHub invokes this as `bash -e`, and the whole script is built on
+          # commands that fail as part of normal operation (a merge that
+          # conflicts is the thing being measured). Turn -e OFF explicitly:
+          # `set -uo pipefail` alone does NOT clear an -e already in effect.
+          set +e
+          set -uo pipefail
+          MANIFEST=.github/publish-schedule.json
+          REPORT=/tmp/canary-report.md
+          STATUS=/tmp/canary-status.txt
+          : > "$REPORT"; : > "$STATUS"
+          FAILED=0
+
+          # A dirty tree makes every merge fail before it starts, which would
+          # report a conflict for every branch. Refuse to rehearse rather than lie.
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Working tree is not clean; the rehearsal would report false conflicts."
+            git status --short
+            exit 1
+          fi
+
+          PENDING=$(jq -r '.articles[] | "\(.date)\t\(.branch)\t\(.article)"' "$MANIFEST" | sort)
+
+          git checkout -q -b canary/rehearsal main
+          while IFS=$'\t' read -r date branch article; do
+            [ -z "${branch:-}" ] && continue
+
+            # "Already published" is the EN article being present — the same
+            # definition select-due-article.mjs uses, so there is no second
+            # marker that can drift. Checked against the ACCUMULATED tree, not
+            # main: by this date the earlier entries will have merged, and one of
+            # them may already carry this article. Checking main would rehearse a
+            # merge that scheduled-publish.yml will never attempt.
+            if git cat-file -e "HEAD:$article" 2>/dev/null; then
+              if git cat-file -e "main:$article" 2>/dev/null; then
+                echo "DONE  $date  $branch" | tee -a "$STATUS"
+              else
+                echo "SUPER $date  $branch" | tee -a "$STATUS"
+                {
+                  echo "### \`$branch\` — scheduled $date, superseded"
+                  echo
+                  echo "_Not a failure_: \`$article\` is already brought in by an earlier"
+                  echo "entry in the queue, so this one will be skipped as published."
+                  echo "The manifest entry is leftover and can be removed."
+                  echo
+                } >> "$REPORT"
+              fi
+              continue
+            fi
+
+            if ! git rev-parse --verify -q "origin/$branch" >/dev/null; then
+              FAILED=1
+              echo "GONE  $date  $branch" | tee -a "$STATUS"
+              {
+                echo "### \`$branch\` — scheduled $date"
+                echo
+                echo "**BLOCKER** — the manifest points at a branch that does not exist on origin,"
+                echo "and \`$article\` is not in main either. The publish will fail on $date."
+                echo
+              } >> "$REPORT"
+              continue
+            fi
+
+            if git merge --no-ff -m "canary: $branch" "origin/$branch" >/tmp/merge.log 2>&1; then
+              echo "OK    $date  $branch" | tee -a "$STATUS"
+            else
+              FAILED=1
+              files=$(git diff --name-only --diff-filter=U | sed 's/^/  - `/;s/$/`/')
+              echo "FAIL  $date  $branch" | tee -a "$STATUS"
+              {
+                echo "### \`$branch\` — scheduled $date"
+                echo
+                echo "**BLOCKER** — scheduled-publish.yml will attempt this merge and fail."
+                echo
+                if [ -n "$files" ]; then
+                  echo "Conflicts in:"
+                  echo "$files"
+                else
+                  # No unmerged paths: the merge never started (bad ref, dirty
+                  # tree, …). Without the log this is indistinguishable from a
+                  # content conflict, and it is a completely different fix.
+                  echo "The merge did not start — this is not a content conflict:"
+                  echo
+                  echo '```'
+                  tail -5 /tmp/merge.log
+                  echo '```'
+                fi
+                echo
+              } >> "$REPORT"
+              echo "$files"
+              # Only abort a merge that actually began, and leave the tree clean
+              # either way so the next entry is rehearsed honestly.
+              git merge --abort 2>/dev/null || git reset --hard -q HEAD
+            fi
+          done <<< "$PENDING"
+
+          # Branches nothing points at. Not a failure — nothing will try to merge
+          # them — but they are usually leftovers worth deleting, and one of them
+          # holding a duplicate article is how two branches end up fighting.
+          for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/blog/); do
+            b="${ref#origin/}"
+            if jq -e --arg b "$b" '.articles[] | select(.branch == $b)' "$MANIFEST" >/dev/null 2>&1; then
+              continue
+            fi
+            git merge-base --is-ancestor "$ref" main && continue   # already merged
+            echo "ORPHAN       $b" | tee -a "$STATUS"
+            {
+              echo "### \`$b\` — orphan branch"
+              echo
+              echo "_Not a failure_: no entry in \`$MANIFEST\` points at it, so nothing will"
+              echo "publish it. Delete it, or add it to the manifest if it is still wanted."
+              echo
+            } >> "$REPORT"
+          done
+
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          {
+            echo 'report<<CANARY_EOF'
+            cat "$REPORT"
+            echo 'CANARY_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+          # Always leave the outcome on the run summary, including orphans and
+          # superseded entries, which are worth seeing but not worth an issue
+          # every morning.
+          {
+            echo "## Publish canary"
+            echo
+            echo '```'
+            cat "$STATUS"
+            echo '```'
+            if [ -s "$REPORT" ]; then echo; cat "$REPORT"; fi
+          } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+
+          # The rehearsal's verdict travels in the `failed` output, never in this
+          # step's exit code: a conflict found is a successful rehearsal.
+          exit 0
+
+      # Only meaningful when every entry merged: this is the site as it will
+      # exist once the whole queue has published.
+      - name: Set up Node
+        if: steps.rehearse.outputs.failed == '0'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build the fully-merged site
+        if: steps.rehearse.outputs.failed == '0'
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Open or update the canary issue
+        if: failure() || steps.rehearse.outputs.failed != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPORT: ${{ steps.rehearse.outputs.report }}
+        run: |
+          set -uo pipefail
+          TITLE="🐤 Publish canary: the pending article queue does not merge cleanly"
+          BODY="The daily rehearsal of the publish queue failed. Left alone, the affected article does **not** publish on its scheduled morning — the merge fails and the job stops.
+
+          $REPORT
+
+          If the report above shows no blocker, the merges were fine and the **build** of the fully-merged site is what failed (duplicate slug, internal link to an unpublished article, frontmatter schema, …).
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Fix on the article branch, not on main. This issue auto-closes once a run passes."
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' 2>/dev/null || true)
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY" || echo "comment failed (non-fatal)"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" || echo "issue creation failed (non-fatal)"
+          fi
+
+      - name: Close the canary issue once the queue is clean again
+        if: success() && steps.rehearse.outputs.failed == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          TITLE="🐤 Publish canary: the pending article queue does not merge cleanly"
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' 2>/dev/null || true)
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" --comment "Queue merges cleanly and the fully-merged site builds. Closing." \
+              || echo "close failed (non-fatal)"
+          fi

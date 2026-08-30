@@ -81,11 +81,14 @@ async function publishToDevto() {
     // 1) Strip scoped <style> blocks (would show as raw CSS text on Dev.to).
     devtoContent = devtoContent.replace(/<style>[\s\S]*?<\/style>\s*/g, '');
 
-    // 2) Replace each inline SVG <figure class="cwm-fig"> with a hosted image
-    //    (pre-rendered to public/blog/<slug>-fig-<n>.{gif,png}, in document order).
+    // 2) Replace each inline SVG figure with a hosted image (pre-rendered to
+    //    public/blog/<slug>-fig-<n>.{gif,png}, in document order).
     //    alt = the SVG aria-label; caption = the <figcaption> text.
+    //    Matches ANY article-scoped figure class ending in "-fig" (cwm-fig,
+    //    ont-fig, …) — a new article picks its own prefix and must not have to
+    //    remember to come back and edit this regex.
     let figIdx = 0;
-    devtoContent = devtoContent.replace(/<figure class="cwm-fig">([\s\S]*?)<\/figure>/g, (_m, inner) => {
+    devtoContent = devtoContent.replace(/<figure class="[a-z0-9-]*fig">([\s\S]*?)<\/figure>/g, (_m, inner) => {
       figIdx++;
       const alt = (inner.match(/aria-label="([^"]*)"/) || [, `Figure ${figIdx}`])[1];
       let cap = (inner.match(/<figcaption>([\s\S]*?)<\/figcaption>/) || [, ''])[1];

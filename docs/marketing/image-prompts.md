@@ -4,6 +4,65 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## nobody-will-check-behind-you
+
+- **Article:** `src/content/blog/{en,es}/nobody-will-check-behind-you.md`
+- **Image:** `public/blog/nobody-will-check-behind-you.png`
+- **Generated:** 2026-08-23 (**ChatGPT, manual** — `codex exec` returned
+  `Your workspace is out of credits`, so the prompt was handed over by hand)
+- **Watch for:** the box label `0.4.0` and its contents `0.3.1` must stay the
+  right way round. Swapped, the image tells the opposite of the article. The
+  first generation got those right but wrote an *instruction* in the highlighted
+  paragraph ("Verify the published package state after release", naming the
+  registry), which contradicts the article's whole point — the clause assigns
+  ownership and never says where to look. Fixed with the follow-up edit below;
+  check this on any regeneration.
+
+```text
+Create a 1020x510 (2:1) blog hero image for a technical article titled
+"Nobody Will Check Behind You", about a coding agent that publishes a release,
+sees every local signal come back green, and never opens the package registry
+where the actual artifact is stale — until a paragraph in its brief makes it
+the owner of the published state.
+
+Style: refined technical editorial illustration, dark but not monochrome,
+showing a concrete working system rather than an abstract metaphor.
+
+Compose four legible zones:
+1. A terminal window, its output green, with readable generic lines:
+   "./release.sh 0.4.0", "suite: 18 passed", "tag v0.4.0 pushed",
+   and the last line "upload: widgetkit 0.4.0 (cached)".
+2. A registry shelf to the right holding a labelled box "0.4.0" whose visible
+   contents are labelled "0.3.1" — the mismatch is the subject of the image.
+3. A brief/ticket card on the left with one highlighted paragraph, and an arrow
+   running from that paragraph past the terminal to the registry shelf.
+4. A green tag or checkmark near the terminal, deliberately contrasted with the
+   mismatched artifact in the shelf.
+
+Readable generic text is good; do not make it a text-heavy poster.
+No logos, no brand names, no people.
+Crisp bitmap illustration, high contrast, professional AI/developer blog
+aesthetic, balanced teal, amber, graphite and off-white accents on dark.
+No purple gradient blobs, no bokeh.
+```
+
+Follow-up edit that produced the final image (same session, image edit rather
+than a regeneration, so the rest of the composition is untouched):
+
+```text
+Keep the image exactly as it is — same layout, same terminal lines, same box
+labels 0.4.0 outside and 0.3.1 inside, same arrow, same palette. Change ONLY the
+highlighted amber paragraph on the ticket card. Replace its text with exactly:
+
+"You own the published state of this release. Nobody is going to verify it
+behind you."
+
+Do not add any instruction to verify, and do not mention the registry in the
+card. Retitle the card to exactly "Release ownership".
+```
+
+---
+
 ## three-judges-three-rankings
 
 - **Article:** `src/content/blog/en/three-judges-three-rankings.md`
@@ -640,3 +699,74 @@ procedural lane is roughly 2.3x the tokens and 1.6x the cost, NOT ten times.
 Everything else stays: same 1020x510 size, same dark graphite + teal + amber
 palette, same readable generic terminal lines and file trees, no logos, no people.
 ```
+
+## `the-grader-knew-less` — El evaluador sabía menos que el sistema evaluado (2026-08-20)
+
+- Artículo: `src/content/blog/{en,es}/the-grader-knew-less.md`
+- Imagen: `public/blog/the-grader-knew-less.png`
+- Generado con Codex (`codex exec --approve-for-me`, modelo de imagen de OpenAI).
+  Nota: los flags `--full-auto` de la skill ya no existen en Codex v0.147; el
+  equivalente actual es `--approve-for-me` (y no admite `-s` a la vez).
+
+Prompt de estilo entregado a Codex para que redacte y ejecute el prompt final:
+
+```text
+Create a 1020x510 blog hero image; style: refined technical editorial
+illustration, dark but not monochrome, showing a CONCRETE SCENE of the article's
+core idea — a company-classification evaluation where the grader had less
+information than the system it graded: on one side a research pipeline (browser
+window with a company website, official registry record card, magnifier, arrows
+into a taxonomy code tree), on the other side a bare spreadsheet column of
+generic company names being pasted into a chat box that emits labels directly
+from the names; a scorecard between them showing a low percentage crossed out and
+a higher one written next to it.
+
+Visual motifs: readable but generic text is GOOD (column headers like 'company
+name', 'code', a taxonomy tree with nodes, a score card reading '54%' struck
+through and '75%'), clean geometric composition, several distinct zones.
+
+No logos, no brand names, no real company names, no people, no text-heavy poster.
+Use crisp bitmap illustration, high contrast, professional AI/developer blog
+aesthetic, balanced teal, amber, graphite and off-white accents, no purple
+gradient blobs, no bokeh.
+```
+
+**Comprobar en la imagen final:** que las cifras salgan como `54%` (tachado) y
+`75%`, no inventadas — es el mismo fallo documentado en `the-scaffolding-you-pay-for`.
+---
+
+## `infer-the-rule-in-one-dimension`
+
+- Artículo: `src/content/blog/en/infer-the-rule-in-one-dimension.md`
+- Imagen destino: `public/blog/infer-the-rule-in-one-dimension.png`
+- Generada: 2026-08-18 con Codex `image_gen` (ruta integrada), revisada y
+  redimensionada a 1020x510.
+
+Las cifras van explícitas en el prompt siguiendo la lección del artículo anterior
+(el modelo rellena huecos numéricos con lo que le resulta vistoso). Las dos que
+aparecen son las reales del paper: **105/111** en la regla 1D y **0/156** en la 2D.
+El `8.0` del panel izquierdo es la constante verdadera del muro y el `2.0` del
+derecho es el semiplano que los artefactos escriben de verdad, en el borde oeste
+del disco — conviene mantenerlos.
+
+Prompt final usado:
+
+```text
+Use case: scientific-educational
+Asset type: 1020x510 technical blog hero image
+Primary request: Create a refined technical editorial illustration for the article “An LLM Can Infer the Rule You Forgot — in One Dimension”, contrasting two control experiments side by side, split down the middle.
+
+LEFT PANEL — success, headed exactly “1D”: a cart on a straight horizontal rail meeting a solid vertical wall. Above it, a compact code panel with the single readable line exactly “if x >= 8.0: stop()”, marked with a green check. A short caption strip reads exactly “105 / 111”.
+
+RIGHT PANEL — failure, headed exactly “2D”: top-down plane with a circular region; a moving dot enters the circle; contact dots appear around only one arc, leaving most of the circumference bare. A compact code panel contains the single readable line exactly “if x >= 2.0:”, marked with a red cross. A straight dashed line cuts the plane, clearly showing a half-plane guessed where a circle belongs. A short caption strip reads exactly “0 / 156”.
+
+Style/medium: crisp bitmap illustration, refined technical editorial aesthetic; dark but not monochrome; high contrast; balanced teal, amber, graphite and off-white accents.
+Composition/framing: exact 2:1 landscape composition, balanced split screen, generous safe margins, readable at blog-card size.
+Details: thin measurement annotations and tick marks; make the rail, wall, circular boundary, partial contact arc, and wrong straight boundary visually unambiguous.
+Text constraints: The only numeric strings anywhere must be exactly “8.0”, “2.0”, “105 / 111”, and “0 / 156”. Render all requested labels verbatim. Do not invent any other numbers, statistics, code, or labels.
+Constraints: no logos, no brand names, no people, no watermark, no text-heavy poster.
+Avoid: purple gradient blobs, bokeh, decorative pseudo-text, stray glyphs, extra digits, fake UI copy.
+```
+
+Revisión: `105 / 111`, `0 / 156`, `8.0` y `2.0` aparecen correctamente; no hay
+otras estadísticas ni cifras inventadas.

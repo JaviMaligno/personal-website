@@ -21,41 +21,77 @@ same day.
 
 ## Scheduling a publication
 
-Publishing is scheduled with a **one-shot cron workflow per article**,
-`.github/workflows/scheduled-publish-<slug>.yml`, that merges the article branch
-into `main` on a given date so the workflows above fire on the resulting push.
+Publishing is driven by **one manifest and one daily workflow**:
 
-Pattern (copy an existing one, e.g. `scheduled-publish-internal-context-leakage.yml`):
+- `.github/publish-schedule.json` — the schedule. One entry per pending article:
+  `slug`, `branch`, `article` (the EN path) and `date`.
+- `.github/workflows/scheduled-publish.yml` — runs four times a day, merges the
+  oldest article that is **due and not yet in `main`**, and pushes, so the
+  deploy/Dev.to/LinkedIn workflows fire on that push.
 
-- `on.schedule.cron: '19 8 <DAY> <MONTH> *'` plus two later retries. See
-  **"The cron runs late, it does not get dropped"** below before picking a time.
-- Checks out `main` **with `secrets.PUBLISH_PAT`** (a user PAT). This is required:
-  a push made with the default `GITHUB_TOKEN` does **not** re-trigger other
-  workflows, so deploy/LinkedIn/Dev.to would silently not run.
-- `git merge --no-ff origin/<article-branch>` then `git push origin main`.
-- Guards with `git merge-base --is-ancestor` (no-op if already merged) and a
-  `concurrency` group (never runs twice).
-- Checks the branch exists first: if it is gone **and** the article is already in
-  `main`, it exits 0 as a no-op (published by hand, branch deleted). It only errors
-  when the branch is missing *and* the article is absent — i.e. a real typo.
-- Opens a GitHub issue on success/failure as a notification.
-- **Deletes the article branch** once the merge is pushed (`published == 'true'`).
-  Safe because the article is in `main` by then, and a failed cross-post is always
-  retried from `main`, never from the branch. The delete is non-fatal: if it fails
-  it emits a `::warning::` instead of failing an otherwise successful publication.
+To schedule an article, add an entry to the manifest and commit it to `main`.
+That is the whole procedure — no new workflow file per article.
 
-### The cron runs late, it does not get dropped
+Selection lives in `scripts/publish/select-due-article.mjs` as a pure function,
+covered by `scripts/publish/select-due-article.test.mjs` (`npm test`). That
+matters: the previous design could only be tested by waiting for a specific
+calendar date to arrive.
+
+### Due, not "today" — and why that is the whole point
+
+The workflow publishes everything with `date <= today` that is not yet in `main`,
+oldest first. A date-pinned cron that misses its day is simply lost; this one
+picks the article up the next day, and the day after, until it is published.
+
+The guards it keeps:
+
+- **One article per day.** If `main` already carries a `Publish: …` merge dated
+  today, the run stops. A backlog drains one per day rather than putting two
+  LinkedIn posts out at once.
+- **`main` is the source of truth for "published".** The check is whether the
+  article file exists, not a flag in the manifest — a flag can drift, the file
+  cannot. Re-running is therefore always safe.
+- **`blockIfMatches`** (optional, per entry): a regexp that must *not* appear in
+  the article on its branch. Used for placeholders that must never ship — e.g.
+  `being-wrong-can-be-free` and `the-bug-nobody-can-reach` cite paper 3's
+  preprint and carry the literal `XXXX.XXXXX` until its arXiv ID is substituted.
+  A match fails the run and opens an issue instead of publishing.
+- **Branch deletion is conditional.** The branch is deleted only when it carries
+  nothing that is not already in `main`. On 2026-08-30 `blog/what-has-already-happened`
+  — an article published on 08-13 — turned out to hold 6,759 lines of research
+  documentation committed after publication. Unconditional deletion would have
+  thrown that away.
+- **The push uses `secrets.PUBLISH_PAT`**, a user PAT. A push made with the
+  default `GITHUB_TOKEN` does **not** re-trigger other workflows, so the article
+  would merge without being distributed anywhere.
+
+`workflow_dispatch` takes an optional `slug` to publish one article immediately,
+skipping the date but none of the other guards.
+
+### The cron runs late — and can be dropped entirely
 
 Measured on 2026-07-25 over 20 consecutive days of this repo's daily 08:00 UTC
 cron (`linkedin-scheduled-posts.yml`, which nobody ever triggers by hand): it
 fired **every single day**, and **never on time** — between 1h21m and 4h02m late,
-median ~2h13m. The `scheduled-publish` crons show the same shift: `09:19` UTC
+median ~2h13m. The `scheduled-publish` crons showed the same shift: `09:19` UTC
 consistently ran at ~11:20 UTC. This matches GitHub's own docs — *"the `schedule`
 event can be delayed during periods of high loads […] High load times include the
-start of every hour"* — and cannot be eliminated, only compensated.
+start of every hour"*.
 
-**The lateness shrinks as the day goes on**, and so does its spread. Same repo,
-three different cron slots, 07-21 … 07-25:
+**On 2026-08-30 that 20-day sample was falsified.** This document previously
+concluded "it does not get dropped… a genuine dropped run, which has never been
+observed here". That day `scheduled-publish-infer-the-rule-in-one-dimension.yml`
+ended with **0 runs**: all four of its departures (08:19, 09:07, 09:59, 13:53
+UTC) were dropped, not delayed. The workflow was `active` and had been on `main`
+since 08-23. The article was published by hand, ~4h late.
+
+So: the queue is late *most* of the time and absent *some* of the time, and a
+schedule that only fires on one calendar date has no answer to the second case.
+That is why the current design keys on **due**, not on today.
+
+The lateness data still holds, and still shapes the cron slots. **The lateness
+shrinks as the day goes on**, and so does its spread. Same repo, three different
+cron slots, 07-21 … 07-25:
 
 | Cron (UTC) | Mean lateness | Spread | n |
 |---|---|---|---|
@@ -65,46 +101,73 @@ three different cron slots, 07-21 … 07-25:
 
 Consequences to keep in mind:
 
-- **Cron times are departure times, not arrival times.** Set the cron ~1-2h before
-  you actually want the article out.
+- **Cron times are departure times, not arrival times.** The first slot is set
+  ~1-2h before the article is actually wanted out.
 - **Scheduling earlier buys less than it looks, and costs predictability.** An
   early slot is queued during the European-morning peak, so it is both later *and*
-  much noisier (±35m at 09:19 vs ±5m at 11:37). If you want a *predictable*
-  publication hour, schedule **later**, not earlier.
-- **Retries are cheap, so keep them close (~45m).** They do not help with the
-  delay — only with a genuine dropped run, which has never been observed here. But
-  a no-op run opens no issue and costs seconds, so a tight retry chain is free
-  insurance: if a run is ever dropped, the next attempt is 45m behind instead of
-  2h+.
-- **As of 2026-07-25, no article had ever been published by its cron.** The first
-  six (07-20 … 07-25) all went out via a manual `workflow_dispatch` or a manual
-  merge, because the cron ran ~2h late and somebody always got there first. When
-  that happens the late cron run is a harmless no-op (`already merged`).
-- So the automatic path is **not yet validated end-to-end**. The merge step itself
-  is proven (the manual dispatches published fine, deploy + Dev.to + LinkedIn
-  included); what has never been observed is a cron firing *and* publishing.
-- Two things that did break, both fixed: `PUBLISH_PAT` was missing on 07-20
-  (`Input required and not supplied: token`), and the 07-23 workflow pointed at a
-  branch name that did not exist.
+  much noisier (±35m at 09:19 vs ±5m at 11:37).
+- **Retries are spread across the day, not bunched.** The old per-article files
+  used a ~45m chain, on the theory that only delay mattered. Once a whole day's
+  worth of departures can vanish together, four attempts inside 45 minutes all
+  fall in the same hole; the current slots sit hours apart (08:19, 11:07, 13:53,
+  16:41), and the daily re-run is the real backstop.
+
+### The `image-prompts.md` conflict, and why merges no longer break on it
+
+Every article branch appends its hero-image prompt to the same file,
+`docs/marketing/image-prompts.md`. Branches cut before other articles landed
+insert at the same point, and git aborts the merge — even though the changes are
+pure insertions with nothing in genuine disagreement.
+
+This broke publications repeatedly and was resolved by hand each time; the commit
+messages still carry the scar (`wheres-the-ball-3`, `bring-your-app-to-the-agent`,
+`writing-a-paper-with-ai`, all with `# Conflicts: docs/marketing/image-prompts.md`).
+On 2026-08-30, four of the seven pending articles were measured (`git merge-tree`)
+to be heading for the same failure.
+
+`.gitattributes` now declares:
+
+```
+docs/marketing/image-prompts.md merge=union
+```
+
+The `union` merge driver keeps both sides and produces no conflict. The trade-off
+is that the order of the blocks is left to git for branches that insert near the
+top of the file — acceptable for a reference archive.
 
 Checklist when scheduling:
 
-1. The workflow file must live on **`main`** (GitHub only runs `schedule`
-   triggers from the default branch). Commit it to `main` directly — this does
-   **not** publish the article, it only arms the future merge.
-2. The **article branch must be pushed to `origin`** with the exact name the
-   workflow's `git fetch origin <branch>` expects, or the scheduled merge fails.
-   The workflow validates this with `git ls-remote` and fails with an explicit
-   error listing the real `blog/*` branches — a typo here previously surfaced only
-   on publication day as an opaque `couldn't find remote ref` (2026-07-23).
-3. Pick a **free date** — check the crons of the other `scheduled-publish-*.yml`
-   files first (one article per day).
-4. **Set the article's `pubDate` to the cron date, in both EN and ES.** The blog
-   index sorts *and displays* by `pubDate` (`src/pages/*/blog/index.astro`), not by
-   the merge date, so a draft date left in the frontmatter makes the article show
-   up under an older date — and, if it ties with older posts, buried below them.
-   This is what happened to the 07-22/07-23/07-24 publications (fixed in
-   `fix/blog-pubdates`). If the schedule is later moved, move the `pubDate` too.
+1. Add the entry to `.github/publish-schedule.json` on **`main`**. This does
+   **not** publish the article; it arms the future merge.
+2. The **article branch must be pushed to `origin`** under exactly the `branch`
+   name in the entry. The workflow validates this with `git ls-remote` and fails
+   with an explicit error listing the real `blog/*` branches — a typo here
+   previously surfaced only on publication day as an opaque `couldn't find remote
+   ref` (2026-07-23).
+3. Pick a **free date** — and free means free in **two** calendars:
+   - the other `date` values in `.github/publish-schedule.json` (one article per day);
+   - the dates in `scripts/linkedin/posts/schedule.json`, read daily by
+     `linkedin-scheduled-posts.yml`. That workflow is legacy for *articles*, but it
+     is very much alive. Publishing an article also fires `linkedin-post.yml`, so a
+     date carrying a `schedule.json` entry puts **two LinkedIn posts out the same
+     day**, which the alternating pattern of those dates exists to avoid.
+
+   Both collisions are now enforced by `npm test`, so a clash fails in CI instead
+   of on publication day. It went unnoticed once by hand: on 2026-08-23,
+   `infer-the-rule-in-one-dimension` was nearly scheduled for 08-24, which looked
+   free against the article crons alone while `schedule.json` held
+   `you-were-right-to-be-sceptical-en` that day.
+4. **Set the article's `pubDate` to the scheduled date, in both EN and ES.** The
+   blog index sorts *and displays* by `pubDate` (`src/pages/*/blog/index.astro`),
+   not by the merge date, so a draft date left in the frontmatter makes the
+   article show up under an older date — and, if it ties with older posts, buried
+   below them. This is what happened to the 07-22/07-23/07-24 publications (fixed
+   in `fix/blog-pubdates`). If the schedule is later moved, move the `pubDate` too.
+
+   Note the one case this does not cover: an article recovered from a backlog is
+   merged *after* its `date`, so its `pubDate` will read earlier than the day it
+   actually went live. That is the intended trade — the alternative is silence.
+
 
 ## Retrying a failed cross-post
 
