@@ -733,3 +733,40 @@ gradient blobs, no bokeh.
 
 **Comprobar en la imagen final:** que las cifras salgan como `54%` (tachado) y
 `75%`, no inventadas — es el mismo fallo documentado en `the-scaffolding-you-pay-for`.
+---
+
+## `infer-the-rule-in-one-dimension`
+
+- Artículo: `src/content/blog/en/infer-the-rule-in-one-dimension.md`
+- Imagen destino: `public/blog/infer-the-rule-in-one-dimension.png`
+- Generada: 2026-08-18 con Codex `image_gen` (ruta integrada), revisada y
+  redimensionada a 1020x510.
+
+Las cifras van explícitas en el prompt siguiendo la lección del artículo anterior
+(el modelo rellena huecos numéricos con lo que le resulta vistoso). Las dos que
+aparecen son las reales del paper: **105/111** en la regla 1D y **0/156** en la 2D.
+El `8.0` del panel izquierdo es la constante verdadera del muro y el `2.0` del
+derecho es el semiplano que los artefactos escriben de verdad, en el borde oeste
+del disco — conviene mantenerlos.
+
+Prompt final usado:
+
+```text
+Use case: scientific-educational
+Asset type: 1020x510 technical blog hero image
+Primary request: Create a refined technical editorial illustration for the article “An LLM Can Infer the Rule You Forgot — in One Dimension”, contrasting two control experiments side by side, split down the middle.
+
+LEFT PANEL — success, headed exactly “1D”: a cart on a straight horizontal rail meeting a solid vertical wall. Above it, a compact code panel with the single readable line exactly “if x >= 8.0: stop()”, marked with a green check. A short caption strip reads exactly “105 / 111”.
+
+RIGHT PANEL — failure, headed exactly “2D”: top-down plane with a circular region; a moving dot enters the circle; contact dots appear around only one arc, leaving most of the circumference bare. A compact code panel contains the single readable line exactly “if x >= 2.0:”, marked with a red cross. A straight dashed line cuts the plane, clearly showing a half-plane guessed where a circle belongs. A short caption strip reads exactly “0 / 156”.
+
+Style/medium: crisp bitmap illustration, refined technical editorial aesthetic; dark but not monochrome; high contrast; balanced teal, amber, graphite and off-white accents.
+Composition/framing: exact 2:1 landscape composition, balanced split screen, generous safe margins, readable at blog-card size.
+Details: thin measurement annotations and tick marks; make the rail, wall, circular boundary, partial contact arc, and wrong straight boundary visually unambiguous.
+Text constraints: The only numeric strings anywhere must be exactly “8.0”, “2.0”, “105 / 111”, and “0 / 156”. Render all requested labels verbatim. Do not invent any other numbers, statistics, code, or labels.
+Constraints: no logos, no brand names, no people, no watermark, no text-heavy poster.
+Avoid: purple gradient blobs, bokeh, decorative pseudo-text, stray glyphs, extra digits, fake UI copy.
+```
+
+Revisión: `105 / 111`, `0 / 156`, `8.0` y `2.0` aparecen correctamente; no hay
+otras estadísticas ni cifras inventadas.
