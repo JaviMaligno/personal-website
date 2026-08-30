@@ -1,7 +1,7 @@
 ---
 title: "Bad Code Doesn't Hurt an Agent. Until the Repository Is Large."
-description: "I degraded four repositories in nine semantically-equivalent ways and measured 2,371 agent runs. In small code nothing measurable happens. In large interconnected code, degrading how it's written flattens it: zero out of twenty-five."
-pubDate: 2026-08-25
+description: "I degraded four repositories in nine semantically-equivalent ways and measured 2,929 agent runs. In small code nothing measurable happens. In large interconnected code, degrading how it's written halves what the agent solves."
+pubDate: 2026-09-01
 tags: ["AI", "Agents", "Evaluation"]
 lang: en
 translationKey: practices-for-agents-substrate
@@ -44,7 +44,7 @@ And one condition the first version of this experiment lacked: **a task only ent
 tree solves it with margin**. If the clean code already exhausts the turn budget, there is no room
 for a degradation to show, and the cell reads zero either way.
 
-**2,371 measured runs across four repositories**, at ten or fifteen passes per cell. All of it
+**2,929 measured runs across four repositories**, at ten or fifteen passes per cell. All of it
 [in the repo](https://github.com/JaviMaligno/agent-code-practices).
 
 ## Where nothing happens
@@ -53,10 +53,10 @@ python-stdnum: tax-number validators, small self-contained files.
 
 | Condition | Solves | 95% CI | Turns | Ceiling before→after | Distinct from baseline? |
 |---|---|---|---|---|---|
-| untouched (baseline) | 49/59 — 83% | [72%, 91%] | 10 | 2 | — |
-| how it's writtenᵃ | 42/56 — 75% | [62%, 84%] | 13 | 2→4 | n.s. (≥20% would be visible) |
-| where to lookᵃ | 46/58 — 79% | [67%, 88%] | 10 | 2→5 | n.s. (≥20% would be visible) |
-| bothᵃ | 48/59 — 81% | [70%, 89%] | 11 | 2→5 | n.s. (≥19% would be visible) |
+| untouched (baseline) | 91/167 — 54% | [47%, 62%] | 30 | 62 | — |
+| how it's writtenᵃ | 45/155 — 29% | [22%, 37%] | 40 | 62→96 | **p=0.000** |
+| where to look | 76/161 — 47% | [40%, 55%] | 38 | 62→75 | n.s. (≥16% would be visible) |
+| bothᵃ | 37/157 — 24% | [18%, 31%] | 40 | 62→103 | **p=0.000** |
 
 Conditions sharing a mark (ᵃ) **cannot be told apart from each other**, only from the baseline.
 
@@ -92,8 +92,11 @@ pieces at once.
 
 Conditions sharing a mark (ᵃ) **cannot be told apart from each other**, only from the baseline.
 
-**Zero out of twenty-five.** Degrading both families at once doesn't lower the rate: it erases it.
-And degrading only *how it's written* halves it, with the median turn count pinned at the ceiling.
+**From 54% to 24%.** Degrading both families at once takes away more than half of what the agent was
+solving, and degrading only *how it's written* costs almost as much, with the median turn count
+pinned at the ceiling. At nearly two hundred cells per condition both drops sit far below chance
+(p<0.001) and **they are also distinct from each other**: hiding *where to look* adds damage on top
+of dirtying the text, but on its own it does nothing this data separates from noise.
 
 That is the answer to the hypothesis, and it is the opposite of what I wrote down. Hiding *where to
 look* produces no effect this data can separate from noise. Dirtying the text does.
@@ -112,7 +115,7 @@ The three runs lined up, comparing the untouched tree with its worst condition:
 |---|---|---|---|---|
 | python-stdnum, high tier | 98% | 93% | 6 → 6 | 1/60 → 2/60 |
 | python-stdnum, low tier | 83% | 81% | 10 → 11 | 2/59 → 5/59 |
-| pint | 54% | 0% | 30 → 40 | 12/35 → 18/25 |
+| pint | 54% | 24% | 30 → 40 | 62/167 → 103/157 |
 
 The capable model doesn't absorb the damage by being smarter: **it starts with margin**. It solves
 in 6 turns out of 40, and even if degradation tripled that it would still have budget to spare. pint
@@ -157,9 +160,9 @@ vanished, and at ten it turns out the real effect is on the other side of the ex
 
 | File size | Solves | Distinct? |
 |---|---|---|
-| original | 19/35 — 54% | — |
-| ~500 lines | 19/31 — 61% | n.s. (p=0.62) |
-| ~2.000 lines | 13/30 — 43% | n.s. (p=0.46) |
+| original | 91/167 — 54% | — |
+| ~500 lines | 41/71 — 58% | n.s. (p=0.67) |
+| ~2.000 lines | 33/70 — 47% | n.s. (p=0.32) |
 
 Concatenating pint's modules up to ~500 and ~2,000 lines per file changes nothing detectable. The
 design was looking for a threshold; with these cells, neither threshold nor slope.

@@ -1,7 +1,7 @@
 ---
 title: "El código malo no daña a un agente. Hasta que el repositorio es grande."
-description: "Degradé cuatro repositorios de nueve formas semánticamente equivalentes y medí 2.371 corridas de agente. En código pequeño no pasa nada medible. En código grande e interconectado, degradar cómo está escrito lo tumba: cero de veinticinco."
-pubDate: 2026-08-25
+description: "Degradé cuatro repositorios de nueve formas semánticamente equivalentes y medí 2.929 corridas de agente. En código pequeño no pasa nada medible. En código grande e interconectado, degradar cómo está escrito reduce a la mitad lo que el agente resuelve."
+pubDate: 2026-09-01
 tags: ["IA", "Agentes", "Evaluación"]
 lang: es
 translationKey: practices-for-agents-substrate
@@ -46,7 +46,7 @@ Y una condición que la primera versión de este experimento no tenía: **una ta
 árbol intacto la resuelve con margen**. Si el código limpio ya agota el presupuesto de turnos, no
 queda sitio donde una degradación pueda notarse, y la celda saldrá a cero pase lo que pase.
 
-**2.371 corridas medidas sobre cuatro repositorios**, con diez o quince pasadas por celda.
+**2.929 corridas medidas sobre cuatro repositorios**, con diez o quince pasadas por celda.
 Todo [en el repo](https://github.com/JaviMaligno/agent-code-practices).
 
 ## Dónde no pasa nada
@@ -55,10 +55,10 @@ python-stdnum: validadores de números fiscales, ficheros pequeños y autoconten
 
 | Condición | Resuelve | IC 95% | Turnos | Techo antes→después | ¿Se distingue de la base? |
 |---|---|---|---|---|---|
-| sin tocar (base) | 49/59 — 83% | [72%, 91%] | 10 | 2 | — |
-| cómo está escritoᵃ | 42/56 — 75% | [62%, 84%] | 13 | 2→4 | n.s. (≥20% sería visible) |
-| dónde mirarᵃ | 46/58 — 79% | [67%, 88%] | 10 | 2→5 | n.s. (≥20% sería visible) |
-| las dos cosasᵃ | 48/59 — 81% | [70%, 89%] | 11 | 2→5 | n.s. (≥19% sería visible) |
+| sin tocar (base) | 91/167 — 54% | [47%, 62%] | 30 | 62 | — |
+| cómo está escritoᵃ | 45/155 — 29% | [22%, 37%] | 40 | 62→96 | **p=0.000** |
+| dónde mirar | 76/161 — 47% | [40%, 55%] | 38 | 62→75 | n.s. (≥16% sería visible) |
+| las dos cosasᵃ | 37/157 — 24% | [18%, 31%] | 40 | 62→103 | **p=0.000** |
 
 Las condiciones con la misma marca (ᵃ) **no se distinguen entre sí**, solo de la base.
 
@@ -93,8 +93,11 @@ piezas a la vez.
 
 Las condiciones con la misma marca (ᵃ) **no se distinguen entre sí**, solo de la base.
 
-**Cero de veinticinco.** Degradar las dos familias a la vez no baja la tasa: la anula. Y degradar
-solo *cómo está escrito* la reduce a la mitad, con la mediana de turnos clavada en el techo.
+**Del 54% al 24%.** Degradar las dos familias a la vez se lleva por delante más de la mitad de lo
+que el agente resolvía, y degradar solo *cómo está escrito* casi lo mismo, con la mediana de turnos
+clavada en el techo. Con casi doscientas celdas por condición, las dos caídas están muy por debajo
+del azar (p<0,001) y **se distinguen también entre sí**: esconder *dónde mirar* añade daño sobre
+ensuciar el texto, pero por sí solo no hace nada que estos datos separen del ruido.
 
 Esa es la respuesta a la hipótesis, y es la contraria a la que yo había escrito. Esconder *dónde
 mirar* no produce un efecto que estos datos distingan del ruido. Ensuciar el texto sí.
@@ -113,7 +116,7 @@ Las tres corridas puestas en fila, comparando el árbol intacto con su peor cond
 |---|---|---|---|---|
 | python-stdnum, tier alto | 98% | 93% | 6 → 6 | 1/60 → 2/60 |
 | python-stdnum, tier bajo | 83% | 81% | 10 → 11 | 2/59 → 5/59 |
-| pint | 54% | 0% | 30 → 40 | 12/35 → 18/25 |
+| pint | 54% | 24% | 30 → 40 | 62/167 → 103/157 |
 
 El modelo capaz no absorbe el daño por ser más listo: **empieza con margen**. Resuelve en 6 turnos
 de 40, y aunque la degradación le costara el triple seguiría sobrándole presupuesto. pint parte de
@@ -160,9 +163,9 @@ lado del experimento.
 
 | Tamaño de fichero | Resuelve | ¿Se distingue? |
 |---|---|---|
-| original | 19/35 — 54% | — |
-| ~500 líneas | 19/31 — 61% | n.s. (p=0.62) |
-| ~2.000 líneas | 13/30 — 43% | n.s. (p=0.46) |
+| original | 91/167 — 54% | — |
+| ~500 líneas | 41/71 — 58% | n.s. (p=0.67) |
+| ~2.000 líneas | 33/70 — 47% | n.s. (p=0.32) |
 
 Concatenar los módulos de pint hasta ~500 y ~2.000 líneas por fichero no cambia nada detectable. El
 diseño buscaba un umbral; con estas celdas, ni umbral ni pendiente.
