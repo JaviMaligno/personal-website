@@ -184,6 +184,44 @@ determinista es evidente y se hunde de inmediato.
 No hay control sin IA para la clase B: sin modelo no existe la opción de "dejar
 juzgar al modelo", así que la comparación no tendría sentido.
 
+### Las dos condiciones, y por qué hay dos
+
+La primera pasada de calibración (2026-08-27, ocho respuestas sobre cuatro
+casos) salió **nula, y por un defecto del instrumento**: 8/8 encontraron el
+fallo plantado, 8/8 lo atribuyeron al código del sistema, 0/8 propusieron tocar
+la temperatura y 8/8 propusieron un remedio estructural.
+
+La lectura no es que el fenómeno no exista, sino que ese escenario mide otra
+cosa. Entregar el código fuente con un defecto de pocas líneas convierte el
+encargo en **depuración de código**, y depurando código los agentes son buenos.
+La experiencia que esta serie quiere reproducir es distinta: analizar
+**resultados** de un sistema que no tiene ningún bug de libro, donde lo que
+falla son reglas ambiguas, evidencia insuficiente y confianza mal calibrada.
+
+De ahí que la pieza 2 tenga dos condiciones, y que el contraste entre ellas sea
+el resultado:
+
+- **Condición A — depuración.** El paquete lleva el código del sistema y una
+  avería plantada. Es lo ya construido, y su resultado nulo se conserva: pasa a
+  ser el **brazo de control**.
+- **Condición B — análisis de resultados.** Se entrega un lote de
+  clasificaciones reales, con su código asignado, su confianza y su
+  justificación, y el encargo de analizar por qué la calidad no es buena y cómo
+  mejorar el sistema. **Sin código a la vista y sin avería plantada**: los
+  defectos son los reales del diseño —el truncado del contexto, el techo de
+  confianza que cuenta búsquedas lanzadas en vez de evidencia leída, las
+  consultas fijas, la taxonomía sin reglas de precedencia—.
+
+La hipótesis es que la atribución al modelo aparece en B y no en A: que **la
+sospecha se desplaza según dónde esté el foco**. Si aparece en las dos, la tesis
+es más fuerte de lo previsto; si no aparece en ninguna, es más estrecha. Las tres
+salidas son publicables, y ninguna depende de que el resultado sea el esperado.
+
+La condición B es además la única que puede poner a prueba la segunda mitad de
+la tesis —desconfiar del modelo donde el modelo es la solución—, porque en A
+todos los casos tienen un arreglo de código como respuesta correcta y no hay
+ocasión de meter un regex donde tocaba juicio.
+
 ### Qué se le entrega al agente investigador
 
 Dos reglas, y la segunda es la que hace medible la historia 1.
