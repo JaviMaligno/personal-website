@@ -2,7 +2,23 @@
 
 **Fecha:** 2026-08-30
 **Estado:** spec aprobado, pendiente de plan de implementación
-**Fase:** F1 de 3 (F2 = InterCode CTF, F3 = repositorio de código real)
+
+**Estructura en tres bloques.** El eje que separa los bloques no es la dificultad sino qué
+permite cada entorno:
+
+| Bloque | Contenido | Entornos |
+|---|---|---|
+| **1. Réplica** | Los 4 runtimes originales + control de presupuesto igualado | Los **cuatro** suyos: Warehouse, Software Repository, InterCode CTF, τ-Bench (Retail y Airline) |
+| **2. Expansión** | Sondas A, B, C + eje de esquema | Solo los **dos sintéticos**, por la restricción de abajo |
+| **3. Generalización** | Sondas sobre repositorio de código real | Posterior y condicionado al resultado del bloque 2 |
+
+**Por qué las sondas no corren en los cuatro.** Medir relevancia diferida exige inyectar un
+hecho en el paso `t` que se vuelva portante en `t+k`, con ground truth exacto de cuál era la
+acción correcta. Eso requiere control sobre la generación del entorno, que solo tenemos en
+los dos sintéticos. En InterCode CTF y τ-Bench podemos replicar sus números pero no
+manipular `k`: sus trayectorias no son nuestras. Es una restricción del método, no una
+concesión al presupuesto — y conviene decirlo así en el artículo, porque es la pregunta que
+hará el primer revisor.
 
 ## 1. Contexto y objetivo
 
@@ -26,17 +42,19 @@ blog. No es contribución de track principal y el diseño no debe pretenderlo.
 
 ## 2. Contribución declarada
 
-1. **Réplica parcial y cruzada de modelo.** Parcial en dos sentidos que hay que declarar en
-   el artículo, no esconder: cubrimos **uno de sus cuatro entornos** (Warehouse, no Software
-   Repository ni InterCode CTF ni τ-Bench), y **no existe código público de SkillExecBench**
-   — reimplementamos desde la descripción de su §4.1. Ellos usan Gemini-3-Flash, Gemma-4-31B
-   y Qwen-3-8B; nosotros Claude Haiku 4.5 y Sonnet 5. Que el efecto sobreviva a otra familia
-   de modelos es resultado por sí solo.
+1. **Réplica cruzada de modelo sobre sus cuatro entornos.** Warehouse y Software Repository
+   (SkillExecBench), InterCode CTF y τ-Bench (Retail y Airline). Ellos usan Gemini-3-Flash,
+   Gemma-4-31B y Qwen-3-8B; nosotros Claude Haiku 4.5 y Sonnet 5. Que el efecto sobreviva a
+   otra familia de modelos es resultado por sí solo, y cubrir los cuatro es lo que separa
+   una réplica de una anécdota.
 
-   La ausencia de código es la principal amenaza a la validez de todo el trabajo: cualquier
-   discrepancia con sus números es indistinguible de un error nuestro de reimplementación.
-   Por eso la calibración (§6) no es un preliminar sino el resultado del que dependen los
-   demás, y por eso publicamos nuestra reimplementación completa.
+   **No existe código público de SkillExecBench**: sus dos entornos sintéticos los
+   reimplementamos desde la descripción de su §4.1, y cualquier discrepancia con sus números
+   ahí es indistinguible de un error nuestro. Los otros dos no tienen ese problema —
+   InterCode CTF y τ-Bench son benchmarks públicos con evaluador programático propio, así
+   que los integramos en vez de reimplementarlos. Esa asimetría es un argumento a favor de
+   incluirlos: son los dos entornos donde nadie puede acusarnos de habernos construido el
+   rival a medida.
 2. **Operacionalización de sus tres limitaciones declaradas** (sondas A, B y eje de esquema).
 3. **Una cuarta dimensión que no está en su lista: irrecuperabilidad** (sonda C). El paper
    reporta tasas de error y nunca su reversibilidad. Con historia, un error de razonamiento
@@ -55,11 +73,25 @@ blog. No es contribución de track principal y el diseño no debe pretenderlo.
 
 ## 4. Entorno
 
-Reimplementación de su **Warehouse Management** (§4.1): dominio de inventario discreto y
-determinista, 500 estanterías independientes, acciones `Store`, `Move`, `Ship`, `Wait`,
-transiciones con ground truth exacto. Elegido porque es el que ellos usan para la Tabla 1
-(nuestra calibración) y porque el determinismo permite puntuación programática sin
-LLM-judge.
+**Bloque 1 (réplica)** corre sobre los cuatro:
+
+- **Warehouse Management** (SkillExecBench §4.1) — reimplementado. Inventario discreto y
+  determinista, 500 estanterías independientes, acciones `Store`, `Move`, `Ship`, `Wait`,
+  transiciones con ground truth exacto. Es el de su Tabla 1.
+- **Software Repository** (SkillExecBench §4.1) — reimplementado. Grafo relacional de ramas,
+  commits, PRs y estados de CI; acciones `CherryPick`, `Merge`, `RunTests`, `CreateRelease`,
+  `Rollback`. Dependencias densas: una sola acción altera el estado de la rama destino y de
+  las PRs dependientes.
+- **InterCode CTF** — integrado, no reimplementado. 100 retos de bash en Docker.
+- **τ-Bench Retail y Airline** — integrados. Evaluador oficial programático que verifica que
+  el estado final de la base de datos satisface la intención del usuario sin violar política.
+
+**Bloque 2 (sondas)** corre solo sobre Warehouse y Software Repository, por la restricción
+declarada arriba. Warehouse es el entorno principal —variables de estado independientes, más
+fácil aislar el efecto del lag—; Software Repository actúa como control de generalización
+dentro del bloque: si el efecto aparece en uno y no en el otro, eso acota la tesis.
+
+El determinismo de ambos permite puntuación programática sin LLM-judge.
 
 **Ruido de fondo.** Reutilizamos su inyector de distractores (telemetría de sistema,
 actividad irrelevante, overrides de reglas). Diferencia central: en nuestras sondas
@@ -164,10 +196,18 @@ Su baseline "Stateful (LangGraph)" — estado estructurado **junto al** transcri
 queda cubierto: es punto de comparación en la calibración (§6) pero no se arrastra a las
 sondas, donde no añade nada que ReAct no dé ya.
 
-## 6. Calibración antes de cualquier sonda
+## 6. Bloque 1 — réplica, antes de cualquier sonda
 
-Reproducimos Warehouse T ∈ {10, 25, 50, 100} de su Tabla 1 con los cuatro runtimes
-originales (ReAct, Memory, Stateful, SKILL.state), 5 seeds, ambos modelos.
+Con los cuatro runtimes originales (ReAct, Memory, Stateful, SKILL.state) y ambos modelos:
+
+- **Su Tabla 1** — Warehouse a T ∈ {10, 25, 50, 100}, 5 seeds. Es la celda de calibración
+  principal: si nuestros baselines están mal implementados, aquí se ve.
+- **Software Repository** a los mismos horizontes, 5 seeds. Ellos lo relegan al Apéndice 7;
+  nosotros lo tratamos igual que Warehouse porque es el segundo entorno donde luego corren
+  las sondas.
+- **Su Tabla 4** — InterCode CTF (100 tareas) y τ-Bench Retail y Airline. Sin seeds, igual
+  que ellos: reportan un número único por celda. Aquí replicamos pass@1 / pass rate, tamaño
+  de prompt y tokens acumulados.
 
 - Si reproduce la dirección de sus resultados → la réplica cruzada de modelo ya es resultado
   publicable y sabemos que nuestros baselines están bien implementados.
@@ -228,16 +268,18 @@ degradación con `k`, el resultado es que el supuesto de estadístico suficiente
 de lo esperado — réplica negativa, igual de publicable y más útil para el lector que tiene
 que decidir si adopta esto.
 
-### 8.1 Criterios de parada y paso a F2
+### 8.1 Criterios de parada y paso al bloque 3
 
 Fijados antes de correr, para que la decisión de seguir no dependa de lo apetecible que
 parezca el resultado a mitad de camino:
 
-| Resultado de F1 | Decisión |
+| Resultado | Decisión |
 |---|---|
-| La calibración no reproduce la dirección de su Tabla 1 | Parar las sondas. El artículo es la réplica fallida, y antes hay que descartar error propio de reimplementación auditando contra su §4.1 y su Apéndice A. |
-| Calibración reproduce, sonda A da efecto con `k` y el brazo de presupuesto igualado **no** falla igual | Resultado principal conseguido. F2 (InterCode CTF) sirve para generalizar a un entorno público y no sintético. |
-| Calibración reproduce, sonda A no da efecto | Réplica positiva + frontera más robusta de lo previsto. Se escribe igual; F2 pasa a opcional y F3 se descarta. |
+| El bloque 1 no reproduce la dirección de sus tablas **en los dos entornos reimplementados**, pero sí en los dos públicos | Es error nuestro de reimplementación, no fallo de réplica. Auditar contra su §4.1 y su Apéndice A antes de seguir. Este es el diagnóstico que hace valiosa la asimetría entre entornos reimplementados e integrados. |
+| El bloque 1 no reproduce en ninguno de los cuatro | Parar las sondas. El artículo es la réplica fallida. |
+| Bloque 1 reproduce, sonda A da efecto con `k` y el brazo de presupuesto igualado **no** falla igual | Resultado principal conseguido. El bloque 3 pasa a estar justificado. |
+| Bloque 1 reproduce, sonda A no da efecto en ninguno de los dos entornos | Réplica positiva + frontera más robusta de lo previsto. Se escribe igual; el bloque 3 se descarta. |
+| Sonda A da efecto en Warehouse pero no en Software Repository (o al revés) | La tesis existe pero está acotada al tipo de estado. Hay que caracterizar la diferencia antes de generalizar nada. |
 | El brazo de presupuesto igualado falla igual que el estado | El efecto era de presupuesto, no de descarte. Se reporta como tal y **no** se escribe la tesis de la relevancia diferida. |
 
 ## 9. Presupuesto
@@ -245,18 +287,34 @@ parezca el resultado a mitad de camino:
 Modelos: `claude-haiku-4-5` ($1/$5 por MTok, 200K contexto) y `claude-sonnet-5`
 ($2/$10, 1M contexto).
 
+Cifras extrapoladas de sus Tablas 1 y 4; sus consumos son con Gemini-3-Flash y Gemma, así
+que los nuestros pueden desviarse. Tratar como orden de magnitud, no como presupuesto cerrado.
+
 | Bloque | Coste estimado |
 |---|---|
-| Calibración (4 runtimes × 4 horizontes × 5 seeds × 2 modelos) | ~$70 |
-| Control de presupuesto igualado a T=100 (§5.6) | ~$15 |
-| Sonda A (5 valores de `k` × 7 brazos × 5 seeds × 2 modelos) | ~$93 |
-| Sonda B | ~$19 |
-| Sonda C (3 lags × 7 brazos × 5 seeds × 2 modelos) | ~$58 |
-| Margen de depuración y recorridas | ~$100 |
-| **Total** | **$350–450** |
+| **1.** Warehouse, 4 horizontes × 5 seeds × 2 modelos | ~$70 |
+| **1.** Software Repository, ídem | ~$70 |
+| **1.** InterCode CTF (~3,5M tokens × 2 modelos) | ~$11 |
+| **1.** τ-Bench Retail + Airline (~34M tokens × 2 modelos) | ~$100 |
+| **1.** Control de presupuesto igualado a T=100 (§5.6) | ~$15 |
+| **2.** Sonda A (5 valores de `k` × 7 brazos × 5 seeds × 2 modelos × 2 entornos) | ~$185 |
+| **2.** Sonda B (2 entornos) | ~$38 |
+| **2.** Sonda C (3 lags × 7 brazos × 5 seeds × 2 modelos × 2 entornos) | ~$115 |
+| Margen de depuración y recorridas | ~$150 |
+| **Total** | **$700–800** |
 
-**Palanca de recorte si hace falta:** Sonnet 5 solo en la calibración, sondas con Haiku.
-Baja a ~$150 sin tocar ninguna conclusión sobre `k`.
+τ-Bench es la partida cara del bloque 1 y no admite recorte sin dejar de ser réplica: sus
+prompts llegan a 5.000 tokens por paso en Airline, y ese es justamente el caso donde su
+método más luce.
+
+**Palancas de recorte, en orden de menor daño:**
+
+1. Sondas solo en Warehouse, dejando Software Repository para después (−$170). Se pierde el
+   control de generalización interna del bloque 2.
+2. Sonnet 5 solo en el bloque 1, sondas con Haiku (−$150). No toca ninguna conclusión sobre
+   `k`, pero se pierde el eje de escala en las sondas, que era medio artículo.
+3. Bloque 1 con un solo modelo (−$130). No lo recomiendo: la réplica cruzada de modelo es la
+   mitad de la contribución declarada.
 
 Nada corre en local. Todo contra la API, en serie.
 
@@ -273,8 +331,10 @@ Nada corre en local. Todo contra la API, en serie.
   importan, la sonda A queda invalidada. Mitigación: auditoría del prompt por lectura
   independiente antes de la primera corrida, y una condición de control donde el boletín
   nunca llega a ser portante (debe dar accuracy plana en todos los brazos).
-- **R4 — sobreajuste a un solo entorno.** F1 mide un único dominio sintético. Se declara
-  como limitación en el artículo; F2 y F3 existen precisamente para eso.
+- **R4 — las sondas miden solo dominios sintéticos.** La réplica cubre cuatro entornos, pero
+  la expansión vive en dos, ambos generados por nosotros. Mitigación parcial: Software
+  Repository como control de generalización interna. Se declara como limitación en el
+  artículo; el bloque 3 existe precisamente para eso.
 - **R5 — la novedad no está verificada.** Damos por hecho que nadie ha medido relevancia
   diferida en runtimes de agente a partir de una búsqueda superficial. Para un blog basta;
   para un preprint no. **Paso previo obligatorio antes de escribir una línea de código:**
@@ -292,9 +352,11 @@ Nada corre en local. Todo contra la API, en serie.
 4. Artículo bilingüe EN/ES en el blog.
 5. Preprint corto, si la calibración y al menos una sonda dan resultado limpio.
 
-## 12. Fuera de alcance de F1
+## 12. Fuera de alcance
 
-- InterCode CTF (F2) y repositorio de código real (F3).
+- **Sondas** en InterCode CTF y τ-Bench: se replican (bloque 1) pero no se manipulan, por la
+  restricción de §Estructura. Sus trayectorias no son nuestras.
+- Repositorio de código real (bloque 3).
 - Modelos de pesos abiertos: requieren ejecución local y la máquina está saturada.
 - Horizonte T=200.
 - Escenario multiagente (el paper también lo excluye).
