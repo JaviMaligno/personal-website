@@ -21,7 +21,10 @@ Del spec `docs/superpowers/specs/2026-08-30-relevancia-diferida-design.md`, **so
 
 **Fuera de este PR, deliberadamente:** Software Repository, InterCode CTF, τ-Bench, todas las sondas, el brazo de presupuesto igualado, CWL, y el segundo modelo. Cada uno tiene su propio PR tras el checkpoint.
 
-**Decisión aplazada al checkpoint (no la resuelvas aquí):** el spec pide Haiku 4.5 + Sonnet 5, pero Sonnet 5 rechaza el parámetro `temperature` con error 400 y ejecuta *adaptive thinking* siempre. El paper corre a temperatura 0. PR1 usa solo Haiku 4.5, donde `temperature=0` sí es válido. Qué hacer con el segundo punto de escala se decide con la Tabla 1 replicada delante.
+**Sobre temperatura:** ningún modelo de razonamiento admite `temperature`, en ningún
+proveedor, así que la determinación bit a bit del paper no está disponible y no se persigue
+(spec §8). Haiku 4.5 sí la acepta y se usa a 0 porque sale gratis. PR1 corre solo con Haiku
+4.5 por alcance, no por reproducibilidad: el segundo modelo entra en el PR siguiente.
 
 ---
 
@@ -1674,8 +1677,9 @@ escribir una línea más:
    en el paper.
 2. **¿El prompt de `skillstate` es plano?** Debe rondar los ~1.800 tokens a todos los
    horizontes. Si crece con T, hay un fallo.
-3. **¿Qué hacemos con el segundo modelo?** Sonnet 5 no acepta `temperature` y siempre piensa;
-   Sonnet 4.6 sí acepta temperatura 0 y da comparabilidad estricta con Haiku, a cambio de ser
-   un modelo menos actual para el lector. Decisión con datos delante, no antes.
+3. **¿Cuánta varianza hay entre seeds?** Es el dato que decide el presupuesto de repeticiones
+   de todo lo que viene después. Si la SD entre seeds es del orden del efecto que buscan las
+   sondas, hay que subir repeticiones antes de gastar en la rejilla grande. Aquí se ejecuta
+   también la medición del ruido de muestreo del spec §8: una celda, misma seed, N repeticiones.
 
 Los siguientes PRs son Software Repository, luego InterCode CTF y τ-Bench, luego las sondas.

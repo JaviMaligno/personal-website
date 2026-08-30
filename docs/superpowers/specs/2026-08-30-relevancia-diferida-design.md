@@ -288,7 +288,22 @@ saboteados por implementación descuidada (riesgo R1).
 ## 8. Protocolo y predicciones preregistradas
 
 **Protocolo:** 5 seeds por celda, media ± desviación estándar muestral, paired t-test entre
-brazos — igualamos su rigor estadístico (§5.1). Temperatura 0. Todas las corridas en serie.
+brazos — igualamos su rigor estadístico (§5.1). Todas las corridas en serie.
+
+**Sobre la reproducibilidad por temperatura.** El paper fija temperatura 0 y top-p 1. Con
+modelos de razonamiento eso no está disponible en ningún proveedor, así que no lo
+perseguimos: restringirnos a modelos que admitan temperatura significaría elegir modelos
+peores o con el razonamiento apagado, y la réplica dejaría de decir algo sobre los modelos
+que la gente usa — que es la mitad de su utilidad. Haiku 4.5 sí acepta `temperature=0` y se
+usa así porque sale gratis; Sonnet 5 corre con su muestreo por defecto.
+
+Lo que sustituye a la determinación bit a bit es **reproducibilidad estadística**: seeds,
+varianza reportada y conclusiones que sobreviven al ruido. La desviación estándar entre
+seeds absorbe entonces dos fuentes de ruido, entorno y muestreo, y así hay que declararla.
+Para no dejarlo en mano alzada, medimos el ruido de muestreo por separado: una celda
+repetida N veces con la **misma** seed. Cuesta unos $2 y convierte una salvedad en un número.
+Si ese ruido resulta comparable al efecto que buscamos, la respuesta es subir repeticiones,
+no bajar temperatura.
 
 **Límite de potencia, declarado por adelantado.** Con 5 seeds detectamos diferencias grandes
 entre brazos, pero **no localizamos `k*` con precisión de punto**. El artículo debe reportar
