@@ -32,18 +32,15 @@ Esa tabla es lo que ve el agente. Lo único que varío es **si además recibe el
   <rect x="200" y="18" width="200" height="46" rx="6" fill="#1e293b" stroke="#2dd4bf" stroke-width="1.4"/>
   <text x="300" y="40" fill="#e2e8f0" font-size="13" text-anchor="middle">mismo sistema, misma avería</text>
   <text x="300" y="56" fill="#94a3b8" font-size="12" text-anchor="middle">cinco pasadas de un lote</text>
-
   <path d="M300 64 L300 88 M170 88 L430 88 M170 88 L170 106 M430 88 L430 106" stroke="#64748b" stroke-width="1.3" fill="none"/>
   <path d="M166 100 L170 108 L174 100 Z" fill="#64748b"/>
   <path d="M426 100 L430 108 L434 100 Z" fill="#64748b"/>
-
   <rect x="40" y="110" width="260" height="118" rx="6" fill="#171f2e" stroke="#f59e0b" stroke-width="1.4"/>
   <text x="58" y="132" fill="#fbbf24" font-size="13">sin el código</text>
   <text x="58" y="156" fill="#cbd5e1" font-size="12">· la tabla de resultados</text>
   <text x="58" y="176" fill="#cbd5e1" font-size="12">· registros someros</text>
   <text x="58" y="196" fill="#cbd5e1" font-size="12">· el corpus de documentos</text>
   <text x="58" y="218" fill="#64748b" font-size="11">n = 20</text>
-
   <rect x="320" y="110" width="240" height="118" rx="6" fill="#172a2a" stroke="#2dd4bf" stroke-width="1.4"/>
   <text x="338" y="132" fill="#5eead4" font-size="13">con el código</text>
   <text x="338" y="156" fill="#cbd5e1" font-size="12">· todo lo de la izquierda</text>
@@ -74,7 +71,7 @@ El titular no es la atribución. Culpar al modelo abiertamente pasó cuatro vece
 
 Lo que sí sobrevive es la conducta. **Diecinueve de veinte, sin manera de ver el sistema, se pusieron a amortiguar su salida**: votar entre reintentos, fijar la temperatura, promediar la inestabilidad hasta que desaparezca. Con el código delante, nueve. No hace falta decir que la culpa es del modelo para tratarlo como si lo fuera: basta con dejar de buscar la causa y ponerse a suavizar el síntoma.
 
-> **Añadido después.** Un control posterior a la publicación de este artículo sacó el modelo de lenguaje del pipeline y puso un random forest congelado en su lugar, con la misma avería y todo lo demás igual. El parcheo no se movió: 20/20 en los dos brazos. Así que la conducta de esta tabla no es un hecho sobre los sistemas que llevan un modelo dentro — es un hecho sobre diagnosticar algo que no puedes abrir. De eso va [el tercer artículo](/es/blog/knew-it-wasnt-the-model), y reencuadra a éste.
+> **Añadido después.** Un control posterior a la publicación de este artículo sacó el modelo de lenguaje del pipeline y puso un random forest congelado en su lugar, con la misma avería y todo lo demás igual. El parcheo no se movió: 20/20 en los dos brazos — así que *esa* fila no va de modelos de lenguaje, va de diagnosticar algo que no puedes abrir. Pero encontrar la causa sí se movió, y mucho: 0/20 con el modelo frente a 5/20 con el bosque. Parchear es genérico; investigar no. De eso va [el tercer artículo](/es/blog/knew-it-wasnt-the-model).
 
 ## La segunda avería: donde culpar al modelo es medio cierto
 
@@ -83,37 +80,29 @@ El primer escenario tiene una debilidad que veía desde el principio. Nada en é
 Así que construí un segundo, y ésta es la parte que defendería con más ganas.
 
 <figure class="exp-fig">
-<svg viewBox="0 0 600 250" role="img" aria-label="Diagrama de la segunda avería: una caché de páginas compartida en el lote se indexa por nombre de proyecto y sección, así que dos proyectos distintos que coinciden de nombre colisionan. El segundo en pedir una sección recibe la documentación del primero, y la clasifica correctamente, pero está leyendo el proyecto equivocado.">
+<svg viewBox="0 0 600 215" role="img" aria-label="Diagrama de la segunda avería: una caché de páginas compartida en el lote se indexa por nombre de proyecto y sección, así que dos proyectos distintos que coinciden de nombre colisionan. El segundo en pedir una sección recibe la documentación del primero, y la clasifica correctamente, pero está leyendo el proyecto equivocado.">
   <rect x="26" y="30" width="150" height="52" rx="6" fill="#1e293b" stroke="#2dd4bf" stroke-width="1.3"/>
   <text x="101" y="52" fill="#e2e8f0" font-size="13" text-anchor="middle">proyecto A</text>
   <text x="101" y="70" fill="#94a3b8" font-size="11" text-anchor="middle">se llama «atlas»</text>
-
   <rect x="26" y="150" width="150" height="52" rx="6" fill="#1e293b" stroke="#2dd4bf" stroke-width="1.3"/>
   <text x="101" y="172" fill="#e2e8f0" font-size="13" text-anchor="middle">proyecto B</text>
   <text x="101" y="190" fill="#94a3b8" font-size="11" text-anchor="middle">también «atlas»</text>
-
   <rect x="235" y="86" width="140" height="60" rx="6" fill="#2a1f14" stroke="#f59e0b" stroke-width="1.5"/>
   <text x="305" y="108" fill="#fbbf24" font-size="13" text-anchor="middle">caché compartida</text>
   <text x="305" y="128" fill="#fbbf24" font-size="11" text-anchor="middle" font-family="ui-monospace,monospace">clave: (nombre, sección)</text>
-
   <path d="M176 56 L235 100" stroke="#2dd4bf" stroke-width="1.3" fill="none"/>
   <path d="M228 94 L237 102 L230 104 Z" fill="#2dd4bf"/>
   <rect x="182" y="64" width="82" height="16" fill="#1a1a24"/>
   <text x="186" y="76" fill="#5eead4" font-size="11">guarda primero</text>
-
   <path d="M176 176 L235 134" stroke="#f59e0b" stroke-width="1.3" fill="none"/>
   <path d="M228 138 L237 132 L231 128 Z" fill="#f59e0b"/>
   <rect x="182" y="148" width="74" height="16" fill="#1a1a24"/>
   <text x="186" y="160" fill="#fbbf24" font-size="11">pide después</text>
-
   <rect x="424" y="86" width="150" height="60" rx="6" fill="#171f2e" stroke="#64748b" stroke-width="1.3"/>
   <text x="499" y="108" fill="#e2e8f0" font-size="13" text-anchor="middle">el modelo</text>
   <text x="499" y="128" fill="#94a3b8" font-size="11" text-anchor="middle">lee A, etiqueta B</text>
-
   <path d="M375 116 L424 116" stroke="#f59e0b" stroke-width="1.5" fill="none"/>
   <path d="M416 112 L426 116 L416 120 Z" fill="#f59e0b"/>
-
-  <text x="300" y="228" fill="#94a3b8" font-size="12" text-anchor="middle">qué proyecto va primero depende del orden de iteración del lote</text>
 </svg>
 <figcaption>Una caché compartida entre las corridas de un lote, indexada por proyecto y sección. Dos proyectos sin relación que casualmente comparten nombre corto colisionan, y el segundo en pedir recibe la documentación del primero. El modelo clasifica esa documentación perfectamente bien: sencillamente no es la del proyecto por el que se le preguntaba.</figcaption>
 </figure>
@@ -164,15 +153,12 @@ Así que no es falta de curiosidad por los datos. Varias de estas respuestas hic
   <text x="20" y="24" fill="#94a3b8" font-size="12">sobre 20 respuestas por grupo</text>
   <rect x="380" y="14" width="12" height="12" fill="#f59e0b"/><text x="398" y="24" fill="#cbd5e1" font-size="12">sin el código</text>
   <rect x="380" y="32" width="12" height="12" fill="#2dd4bf"/><text x="398" y="42" fill="#cbd5e1" font-size="12">con el código</text>
-
   <text x="20" y="72" fill="#e2e8f0" font-size="13">parchea el síntoma</text>
   <rect x="200" y="60" width="332" height="15" rx="2" fill="#f59e0b"/><text x="540" y="72" fill="#fbbf24" font-size="12">19</text>
   <rect x="200" y="79" width="157" height="15" rx="2" fill="#2dd4bf"/><text x="365" y="91" fill="#5eead4" font-size="12">9</text>
-
   <text x="20" y="132" fill="#e2e8f0" font-size="13">encuentra la causa</text>
   <rect x="200" y="120" width="52" height="15" rx="2" fill="#f59e0b"/><text x="260" y="132" fill="#fbbf24" font-size="12">3</text>
   <rect x="200" y="139" width="350" height="15" rx="2" fill="#2dd4bf"/><text x="558" y="151" fill="#5eead4" font-size="12">20</text>
-
   <text x="20" y="192" fill="#e2e8f0" font-size="13">pide los datos</text>
   <rect x="200" y="180" width="2" height="15" rx="1" fill="#f59e0b"/><text x="210" y="192" fill="#fbbf24" font-size="12">0</text>
   <rect x="200" y="199" width="2" height="15" rx="1" fill="#2dd4bf"/><text x="210" y="211" fill="#5eead4" font-size="12">0</text>

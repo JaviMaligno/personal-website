@@ -56,12 +56,10 @@ In my experience that has almost never been the actual cause. The inputs changed
   <text x="46" y="200" fill="#e2e8f0" font-size="14" font-family="ui-monospace,'JetBrains Mono',monospace">harness code</text>
   <rect x="30" y="230" width="300" height="34" rx="5" fill="#2a1f14" stroke="#f59e0b" stroke-width="1.6"/>
   <text x="46" y="252" fill="#fbbf24" font-size="14" font-family="ui-monospace,'JetBrains Mono',monospace">model sampling</text>
-
   <path d="M338 57 L400 57 M338 103 L400 103 M338 149 L400 149 M338 195 L400 195" stroke="#2dd4bf" stroke-width="1.2" fill="none" opacity="0.7"/>
   <path d="M400 50 L400 202" stroke="#2dd4bf" stroke-width="1.5" fill="none"/>
   <text x="412" y="120" fill="#5eead4" font-size="13">where the cause</text>
   <text x="412" y="138" fill="#5eead4" font-size="13">usually is</text>
-
   <path d="M338 247 L400 247" stroke="#f59e0b" stroke-width="1.6" fill="none"/>
   <text x="412" y="243" fill="#fbbf24" font-size="13">where the</text>
   <text x="412" y="261" fill="#fbbf24" font-size="13">suspicion lands</text>
