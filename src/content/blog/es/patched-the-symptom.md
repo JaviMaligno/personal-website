@@ -1,6 +1,6 @@
 ---
 title: "Diecinueve de veinte parchearon el síntoma"
-description: "Le di a ochenta agentes el mismo clasificador averiado y cambié una sola cosa: si podían ver su código. Lo que se movió no fue a quién culpaban, sino si buscaban la causa siquiera. Y en ochenta respuestas, ninguna pidió los datos que le faltaban."
+description: "Le di a ciento cuarenta agentes el mismo clasificador averiado y cambié una sola cosa: si podían ver su código. Lo que se movió no fue a quién culpaban, sino si buscaban la causa siquiera. Y ninguno pidió los datos que le faltaban, ni cuando se le dijo expresamente que podía."
 pubDate: 2026-09-10
 tags: ["IA", "Agentes", "Evaluación", "Investigación"]
 lang: es
@@ -135,15 +135,27 @@ Hacer que la explicación equivocada fuera *razonable* es lo que movió el núme
 
 Un resultado salió al revés de lo que esperaba: proponer fijar la temperatura fue **más** frecuente con el código que sin él (8/20 frente a 2/20). Leer las respuestas lo explica: con el código a la vista ven que el muestreo residual es real, y proponen fijarlo como parte del arreglo. Es una sugerencia informada, no un reflejo, y recuerda bien que una casilla suelta mide mal la conducta.
 
-## Nadie preguntó. Ochenta veces.
+## Nadie preguntó. Ciento cuarenta veces.
 
-En los dos escenarios y los cuatro grupos, **ni una de las ochenta respuestas pidió la información que le faltaba antes de llegar a una conclusión.**
+En todos los escenarios y todos los grupos, **ni una sola respuesta pidió la información que le faltaba antes de llegar a una conclusión.**
 
-Ni una. Todos los paquetes llevaban a propósito registros someros —entrada y respuesta final— mientras la traza completa existía y se habría entregado a quien la pidiera. El encargo lo decía: *puedes pedir lo que te falte*. Ochenta de ochenta diagnosticaron primero y enumeraron al final lo que habían echado en falta, con la conclusión ya escrita.
+Ni una. Todos los paquetes llevaban a propósito registros someros —entrada y respuesta final— mientras la traza completa existía y se habría entregado a quien la pidiera. El encargo lo decía: *puedes pedir lo que te falte*. Todas diagnosticaron primero y enumeraron al final lo que habían echado en falta, con la conclusión ya escrita.
 
-Lo que hicieron en su lugar es la mitad interesante. **Dieciocho de veinte se fabricaron su propia medición**: un script, un barrido sobre el corpus, una reproducción sintética. No es que les faltara curiosidad por los datos — varios hicieron trabajo genuinamente riguroso. Preferían fabricar la evidencia a pedirla.
+La explicación evidente es social: enseñarle a alguien una tabla de salidas enmarca el trabajo como *analiza esto*, y pedir más entrada se lee como negarse al encargo. Eso se comprueba cambiando una frase, así que lo comprobé. Sesenta respuestas más, el mismo escenario congelado, con el encargo reescrito para decir que pedir es una respuesta **completa**, preferible a una hipótesis que no se puede contrastar, y rematando con *pedir no es dejar el trabajo a medias*.
 
-No tengo una explicación limpia. La más económica es que enseñarle a alguien una tabla de salidas enmarca el trabajo como *analiza esto*, y pedir más entrada se lee como negarse al encargo. Pero eso es una hipótesis, y el artículo que la mide no está escrito.
+| | permiso pasivo | permiso explícito | p |
+|---|---|---|---|
+| Pide instrumentación antes de concluir | 0/20 | **0/20** | — |
+| Pide y se detiene ahí | 0/20 | 0/20 | — |
+| **Da la conclusión como provisional** | 6/20 | **14/20** | **0,013** |
+
+**Ciento cuarenta de ciento cuarenta.** Decirles con todas las letras que pedir no es escaquearse no cambia nada respecto a si piden.
+
+Lo que sí cambia es la *forma* de la respuesta. El hedging se dobla. Con permiso explícito para preguntar, no preguntan: se cubren, marcando la conclusión como provisional en lugar de hacer lo único que la volvería firme.
+
+Y la otra mitad de la explicación es lo que hacen en su lugar. **Se fabrican su propia medición**: un script, un barrido sobre el corpus, una reproducción sintética del pipeline. En el tier más potente, 18 de 20 lo hacen, frente a 7 de 20 en el menor (p = 0,0004) — la mayor diferencia de capacidad de todo el estudio, y no está en la disposición a preguntar, que es cero en todas partes. Está en poder fabricarse la respuesta sin preguntar.
+
+Así que no es falta de curiosidad por los datos. Varias de estas respuestas hicieron trabajo genuinamente riguroso para conseguirlos. Pedirlos sencillamente no entra en el repertorio, y quien puede se los fabrica.
 
 <figure class="exp-fig">
 <svg viewBox="0 0 600 230" role="img" aria-label="Gráfico de barras con los resultados principales sobre veinte respuestas por grupo. Sin el código: parchea el síntoma 19, encuentra la causa 3, pide los datos 0. Con el código: parchea el síntoma 9, encuentra la causa 20, pide los datos 0.">
@@ -166,24 +178,22 @@ No tengo una explicación limpia. La más económica es que enseñarle a alguien
 <figcaption>El primer escenario, veinte respuestas por grupo. El acceso al código multiplica por casi siete la tasa de encontrar la causa, y reduce aproximadamente a la mitad la de amortiguar el síntoma. No cambia absolutamente nada en la disposición a pedir la información que falta, que es cero en los dos casos.</figcaption>
 </figure>
 
-## El modelo capaz no es mejor de manera uniforme
+## Un hallazgo que no sobrevivió
 
-Corrí la mitad de cada grupo con un tier de modelo más potente y la otra mitad con uno menor. Diez por celda es poco para concluir gran cosa, y la mayoría de las diferencias es ruido. Dos no lo son.
+Dedico un párrafo a algo que ya no está en este artículo, porque cómo se fue es justamente el asunto.
 
-**El reflejo de la temperatura es cosa del tier menor.** En el primer escenario, sin el código: 9/10 del tier menor propusieron fijar la temperatura, frente a 1/10 del mayor (p = 0,0005). Es la separación por tier más nítida de todo el estudio.
+La mitad de cada grupo corrió con un tier de modelo más potente y la otra mitad con uno menor. En la primera ronda, con diez respuestas por celda, el tier mayor parecía encontrar la causa **menos** que el menor —4/10 frente a 9/10, p = 0,029— y yo tenía lista una explicación redonda. Las respuestas del tier mayor habían auditado el corpus documento a documento, verificado que ningún snapshot contiene material de otro proyecto (lo cual es *cierto*, porque la contaminación ocurre en ejecución y no en los datos), y de ahí habían concluido que una caché no podía ser la responsable. Razonamiento correcto, comprobación correcta, conclusión falsa.
 
-**Pero en el escenario difícil el tier mayor encontró la causa menos** —4/10 frente a 9/10 (p = 0,029)— y el motivo no es descuido. Es lo contrario. Las respuestas del tier mayor auditaron el corpus documento a documento, verificaron que ningún snapshot contiene material de otro proyecto —**lo cual es cierto**, porque la contaminación ocurre en ejecución y no en los datos— y de ahí concluyeron que una caché no podía ser la responsable. Una lo escribe tal cual: *«el corpus está limpio… ninguna contiene documentos de otro repo»*, y a continuación *«es intermitente porque hay muestreo»*.
+Era una buena historia. Así que doblé la muestra a veinte por celda, y se evaporó: 2/20 frente a 5/20, p = 0,20. Era ruido, y un p de 0,029 con diez por celda es exactamente esa clase de número que parece un hallazgo y no lo es.
 
-Razonamiento correcto, sobre una comprobación correcta, hasta una conclusión falsa. La capacidad de más se fue en construir una teoría más elaborada —contaminación cruzada entre ítems del mismo lote— en lugar de la más simple, que resultaba ser la verdadera.
-
-Quiero ser cuidadoso aquí: que el tier mayor *culpe* más no está establecido (4/10 frente a 2/10, p = 0,31, que no es nada). Lo que está establecido es que encontró la causa menos en este escenario. La capacidad apareció en lo sofisticada que era la respuesta equivocada.
+La única diferencia de tier que sí aguanta es la de arriba: el tier mayor se fabrica su propia medición mucho más a menudo. Ésa sí la defendería.
 
 ## Lo que no se sostiene
 
 - **Con el código, 20/20 encontraron la primera avería.** Ese grupo no discrimina, y lo sabía antes de correrlo: llegar a una dificultad intermedia ahí habría exigido fabricar metadatos —asignar repositorios a registros de paquetes que no los listan, escalonar fechas de captura— y lo descarté. Un estudio sobre agentes que toman atajos no puede tomar ése. El grupo con código es el control, no la medida.
 - **La forma literal de la tesis sigue sin medirse.** *Culpa al modelo de lo que no se culparía a sí mismo* exige que el sistema sea del propio agente. En los cuatro grupos audita código ajeno. Lo que medí es una asimetría de material, no de autoría.
 - **Una certificación salió a 18/20** en vez del 19/20 que había fijado como listón, y el arreglo elimina las catorce contaminaciones pero deja tres cambios residuales: el 0,7% de suelo de muestreo que ninguna clave de caché toca.
-- **Diez por celda** en el eje de tier. Toda afirmación sobre tiers es una pista, no un hallazgo.
+- **La rúbrica se endureció entre rondas**, y la misma condición puntúa 13/20 con la definición vieja y 3/20 con la nueva (p = 0,0015). La segunda exige que la respuesta describa el mecanismo, y cuenta como fallo listar la caché entre varias hipótesis sin comprometerse. Los números de rondas distintas de ese campo no se pueden juntar ni comparar, y ninguno de este artículo lo hace.
 
 ## La parte que más costó
 

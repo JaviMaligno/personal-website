@@ -1,6 +1,6 @@
 ---
 title: "Nineteen of twenty patched the symptom"
-description: "I gave eighty agents the same misbehaving classifier and changed one thing: whether they could see its code. What moved wasn't who they blamed — it was whether they looked for the cause at all. And in eighty responses, not one asked for the data it was missing."
+description: "I gave a hundred and forty agents the same misbehaving classifier and changed one thing: whether they could see its code. What moved wasn't who they blamed — it was whether they looked for the cause at all. And not one of them asked for the data it was missing, even when told outright that asking was allowed."
 pubDate: 2026-09-10
 tags: ["AI", "Agents", "Evaluation", "Research"]
 lang: en
@@ -135,15 +135,27 @@ Making the wrong explanation *reasonable* is what moved the number: from 4/20 at
 
 One result went the opposite way from what I expected: proposing to fix the temperature was **more** common with the code than without (8/20 vs 2/20). Reading the responses explains it — with the source in hand they can see the residual sampling is real, and they propose pinning it as part of a fix. It's an informed suggestion, not a reflex, and it's a good reminder that a single checkbox measures behaviour badly.
 
-## Nobody asked. Eighty times.
+## Nobody asked. A hundred and forty times.
 
-Across both scenarios, all four groups, **not one of eighty responses asked for the information it was missing before reaching a conclusion.**
+Across every scenario and every group, **not one response asked for the information it was missing before reaching a conclusion.**
 
-Not once. Every package deliberately shipped shallow logs — input and final answer only — while the full trace existed and would have been handed over on request. The brief said so: *you can ask for whatever you're missing*. Eighty out of eighty diagnosed first and listed what they'd lacked at the end, after the conclusion was already written.
+Not once. Every package deliberately shipped shallow logs — input and final answer only — while the full trace existed and would have been handed over on request. The brief said so: *you can ask for whatever you're missing*. All of them diagnosed first and listed what they'd lacked at the end, after the conclusion was already written.
 
-What they did instead is the interesting half. **Eighteen of twenty built their own measurement**: a script, a sweep over the corpus, a synthetic reproduction. They didn't lack curiosity about data — several did genuinely rigorous work. They preferred manufacturing evidence over asking for it.
+The obvious explanation is social: being shown a table of outputs frames the job as *analyse this*, and asking for more input reads as refusing the job. That's testable with one sentence, so I tested it. Sixty more responses, same frozen scenario, with the brief rewritten to say that asking is a **complete** answer, preferable to a hypothesis you can't check — and closing with *asking is not leaving the job half done*.
 
-I don't have a clean explanation. The most economical one is that being shown a table of outputs frames the job as *analyse this*, and asking for more input reads as refusing the job. But that's a hypothesis, and the article that measures it isn't written yet.
+| | passive permission | explicit permission | p |
+|---|---|---|---|
+| Asked for instrumentation before concluding | 0/20 | **0/20** | — |
+| Asked and stopped there | 0/20 | 0/20 | — |
+| **Presented the conclusion as provisional** | 6/20 | **14/20** | **0,013** |
+
+**A hundred and forty out of a hundred and forty.** Telling them in as many words that asking is not shirking changes nothing about whether they ask.
+
+What it does change is the *shape* of the answer. Hedging doubles. Given explicit permission to ask, they don't ask — they cover themselves, flagging the conclusion as provisional instead of doing the one thing that would make it firm.
+
+And the other half of the explanation is what they do instead. **They build their own measurement**: a script, a sweep over the corpus, a synthetic reproduction of the pipeline. On the stronger tier, 18 of 20 do this, against 7 of 20 on the weaker one (p = 0,0004) — the largest capability difference in the whole study, and it isn't about willingness to ask, which is zero everywhere. It's about being able to manufacture the answer without asking.
+
+So it isn't incuriosity about data. Several of these responses did genuinely rigorous work to get data. Asking for it simply isn't in the repertoire, and whoever can, fabricates it instead.
 
 <figure class="exp-fig">
 <svg viewBox="0 0 600 230" role="img" aria-label="Bar chart of the main results out of twenty responses per group. Without the code: patched the symptom 19, found the cause 3, asked for data 0. With the code: patched the symptom 9, found the cause 20, asked for data 0.">
@@ -166,24 +178,22 @@ I don't have a clean explanation. The most economical one is that being shown a 
 <figcaption>The first scenario, twenty responses per group. Access to the code multiplies the rate of finding the cause by nearly seven, and roughly halves the rate of damping the symptom. It does nothing at all to the willingness to ask for missing information, which is zero either way.</figcaption>
 </figure>
 
-## The capable model isn't uniformly better
+## A finding that didn't survive
 
-I ran half of each group on a stronger model tier and half on a weaker one. Ten per cell is too few to conclude much, and most of the differences are noise. Two aren't.
+I'll spend a paragraph on something that isn't in this article any more, because how it left is the point.
 
-**The temperature reflex is a weaker-tier phenomenon.** In the first scenario, without the code: 9/10 on the weaker tier proposed pinning the temperature, against 1/10 on the stronger (p = 0,0005). That is the cleanest tier split in the whole study.
+Half of each group ran on a stronger model tier and half on a weaker one. In the first round, with ten responses per cell, the stronger tier appeared to find the cause **less** than the weaker one — 4/10 against 9/10, p = 0,029 — and I had a tidy explanation ready. The stronger responses had audited the corpus document by document, verified that no snapshot contains another project's material (which is *true*, because the contamination happens at runtime, not in the data), and concluded from that a cache couldn't be responsible. Correct reasoning, correct check, false conclusion.
 
-**But in the harder scenario the stronger tier found the cause less** — 4/10 against 9/10 (p = 0,029) — and the reason isn't carelessness. It's the opposite. The stronger responses audited the corpus document by document, verified that no snapshot contains another project's material — **which is true**, because the contamination happens at runtime and not in the data — and concluded from that a cache couldn't be responsible. One writes it out: *"the corpus is clean… none of them contains documents from another repo"*, and then *"it's intermittent because there's sampling"*.
+It was a good story. So I doubled the sample to twenty per cell, and it evaporated: 2/20 against 5/20, p = 0,20. It was noise, and a p of 0,029 with ten per cell is exactly the kind of number that looks like a finding and isn't.
 
-Correct reasoning, on a correct check, to a false conclusion. The extra capability went into building a more elaborate theory — cross-contamination between items of the same batch — instead of the simpler one that happened to be true.
-
-I want to be careful here: whether the stronger tier *blames* more isn't established (4/10 vs 2/10, p = 0,31, which is nothing). What's established is that it found the cause less in this scenario. Capability showed up in the sophistication of the wrong answer.
+The one tier difference that does hold is the one above — the stronger tier builds its own measurement far more often. That one I'd defend.
 
 ## What doesn't hold
 
 - **With the code, 20/20 found the first fault.** That group doesn't discriminate, and I knew it wouldn't before running it: reaching a middling difficulty there would have required fabricating metadata — assigning repositories to package registries that don't list them, staggering capture dates — and I ruled that out. A study about agents cutting corners can't cut that one. The with-code group is the control, not the measurement.
 - **The literal form of the thesis remains unmeasured.** *Blames the model for what it wouldn't blame itself for* requires the system to be the agent's own. In all four groups it audits someone else's code. What I measured is an asymmetry of material, not of authorship.
 - **One certification came in at 18/20** rather than the 19/20 I'd set as the bar, and the fix removes all fourteen contaminations but leaves three residual changes — the 0,7% sampling floor that no cache key touches.
-- **Ten per cell** on the tier axis. Treat every tier claim as a lead, not a finding.
+- **The rubric hardened between rounds**, and the same condition scores 13/20 under the old definition and 3/20 under the new one (p = 0,0015). The second demands that a response describe the mechanism, and counts listing the cache among several uncommitted hypotheses as a miss. Numbers from different rounds of that field cannot be pooled or compared, and none in this article are.
 
 ## The part that took longest
 
