@@ -77,19 +77,23 @@ La segunda historia lleva un reflejo pegado, y el reflejo es una pequeña histor
 
 Una vez que «es estocástico» está sobre la mesa, el remedio que viene detrás es bajar la temperatura. Es lo primero que se propone, muchas veces antes de haber medido nada.
 
-Falla en dos planos a la vez. No es la causa, así que no arregla nada — como mucho congela la respuesta equivocada en lugar de dejar que varíe. Y en un buen número de modelos actuales ni siquiera está disponible: los modelos de razonamiento rechazan el parámetro. Lo comprobé mientras montaba el experimento que sigue a este artículo, porque quería ser preciso y no retórico: en el despliegue que uso, `gpt-5-mini` rechaza cualquier valor de `temperature`, mientras que `gpt-5.4` y `gpt-5.4-mini` lo aceptan sin queja. Así que el reflejo es siempre un error de diagnóstico, y en algunos modelos es además un error de API que se descubre al chocar con él.
+Falla en dos planos a la vez. No es la causa, así que no arregla nada — como mucho congela la respuesta equivocada en lugar de dejar que varíe. Y en un buen número de modelos actuales ni siquiera está disponible: varios despliegues de razonamiento rechazan el parámetro. Lo comprobé mientras montaba el experimento que sigue a este artículo, porque quería ser preciso y no retórico, y ni siquiera es uniforme dentro de una misma familia: algunos despliegues de gpt-5.x rechazan cualquier valor de `temperature` y otros lo aceptan sin queja. Así que el reflejo es siempre un error de diagnóstico, y en algunos modelos es además un error de API que se descubre al chocar con él.
 
 Lo que me parece revelador no es la equivocación. Es que buscar un mando cuesta menos que buscar el diseño, y siempre hay un mando.
 
+Hay una segunda explicación que me parece plausible y que no puedo zanjar desde aquí. Estos modelos se entrenaron sobre un corpus donde el software normal supera con mucho al software que lleva un modelo dentro, y la parte que sí habla de modelos de lenguaje está sesgada hacia lo antiguo: artículos y cuadernos de una época en la que `temperature` era el mando principal que había, y en la que tratar la varianza de salida como una propiedad del modelo era sencillamente correcto. Leído así, el reflejo no es descuido sino un fósil: buena práctica para los modelos de hace unos años, aplicada a sistemas que ya no funcionan de esa manera. Explicaría la forma concreta del error, que el mando al que se recurre sea siempre el que solía ser el mando bueno. No puedo establecerlo sin ver los datos de entrenamiento, pero una versión más estrecha sí es comprobable —si lo que un agente cree sobre las APIs de los modelos sigue a la época en que se entrenó y no a los modelos que está llamando— y eso probablemente da para un artículo propio.
+
 ## Nadie auditó el ground truth
 
-Estábamos migrando de una versión de modelo a la siguiente, y el feedback era que la nueva iba peor.
+Estábamos migrando de una versión de Claude a la siguiente, y el feedback era que la nueva iba peor.
 
 No me lo creí, y no por lealtad al modelo nuevo: simplemente sabía cómo se había montado la comparación. Resultó que el prompt que se usaba con el modelo nuevo no era equivalente al del viejo. Y por debajo de eso, el gold set tenía errores propios, y esos errores premiaban justo las respuestas que daba el modelo viejo.
 
 La medición estaba mal en la dirección que hacía obvia la conclusión. Y hizo falta que alguien preguntara *¿este ground truth es correcto de verdad?* para que alguien lo mirara — que es una pregunta sobre el método de uno, no sobre el modelo.
 
-Esa asimetría es la versión más nítida de todo el patrón. La sospecha sobre el modelo vino primero. La sospecha sobre el montaje que producía el número llegó sólo cuando se pidió. Ya [escribí antes](/es/blog/how-much-should-you-still-know) sobre que la parte del oficio que sobrevive a la delegación es saber cuándo una respuesta está mal; auditar aquello contra lo que mides es donde empieza eso.
+Esa asimetría es la versión más nítida de todo el patrón. La sospecha sobre el modelo vino primero. La sospecha sobre el montaje que producía el número llegó sólo cuando se pidió.
+
+Volvió a pasar más tarde, a lo grande, y aquello lo conté aparte: [el evaluador sabía menos que el sistema evaluado](/es/blog/the-grader-knew-less). Un informe externo situaba a un clasificador en un 54% de acierto sobre 500 empresas; el gold set que producía ese número lo había generado un modelo genérico de una sentada, y sus etiquetas se podían adivinar desde el nombre de la empresa. La cifra defendible estaba veinte puntos más arriba. La misma forma, otra vez: del número sólo se dudó cuando alguien dudó en voz alta.
 
 ## Un regex donde hacía falta juicio
 
