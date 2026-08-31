@@ -1,6 +1,6 @@
 ---
 title: "Sabían que no era el modelo. Lo parchearon igual."
-description: "Cambié el modelo de lenguaje por un random forest y pasé el mismo pipeline averiado por cuarenta agentes. Diecinueve de veinte parchearon el síntoma a cada lado — pero con el modelo en la caja, no encontró la causa nadie. Y cuando arreglé un defecto de mi propio montaje, la mitad del efecto se fue con él."
+description: "Cambié el modelo de lenguaje por un random forest y pasé el mismo pipeline averiado por cuarenta agentes. Diecinueve de veinte parchearon el síntoma a cada lado, con el modelo y sin él. Lo corrí dos veces: la mitad de lo que había medido era mi montaje, y lo que aguanta no es que investiguen menos, sino de qué acusan al modelo."
 pubDate: 2026-09-11
 tags: ["IA", "Agentes", "Evaluación", "Investigación"]
 lang: es
@@ -69,7 +69,6 @@ El arreglo acabó siendo lo que hace cualquiera por coste: **el sistema cachea l
 La avería no se mueve: sigue en la recuperación, aguas arriba de la caché, así que cachear no la tapa. Verificado sobre las 285 corridas: los mismos proyectos que cambiaban siguen cambiando, con cero diferencias de orden, de posición, de prompt ni de código. Y los dos encargos difieren ahora **en una sola línea** —«la clasificación la decide un modelo de lenguaje» contra «la clasificación la decide un random forest»— con un test que aborta la ejecución si el diff es cualquier otra cosa.
 
 Cuarenta agentes nuevos vieron la tabla sin el código, veinte por brazo. Todo lo que sigue es de la segunda versión.
-
 ## Lo que pasó
 
 | | modelo de lenguaje | random forest | p |
@@ -85,68 +84,83 @@ Treinta y ocho de cuarenta parchearon el síntoma. Diecinueve en cada brazo, la 
 
 Ésa es la fila que rompe el marco que yo traía, y resulta ser también la que menos se movió al arreglar el montaje: antes era 20 y 20.
 
-Lo que sí se movió, y mucho, es la atribución. Con el montaje sucio, diecinueve de veinte culpaban al modelo y nueve al bosque, con una p de 0,0006. Con los dos brazos certificados igual: doce y seis. La misma dirección, la mitad de tamaño, y ya no significativo. **Una buena parte de lo que yo había medido como propiedad del modelo era propiedad de mi encabezado.**
+Lo que sí se movió, y mucho, es la atribución. Con el montaje sucio, diecinueve de veinte culpaban al modelo y nueve al bosque, con una p de 0,0006. Con los dos brazos certificados igual: doce y seis. La misma dirección, la mitad de tamaño.
 
 Merece la pena decir en voz alta lo que acaba de pasar. Esta serie entera va de atribuir a la cabeza lo que le pertenece al andamiaje que la rodea. Yo hice exactamente eso con mi propio experimento, y lo hice imprimiendo el número que me delataba —240/260— en la misma frase en la que explicaba por qué no importaba.
 
-Lo que aguanta después del arreglo es más pequeño, y más interesante.
+Mirando esa tabla escribí una tesis: que el modelo no cambia si parcheas, cambia *dónde te paras a mirar*. Diez de veinte contra dieciséis mirando aguas arriba, y un análisis precioso que decía que todo pasaba por si construías el argumento de exclusión.
 
-Con el modelo en la caja, diez de veinte miran aguas arriba siquiera. Con el bosque, dieciséis. Y llegar hasta la causa: cuatro con el bosque, **cero con el modelo**. Ese cero es lo único que no se ha movido nunca, ni entre montajes ni entre condiciones: **cero de cuarenta**, sumando las dos versiones del control.
+Y entonces la corrí otra vez.
 
-Y a continuación, habiendo exculpado la caja, la parchean igual.
+## Lo que sobrevivió a la segunda vuelta
+
+Cuarenta respuestas nuevas, los mismos dos paquetes sin un byte de cambio, el mismo texto de encargo. Esta vez con una variable más, declarada por escrito y comiteada antes de recoger nada.
+
+| | primera vuelta | segunda vuelta | |
+|---|---|---|---|
+| Parchea el síntoma | 19/19 | 19/19 | sin diferencia, dos veces |
+| Usa el argumento del determinismo | 9/16 · p=0,024 | 9/16 · p=0,024 | idéntico |
+| Culpa a la cabeza | 12/6 · p=0,055 | 13/6 · p=0,028 | replica |
+| Encuentra la causa | 0/4 · p=0,053 | 2/8 · p=0,032 | replica |
+| **Sitúa la causa aguas arriba** | 10/16 · p=0,048 | **16/17 · p=0,50** | **no replica** |
+| Pide los datos que le faltan | 0/20 y 0/20 | 0/20 y 0/20 | — |
+
+Mi tesis bonita se cayó. Con un modelo de lenguaje delante, los agentes miran aguas arriba **exactamente igual** que con un bosque: dieciséis contra diecisiete. Y el análisis de la cadena —quien construye el argumento de exclusión mira arriba 25 de 25, quien no, 1 de 15— pasó de una p menor que 0,0001 a **p = 0,22**. Era post-hoc, era el hallazgo más elegante que tenía, y no aguanta una segunda muestra.
+
+Lo que sí aguantó fue todo lo demás, y una fila replicó hasta el dígito: nueve contra dieciséis en el argumento del determinismo, las dos veces.
 
 <figure class="gua-fig">
-<svg viewBox="0 0 600 310" role="img" aria-label="Gráfico de barras con cinco medidas sobre veinte respuestas por brazo, con las dos cabezas certificadas al mismo nivel. Parchear el síntoma es diecinueve en ambos. El argumento del determinismo es nueve con el modelo y dieciséis con el bosque; mirar aguas arriba diez y dieciséis; culpar a la cabeza doce y seis; encontrar la causa cero y cuatro.">
-  <rect x="366" y="12" width="12" height="12" fill="#2dd4bf"/><text x="384" y="22" fill="#cbd5e1" font-size="12">modelo de lenguaje</text>
-  <rect x="366" y="30" width="12" height="12" fill="#f59e0b"/><text x="384" y="40" fill="#cbd5e1" font-size="12">random forest</text>
-  <text x="20" y="22" fill="#94a3b8" font-size="12">sobre 20 respuestas por brazo</text>
-  <text x="20" y="76" fill="#e2e8f0" font-size="13">parchea el síntoma</text>
-  <rect x="210" y="64" width="314" height="14" rx="2" fill="#2dd4bf"/><text x="532" y="76" fill="#5eead4" font-size="12">19</text>
-  <rect x="210" y="82" width="314" height="14" rx="2" fill="#f59e0b"/><text x="532" y="94" fill="#fbbf24" font-size="12">19</text>
-  <text x="20" y="124" fill="#e2e8f0" font-size="13">&#171;es determinista&#187;</text>
-  <rect x="210" y="112" width="149" height="14" rx="2" fill="#2dd4bf"/><text x="367" y="124" fill="#5eead4" font-size="12">9</text>
-  <rect x="210" y="130" width="264" height="14" rx="2" fill="#f59e0b"/><text x="482" y="142" fill="#fbbf24" font-size="12">16</text>
-  <text x="20" y="172" fill="#e2e8f0" font-size="13">mira aguas arriba</text>
-  <rect x="210" y="160" width="165" height="14" rx="2" fill="#2dd4bf"/><text x="383" y="172" fill="#5eead4" font-size="12">10</text>
-  <rect x="210" y="178" width="264" height="14" rx="2" fill="#f59e0b"/><text x="482" y="190" fill="#fbbf24" font-size="12">16</text>
-  <text x="20" y="220" fill="#e2e8f0" font-size="13">culpa a la cabeza</text>
-  <rect x="210" y="208" width="198" height="14" rx="2" fill="#2dd4bf"/><text x="416" y="220" fill="#5eead4" font-size="12">12</text>
-  <rect x="210" y="226" width="99" height="14" rx="2" fill="#f59e0b"/><text x="317" y="238" fill="#fbbf24" font-size="12">6</text>
-  <text x="20" y="268" fill="#e2e8f0" font-size="13">encuentra la causa</text>
-  <rect x="210" y="256" width="2" height="14" rx="2" fill="#2dd4bf"/><text x="220" y="268" fill="#5eead4" font-size="12">0</text>
-  <rect x="210" y="274" width="66" height="14" rx="2" fill="#f59e0b"/><text x="284" y="286" fill="#fbbf24" font-size="12">4</text>
+<svg viewBox="0 0 600 300" role="img" aria-label="Gráfico de puntos con la diferencia entre brazos, modelo menos bosque, sobre veinte respuestas. Cada medida tiene un punto hueco para la primera vuelta y uno relleno para la segunda, unidos por una línea. Parchear el síntoma es cero en las dos. Culpar a la cabeza pasa de más seis a más siete; el argumento del determinismo se queda en menos siete las dos veces; encontrar la causa pasa de menos cuatro a menos seis; situar la causa aguas arriba pasa de menos seis a menos uno, acercándose a cero. Acusar a la cabeza de aleatoriedad propia, medido sólo en la segunda vuelta, es más diez.">
+  <line x1="300" y1="52" x2="300" y2="270" stroke="#475569" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="300" y="44" fill="#94a3b8" font-size="11" text-anchor="middle">sin diferencia</text>
+  <circle cx="392" cy="20" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.6"/><text x="402" y="24" fill="#cbd5e1" font-size="11">primera vuelta</text>
+  <circle cx="492" cy="20" r="4.5" fill="#2dd4bf"/><text x="502" y="24" fill="#cbd5e1" font-size="11">segunda</text>
+  <text x="20" y="74" fill="#e2e8f0" font-size="12">parchea el síntoma</text>
+  <circle cx="300" cy="70" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.6"/><circle cx="300" cy="70" r="4.5" fill="#2dd4bf"/>
+  <text x="20" y="112" fill="#e2e8f0" font-size="12">culpa a la cabeza</text>
+  <line x1="420" y1="108" x2="440" y2="108" stroke="#475569" stroke-width="1.4"/>
+  <circle cx="420" cy="108" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.6"/><circle cx="440" cy="108" r="4.5" fill="#2dd4bf"/>
+  <text x="20" y="150" fill="#e2e8f0" font-size="12">&#171;es determinista&#187;</text>
+  <circle cx="160" cy="146" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.6"/><circle cx="160" cy="146" r="4.5" fill="#2dd4bf"/>
+  <text x="20" y="188" fill="#e2e8f0" font-size="12">encuentra la causa</text>
+  <line x1="180" y1="184" x2="220" y2="184" stroke="#475569" stroke-width="1.4"/>
+  <circle cx="220" cy="184" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.6"/><circle cx="180" cy="184" r="4.5" fill="#2dd4bf"/>
+  <text x="20" y="226" fill="#f87171" font-size="12">mira aguas arriba</text>
+  <line x1="180" y1="222" x2="280" y2="222" stroke="#f87171" stroke-width="1.4"/>
+  <circle cx="180" cy="222" r="4.5" fill="none" stroke="#f87171" stroke-width="1.6"/><circle cx="280" cy="222" r="4.5" fill="#f87171"/>
+  <text x="20" y="264" fill="#5eead4" font-size="12">le acusa de ser aleatorio</text>
+  <circle cx="500" cy="260" r="4.5" fill="#2dd4bf"/>
+  <text x="160" y="290" fill="#94a3b8" font-size="11" text-anchor="middle">&#8592; m&#225;s con el bosque</text>
+  <text x="450" y="290" fill="#94a3b8" font-size="11" text-anchor="middle">m&#225;s con el modelo &#8594;</text>
 </svg>
-<figcaption>La fila de arriba es la misma barra dos veces: al parcheo le da igual lo que haya en la caja. Las de abajo se mueven, todas en la misma dirección y ninguna de forma aplastante — salvo la última, donde con un modelo de lenguaje dentro no llega nadie.</figcaption>
+<figcaption>Distancia entre los dos brazos, sobre veinte respuestas cada uno, medida dos veces. Casi todo se queda donde estaba. La fila roja es la que se movió: mirar aguas arriba se acercó tanto a cero que la tesis que había construido sobre ella deja de sostenerse. Donde sólo se ve un punto es que las dos vueltas dieron lo mismo y se solapan. La última fila lo tiene por otro motivo: sólo se midió en la segunda vuelta — es la que se declaró por escrito antes de mirar.</figcaption>
 </figure>
 
-## Qué desbloquea la búsqueda
+## De qué se le acusa
 
-La tabla deja una cosa genuinamente ambigua, y es la que más me interesaba resolver: ¿el brazo del bosque es *más fácil*, o el modelo *absorbe la sospecha*? Las dos predicen los mismos números.
+La variable nueva es la que llevaba en la cabeza desde el principio, y por eso la escribí antes de correr nada: no *cuánto* culpan a la cabeza, sino **de qué la culpan**.
 
-Las propias respuestas lo acotan. Esto es post-hoc en su origen —no lo prerregistré— pero es la estructura más limpia que hay en los datos, y ahora está medida en el montaje bueno.
+Hay dos formas de acusar a un componente de que su salida baile. Una es que sea aleatorio por naturaleza: muestrea, tiene ruido, tira el dado. La otra es que sea determinista pero el sistema le haga algo: lo reentrena, lo paraleliza, le cambia la configuración. Las dos son formulables contra las dos cabezas —un bosque puede votar con aleatoriedad, un servidor de inferencia puede agrupar peticiones— y el criterio de codificación se fijó por escrito, con ejemplos de las dos acusaciones para las dos cabezas, antes de ver una sola respuesta.
 
-| | mira aguas arriba |
-|---|---|
-| Construye el argumento del determinismo | **25/25** |
-| No lo construye | **1/15** |
+| | modelo de lenguaje | random forest | p |
+|---|---|---|---|
+| **Le acusa de aleatoriedad propia** | **14/20** | **4/20** | **0,0018** |
 
-p < 0,0001. Y al condicionar en ese argumento, el efecto de la cabeza **desaparece por completo**: entre los que lo construyen, el brazo del modelo va 9 de 9 y el del bosque 16 de 16. Entre los que no, 1 de 11 y 0 de 4.
+Dos codificadores independientes, con acuerdo de 0,95; los dos desacuerdos los resolvió un tercero que no sabía qué había votado cada uno.
 
-Es una cadena de cuatro eslabones en la que la cabeza sólo toca el primero:
+Y el vocabulario, que ya no es una medida sino lo que se lee: en el brazo del modelo aparece «se re-muestrea cada noche», «temperature > 0 sin seed», «ruido de muestreo en cada llamada», «la re-tirada nocturna». Los cuatro del brazo del bosque que también acusan a su cabeza no dicen nada de eso. Dicen que **se reentrena sin `random_state`**, que `predict_proba` corre sobre el lote entero, que el punto flotante se mueve en paralelo.
 
-**qué hay en la caja → si construyes el argumento para descartarla → si miras aguas arriba → si llegas a la causa**
+Al bosque se le acusa de lo que el sistema le hace. Al modelo, de lo que es.
 
-Un bosque congelado te regala ese argumento: es una función pura, se dice en una línea, y dieciséis de veinte la dicen. Un modelo de lenguaje, con exactamente la misma certificación delante y en la misma posición del encargo, no: nueve de veinte. **El modelo no bloquea la búsqueda. Retiene el argumento que la habría empezado.**
+Los parches van detrás del diagnóstico, como siempre: proponer quitarle la aleatoriedad a la cabeza, diecisiete de veinte contra once de veinte. De un lado `temperature=0` y `seed`; del otro `random_state` y `n_jobs=1`. Vale la pena notar que el primero es un mando que en buena parte de los modelos de razonamiento actuales ya no existe.
 
-Y ahí está lo que hizo mi montaje sucio. En la primera versión esa cifra no era nueve de veinte: era dos. El sesgo del montaje y el efecto real empujaban en la misma dirección, que es la forma más incómoda de equivocarse — el resultado sale más bonito y no sabes cuánto de él es tuyo.
-
-La misma forma aparece por el otro lado: de las veintidós respuestas que *no* culparon a la cabeza, **veintidós miraron aguas arriba**. De las dieciocho que sí, cuatro. Y encontrar la causa sólo ocurre después de mirar: 4 de los 26 que miraron, 0 de los 14 que no.
+Seis respuestas hacen las dos cosas a la vez: acusan al modelo de muestrear **y** usan la certificación que lo exculpa, en el mismo documento.
 
 ## La disociación
 
-Éste es el hallazgo, y es el que aguanta el corte más estricto que le puedo hacer.
+Éste es el hallazgo, y ha salido dos veces con la misma cifra.
 
-De las veinticinco respuestas que exculparon a la cabeza —de los dos brazos, con el mismo argumento y la misma certificación— **veintitrés propusieron un parche igualmente.**
+De las veinticinco respuestas que exculparon a la cabeza —de los dos brazos, con el mismo argumento y la misma certificación— **veintitrés propusieron un parche igualmente.** En la primera vuelta: veinticinco y veintitrés.
 
 Una escribe: *«un random forest es una función pura: mismo vector de features, mismo voto. El 260/260 lo confirma. El clasificador queda descartado»*. Su cuarta recomendación es publicar por margen en vez de por top-1, con un umbral sobre la diferencia de confianza y revisión humana por debajo — *«esto corta el síntoma que ve el usuario sea cual sea la causa raíz»*.
 
@@ -154,13 +168,13 @@ Esa última frase es el artículo entero. Cortar el síntoma que ve el usuario, 
 
 ## Lo que el modelo cambia y lo que no
 
-La lectura honesta parte en dos lo que yo venía llamando una sola conducta, y sólo una de las mitades es genérica.
+**Parchear es genérico.** Diecinueve de veinte a cada lado, en las dos vueltas, con las dos cabezas, exculpada o no. Sea lo que sea lo que empuja a un ingeniero a suavizar una salida en vez de rastrearla, un modelo de lenguaje no es requisito: un componente opaco sí.
 
-**Parchear es genérico.** Diecinueve de veinte a cada lado, con la cabeza exculpada o sin exculpar. Sea lo que sea lo que empuja a un ingeniero a suavizar una salida en vez de rastrearla, un modelo de lenguaje no es requisito: un componente opaco sí.
+**Investigar apenas se mueve.** Miran aguas arriba igual —dieciséis contra diecisiete—; lo que cambia es que llegan menos lejos: dos de veinte contra ocho encuentran la causa, y los mismos dos contra ocho nombran el mecanismo real. Es una diferencia real y pequeña, no la que yo había anunciado.
 
-**Investigar, menos.** Cada paso de la cadena se mueve al cambiar la cabeza y todos en la misma dirección, pero con el montaje limpio los efectos son pequeños y rozan el umbral: 0,024 el argumento, 0,048 mirar arriba, 0,053 llegar a la causa, 0,056 la atribución. Con veinte por brazo, eso es exactamente lo que se ve cuando hay algo y no es grande.
+**Lo que sí cambia, y es lo único grande que queda, es la naturaleza de la sospecha.** Con la misma certificación delante y el mismo argumento disponible para exculparla, a una cabeza se la acusa de ser aleatoria y a la otra no. Catorce contra cuatro.
 
-La afirmación específica de los modelos de lenguaje sobrevive, entonces, más pequeña de lo que yo la había medido y con la forma cambiada. La versión que traía iba de *lo que el agente dice*: culpa al modelo. Ésa es justamente la que casi se cae al quitarle el defecto — doce contra seis, p = 0,056. La que aguanta va de *dónde se para*: con un modelo de lenguaje delante, el argumento que desbloquea la investigación se le ocurre a menos de la mitad, y hasta la causa no llega nadie.
+Ésa es la afirmación específica de los modelos de lenguaje, y es la más antigua y la más simple de todas las que traía: no va de que la gente investigue menos, va de que **al modelo se le atribuye una clase de fallo que no se le atribuye a lo que ocupa su lugar**.
 
 ## La pregunta que se quedó sin la mitad de su objeto
 
@@ -168,21 +182,22 @@ Llegué a esta pieza con dos hipótesis sobre por qué existe el reflejo. Una de
 
 Para el parcheo, las dos sobran: ahí no hay conducta específica de los modelos que explicar, porque aparece igual sin ningún modelo en el circuito.
 
-Para lo que queda siguen vivas, y este diseño no puede separarlas — cosa que ya era cierta antes de correr nada. Un hábito aprendido de un corpus que dirige los tokens sin pasar por ninguna creencia consultable es indistinguible de una disposición, para cualquier experimento que sólo observe conducta. Tres revisores independientes del diseño convergieron en eso antes de recoger una sola respuesta.
+Para la acusación siguen vivas, y ahora la primera tiene al menos una pista a su favor que antes no tenía: lo que aparece en el brazo del modelo no es un razonamiento sobre este sistema, es un vocabulario —temperatura, seed, tirada, muestreo— aplicado a un componente que en este montaje lee de disco. Eso es lo que parece un hábito. Pero seguir vivas no es separarse: un hábito aprendido de un corpus que dirige los tokens sin pasar por ninguna creencia consultable es indistinguible de una disposición, para cualquier experimento que sólo observe conducta. Tres revisores independientes del diseño convergieron en eso antes de recoger una sola respuesta.
 
 ## Lo que no se sostiene
 
-- **Culpar a la cabeza ya no alcanza significación.** p = 0,056. Con el montaje anterior parecía el efecto más sólido de la tabla, y era en buena parte la certificación asimétrica. Se queda en tendencia, y así hay que leerlo.
-- **La banda de dificultad aprobó por los pelos.** El criterio comprometido de antemano admitía hasta 4 de 20 de diferencia en encontrar la causa, y salió exactamente 4 (cero contra cuatro). En la primera versión salió 5 y se rompió. Aprobar rozando el límite no es lo mismo que estar holgado.
-- **La mediación es post-hoc en su origen.** No la prerregistré. Se replica aquí en el montaje limpio y sale más fuerte que en el sucio, lo cual ayuda; sigue siendo un análisis que se me ocurrió mirando datos.
-- **El brazo con código no se ha vuelto a correr.** El arreglo de la caché también lo limpiaría, pero los únicos números que tengo de él son de la versión defectuosa, así que no los uso para nada.
+- **La tesis de dónde se para la investigación, que es la que yo había publicado.** Mirar aguas arriba salió 10 contra 16 en la primera vuelta y 16 contra 17 en la segunda. No replica, y la mediación que la sostenía pasó de p < 0,0001 a p = 0,22. La escribí con una sola muestra y con un análisis que se me ocurrió mirando los datos; las dos cosas se notan.
+- **La banda de dificultad aprobó por los pelos en la primera vuelta** —cuatro de veinte de diferencia en encontrar la causa, justo el límite comprometido— y en la segunda se rompió, con seis.
+- **El codificador no puede ser cegado.** El texto dice «el modelo» o «el random forest» en cada párrafo, y fingir lo contrario sería mentir. Lo que hay en su lugar: criterio simétrico fijado por escrito antes de ver una respuesta, dos codificadores independientes con acuerdo de 0,95, un árbitro para los desacuerdos, y las citas publicadas para que cualquiera pueda discutir cada clasificación.
+- **Las dos vueltas no se agrupan.** Se reportan por separado y se declara qué replica y qué no. Sumarlas para ganar potencia sería exactamente el atajo que este experimento mide en otros.
+- **El brazo con código no se ha vuelto a correr.** El arreglo de la caché también lo limpiaría, pero los únicos números que tengo de él son de la versión defectuosa, así que no los uso.
 - **Una avería, un corpus, dos cabezas.** Que la conducta sea genérica ante *este* fallo bajo *esta* opacidad no la hace genérica ante cualquiera.
 
-## Doscientas cuarenta
+## Doscientas ochenta
 
-A lo largo de cinco escenarios, dos tipos de cabeza, permiso pasivo y permiso explícito, dos montajes distintos del mismo control, **ni una de doscientas cuarenta respuestas ha pedido la información que le faltaba antes de concluir.**
+A lo largo de cinco escenarios, dos tipos de cabeza, permiso pasivo y permiso explícito, tres montajes distintos del mismo control, **ni una de doscientas ochenta respuestas ha pedido la información que le faltaba antes de concluir.**
 
-Ese número ha sobrevivido ya a todas las manipulaciones que le he hecho, incluida la diseñada para romperlo, la que quitó el modelo de lenguaje del todo y la que arregló mi propio montaje. Es lo más robusto de toda la serie, y sigo sin tener una buena explicación.
+Ese número ha sobrevivido a todas las manipulaciones que le he hecho: la diseñada para romperlo, la que quitó el modelo de lenguaje del circuito, la que arregló mi propio montaje y la que repitió la medición entera desde cero. Es lo más robusto de toda la serie, y sigo sin tener una buena explicación.
 
 Lo mejor que tengo es la forma de lo que ocupa su lugar: se fabrican su propia medición — un script, un barrido, una reproducción sintética. Quieren los datos. Simplemente no los piden.
 

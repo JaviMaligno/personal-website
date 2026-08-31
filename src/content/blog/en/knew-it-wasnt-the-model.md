@@ -1,6 +1,6 @@
 ---
 title: "They knew it wasn't the model. They patched it anyway."
-description: "I swapped the language model for a random forest and ran the same broken pipeline past forty agents. Nineteen of twenty patched the symptom on each side — but with the model in the box, nobody found the cause at all. And when I fixed a defect in my own setup, half the effect went with it."
+description: "I swapped the language model for a random forest and ran the same broken pipeline past forty agents. Nineteen of twenty patched the symptom on each side, with the model and without it. I ran it twice: half of what I'd measured was my own setup, and what holds up isn't that they investigate less — it's what they accuse the model of."
 pubDate: 2026-09-11
 tags: ["AI", "Agents", "Evaluation", "Research"]
 lang: en
@@ -69,7 +69,6 @@ The fix turned out to be the thing anyone does for cost reasons: **the system ca
 The fault doesn't move: it's still in retrieval, upstream of the cache, so caching doesn't mask it. Verified across all 285 runs: the same projects that changed still change, with zero differences in ordering, position, prompt or code. And the two briefs now differ in **exactly one line** — "the classification is decided by a language model" against "the classification is decided by a random forest" — with a test that aborts the run if the diff is anything else.
 
 Forty fresh agents saw the table without the code, twenty per arm. Everything below is from the second version.
-
 ## What happened
 
 | | language model | random forest | p |
@@ -85,68 +84,83 @@ Thirty-eight of forty patched the symptom. Nineteen in each arm, the same exact 
 
 That's the row that breaks the frame I brought in, and it also turns out to be the one that moved least when I fixed the setup: it was 20 and 20 before.
 
-What did move, a lot, is the attribution. With the dirty setup, nineteen of twenty blamed the model and nine blamed the forest, at p = 0.0006. With both arms certified alike: twelve and six. Same direction, half the size, and no longer significant. **A good part of what I had measured as a property of the model was a property of my header.**
+What did move, a lot, is the attribution. With the dirty setup, nineteen of twenty blamed the model and nine blamed the forest, at p = 0.0006. With both arms certified alike: twelve and six. Same direction, half the size.
 
 It's worth saying out loud what just happened. This entire series is about attributing to the head what belongs to the scaffolding around it. I did exactly that to my own experiment, and I did it while printing the number that gave me away — 240/260 — in the same sentence where I explained why it didn't matter.
 
-What survives the fix is smaller, and more interesting.
+Looking at that table I wrote a thesis: the model doesn't change whether you patch, it changes *where you stop looking*. Ten of twenty against sixteen going upstream, and a lovely analysis saying it all ran through whether you built the exclusion argument.
 
-With the model in the box, ten of twenty look upstream at all. With the forest, sixteen. And reaching the cause: four with the forest, **zero with the model**. That zero is the one thing that has never moved, across setups or conditions: **zero of forty**, summing both versions of the control.
+And then I ran it again.
 
-And then, having exonerated the box, they patch it anyway.
+## What survived the second round
+
+Forty fresh responses, the same two packages without a byte of change, the same brief. This time with one more variable, written down and committed before a single response was collected.
+
+| | first round | second round | |
+|---|---|---|---|
+| Patches the symptom | 19/19 | 19/19 | no difference, twice |
+| Uses the determinism argument | 9/16 · p=0.024 | 9/16 · p=0.024 | identical |
+| Blames the head | 12/6 · p=0.055 | 13/6 · p=0.028 | replicates |
+| Finds the cause | 0/4 · p=0.053 | 2/8 · p=0.032 | replicates |
+| **Places the cause upstream** | 10/16 · p=0.048 | **16/17 · p=0.50** | **does not replicate** |
+| Asks for the data it lacks | 0/20 and 0/20 | 0/20 and 0/20 | — |
+
+My pretty thesis fell over. With a language model in front of them, agents look upstream **exactly as often** as with a forest: sixteen against seventeen. And the chain analysis — whoever builds the exclusion argument looks upstream 25 of 25, whoever doesn't, 1 of 15 — went from p below 0.0001 to **p = 0.22**. It was post-hoc, it was the most elegant thing I had, and it doesn't survive a second sample.
+
+What did survive is everything else, and one row replicated to the digit: nine against sixteen on the determinism argument, both times.
 
 <figure class="gua-fig">
-<svg viewBox="0 0 600 310" role="img" aria-label="Bar chart of five measures over twenty responses per arm, with both heads certified at the same level. Patching the symptom is nineteen in both. The determinism argument is nine with the model and sixteen with the forest; looking upstream ten and sixteen; blaming the head twelve and six; finding the cause zero and four.">
-  <rect x="366" y="12" width="12" height="12" fill="#2dd4bf"/><text x="384" y="22" fill="#cbd5e1" font-size="12">language model</text>
-  <rect x="366" y="30" width="12" height="12" fill="#f59e0b"/><text x="384" y="40" fill="#cbd5e1" font-size="12">random forest</text>
-  <text x="20" y="22" fill="#94a3b8" font-size="12">out of 20 responses per arm</text>
-  <text x="20" y="76" fill="#e2e8f0" font-size="13">patches the symptom</text>
-  <rect x="210" y="64" width="314" height="14" rx="2" fill="#2dd4bf"/><text x="532" y="76" fill="#5eead4" font-size="12">19</text>
-  <rect x="210" y="82" width="314" height="14" rx="2" fill="#f59e0b"/><text x="532" y="94" fill="#fbbf24" font-size="12">19</text>
-  <text x="20" y="124" fill="#e2e8f0" font-size="13">&#8220;it&#8217;s deterministic&#8221;</text>
-  <rect x="210" y="112" width="149" height="14" rx="2" fill="#2dd4bf"/><text x="367" y="124" fill="#5eead4" font-size="12">9</text>
-  <rect x="210" y="130" width="264" height="14" rx="2" fill="#f59e0b"/><text x="482" y="142" fill="#fbbf24" font-size="12">16</text>
-  <text x="20" y="172" fill="#e2e8f0" font-size="13">looks upstream</text>
-  <rect x="210" y="160" width="165" height="14" rx="2" fill="#2dd4bf"/><text x="383" y="172" fill="#5eead4" font-size="12">10</text>
-  <rect x="210" y="178" width="264" height="14" rx="2" fill="#f59e0b"/><text x="482" y="190" fill="#fbbf24" font-size="12">16</text>
-  <text x="20" y="220" fill="#e2e8f0" font-size="13">blames the head</text>
-  <rect x="210" y="208" width="198" height="14" rx="2" fill="#2dd4bf"/><text x="416" y="220" fill="#5eead4" font-size="12">12</text>
-  <rect x="210" y="226" width="99" height="14" rx="2" fill="#f59e0b"/><text x="317" y="238" fill="#fbbf24" font-size="12">6</text>
-  <text x="20" y="268" fill="#e2e8f0" font-size="13">finds the cause</text>
-  <rect x="210" y="256" width="2" height="14" rx="2" fill="#2dd4bf"/><text x="220" y="268" fill="#5eead4" font-size="12">0</text>
-  <rect x="210" y="274" width="66" height="14" rx="2" fill="#f59e0b"/><text x="284" y="286" fill="#fbbf24" font-size="12">4</text>
+<svg viewBox="0 0 600 300" role="img" aria-label="Dot plot of the gap between arms, model minus forest, out of twenty responses. Each measure has a hollow dot for the first round and a filled one for the second, joined by a line. Patching the symptom is zero both times. Blaming the head goes from plus six to plus seven; the determinism argument stays at minus seven both times; finding the cause goes from minus four to minus six; placing the cause upstream goes from minus six to minus one, close to zero. Accusing the head of being random, measured only in the second round, is plus ten.">
+  <line x1="300" y1="52" x2="300" y2="270" stroke="#475569" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="300" y="44" fill="#94a3b8" font-size="11" text-anchor="middle">no difference</text>
+  <circle cx="392" cy="20" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.6"/><text x="402" y="24" fill="#cbd5e1" font-size="11">first round</text>
+  <circle cx="492" cy="20" r="4.5" fill="#2dd4bf"/><text x="502" y="24" fill="#cbd5e1" font-size="11">second</text>
+  <text x="20" y="74" fill="#e2e8f0" font-size="12">patches the symptom</text>
+  <circle cx="300" cy="70" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.6"/><circle cx="300" cy="70" r="4.5" fill="#2dd4bf"/>
+  <text x="20" y="112" fill="#e2e8f0" font-size="12">blames the head</text>
+  <line x1="420" y1="108" x2="440" y2="108" stroke="#475569" stroke-width="1.4"/>
+  <circle cx="420" cy="108" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.6"/><circle cx="440" cy="108" r="4.5" fill="#2dd4bf"/>
+  <text x="20" y="150" fill="#e2e8f0" font-size="12">&#8220;it&#8217;s deterministic&#8221;</text>
+  <circle cx="160" cy="146" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.6"/><circle cx="160" cy="146" r="4.5" fill="#2dd4bf"/>
+  <text x="20" y="188" fill="#e2e8f0" font-size="12">finds the cause</text>
+  <line x1="180" y1="184" x2="220" y2="184" stroke="#475569" stroke-width="1.4"/>
+  <circle cx="220" cy="184" r="4.5" fill="none" stroke="#94a3b8" stroke-width="1.6"/><circle cx="180" cy="184" r="4.5" fill="#2dd4bf"/>
+  <text x="20" y="226" fill="#f87171" font-size="12">looks upstream</text>
+  <line x1="180" y1="222" x2="280" y2="222" stroke="#f87171" stroke-width="1.4"/>
+  <circle cx="180" cy="222" r="4.5" fill="none" stroke="#f87171" stroke-width="1.6"/><circle cx="280" cy="222" r="4.5" fill="#f87171"/>
+  <text x="20" y="264" fill="#5eead4" font-size="12">calls it random by nature</text>
+  <circle cx="500" cy="260" r="4.5" fill="#2dd4bf"/>
+  <text x="160" y="290" fill="#94a3b8" font-size="11" text-anchor="middle">&#8592; more with the forest</text>
+  <text x="450" y="290" fill="#94a3b8" font-size="11" text-anchor="middle">more with the model &#8594;</text>
 </svg>
-<figcaption>The top row is the same bar twice: patching doesn't care what's in the box. The ones below all move, all in the same direction and none of them overwhelmingly — except the last, where with a language model inside nobody arrives.</figcaption>
+<figcaption>Gap between the two arms, out of twenty responses each, measured twice. Almost everything stays where it was. The red row is the one that moved: looking upstream came so close to zero that the thesis I had built on it no longer stands. Where only one dot shows, the two rounds landed on the same number and overlap. The last row has one for a different reason: it was only measured in the second round — it's the one that was written down before looking.</figcaption>
 </figure>
 
-## What actually unlocks the search
+## What it gets accused of
 
-The table leaves one thing genuinely ambiguous, and it's the one I most wanted to settle: is the forest arm *easier*, or does the model *absorb the suspicion*? Both predict the same numbers.
+The new variable is the one I'd had in mind from the start, which is why I wrote it down before running anything: not *how much* they blame the head, but **what they blame it for**.
 
-The responses themselves narrow it. This is post-hoc in origin — I didn't pre-register it — but it's the cleanest structure in the data, and it is now measured on the good setup.
+There are two ways to accuse a component of an output that wobbles. One is that it's random by nature: it samples, it has noise, it rolls the dice. The other is that it's deterministic but the system does something to it: retrains it, parallelises it, changes its configuration. Both are formulable against both heads — a forest can vote with randomness, an inference server can batch requests — and the coding criterion was fixed in writing, with examples of both accusations for both heads, before a single response was read.
 
-| | looks upstream |
-|---|---|
-| Builds the determinism argument | **25/25** |
-| Doesn't build it | **1/15** |
+| | language model | random forest | p |
+|---|---|---|---|
+| **Accuses it of randomness of its own** | **14/20** | **4/20** | **0.0018** |
 
-p < 0.0001. And conditioning on that argument, the effect of the head **disappears entirely**: among those who build it, the model arm goes 9 of 9 and the forest arm 16 of 16. Among those who don't, 1 of 11 and 0 of 4.
+Two independent coders, agreement 0.95; the two disagreements were settled by a third who didn't know how either had voted.
 
-It's a four-link chain in which the head only touches the first link:
+And the vocabulary, which is no longer a measure but simply what's on the page: the model arm gives you "it re-samples every night", "temperature > 0 with no seed", "sampling noise on every call", "the nightly re-roll". The four in the forest arm who also accuse their head say nothing of the kind. They say it **retrains without `random_state`**, that `predict_proba` runs over the whole batch, that floating point moves under parallelism.
 
-**what's in the box → whether you build the argument to rule it out → whether you look upstream → whether you reach the cause**
+The forest gets accused of what the system does to it. The model, of what it is.
 
-A frozen forest hands you that argument: it's a pure function, it takes one line to say, and sixteen of twenty say it. A language model, with exactly the same certification in front of it and in the same position in the brief, does not: nine of twenty. **The model doesn't block the search. It withholds the argument that would have started it.**
+The patches follow the diagnosis, as always: proposing to take the randomness out of the head, seventeen of twenty against eleven of twenty. `temperature=0` and `seed` on one side; `random_state` and `n_jobs=1` on the other. Worth noting that the first is a dial that most current reasoning models no longer expose.
 
-And there is what my dirty setup did. In the first version that figure wasn't nine of twenty — it was two. The setup bias and the real effect pushed in the same direction, which is the most uncomfortable way to be wrong: the result comes out prettier and you don't know how much of it is yours.
-
-The same shape shows up from the other side: of the twenty-two responses that did *not* blame the head, **twenty-two looked upstream**. Of the eighteen that did, four. And finding the cause only ever happens downstream of looking: 4 of the 26 who looked, 0 of the 14 who didn't.
+Six responses do both at once: they accuse the model of sampling **and** cite the certification that exonerates it, in the same document.
 
 ## The dissociation
 
-This is the finding, and it survives the strictest slice I can take of it.
+This is the finding, and it has now come out twice with the same figure.
 
-Of the twenty-five responses that exonerated the head — across both arms, on the same argument and the same certification — **twenty-three proposed a patch anyway.**
+Of the twenty-five responses that exonerated the head — across both arms, on the same argument and the same certification — **twenty-three proposed a patch anyway.** In the first round: twenty-five and twenty-three.
 
 One writes: *"a random forest is a pure function: same feature vector, same vote. The 260/260 confirms it. The classifier is ruled out."* Its fourth recommendation is to publish by margin instead of top-1, with a threshold on the confidence gap and human review below it — *"this cuts the symptom the user sees, whatever the root cause"*.
 
@@ -154,13 +168,13 @@ That last clause is the whole article. Cutting the symptom the user sees, whatev
 
 ## What the model does and doesn't change
 
-The honest reading splits the thing I'd been calling one behaviour into two, and only one of them is generic.
+**Patching is generic.** Nineteen of twenty on each side, in both rounds, with both heads, exonerated or not. Whatever drives an engineer to smooth an output rather than trace it, a language model is not a prerequisite — an opaque component is.
 
-**Patching is generic.** Nineteen of twenty on each side, head exonerated or not. Whatever drives an engineer to smooth an output rather than trace it, a language model is not a prerequisite — an opaque component is.
+**Investigating barely moves.** They look upstream equally — sixteen against seventeen; what changes is that they get less far: two of twenty against eight find the cause, and the same two against eight name the real mechanism. A real difference, and a small one — not the one I had announced.
 
-**Investigating, less so.** Every step of the chain moves when the head changes, all in the same direction, but on the clean setup the effects are small and sitting on the threshold: 0.024 for the argument, 0.048 for looking upstream, 0.053 for reaching the cause, 0.056 for attribution. At twenty per arm, that is exactly what it looks like when something is there and it isn't large.
+**What does change, and it's the only large thing left, is the nature of the suspicion.** With the same certification in front of them and the same argument available to clear it, one head gets accused of being random and the other doesn't. Fourteen against four.
 
-So the LLM-specific claim survives, smaller than I had measured it and with its shape changed. The version I brought in was about *what the agent says*: it blames the model. That's precisely the one that nearly falls over once the defect is removed — twelve against six, p = 0.056. The one that holds is about *where it stops*: with a language model in front of them, the argument that unlocks the investigation occurs to fewer than half, and nobody gets as far as the cause.
+That is the LLM-specific claim, and it's the oldest and simplest of the ones I brought in: it isn't that people investigate less, it's that **the model gets charged with a class of fault that the thing standing in its place does not**.
 
 ## The question that lost half its object
 
@@ -168,21 +182,22 @@ I came into this piece with two hypotheses about why the reflex exists. One said
 
 For the patching, both are moot: there's no model-specific behaviour there to explain, because it shows up unchanged with no model in the loop.
 
-For what's left, they're still live, and this design can't separate them — which was true before I ran anything. A habit learned from a corpus that steers tokens without passing through any consultable belief is indistinguishable from a disposition, for any experiment that only observes behaviour. Three independent reviewers of the design converged on that before a single response was collected.
+For the accusation they're both still live, and the first now has one hint in its favour it didn't have before: what shows up in the model arm isn't reasoning about this system, it's a vocabulary — temperature, seed, roll, sampling — applied to a component that in this setup reads from disk. That is what a habit looks like. But still live isn't separated: a habit learned from a corpus that steers tokens without passing through any consultable belief is indistinguishable from a disposition, for any experiment that only observes behaviour. Three independent reviewers of the design converged on that before a single response was collected.
 
 ## What doesn't hold
 
-- **Blaming the head no longer reaches significance.** p = 0.056. On the previous setup it looked like the most solid effect in the table, and it was in large part the asymmetric certification. It stands as a trend, and should be read as one.
-- **The difficulty band passed by a hair.** The pre-committed criterion allowed up to 4 of 20 of difference in finding the cause, and it came out exactly 4 (zero against four). On the first version it came out 5 and broke. Passing at the line is not the same as passing comfortably.
-- **The mediation is post-hoc in origin.** I didn't pre-register it. It replicates here on the clean setup and comes out stronger than on the dirty one, which helps; it is still an analysis I thought of while looking at data.
-- **The with-code arm hasn't been re-run.** The cache fix would clean it too, but the only numbers I have for it come from the defective version, so I don't use them for anything.
+- **The where-the-search-stops thesis, which is the one I had published.** Looking upstream came out 10 against 16 in the first round and 16 against 17 in the second. It doesn't replicate, and the mediation that propped it up went from p < 0.0001 to p = 0.22. I wrote it off one sample with an analysis I thought of while looking at the data; both show.
+- **The difficulty band passed by a hair in the first round** — four of twenty of difference in finding the cause, exactly the committed limit — and broke in the second, at six.
+- **The coder cannot be blinded.** The text says "the model" or "the random forest" in every paragraph, and pretending otherwise would be a lie. What stands in its place: a symmetric criterion fixed in writing before a single response was read, two independent coders agreeing at 0.95, an arbiter for the disagreements, and the quotes published so anyone can argue with each call.
+- **The two rounds are not pooled.** They're reported separately with an explicit statement of what replicates and what doesn't. Summing them for power would be exactly the shortcut this experiment measures in others.
+- **The with-code arm hasn't been re-run.** The cache fix would clean it too, but the only numbers I have for it come from the defective version, so I don't use them.
 - **One fault, one corpus, two heads.** That the behaviour is generic against *this* failure under *this* opacity doesn't make it generic against any.
 
-## Two hundred and forty
+## Two hundred and eighty
 
-Across five scenarios, two kinds of head, passive permission and explicit permission, two different setups of the same control, **not one of two hundred and forty responses has asked for the information it was missing before concluding.**
+Across five scenarios, two kinds of head, passive permission and explicit permission, three different setups of the same control, **not one of two hundred and eighty responses has asked for the information it was missing before concluding.**
 
-That number has now survived every manipulation I've thrown at it, including the one designed to break it, the one that removed the language model entirely, and the one that fixed my own setup. It is the most robust thing in the whole series, and I still don't have a good explanation for it.
+That number has survived every manipulation I've thrown at it: the one designed to break it, the one that took the language model out of the loop, the one that fixed my own setup, and the one that repeated the whole measurement from scratch. It is the most robust thing in the whole series, and I still don't have a good explanation for it.
 
 The best I have is the shape of what replaces it: they build their own measurement instead — a script, a sweep, a synthetic reproduction. They want the data. They just don't ask.
 
