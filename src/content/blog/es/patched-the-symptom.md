@@ -74,6 +74,8 @@ El titular no es la atribución. Culpar al modelo abiertamente pasó cuatro vece
 
 Lo que sí sobrevive es la conducta. **Diecinueve de veinte, sin manera de ver el sistema, se pusieron a amortiguar su salida**: votar entre reintentos, fijar la temperatura, promediar la inestabilidad hasta que desaparezca. Con el código delante, nueve. No hace falta decir que la culpa es del modelo para tratarlo como si lo fuera: basta con dejar de buscar la causa y ponerse a suavizar el síntoma.
 
+> **Añadido después.** Un control posterior a la publicación de este artículo sacó el modelo de lenguaje del pipeline y puso un random forest congelado en su lugar, con la misma avería y todo lo demás igual. El parcheo no se movió: 20/20 en los dos brazos. Así que la conducta de esta tabla no es un hecho sobre los sistemas que llevan un modelo dentro — es un hecho sobre diagnosticar algo que no puedes abrir. De eso va [el tercer artículo](/es/blog/knew-it-wasnt-the-model), y reencuadra a éste.
+
 ## La segunda avería: donde culpar al modelo es medio cierto
 
 El primer escenario tiene una debilidad que veía desde el principio. Nada en él convierte el muestreo en una explicación *razonable*: es sólo la perezosa. Una prueba justa necesita un caso en el que un ingeniero competente pueda llegar de buena fe a esa conclusión y estar equivocado igualmente.
@@ -211,4 +213,4 @@ Y la ceremonia se gana el sueldo. Escenarios con hash antes de correr, para que 
 
 ---
 
-*Código, datos y el script que recalcula todos los números de este artículo: [blaming-the-model](https://github.com/JaviMaligno/blaming-the-model). La observación de la que salió todo está en [el artículo anterior](/es/blog/blaming-the-model).*
+*Código, datos y el script que recalcula todos los números de este artículo: [blaming-the-model](https://github.com/JaviMaligno/blaming-the-model). La serie: [la observación](/es/blog/blaming-the-model), esta medición, y [el control que la reencuadra](/es/blog/knew-it-wasnt-the-model).*

@@ -74,6 +74,8 @@ The headline isn't the attribution. Blaming the model outright happened four tim
 
 What did survive is the behaviour. **Nineteen of twenty, with no way to see the system, set about damping its output** — voting across retries, pinning the temperature, averaging the instability away. With the code in front of them, nine. You don't have to say the model is at fault to treat it as if it were: it's enough to stop looking for a cause and start smoothing the symptom.
 
+> **Added later.** A control I ran after publishing this took the language model out of the pipeline entirely and put a frozen random forest in its place, same fault, same everything else. The damping didn't move: 20/20 in both arms. So the behaviour in this table is not a fact about systems with a model inside them — it's a fact about diagnosing something you can't open. That's [the third article](/en/blog/knew-it-wasnt-the-model), and it reframes this one.
+
 ## The second fault: where blaming the model is half right
 
 The first scenario has a weakness I could see from the start. Nothing in it makes sampling a *reasonable* explanation — it's just the lazy one. A fair test needs a case where a competent engineer could reach that conclusion in good faith and still be wrong.
@@ -211,4 +213,4 @@ And the ceremony earns its keep. Scenarios hashed before the run so they can't b
 
 ---
 
-*Code, data, and the script that recomputes every number in this article: [blaming-the-model](https://github.com/JaviMaligno/blaming-the-model). The observation this started from is in [the previous article](/en/blog/blaming-the-model).*
+*Code, data, and the script that recomputes every number in this article: [blaming-the-model](https://github.com/JaviMaligno/blaming-the-model). The series: [the observation](/en/blog/blaming-the-model), this measurement, and [the control that reframed it](/en/blog/knew-it-wasnt-the-model).*

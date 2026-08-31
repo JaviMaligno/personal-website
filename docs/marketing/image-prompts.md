@@ -825,3 +825,32 @@ Do not invent any other label, metric name, axis title or annotation. No
 'higher is better' captions. Crisp bitmap illustration, high contrast, teal
 amber graphite off-white on dark, no logos, no people, no purple, no bokeh.
 ```
+
+## knew-it-wasnt-the-model
+
+- Artículo: `src/content/blog/en/knew-it-wasnt-the-model.md`
+- Imagen: `public/blog/knew-it-wasnt-the-model.png` (1020×510)
+- Generada: 2026-08-31, Codex CLI 0.147 (`codex exec --approve-for-me`, `image_gen`)
+- Salió buena a la primera. Lección de la anterior aplicada: el texto permitido
+  se enumera de forma cerrada ("EXACTLY AND ONLY"), porque cuando se deja
+  margen el modelo inventa etiquetas de métrica que contradicen el artículo.
+
+```text
+Create a 1020x510 blog hero image. Style: refined technical editorial
+illustration, dark but not monochrome, showing a CONCRETE SCENE: one pipeline
+that forks into two identical-looking outcomes. Visual motifs: a single
+horizontal conveyor of labelled stages ending in a fork; on the upper branch a
+sealed box labelled 'model', on the lower branch a sealed box labelled 'forest';
+both branches end in the SAME small stack of sticky patches, drawn identically,
+making the point that the outcome is the same either way; a small clipboard to
+one side with two tick marks. Clean geometric composition, several distinct
+zones.
+
+TEXT MUST BE EXACTLY AND ONLY: 'model', 'forest', 'same patch'. No other label,
+no metric names, no axis titles, no comments in any code, no numbers.
+
+No logos, no brand names, no people, no text-heavy poster. Crisp bitmap
+illustration, high contrast, professional AI/developer blog aesthetic, balanced
+teal, amber, graphite and off-white accents on dark, no purple gradient blobs,
+no bokeh.
+```
