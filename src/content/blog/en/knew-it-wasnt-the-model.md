@@ -103,6 +103,25 @@ And then, having exonerated the box, they patch it anyway.
 <figcaption>The top row is the same bar twice: patching doesn't care what's in the box. Every row below it moves, and all in the same direction — with a language model in the loop the suspicion stays on the head, fewer look past it, and nobody arrives.</figcaption>
 </figure>
 
+## What actually unlocks the search
+
+The table above leaves one thing genuinely ambiguous, and it's the thing I most wanted to resolve: is the forest arm *easier*, or does the model *absorb the suspicion*? Those predict the same numbers.
+
+The responses themselves narrow it. This is post-hoc — I did not pre-register it, and it should be read as a lead rather than a result — but it's the cleanest structure in the data.
+
+| | looked upstream |
+|---|---|
+| Built the determinism argument | **17/19** |
+| Didn't | **5/21** |
+
+p < 0,0001. And conditioning on that argument, the effect of the head disappears: among those who built it, the model arm goes 2/2 and the forest arm 15/17. Among those who didn't, 5/18 and 0/3.
+
+So what unlocks the search isn't what's in the box. It's **whether you reach an argument for ruling the box out**. The two responses in the model arm who got there looked upstream, both of them.
+
+The same shape shows up from the other side: of the twelve responses across both arms that did *not* blame the head, **twelve looked upstream**. Of the twenty-eight that did, ten. And finding the cause happens only downstream of looking: 5 of the 22 who looked upstream found it, 0 of the 18 who didn't.
+
+That's a cleaner statement of the LLM-specific claim than "the model absorbs blame". A frozen forest hands you the exclusion argument for free — it is a pure function and you can say so in one line. A language model doesn't, and almost nobody builds one anyway: two of twenty. The model doesn't block the search directly. It withholds the argument that would start it.
+
 ## The dissociation
 
 This is the finding, and it survives the strictest slice I can take of it.
@@ -133,11 +152,9 @@ For the patching, both are moot: there's no model-specific behaviour there to ex
 
 For the attribution, they're still live, and this design can't separate them — which was true before I ran anything. A habit learned from a corpus that steers tokens without passing through any consultable belief is indistinguishable from a disposition, for any experiment that only observes behaviour. Three independent reviewers of the design converged on that before a single response was collected.
 
-There's a second thing the design couldn't settle, and I'd rather state it than let it sit implied: even if the reflex had been LLM-specific, corpus and personality are **not separable from the outside**. A habit learned from a corpus that steers tokens without passing through any consultable belief is indistinguishable from a disposition, for any experiment that only observes behaviour. Three independent reviewers of the design converged on that before a single response was collected.
-
 ## What doesn't hold
 
-- **The difficulty band broke, by one unit, and it's ambiguous which way to read it.** The pre-committed criterion allowed up to 4/20 of difference in finding the cause; it came out 5/20. One reading is that the forest arm is simply *easier*, which would be a pairing defect — and note the direction still plays against the patching result, since an easier task should produce less patching, not the same. The other reading is that it isn't a defect at all but the finding itself: the 0/20 is what happens when suspicion has somewhere comfortable to stop. The three other rows of the chain are consistent with the second, but this design cannot separate them, and I'm not going to pick the one that suits me.
+- **The difficulty band broke, by one unit, and it's ambiguous which way to read it.** The pre-committed criterion allowed up to 4/20 of difference in finding the cause; it came out 5/20. One reading is that the forest arm is simply *easier*, which would be a pairing defect — and note the direction still plays against the patching result, since an easier task should produce less patching, not the same. The other reading is that it isn't a defect at all but the finding itself: the 0/20 is what happens when suspicion has somewhere comfortable to stop. The three other rows of the chain are consistent with the second, and the mediation above narrows it further — what predicts looking upstream is the exclusion argument, not the head itself. It still isn't settled: this design can't fully separate them, and the mediation is post-hoc.
 - **The certification neutralised less than intended.** 260/260 against 240/260 still reads as "perfect" versus "not quite", and seventeen of twenty reasoned from exactly that. Up close the model's miss is a single context out of thirteen — twelve reproduced 20/20, and the one that didn't gave the same label all twenty times.
 - **The with-code arm isn't clean on the model side**: its head file contains the network call, a legitimate culprit the forest doesn't have. Faking that would be lying about the system. The comparison that carries is the one without code.
 - **One fault, one corpus, two heads.** That the behaviour is generic against *this* failure under *this* opacity doesn't make it generic against any.

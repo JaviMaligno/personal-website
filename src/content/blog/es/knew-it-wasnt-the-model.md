@@ -103,6 +103,25 @@ Y a continuación, habiendo exculpado la caja, la parchean igual.
 <figcaption>La fila de arriba es la misma barra dos veces: al parcheo le da igual lo que haya en la caja. Todas las de abajo se mueven, y en la misma dirección — con un modelo de lenguaje dentro, la sospecha se queda en la cabeza, menos gente mira más allá, y nadie llega.</figcaption>
 </figure>
 
+## Qué desbloquea la búsqueda
+
+La tabla de arriba deja una cosa genuinamente ambigua, y es justo la que más me interesaba resolver: ¿el brazo del bosque es *más fácil*, o el modelo *absorbe la sospecha*? Las dos predicen los mismos números.
+
+Las propias respuestas lo acotan. Esto es post-hoc —no lo prerregistré, y hay que leerlo como una pista y no como un resultado— pero es la estructura más limpia que hay en los datos.
+
+| | mira aguas arriba |
+|---|---|
+| Construye el argumento del determinismo | **17/19** |
+| No lo construye | **5/21** |
+
+p < 0,0001. Y al condicionar en ese argumento, el efecto de la cabeza desaparece: entre los que lo construyen, el brazo del modelo va 2/2 y el del bosque 15/17. Entre los que no, 5/18 y 0/3.
+
+Así que lo que desbloquea la búsqueda no es lo que hay en la caja. Es **si llegas a un argumento para descartar la caja**. Las dos respuestas del brazo del modelo que llegaron ahí miraron aguas arriba, las dos.
+
+La misma forma aparece por el otro lado: de las doce respuestas de ambos brazos que *no* culparon a la cabeza, **doce miraron aguas arriba**. De las veintiocho que sí, diez. Y encontrar la causa sólo ocurre después de mirar: 5 de los 22 que miraron arriba la encontraron, 0 de los 18 que no.
+
+Es una formulación más nítida de la afirmación específica de los LLM que «el modelo absorbe la culpa». Un bosque congelado te regala el argumento de exclusión — es una función pura y lo dices en una línea. Un modelo de lenguaje no, y casi nadie lo construye igualmente: dos de veinte. El modelo no bloquea la búsqueda directamente. Retiene el argumento que la habría empezado.
+
 ## La disociación
 
 Éste es el hallazgo, y aguanta el corte más estricto que le puedo hacer.
@@ -135,7 +154,7 @@ Para la atribución siguen vivas, y este diseño no puede separarlas — cosa qu
 
 ## Lo que no se sostiene
 
-- **La banda de dificultad se rompió por una unidad, y es ambiguo cómo leerlo.** El criterio comprometido de antemano admitía hasta 4/20 de diferencia en encontrar la causa; salió 5/20. Una lectura es que el brazo del bosque es sencillamente *más fácil*, y entonces es un defecto de pareado — nótese que la dirección sigue jugando en contra del resultado del parcheo, porque una tarea más fácil debería producir menos parcheo, no el mismo. La otra lectura es que no es un defecto sino el hallazgo mismo: el 0/20 es lo que pasa cuando la sospecha tiene dónde pararse cómodamente. Las otras tres filas de la cadena son coherentes con la segunda, pero este diseño no puede separarlas, y no voy a elegir la que me conviene.
+- **La banda de dificultad se rompió por una unidad, y es ambiguo cómo leerlo.** El criterio comprometido de antemano admitía hasta 4/20 de diferencia en encontrar la causa; salió 5/20. Una lectura es que el brazo del bosque es sencillamente *más fácil*, y entonces es un defecto de pareado — nótese que la dirección sigue jugando en contra del resultado del parcheo, porque una tarea más fácil debería producir menos parcheo, no el mismo. La otra lectura es que no es un defecto sino el hallazgo mismo: el 0/20 es lo que pasa cuando la sospecha tiene dónde pararse cómodamente. Las otras tres filas de la cadena son coherentes con la segunda, y la mediación de más arriba lo acota un poco más: lo que predice mirar aguas arriba es el argumento de exclusión, no la cabeza en sí. Sigue sin estar zanjado: este diseño no puede separarlas del todo, y la mediación es post-hoc.
 - **La certificación neutralizó menos de lo previsto.** 260/260 contra 240/260 se sigue leyendo como «perfecto» frente a «no del todo», y diecisiete de veinte razonaron justamente desde ahí. De cerca, el fallo del modelo es un único contexto de trece: doce reprodujeron 20/20, y el que no dio la misma etiqueta las veinte veces.
 - **El brazo con código no es limpio del lado del modelo**: su fichero de cabeza contiene la llamada de red, un culpable legítimo que el bosque no tiene. Falsearlo sería mentir sobre el sistema. La comparación que porta es la de sin código.
 - **Una avería, un corpus, dos cabezas.** Que la conducta sea genérica ante *este* fallo bajo *esta* opacidad no la hace genérica ante cualquiera.
