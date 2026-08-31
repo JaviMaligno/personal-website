@@ -9,13 +9,13 @@ heroImage: "/blog/the-bug-nobody-can-reach.png"
 repoUrl: https://github.com/JaviMaligno/code-world-models
 linkedinLinks:
   - label: "Preprint"
-    url: "https://arxiv.org/abs/XXXX.XXXXX"
+    url: "https://arxiv.org/abs/2608.28541"
 ---
 Supón que al mapa sobre el que planifica tu sistema le falta una habitación. No "está un poco equivocado sobre la habitación" — la habitación no está en el mapa. ¿Cuánto te cuesta eso?
 
 He pasado unos meses haciendo precisa esa pregunta, y la respuesta resultó más estrecha y más rara de lo que esperaba. Depende exactamente de una cosa, y no es el tamaño del error, ni lo seguro que estuviera el modelo, ni siquiera si lo que falta es peligroso. Es si algo que planifique sobre ese mapa puede **llegar** a la habitación.
 
-Esta es la versión corta de un preprint ([arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)); el [post largo](/es/blog/being-wrong-can-be-free) cuenta lo mismo con los números, las demostraciones y las partes que salieron mal. Aquí quiero solo la idea, porque es la que yo usaría.
+Esta es la versión corta de un preprint ([arXiv:2608.28541](https://arxiv.org/abs/2608.28541)); el [post largo](/es/blog/being-wrong-can-be-free) cuenta lo mismo con los números, las demostraciones y las partes que salieron mal. Aquí quiero solo la idea, porque es la que yo usaría.
 
 <style>
 .cwm-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -172,4 +172,4 @@ La versión incómoda de todo esto: un modelo puede ser exactamente correcto en 
 
 ---
 
-*La versión larga, con las curvas de peligro, los experimentos de reparación y un test pre-registrado que salió nulo: [Estar equivocado puede ser gratis](/es/blog/being-wrong-can-be-free). La versión formal: [arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX), con el [código y todos los artefactos de resultados abiertos](https://github.com/JaviMaligno/code-world-models).*
+*La versión larga, con las curvas de peligro, los experimentos de reparación y un test pre-registrado que salió nulo: [Estar equivocado puede ser gratis](/es/blog/being-wrong-can-be-free). La versión formal: [arXiv:2608.28541](https://arxiv.org/abs/2608.28541), con el [código y todos los artefactos de resultados abiertos](https://github.com/JaviMaligno/code-world-models).*

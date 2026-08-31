@@ -1,7 +1,7 @@
 # X thread — "The Bug Nobody Can Reach"
 
 Manual thread (there is no X automation in this repo). Post on publication day.
-**Replace `XXXX.XXXXX` before posting.**
+**Replace `2608.28541` before posting.**
 
 Short on purpose: this is the digestible companion to the long post, which has
 its own 13-tweet thread. Eight tweets, each under 280 characters.
@@ -99,5 +99,5 @@ So the uncomfortable version:
 
 A model can be exactly right on everything you can check and arbitrarily wrong beyond it — and whether that's free or catastrophic isn't a property of the error. It's a property of the plans you happen to run today.
 
-arxiv.org/abs/XXXX.XXXXX
+arxiv.org/abs/2608.28541
 ```

@@ -9,7 +9,7 @@ heroImage: "/blog/the-bug-nobody-can-reach.png"
 repoUrl: https://github.com/JaviMaligno/code-world-models
 linkedinLinks:
   - label: "Preprint"
-    url: "https://arxiv.org/abs/XXXX.XXXXX"
+    url: "https://arxiv.org/abs/2608.28541"
 linkedinSummary: |
   Suppose the map your system plans on is missing a room. Not "slightly off about the room" — the room is not on the map at all. What does that cost you?
 
@@ -31,7 +31,7 @@ Suppose the map your system plans on is missing a room. Not "slightly off about 
 
 I have spent a few months making that question precise, and the answer turned out to be narrower and stranger than I expected. It depends on exactly one thing, and it is not the size of the error, not how confident the model was, not even whether the missing thing is dangerous. It is whether anything that plans on that map can *get* to the room.
 
-This is the short version of a preprint ([arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)); the [long post](/en/blog/being-wrong-can-be-free) has the same story with the numbers, the proofs and the parts that went wrong. Here I want just the one idea, because it is the one I would actually use.
+This is the short version of a preprint ([arXiv:2608.28541](https://arxiv.org/abs/2608.28541)); the [long post](/en/blog/being-wrong-can-be-free) has the same story with the numbers, the proofs and the parts that went wrong. Here I want just the one idea, because it is the one I would actually use.
 
 <style>
 .cwm-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -188,4 +188,4 @@ The uncomfortable version of all this: a model can be exactly right on everythin
 
 ---
 
-*The long version, with the danger curves, the repair experiments and a pre-registered test that came out null: [Being Wrong Can Be Free](/en/blog/being-wrong-can-be-free). The formal version: [arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX), with [code and every result artifact open](https://github.com/JaviMaligno/code-world-models).*
+*The long version, with the danger curves, the repair experiments and a pre-registered test that came out null: [Being Wrong Can Be Free](/en/blog/being-wrong-can-be-free). The formal version: [arXiv:2608.28541](https://arxiv.org/abs/2608.28541), with [code and every result artifact open](https://github.com/JaviMaligno/code-world-models).*

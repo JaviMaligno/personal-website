@@ -18,22 +18,15 @@ Calendar: 09-01, 09-02 and 09-04 carry articles, 09-03 carries a standalone
 LinkedIn post, so 09-05 is the first day free in both calendars after the long
 post.
 
-## The one blocker
+## The blocker, now resolved
 
-**The arXiv ID.** Five placeholder `XXXX.XXXXX` occurrences per language file
-plus two in the X thread. Same substitution as the long post — do both branches
-in one go:
-
-```bash
-cd personal-website
-for b in blog/being-wrong-can-be-free blog/the-bug-nobody-can-reach; do
-  git checkout "$b"
-  grep -rl 'XXXX\.XXXXX' src/content/blog docs/marketing | \
-    xargs sed -i 's/XXXX\.XXXXX/<THE-REAL-ID>/g'
-  git commit -am "Substitute the real arXiv ID"
-  git push
-done
-```
+**The arXiv ID — done.** Paper 3 was announced as
+[`arXiv:2608.28541`](https://arxiv.org/abs/2608.28541) (submitted 2026-08-28 as
+`submit/8006768`, primary cs.LG, cross-list cs.AI). Every `XXXX.XXXXX`
+placeholder was replaced with it in both language files and in the X thread, so
+the scheduled-publish workflow's guard now passes. The announced v1 is the
+corrected source: the `tab:ndim` cell fixed after the first submission is in
+the published PDF, verified against its own text stream.
 
 ## Already done
 
