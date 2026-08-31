@@ -314,6 +314,44 @@ ser nuestro hasta que se demuestre lo contrario, porque los tres artefactos enco
 hasta ahora empujaban en la misma dirección — hacer quedar mal al método que estamos
 replicando.
 
+## 6.2 Hallazgo de la calibración: el horizonte no es la variable
+
+Medido sobre el entorno calibrado, con Haiku 4.5 vía Foundry, 5 seeds:
+
+| runtime | T=10 | T=25 | T=50 | ellos T=50 |
+|---|---|---|---|---|
+| ReAct | 1.00 ±0.00 | 1.00 ±0.00 | **1.00 ±0.00** | 0.88 |
+| SKILL.state | 1.00 ±0.00 | 1.00 ±0.00 | — | 0.96 |
+
+**Su afirmación se parte en dos y solo una mitad se reproduce.** La de coste sí: el
+prompt de SKILL.state es plano (2.136 → 2.139) mientras el de ReAct crece 4.596 → 9.124 →
+16.437. O(1) frente a O(T), tal como dicen. La de precisión no: con historia completa,
+prompts de 16k y 172 eventos accionables, el modelo no comete **ni un error**. Y no es por
+falta de presión de contexto — vamos un 38% por encima de su densidad a T=50.
+
+**El control de dificultad descarta que la tarea sea trivial**, y a la vez explica por qué:
+
+- El 69–74% de los eventos son accionables; el score se juega sobre 172 eventos reales.
+- El 70% de los `Store` reutilizan un hueco liberado por un envío anterior, no van a la
+  siguiente estantería nueva. Hay que llevar la cuenta de verdad.
+- **Pero el hueco reutilizado está a 1,9 posiciones del tope de media, con un máximo de 7.**
+
+Esa última línea es la clave. La información que el modelo necesita en cada paso vive casi
+siempre en las últimas decenas de pasos: **el entorno tiene memoria de corto alcance por
+construcción**. Alargar el episodio añade pasos, pero no aleja la información de su uso.
+
+**Consecuencia directa sobre el plan:** subir a T=100 (~$51 medidos) probablemente
+reproduzca lo mismo que T=50, porque no toca la variable que importa. Lo que hace falta no
+es más horizonte sino más **distancia entre la información y el momento en que se usa** —
+que es exactamente la `k` de la sonda A.
+
+Es decir: la calibración ha convertido la sonda de relevancia diferida de "expansión del
+artículo" en **la única vía que tenemos para reproducir su efecto**. Si el paper tiene
+razón sobre la degradación de la historia, aparecerá al separar `k`, no al alargar `T`. Y
+si no aparece ni así, ese es un resultado más fuerte que el que íbamos a buscar.
+
+Antes de gastar en T=100, la prioridad pasa a ser la sonda A.
+
 ## 7. Métricas
 
 1. **Accuracy** — su métrica de SkillExecBench: acciones correctas / eventos accionables.
