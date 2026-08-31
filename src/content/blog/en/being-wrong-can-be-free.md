@@ -9,7 +9,7 @@ heroImage: "/blog/being-wrong-can-be-free.png"
 repoUrl: https://github.com/JaviMaligno/code-world-models
 linkedinLinks:
   - label: "Preprint"
-    url: "https://arxiv.org/abs/XXXX.XXXXX"
+    url: "https://arxiv.org/abs/2608.28541"
   - label: "Companion paper"
     url: "https://arxiv.org/abs/2608.17956"
 linkedinSummary: |
@@ -29,7 +29,7 @@ linkedinSummary: |
 ---
 Last week I wrote about [a model that infers the rule you forgot, but only in one dimension](/en/blog/infer-the-rule-in-one-dimension). The practical rule I ended on was that coverage of the boundary is the whole game: your sampling gate certifies your model where your samples land, and a rule with a shape you still have to specify.
 
-That leaves a question I could not answer with the instruments in that paper. All of those wrong models were wrong *somewhere a planner could get to*. What happens when the part the model gets wrong encloses something nothing can ever reach? The answer turns out to be sharper than "it's probably fine", in both directions: the error becomes provably uncatchable *and* provably costless — and then a door 0.1 radians wide, in the right place, undoes the second half while leaving the topology untouched. That is a preprint, *An Enclosed Mode Is a Gauge Choice* (**[arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)**), with the [code, result artifacts and Lean proofs open](https://github.com/JaviMaligno/code-world-models).
+That leaves a question I could not answer with the instruments in that paper. All of those wrong models were wrong *somewhere a planner could get to*. What happens when the part the model gets wrong encloses something nothing can ever reach? The answer turns out to be sharper than "it's probably fine", in both directions: the error becomes provably uncatchable *and* provably costless — and then a door 0.1 radians wide, in the right place, undoes the second half while leaving the topology untouched. That is a preprint, *An Enclosed Mode Is a Gauge Choice* (**[arXiv:2608.28541](https://arxiv.org/abs/2608.28541)**), with the [code, result artifacts and Lean proofs open](https://github.com/JaviMaligno/code-world-models).
 
 <style>
 .cwm-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -347,8 +347,8 @@ Which flips the question you should be asking. Not "is the model right?" but **"
 - **Your evidence summary is a sensor with a resolution.** If anything in the loop — a monitor, a report, a retrieval step, a topological or statistical summary — decides *what shape the evidence has*, its blind spot propagates into what gets certified. Ours reports a closed loop for every gap narrower than two arc-units, and the artifacts follow the report. More data made it worse, not better.
 - **Fences pay for dimension and direction.** A defense built from points cannot seal a curve, and a defense built from distrust cannot repair over-pessimism. Match the boundary's dimension, persist what you learn across episodes, and know which of the two errors you are defending against — they need opposite certificates.
 
-If you want the formal version — the gate quotient, the unfalsifiable-and-harmless theorem, the two-sided resolution sandwich, the $n$-dimensional rate, and which parts are machine-checked in Lean — it is in the [preprint](https://arxiv.org/abs/XXXX.XXXXX), and the [code and every result artifact are open](https://github.com/JaviMaligno/code-world-models).
+If you want the formal version — the gate quotient, the unfalsifiable-and-harmless theorem, the two-sided resolution sandwich, the $n$-dimensional rate, and which parts are machine-checked in Lean — it is in the [preprint](https://arxiv.org/abs/2608.28541), and the [code and every result artifact are open](https://github.com/JaviMaligno/code-world-models).
 
 ---
 
-*Preprint: "An Enclosed Mode Is a Gauge Choice" ([arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)) · [code](https://github.com/JaviMaligno/code-world-models). Companion papers: [An Omitted Mode Is a Rare Rule](https://arxiv.org/abs/2608.17956) and the post about it — [An LLM Can Infer the Rule You Forgot](/en/blog/infer-the-rule-in-one-dimension) — and [When a Verified World Model Still Loses](https://arxiv.org/abs/2607.14169).*
+*Preprint: "An Enclosed Mode Is a Gauge Choice" ([arXiv:2608.28541](https://arxiv.org/abs/2608.28541)) · [code](https://github.com/JaviMaligno/code-world-models). Companion papers: [An Omitted Mode Is a Rare Rule](https://arxiv.org/abs/2608.17956) and the post about it — [An LLM Can Infer the Rule You Forgot](/en/blog/infer-the-rule-in-one-dimension) — and [When a Verified World Model Still Loses](https://arxiv.org/abs/2607.14169).*

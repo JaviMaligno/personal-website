@@ -9,13 +9,13 @@ heroImage: "/blog/being-wrong-can-be-free.png"
 repoUrl: https://github.com/JaviMaligno/code-world-models
 linkedinLinks:
   - label: "Preprint"
-    url: "https://arxiv.org/abs/XXXX.XXXXX"
+    url: "https://arxiv.org/abs/2608.28541"
   - label: "Paper companion"
     url: "https://arxiv.org/abs/2608.17956"
 ---
 La semana pasada escribí sobre [un modelo que infiere la regla que olvidaste, pero solo en una dimensión](/es/blog/infer-the-rule-in-one-dimension). La regla práctica con la que terminaba era que la cobertura de la frontera lo es todo: tu gate de muestreo certifica tu modelo allí donde caen tus muestras, y una regla con forma sigues teniendo que especificarla.
 
-Eso deja una pregunta que no podía responder con los instrumentos de aquel paper. Todos esos modelos equivocados lo estaban *en algún sitio al que un planificador podía llegar*. ¿Qué pasa cuando la parte que el modelo se equivoca encierra algo a lo que nada puede llegar nunca? La respuesta resulta más nítida que "probablemente no pasa nada", y en las dos direcciones: el error se vuelve demostrablemente indetectable **y** demostrablemente gratis — y luego una puerta de 0.1 radianes, en el sitio correcto, deshace la segunda mitad sin tocar la topología. Está escrito como preprint, *An Enclosed Mode Is a Gauge Choice* (**[arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)**), con el [código, los artefactos de resultados y las demostraciones en Lean abiertos](https://github.com/JaviMaligno/code-world-models).
+Eso deja una pregunta que no podía responder con los instrumentos de aquel paper. Todos esos modelos equivocados lo estaban *en algún sitio al que un planificador podía llegar*. ¿Qué pasa cuando la parte que el modelo se equivoca encierra algo a lo que nada puede llegar nunca? La respuesta resulta más nítida que "probablemente no pasa nada", y en las dos direcciones: el error se vuelve demostrablemente indetectable **y** demostrablemente gratis — y luego una puerta de 0.1 radianes, en el sitio correcto, deshace la segunda mitad sin tocar la topología. Está escrito como preprint, *An Enclosed Mode Is a Gauge Choice* (**[arXiv:2608.28541](https://arxiv.org/abs/2608.28541)**), con el [código, los artefactos de resultados y las demostraciones en Lean abiertos](https://github.com/JaviMaligno/code-world-models).
 
 <style>
 .cwm-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -333,8 +333,8 @@ Lo que invierte la pregunta que deberías estar haciendo. No "¿es correcto el m
 - **Tu resumen de la evidencia es un sensor con resolución.** Si algo en el bucle — un monitor, un informe, un paso de recuperación, un resumen topológico o estadístico — decide *qué forma tiene la evidencia*, su punto ciego se propaga a lo que queda certificado. El nuestro informa de un lazo cerrado para todo hueco más estrecho que dos unidades de arco, y los artefactos siguen al informe. Más datos lo empeoraron, no lo mejoraron.
 - **Las vallas pagan dimensión y dirección.** Una defensa hecha de puntos no puede sellar una curva, y una defensa hecha de desconfianza no puede reparar el exceso de pesimismo. Iguala la dimensión de la frontera, persiste lo aprendido entre episodios, y ten claro contra cuál de los dos errores te defiendes — necesitan certificados opuestos.
 
-Si quieres la versión formal — el cociente del gate, el teorema de infalsable-e-inofensivo, el sándwich de resolución de dos lados, la tasa en $n$ dimensiones, y qué partes están verificadas por máquina en Lean — está en el [preprint](https://arxiv.org/abs/XXXX.XXXXX), y el [código y todos los artefactos de resultados están abiertos](https://github.com/JaviMaligno/code-world-models).
+Si quieres la versión formal — el cociente del gate, el teorema de infalsable-e-inofensivo, el sándwich de resolución de dos lados, la tasa en $n$ dimensiones, y qué partes están verificadas por máquina en Lean — está en el [preprint](https://arxiv.org/abs/2608.28541), y el [código y todos los artefactos de resultados están abiertos](https://github.com/JaviMaligno/code-world-models).
 
 ---
 
-*Preprint: "An Enclosed Mode Is a Gauge Choice" ([arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)) · [código](https://github.com/JaviMaligno/code-world-models). Papers companion: [An Omitted Mode Is a Rare Rule](https://arxiv.org/abs/2608.17956) y el post sobre él — [Un LLM puede inferir la regla que olvidaste](/es/blog/infer-the-rule-in-one-dimension) — y [When a Verified World Model Still Loses](https://arxiv.org/abs/2607.14169).*
+*Preprint: "An Enclosed Mode Is a Gauge Choice" ([arXiv:2608.28541](https://arxiv.org/abs/2608.28541)) · [código](https://github.com/JaviMaligno/code-world-models). Papers companion: [An Omitted Mode Is a Rare Rule](https://arxiv.org/abs/2608.17956) y el post sobre él — [Un LLM puede inferir la regla que olvidaste](/es/blog/infer-the-rule-in-one-dimension) — y [When a Verified World Model Still Loses](https://arxiv.org/abs/2607.14169).*

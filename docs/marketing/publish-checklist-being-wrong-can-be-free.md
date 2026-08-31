@@ -12,31 +12,15 @@ carry articles; 08-28, 08-31 and 09-03 carry standalone LinkedIn posts in
 `scripts/linkedin/posts/schedule.json`, and publishing here fires
 `linkedin-post.yml` too, which would put two posts out on one day.
 
-## The one blocker
+## The blocker, now resolved
 
-**The arXiv ID.** Paper 3 was submitted 2026-08-28 as `submit/8006768` and is
-awaiting announcement. Both language files and the X thread carry the literal
-placeholder `XXXX.XXXXX` in six places each. When the ID arrives:
-
-```bash
-cd personal-website
-git checkout blog/being-wrong-can-be-free
-grep -rl 'XXXX\.XXXXX' src/content/blog docs/marketing | \
-  xargs sed -i 's/XXXX\.XXXXX/<THE-REAL-ID>/g'
-grep -rn 'XXXX\.XXXXX' . || echo "clean"
-```
-
-Then commit and push the branch. The scheduled workflow's guard will pass and
-the 09-02 cron publishes.
-
-**Related, in the other repo:** paper 3's own arXiv ID also has to go into
-`code-world-models` (README, `docs/paper3/STATE.md`,
-`docs/paper3/ARXIV-SUBMISSION.md`), and there is an open decision recorded in
-`docs/paper3/CHANGELOG-corrections.md` about a table cell corrected *after*
-submission (unsubmit-and-replace before announcement, or announce v1 and post
-v2). If that decision delays the announcement, move this article's cron date
-with it — the post's opening paragraph links the preprint, so it must not
-publish first.
+**The arXiv ID — done.** Paper 3 was announced as
+[`arXiv:2608.28541`](https://arxiv.org/abs/2608.28541) (submitted 2026-08-28 as
+`submit/8006768`, primary cs.LG, cross-list cs.AI). Every `XXXX.XXXXX`
+placeholder was replaced with it in both language files and in the X thread, so
+the scheduled-publish workflow's guard now passes. The announced v1 is the
+corrected source: the `tab:ndim` cell fixed after the first submission is in
+the published PDF, verified against its own text stream.
 
 ## Already done
 

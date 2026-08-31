@@ -1,7 +1,7 @@
 # X thread — "Being Wrong Can Be Free — Until the Planner Can Reach It"
 
 Manual thread (there is no X automation in this repo). Post on publication day,
-after the arXiv ID exists. **Replace `XXXX.XXXXX` before posting.**
+after the arXiv ID exists. **Replace `2608.28541` before posting.**
 
 Each tweet is kept under 280 characters so it works on a free account.
 
@@ -130,6 +130,6 @@ A sampling gate certifies the reachable restriction of your model, nothing else.
 
 So the question isn't "is the model right?" but "does where it's wrong intersect the reach of whatever plans against it?"
 
-arxiv.org/abs/XXXX.XXXXX
+arxiv.org/abs/2608.28541
 github.com/JaviMaligno/code-world-models
 ```
