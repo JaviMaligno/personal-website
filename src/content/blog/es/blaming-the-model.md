@@ -1,7 +1,7 @@
 ---
 title: "Culpa al modelo de lo que no se culparía a sí mismo"
 description: "Los agentes que construyen sistemas con un LLM dentro recurren siempre a la misma explicación: el modelo no es determinista. Cinco veces no lo era, y lo interesante es adónde fue la sospecha en vez de adónde estaba la causa."
-pubDate: 2026-08-31
+pubDate: 2026-09-09
 tags: ["IA", "Agentes", "Ingeniería", "Depuración"]
 lang: es
 translationKey: blaming-the-model

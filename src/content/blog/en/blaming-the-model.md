@@ -1,7 +1,7 @@
 ---
 title: "It blames the model for what it wouldn't blame itself for"
 description: "Agents that build systems with an LLM inside keep reaching for the same explanation: the model is nondeterministic. Five times it wasn't, and the interesting part is where the suspicion went instead of where the cause was."
-pubDate: 2026-08-31
+pubDate: 2026-09-09
 tags: ["AI", "Agents", "Engineering", "Debugging"]
 lang: en
 translationKey: blaming-the-model
