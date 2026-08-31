@@ -792,3 +792,36 @@ Text: Render only these short labels and terminal lines, verbatim and legibly: "
 Constraints: Concrete debugging scene; solid crisp layer boxes; model box slightly apart; obvious spotlight or magnifying glass aimed at the model; unnoticed amber defect marker on a non-model layer; readable but generic terminal; several distinct geometric zones; professional editorial finish.
 Avoid: people, hands, faces, logos, brand names, watermarks, slogans, dense text, purple gradient blobs, purple-dominant palette, bokeh, lens flares, neon cyberpunk clutter, glassmorphism, soft amorphous shapes, generic robot imagery, brains, circuit-board clichés, photorealism, low contrast, illegible labels.
 ```
+
+## patched-the-symptom
+
+- Artículo: `src/content/blog/en/patched-the-symptom.md`
+- Imagen: `public/blog/patched-the-symptom.png` (1020×510)
+- Generada: 2026-08-31, Codex CLI 0.147 (`codex exec --approve-for-me`, `image_gen`)
+- **Hubo que regenerar.** La primera versión tenía la composición bien pero
+  inventó etiquetas de gráfico que contradecían el artículo ("Debug Impact",
+  "Prediction Variance (lower is better)") y un comentario en el código de
+  ejemplo, "thr has noise injected each run", que insinuaba lo contrario de lo
+  que mide el experimento. La segunda pasada fija el texto literal permitido.
+
+```text
+Regenerate the hero image (1020x510). Dark graphite desk, two side-by-side
+evidence packets containing the IDENTICAL results table with some highlighted
+rows; left packet sealed and labelled 'no source' in amber; right packet open in
+teal, showing the same table plus a short generic code listing; a small stack of
+five numbered run logs; a horizontal bar comparison in an upper panel.
+
+TEXT MUST BE EXACTLY THIS AND NOTHING ELSE:
+- Left packet label: 'no source'
+- Upper panel title: 'out of 20 responses'
+- First bar pair labelled 'found the cause', amber bar short, teal bar long
+- Second bar pair labelled 'asked for the data', BOTH bars zero length, each
+  marked with a '0' at the baseline
+- The code listing: short generic Python-looking lines with NO comments and no
+  narrative. No words like noise, random, inject, error or bug.
+- Table cells: plain marks and short ids only, no prose.
+
+Do not invent any other label, metric name, axis title or annotation. No
+'higher is better' captions. Crisp bitmap illustration, high contrast, teal
+amber graphite off-white on dark, no logos, no people, no purple, no bokeh.
+```
