@@ -770,3 +770,25 @@ Avoid: purple gradient blobs, bokeh, decorative pseudo-text, stray glyphs, extra
 
 Revisión: `105 / 111`, `0 / 156`, `8.0` y `2.0` aparecen correctamente; no hay
 otras estadísticas ni cifras inventadas.
+
+## blaming-the-model
+
+- Artículo: `src/content/blog/en/blaming-the-model.md`
+- Imagen: `public/blog/blaming-the-model.png` (1020×510)
+- Generada: 2026-08-31, Codex CLI 0.147 (`codex exec --approve-for-me`, `image_gen`)
+- Nota: `--full-auto` ya no existe en esta versión de Codex; la equivalente es `--approve-for-me`.
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 landscape blog hero image
+Primary request: Create a refined technical editorial illustration of a concrete debugging workspace for a software system with a language model inside it. Show the system's layers clearly, while suspicion is visibly aimed at the wrong layer.
+Scene/backdrop: Dark graphite developer workspace rendered as a crisp bitmap illustration, with a subtle desk-plane and interface-panel structure rather than an abstract background. Divide the canvas into several distinct, clean geometric zones.
+Subject: In the main zone, show a vertical stack of four solid, crisp rectangular system-layer boxes labelled exactly, from top to bottom: "input data", "prompt rules", "tools", "harness code". Place a separate softly glowing box labelled exactly "model" slightly apart from the stack, clearly part of the same system but visually isolated. Aim a strong inspection spotlight or large magnifying-glass beam at the "model" box, making it look wrongly accused. Place one small amber defect marker—an alert notch or tiny warning indicator—on the "prompt rules" or "tools" layer, outside the spotlight and easy to overlook but still visible to the viewer. Include a secondary terminal-window zone with only a few readable generic monospace lines such as "trace: input loaded", "tool result: 4 docs", "context: truncated", and "status: inspect layers". No error brands, product names, or logos.
+Style/medium: Refined technical editorial illustration; crisp bitmap shapes, precise edges, subtle screen-print texture, high contrast, professional AI/developer blog aesthetic. Dark but not monochrome. Not photorealistic and not glossy 3D.
+Composition/framing: Exact 2:1 wide hero composition designed for 1020x510 display. Clear hierarchy and generous breathing room. The stacked layers occupy one major zone, the separate model box and inspection beam form a second, and the compact terminal forms a third. Keep all important content inside safe margins. Avoid clutter and avoid a text-heavy poster.
+Lighting/mood: Focused investigative lighting, controlled and analytical. The model box has restrained teal/off-white illumination; the missed defect marker is amber.
+Color palette: Balanced teal, amber, graphite, deep navy-charcoal, and off-white accents on a dark background. Dark but chromatic.
+Text: Render only these short labels and terminal lines, verbatim and legibly: "input data", "prompt rules", "tools", "harness code", "model", "trace: input loaded", "tool result: 4 docs", "context: truncated", "status: inspect layers". Use clean compact monospace lettering. No other text.
+Constraints: Concrete debugging scene; solid crisp layer boxes; model box slightly apart; obvious spotlight or magnifying glass aimed at the model; unnoticed amber defect marker on a non-model layer; readable but generic terminal; several distinct geometric zones; professional editorial finish.
+Avoid: people, hands, faces, logos, brand names, watermarks, slogans, dense text, purple gradient blobs, purple-dominant palette, bokeh, lens flares, neon cyberpunk clutter, glassmorphism, soft amorphous shapes, generic robot imagery, brains, circuit-board clichés, photorealism, low contrast, illegible labels.
+```
