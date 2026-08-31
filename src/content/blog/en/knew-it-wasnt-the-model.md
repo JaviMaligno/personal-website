@@ -1,6 +1,6 @@
 ---
 title: "They knew it wasn't the model. They patched it anyway."
-description: "I swapped the language model for a random forest and ran the same broken pipeline past forty agents. Everyone patched the symptom either way — but with the model in the box, nobody found the cause at all. Patching is generic; investigating is not."
+description: "I swapped the language model for a random forest and ran the same broken pipeline past forty agents. Nineteen of twenty patched the symptom on each side — but with the model in the box, nobody found the cause at all. And when I fixed a defect in my own setup, half the effect went with it."
 pubDate: 2026-09-11
 tags: ["AI", "Agents", "Evaluation", "Research"]
 lang: en
@@ -52,97 +52,115 @@ In one arm it's a language model. In the other it's a random forest — trained 
 <figcaption>The whole control. The fault sits in retrieval, upstream of the head, so it is the same fault in both arms — and the head, whichever it is, classifies correctly whatever it is handed.</figcaption>
 </figure>
 
-Both briefs carry a measured certification, and it is the piece that makes the comparison fair: *"re-running the classification over the same context reproduced the output in X of 20 cases"* — 260/260 for the forest, 240/260 for the model, the real numbers. Without it, an agent facing the forest could reason, entirely correctly, that a trained forest is deterministic and therefore the cause must be upstream, and would patch less for a good reason rather than a revealing one.
+Both briefs carry the same measured certification, and it is the piece that makes the comparison fair: *"re-running the classification over the same context reproduced the output in 260 of 260 cases"* — the real number, identical in both arms. Without it, an agent facing the forest could reason, entirely correctly, that a trained forest is deterministic and therefore the cause must be upstream, and would patch less for a good reason rather than a revealing one.
 
-Forty agents saw the table without the code, twenty per arm.
+That sentence cost me running the control twice.
+
+## The setup I had to throw away
+
+The first version did not give 260/260 in both arms. It gave 260/260 for the forest and 240/260 for the model, and I wrote those two numbers side by side as if the asymmetry were a bookkeeping detail: of thirteen contexts, twelve reproduced 20/20, and the single one that missed gave the same label all twenty times.
+
+It was not a bookkeeping detail. It was a defect placed in the worst possible spot.
+
+Because the analysis further down says that what predicts whether an agent looks upstream is not which head is in the box — it is **whether it builds an argument for ruling the head out**. And I had made that argument literally more available in one arm than in the other. I was measuring, in part, my own header.
+
+The fix turned out to be the thing anyone does for cost reasons: **the system caches the head's output keyed by context**. With that, the model arm certifies 260/260 exactly like the forest, and its head file reads from disk instead of calling the network — which closes the second defect on the way, since the with-code package on the model side contained a network call, a legitimate culprit the forest didn't have.
+
+The fault doesn't move: it's still in retrieval, upstream of the cache, so caching doesn't mask it. Verified across all 285 runs: the same projects that changed still change, with zero differences in ordering, position, prompt or code. And the two briefs now differ in **exactly one line** — "the classification is decided by a language model" against "the classification is decided by a random forest" — with a test that aborts the run if the diff is anything else.
+
+Forty fresh agents saw the table without the code, twenty per arm. Everything below is from the second version.
 
 ## What happened
 
 | | language model | random forest | p |
 |---|---|---|---|
-| **Patched the symptom** | **20/20** | **20/20** | 1,00 |
-| Blamed the head | 19/20 | 9/20 | **0,0006** |
-| Used the determinism argument | 2/20 | 17/20 | **<0,0001** |
-| Located the cause upstream | 7/20 | 15/20 | 0,012 |
-| Found the actual cause | 0/20 | 5/20 | 0,024 |
-| Asked for the missing data | 0/20 | 0/20 | — |
+| **Patches the symptom** | **19/20** | **19/20** | 0.76 |
+| Uses the determinism argument | 9/20 | 16/20 | **0.024** |
+| Places the cause upstream | 10/20 | 16/20 | **0.048** |
+| Blames the head | 12/20 | 6/20 | 0.056 |
+| Finds the real cause | **0/20** | 4/20 | 0.053 |
+| Asks for the data it lacks | 0/20 | 0/20 | — |
 
-Forty out of forty patched the symptom. Wilson interval [0,91, 1,00].
+Thirty-eight of forty patched the symptom. Nineteen in each arm, the same exact figure on both sides. Wilson interval [0.84, 0.99].
 
-That row is the one I noticed first, and it's the one that breaks the frame I'd built. But it isn't the only story in the table, and the rest of it deserves more than a shrug — because the other four rows are not four separate measurements. They're a chain.
+That's the row that breaks the frame I brought in, and it also turns out to be the one that moved least when I fixed the setup: it was 20 and 20 before.
 
-With the model in the box, suspicion stays on the box: nineteen of twenty blame it. Only seven of twenty look upstream at all. **Nobody finds the cause.**
+What did move, a lot, is the attribution. With the dirty setup, nineteen of twenty blamed the model and nine blamed the forest, at p = 0.0006. With both arms certified alike: twelve and six. Same direction, half the size, and no longer significant. **A good part of what I had measured as a property of the model was a property of my header.**
 
-With the forest in the box, they exonerate it — seventeen of twenty argue explicitly that a trained random forest is a pure function, that the certification proves it, that the classifier is ruled out. Fifteen then look upstream. Five find the cause.
+It's worth saying out loud what just happened. This entire series is about attributing to the head what belongs to the scaffolding around it. I did exactly that to my own experiment, and I did it while printing the number that gave me away — 240/260 — in the same sentence where I explained why it didn't matter.
 
-So swapping the head doesn't change whether they patch. It changes **where they look, and whether they get there**. A language model in the loop absorbs the suspicion, and the investigation stops at the thing being suspected.
+What survives the fix is smaller, and more interesting.
+
+With the model in the box, ten of twenty look upstream at all. With the forest, sixteen. And reaching the cause: four with the forest, **zero with the model**. That zero is the one thing that has never moved, across setups or conditions: **zero of forty**, summing both versions of the control.
 
 And then, having exonerated the box, they patch it anyway.
 
 <figure class="gua-fig">
-<svg viewBox="0 0 600 310" role="img" aria-label="Bar chart of five measures out of twenty responses per arm. Patching the symptom is twenty in both. Blaming the head is nineteen for the model and nine for the forest; the determinism argument two and seventeen; looking upstream seven and fifteen; finding the cause zero and five.">
+<svg viewBox="0 0 600 310" role="img" aria-label="Bar chart of five measures over twenty responses per arm, with both heads certified at the same level. Patching the symptom is nineteen in both. The determinism argument is nine with the model and sixteen with the forest; looking upstream ten and sixteen; blaming the head twelve and six; finding the cause zero and four.">
   <rect x="366" y="12" width="12" height="12" fill="#2dd4bf"/><text x="384" y="22" fill="#cbd5e1" font-size="12">language model</text>
   <rect x="366" y="30" width="12" height="12" fill="#f59e0b"/><text x="384" y="40" fill="#cbd5e1" font-size="12">random forest</text>
   <text x="20" y="22" fill="#94a3b8" font-size="12">out of 20 responses per arm</text>
-  <text x="20" y="76" fill="#e2e8f0" font-size="13">patched the symptom</text>
-  <rect x="210" y="64" width="330" height="14" rx="2" fill="#2dd4bf"/><text x="548" y="76" fill="#5eead4" font-size="12">20</text>
-  <rect x="210" y="82" width="330" height="14" rx="2" fill="#f59e0b"/><text x="548" y="94" fill="#fbbf24" font-size="12">20</text>
-  <text x="20" y="124" fill="#e2e8f0" font-size="13">blamed the head</text>
-  <rect x="210" y="112" width="314" height="14" rx="2" fill="#2dd4bf"/><text x="532" y="124" fill="#5eead4" font-size="12">19</text>
-  <rect x="210" y="130" width="148" height="14" rx="2" fill="#f59e0b"/><text x="366" y="142" fill="#fbbf24" font-size="12">9</text>
-  <text x="20" y="172" fill="#e2e8f0" font-size="13">&quot;it's deterministic&quot;</text>
-  <rect x="210" y="160" width="33" height="14" rx="2" fill="#2dd4bf"/><text x="251" y="172" fill="#5eead4" font-size="12">2</text>
-  <rect x="210" y="178" width="280" height="14" rx="2" fill="#f59e0b"/><text x="498" y="190" fill="#fbbf24" font-size="12">17</text>
-  <text x="20" y="220" fill="#e2e8f0" font-size="13">looked upstream</text>
-  <rect x="210" y="208" width="115" height="14" rx="2" fill="#2dd4bf"/><text x="333" y="220" fill="#5eead4" font-size="12">7</text>
-  <rect x="210" y="226" width="248" height="14" rx="2" fill="#f59e0b"/><text x="466" y="238" fill="#fbbf24" font-size="12">15</text>
-  <text x="20" y="268" fill="#e2e8f0" font-size="13">found the cause</text>
+  <text x="20" y="76" fill="#e2e8f0" font-size="13">patches the symptom</text>
+  <rect x="210" y="64" width="314" height="14" rx="2" fill="#2dd4bf"/><text x="532" y="76" fill="#5eead4" font-size="12">19</text>
+  <rect x="210" y="82" width="314" height="14" rx="2" fill="#f59e0b"/><text x="532" y="94" fill="#fbbf24" font-size="12">19</text>
+  <text x="20" y="124" fill="#e2e8f0" font-size="13">&#8220;it&#8217;s deterministic&#8221;</text>
+  <rect x="210" y="112" width="149" height="14" rx="2" fill="#2dd4bf"/><text x="367" y="124" fill="#5eead4" font-size="12">9</text>
+  <rect x="210" y="130" width="264" height="14" rx="2" fill="#f59e0b"/><text x="482" y="142" fill="#fbbf24" font-size="12">16</text>
+  <text x="20" y="172" fill="#e2e8f0" font-size="13">looks upstream</text>
+  <rect x="210" y="160" width="165" height="14" rx="2" fill="#2dd4bf"/><text x="383" y="172" fill="#5eead4" font-size="12">10</text>
+  <rect x="210" y="178" width="264" height="14" rx="2" fill="#f59e0b"/><text x="482" y="190" fill="#fbbf24" font-size="12">16</text>
+  <text x="20" y="220" fill="#e2e8f0" font-size="13">blames the head</text>
+  <rect x="210" y="208" width="198" height="14" rx="2" fill="#2dd4bf"/><text x="416" y="220" fill="#5eead4" font-size="12">12</text>
+  <rect x="210" y="226" width="99" height="14" rx="2" fill="#f59e0b"/><text x="317" y="238" fill="#fbbf24" font-size="12">6</text>
+  <text x="20" y="268" fill="#e2e8f0" font-size="13">finds the cause</text>
   <rect x="210" y="256" width="2" height="14" rx="2" fill="#2dd4bf"/><text x="220" y="268" fill="#5eead4" font-size="12">0</text>
-  <rect x="210" y="274" width="82" height="14" rx="2" fill="#f59e0b"/><text x="300" y="286" fill="#fbbf24" font-size="12">5</text>
+  <rect x="210" y="274" width="66" height="14" rx="2" fill="#f59e0b"/><text x="284" y="286" fill="#fbbf24" font-size="12">4</text>
 </svg>
-<figcaption>The top row is the same bar twice: patching doesn't care what's in the box. Every row below it moves, and all in the same direction — with a language model in the loop the suspicion stays on the head, fewer look past it, and nobody arrives.</figcaption>
+<figcaption>The top row is the same bar twice: patching doesn't care what's in the box. The ones below all move, all in the same direction and none of them overwhelmingly — except the last, where with a language model inside nobody arrives.</figcaption>
 </figure>
 
 ## What actually unlocks the search
 
-The table above leaves one thing genuinely ambiguous, and it's the thing I most wanted to resolve: is the forest arm *easier*, or does the model *absorb the suspicion*? Those predict the same numbers.
+The table leaves one thing genuinely ambiguous, and it's the one I most wanted to settle: is the forest arm *easier*, or does the model *absorb the suspicion*? Both predict the same numbers.
 
-The responses themselves narrow it. This is post-hoc — I did not pre-register it, and it should be read as a lead rather than a result — but it's the cleanest structure in the data.
+The responses themselves narrow it. This is post-hoc in origin — I didn't pre-register it — but it's the cleanest structure in the data, and it is now measured on the good setup.
 
-| | looked upstream |
+| | looks upstream |
 |---|---|
-| Built the determinism argument | **17/19** |
-| Didn't | **5/21** |
+| Builds the determinism argument | **25/25** |
+| Doesn't build it | **1/15** |
 
-p < 0,0001. And conditioning on that argument, the effect of the head disappears: among those who built it, the model arm goes 2/2 and the forest arm 15/17. Among those who didn't, 5/18 and 0/3.
+p < 0.0001. And conditioning on that argument, the effect of the head **disappears entirely**: among those who build it, the model arm goes 9 of 9 and the forest arm 16 of 16. Among those who don't, 1 of 11 and 0 of 4.
 
-So what unlocks the search isn't what's in the box. It's **whether you reach an argument for ruling the box out**. The two responses in the model arm who got there looked upstream, both of them.
+It's a four-link chain in which the head only touches the first link:
 
-The same shape shows up from the other side: of the twelve responses across both arms that did *not* blame the head, **twelve looked upstream**. Of the twenty-eight that did, ten. And finding the cause happens only downstream of looking: 5 of the 22 who looked upstream found it, 0 of the 18 who didn't.
+**what's in the box → whether you build the argument to rule it out → whether you look upstream → whether you reach the cause**
 
-That's a cleaner statement of the LLM-specific claim than "the model absorbs blame". A frozen forest hands you the exclusion argument for free — it is a pure function and you can say so in one line. A language model doesn't, and almost nobody builds one anyway: two of twenty. The model doesn't block the search directly. It withholds the argument that would start it.
+A frozen forest hands you that argument: it's a pure function, it takes one line to say, and sixteen of twenty say it. A language model, with exactly the same certification in front of it and in the same position in the brief, does not: nine of twenty. **The model doesn't block the search. It withholds the argument that would have started it.**
+
+And there is what my dirty setup did. In the first version that figure wasn't nine of twenty — it was two. The setup bias and the real effect pushed in the same direction, which is the most uncomfortable way to be wrong: the result comes out prettier and you don't know how much of it is yours.
+
+The same shape shows up from the other side: of the twenty-two responses that did *not* blame the head, **twenty-two looked upstream**. Of the eighteen that did, four. And finding the cause only ever happens downstream of looking: 4 of the 26 who looked, 0 of the 14 who didn't.
 
 ## The dissociation
 
 This is the finding, and it survives the strictest slice I can take of it.
 
-Of the twenty responses facing the forest, **seventeen made the determinism argument. All seventeen proposed a patch anyway.** Eleven exonerated the head outright, with no hedging. All eleven patched too.
+Of the twenty-five responses that exonerated the head — across both arms, on the same argument and the same certification — **twenty-three proposed a patch anyway.**
 
 One writes: *"a random forest is a pure function: same feature vector, same vote. The 260/260 confirms it. The classifier is ruled out."* Its fourth recommendation is to publish by margin instead of top-1, with a threshold on the confidence gap and human review below it — *"this cuts the symptom the user sees, whatever the root cause"*.
 
 That last clause is the whole article. Cutting the symptom the user sees, whatever the root cause, is a perfectly sensible operational instinct. It is also what you do instead of finding the cause, and for *that* the thing in the box doesn't need to be a language model — it needs to be closed.
 
-What the language model adds is the other half: somewhere plausible for the suspicion to come to rest. The forest offers no such resting place, so nine of twenty still blame it but fifteen go looking upstream. The model offers an excellent one, and seven do.
-
 ## What the model does and doesn't change
 
-The honest reading of this table is that it splits the thing I'd been calling one behaviour into two, and only one of them is generic.
+The honest reading splits the thing I'd been calling one behaviour into two, and only one of them is generic.
 
-**Patching is generic.** It doesn't care what's in the box. Whatever drives an engineer to smooth an output rather than trace it, a language model is not a prerequisite — an opaque component is.
+**Patching is generic.** Nineteen of twenty on each side, head exonerated or not. Whatever drives an engineer to smooth an output rather than trace it, a language model is not a prerequisite — an opaque component is.
 
-**Investigating is not.** Every step of the diagnostic chain moves when the head changes, and moves in the same direction: attribution to the head (19/20 → 9/20), looking upstream (7/20 → 15/20), reaching the cause (0/20 → 5/20). The model doesn't make people patch. It makes them stop at the model.
+**Investigating, less so.** Every step of the chain moves when the head changes, all in the same direction, but on the clean setup the effects are small and sitting on the threshold: 0.024 for the argument, 0.048 for looking upstream, 0.053 for reaching the cause, 0.056 for attribution. At twenty per arm, that is exactly what it looks like when something is there and it isn't large.
 
-That second half is the LLM-specific claim, and it survives — in a sharper form than the one I started with. The original thesis was about *what the agent says*: it blames the model. What the data supports is about *where the agent stops*: the language model acts as a sink for suspicion, and the search ends at the thing suspected. Nobody in the model arm found the cause. Not one.
+So the LLM-specific claim survives, smaller than I had measured it and with its shape changed. The version I brought in was about *what the agent says*: it blames the model. That's precisely the one that nearly falls over once the defect is removed — twelve against six, p = 0.056. The one that holds is about *where it stops*: with a language model in front of them, the argument that unlocks the investigation occurs to fewer than half, and nobody gets as far as the cause.
 
 ## The question that lost half its object
 
@@ -150,20 +168,21 @@ I came into this piece with two hypotheses about why the reflex exists. One said
 
 For the patching, both are moot: there's no model-specific behaviour there to explain, because it shows up unchanged with no model in the loop.
 
-For the attribution, they're still live, and this design can't separate them — which was true before I ran anything. A habit learned from a corpus that steers tokens without passing through any consultable belief is indistinguishable from a disposition, for any experiment that only observes behaviour. Three independent reviewers of the design converged on that before a single response was collected.
+For what's left, they're still live, and this design can't separate them — which was true before I ran anything. A habit learned from a corpus that steers tokens without passing through any consultable belief is indistinguishable from a disposition, for any experiment that only observes behaviour. Three independent reviewers of the design converged on that before a single response was collected.
 
 ## What doesn't hold
 
-- **The difficulty band broke, by one unit, and it's ambiguous which way to read it.** The pre-committed criterion allowed up to 4/20 of difference in finding the cause; it came out 5/20. One reading is that the forest arm is simply *easier*, which would be a pairing defect — and note the direction still plays against the patching result, since an easier task should produce less patching, not the same. The other reading is that it isn't a defect at all but the finding itself: the 0/20 is what happens when suspicion has somewhere comfortable to stop. The three other rows of the chain are consistent with the second, and the mediation above narrows it further — what predicts looking upstream is the exclusion argument, not the head itself. It still isn't settled: this design can't fully separate them, and the mediation is post-hoc.
-- **The certification neutralised less than intended.** 260/260 against 240/260 still reads as "perfect" versus "not quite", and seventeen of twenty reasoned from exactly that. Up close the model's miss is a single context out of thirteen — twelve reproduced 20/20, and the one that didn't gave the same label all twenty times.
-- **The with-code arm isn't clean on the model side**: its head file contains the network call, a legitimate culprit the forest doesn't have. Faking that would be lying about the system. The comparison that carries is the one without code.
+- **Blaming the head no longer reaches significance.** p = 0.056. On the previous setup it looked like the most solid effect in the table, and it was in large part the asymmetric certification. It stands as a trend, and should be read as one.
+- **The difficulty band passed by a hair.** The pre-committed criterion allowed up to 4 of 20 of difference in finding the cause, and it came out exactly 4 (zero against four). On the first version it came out 5 and broke. Passing at the line is not the same as passing comfortably.
+- **The mediation is post-hoc in origin.** I didn't pre-register it. It replicates here on the clean setup and comes out stronger than on the dirty one, which helps; it is still an analysis I thought of while looking at data.
+- **The with-code arm hasn't been re-run.** The cache fix would clean it too, but the only numbers I have for it come from the defective version, so I don't use them for anything.
 - **One fault, one corpus, two heads.** That the behaviour is generic against *this* failure under *this* opacity doesn't make it generic against any.
 
-## Two hundred
+## Two hundred and forty
 
-Across five scenarios, two kinds of head, passive permission and explicit permission, **not one of two hundred responses has asked for the information it was missing before concluding.**
+Across five scenarios, two kinds of head, passive permission and explicit permission, two different setups of the same control, **not one of two hundred and forty responses has asked for the information it was missing before concluding.**
 
-That number has now survived every manipulation I've thrown at it, including the one designed to break it and the one that removed the language model entirely. It is the most robust thing in the whole series, and I still don't have a good explanation for it.
+That number has now survived every manipulation I've thrown at it, including the one designed to break it, the one that removed the language model entirely, and the one that fixed my own setup. It is the most robust thing in the whole series, and I still don't have a good explanation for it.
 
 The best I have is the shape of what replaces it: they build their own measurement instead — a script, a sweep, a synthetic reproduction. They want the data. They just don't ask.
 
