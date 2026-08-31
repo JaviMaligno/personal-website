@@ -271,6 +271,49 @@ dice nada que T=100 no diga ya.
 La calibración es además el único test que tenemos de que los baselines no están
 saboteados por implementación descuidada (riesgo R1).
 
+## 6.1 Puertas de calibración (aprendidas ejecutando, no diseñando)
+
+Tres comprobaciones que van **antes** de gastar en cualquier rejilla. Las tres salieron
+de errores reales cometidos en la primera calibración, y las tres son gratis o casi.
+
+**Puerta 1 — densidad de contexto igualada, medida sin llamar a la API.** La primera
+rejilla salió invertida (historia completa 1.00, estado 0.67) y la causa era nuestra:
+prompts entre tres y cuatro veces más ligeros que los suyos. A esa densidad el brazo de
+historia nunca alcanza la presión de contexto donde el método del paper tiene algo que
+ganar, así que la comparación mide otra cosa. `experiments/measure_density.py` calcula el
+prompt de cada runtime con un oráculo local, sin una sola petición.
+
+Dos avisos que costaron dinero aprender:
+
+- La herramienta debe modelar la **longitud de respuesta del modelo**, no solo la de las
+  observaciones: en los brazos con historia la respuesta se acumula en el transcript y pesa
+  igual. La primera versión respondía en dos líneas y dio por calibrado un entorno que
+  estaba al doble de densidad real.
+- El residuo se declara **con la dirección del sesgo**. Quedamos en 1.2–1.5x sobre ellos en
+  los brazos con historia, lo que favorece al estado; el error inicial favorecía a la
+  historia. Ninguno de los dos es neutro y el artículo debe decir cuál tiene.
+
+**Puerta 2 — semántica del merge declarada y medida.** Un merge de primer nivel sobre un
+esquema anidado **fabrica** el modo de fallo que el paper atribuye al modelo: el agente
+emite un parche tocando una sub-clave, el runtime reemplaza el objeto entero y el resto se
+pierde. Eso es el "premature state overwrite" de su §5.7, el 68% de los errores en modelos
+abiertos, producido por el runtime y no por el modelo. Su fórmula solo dice "el operador de
+merge del runtime con semántica de borrado por null", sin especificar profundidad.
+
+Conservamos las dos variantes tras un flag y la semántica se declara en el prompt. **La
+sensibilidad del método a la profundidad del merge es un resultado por derecho propio**, y
+posiblemente explica parte de su taxonomía de errores.
+
+**Puerta 3 — truncamiento por tope de salida instrumentado.** Una respuesta cortada por
+`max_tokens` parte el bloque JSON del parche y hace fallar a SKILL.state por el tope, no
+por el método. Se cuenta por episodio y se avisa. Sin ese contador, el artefacto se lee
+como resultado — que es exactamente lo que ya pasó dos veces por otras vías.
+
+**Regla general que se saca de las tres:** todo fallo del brazo de estado es sospechoso de
+ser nuestro hasta que se demuestre lo contrario, porque los tres artefactos encontrados
+hasta ahora empujaban en la misma dirección — hacer quedar mal al método que estamos
+replicando.
+
 ## 7. Métricas
 
 1. **Accuracy** — su métrica de SkillExecBench: acciones correctas / eventos accionables.
@@ -403,6 +446,12 @@ Nada corre en local. Todo contra la API, en serie.
   las variantes control y diferida son **la misma tarea con la restricción movida de sitio**,
   no tareas distintas; se publican íntegras junto al código; y el par control/diferida a `k`
   mínimo funciona como condición nula, donde no debe haber diferencia entre runtimes.
+- **R7 — el equipo se ralentiza solo.** Una rejilla de horas contra una API es espera, no
+  CPU, así que Windows la lee como inactividad y entra en bajo consumo. En modern standby
+  no queda rastro en el registro de eventos, así que se manifiesta como una corrida
+  inexplicablemente lenta y se diagnostica mal (aquí se atribuyó al despliegue, que medido
+  daba 85 tokens/s). Mitigación: el corredor inhibe la suspensión del sistema mientras
+  corre. Antes de culpar a un proveedor de lentitud, medir su latencia directamente.
 - **R5 — la novedad no está verificada.** Damos por hecho que nadie ha medido relevancia
   diferida en runtimes de agente a partir de una búsqueda superficial. Para un blog basta;
   para un preprint no. **Paso previo obligatorio antes de escribir una línea de código:**
