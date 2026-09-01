@@ -1,10 +1,24 @@
 # X thread — "The Bug Nobody Can Reach"
 
 Manual thread (there is no X automation in this repo). Post on publication day.
-**Replace `2608.28541` before posting.**
+The arXiv ID (2608.28541) is already in the text below: copy the blocks as they
+are.
 
 Short on purpose: this is the digestible companion to the long post, which has
 its own 13-tweet thread. Eight tweets, each under 280 characters.
+
+## Posting it from a phone, from the repo
+
+Nothing here needs a checkout. This file lives on `main` once the article is
+published (the publish workflow merges the branch, so the thread comes with
+it), and every tweet below is its own fenced block, which GitHub renders with a
+copy button on mobile and desktop alike:
+
+https://github.com/JaviMaligno/personal-website/blob/main/docs/marketing/x-thread-the-bug-nobody-can-reach.md
+
+Post `1/` as a normal post, then reply to *your own* previous post for each of
+the rest, in order. The arXiv ID is already substituted — there is nothing to
+replace, and no editing is needed at all.
 
 ---
 
