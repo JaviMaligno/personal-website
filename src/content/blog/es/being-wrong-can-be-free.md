@@ -1,7 +1,7 @@
 ---
 title: "Estar equivocado puede ser gratis — hasta que el planificador pueda llegar"
 description: "Un modelo del mundo sintetizado puede equivocarse en toda una región, pasar cualquier gate de muestreo y no costar absolutamente nada — con demostración. Después abrí una puerta de 0.1 radianes en esa región y el peligro se derrumbó; escondí la misma puerta detrás del objetivo y siguió a plena potencia. Misma topología, peligro opuesto."
-pubDate: 2026-09-02
+pubDate: 2026-09-14
 tags: ["IA", "Machine Learning", "Testing", "Investigación", "Agentes"]
 lang: es
 translationKey: being-wrong-can-be-free

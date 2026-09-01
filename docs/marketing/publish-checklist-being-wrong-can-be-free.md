@@ -1,16 +1,20 @@
 # Publish checklist — "Being Wrong Can Be Free — Until the Planner Can Reach It"
 
-Paper 3's companion article. Scheduled for **2026-09-02** via
-`.github/workflows/scheduled-publish-being-wrong-can-be-free.yml`, which
-**refuses to publish while the arXiv placeholder is still in the files** (see
-"The one blocker" below) — so an un-filled ID means no publication and a
-failure issue, never a broken post.
+Paper 3's companion article. Scheduled for **2026-09-14** in
+`.github/publish-schedule.json`, read daily by
+`.github/workflows/scheduled-publish.yml`. Its `blockIfMatches` entry refuses
+to publish while an unresolved `XXXX.XXXXX` is in the article — that blocker is
+resolved (see below), so the guard now passes.
 
-The date is the first day free in *both* calendars. 08-29 (`nobody-will-check-behind-you`),
-08-30 (paper 2's `infer-the-rule-in-one-dimension`) and 09-01 (`stop-being-the-cable`)
-carry articles; 08-28, 08-31 and 09-03 carry standalone LinkedIn posts in
-`scripts/linkedin/posts/schedule.json`, and publishing here fires
-`linkedin-post.yml` too, which would put two posts out on one day.
+**Why the 14th and not the 2nd.** It was scheduled for 2026-09-02 until the
+VitaminD launch on Product Hunt was postponed onto that same morning. That
+launch has its own X thread, and two threads from one account on one day split
+the attention of both. The article queue is full from 09-04 to 09-11 and 09-03
+carries a standalone LinkedIn post in `scripts/linkedin/posts/schedule.json`
+(publishing an article fires `linkedin-post.yml`, so that day would go out with
+two LinkedIn posts), which makes the 12th the first free day in both calendars
+— and the 14th the first free *weekday*. Its companion moved with it, to the
+17th, to keep the same three-day gap and the same order.
 
 ## The blocker, now resolved
 
@@ -26,7 +30,7 @@ the published PDF, verified against its own text stream.
 
 - Both language files written, frontmatter validated against the content
   collection schema (all keys known, both languages same `translationKey`,
-  `pubDate` 2026-09-02 matching the cron).
+  `pubDate` 2026-09-14 matching the cron).
 - `linkedinSummary` written by hand and pinned in the EN frontmatter, so
   Gemini is not called for this post. This required the same 5-line
   `src/content/config.ts` schema addition that paper 2's branch carries; the

@@ -1,7 +1,7 @@
 ---
 title: "Being Wrong Can Be Free — Until the Planner Can Reach It"
 description: "A synthesized world model can get a whole region wrong, pass any sampling gate, and cost exactly nothing — provably. Then I opened a 0.1-radian door in that region and the danger collapsed; I hid the same door behind the goal and it stayed at full strength. Same topology, opposite danger."
-pubDate: 2026-09-02
+pubDate: 2026-09-14
 tags: ["AI", "Machine Learning", "Testing", "Research", "Agents"]
 lang: en
 translationKey: being-wrong-can-be-free
