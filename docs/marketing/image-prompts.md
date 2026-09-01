@@ -770,3 +770,49 @@ Avoid: purple gradient blobs, bokeh, decorative pseudo-text, stray glyphs, extra
 
 Revisión: `105 / 111`, `0 / 156`, `8.0` y `2.0` aparecen correctamente; no hay
 otras estadísticas ni cifras inventadas.
+## stop-being-the-cable (2026-08-19)
+
+- Artículo: `src/content/blog/{en,es}/stop-being-the-cable.md`
+- Imagen: `public/blog/stop-being-the-cable.png` (1020x510)
+- Generada con `codex exec -s workspace-write` (codex-cli 0.148.0), delegando la
+  redaccion del prompt final a Codex a partir del brief de estilo.
+
+A la primera. Sin artefactos de texto: las cuatro etiquetas (`REPO`, `TICKETS`,
+`DOCS`, `DB`) salieron limpias porque se le dieron literales y se le prohibio
+cualquier otro texto prominente. La composicion en dos mitades comparadas
+—izquierda con cable enredado y humano de espaldas, derecha con conectores
+directos— es la que hace que el hero cuente el articulo sin titular.
+
+Prompt exacto:
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 blog hero image, exact 2:1 landscape composition
+Primary request: A refined technical editorial illustration of the core idea "stop being the cable": one coherent split workspace scene contrasts manual human integration with directly connected agent infrastructure.
+Scene/backdrop: Dark graphite technical workspace, dark but not monochrome, with subtle off-white grid and panel structure; no abstract gradient background.
+Subject: On the left, a faceless person shown from the back or cropped below the head physically carries a clipboard and a thick literal cable between a chat window and four system boxes. The chat window contains only three short generic readable lines. The system boxes are clearly labeled exactly "REPO", "TICKETS", "DOCS", and "DB". Make the manual path visibly awkward: the person holds the cable/clipboard and bridges disconnected gaps by hand. On the right, the same chat/agent panel is wired directly to the same four labeled system boxes through clean, organized connector lines and arrowheads, with no person in the path. The contrast should immediately communicate repeated copy-paste versus durable direct connections.
+Style/medium: Crisp bitmap illustration with vector-like geometric forms, refined technical editorial art, professional AI/developer blog aesthetic, precise edges, restrained detail, slight tactile grain, high contrast.
+Composition/framing: Exact 2:1 wide hero layout. Balanced left-versus-right comparison within one scene, strong central dividing axis, generous margins for crop safety, clear visual hierarchy, no headline or poster title. Keep all important elements away from the outer 5 percent.
+Lighting/mood: Focused, intelligent, calm and professional; the manual side slightly tense and tangled, the connected side orderly and efficient.
+Color palette: Graphite and deep charcoal base, balanced teal connector paths, amber manual cable and clipboard accents, off-white panels and typography; dark but chromatic.
+Text (verbatim): "REPO", "TICKETS", "DOCS", "DB". Chat lines may be generic short UI marks or simple phrases, but add no other prominent text.
+Constraints: Readable generic labels, one faceless human only, no visible face, no logos, no brand names, no real product names, no watermark. Clean geometric composition, strong silhouettes, clear cable-versus-connectors storytelling, bitmap output.
+Avoid: text-heavy poster, headline, slogans, tiny dense text, logos, trademarks, visible facial features, purple gradient blobs, bokeh, neon cyberpunk glow, photorealism, glossy 3D, clutter, illegible pseudo-text, extra system boxes.
+```
+
+## what-you-still-need-to-know-map — regeneracion a 14 categorias (2026-08-19)
+
+- Imagenes: `public/blog/what-you-still-need-to-know-map.png` y `-es.png`
+- Motivo: el mapa paso de 13 a 14 categorias (nueva *What it can reach* /
+  *Hasta donde llega*, dentro de la familia *El techo*).
+
+**Patron que funciona para editar un diagrama existente sin perderlo:** no se
+redacta un prompt nuevo desde cero — se le dice a Codex que **mire el PNG que ya
+esta en disco**, se le describe la composicion actual (titulo, leyenda, tarjetas
+y sus filas, barra inferior) y se le pide que regenere **exactamente lo mismo
+cambiando una sola cosa**, enumerando literalmente todas las filas que deben
+quedar igual. Las dos salieron a la primera, acentos incluidos.
+
+Mismo esquema que la segunda pasada de `the-scaffolding-you-pay-for`: reusar
+composicion, cambiar un dato. Las originales se respaldan antes de sobrescribir,
+porque `image_gen` escribe sobre el fichero destino.

@@ -73,27 +73,33 @@ Two things about this that matter more than the levels themselves.
 
 **Your level is a vector, not a number.** Nobody sits on the same rung across the board. You can be Opinionated about access control and completely unaware of what your hosting costs. The profile is jagged, and that's normal — it's a map with holes in it, not a ladder you climb whole.
 
-If you want your own version of that jagged profile before reading on, there's a [thirteen-question version of this](/en/assessment) that takes about two minutes.
+If you want your own version of that jagged profile before reading on, there's a [fourteen-question version of this](/en/assessment) that takes about two minutes.
 
 **Opinionated is optional — until it isn't.** You can ship most categories without ever forming a view of your own. But wherever the project is actually betting something, the top level stops being a luxury: if you charge money, you need a view on cost; if you hold other people's data, you need one on access.
 
-![The map: twelve risk categories in five families, plus one of taste](/blog/what-you-still-need-to-know-map.png)
+![The map: thirteen risk categories in five families, plus one of taste](/blog/what-you-still-need-to-know-map.png)
 
-## Twelve categories, plus one
+## Thirteen categories, plus one
 
-Twelve where things can go wrong, and one that's a different animal. Read down and find the ones you didn't know were categories — those are your answer.
+Thirteen where things can go wrong, and one that's a different animal. Read down and find the ones you didn't know were categories — those are your answer.
 
 ### The ceiling
 
-**1. What can even be asked for.** This one sits alone because it limits the other twelve. If you think an agent writes text, you will ask it to write text, and everything below stays theoretical.
+**1. What can even be asked for.** This one comes first because it limits the other twelve. If you think an agent writes text, you will ask it to write text, and everything below stays theoretical.
 
 - **Aware** — an agent builds entire working systems, not just snippets of writing
 - **Fluent** — describe what you want by outcome, ask it to research and propose before it builds, and understand it when it says something can't be done or offers a different route
 - **Opinionated** — which model, which tool, which hardware. A topic for a later piece.
 
+**2. What it can reach.** The other half of the ceiling, and the half nobody mentions. An agent that only sees what you paste into it is a very expensive text box: you are the integration layer, carrying context in by hand and answers back out, and that cost is paid in full every single time — which is why people try these tools, get a good result, and quietly stop. Fixing it is mostly not development. Connectors to the common systems — repository, issue tracker, documentation, chat — are standard now, and installing one is configuration. What it costs is a permission, which is why it stalls in places nothing technical would. I've written about [the whole failure mode separately](/en/blog/stop-being-the-cable).
+
+- **Aware** — it only knows what you paste, and it can be connected to your own systems
+- **Fluent** — connect one system that matters, and grant reading before writing
+- **Opinionated** — scoped permissions, knowing what it may do by default versus what needs approval, and building a connector when none exists
+
 ### Where it is and how I get it back
 
-**2. Where your app lives.** The environment question is where the genuinely scary mistakes live. Almost nobody deletes production data on purpose — they delete it believing they're in the test copy. And the separation you think you have may not exist: I've had pipelines that didn't distinguish environments at all, running CI against dev and prod alike, with no real separation behind the names. I found out by looking at the deployment dashboard, not by reading configuration — and then wrote the separation down so it stayed true.
+**3. Where your app lives.** The environment question is where the genuinely scary mistakes live. Almost nobody deletes production data on purpose — they delete it believing they're in the test copy. And the separation you think you have may not exist: I've had pipelines that didn't distinguish environments at all, running CI against dev and prod alike, with no real separation behind the names. I found out by looking at the deployment dashboard, not by reading configuration — and then wrote the separation down so it stayed true.
 
 The same question applies to the agent itself, and catches people out. The browser versions of these tools don't run on your computer — they run on someone else's, so they can't see your files, don't have your keys, and don't have whatever you've installed. "It worked on my machine but not in the browser" isn't inconsistency; it's two environments with two sets of configuration.
 
@@ -101,13 +107,13 @@ The same question applies to the agent itself, and catches people out. The brows
 - **Fluent** — ask for a deploy, understand the difference between the test site and the real one, run a command you're handed without freezing, know which of the two you're touching right now, and know what kind of thing gets left behind when you work in the cloud — local files, keys, installed tooling — so you know when you have to come back to your own machine
 - **Opinionated** — domains, per-environment settings, host logs, rolling back a deploy, choosing where it runs, and configuring the remote one so it works there too
 
-**3. Code versus data.** Agents hardcode constantly — a value written into the code where it should have been read from the database. It's a reasonable shortcut when the goal is something that runs, and it's wrong the moment that data is meant to change. It's the standard case for the first and third techniques above: say up front that it mustn't happen, and ask later when a number looks suspiciously stable.
+**4. Code versus data.** Agents hardcode constantly — a value written into the code where it should have been read from the database. It's a reasonable shortcut when the goal is something that runs, and it's wrong the moment that data is meant to change. It's the standard case for the first and third techniques above: say up front that it mustn't happen, and ask later when a number looks suspiciously stable.
 
 - **Aware** — code can be regenerated, data cannot; some data is sitting inside the code; data needs backups
 - **Fluent** — ask where something gets stored and understand the answer, know whether the database is local or remote, and confirm a backup exists rather than having been mentioned
 - **Opinionated** — migrations, test data versus real data, restoring, what kind of database and shape
 
-**4. Getting back.** "It was working, now it isn't, and I don't know what changed" is the most common disaster in this field and the most completely solved one. The agent already commits for you. What's missing is you knowing the rescue exists so you can call for it.
+**5. Getting back.** "It was working, now it isn't, and I don't know what changed" is the most common disaster in this field and the most completely solved one. The agent already commits for you. What's missing is you knowing the rescue exists so you can call for it.
 
 - **Aware** — there's a way to recover yesterday's version and it isn't Ctrl+Z
 - **Fluent** — ask for a save point before a big change, ask to go back, and check the history to confirm that point is really there
@@ -115,7 +121,7 @@ The same question applies to the agent itself, and catches people out. The brows
 
 ### Who gets hurt if this fails
 
-**5. Secrets.** You do not need to be able to read a `.env` file. You need to know it exists and that keys belong in it. What isn't obvious: taking a key out of the code doesn't remove it from the project's history, and I've had to scrub keys out of that history more than once. There are tools that watch for this — GitGuardian and similar — and, depending on how critical the key is, safe ways to hand one to someone that aren't a chat message.
+**6. Secrets.** You do not need to be able to read a `.env` file. You need to know it exists and that keys belong in it. What isn't obvious: taking a key out of the code doesn't remove it from the project's history, and I've had to scrub keys out of that history more than once. There are tools that watch for this — GitGuardian and similar — and, depending on how critical the key is, safe ways to hand one to someone that aren't a chat message.
 
 There's a second confusion worth naming, because it runs the other way. Not everything that lives in environment variables is a secret. Feature flags, timeouts, which region to use — settings drift into that file because it's the place things go, and then get treated with the ceremony a password deserves while the actual passwords get lost among them. Knowing which of your variables are secret and which are merely configuration is part of being fluent here.
 
@@ -123,13 +129,13 @@ There's a second confusion worth naming, because it runs the other way. Not ever
 - **Fluent** — ask for a key to be moved out of the code, understand why that file isn't uploaded, know where a key comes from when you're asked for one, know that a server key and a public client key are different animals, and tell a secret from a setting that merely ended up next to one
 - **Opinionated** — rotating a leaked key, secret managers, per-environment secrets
 
-**6. Who can get in.** The open endpoint above is this category. Worth restating what actually did the work there: the check was cheap and took a minute. Knowing it was a check worth running is the part that isn't free.
+**7. Who can get in.** The open endpoint above is this category. Worth restating what actually did the work there: the check was cheap and took a minute. Knowing it was a check worth running is the part that isn't free.
 
 - **Aware** — having a login does not mean being protected
 - **Fluent** — ask "can anyone call this?" and understand the answer; authentication is who you are, authorization is what you're allowed to touch; log in as one user and confirm you can't see another's data
 - **Opinionated** — roles and permissions, row-level security, tokens, reviewing what's exposed
 
-**7. Other people's data.** The one category with a moral asymmetry: everything else here costs you money or embarrassment, and this one is paid by someone who never agreed to your learning curve.
+**8. Other people's data.** The one category with a moral asymmetry: everything else here costs you money or embarrassment, and this one is paid by someone who never agreed to your learning curve.
 
 - **Aware** — if you store things about other people, the cost of getting it wrong isn't yours
 - **Fluent** — know what you're collecting and why, know there are legal obligations attached, and ask for anything unnecessary not to be stored at all
@@ -137,19 +143,19 @@ There's a second confusion worth naming, because it runs the other way. Not ever
 
 ### What's going to surprise me
 
-**8. What this costs.** Surprise bills are more common than breaches, easier to prevent, and almost nobody prevents them — because "there is no default limit" isn't something you'd think to ask about. Early on I built agentic systems without asking for token costs to be tracked, which meant I had no cost estimate at the end and had to run the whole batch again just to measure it. Not measuring cost has a cost, and it's paid in exactly the currency you were trying to find out about. Ask for it in the spec and it's free.
+**9. What this costs.** Surprise bills are more common than breaches, easier to prevent, and almost nobody prevents them — because "there is no default limit" isn't something you'd think to ask about. Early on I built agentic systems without asking for token costs to be tracked, which meant I had no cost estimate at the end and had to run the whole batch again just to measure it. Not measuring cost has a cost, and it's paid in exactly the currency you were trying to find out about. Ask for it in the spec and it's free.
 
 - **Aware** — this generates a bill and by default nothing caps it
 - **Fluent** — understand the shape of the bill (model and API usage, hosting, database, storage, traffic), fixed versus per-use, that CPU and GPU aren't priced alike; ask for a cap and look at real consumption
 - **Opinionated** — alerts, your own rate limits, bot protection, designing for cost
 
-**9. Who you depend on.** Separate from cost because the failure isn't financial. It's that something which worked stops existing. I've run a migration between platforms that the agent reported as complete, and which fell over the moment I tried to run on the new one alone — the old platform was still quietly holding it up, and became the backup I hadn't planned for. "Migration complete" and "the old thing can be switched off" are different claims, and only the second one is testable.
+**10. Who you depend on.** Separate from cost because the failure isn't financial. It's that something which worked stops existing. I've run a migration between platforms that the agent reported as complete, and which fell over the moment I tried to run on the new one alone — the old platform was still quietly holding it up, and became the backup I hadn't planned for. "Migration complete" and "the old thing can be switched off" are different claims, and only the second one is testable.
 
 - **Aware** — your app leans on other people's services, and they can raise prices, change, or shut down
 - **Fluent** — know which pieces are someone else's and which are yours, and ask what happens when one goes away
 - **Opinionated** — choose by coupling rather than price alone, and have an exit route
 
-**10. Holding more than you tested.** Nothing in the building process warns you about this, because while you're building there is exactly one user.
+**11. Holding more than you tested.** Nothing in the building process warns you about this, because while you're building there is exactly one user.
 
 - **Aware** — it works with three users and can fall over with three hundred
 - **Fluent** — know that testing and holding load are different questions, and ask what breaks first
@@ -157,13 +163,13 @@ There's a second confusion worth naming, because it runs the other way. Not ever
 
 ### How I know it's still fine
 
-**11. Tests, and where it breaks.** There should be tests for one unglamorous reason: without them, every check you'll ever do is you clicking through the finished app guessing what happened in the middle. That's a maze, and it grows with the project.
+**12. Tests, and where it breaks.** There should be tests for one unglamorous reason: without them, every check you'll ever do is you clicking through the finished app guessing what happened in the middle. That's a maze, and it grows with the project.
 
 - **Aware** — there have to be tests, and "the agent says it works" isn't one
 - **Fluent** — understand what you're told when someone says frontend or backend, run the tests and see them pass, and know where to look for an error depending on which side it's on
 - **Opinionated** — which kind of test for which risk
 
-**12. Still working in six months.** As a project grows messy and undocumented, **the agent starts failing more.** That's the argument — not architectural purity, but your own tool getting worse at helping you. The failure mode is specific and easy to miss: documentation drifts out of date, the agent trusts it completely, and you get confident work built on a description that stopped being true months ago. Documentation only stays true if something reviews it against the code — and that something can be the agent itself, if you ask.
+**13. Still working in six months.** As a project grows messy and undocumented, **the agent starts failing more.** That's the argument — not architectural purity, but your own tool getting worse at helping you. The failure mode is specific and easy to miss: documentation drifts out of date, the agent trusts it completely, and you get confident work built on a description that stopped being true months ago. Documentation only stays true if something reviews it against the code — and that something can be the agent itself, if you ask.
 
 - **Aware** — mess degrades the thing you're relying on
 - **Fluent** — ask for documentation, and understand the difference between docs for people and instructions for the agent, and notice when the project's own summary no longer matches what it does
@@ -171,7 +177,7 @@ There's a second confusion worth naming, because it runs the other way. Not ever
 
 ### Plus one: taste
 
-The thirteenth isn't like the other twelve, which is why it's last and separate. In all twelve, failure has a victim. Here there's no failure — just absence.
+The fourteenth isn't like the other thirteen, which is why it's last and separate. In all thirteen, failure has a victim. Here there's no failure — just absence.
 
 Agents are good at *working*. They're mediocre at *good*. The layout will be reasonable, the spacing fine, the colors the ones everything else has. Functionally correct and completely anonymous. Nobody will ever tell you it's wrong, because it isn't.
 
@@ -222,22 +228,23 @@ You don't need to learn to code. You need a loop, a map of what exists, and enou
 | | Aware | Fluent | Opinionated |
 |---|---|---|---|
 | **1. What can be asked for** | agents build whole systems | describe by outcome, ask it to propose | model, tooling, hardware |
-| **2. Where it lives** | laptop vs internet | deploy, test site vs real, run a given command | domains, env settings, rollback |
-| **3. Code vs data** | data can't be regenerated | where is this stored, local vs remote database | migrations, restores, schema |
-| **4. Getting back** | yesterday is recoverable | ask for a save point, confirm it exists | branches, tags, diffs |
-| **5. Secrets** | keys live outside the code | secrets file, server vs client key | rotation, secret manager |
-| **6. Who gets in** | login ≠ protected | can anyone call this, authn vs authz | roles, permissions, tokens |
-| **7. Other people's data** | the damage isn't yours to pay | what you collect and why, legal duties | consent, retention, residency |
-| **8. What it costs** | no default limit | shape of the bill, ask for a cap | alerts, rate limits, cost design |
-| **9. Who you depend on** | someone else's service can vanish | which pieces aren't yours | coupling, exit plan |
-| **10. Holding load** | works at three users, not three hundred | testing vs load are different questions | measure, size, optimize |
-| **11. Tests and breakage** | there have to be tests | frontend vs backend, run them, read the failure | which test for which risk |
-| **12. Six months on** | mess degrades the agent | docs for people vs for agents | permanent instructions, structure |
+| **2. What it can reach** | it only knows what you paste | connect a system, read before write | scoped permissions, default vs approval |
+| **3. Where it lives** | laptop vs internet | deploy, test site vs real, run a given command | domains, env settings, rollback |
+| **4. Code vs data** | data can't be regenerated | where is this stored, local vs remote database | migrations, restores, schema |
+| **5. Getting back** | yesterday is recoverable | ask for a save point, confirm it exists | branches, tags, diffs |
+| **6. Secrets** | keys live outside the code | secrets file, server vs client key | rotation, secret manager |
+| **7. Who gets in** | login ≠ protected | can anyone call this, authn vs authz | roles, permissions, tokens |
+| **8. Other people's data** | the damage isn't yours to pay | what you collect and why, legal duties | consent, retention, residency |
+| **9. What it costs** | no default limit | shape of the bill, ask for a cap | alerts, rate limits, cost design |
+| **10. Who you depend on** | someone else's service can vanish | which pieces aren't yours | coupling, exit plan |
+| **11. Holding load** | works at three users, not three hundred | testing vs load are different questions | measure, size, optimize |
+| **12. Tests and breakage** | there have to be tests | frontend vs backend, run them, read the failure | which test for which risk |
+| **13. Six months on** | mess degrades the agent | docs for people vs for agents | permanent instructions, structure |
 | **+1. Taste** | the default is anonymous | name what you don't like | a direction of your own |
 
 ---
 
-**Want your own map?** [Answer the thirteen questions](/en/assessment) and you'll get the same grid filled in for your project, along with which gap is worth closing first.
+**Want your own map?** [Answer the fourteen questions](/en/assessment) and you'll get the same grid filled in for your project, along with which gap is worth closing first.
 
 ---
 

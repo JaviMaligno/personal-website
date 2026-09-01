@@ -73,27 +73,33 @@ Dos cosas sobre esto que importan más que los niveles en sí.
 
 **Tu nivel es un vector, no un número.** Nadie está en el mismo peldaño en todo. Puedes tener criterio sobre control de acceso y no tener ni idea de lo que te cuesta el hosting. El perfil sale dentado, y eso es lo normal: es un mapa con agujeros, no una escalera que se sube entera.
 
-Si quieres tu propia versión de ese perfil dentado antes de seguir leyendo, hay una [versión de trece preguntas de esto](/es/assessment) que lleva unos dos minutos.
+Si quieres tu propia versión de ese perfil dentado antes de seguir leyendo, hay una [versión de catorce preguntas de esto](/es/assessment) que lleva unos dos minutos.
 
 **Con criterio es opcional, hasta que deja de serlo.** Puedes lanzar la mayoría de categorías sin formarte nunca una opinión propia. Pero allí donde el proyecto se está jugando algo de verdad, el nivel de arriba deja de ser un lujo: si cobras dinero, necesitas criterio sobre coste; si guardas datos de otras personas, sobre acceso.
 
-![El mapa: doce categorías de riesgo en cinco familias, más una de criterio](/blog/what-you-still-need-to-know-map-es.png)
+![El mapa: trece categorías de riesgo en cinco familias, más una de criterio](/blog/what-you-still-need-to-know-map-es.png)
 
-## Doce categorías, más una
+## Trece categorías, más una
 
-Doce donde las cosas pueden salir mal, y una que es de otra naturaleza. Recórrelas y busca aquellas que no sabías que eran una categoría: esas son tu respuesta.
+Trece donde las cosas pueden salir mal, y una que es de otra naturaleza. Recórrelas y busca aquellas que no sabías que eran una categoría: esas son tu respuesta.
 
 ### El techo
 
-**1. Qué se puede pedir.** Esta va sola porque limita a las otras doce. Si crees que un agente escribe texto, le pedirás que escriba texto, y todo lo de abajo se queda en teoría.
+**1. Qué se puede pedir.** Esta va primero porque limita a las otras doce. Si crees que un agente escribe texto, le pedirás que escriba texto, y todo lo de abajo se queda en teoría.
 
 - **Consciente** — un agente construye sistemas enteros que funcionan, no fragmentos de escritura
 - **Con soltura** — describir lo que quieres por resultado, pedirle que investigue y proponga antes de construir, y entenderlo cuando dice que algo no se puede o propone otra ruta
 - **Con criterio** — qué modelo, qué herramienta, qué hardware. Tema para otro artículo.
 
+**2. Hasta dónde llega.** La otra mitad del techo, y la mitad que nadie menciona. Un agente que solo ve lo que le pegas es una caja de texto muy cara: la capa de integración eres tú, metiendo el contexto a mano y sacando las respuestas igual, y ese coste se paga entero todas las veces — que es la razón por la que se prueban estas herramientas, sale bien, y se dejan en silencio. Arreglarlo casi nunca es desarrollo. Los conectores a los sistemas habituales —repositorio, gestor de tickets, documentación, chat— ya son estándar, e instalar uno es configuración. Lo que cuesta es un permiso, y por eso se atasca donde nada técnico se atascaría. He escrito sobre [el modo de fallo completo aparte](/es/blog/stop-being-the-cable).
+
+- **Consciente** — solo sabe lo que le pegas, y se le puede conectar a lo vuestro
+- **Con soltura** — conectar un sistema que importe, y conceder lectura antes que escritura
+- **Con criterio** — permisos acotados, saber qué puede hacer por defecto y qué requiere aprobación, y construir un conector cuando no existe
+
 ### Dónde está y cómo lo recupero
 
-**2. Dónde vive tu app.** La cuestión del entorno es donde viven los errores realmente feos. Casi nadie borra datos de producción a propósito: los borra creyendo que está en la copia de pruebas. Y la separación que crees tener puede no existir: he tenido pipelines que no distinguían entornos en absoluto, ejecutando CI contra dev y contra prod por igual, sin separación real detrás de los nombres. Me enteré mirando el panel de despliegue, no leyendo configuración — y luego dejé la separación documentada para que siguiera siendo cierta.
+**3. Dónde vive tu app.** La cuestión del entorno es donde viven los errores realmente feos. Casi nadie borra datos de producción a propósito: los borra creyendo que está en la copia de pruebas. Y la separación que crees tener puede no existir: he tenido pipelines que no distinguían entornos en absoluto, ejecutando CI contra dev y contra prod por igual, sin separación real detrás de los nombres. Me enteré mirando el panel de despliegue, no leyendo configuración — y luego dejé la separación documentada para que siguiera siendo cierta.
 
 La misma pregunta se aplica al propio agente, y ahí es donde pilla a la gente. Las versiones de navegador de estas herramientas no corren en tu ordenador: corren en el de otro, así que no ven tus ficheros, no tienen tus claves ni lo que tengas instalado. "Funcionaba en mi máquina pero no en el navegador" no es inconsistencia; son dos entornos con dos configuraciones.
 
@@ -101,13 +107,13 @@ La misma pregunta se aplica al propio agente, y ahí es donde pilla a la gente. 
 - **Con soltura** — pedir un despliegue, entender la diferencia entre el sitio de pruebas y el real, ejecutar sin bloquearte un comando que te dictan, saber en cuál de los dos estás tocando ahora mismo, y saber qué tipo de cosas se quedan fuera cuando trabajas en la nube — ficheros locales, claves, herramientas instaladas — para saber cuándo tienes que volver a tu propia máquina
 - **Con criterio** — dominios, ajustes por entorno, logs del hosting, deshacer un despliegue, elegir dónde corre, y configurar el remoto para que funcione también allí
 
-**3. Código y datos.** Los agentes escriben valores a fuego constantemente: un dato metido en el código que debería salir de la base de datos. Es un atajo razonable cuando el objetivo es que algo funcione, y está mal en el momento en que ese dato tiene que cambiar. Es el caso típico de la primera y la tercera técnica de arriba: decir por adelantado que no pase, y preguntar después cuando un número parece sospechosamente estable.
+**4. Código y datos.** Los agentes escriben valores a fuego constantemente: un dato metido en el código que debería salir de la base de datos. Es un atajo razonable cuando el objetivo es que algo funcione, y está mal en el momento en que ese dato tiene que cambiar. Es el caso típico de la primera y la tercera técnica de arriba: decir por adelantado que no pase, y preguntar después cuando un número parece sospechosamente estable.
 
 - **Consciente** — el código se regenera, los datos no; hay datos metidos dentro del código; los datos necesitan copias de seguridad
 - **Con soltura** — preguntar dónde se guarda algo y entender la respuesta, saber si la base de datos es local o remota, y confirmar que la copia existe en vez de que alguien la haya mencionado
 - **Con criterio** — migraciones, datos de prueba frente a datos reales, restaurar, qué tipo de base de datos y con qué forma
 
-**4. Volver atrás.** "Funcionaba, ahora no, y no sé qué cambió" es el desastre más común de este mundo y el más completamente resuelto. El agente ya hace commits por ti. Lo que falta es que sepas que el rescate existe para poder pedirlo.
+**5. Volver atrás.** "Funcionaba, ahora no, y no sé qué cambió" es el desastre más común de este mundo y el más completamente resuelto. El agente ya hace commits por ti. Lo que falta es que sepas que el rescate existe para poder pedirlo.
 
 - **Consciente** — hay forma de recuperar la versión de ayer y no es Ctrl+Z
 - **Con soltura** — pedir un punto de guardado antes de un cambio grande, pedir volver, y mirar el historial para confirmar que ese punto está realmente ahí
@@ -115,7 +121,7 @@ La misma pregunta se aplica al propio agente, y ahí es donde pilla a la gente. 
 
 ### Quién sale herido si esto falla
 
-**5. Secretos.** No necesitas saber leer un fichero `.env`. Necesitas saber que existe y que las claves van ahí. Lo que no es obvio: sacar una clave del código no la saca del historial del proyecto, y he tenido que limpiar claves de ese historial más de una vez. Hay herramientas que vigilan esto — GitGuardian y similares — y, según lo crítica que sea la clave, formas seguras de pasársela a alguien que no son un mensaje de chat.
+**6. Secretos.** No necesitas saber leer un fichero `.env`. Necesitas saber que existe y que las claves van ahí. Lo que no es obvio: sacar una clave del código no la saca del historial del proyecto, y he tenido que limpiar claves de ese historial más de una vez. Hay herramientas que vigilan esto — GitGuardian y similares — y, según lo crítica que sea la clave, formas seguras de pasársela a alguien que no son un mensaje de chat.
 
 Hay una segunda confusión que merece nombrarse, porque va en dirección contraria. No todo lo que vive en variables de entorno es un secreto. Feature flags, tiempos de espera, qué región usar — la configuración se va colando en ese fichero porque es el sitio donde van las cosas, y acaba tratándose con la ceremonia que merece una contraseña mientras las contraseñas de verdad se pierden entre medias. Saber cuáles de tus variables son secretas y cuáles son simple configuración es parte de tener soltura aquí.
 
@@ -123,13 +129,13 @@ Hay una segunda confusión que merece nombrarse, porque va en dirección contrar
 - **Con soltura** — pedir que una clave salga del código, entender por qué ese fichero no se sube, saber de dónde sale una clave cuando te la piden, saber que una clave de servidor y una clave pública de cliente son animales distintos, y distinguir un secreto de un ajuste que simplemente acabó al lado de uno
 - **Con criterio** — rotar una clave filtrada, gestores de secretos, secretos por entorno
 
-**6. Quién puede entrar.** El endpoint abierto de más arriba es esta categoría. Merece repetirse qué hizo el trabajo allí: la comprobación fue barata y llevó un minuto. Saber que era una comprobación que merecía la pena hacer es la parte que no sale gratis.
+**7. Quién puede entrar.** El endpoint abierto de más arriba es esta categoría. Merece repetirse qué hizo el trabajo allí: la comprobación fue barata y llevó un minuto. Saber que era una comprobación que merecía la pena hacer es la parte que no sale gratis.
 
 - **Consciente** — tener login no significa estar protegido
 - **Con soltura** — preguntar "¿esto lo puede llamar cualquiera?" y entender la respuesta; autenticación es quién eres, autorización es qué puedes tocar; entrar como un usuario y confirmar que no ves los datos de otro
 - **Con criterio** — roles y permisos, seguridad a nivel de fila, tokens, revisar qué está expuesto
 
-**7. Datos de otras personas.** La única categoría con asimetría moral: todo lo demás de esta lista te cuesta dinero o vergüenza, y esta la paga alguien que nunca aceptó tu curva de aprendizaje.
+**8. Datos de otras personas.** La única categoría con asimetría moral: todo lo demás de esta lista te cuesta dinero o vergüenza, y esta la paga alguien que nunca aceptó tu curva de aprendizaje.
 
 - **Consciente** — si guardas cosas sobre otras personas, el coste de equivocarte no es tuyo
 - **Con soltura** — saber qué estás recogiendo y por qué, saber que hay obligaciones legales de por medio, y pedir que lo innecesario ni se guarde
@@ -137,19 +143,19 @@ Hay una segunda confusión que merece nombrarse, porque va en dirección contrar
 
 ### Qué me va a sorprender
 
-**8. Lo que esto cuesta.** Las facturas sorpresa son más frecuentes que las brechas, más fáciles de evitar, y casi nadie las evita, porque "por defecto no hay tope" no es algo que se te ocurra preguntar. Al principio construí sistemas agénticos sin pedir que se registrara el coste en tokens, lo que significó quedarme sin estimación al final y tener que repetir la tanda entera solo para medirla. No medir el coste tiene un coste, y se paga justo en la moneda sobre la que querías informarte. Pedirlo en el spec es gratis.
+**9. Lo que esto cuesta.** Las facturas sorpresa son más frecuentes que las brechas, más fáciles de evitar, y casi nadie las evita, porque "por defecto no hay tope" no es algo que se te ocurra preguntar. Al principio construí sistemas agénticos sin pedir que se registrara el coste en tokens, lo que significó quedarme sin estimación al final y tener que repetir la tanda entera solo para medirla. No medir el coste tiene un coste, y se paga justo en la moneda sobre la que querías informarte. Pedirlo en el spec es gratis.
 
 - **Consciente** — esto genera una factura y por defecto nada la limita
 - **Con soltura** — entender la forma de esa factura (uso de modelo y APIs, hosting, base de datos, almacenamiento, tráfico), coste fijo frente a coste por uso, que CPU y GPU no se cobran igual; pedir un tope y mirar el consumo real
 - **Con criterio** — alertas, límites propios, protección contra bots, diseñar pensando en el coste
 
-**9. De quién dependes.** Separada del coste porque el fallo no es económico: es que algo que funcionaba deja de existir. He hecho una migración entre plataformas que el agente daba por completa y que se cayó en cuanto intenté tirar solo de la nueva — la vieja seguía sosteniéndolo por debajo, y se convirtió en el respaldo que yo no había planeado. "Migración completa" y "ya se puede apagar lo viejo" son afirmaciones distintas, y solo la segunda se puede comprobar.
+**10. De quién dependes.** Separada del coste porque el fallo no es económico: es que algo que funcionaba deja de existir. He hecho una migración entre plataformas que el agente daba por completa y que se cayó en cuanto intenté tirar solo de la nueva — la vieja seguía sosteniéndolo por debajo, y se convirtió en el respaldo que yo no había planeado. "Migración completa" y "ya se puede apagar lo viejo" son afirmaciones distintas, y solo la segunda se puede comprobar.
 
 - **Consciente** — tu app se apoya en servicios de otros, y esos pueden subir de precio, cambiar o cerrar
 - **Con soltura** — saber qué piezas son de otro y cuáles son tuyas, y preguntar qué pasa cuando una desaparece
 - **Con criterio** — elegir por acoplamiento y no solo por precio, y tener una salida
 
-**10. Aguantar más de lo que probaste.** Nada durante la construcción te avisa de esto, porque mientras construyes hay exactamente un usuario.
+**11. Aguantar más de lo que probaste.** Nada durante la construcción te avisa de esto, porque mientras construyes hay exactamente un usuario.
 
 - **Consciente** — funciona con tres usuarios y puede caerse con trescientos
 - **Con soltura** — saber que probar y aguantar carga son preguntas distintas, y preguntar qué se rompe primero
@@ -157,13 +163,13 @@ Hay una segunda confusión que merece nombrarse, porque va en dirección contrar
 
 ### Cómo sé que sigue bien
 
-**11. Tests, y dónde se rompe.** Tiene que haber tests por una razón poco lucida: sin ellos, toda comprobación que hagas se reduce a pulsar por la aplicación terminada adivinando qué pasó por el medio. Eso es un laberinto, y crece con el proyecto.
+**12. Tests, y dónde se rompe.** Tiene que haber tests por una razón poco lucida: sin ellos, toda comprobación que hagas se reduce a pulsar por la aplicación terminada adivinando qué pasó por el medio. Eso es un laberinto, y crece con el proyecto.
 
 - **Consciente** — tiene que haber tests, y "el agente dice que funciona" no es uno
 - **Con soltura** — entender qué te dicen cuando hablan de frontend o backend, ejecutar los tests y verlos pasar, y saber dónde buscar un error según de qué lado esté
 - **Con criterio** — qué tipo de test para qué riesgo
 
-**12. Que siga funcionando dentro de seis meses.** A medida que un proyecto crece desordenado y sin documentar, **el agente empieza a fallar más.** Ese es el argumento: no la pureza arquitectónica, sino tu propia herramienta volviéndose peor ayudándote. El modo de fallo es concreto y fácil de pasar por alto: la documentación se desactualiza, el agente se la cree entera, y acabas con trabajo muy seguro de sí mismo construido sobre una descripción que dejó de ser cierta hace meses. La documentación solo sigue siendo cierta si algo la revisa contra el código — y ese algo puede ser el propio agente, si se lo pides.
+**13. Que siga funcionando dentro de seis meses.** A medida que un proyecto crece desordenado y sin documentar, **el agente empieza a fallar más.** Ese es el argumento: no la pureza arquitectónica, sino tu propia herramienta volviéndose peor ayudándote. El modo de fallo es concreto y fácil de pasar por alto: la documentación se desactualiza, el agente se la cree entera, y acabas con trabajo muy seguro de sí mismo construido sobre una descripción que dejó de ser cierta hace meses. La documentación solo sigue siendo cierta si algo la revisa contra el código — y ese algo puede ser el propio agente, si se lo pides.
 
 - **Consciente** — el desorden degrada aquello de lo que dependes
 - **Con soltura** — pedir documentación, entender la diferencia entre documentación para personas e instrucciones para el agente, y notar cuando el resumen del proyecto ya no cuadra con lo que hace
@@ -171,7 +177,7 @@ Hay una segunda confusión que merece nombrarse, porque va en dirección contrar
 
 ### Más una: el criterio
 
-La decimotercera no es como las otras doce, y por eso va la última y aparte. En las doce, el fallo tiene víctima. Aquí no hay fallo: hay ausencia.
+La decimocuarta no es como las otras trece, y por eso va la última y aparte. En las trece, el fallo tiene víctima. Aquí no hay fallo: hay ausencia.
 
 Los agentes son buenos en *funcionar*. Son mediocres en *bueno*. La disposición será razonable, los espacios correctos, los colores los mismos que todo lo demás. Funcionalmente correcto y completamente anónimo. Nadie te va a decir nunca que está mal, porque no lo está.
 
@@ -222,22 +228,23 @@ No necesitas aprender a programar. Necesitas un bucle, un mapa de lo que existe,
 | | Consciente | Con soltura | Con criterio |
 |---|---|---|---|
 | **1. Qué se puede pedir** | los agentes construyen sistemas enteros | describir por resultado, pedir que proponga | modelo, herramienta, hardware |
-| **2. Dónde vive** | portátil o internet | desplegar, pruebas o real, ejecutar un comando dado | dominios, ajustes por entorno, deshacer |
-| **3. Código y datos** | los datos no se regeneran | dónde se guarda esto, base local o remota | migraciones, restaurar, esquema |
-| **4. Volver atrás** | lo de ayer es recuperable | pedir punto de guardado, confirmar que está | ramas, etiquetas, diffs |
-| **5. Secretos** | las claves viven fuera del código | fichero de secretos, clave de servidor o de cliente | rotación, gestor de secretos |
-| **6. Quién entra** | login ≠ protegido | ¿lo puede llamar cualquiera?, autenticar o autorizar | roles, permisos, tokens |
-| **7. Datos de otros** | el daño no lo pagas tú | qué recoges y por qué, deberes legales | consentimiento, retención, residencia |
-| **8. Lo que cuesta** | no hay tope por defecto | forma de la factura, pedir un límite | alertas, límites, diseño por coste |
-| **9. De quién dependes** | un servicio ajeno puede desaparecer | qué piezas no son tuyas | acoplamiento, plan de salida |
-| **10. Aguantar carga** | va con tres usuarios, no con trescientos | probar y aguantar son preguntas distintas | medir, dimensionar, optimizar |
-| **11. Tests y fallos** | tiene que haber tests | frontend o backend, ejecutarlos, leer el fallo | qué test para qué riesgo |
-| **12. Seis meses después** | el desorden degrada al agente | documentación para personas o para agentes | instrucciones permanentes, estructura |
+| **2. Hasta dónde llega** | solo sabe lo que le pegas | conectar un sistema, leer antes que escribir | permisos acotados, por defecto o aprobación |
+| **3. Dónde vive** | portátil o internet | desplegar, pruebas o real, ejecutar un comando dado | dominios, ajustes por entorno, deshacer |
+| **4. Código y datos** | los datos no se regeneran | dónde se guarda esto, base local o remota | migraciones, restaurar, esquema |
+| **5. Volver atrás** | lo de ayer es recuperable | pedir punto de guardado, confirmar que está | ramas, etiquetas, diffs |
+| **6. Secretos** | las claves viven fuera del código | fichero de secretos, clave de servidor o de cliente | rotación, gestor de secretos |
+| **7. Quién entra** | login ≠ protegido | ¿lo puede llamar cualquiera?, autenticar o autorizar | roles, permisos, tokens |
+| **8. Datos de otros** | el daño no lo pagas tú | qué recoges y por qué, deberes legales | consentimiento, retención, residencia |
+| **9. Lo que cuesta** | no hay tope por defecto | forma de la factura, pedir un límite | alertas, límites, diseño por coste |
+| **10. De quién dependes** | un servicio ajeno puede desaparecer | qué piezas no son tuyas | acoplamiento, plan de salida |
+| **11. Aguantar carga** | va con tres usuarios, no con trescientos | probar y aguantar son preguntas distintas | medir, dimensionar, optimizar |
+| **12. Tests y fallos** | tiene que haber tests | frontend o backend, ejecutarlos, leer el fallo | qué test para qué riesgo |
+| **13. Seis meses después** | el desorden degrada al agente | documentación para personas o para agentes | instrucciones permanentes, estructura |
 | **+1. Criterio** | lo que sale por defecto es anónimo | nombrar lo que no te gusta | una dirección propia |
 
 ---
 
-**¿Quieres tu propio mapa?** [Responde a las trece preguntas](/es/assessment) y tendrás esta misma rejilla rellena para tu proyecto, junto con qué hueco conviene cerrar primero.
+**¿Quieres tu propio mapa?** [Responde a las catorce preguntas](/es/assessment) y tendrás esta misma rejilla rellena para tu proyecto, junto con qué hueco conviene cerrar primero.
 
 ---
 

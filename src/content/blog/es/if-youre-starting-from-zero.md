@@ -12,7 +12,7 @@ Hay un momento, la primera vez que esto funciona, que es sinceramente de las mej
 
 No quiero estropearlo. Es tan real como se siente, y quien te diga que no lo es suele estar protegiendo algo.
 
-Pero entre ese momento y tener algo que otras personas puedan usar hay una distancia, y casi nada de lo que hiciste para llegar hasta aquí te ayuda a cruzarla. [Escribí el mapa completo de esa distancia](/es/blog/what-you-still-need-to-know-to-ship) — trece categorías, tres niveles cada una. Este artículo es la otra mitad de la pregunta, la que me hace la gente de verdad: **no qué hay en la lista, sino qué hacer primero.**
+Pero entre ese momento y tener algo que otras personas puedan usar hay una distancia, y casi nada de lo que hiciste para llegar hasta aquí te ayuda a cruzarla. [Escribí el mapa completo de esa distancia](/es/blog/what-you-still-need-to-know-to-ship) — catorce categorías, tres niveles cada una. Este artículo es la otra mitad de la pregunta, la que me hace la gente de verdad: **no qué hay en la lista, sino qué hacer primero.**
 
 ## Lo más útil que puedes entender el primer día
 
@@ -62,7 +62,7 @@ Hazlo antes de empezar a construir, y otra vez cada vez que te pilles dando por 
 
 ## Qué aprender primero, y por qué en este orden
 
-El mapa tiene trece categorías. No necesitas trece el primer día, y que alguien te las suelte todas de golpe es la razón por la que la mayoría rebota. El orden importa más que la lista, y sale de una sola pregunta: **cuando esto salga mal, ¿quién paga?**
+El mapa tiene catorce categorías. No necesitas catorce el primer día, y que alguien te las suelte todas de golpe es la razón por la que la mayoría rebota. El orden importa más que la lista, y sale de una sola pregunta: **cuando esto salga mal, ¿quién paga?**
 
 **Primero, lo que no tiene vuelta atrás.** Tus datos no son tu código. Si borras el proyecto y lo reconstruyes, el código vuelve; todo lo que la gente escribió dentro, no. Y hay una forma de recuperar la versión de ayer de tu trabajo que no es Ctrl+Z.
 
@@ -102,7 +102,7 @@ En mi experiencia este perfil es el que más rápido se adapta. No porque sepa m
 
 ## Por dónde empezar hoy
 
-Si quieres saber qué casillas tienes vacías, hay una [versión de trece preguntas](/es/assessment) del mapa — unos dos minutos, y el resultado útil es encontrar una categoría que nunca te habías planteado.
+Si quieres saber qué casillas tienes vacías, hay una [versión de catorce preguntas](/es/assessment) del mapa — unos dos minutos, y el resultado útil es encontrar una categoría que nunca te habías planteado.
 
 Y el resumen honesto de todo lo anterior:
 

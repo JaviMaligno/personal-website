@@ -12,7 +12,7 @@ There's a moment, the first time this works, that is genuinely one of the better
 
 I don't want to spoil it. It is as real as it feels, and the people telling you it isn't are mostly protecting something.
 
-But there's a gap between that moment and having something other people can use, and almost nothing you did to get here helps you cross it. [I wrote the full map of that gap](/en/blog/what-you-still-need-to-know-to-ship) — thirteen categories, three levels each. This piece is the other half of the question, the one people actually ask me: **not what's on the list, but what to do first.**
+But there's a gap between that moment and having something other people can use, and almost nothing you did to get here helps you cross it. [I wrote the full map of that gap](/en/blog/what-you-still-need-to-know-to-ship) — fourteen categories, three levels each. This piece is the other half of the question, the one people actually ask me: **not what's on the list, but what to do first.**
 
 ## The single most useful thing to understand on day one
 
@@ -62,7 +62,7 @@ Do it before you start building, and again whenever you find yourself assuming s
 
 ## What to learn first, and why in this order
 
-The map has thirteen categories. You do not need thirteen on day one, and someone handing you all of them at once is why most people bounce off. The order matters more than the list, and it comes from one question: **when this goes wrong, who pays?**
+The map has fourteen categories. You do not need fourteen on day one, and someone handing you all of them at once is why most people bounce off. The order matters more than the list, and it comes from one question: **when this goes wrong, who pays?**
 
 **First, the things you can't undo.** Your data isn't your code. If you delete the project and rebuild it, the code comes back — everything people typed into it doesn't. And there's a way to recover yesterday's version of your work that is not Ctrl+Z.
 
@@ -102,7 +102,7 @@ In my experience this profile adapts fastest of all. Not because they know more,
 
 ## Where to start today
 
-If you want to know which boxes are empty for you, there's a [thirteen-question version](/en/assessment) of the map — about two minutes, and the useful outcome is finding a category you'd never considered.
+If you want to know which boxes are empty for you, there's a [fourteen-question version](/en/assessment) of the map — about two minutes, and the useful outcome is finding a category you'd never considered.
 
 And the honest summary of everything above:
 
