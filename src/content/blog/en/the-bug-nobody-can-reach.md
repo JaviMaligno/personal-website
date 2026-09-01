@@ -1,7 +1,7 @@
 ---
 title: "The Bug Nobody Can Reach"
 description: "A model of the world can be flatly wrong about a whole region, pass every test you can write, and cost you exactly nothing — provably. Move the same mistake a few metres, onto the path something actually walks, and it costs you everything. What decides is not the size or the shape of the error. It is reach."
-pubDate: 2026-09-05
+pubDate: 2026-09-17
 tags: ["AI", "Machine Learning", "Testing", "Research", "Agents"]
 lang: en
 translationKey: the-bug-nobody-can-reach

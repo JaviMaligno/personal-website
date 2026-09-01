@@ -1,7 +1,7 @@
 ---
 title: "El error que nadie puede alcanzar"
 description: "Un modelo del mundo puede estar rotundamente equivocado sobre toda una región, pasar cualquier test que sepas escribir y no costarte absolutamente nada — con demostración. Mueve ese mismo error unos metros, hasta el camino por el que algo pasa de verdad, y te cuesta todo. Lo que decide no es el tamaño ni la forma del error. Es el alcance."
-pubDate: 2026-09-05
+pubDate: 2026-09-17
 tags: ["IA", "Machine Learning", "Testing", "Investigación", "Agentes"]
 lang: es
 translationKey: the-bug-nobody-can-reach

@@ -2,21 +2,23 @@
 
 The digestible companion to `being-wrong-can-be-free`: one idea, ~1400 words,
 no Betti numbers, no `play_cost` jargon, written to answer "what is the paper
-about?" on its own. Scheduled for **2026-09-05** via
+about?" on its own. Scheduled for **2026-09-17** via
 `.github/workflows/scheduled-publish-the-bug-nobody-can-reach.yml`, which
 **refuses to publish while the arXiv placeholder is still in the files**.
 
 ## Order matters here
 
-It publishes **after** the long post (2026-09-02), not before, and that is
+It publishes **after** the long post (2026-09-14), not before, and that is
 deliberate: the opening paragraph links `/en/blog/being-wrong-can-be-free` as
 "the same story with the numbers", so publishing first would ship two dead
-links for three days. If the long post's date moves, move this one with it and
-keep the gap.
+links. That rule is why this article moved when the long one did: both were
+pushed back from 09-02/09-05 when the postponed VitaminD launch landed on the
+2nd, and they kept their three-day gap.
 
-Calendar: 09-01, 09-02 and 09-04 carry articles, 09-03 carries a standalone
-LinkedIn post, so 09-05 is the first day free in both calendars after the long
-post.
+Calendar: the article queue is full from 09-04 to 09-11, and 09-03 carries a
+standalone LinkedIn post (publishing an article fires `linkedin-post.yml`, so
+that day would go out with two), which leaves 09-12 as the first free day in
+both calendars and 09-14/09-17 as the first free weekdays.
 
 ## The blocker, now resolved
 
@@ -66,4 +68,4 @@ automatically. By hand afterwards:
 
 - Post the 8-tweet X thread with the real arXiv ID.
 - Check the two internal links to `being-wrong-can-be-free` resolve (they will,
-  if the long post published on 09-02 as scheduled).
+  if the long post published on 09-14 as scheduled).
