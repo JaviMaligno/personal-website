@@ -157,6 +157,35 @@ jobs:
           git push origin --delete "$BRANCH" \
             || echo "::warning::No se pudo borrar $BRANCH — quitala a mano (no es fatal)"
 
+      # El refactor a cron diario se dejo por el camino el aviso de EXITO, que
+      # es donde vivia el recordatorio del hilo de X. No hay automatizacion para
+      # X: si nadie avisa, el hilo no sale. Solo se abre cuando la rama traia un
+      # fichero de hilo, para no hacer ruido en los articulos que no lo tienen.
+      - name: Avisar de la publicacion y del hilo pendiente
+        if: steps.merge.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLUG: ${{ steps.select.outputs.slug }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          THREAD="docs/marketing/x-thread-${SLUG}.md"
+          URL="https://www.javieraguilar.ai/en/blog/${SLUG}"
+          if [ -f "$THREAD" ]; then
+            BODY="**$SLUG** esta publicado: $URL
+
+          Queda una cosa a mano, porque no hay automatizacion para X: el hilo.
+
+          https://github.com/$REPO/blob/main/$THREAD
+
+          Cada tuit es su propio bloque de codigo, con boton de copiar tambien en el movil. El primero va suelto y cada uno de los siguientes como respuesta al anterior. El ID de arXiv ya esta puesto: no hay que editar nada."
+          else
+            BODY="**$SLUG** esta publicado: $URL
+
+          No lleva fichero de hilo de X en main, asi que no queda nada manual salvo lo que digan sus propias notas."
+          fi
+          gh issue create --title "✅ Publicado: $SLUG" --body "$BODY" || echo "issue creation failed (non-fatal)"
+
       - name: Avisar del fallo
         if: failure()
         env:
