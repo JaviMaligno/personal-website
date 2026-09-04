@@ -102,18 +102,79 @@ Una diferencia es deliberada y conviene decirla ya: **su Tabla 1 corre sobre Gem
 
 La curva de coste se reproduce exactamente. Prompt medio a T=50, en la misma unidad que reporta el paper —caracteres—: SKILL.state **2.157**, plano desde T=10 (2.136) hasta T=50, frente a sus 1.773. ReAct: **16.437** y creciendo linealmente, frente a sus 11.931. O(1) contra O(T), como anuncian, con un 1,2–1,4x de su densidad.
 
-La mitad de la precisión no. A T=50, con prompts de 16k tokens y 172 eventos accionables por episodio, tres de los cuatro brazos sacan un 1,00 limpio:
+La mitad de la precisión no, y lo interesante es que no lo hace en ningún horizonte de los que ellos probaron. Su degradación es un efecto de escala —ReAct cae de 0,90 a T=10 hasta 0,74 a T=200—, así que la única forma honesta de comprobarlo es correr su rango entero.
 
-| runtime | T=10 | T=25 | T=50 | paper, T=50 |
-|---|---|---|---|---|
-| ReAct | 1,00 | 1,00 | **1,00** | 0,88 |
-| Memory | 1,00 | 0,96 | **0,75** | 0,93 |
-| Stateful | 1,00 | 1,00 | **1,00** | 0,94 |
-| SKILL.state | 1,00 | 1,00 | **1,00** | 0,96 |
+<figure class="wfs-fig">
+<svg viewBox="0 0 600 300" role="img" aria-label="Score frente al horizonte en los dos modelos. Gemini-3-Flash con transcript completo cae de 0,90 a T=10 hasta 0,74 a T=200, y su brazo de estado explícito de 1,00 a 0,94. Claude Haiku 4.5 se mantiene en 1,00 en los dos brazos en todos los horizontes, acabando en 0,987 el transcript y 1,00 el estado explícito.">
+  <defs>
+    <style>
+      .sm { fill:#94a3b8; font:10.5px ui-sans-serif,system-ui; }
+      .st { fill:#f8fafc; font:600 13px ui-sans-serif,system-ui; }
+      .ss { fill:#94a3b8; font:10.5px ui-sans-serif,system-ui; }
+      .sl { fill:#e2e8f0; font:11px ui-sans-serif,system-ui; }
+    </style>
+  </defs>
+  <text x="16" y="22" class="st">Su degradación, y la misma medida sobre Claude</text>
+  <text x="16" y="40" class="ss">score frente al horizonte · ReAct sólido, SKILL.state discontinuo · 3 seeds cada uno</text>
+  <line x1="88" y1="62.0" x2="568" y2="62.0" stroke="rgba(255,255,255,0.09)"/>
+  <text x="80" y="66.0" class="sm" text-anchor="end">1.00</text>
+  <line x1="88" y1="114.7" x2="568" y2="114.7" stroke="rgba(255,255,255,0.09)"/>
+  <text x="80" y="118.7" class="sm" text-anchor="end">0.90</text>
+  <line x1="88" y1="167.3" x2="568" y2="167.3" stroke="rgba(255,255,255,0.09)"/>
+  <text x="80" y="171.3" class="sm" text-anchor="end">0.80</text>
+  <line x1="88" y1="220.0" x2="568" y2="220.0" stroke="rgba(255,255,255,0.09)"/>
+  <text x="80" y="224.0" class="sm" text-anchor="end">0.70</text>
+  <text x="96" y="240" class="sm" text-anchor="middle">10</text>
+  <text x="212" y="240" class="sm" text-anchor="middle">25</text>
+  <text x="328" y="240" class="sm" text-anchor="middle">50</text>
+  <text x="444" y="240" class="sm" text-anchor="middle">100</text>
+  <text x="560" y="240" class="sm" text-anchor="middle">200</text>
+  <polyline points="96,114.7 212,104.1 328,125.2 444,146.3 560,198.9" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-dasharray="none" stroke-linejoin="round"/>
+  <circle cx="96" cy="114.7" r="3.4" fill="#f59e0b"/>
+  <circle cx="212" cy="104.1" r="3.4" fill="#f59e0b"/>
+  <circle cx="328" cy="125.2" r="3.4" fill="#f59e0b"/>
+  <circle cx="444" cy="146.3" r="3.4" fill="#f59e0b"/>
+  <circle cx="560" cy="198.9" r="3.4" fill="#f59e0b"/>
+  <polyline points="96,62.0 212,62.0 328,83.1 444,93.6 560,93.6" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-dasharray="5 3" stroke-linejoin="round"/>
+  <circle cx="96" cy="62.0" r="3.4" fill="#f59e0b"/>
+  <circle cx="212" cy="62.0" r="3.4" fill="#f59e0b"/>
+  <circle cx="328" cy="83.1" r="3.4" fill="#f59e0b"/>
+  <circle cx="444" cy="93.6" r="3.4" fill="#f59e0b"/>
+  <circle cx="560" cy="93.6" r="3.4" fill="#f59e0b"/>
+  <polyline points="96,62.0 212,62.0 328,62.0 444,62.0 560,68.8" fill="none" stroke="#2dd4bf" stroke-width="2.2" stroke-dasharray="none" stroke-linejoin="round"/>
+  <circle cx="96" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="212" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="328" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="444" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="560" cy="68.8" r="3.4" fill="#2dd4bf"/>
+  <polyline points="96,62.0 212,62.0 328,62.0 444,62.0 560,62.0" fill="none" stroke="#2dd4bf" stroke-width="2.2" stroke-dasharray="5 3" stroke-linejoin="round"/>
+  <circle cx="96" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="212" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="328" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="444" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="560" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <text x="300" y="262" class="sm" text-anchor="middle">horizonte T (pasos)</text>
+  <line x1="120" y1="282" x2="150" y2="282" stroke="#f59e0b" stroke-width="2.2"/>
+  <text x="156" y="286" class="sl">Gemini-3-Flash (su Tabla 1)</text>
+  <line x1="330" y1="282" x2="360" y2="282" stroke="#2dd4bf" stroke-width="2.2"/>
+  <text x="366" y="286" class="sl">Claude Haiku 4.5 (esta réplica)</text>
+  <text x="120" y="298" class="ss">A T=200 su brazo de transcript está en 0,74. El nuestro en 0,987: falla una decisión de 600.</text>
+</svg>
+<figcaption>Su brazo de transcript se degrada con el horizonte exactamente como reportan. Sobre otra familia de modelo, en un entorno 1,2–1,4x más denso que el suyo y hasta el mismo T=200, no lo hace.</figcaption>
+</figure>
 
-El único brazo que se degrada es el que resume en prosa, y se degrada más que en el paper. Remedir la celda de SKILL.state con 3 seeds × 6 repeticiones da **18/18 exactos a 1,000, desviación cero**: no es una tirada afortunada.
+| runtime | T=10 | T=25 | T=50 | T=100 | T=200 |
+|---|---|---|---|---|---|
+| ReAct | 1,00 | 1,00 | 1,00 | 1,00 | **0,99 ±0,02** |
+| SKILL.state | 1,00 | 1,00 | 1,00 | 1,00 | **1,00 ±0,00** |
+| Stateful | 1,00 | 1,00 | 1,00 | 0,99 ±0,02 | — |
+| Memory | 1,00 | 0,96 | 0,75 | 0,72 | — |
 
-El motivo merece nombrarse, porque gobierna el resto del trabajo: en esta tarea la información portante nunca está lejos. El hueco liberado que el agente tiene que reutilizar está a **1,9 posiciones del tope de la pila de media**, siete como mucho. Alargar el horizonte añade pasos sin alejar la información de su uso. Si quieres medir si un runtime recuerda, `T` no es la palanca.
+A T=200 el brazo del transcript sostiene un prompt de 48.000 caracteres y 690 eventos accionables, y falla **una decisión de unas 600**. En Gemini-3-Flash ese mismo brazo falla una de cada cuatro. Remedir la celda de SKILL.state a T=50 con 3 seeds × 6 repeticiones da 18/18 exactos a 1,000, desviación cero, así que tampoco es una tirada afortunada.
+
+⚠️ **La fila de Memory es el único número de aquí del que no me fío.** Su runtime es el único que hace una segunda llamada por paso, y a T=100 perdió 23, 14 y 2 respuestas de 100 por el tope de salida en las tres seeds — puntuando 0,58, 0,67 y 0,91 en ese orden. Eso no es un fallo de resumir, es un fallo de presupuesto, y se está remidiendo con un tope que lo elimina.
+
+El motivo por el que los otros tres aguantan merece nombrarse, porque gobierna todo lo que viene después: en esta tarea la información portante nunca está lejos. El hueco liberado que el agente tiene que reutilizar está a **1,9 posiciones del tope de la pila de media**, siete como mucho. Alargar el horizonte añade pasos sin alejar la información de su uso. Si quieres medir si un runtime recuerda, `T` no es la palanca — y de eso va el resto de este artículo.
 
 ## El recuento de tokens no es la factura
 

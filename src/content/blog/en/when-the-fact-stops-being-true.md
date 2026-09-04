@@ -114,18 +114,79 @@ One difference is deliberate and worth stating up front: **their Table 1 runs on
 
 The cost curve reproduces exactly. Average prompt at T=50, in the same unit the paper reports — characters: SKILL.state **2,157**, flat from T=10 (2,136) to T=50, against their 1,773. ReAct: **16,437** and growing linearly, against their 11,931. O(1) against O(T), as advertised, at 1.2–1.4x their density.
 
-The accuracy half does not. At T=50, with 16k-token prompts and 172 actionable events per episode, three of the four arms score a clean 1.00:
+The accuracy half does not, and the interesting part is that it does not at any horizon they tested. Their degradation is a scaling effect — ReAct falls from 0.90 at T=10 to 0.74 at T=200 — so the only honest way to check it is to run their whole range.
 
-| runtime | T=10 | T=25 | T=50 | paper, T=50 |
-|---|---|---|---|---|
-| ReAct | 1.00 | 1.00 | **1.00** | 0.88 |
-| Memory | 1.00 | 0.96 | **0.75** | 0.93 |
-| Stateful | 1.00 | 1.00 | **1.00** | 0.94 |
-| SKILL.state | 1.00 | 1.00 | **1.00** | 0.96 |
+<figure class="wfs-fig">
+<svg viewBox="0 0 600 300" role="img" aria-label="Score against horizon for both models. Gemini-3-Flash with the full transcript falls from 0.90 at T=10 to 0.74 at T=200, and its explicit-state arm from 1.00 to 0.94. Claude Haiku 4.5 stays at 1.00 in both arms across every horizon, ending at 0.987 for the transcript and 1.00 for explicit state.">
+  <defs>
+    <style>
+      .sm { fill:#94a3b8; font:10.5px ui-sans-serif,system-ui; }
+      .st { fill:#f8fafc; font:600 13px ui-sans-serif,system-ui; }
+      .ss { fill:#94a3b8; font:10.5px ui-sans-serif,system-ui; }
+      .sl { fill:#e2e8f0; font:11px ui-sans-serif,system-ui; }
+    </style>
+  </defs>
+  <text x="16" y="22" class="st">Their degradation, and the same measurement on Claude</text>
+  <text x="16" y="40" class="ss">score against horizon · ReAct solid, SKILL.state dashed · 3 seeds each</text>
+  <line x1="88" y1="62.0" x2="568" y2="62.0" stroke="rgba(255,255,255,0.09)"/>
+  <text x="80" y="66.0" class="sm" text-anchor="end">1.00</text>
+  <line x1="88" y1="114.7" x2="568" y2="114.7" stroke="rgba(255,255,255,0.09)"/>
+  <text x="80" y="118.7" class="sm" text-anchor="end">0.90</text>
+  <line x1="88" y1="167.3" x2="568" y2="167.3" stroke="rgba(255,255,255,0.09)"/>
+  <text x="80" y="171.3" class="sm" text-anchor="end">0.80</text>
+  <line x1="88" y1="220.0" x2="568" y2="220.0" stroke="rgba(255,255,255,0.09)"/>
+  <text x="80" y="224.0" class="sm" text-anchor="end">0.70</text>
+  <text x="96" y="240" class="sm" text-anchor="middle">10</text>
+  <text x="212" y="240" class="sm" text-anchor="middle">25</text>
+  <text x="328" y="240" class="sm" text-anchor="middle">50</text>
+  <text x="444" y="240" class="sm" text-anchor="middle">100</text>
+  <text x="560" y="240" class="sm" text-anchor="middle">200</text>
+  <polyline points="96,114.7 212,104.1 328,125.2 444,146.3 560,198.9" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-dasharray="none" stroke-linejoin="round"/>
+  <circle cx="96" cy="114.7" r="3.4" fill="#f59e0b"/>
+  <circle cx="212" cy="104.1" r="3.4" fill="#f59e0b"/>
+  <circle cx="328" cy="125.2" r="3.4" fill="#f59e0b"/>
+  <circle cx="444" cy="146.3" r="3.4" fill="#f59e0b"/>
+  <circle cx="560" cy="198.9" r="3.4" fill="#f59e0b"/>
+  <polyline points="96,62.0 212,62.0 328,83.1 444,93.6 560,93.6" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-dasharray="5 3" stroke-linejoin="round"/>
+  <circle cx="96" cy="62.0" r="3.4" fill="#f59e0b"/>
+  <circle cx="212" cy="62.0" r="3.4" fill="#f59e0b"/>
+  <circle cx="328" cy="83.1" r="3.4" fill="#f59e0b"/>
+  <circle cx="444" cy="93.6" r="3.4" fill="#f59e0b"/>
+  <circle cx="560" cy="93.6" r="3.4" fill="#f59e0b"/>
+  <polyline points="96,62.0 212,62.0 328,62.0 444,62.0 560,68.8" fill="none" stroke="#2dd4bf" stroke-width="2.2" stroke-dasharray="none" stroke-linejoin="round"/>
+  <circle cx="96" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="212" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="328" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="444" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="560" cy="68.8" r="3.4" fill="#2dd4bf"/>
+  <polyline points="96,62.0 212,62.0 328,62.0 444,62.0 560,62.0" fill="none" stroke="#2dd4bf" stroke-width="2.2" stroke-dasharray="5 3" stroke-linejoin="round"/>
+  <circle cx="96" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="212" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="328" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="444" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <circle cx="560" cy="62.0" r="3.4" fill="#2dd4bf"/>
+  <text x="300" y="262" class="sm" text-anchor="middle">horizon T (steps)</text>
+  <line x1="120" y1="282" x2="150" y2="282" stroke="#f59e0b" stroke-width="2.2"/>
+  <text x="156" y="286" class="sl">Gemini-3-Flash (their Table 1)</text>
+  <line x1="330" y1="282" x2="360" y2="282" stroke="#2dd4bf" stroke-width="2.2"/>
+  <text x="366" y="286" class="sl">Claude Haiku 4.5 (this replication)</text>
+  <text x="120" y="298" class="ss">At T=200 their transcript arm is at 0.74. Ours is at 0.987, and misses one decision in 600.</text>
+</svg>
+<figcaption>Their transcript arm degrades with the horizon exactly as they report. On a different model family, on an environment 1.2–1.4x denser than theirs, run out to the same T=200, it does not.</figcaption>
+</figure>
 
-The only arm that degrades is the one that summarises into prose, and it degrades further than in the paper. Re-measuring the SKILL.state cell with 3 seeds × 6 repetitions gives **18/18 at exactly 1.000, zero deviation** — this is not a lucky run.
+| runtime | T=10 | T=25 | T=50 | T=100 | T=200 |
+|---|---|---|---|---|---|
+| ReAct | 1.00 | 1.00 | 1.00 | 1.00 | **0.99 ±0.02** |
+| SKILL.state | 1.00 | 1.00 | 1.00 | 1.00 | **1.00 ±0.00** |
+| Stateful | 1.00 | 1.00 | 1.00 | 0.99 ±0.02 | — |
+| Memory | 1.00 | 0.96 | 0.75 | 0.72 | — |
 
-The reason is worth naming, because it governs the rest of the work: in this task the load-bearing information is never far away. The freed shelf an agent has to reuse sits **1.9 positions from the top of the stack on average**, at most 7. Making the horizon longer adds steps without moving information further from its use. If you want to measure whether a runtime remembers, `T` is the wrong knob.
+At T=200 the transcript arm is holding a 48,000-character prompt and 690 actionable events, and it misses **one decision out of roughly 600**. On Gemini-3-Flash the same arm misses a quarter of them. Re-measuring the T=50 SKILL.state cell with 3 seeds × 6 repetitions gives 18/18 at exactly 1.000, zero deviation, so this is not a lucky run either.
+
+⚠️ **The Memory row is the one number here I do not trust.** Its runtime is the only one that makes a second call per step, and at T=100 it lost 23, 14 and 2 replies out of 100 to the output cap on the three seeds — scoring 0.58, 0.67 and 0.91 in that order. That is not a summarising failure, it is a budget failure, and it is being re-measured with a budget that removes it.
+
+The reason the other three hold is worth naming, because it governs everything after: in this task the load-bearing information is never far away. The freed shelf an agent has to reuse sits **1.9 positions from the top of the stack on average**, at most 7. Making the horizon longer adds steps without moving information further from its use. If you want to measure whether a runtime remembers, `T` is the wrong knob — which is what the rest of this article is about.
 
 ## The token count is not the bill
 
