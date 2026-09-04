@@ -7,6 +7,7 @@ lang: es
 translationKey: when-the-fact-stops-being-true
 heroImage: "/blog/when-the-fact-stops-being-true.png"
 linkedinImage: /blog/when-the-fact-stops-being-true-fig-3.png
+repoUrl: https://github.com/JaviMaligno/delayed-relevance
 ---
 
 <style>

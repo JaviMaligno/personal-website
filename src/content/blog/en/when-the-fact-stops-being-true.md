@@ -7,6 +7,7 @@ lang: en
 translationKey: when-the-fact-stops-being-true
 heroImage: "/blog/when-the-fact-stops-being-true.png"
 linkedinImage: /blog/when-the-fact-stops-being-true-fig-3.png
+repoUrl: https://github.com/JaviMaligno/delayed-relevance
 linkedinSummary: |
   An agent reads a correction at step 10: the pallet you filed at step 3 was never actually put away, that shelf is empty. Twenty steps later it has to decide where to store the next one.
 
