@@ -816,3 +816,42 @@ quedar igual. Las dos salieron a la primera, acentos incluidos.
 Mismo esquema que la segunda pasada de `the-scaffolding-you-pay-for`: reusar
 composicion, cambiar un dato. Las originales se respaldan antes de sobrescribir,
 porque `image_gen` escribe sobre el fichero destino.
+
+---
+
+## `the-instrument-fails-in-your-favour` — El instrumento falla a tu favor (2026-08-28)
+
+- Artículo: `src/content/blog/{en,es}/the-instrument-fails-in-your-favour.md`
+- Imagen: `public/blog/the-instrument-fails-in-your-favour.png` (1020x510)
+- Generada con `codex exec -s workspace-write` (no `--full-auto`: retirado en codex-cli 0.147)
+
+Prompt de estilo entregado a Codex para que redacte y ejecute el prompt final:
+
+```text
+Create a 1020x510 blog hero image. Style: refined technical editorial
+illustration, dark but not monochrome, showing a concrete scene — a measuring
+instrument on a workbench that is itself miscalibrated: a calibration bench where
+a dial gauge reads a clean confident number while the reference block it is
+measuring against is visibly the wrong size, next to a terminal window with
+readable but generic lines like 'score.py --gold gold.csv' and a small results
+table showing '54%' crossed out and '75%' written beside it.
+
+Visual motifs: workbench with calipers or a dial gauge, a reference/gauge block, a
+terminal window, a small bar chart where all error bars lean the same direction,
+an arrow pointing from the instrument back at itself. Clean geometric composition,
+several distinct zones.
+
+No logos, no brand names, no people, no text-heavy poster. Use crisp bitmap
+illustration, high contrast, professional AI/developer blog aesthetic, balanced
+teal, amber, graphite, and off-white accents, no purple gradient blobs, no bokeh.
+```
+
+Prompt final que Codex redactó y ejecutó: mismo esqueleto, con el bloque patrón
+contrastado contra un contorno grabado del tamaño correcto, la flecha ámbar
+curvándose desde la punta del comparador de vuelta al propio instrumento, y la
+lista de texto verbatim restringida a `score.py --gold gold.csv`, `54%` y `75%`
+para que el modelo no inventara cifras.
+
+**Comprobado en la imagen final:** las tres cadenas salen correctas y legibles,
+sin texto inventado. El gráfico de barras rinde el sesgo direccional como cuatro
+flechas inclinadas igual.
