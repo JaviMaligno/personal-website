@@ -770,3 +770,36 @@ Avoid: purple gradient blobs, bokeh, decorative pseudo-text, stray glyphs, extra
 
 Revisión: `105 / 111`, `0 / 156`, `8.0` y `2.0` aparecen correctamente; no hay
 otras estadísticas ni cifras inventadas.
+
+---
+
+## `when-the-fact-stops-being-true`
+
+- Artículo: `src/content/blog/en/when-the-fact-stops-being-true.md`
+- Imagen: `public/blog/when-the-fact-stops-being-true.png`
+- Generada: 2026-09-04 con Codex (`codex exec --sandbox danger-full-access`, herramienta `image_gen`)
+
+Prompt final usado:
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 landscape blog hero image
+Primary request: Create a refined technical editorial illustration of a concrete agent-runtime working scene at the moment a stored fact is corrected. Show a compact mutable JSON state panel holding one current corrected truth, beside a much longer scrolling transcript that still contains both the original stale record and its later retraction.
+Scene/backdrop: dark graphite developer workspace, dimensional but clean, with subtle panel depth and an engineered grid; dark but not monochrome.
+Subject: on one side, a compact JSON state card with a single authoritative current state; on the other, a tall ribbon of many stacked event-log records receding and fading upward. In the log ribbon, show an earlier muted original record and a later clearly highlighted amber CORRECTION event. Two precise thin teal arrows carry the correction from that event into the JSON state card. Include a small, simple two-bar comparison suggesting a low count versus a complete count.
+Style/medium: crisp bitmap technical editorial illustration, vector-like geometry with subtle texture and controlled dimensional lighting; professional AI/developer research blog aesthetic; concrete operational interface scene, not an abstract metaphor.
+Composition/framing: exact 2:1 landscape composition designed for a 1020x510 crop; balanced asymmetry; generous margins; strong visual hierarchy; the long transcript visibly outweighs the compact state card; no headline or title.
+Lighting/mood: high contrast, calm, analytical, precise; restrained soft edge lighting only.
+Color palette: graphite and near-black foundation, balanced teal, amber, muted slate, and off-white accents; dark but chromatic.
+Text (verbatim): JSON card may contain only short readable generic code lines: "shelf_status": "empty" and "quarantined": false. Highlighted event label: "CORRECTION". Earlier record may use the single label "stored". Render no other prose.
+Constraints: clean geometric composition; keep text sparse and legible; make the corrected JSON value visually authoritative; show both stale record and retraction simultaneously in the transcript; no people; no logos; no brand names; no watermark; no text-heavy poster.
+Avoid: abstract metaphor, purple gradient blobs, bokeh, neon cyberpunk excess, photorealistic monitors, clutter, decorative circuitry, illegible pseudo-text, large typography, glowing orb imagery.
+```
+
+Revisión: los únicos textos renderizados son `"shelf_status": "empty"`,
+`"quarantined": false`, `CORRECTION` y `stored`, todos legibles y coherentes con
+el artículo (el registro antiguo dice `"full"`, la corrección dice `"empty"`). No
+hay cifras ni estadísticas inventadas.
+
+Figuras del artículo (SVG inline rasterizado a PNG para Dev.to con Chrome
+headless, ver `blog-writer`): `when-the-fact-stops-being-true-fig-{1..4}.png`.
