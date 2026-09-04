@@ -172,7 +172,14 @@ La mitad de la precisión no, y lo interesante es que no lo hace en ningún hori
 
 A T=200 el brazo del transcript sostiene un prompt de 48.000 caracteres y 690 eventos accionables, y falla **una decisión de unas 600**. En Gemini-3-Flash ese mismo brazo falla una de cada cuatro. Remedir la celda de SKILL.state a T=50 con 3 seeds × 6 repeticiones da 18/18 exactos a 1,000, desviación cero, así que tampoco es una tirada afortunada.
 
-⚠️ **La fila de Memory es el único número de aquí del que no me fío.** Su runtime es el único que hace una segunda llamada por paso, y a T=100 perdió 23, 14 y 2 respuestas de 100 por el tope de salida en las tres seeds — puntuando 0,58, 0,67 y 0,91 en ese orden. Eso no es un fallo de resumir, es un fallo de presupuesto, y se está remidiendo con un tope que lo elimina.
+La fila de Memory parecía al principio un artefacto y no un resultado: su runtime es el único que hace una segunda llamada por paso, y a T=100 perdió 23, 14 y 2 respuestas de 100 por el tope de salida en las tres seeds, puntuando 0,58, 0,67 y 0,91 en ese orden. Así que se remidió con **el doble de presupuesto de salida**:
+
+| Memory | tope 600 | tope 1.200 | respuestas truncadas |
+|---|---|---|---|
+| T=50 | 0,75 | **0,79** | 3–10 de 50 |
+| T=100 | 0,72 | **0,71** | 12–37 de 100 |
+
+Doblar el presupuesto *subió* el truncamiento —23 respuestas cortadas pasaron a 34 en la misma seed— y dejó el score donde estaba. El modelo llena el presupuesto que le den, y el score bajo no es lo que costaban las respuestas cortadas. **Memory se degrada de verdad**, y se degrada más que en el paper.
 
 El motivo por el que los otros tres aguantan merece nombrarse, porque gobierna todo lo que viene después: en esta tarea la información portante nunca está lejos. El hueco liberado que el agente tiene que reutilizar está a **1,9 posiciones del tope de la pila de media**, siete como mucho. Alargar el horizonte añade pasos sin alejar la información de su uso. Si quieres medir si un runtime recuerda, `T` no es la palanca — y de eso va el resto de este artículo.
 

@@ -184,7 +184,14 @@ The accuracy half does not, and the interesting part is that it does not at any 
 
 At T=200 the transcript arm is holding a 48,000-character prompt and 690 actionable events, and it misses **one decision out of roughly 600**. On Gemini-3-Flash the same arm misses a quarter of them. Re-measuring the T=50 SKILL.state cell with 3 seeds × 6 repetitions gives 18/18 at exactly 1.000, zero deviation, so this is not a lucky run either.
 
-⚠️ **The Memory row is the one number here I do not trust.** Its runtime is the only one that makes a second call per step, and at T=100 it lost 23, 14 and 2 replies out of 100 to the output cap on the three seeds — scoring 0.58, 0.67 and 0.91 in that order. That is not a summarising failure, it is a budget failure, and it is being re-measured with a budget that removes it.
+The Memory row looked at first like an artefact rather than a result: its runtime is the only one that makes a second call per step, and at T=100 it lost 23, 14 and 2 replies out of 100 to the output cap on the three seeds, scoring 0.58, 0.67 and 0.91 in that order. So it was re-measured with **double the output budget**:
+
+| Memory | output cap 600 | output cap 1,200 | truncated replies |
+|---|---|---|---|
+| T=50 | 0.75 | **0.79** | 3–10 of 50 |
+| T=100 | 0.72 | **0.71** | 12–37 of 100 |
+
+Doubling the budget *raised* the truncation count — 23 replies cut off became 34 on the same seed — and left the score where it was. The model fills whatever budget it is given, and the low score is not what the cut-off replies were costing. **Memory really does degrade**, and it degrades further than in the paper.
 
 The reason the other three hold is worth naming, because it governs everything after: in this task the load-bearing information is never far away. The freed shelf an agent has to reuse sits **1.9 positions from the top of the stack on average**, at most 7. Making the horizon longer adds steps without moving information further from its use. If you want to measure whether a runtime remembers, `T` is the wrong knob — which is what the rest of this article is about.
 
