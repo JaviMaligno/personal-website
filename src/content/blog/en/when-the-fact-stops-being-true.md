@@ -27,7 +27,7 @@ linkedinSummary: |
 .wfs-fig figcaption { margin-top: 0.6rem; font-size: 0.9rem; color: #94a3b8; line-height: 1.5; }
 </style>
 
-> **A replication of *SKILL.state: Scalable Long-Horizon Agent Skills* (Badhe, Tiwari and Chung, accepted at EMNLP) across two models and 500+ episodes.** Every headline number here is a count of decisions, not an average of episodes, and two results that were already written up with clean confidence intervals were killed by checks described at the end. Those checks are the transferable part.
+> **A replication of *SKILL.state: Scalable Long-Horizon Agent Skills* (Badhe, Tiwari and Chung, accepted at EMNLP) across two models and 500+ episodes.** Every headline number here is a count of decisions, not an average of episodes.
 
 An agent reads an event at step 10: *the pallet you filed at step 3 was never actually put away; that shelf is empty.* Twenty steps later it has to decide where to store the next pallet. The correct answer is the shelf the correction freed.
 
@@ -106,11 +106,13 @@ The claim has two halves: better accuracy on long procedures, and a prompt that 
 <figcaption>The four arms differ only in what sits between the procedure and the latest observation. Stateful and ReAct carry nearly the same content; the order they carry it in turns out to cost 5.7x.</figcaption>
 </figure>
 
-SkillExecBench has no public code, so the environment here is a reimplementation from the paper's §4.1 description — a 500-shelf warehouse with dense pipe-separated event records, matched on **context density** rather than literal content, running about 1.2–1.5x heavier than theirs. Two models: Claude Haiku 4.5 and Claude Sonnet 5.
+SkillExecBench has no public code, so the environment here is a reimplementation from the paper's §4.1 description — a 500-shelf warehouse with dense pipe-separated event records, matched on **context density** rather than literal content, and running 1.2–1.5x heavier than theirs by average prompt size.
+
+One difference is deliberate and worth stating up front: **their Table 1 runs on Gemini-3-Flash**, with Gemma-4-31B-it and Qwen-3-8B-it elsewhere in the paper. This replication runs Claude Haiku 4.5 and Claude Sonnet 5. Where a result here disagrees with theirs, the first candidate explanation is the model family, not the method — and saying which of the two it is turns out to be most of the work.
 
 ## Half of it replicates
 
-The cost curve reproduces exactly. Average prompt at T=50: SKILL.state **2,157 tokens**, flat from T=10 (2,136) to T=50. ReAct: **16,437**, growing linearly. O(1) against O(T), as advertised.
+The cost curve reproduces exactly. Average prompt at T=50, in the same unit the paper reports — characters: SKILL.state **2,157**, flat from T=10 (2,136) to T=50, against their 1,773. ReAct: **16,437** and growing linearly, against their 11,931. O(1) against O(T), as advertised, at 1.2–1.4x their density.
 
 The accuracy half does not. At T=50, with 16k-token prompts and 172 actionable events per episode, three of the four arms score a clean 1.00:
 
@@ -127,57 +129,87 @@ The reason is worth naming, because it governs the rest of the work: in this tas
 
 ## The token count is not the bill
 
-The paper compares tokens. Anyone running this compares money, and those are different quantities the moment prompt caching is on. An append-only transcript is the ideal cacheable prefix: every step re-sends exactly what it sent before, plus a suffix. A state object that mutates invalidates the cache from the point it mutates.
+The paper compares **tokens**. Anyone running this compares **money**, and the moment prompt caching is on those are different quantities. An append-only transcript is the ideal cacheable prefix: every step re-sends exactly what it sent before, plus a suffix. A block that mutates invalidates the cache from the point it mutates.
 
-Anthropic bills cache reads at 0.1x and cache writes at 1.25x. Measured over T=50 episodes, with the transcript sent as immutable per-turn blocks so the cache can actually match:
+There is one number you have to measure before any of this means anything: **the minimum cacheable prefix**. Below it, nothing caches at all. On Claude Haiku 4.5 it is **4,096 tokens exactly** — a 3,984-token system block, sent twice, reads nothing from cache; a 4,116-token one reads all of it. So the answer depends on how long your procedure is, and both cases are worth having.
 
 <figure class="wfs-fig">
-<svg viewBox="0 0 600 250" role="img" aria-label="Raw token counts versus billed token counts for four runtimes. SKILL.state uses the fewest raw tokens at 109k, but ReAct falls from 826k raw to 152k billed because its append-only transcript caches, so the 7.5x advantage in tokens becomes 1.4x in money.">
+<svg viewBox="0 0 600 322" role="img" aria-label="Cost of one 50-step episode under two procedure lengths. With a short procedure SKILL.state is billed 109k tokens and ReAct 152k, a 1.39x advantage against 7.54x in raw tokens. With a realistic 5,243-token procedure SKILL.state falls to 64k and ReAct rises to 162k, a 2.51x advantage. Stateful is billed around 850k in both, roughly five times ReAct for nearly identical content.">
   <defs>
     <style>
       .cl { fill:#e2e8f0; font:11.5px ui-sans-serif,system-ui; }
-      .cv { fill:#f8fafc; font:600 11px ui-monospace,'JetBrains Mono',monospace; }
-      .ct { fill:#f8fafc; font:600 13px ui-sans-serif,system-ui; }
-      .cm { fill:#94a3b8; font:10.5px ui-sans-serif,system-ui; }
+      .cv { fill:#f8fafc; font:600 11.5px ui-monospace,'JetBrains Mono',monospace; }
+      .ct { fill:#fbbf24; font:600 12px ui-sans-serif,system-ui; }
+      .cs { fill:#94a3b8; font:10.5px ui-sans-serif,system-ui; }
+      .cm { fill:#94a3b8; font:10px ui-monospace,'JetBrains Mono',monospace; }
+      .ch { fill:#f8fafc; font:600 13px ui-sans-serif,system-ui; }
     </style>
   </defs>
-  <text x="16" y="24" class="ct">Input tokens per episode, T=50</text>
-  <rect x="200" y="32" width="11" height="9" fill="#475569"/><text x="216" y="40" class="cm">raw</text>
-  <rect x="256" y="32" width="11" height="9" fill="#2dd4bf"/><text x="272" y="40" class="cm">actually billed</text>
-
-  <g transform="translate(0,52)">
-    <text x="126" y="12" class="cl" text-anchor="end">SKILL.state</text>
-    <rect x="132" y="2" width="46" height="12" fill="#475569"/><text x="184" y="12" class="cv">109k</text>
-    <rect x="132" y="18" width="46" height="12" fill="#2dd4bf"/><text x="184" y="28" class="cv">109k</text>
-    <text x="228" y="28" class="cm">cache saves 0%</text>
-  </g>
-  <g transform="translate(0,100)">
-    <text x="126" y="12" class="cl" text-anchor="end">ReAct</text>
-    <rect x="132" y="2" width="350" height="12" fill="#475569"/><text x="488" y="12" class="cv">826k</text>
-    <rect x="132" y="18" width="64" height="12" fill="#2dd4bf"/><text x="202" y="28" class="cv">152k</text>
-    <text x="246" y="28" class="cm">cache saves 82%</text>
-  </g>
-  <g transform="translate(0,148)">
-    <text x="126" y="12" class="cl" text-anchor="end">Memory</text>
-    <rect x="132" y="2" width="133" height="12" fill="#475569"/><text x="271" y="12" class="cv">313k</text>
-    <rect x="132" y="18" width="133" height="12" fill="#2dd4bf"/><text x="271" y="28" class="cv">313k</text>
-    <text x="316" y="28" class="cm">cache saves 0%</text>
-  </g>
-  <g transform="translate(0,196)">
-    <text x="126" y="12" class="cl" text-anchor="end">Stateful</text>
-    <rect x="132" y="2" width="370" height="12" fill="#475569"/><text x="508" y="12" class="cv">873k</text>
-    <rect x="132" y="18" width="370" height="12" fill="#2dd4bf"/><text x="508" y="28" class="cv">873k</text>
-    <text x="132" y="46" class="cm">same content as ReAct, state block placed first — 5.7x the bill</text>
-  </g>
+  <text x="16" y="22" class="ch">What the same 50-step episode actually costs</text>
+  <text x="16" y="40" class="cs">Claude Haiku 4.5 · input only · 3 seeds</text>
+  <text x="592" y="40" class="cs" text-anchor="end">$ per 1,000 episodes</text>
+  <text x="16" y="70" class="ct">Short procedure — 1,491 tokens</text>
+  <text x="16" y="85" class="cs">below the 4,096-token caching threshold: only ReAct's growing transcript caches</text>
+  <text x="126" y="110" class="cl" text-anchor="end">SKILL.state</text>
+  <rect x="132" y="100" width="33.2" height="13" rx="2" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="132" y="100" width="33.2" height="13" rx="2" fill="#2dd4bf"/>
+  <text x="172.2" y="110" class="cm">109k</text>
+  <text x="592" y="110" class="cv" text-anchor="end">$109</text>
+  <text x="126" y="130" class="cl" text-anchor="end">ReAct</text>
+  <rect x="132" y="120" width="251.9" height="13" rx="2" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="132" y="120" width="46.4" height="13" rx="2" fill="#2dd4bf"/>
+  <text x="390.9" y="130" class="cm">826k</text>
+  <text x="592" y="130" class="cv" text-anchor="end">$152</text>
+  <text x="126" y="150" class="cl" text-anchor="end">Memory</text>
+  <rect x="132" y="140" width="95.5" height="13" rx="2" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="132" y="140" width="95.5" height="13" rx="2" fill="#2dd4bf"/>
+  <text x="234.5" y="150" class="cm">313k</text>
+  <text x="592" y="150" class="cv" text-anchor="end">$313</text>
+  <text x="126" y="170" class="cl" text-anchor="end">Stateful</text>
+  <rect x="132" y="160" width="266.3" height="13" rx="2" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="132" y="160" width="266.3" height="13" rx="2" fill="#2dd4bf"/>
+  <text x="405.3" y="170" class="cm">873k</text>
+  <text x="592" y="170" class="cv" text-anchor="end">$873</text>
+  <text x="16" y="188" class="ct">Realistic procedure — 5,243 tokens</text>
+  <text x="16" y="203" class="cs">above the threshold: every arm now caches its static half</text>
+  <text x="126" y="228" class="cl" text-anchor="end">SKILL.state</text>
+  <rect x="132" y="218" width="91.5" height="13" rx="2" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="132" y="218" width="19.5" height="13" rx="2" fill="#2dd4bf"/>
+  <text x="230.5" y="228" class="cm">300k</text>
+  <text x="592" y="228" class="cv" text-anchor="end">$64</text>
+  <text x="126" y="248" class="cl" text-anchor="end">ReAct</text>
+  <rect x="132" y="238" width="313.8" height="13" rx="2" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="132" y="238" width="49.4" height="13" rx="2" fill="#2dd4bf"/>
+  <text x="452.8" y="248" class="cm">1029k</text>
+  <text x="592" y="248" class="cv" text-anchor="end">$162</text>
+  <text x="126" y="268" class="cl" text-anchor="end">Memory</text>
+  <rect x="132" y="258" width="150.7" height="13" rx="2" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="132" y="258" width="78.7" height="13" rx="2" fill="#2dd4bf"/>
+  <text x="289.7" y="268" class="cm">494k</text>
+  <text x="592" y="268" class="cv" text-anchor="end">$258</text>
+  <text x="126" y="288" class="cl" text-anchor="end">Stateful</text>
+  <rect x="132" y="278" width="330.0" height="13" rx="2" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="132" y="278" width="258.9" height="13" rx="2" fill="#2dd4bf"/>
+  <text x="469.0" y="288" class="cm">1082k</text>
+  <text x="592" y="288" class="cv" text-anchor="end">$849</text>
+  <rect x="132" y="306" width="26" height="9" rx="2" fill="#2dd4bf"/>
+  <text x="165" y="314" class="cs">what you are billed</text>
+  <rect x="322" y="306" width="26" height="9" rx="2" fill="none" stroke="#64748b" stroke-dasharray="3 2"/>
+  <text x="355" y="314" class="cs">raw tokens</text>
 </svg>
-<figcaption>Every method that compresses rewrites its prefix, and rewriting the prefix kills the cache. The one arm that caches is the one that never touches what it already sent.</figcaption>
+<figcaption>Raw tokens are the dashed outline; the filled bar is what you are billed. Every method that compresses rewrites its prefix, and rewriting the prefix kills the cache — until the procedure itself is long enough to cache on its own.</figcaption>
 </figure>
 
-**SKILL.state's advantage goes from 7.54x in raw tokens to 1.39x in money.** And the two orderings disagree: by tokens it is SKILL.state < Memory < ReAct < Stateful; by money it is SKILL.state < **ReAct** < Memory < Stateful.
+**Short procedure — 1,491 tokens.** Below the threshold, so no arm's procedure caches. Only ReAct caches, and only because its accumulated transcript pushes the prefix past 4,096 on its own. **SKILL.state's advantage over ReAct falls from 7.54x in raw tokens to 1.39x in money.** The orderings disagree too: by tokens it is SKILL.state < Memory < ReAct < Stateful; by money, SKILL.state < **ReAct** < Memory < Stateful.
 
-The Stateful row is the one to keep. It sends almost exactly what ReAct sends. It puts a mutating state block in front of the transcript instead of behind it, which is where the paper's own Appendix A.3 template puts it, and pays **5.7 times more** for it. Prompt order is a first-order cost variable.
+**Realistic procedure — 5,243 tokens.** A field reference for the 112 fields the events actually carry, six exception rules, five worked examples. Real operating procedures look like this. Now every arm's static half caches, and two things happen:
 
-Two things scope this. Caching has a minimum prefix length, and the procedure used here (~1,300 tokens) is below it — measured directly, Haiku 4.5 does not cache a ~2,200-token system block and does cache a ~4,200-token one. With a longer procedure every arm would cache its static part and the 1.39x would move. The direction is arithmetic and holds regardless; the magnitude belongs to this prompt length and this model.
+- **SKILL.state gets 41% cheaper: $109 → $64 per thousand episodes.** The procedure got three and a half times longer and the bill went down, because it crossed the threshold. Memory goes from saving 0% to 48%, Stateful from 0% to 22%.
+- **The advantage in money widens to 2.51x while the advantage in raw tokens narrows to 3.43x.** In both conditions the raw token count is the wrong number to quote: it says 7.54x or 3.43x where the invoice says 1.39x or 2.51x.
+
+The row to actually act on is Stateful. It sends almost exactly what ReAct sends. It puts a mutating state block **in front of** the transcript instead of behind it — which is where the paper's own Appendix A.3 template puts it — and is billed **$849 against $162 per thousand episodes**. Same content, same task, same score of 1.00. A 5.2x difference, and it holds in both conditions.
+
+On Sonnet 5, at 3x the input price, those become $2,546 against $486. Per thousand episodes, prompt order is a four-figure line item.
 
 ## Where explicit state actually wins
 
@@ -197,47 +229,202 @@ Two design choices make this measurable at all. First, the unit of counting is n
 Seeds 4, 10 and 6 carry 22 dependent steps per repetition. Seeds 0, 1 and 2 carry five between them, and one of them carries none at all. Computing that table costs zero API calls.
 
 <figure class="wfs-fig">
-<svg viewBox="0 0 600 230" role="img" aria-label="Percentage of dependent steps on which the retroactive correction was applied. With the full transcript, Haiku applies it on 3 of 44 steps and Sonnet on 15 of 38. With explicit state, both models apply it on every single step: 44 of 44 and 49 of 49.">
+<svg viewBox="0 0 600 218" role="img" aria-label="Every decision that depended on the retroactive correction, one cell each. With explicit state all 44 Haiku cells and all 49 Sonnet cells are filled. With the full transcript, Haiku fills 3 of 44 and misses whole episodes at a time; Sonnet fills 15 of 38, applying every correction in one episode and none in the next on the same scenario.">
   <defs>
     <style>
-      .pl { fill:#e2e8f0; font:11.5px ui-sans-serif,system-ui; }
-      .pv { fill:#f8fafc; font:600 11.5px ui-monospace,'JetBrains Mono',monospace; }
-      .pt { fill:#f8fafc; font:600 13px ui-sans-serif,system-ui; }
-      .pm { fill:#94a3b8; font:10.5px ui-sans-serif,system-ui; }
-      .ph { fill:#fbbf24; font:600 11.5px ui-sans-serif,system-ui; }
+      .dl { fill:#e2e8f0; font:11.5px ui-sans-serif,system-ui; }
+      .dt { fill:#f8fafc; font:600 13px ui-sans-serif,system-ui; }
+      .dm { fill:#94a3b8; font:10.5px ui-sans-serif,system-ui; }
+      .dh { fill:#fbbf24; font:600 11.5px ui-sans-serif,system-ui; }
     </style>
   </defs>
-  <text x="16" y="24" class="pt">Dependent steps on which the correction was applied</text>
-  <text x="16" y="42" class="pm">seeds 4, 10 and 6 · 2 repetitions · episodes with &gt;3 truncated replies excluded</text>
-
-  <line x1="150" y1="56" x2="150" y2="196" stroke="rgba(255,255,255,0.12)"/>
-  <line x1="530" y1="56" x2="530" y2="196" stroke="rgba(255,255,255,0.12)"/>
-  <text x="150" y="212" class="pm" text-anchor="middle">0%</text>
-  <text x="530" y="212" class="pm" text-anchor="middle">100%</text>
-
-  <text x="16" y="70" class="ph">Haiku 4.5</text>
-  <g transform="translate(0,76)">
-    <text x="144" y="11" class="pl" text-anchor="end">ReAct</text>
-    <rect x="150" y="1" width="26" height="13" rx="2" fill="#64748b"/>
-    <text x="184" y="12" class="pv">3/44 — 6.8%</text>
-  </g>
-  <g transform="translate(0,96)">
-    <text x="144" y="11" class="pl" text-anchor="end">SKILL.state</text>
-    <rect x="150" y="1" width="380" height="13" rx="2" fill="#2dd4bf"/>
-    <text x="404" y="12" class="pv" style="fill:#0f172a">44/44 — 100%</text>
-  </g>
-
-  <text x="16" y="140" class="ph">Sonnet 5</text>
-  <g transform="translate(0,146)">
-    <text x="144" y="11" class="pl" text-anchor="end">ReAct</text>
-    <rect x="150" y="1" width="150" height="13" rx="2" fill="#64748b"/>
-    <text x="308" y="12" class="pv">15/38 — 39.5%</text>
-  </g>
-  <g transform="translate(0,166)">
-    <text x="144" y="11" class="pl" text-anchor="end">SKILL.state</text>
-    <rect x="150" y="1" width="380" height="13" rx="2" fill="#2dd4bf"/>
-    <text x="404" y="12" class="pv" style="fill:#0f172a">49/49 — 100%</text>
-  </g>
+  <text x="16" y="24" class="dt">Every decision that depended on the correction</text>
+  <text x="16" y="42" class="dm">one cell = one decision · gaps separate episodes · seeds 4, 10 and 6</text>
+  <text x="16" y="62" class="dh">Haiku 4.5</text>
+  <text x="16" y="130" class="dh">Sonnet 5</text>
+    <text x="184" y="80" class="dl" text-anchor="end">ReAct · 3/44</text>
+    <rect x="192.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="199.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="206.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="213.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="220.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="227.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="234.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="247.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="254.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="261.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="268.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="275.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="282.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="289.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="302.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="309.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="316.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="323.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="330.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="337.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="344.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="351.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="358.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="365.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="372.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="385.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="392.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="399.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="406.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="413.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="420.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="427.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="434.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="441.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="448.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="455.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="468.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="475.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="482.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="489.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="502.0" y="70" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="509.0" y="70" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="516.0" y="70" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="523.0" y="70" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <text x="184" y="102" class="dl" text-anchor="end">SKILL.state · 44/44</text>
+    <rect x="192.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="199.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="206.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="213.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="220.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="227.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="234.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="247.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="254.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="261.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="268.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="275.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="282.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="289.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="302.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="309.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="316.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="323.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="330.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="337.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="344.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="351.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="358.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="365.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="372.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="385.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="392.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="399.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="406.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="413.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="420.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="427.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="434.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="441.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="448.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="455.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="468.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="475.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="482.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="489.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="502.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="509.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="516.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="523.0" y="92" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <text x="184" y="148" class="dl" text-anchor="end">ReAct · 15/38</text>
+    <rect x="192.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="199.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="212.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="219.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="226.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="233.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="240.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="247.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="254.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="267.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="274.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="281.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="288.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="295.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="302.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="309.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="322.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="329.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="336.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="343.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="350.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="357.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="364.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="371.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="378.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="385.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="392.0" y="138" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="405.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="412.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="419.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="426.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="433.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="440.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="447.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="454.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="461.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="468.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <rect x="475.0" y="138" width="5.7" height="13" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+    <text x="184" y="170" class="dl" text-anchor="end">SKILL.state · 49/49</text>
+    <rect x="192.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="199.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="212.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="219.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="226.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="233.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="240.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="247.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="254.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="267.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="274.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="281.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="288.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="295.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="302.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="309.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="322.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="329.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="336.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="349.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="356.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="363.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="370.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="377.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="384.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="391.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="398.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="405.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="412.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="419.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="432.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="439.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="446.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="453.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="460.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="467.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="474.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="481.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="488.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="495.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="502.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="515.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="522.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="529.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="536.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="549.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="556.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="563.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+    <rect x="570.0" y="160" width="5.7" height="13" rx="1.4" fill="#2dd4bf"/>
+  <rect x="192" y="196" width="5.7" height="11" rx="1.4" fill="#2dd4bf"/>
+  <text x="205" y="205" class="dm">correction applied</text>
+  <rect x="342" y="196" width="5.7" height="11" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
+  <text x="355" y="205" class="dm">missed</text>
 </svg>
 <figcaption>Explicit state does not miss a single correction in 93 dependent steps across two models. The full transcript, which physically contains the correction, applies it on 18 of 82.</figcaption>
 </figure>
@@ -312,20 +499,14 @@ So: making the fact available recovers two thirds of the failure. The remaining 
 
 The practical version, scoped to what was measured (one environment, `k=40`, the three-level comparison on Haiku only): **if a fact stays true across many steps, re-inject the field, not the record.** A system that replays the whole document into context leaves a third of the failures on the table. This is the same shape as the finding in [The Scaffolding You Pay For](/en/blog/the-scaffolding-you-pay-for) — the intervention that survives is the one that changes what the model is looking at, not the one that adds structure around it.
 
-## The instrument, and two results it killed
+## Four checks this kind of experiment needs
 
-An experiment on agents produces numbers whether or not it is measuring anything, and the failure mode is not noise. It is a clean result.
+An experiment on agents produces numbers whether or not it is measuring anything, and when it goes wrong the output is not noise — it is a clean result. Two findings here were fully written up, tables and non-overlapping intervals included, before these four removed them.
 
-Two findings in this project were fully written up — tables, non-overlapping confidence intervals, a mechanism — before being retracted by checks that cost nothing. Both are checks any replication of this kind needs:
-
-**Compute the floor before the effect.** Simulate an agent that is perfect except that it ignores exactly the thing you are measuring. On the correction probe that agent scores 0.931, 0.893 and 1.000 on seeds 0, 1 and 2 — so the maximum possible effect on those seeds averages 0.06, and a seed with a floor of 1.000 carries no information at all. A measured separation of **+0.199** on those seeds was therefore impossible before anyone looked at what caused it. The cause was truncation: the transcript arm was losing 8 to 19 replies out of 50 to the output cap, and a reply cut off before its `Action:` line is a step with no action, which scores as an error.
-
-**Count steps with no action separately from steps with a wrong action.** They are different events with different fixes, and averaging them together is what let a budget artefact look like a cognitive one. Raising the cap does not fix it either: on the same scenario, 600 tokens gave 19 truncated replies, 1,500 gave 11, and 4,000 gave 18. A fixed output budget penalises the arm whose prompt grows, because its replies grow with the transcript — and the original paper reports ReAct degrading as `T` grows without reporting truncation.
-
-**Decompose the score by the type of step it averages.** A second environment was built as a domain control and reported a sign-flipping interaction between models, with non-overlapping intervals on both separations. Instrumented, all four cells got the load-bearing rule right — 12/12, 14/15, 12/13, and all of them. Only 5 of 34 actionable steps tested the rule at all, a blind policy scored 0.853, and the entire reported effect lived in routine steps and in out-of-schema patches. The whole section was withdrawn.
-
-**And know your noise floor.** The same seed, byte-identical prompt, eight repetitions: one seed alternated hit and miss eight times running. Single-step accuracy carries tens of points of sampling noise; an average over ~170 events carries almost none; token accounting carries none at all. Every claim that fell in this project was of the first kind, and the ones that survived are of the second and third.
-
+- **Compute the floor before the effect.** Simulate an agent that is perfect except that it ignores the thing you are measuring. On seeds 0, 1 and 2 that agent scores 0.931, 0.893 and 1.000, so the largest possible effect there averages 0.06 and one seed carries no information at all. A separation of **+0.199** measured on those seeds was arithmetically impossible before anyone asked what caused it.
+- **Count steps with no action separately from steps with a wrong action.** That +0.199 was truncation: the transcript arm lost 8 to 19 replies out of 50 to the output cap, and a reply cut off before its `Action:` line scores as an error. Raising the cap does not fix it — 600 tokens gave 19 truncated replies, 1,500 gave 11, 4,000 gave 18. A fixed output budget penalises the arm whose prompt grows, and the paper reports ReAct degrading with `T` without reporting truncation.
+- **Decompose the score by the type of step it averages.** A second environment reported a sign-flipping interaction between models, with non-overlapping intervals on both separations. Instrumented, all four cells got its load-bearing rule right; only 5 of 34 actionable steps tested that rule, a blind policy scored 0.853, and the whole reported effect lived in routine steps. The section was withdrawn.
+- **Know your noise floor.** Same seed, byte-identical prompt, eight repetitions: one seed alternated hit and miss eight times running. Single-step accuracy carries tens of points of sampling noise; an average over ~170 events carries almost none; token accounting carries none.
 ## What I would take from this
 
 - **The advertised axis is the wrong axis.** How much context you keep barely moves accuracy on a task where the information is nearby. What moves it is whether the load-bearing fact is present, current, and distilled at the moment of the decision.
