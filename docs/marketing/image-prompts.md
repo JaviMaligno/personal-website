@@ -855,3 +855,32 @@ para que el modelo no inventara cifras.
 **Comprobado en la imagen final:** las tres cadenas salen correctas y legibles,
 sin texto inventado. El gráfico de barras rinde el sesgo direccional como cuatro
 flechas inclinadas igual.
+
+---
+
+## `too-small-to-automate`
+
+- Artículo: `src/content/blog/en/too-small-to-automate.md`
+- Imagen: `public/blog/too-small-to-automate.png`
+- Generada: PENDIENTE (Codex `codex exec`, herramienta `image_gen`)
+
+Prompt propuesto:
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 landscape blog hero image
+Primary request: Create a refined technical editorial illustration of the automation threshold — the narrow band of work that is too large to do by hand and too small to justify building a pipeline. Show three cost terms laid out along one axis, with the third term visibly refusing to shrink.
+Scene/backdrop: dark graphite developer workspace, dimensional but clean, with a subtle engineered grid; dark but not monochrome.
+Subject: a horizontal axis of stacked row-cards increasing in count from left to right. Above it, three thin descending curves labelled BUILD, RUN and CHECK: BUILD and RUN collapse steeply toward the baseline, CHECK stays flat and high in amber. Between two vertical teal threshold markers, shade a narrow band and fill it with a small cluster of uniform row-cards, each carrying a tiny amber judgement mark rather than a number. Left of the band, a single card done by hand; right of the band, a compact pipeline glyph of connected nodes.
+Style/medium: crisp bitmap technical editorial illustration, vector-like geometry with subtle texture and controlled dimensional lighting; professional AI/developer research blog aesthetic; concrete diagrammatic scene, not an abstract metaphor.
+Composition/framing: exact 2:1 landscape composition designed for a 1020x510 crop; balanced asymmetry; generous margins; strong visual hierarchy; the shaded band is the visual centre; no headline or title.
+Lighting/mood: high contrast, calm, analytical, precise; restrained soft edge lighting only.
+Color palette: graphite and near-black foundation, balanced teal, amber, muted slate, and off-white accents; dark but chromatic.
+Text (verbatim): render only these three labels, once each: "BUILD", "RUN", "CHECK". No other prose, no numbers, no axis values.
+Constraints: clean geometric composition; keep text sparse and legible; the CHECK curve must remain clearly the highest at the right edge; no people; no logos; no brand names; no product screenshots; no browser or extension UI; no watermark; no text-heavy poster.
+Avoid: purple gradient blobs, bokeh, neon cyberpunk excess, photorealistic monitors, clutter, decorative circuitry, illegible pseudo-text, invented statistics or digits, large typography, glowing orb imagery.
+```
+
+Revisión: PENDIENTE. Comprobar que los únicos textos renderizados son `BUILD`,
+`RUN` y `CHECK`, que no aparece ninguna cifra inventada y que no hay UI de
+producto ni marcas reconocibles.
