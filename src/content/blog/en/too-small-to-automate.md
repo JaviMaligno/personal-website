@@ -5,7 +5,6 @@ pubDate: 2026-09-13
 tags: ["AI", "Automation", "Productivity", "Engineering", "Tooling"]
 lang: en
 translationKey: too-small-to-automate
-heroImage: "/blog/too-small-to-automate.png"
 linkedinLinks:
   - label: "Prompt Scripter"
     url: "https://promptscripter.javieraguilar.ai"
@@ -17,7 +16,7 @@ What's in the folder is small. A hundred and fifty short descriptions that each 
 
 I know how to automate every item in that folder. I've known for years. That's the part worth explaining.
 
-Sort the folder by difficulty and nothing lines up. Sort it by tedium and nothing lines up either — the jobs that did get scripted, years ago, were exactly as tedious. What sorts it is size, and the cut is sharper than it has any right to be: the big tedious jobs all got automated, the medium ones never did, and the boundary between them sits somewhere I've never actually calculated. **The work that never gets automated isn't the hard work. It's the work sitting just below the line where writing the script pays for itself.** That line is the one thing here nobody recalculates, and it has moved twice since most of us last looked.
+Sort the folder by tedium and nothing lines up — the jobs that did get scripted, years ago, were exactly as tedious as the ones that didn't. What sorts it is size, and the cut is sharper than it has any right to be: the big tedious jobs all got automated, the medium ones never did, and the boundary between them sits somewhere I've never actually calculated. **The work that never gets automated isn't the hard work. It's the work sitting just below the line where writing the script pays for itself.** That line is the one thing here nobody recalculates, and it has moved twice since most of us last looked.
 
 ## The arithmetic everyone half-remembers
 
@@ -39,7 +38,7 @@ So we all learned a two-term formula, from a world where the third term rounded 
 
 **And a new class of task walked into the band.** This is the part that matters more, and it gets discussed less. It's the per-row work where the operation is a judgement. Does this message describe a billing problem or a login problem. Is this clause unusual for a contract of this type. Rewrite this in our tone without inventing a claim. Summarise this in one line that a non-specialist would understand.
 
-A model could do that kind of thing long before it could write the loop. What arrived late isn't the capability — it's a cheap, ordinary way to point it at a list: something you can reach without an integration, a budget line or anyone's sign-off. Which is why nobody has a habit for the category. For most people it never had an automated form worth reaching for; it was either a person, or a project nobody was going to fund. You never needed a threshold rule for it, so you never built one, and now the tasks are arriving and the rule is missing.
+What arrived late isn't the capability — it's a cheap, ordinary way to point it at a list: something you can reach without an integration, a budget line or anyone's sign-off. Which is why nobody has a habit for the category. For most people it never had an automated form worth reaching for; it was either a person, or a project nobody was going to fund. You never needed a threshold rule for it, so you never built one, and now the tasks are arriving and the rule is missing.
 
 ## The one term that didn't get cheaper
 
@@ -59,6 +58,8 @@ This is also why the naive update — *building is free now, so automate everyth
 
 ## Why the script is more expensive than the script
 
+I have a stake in the three costs below, and you should discount them accordingly.
+
 There's a second reason the band is wider than the formula suggests, and it's the one a technical reader will resist, because from the inside it looks like an excuse.
 
 "I'd do that in twenty lines of Python." True. But the twenty lines aren't the cost.
@@ -69,7 +70,7 @@ There's a second reason the band is wider than the formula suggests, and it's th
 
 **The output shape is a cost.** A script wants structured output it can write to a file. Which means you're now specifying JSON schemas and handling parse failures and deciding what to do with row 90, and you have added a serialisation problem to a task that didn't have one, because the actual consumer of those hundred and fifty answers is a person who was going to read them.
 
-Add those up and the honest build term for a fuzzy hundred-and-fifty-row job is not twenty minutes. It's an afternoon, a decision you may not be authorised to make, and a commitment to a prompt you were still editing. That's why the folder exists.
+Add those up and the honest build term for a fuzzy hundred-and-fifty-row job isn't the twenty lines. It's a decision you may not be authorised to make, a prompt you have to commit to while you're still editing it, and a serialisation problem you invented on the way. That's why the folder exists.
 
 ## What the band actually wants
 
@@ -79,7 +80,7 @@ It wants the repetition removed without the loop being closed. That's one proper
 
 That's a smaller ambition than a pipeline and it's the correct one for the band. A pipeline is the right answer once the job repeats forever, and it earns its retries, logging and resumability then. Below that, [the same argument I made about exploratory versus scripted browser testing](/en/blog/playwright-cli-vs-scripts-ai-agents) applies: the script is the right artefact when you'll run it many times and the criterion is stable, and the wrong one when you're still discovering what correct means.
 
-I have a stake in this section, and you should discount it accordingly. I built a thing that does exactly this: **Prompt Scripter runs one prompt over a list of rows inside the chat you already use — ChatGPT, Claude or Gemini — without moving the work into a spreadsheet or going through an API.** That's the whole of the pitch and I'm not going to dress it up. It's a Chrome extension, it's new, it has an account of its own — which is a cost too, just not an API key and a token bill — and I have no measurement of time saved, so I'm not claiming one. The argument above is the reason I built it. If the argument is wrong, the tool is wrong too, and you should say so.
+I built a thing that does exactly this: **Prompt Scripter runs one prompt over a list of rows inside the chat you already use — ChatGPT, Claude or Gemini. No API key of your own and no token bill: the model call happens in the session you already pay for.** That's the whole of the pitch and I'm not going to dress it up. It's a Chrome extension, it's new, and it has an account of its own — which is a cost too, just not an API key. And when you're signed in, your rows travel over HTTPS to a server of mine to open the run: the backend keeps the row count and the column names and discards the content, but *received* and *stored* are not the same thing, and in a piece whose whole position is precision it would be cheap of me to leave that out. I have no measurement of time saved, so I'm not claiming one. The argument above is the reason I built it. If the argument is wrong, the tool is wrong too, and you should say so.
 
 ## Where I'd still write the script
 

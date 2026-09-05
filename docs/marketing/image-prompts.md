@@ -863,6 +863,13 @@ flechas inclinadas igual.
 - Artículo: `src/content/blog/en/too-small-to-automate.md`
 - Imagen: `public/blog/too-small-to-automate.png`
 - Generada: PENDIENTE (Codex `codex exec`, herramienta `image_gen`)
+- **`heroImage` retirado de los dos frontmatters.** El fichero no existe, así que
+  el campo dejaba un `<img>` roto en la página y un `og:image` que devolvía 404;
+  `heroImage` es opcional en `src/content/config.ts` y sin él la meta cae al
+  og-image por defecto. El prompt de abajo sigue archivado: **si se genera la
+  imagen y se coloca en `public/blog/too-small-to-automate.png`, hay que volver a
+  añadir `heroImage: "/blog/too-small-to-automate.png"` a mano en el frontmatter
+  EN y en el ES.** Esa decisión la toma una persona, no un merge.
 
 Prompt propuesto:
 
