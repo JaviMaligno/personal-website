@@ -1,0 +1,115 @@
+---
+title: "Too Small to Automate"
+description: "The work that never gets automated isn't the hard work. It's the batch of four hundred rows that sits just below the line where writing the script pays for itself — and that line moved twice, in opposite directions, while nobody recalculated where it is."
+pubDate: 2026-09-13
+tags: ["AI", "Automation", "Productivity", "Engineering", "Tooling"]
+lang: en
+translationKey: too-small-to-automate
+heroImage: "/blog/too-small-to-automate.png"
+linkedinLinks:
+  - label: "Prompt Scripter"
+    url: "https://promptscripter.javieraguilar.ai"
+---
+
+I keep a mental folder of things I never automated. The hard ones aren't in it. Hard problems got scripts years ago, because a hard problem is interesting and a script is a good excuse to solve it.
+
+What's in the folder is small. Four hundred short descriptions that each need one judgement call. A column of free text that needs rewriting in a house voice. Two hundred somethings, one decision each, none of them difficult.
+
+I know how to automate every item in that folder. I've known for years. That's the part worth explaining.
+
+The usual reading is laziness, and there's something in it. But look at the mechanics for a second, because laziness doesn't explain why the folder has a *shape* — why the tedious-but-large jobs got automated and the tedious-but-medium ones never did. **The work that never gets automated isn't the hard work. It's the work sitting just below the line where writing the script pays for itself.** And almost nobody has recalculated where that line is, even though it has moved twice since they last checked.
+
+## The arithmetic everyone half-remembers
+
+The version in most people's heads is the one from the famous xkcd table: automate when the time you'll save exceeds the time it takes to build. Total manual cost is rows times seconds; total automated cost is the build, plus a much smaller per-row cost. Cross the line, write the script.
+
+It's a good rule and it has a hole in it. The formula has three terms, not two:
+
+- **Build.** Writing the thing.
+- **Run.** Executing it, per row.
+- **Check.** Establishing that the output is right, per row.
+
+For the automation most engineers grew up with, the third term was invisible, and invisible for a good reason: it was genuinely near zero. A script that renames files by a rule either implements the rule or doesn't. You inspect three outputs, convince yourself the rule is right, and the other three hundred are correct by construction. Determinism means you verify the *program*, once, not the *output*, N times.
+
+So we all learned a two-term formula, from a world where the third term rounded to nothing. Then the third term stopped rounding to nothing, and we kept using the formula.
+
+## What changed, and it changed twice
+
+**Build got cheap.** This is the part everyone noticed. A coding agent writes the four-hundred-row CSV loop faster than you can specify it. The build term, which used to be the whole argument, collapsed. Taken alone, that pushes the threshold down: more things are worth automating than were before, and there's real work sitting in that gap.
+
+**And a new class of task walked into the band.** This is the part that matters more, and it gets discussed less. There is now a category of per-row work that is automatable *in principle* and wasn't three years ago: the rows where the operation is a judgement. Does this message describe a billing problem or a login problem. Is this clause unusual for a contract of this type. Rewrite this in our tone without inventing a claim. Summarise this in one line that a non-specialist would understand.
+
+Nobody has a habit for that category, because until recently it had no automated form at all. It was either a person, or nothing. You didn't need a threshold rule for it, so you never built one, and now the tasks are arriving and the rule is missing.
+
+## The one term that didn't get cheaper
+
+Here is where the two changes point in opposite directions.
+
+The tasks that just became automatable are exactly the ones whose acceptance criterion is fuzzy. There's no assertion for *does this read right*. There's no unit test for *is this the correct category, given a taxonomy that lives partly in someone's head*. Which means the check term does not collapse the way the build term did. It stays roughly linear in the number of rows, with a human-sized constant.
+
+|  | build once | run per row | check per row |
+|---|---|---|---|
+| Deterministic script, 2019 | hours | ~0 | ~0 — verify the program |
+| Deterministic script, 2026 | minutes | ~0 | ~0 — verify the program |
+| Per-row model judgement | minutes | seconds, plus tokens | the whole job |
+
+That table is structure, not measurement — I haven't timed any of it and I'm not going to pretend otherwise. But the shape is the argument. Automation used to move work from *doing* to *building*. For fuzzy per-row work it moves it from *doing* to *checking*, and checking is the term that doesn't parallelise, doesn't amortise, and doesn't get delegated. It's the same resource I've argued is the real currency in [build-versus-buy decisions](/en/blog/build-vs-buy-attention): your attention, which is the one input that didn't get cheaper when everything else did.
+
+This is also why the naive update — *building is free now, so automate everything* — produces bad decisions. It optimises the term that already collapsed and ignores the one that's now binding. I've had to make [the same correction in how I review agent output](/en/blog/results-oriented-programming): the question stopped being *is the implementation right* and became *is the result right*, and those cost wildly different amounts to answer.
+
+## Why the script is more expensive than the script
+
+There's a second reason the band is wider than the formula suggests, and it's the one a technical reader will resist, because from the inside it looks like an excuse.
+
+"I'd do that in twenty lines of Python." True. But the twenty lines aren't the cost.
+
+**The account is a cost.** To run rows through a model from a script you need an API key, a provider decision, and a per-token bill — on top of the subscription you're already paying for and already using. At home that's a second bill for something you have. At work it's a procurement conversation, and if you don't control what you're allowed to use, it may be a conversation you can't win. I've written about [what changes when the tool isn't your choice](/en/blog/the-tool-youre-allowed-to-use); this is one of the places it bites hardest, because the blocker isn't technical and no amount of engineering removes it.
+
+**The prompt is a cost, and it's not where you think.** The prompt that actually works is not the one you'd write into a file. It's the one you arrived at after six rounds of correcting it in a chat window, watching an output, noticing it drifted, tightening one clause. That loop is the reason it works. Freezing it into a script means committing to it at the exact moment you're least sure it's right — and the thing the script removes is precisely the loop that got you there.
+
+**The output shape is a cost.** A script wants structured output it can write to a file. Which means you're now specifying JSON schemas and handling parse failures and deciding what to do with row 213, and you have added a serialisation problem to a task that didn't have one, because the actual consumer of those four hundred answers is a person who was going to read them.
+
+Add those up and the honest build term for a fuzzy four-hundred-row job is not twenty minutes. It's an afternoon, a decision you may not be authorised to make, and a commitment to a prompt you were still editing. That's why the folder exists.
+
+## What the band actually wants
+
+Given that shape, the interesting question isn't *how do I build the pipeline faster*. It's *what does this band want, if it isn't a pipeline*.
+
+It wants the repetition removed and the loop left intact. Same interface, same model, same conversation history, same eyes on the output as it appears — just not your hand on the paste. The check term stays where checking is cheapest, which is a human reading results in the place they already read results, in an order they control, able to stop after row thirty because row thirty revealed the prompt was wrong.
+
+That's a smaller ambition than a pipeline and it's the correct one for the band. A pipeline is the right answer once the job repeats forever, and it earns its retries, logging and resumability then. Below that, [the same argument I made about exploratory versus scripted browser testing](/en/blog/playwright-cli-vs-scripts-ai-agents) applies: the script is the right artefact when you'll run it many times and the criterion is stable, and the wrong one when you're still discovering what correct means.
+
+I should say where I'm standing, because it's a reason to discount this section. I built a thing that does exactly this: **Prompt Scripter runs one prompt over a list of rows inside the chat you already use — ChatGPT, Claude or Gemini — without moving the work into a spreadsheet or going through an API.** That's the whole of the pitch and I'm not going to dress it up. It's a Chrome extension, it's new, and I have no measurement of time saved, so I'm not claiming one. The argument above is the reason I built it. If the argument is wrong, the tool is wrong too, and you should say so.
+
+## Where I'd still write the script
+
+The threshold moving doesn't mean it disappeared. Four places where the pipeline is straightforwardly the better answer:
+
+- **When the job repeats on a schedule.** Amortisation is real. Weekly forever beats any interactive loop, and the build cost gets divided by every future run.
+- **When the output feeds a system, not a person.** If row 213's answer lands in a database, you need schemas, validation and a retry policy, and a chat window is a bad place to get any of the three.
+- **When the judgement is actually deterministic.** A surprising amount of "the model should decide" is a rule you haven't written down yet. Write the regex. It's faster, free, and you can test it.
+- **When N is genuinely large.** At some scale the per-row check has to become sampling and statistics rather than reading, and once you're sampling you want the infrastructure that makes sampling meaningful.
+
+And the boundary at the other end, which matters just as much: **below roughly a few dozen rows, do it by hand.** Templating the prompt, splitting the columns and deciding what a header row means will cost more than thirty paste operations. The band has a floor as well as a ceiling, and pretending otherwise is how people end up automating a task they'd have finished in ten minutes.
+
+## Limits
+
+I want to be exact about what this argument does and doesn't rest on.
+
+It rests on structure, not data. I haven't measured build time, check time or throughput for anything described here, and the table above is a shape, not a result. When I do have numbers I say so and I show the ones that got smaller as well as the ones that got bigger — that's what happened when [I measured what prescriptive scaffolding actually buys](/en/blog/the-scaffolding-you-pay-for), and the honest version was less flattering than the hunch. This piece has no equivalent measurement behind it, so read it as reasoning you can check against your own folder rather than as a finding.
+
+It also assumes the check term is real, which is only true if you actually check. If nobody reads the four hundred outputs, the argument collapses — but so does the value of the work, and [that failure is quieter than people expect](/en/blog/nobody-will-check-behind-you).
+
+## The test
+
+Before you write the script, ask one question: **what would I have to read to know it worked?**
+
+If the answer is "three outputs and then I trust the rule", you have a deterministic job. Write the script. The check term is near zero and the arithmetic everybody half-remembers is the right arithmetic.
+
+If the answer is "all of it", you don't have a pipeline problem. You have a queue, and the only thing worth removing from it is the part that isn't reading.
+
+Look at what's in your folder. Most of it is in the second category.
+
+---
+
+*Related: [attention as the real currency in build-versus-buy](/en/blog/build-vs-buy-attention), [verifying results instead of implementations](/en/blog/results-oriented-programming), [when a script beats interactive exploration](/en/blog/playwright-cli-vs-scripts-ai-agents), and [why a conversational wrapper around a fixed sequence is just an expensive form](/en/blog/expensive-form). If you're working out where this line sits for your own team, [that's the kind of thing I help with](/en/mentoring).*
