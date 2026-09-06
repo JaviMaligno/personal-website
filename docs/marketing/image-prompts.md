@@ -823,6 +823,17 @@ porque `image_gen` escribe sobre el fichero destino.
 
 - Artículo: `src/content/blog/{en,es}/the-instrument-fails-in-your-favour.md`
 - Imagen: `public/blog/the-instrument-fails-in-your-favour.png` (1020x510)
+
+---
+
+---
+
+## `it-was-never-the-restriction` — Nunca fue la restricción (2026-08-29)
+
+- Artículo: `src/content/blog/{en,es}/it-was-never-the-restriction.md`
+  (renombrado desde `the-agent-knew-to-look` al cambiar la tesis: el eje que
+  domina resultó ser la capacidad del modelo, no la restricción del entorno)
+- Imagen: `public/blog/it-was-never-the-restriction.png` (1020x510)
 - Generada con `codex exec -s workspace-write` (no `--full-auto`: retirado en codex-cli 0.147)
 
 Prompt de estilo entregado a Codex para que redacte y ejecute el prompt final:
@@ -855,3 +866,30 @@ para que el modelo no inventara cifras.
 **Comprobado en la imagen final:** las tres cadenas salen correctas y legibles,
 sin texto inventado. El gráfico de barras rinde el sesgo direccional como cuatro
 flechas inclinadas igual.
+illustration, dark but not monochrome, showing a concrete scene contrasting TWO
+desks side by side facing the same locked registry cabinet.
+
+Left desk: a heavy padlock and chain across the drawers and a hand-written note
+reading 'no shell', yet a magnifier lies ON the open logbook and a clipboard
+reads 'not verified' — the restricted-but-careful workstation.
+
+Right desk: completely unlocked and open, drawers ajar, nothing restraining it,
+but the magnifier still sits unused in its holder and the clipboard reads
+'released 0.4.0' with a green tick — the free-but-incurious workstation.
+
+Between them a shipping crate stamped '0.4.0' whose contents sticker reads
+'0.3.1'. Both desks have a small terminal showing the same line '(cached)'.
+
+Clean geometric composition, clear left-right symmetry so the contrast reads
+instantly. No logos, no brand names, no people, no text-heavy poster. Crisp
+bitmap illustration, high contrast, balanced teal, amber, graphite and off-white
+accents, no purple gradient blobs, no bokeh.
+```
+
+La composición es el argumento: el puesto restringido es el que verificó, el
+libre es el que firmó sin mirar, y la lupa sin usar en su soporte es el hallazgo
+del artículo.
+
+**Comprobado en la imagen final:** las seis cadenas (`(cached)` ×2, `no shell`,
+`not verified`, `released 0.4.0`, `0.4.0`, `0.3.1`) salen correctas y legibles,
+sin texto inventado.
