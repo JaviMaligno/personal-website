@@ -6,6 +6,7 @@ tags: ["IA", "Automatización", "LLM", "Herramientas", "Producto"]
 lang: es
 translationKey: too-small-to-automate
 heroImage: "/blog/too-small-to-automate.png"
+linkedinImage: "/blog/too-small-run-in-chat.png"
 linkedinLinks:
   - label: "Prompt Scripter — Chrome Web Store"
     url: "https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg"
@@ -13,7 +14,7 @@ linkedinLinks:
     url: "https://promptscripter.javieraguilar.ai"
 ---
 
-Ciento cincuenta mensajes de soporte, cada uno con una decisión: ¿problema de facturación o problema de acceso? Noventa campos de texto libre que hay que reescribir en el tono de la casa sin inventarse nada. El trabajo se repite y cada fila pide un juicio, y por eso ya se está haciendo dentro de una ventana de chat: mensaje a mensaje, a mano, con alguien que lee cada respuesta según llega y que en la fila treinta se daría cuenta de que el tono se ha torcido.
+Ciento cincuenta mensajes de soporte, cada uno con una decisión: ¿problema de facturación o problema de acceso? Noventa campos de texto libre que hay que reescribir en el tono de la casa sin inventarse nada. Cuarenta mercados que dimensionar, un sector y un país cada vez. El trabajo se repite y cada fila pide un juicio, y por eso ya se está haciendo dentro de una ventana de chat: mensaje a mensaje, a mano, con alguien que lee cada respuesta según llega y que en la fila treinta se daría cuenta de que el tono se ha torcido.
 
 Casi nadie automatiza eso. Y no es porque sea difícil.
 
@@ -35,7 +36,15 @@ La aritmética que casi todos llevamos encima es [la tabla de xkcd](https://xkcd
 
 ## Lo que construí en su lugar
 
-[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [en la Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — coge un prompt con placeholders — `{{ mensaje }}`, `{{ descripcion }}` — y una lista de filas, y manda un mensaje por fila a la conversación que ya tienes abierta, en ChatGPT, Claude o Gemini. Espera a que cada respuesta termine antes de mandar la siguiente. Las respuestas caen en el hilo, que es donde ya las estabas leyendo.
+[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [en la Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — coge un prompt con placeholders — `{{ sector }}`, `{{ country }}` — y una lista de filas, y manda un mensaje por fila a la conversación que ya tienes abierta, en ChatGPT, Claude o Gemini. Espera a que cada respuesta termine antes de mandar la siguiente.
+
+![El diálogo Guardar como plantilla abierto sobre una conversación de ChatGPT, convirtiendo un prompt de investigación de mercado en plantilla con {{ sector }} y {{ country }} como huecos](https://www.javieraguilar.ai/blog/too-small-save-as-template.png)
+
+La plantilla sale de un mensaje que ya mandaste. No hay un editor aparte que aprender: el prompt que te costó seis vueltas afinar está ahí, en el hilo, y un botón encima de ese mensaje lo convierte en plantilla.
+
+![Un hilo de ChatGPT donde dos filas de una ejecución ya están respondidas — software en España y luego biotecnología en Portugal — cada respuesta con los títulos, las negritas y las citas de la propia plataforma](https://www.javieraguilar.ai/blog/too-small-run-in-chat.png)
+
+Y las respuestas llegan como respuestas, en el hilo, con el formato y las citas de la propia plataforma — que es la parte que decide si todo esto merece la pena o no. Las respuestas caen en el hilo, que es donde ya las estabas leyendo.
 
 El resto del artículo son los tres costes que la extensión viene a evitar. Ninguno de los tres es el bucle de veinte líneas de Python.
 
@@ -55,9 +64,7 @@ Meter un prompt en un fichero y versionarlo no es el problema. Un prompt vive en
 
 El coste es que un prompt es código no determinista, y el código no determinista no se comprueba leyéndolo. Se comprueba ejecutándolo, y una ejecución no vuelve como una aserción que ha pasado. Vuelve como un texto que alguien tiene que juzgar. Ni rojo ni verde: una persona leyendo salidas y decidiendo si están bien, que es exactamente la actividad que la automatización venía a quitar, mudada al banco de pruebas. Y el bucle que hace que un prompt acabe funcionando — reformular, quitar la frase que lo volvía farragoso, añadir un ejemplo, volver a probar — son N ejecuciones sobre M casos, todas facturadas, antes de que salga la primera fila útil.
 
-Por eso [el prompt es el último 10%](/es/blog/llm-as-judge-three-decisions): el primer 90% es decidir qué mides, sobre qué y con qué a la vista. Y es también lo que sobrevivió a la muerte del prompt engineering como artesanía — [el valor nunca estuvo en el fichero de texto](/es/blog/death-of-prompt-engineering), está en la estructura alrededor del bucle, y esa estructura es justamente el producto que no querías montar.
-
-El atajo tentador es poner a otro modelo a juzgar, para que el bucle se cierre sin ti dentro. Eso también lo medí: [las mismas 45 comparaciones ciegas, tres jueces, tres rankings distintos](/es/blog/three-judges-three-rankings), cada juez prefiriendo sus propias respuestas y, en las tareas subjetivas, coincidiendo al nivel del azar. Cada uno de esos 378 juicios fue una llamada de pago, y justo en el tipo de pregunta del que va este artículo el juez resulta ser un participante y no un instrumento. Construir la referencia contra la que comparar tampoco sale más barato: en tres estudios [todos los instrumentos que construí se rompieron al menos una vez, siempre hacia el resultado que esperaba](/es/blog/the-instrument-fails-in-your-favour), y una referencia generada a la ligera te devuelve [el número que querías](/es/blog/the-grader-knew-less).
+El atajo tentador es poner a otro modelo a juzgar, para que el bucle se cierre sin ti dentro. Eso también lo medí: [las mismas 45 comparaciones ciegas, tres jueces, tres rankings distintos](/es/blog/three-judges-three-rankings), cada juez prefiriendo sus propias respuestas y, en las tareas subjetivas, coincidiendo al nivel del azar. Justo en el tipo de pregunta del que va este artículo, el juez resulta ser un participante y no un instrumento — y [el prompt siempre fue el último 10%](/es/blog/llm-as-judge-three-decisions). El primer 90% es decidir qué mides, sobre qué y con qué a la vista. Eso es el producto que no querías montar.
 
 Lo que evita la extensión no es probar. Es tener que montar el banco de pruebas en otro sitio y pagar cada vuelta aparte. El prompt que automatizas es el que ya afinaste a mano en ese mismo chat, mirando respuestas reales, dentro de una tarifa plana: hay un botón en tus propios mensajes que convierte uno en plantilla. La prueba y el error ocurren donde ya ocurrían; la herramienta los recoge al final en vez de abrir un segundo sitio donde hacerlos.
 
@@ -79,7 +86,7 @@ Hay suelo además de techo, y del suelo se acuerda menos gente: por debajo de ci
 
 Lo que no dejo de ver es que todas las salidas disponibles apuntan hacia fuera. El trabajo ocurre en un chat, y cualquier forma de dejar de hacerlo a mano propone un destino nuevo: una consola, un panel, una plataforma con su inicio de sesión, su factura y su pestaña en el navegador de alguien. He defendido lo contrario para los productos en general — [meter tu aplicación dentro del agente que tus usuarios ya usan](/es/blog/bring-your-app-to-the-agent) en vez de pedirles que vengan a ti — y esto es ese mismo argumento girado hacia dentro, hacia el trabajo propio. Si el trabajo vive en el chat, la automatización se queda en el chat.
 
-Prompt Scripter es ese argumento con una herramienta detrás. Es nuevo, no he medido nada sobre el tiempo ahorrado y no voy a afirmar una cifra que no tengo. La desproporción de arriba es la razón entera de que exista; si la desproporción no es real, la herramienta tampoco, y prefiero que me lo digan.
+Prompt Scripter es ese argumento con una herramienta detrás. La desproporción de arriba es la razón entera de que exista; si la desproporción no es real, la herramienta tampoco, y prefiero que me lo digan.
 
 La prueba que le aplicaría a tu propia versión de este montón de trabajo: escribe lo que tendrías que construir para dejar de hacerlo a mano. Si la lista sale como una cuenta de proveedor, un banco de pruebas y una interfaz — y el trabajo es mandar mensajes por un chat —, la lista es el argumento.
 

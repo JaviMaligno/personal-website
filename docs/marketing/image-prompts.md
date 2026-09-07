@@ -899,43 +899,55 @@ sin texto inventado.
 ## `too-small-to-automate`
 
 - Artículo: `src/content/blog/{en,es}/too-small-to-automate.md`
-- Imagen: `public/blog/too-small-to-automate.png`
-- Generada: **2026-09-07**, y **regenerada el mismo día** al reescribirse el artículo
-  (`codex exec -s workspace-write -` por stdin, codex-cli 0.153.2)
+- Hero: `public/blog/too-small-to-automate.png` — generado **2026-09-07** y
+  regenerado **dos veces** el mismo día
+- En el cuerpo, **capturas reales**: `too-small-save-as-template.png` y
+  `too-small-run-in-chat.png`, reutilizadas de las que ya estaban subidas a la
+  ficha de la Chrome Web Store (1280x800). `linkedinImage` apunta a la del hilo.
 
-**Por qué se regeneró, que es la lección aprovechable.** La primera imagen dibujaba
-tres curvas —BUILD, RUN, CHECK— con CHECK plana y por encima. Era una buena
-imagen y era la tesis del **borrador anterior**: una fórmula de tres términos y
-un umbral. Cuando el artículo se reescribió, la tesis pasó a ser la
-desproporción, y la imagen se quedó ilustrando un argumento que el texto ya no
-hace. **Una imagen de cabecera no sobrevive a un cambio de tesis**: si se
-reescribe el artículo, se revisa la imagen antes de dar nada por hecho.
+**Las dos lecciones de las dos regeneraciones, que valen para cualquier artículo:**
 
-Prompt actual:
+1. **Una imagen no sobrevive a un cambio de tesis.** La primera dibujaba las
+   curvas BUILD, RUN y CHECK, que era el argumento del borrador anterior. Al
+   reescribirse el artículo se quedó ilustrando una fórmula que el texto ya no
+   hacía.
+2. **Pedir un concepto abstracto produce un cacharro.** La segunda pedía "la
+   desproporción" con palabras como *módulos*, *bastidor* y *medidor*, y salió
+   una consola de nave espacial: bonita, tridimensional y sin decir nada. La
+   tercera funciona porque **prohíbe explícitamente el registro equivocado** —
+   nada de 3D, ni paneles, ni carcasas, ni brillos— y describe geometría plana:
+   tres burbujas pequeñas contra seis losas grandes, y el hueco vacío en medio.
+
+Si el hero sale "raro", casi siempre es esto: el prompt pedía una idea en vez de
+pedir una forma.
+
+**Capturas del producto antes que ilustración.** Cuando el artículo va de una
+herramienta propia, una captura real de la cosa funcionando demuestra en un
+vistazo lo que la prosa tarda párrafos en argumentar — y para LinkedIn rinde
+mejor que un hero conceptual. Las de la ficha de la tienda ya existen y se
+reutilizan: se sacan de la página pública filtrando por tamaño 1280x800.
+**Ojo:** dos de las cuatro llevan copy de marketing incrustado y no valen para
+el cuerpo de un artículo; las limpias son el modal y el hilo.
+
+Prompt actual del hero:
 
 ```text
 Use case: infographic-diagram
 Asset type: 1020x510 landscape blog hero image
-Primary request: Create a refined technical editorial illustration of a disproportion. On the left, one small thing: a single chat message bubble being sent, repeated as a short vertical stack of identical small bubbles — the work as it is actually done, by hand, inside a chat. On the right, separated by a wide gap, the machinery someone is asked to build in order to stop doing that by hand: a provider key, a metered token counter, a test harness, and a results table with its own interface chrome — four connected modules in a bounded frame, visibly heavier and more numerous than the left side. The composition must read instantly as "this, to avoid that", with the right side outweighing the left.
-Scene/backdrop: dark graphite developer workspace, dimensional but clean, with a subtle engineered grid; dark but not monochrome.
-Subject: left third holds the small stack of chat bubbles, teal, light, with a soft send arrow; a wide empty gap in the middle carries the tension; the right two thirds hold the four amber-outlined modules wired together inside a frame, one of them a small table of rows with a header bar, one a meter dial, one a key glyph, one a bracketed test block. Keep the left side unmistakably smaller and simpler.
-Style/medium: crisp bitmap technical editorial illustration, vector-like geometry with subtle texture and controlled dimensional lighting; professional AI/developer research blog aesthetic; a concrete diagrammatic scene, not an abstract metaphor.
-Composition/framing: exact 2:1 landscape composition designed for a 1020x510 crop; deliberate imbalance left to right; generous margins; strong visual hierarchy; the empty middle gap is load-bearing and must stay empty; no headline or title.
-Lighting/mood: high contrast, calm, analytical, precise; restrained soft edge lighting only.
-Color palette: graphite and near-black foundation, balanced teal for the chat side, amber for the built machinery, muted slate and off-white accents; dark but chromatic.
-Text (verbatim): render no text at all. No labels, no words, no numbers, no axis values, no captions.
-Constraints: clean geometric composition; the left side must stay visually lighter and smaller than the right; no people; no logos; no brand names; no recognisable product screenshots; no real browser or extension UI; no watermark; no text-heavy poster; no readable pseudo-text anywhere.
-Avoid: purple gradient blobs, bokeh, neon cyberpunk excess, photorealistic monitors, clutter, decorative circuitry, illegible pseudo-text, invented statistics or digits, large typography, glowing orb imagery, balanced symmetrical layouts.
+Primary request: Create a calm, flat editorial diagram of a disproportion between two efforts. Left: a short vertical column of three or four small rounded chat message bubbles, plain and light, with a small paper-plane send mark on one — the work as it is actually done, by hand, one message at a time. Right: a much taller and wider stack of plain rectangular slabs piled and offset like a heavy structure, five or six of them, clearly outweighing the left column in mass and height — the machinery someone is asked to assemble instead. A wide quiet gap separates them. The whole image must read at a glance as "this little, versus all that".
+Scene/backdrop: flat off-black editorial ground with a very faint square grid, like a printed technical page rather than a screen; restrained, no device chrome, no panels, no frames, no bezels, no screws, no vents, no futuristic hardware.
+Subject: the two groups only. Nothing else in the frame. Both groups drawn as simple flat geometry with thin even outlines and soft flat fills, no gloss, no bevel, no reflections, no glow.
+Style/medium: flat vector editorial illustration, the register of a broadsheet infographic — thin consistent line weights, generous negative space, restrained flat colour. Deliberately NOT a 3D render, NOT a dashboard, NOT a sci-fi console, NOT a machine.
+Composition/framing: exact 2:1 landscape for a 1020x510 crop; left group occupies roughly the left quarter and sits small; right group occupies the right half and sits large; the middle gap stays empty and is load-bearing; generous margins; no headline, no title.
+Lighting/mood: none — flat illustration with no dimensional lighting at all. Calm, analytical, quiet.
+Color palette: off-black ground, a soft teal for the small chat bubbles on the left, a warm amber for the heavy stack on the right, one muted slate for the faint grid; four colours total and no gradients.
+Text (verbatim): render no text of any kind. No labels, no words, no numbers, no captions, no pseudo-text.
+Constraints: the left group must be visibly smaller, fewer and lighter than the right; flat 2D only; thin uniform strokes; no people; no logos; no brand marks; no product screenshots; no browser or app UI; no watermark.
+Avoid: 3D rendering, metallic surfaces, machine casings, control panels, dials, gauges, keys, screws, rivets, glowing edges, drop shadows, purple gradients, bokeh, neon, cyberpunk, clutter, symmetry, any text.
 ```
 
-Revisión: **hecha el 2026-09-07 y correcta.** No renderiza ni una palabra, que
-es lo que se pedía. La lectura es inmediata: tres burbujas de chat pequeñas y
-teal a la izquierda, y a la derecha un bastidor ámbar con la llave de API, el
-contador de tokens, el bloque de pruebas y una tabla de resultados con cromo de
-ventana — es decir, los tres costes del artículo más la interfaz. El hueco
-central se queda vacío, que es lo que sostiene la desproporción. Ni personas, ni
-marcas, ni interfaz de producto real.
-
-**Lo que hay que vigilar en una regeneración:** que el lado izquierdo siga siendo
-claramente más pequeño y más simple que el derecho. Si se equilibran, la imagen
-deja de decir nada.
+Revisión: **hecha el 2026-09-07 y correcta.** Cero texto renderizado. Lectura
+inmediata de la desproporción, con el lado izquierdo claramente más pequeño.
+Plano, sin iluminación dimensional, sin marcas ni personas. **Lo que hay que
+vigilar en una regeneración:** que el lado izquierdo siga siendo menor, y que no
+vuelva a aparecer nada con aspecto de aparato.

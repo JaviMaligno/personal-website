@@ -6,6 +6,7 @@ tags: ["AI", "Automation", "LLM", "Tooling", "Product"]
 lang: en
 translationKey: too-small-to-automate
 heroImage: "/blog/too-small-to-automate.png"
+linkedinImage: "/blog/too-small-run-in-chat.png"
 linkedinLinks:
   - label: "Prompt Scripter — Chrome Web Store"
     url: "https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg"
@@ -13,7 +14,7 @@ linkedinLinks:
     url: "https://promptscripter.javieraguilar.ai"
 ---
 
-A hundred and fifty support messages, each needing one call: billing problem or login problem. Ninety free-text fields to rewrite in the house voice without inventing a claim. The work repeats, and every row needs a judgement, which is why it is already being done inside a chat window — one message at a time, by a person who reads each answer as it lands and would notice at row thirty if the wording had drifted.
+A hundred and fifty support messages, each needing one call: billing problem or login problem. Ninety free-text fields to rewrite in the house voice without inventing a claim. Forty markets to size, one sector and one country at a time. The work repeats, and every row needs a judgement, which is why it is already being done inside a chat window — one message at a time, by a person who reads each answer as it lands and would notice at row thirty if the wording had drifted.
 
 Almost nobody automates that. Not because it's hard.
 
@@ -35,7 +36,15 @@ The arithmetic most of us carry around is [xkcd's table](https://xkcd.com/1205/)
 
 ## What I built instead
 
-[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [on the Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — takes one prompt with placeholders in it — `{{ message }}`, `{{ description }}` — and a list of rows, and sends one message per row into the conversation you already have open, in ChatGPT, Claude or Gemini. It waits for each answer to finish before sending the next. The answers land in the thread, which is where you were reading them anyway.
+[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [on the Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — takes one prompt with placeholders in it — `{{ sector }}`, `{{ country }}` — and a list of rows, and sends one message per row into the conversation you already have open, in ChatGPT, Claude or Gemini. It waits for each answer to finish before sending the next.
+
+![The Save as Template dialog open over a ChatGPT conversation, turning a market-research prompt into a template with {{ sector }} and {{ country }} as its placeholders](https://www.javieraguilar.ai/blog/too-small-save-as-template.png)
+
+The template comes from a message you already sent. There is no separate editor to learn: the prompt you spent six rounds getting right is sitting in the thread, and a button on it turns that message into the template.
+
+![A ChatGPT thread where two rows of a run have already been answered — software in Spain, then biotech in Portugal — each answer rendered with the platform's own headings, bold and citations](https://www.javieraguilar.ai/blog/too-small-run-in-chat.png)
+
+And the answers arrive as answers, in the thread, with the platform's own formatting and its own citations — which is the part that decides whether any of this is worth doing. The answers land in the thread, which is where you were reading them anyway.
 
 The rest of this piece is the three costs it exists to avoid. None of them is the twenty lines of Python.
 
@@ -55,9 +64,7 @@ Committing a prompt to a file is not the problem. A prompt lives in a repository
 
 The cost is that a prompt is non-deterministic code, and non-deterministic code isn't checked by reading it. You check it by running it, and a run doesn't come back as an assertion that passed. It comes back as a text somebody has to judge. No red, no green — a person reading outputs and deciding whether they're right, which is the same activity the automation was supposed to remove, relocated into the test suite. And the loop that makes a prompt work in the first place — reword it, cut the sentence that made it verbose, add one example, run it again — is N runs over M cases, every one billed, before the first useful row comes out.
 
-Which is why [the prompt is the last 10%](/en/blog/llm-as-judge-three-decisions): the first 90% is deciding what you're measuring, on what, with what in view. It's also what survived the death of prompt engineering as a craft — [the value was never in the text file](/en/blog/death-of-prompt-engineering), it's in the structure around the loop, and that structure is precisely the product you didn't want to build.
-
-The tempting shortcut is to have another model do the judging, so the loop closes without you in it. I measured that one: [the same 45 blinded comparisons, three judges, three different rankings](/en/blog/three-judges-three-rankings), each judge preferring its own answers, and on the subjective tasks agreement at roughly chance. Every one of those 378 judgements was a paid call, and on exactly the kind of question this article is about the judge turns out to be a participant rather than an instrument. Nor is building a reference to check against any cheaper: across three studies [every instrument I built broke at least once, always toward the result I expected](/en/blog/the-instrument-fails-in-your-favour), and a carelessly generated reference gives you [the number you wanted](/en/blog/the-grader-knew-less).
+The tempting shortcut is to have another model judge, so the loop closes without you in it. I measured that one: [the same 45 blinded comparisons, three judges, three different rankings](/en/blog/three-judges-three-rankings), each judge preferring its own answers, and on the subjective tasks agreement at roughly chance. On exactly the kind of question this article is about, the judge is a participant rather than an instrument — and [the prompt was always the last 10% anyway](/en/blog/llm-as-judge-three-decisions). The first 90% is deciding what you're measuring, on what, with what in view. That is the product you didn't want to build.
 
 What the extension avoids isn't the testing. It's having to build the test bench somewhere else and pay for its rounds separately. The prompt you automate is the one you already tuned by hand in that same chat, watching real answers, on a flat subscription — there's a button on your own messages that turns one of them into a template. The trial and error happens where it was already happening; the tool picks it up at the end instead of opening a second place to do it.
 
@@ -79,7 +86,7 @@ There's a floor as well as a ceiling, and the floor gets forgotten more often: b
 
 What I keep noticing is that all the available exits point outward. The work happens in a chat, and every way to stop doing it by hand proposes a new destination: a console, a dashboard, a platform with its own login, its own bill and its own tab in somebody's browser. I've made the opposite argument about products in general — [put your app inside the agent your users already have](/en/blog/bring-your-app-to-the-agent) instead of asking them to come to you — and this is that argument turned inward, at your own work. If the job lives in the chat, the automation belongs in the chat.
 
-Prompt Scripter is that argument with a build attached. It's new, I've measured nothing about time saved, and I'm not going to claim a number I don't have. The disproportion above is the whole reason it exists; if the disproportion isn't real, neither is the tool, and I'd rather be told.
+Prompt Scripter is that argument with a build attached. The disproportion above is the whole reason it exists; if the disproportion isn't real, neither is the tool, and I'd rather be told.
 
 Here's the test I'd apply to your own version of that pile of work. Write down what you'd have to build to stop doing it by hand. If the list comes out as a provider account, a test bench and an interface — and the job is sending messages in a chat — the list is the argument.
 
