@@ -2,6 +2,8 @@
 import '../styles/global.css';
 import { getLangFromUrl, useTranslations, languages, getLocalizedPath, type Language } from '../i18n';
 import { social } from '../config';
+import ThemeScript from '../components/ThemeScript.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
 
 interface Props {
   title?: string;
@@ -109,6 +111,7 @@ const organizationSchema = {
 <!DOCTYPE html>
 <html lang={lang}>
   <head>
+    <ThemeScript />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
@@ -197,6 +200,7 @@ const organizationSchema = {
           <a href={`${getLocalizedPath('/', lang)}#process`}>{t('nav').process}</a>
           <a href={`${getLocalizedPath('/', lang)}#contact`}>{t('nav').contact}</a>
           <a href="#" onclick="window.loadCalendlyPopup && window.loadCalendlyPopup('https://calendly.com/javiecija96/discovery-call?hide_landing_page_details=1&hide_gdpr_banner=1&primary_color=6366f1');return false;" class="btn btn-primary btn-sm">{t('cta').bookCall}</a>
+          <ThemeToggle />
           <a href={langSwitchPath} class="lang-switch" title={languages[otherLang]}>
             {otherLang.toUpperCase()}
           </a>
@@ -261,7 +265,7 @@ const organizationSchema = {
     z-index: 1000;
     padding: 0.75rem 1rem;
     background: var(--accent-primary);
-    color: #fff;
+    color: var(--accent-on);
     border-radius: 0 0 var(--radius-md) 0;
     text-decoration: none;
   }
@@ -276,7 +280,7 @@ const organizationSchema = {
     left: 0;
     right: 0;
     z-index: 100;
-    background: rgba(10, 10, 15, 0.8);
+    background: var(--header-bg);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--glass-border);
   }
@@ -288,11 +292,17 @@ const organizationSchema = {
     height: 72px;
   }
   
+  /* El logo no se encoge ni parte: al entrar el interruptor de tema, la
+     barra se quedo sin holgura y flex empezaba a comprimir el nombre hasta
+     partirlo en dos lineas, con el distintivo montado sobre el primer
+     enlace. La navegacion cede espacio antes que la marca. */
   .logo {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
     text-decoration: none;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
   
   .logo-name {
@@ -315,7 +325,7 @@ const organizationSchema = {
   .nav {
     display: flex;
     align-items: center;
-    gap: var(--space-lg);
+    gap: clamp(0.85rem, 1.6vw, var(--space-lg));
   }
   
   /* :not(.btn) porque `.nav a` gana en especificidad a `.btn-primary` y
@@ -347,7 +357,7 @@ const organizationSchema = {
   
   .lang-switch:hover {
     border-color: var(--accent-primary);
-    color: var(--accent-primary) !important;
+    color: var(--accent-text) !important;
   }
   
   .mobile-menu-btn {

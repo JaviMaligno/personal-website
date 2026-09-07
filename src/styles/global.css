@@ -1,24 +1,32 @@
+/* Tema oscuro: el de por defecto. El claro es opt-in y vive en el bloque
+   [data-theme="light"] de mas abajo, asi que quien no toque nada —y quien
+   llegue con JavaScript desactivado— ve exactamente lo de siempre. */
 :root {
   /* Background */
   --bg-primary: #0a0a0f;
   --bg-secondary: #12121a;
   --bg-card: #1a1a24;
   --bg-card-hover: #22222e;
-  
+
   /* Accent */
-  --accent-primary: #6366f1;
+  /* #6366f1 daba 4.47:1 con texto blanco encima, justo por debajo de AA.
+     Esta variante es indistinguible a ojo y llega a 4.69. Como relleno de
+     UI sobre el fondo oscuro sigue en 4.21, muy por encima del 3:1 que
+     piden los componentes no textuales. */
+  --accent-primary: #5f62ef;
   --accent-secondary: #8b5cf6;
-  --accent-text: #818cf8; /* Lighter variant for text on dark backgrounds (WCAG AA compliant) */
+  --accent-text: #818cf8; /* Variante para texto sobre superficie oscura */
   --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
   --accent-hover: #7679f4;
   --accent-glow: rgba(99, 102, 241, 0.14);
   --accent-surface: rgba(99, 102, 241, 0.08);
-  
+  --accent-on: #ffffff; /* texto encima de --accent-primary */
+
   /* Text */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #9CA3AF;
-  
+
   /* Effects */
   --glass: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
@@ -26,7 +34,31 @@
   --border-strong: rgba(255, 255, 255, 0.16);
   --glow: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  
+
+  /* Superficie que se mantiene oscura pase lo que pase: figuras y tablas
+     que traen sus propios colores incrustados en el markdown. */
+  /* Superficies tenues y colores semanticos. Estaban escritos a pelo por
+     los componentes —rgba(255,255,255,.015) para una fila, #ef4444 para un
+     error— y en claro cada uno de esos valores es exactamente el contrario
+     del que hace falta. */
+  --surface-subtle: rgba(255, 255, 255, 0.02);
+  --surface-raised: rgba(0, 0, 0, 0.3);
+  --header-bg: rgba(10, 10, 15, 0.8);
+  --halo: rgba(59, 130, 246, 0.05);
+  --danger: #f87171;
+  --danger-surface: rgba(239, 68, 68, 0.12);
+  --success: #4ade80;
+  --success-surface: rgba(34, 197, 94, 0.15);
+  --success-border: rgba(34, 197, 94, 0.3);
+  --neutral: #94a3b8;
+  --neutral-surface: rgba(148, 163, 184, 0.15);
+  --neutral-border: rgba(148, 163, 184, 0.3);
+
+  --ink-surface: #14141b;
+  --ink-border: rgba(255, 255, 255, 0.1);
+  --ink-text: #e6e6ea;
+  --ink-text-muted: #9aa0ad;
+
   /* Spacing */
   --space-xs: 0.5rem;
   --space-sm: 1rem;
@@ -55,6 +87,55 @@
   --container-max: 1200px;
   --container-padding: var(--space-md);
 }
+
+/* Tema claro. Solo se redefinen los tokens de color: ni un componente
+   necesita saber que existe. El blanco es roto y el negro no es negro
+   —#fbfbfd sobre #16161a— porque el blanco puro a pantalla completa
+   cansa igual que el halo del oscuro. */
+:root[data-theme="light"] {
+  --bg-primary: #fbfbfd;
+  --bg-secondary: #f2f2f6;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f6f6f9;
+
+  --accent-primary: #4f46e5;
+  --accent-secondary: #7c3aed;
+  --accent-text: #4338ca;
+  --accent-gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
+  --accent-hover: #4338ca;
+  --accent-glow: rgba(79, 70, 229, 0.12);
+  --accent-surface: rgba(79, 70, 229, 0.07);
+  --accent-on: #ffffff;
+
+  --text-primary: #16161a;
+  --text-secondary: #4a4a57;
+  --text-muted: #63636f;
+
+  --glass: rgba(0, 0, 0, 0.03);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --border: rgba(0, 0, 0, 0.11);
+  --border-strong: rgba(0, 0, 0, 0.2);
+  --glow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 20px 40px -16px rgba(0, 0, 0, 0.16);
+
+  --surface-subtle: rgba(0, 0, 0, 0.025);
+  --surface-raised: #f2f2f6;
+  --header-bg: rgba(251, 251, 253, 0.85);
+  --halo: rgba(59, 130, 246, 0.06);
+  --danger: #b91c1c;
+  --danger-surface: rgba(185, 28, 28, 0.09);
+  --success: #12652f;
+  --success-surface: rgba(21, 128, 61, 0.1);
+  --success-border: rgba(21, 128, 61, 0.28);
+  --neutral: #52525f;
+  --neutral-surface: rgba(82, 82, 95, 0.09);
+  --neutral-border: rgba(82, 82, 95, 0.26);
+}
+
+/* El navegador necesita saberlo para pintar los controles nativos, las
+   barras de scroll y el fondo antes de que cargue la hoja de estilos. */
+:root { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
 
 /* Reset */
 *, *::before, *::after {

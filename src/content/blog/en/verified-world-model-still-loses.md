@@ -107,7 +107,7 @@ To be sure this wasn't an artifact of my hand-written stand-in, I also ran it en
 <tr><td><span style="color:#f43f5e">●</span> Synthesized, rule-absent (Panel B)</td><td class="n">0.345 [0.317, 0.374]</td><td class="n"><strong>0.154</strong></td></tr>
 </tbody></table>
 
-<p style="color:#94a3b8;font-size:.82rem;margin:-.5rem 0 1.5rem;text-align:center">Play cost is measured paired-by-seed against each arm's own fair baseline; the synthesized arm's larger cost reflects imperfections beyond the omitted rule. Full numbers and CIs in the <a href="https://arxiv.org/abs/2607.14169">preprint</a>.</p>
+<p class="cwm-note">Play cost is measured paired-by-seed against each arm's own fair baseline; the synthesized arm's larger cost reflects imperfections beyond the omitted rule. Full numbers and CIs in the <a href="https://arxiv.org/abs/2607.14169">preprint</a>.</p>
 
 ## A law for when verification goes blind
 

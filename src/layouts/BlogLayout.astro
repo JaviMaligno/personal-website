@@ -8,6 +8,8 @@ import {
   type Language,
 } from "../i18n";
 import { social } from "../config";
+import ThemeScript from "../components/ThemeScript.astro";
+import ThemeToggle from "../components/ThemeToggle.astro";
 
 interface Props {
   title: string;
@@ -120,6 +122,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
 <!doctype html>
 <html lang={lang}>
   <head>
+    <ThemeScript />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
@@ -247,6 +250,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
             onclick="window.loadCalendlyPopup && window.loadCalendlyPopup('https://calendly.com/javiecija96/discovery-call?hide_landing_page_details=1&hide_gdpr_banner=1&primary_color=6366f1');return false;"
             class="btn btn-primary btn-sm">{t("cta").bookCall}</a
           >
+          <ThemeToggle />
           <a
             href={langSwitchPath}
             class="lang-switch"
@@ -463,7 +467,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     left: 0;
     right: 0;
     z-index: 100;
-    background: rgba(10, 10, 15, 0.8);
+    background: var(--header-bg);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--glass-border);
   }
@@ -475,11 +479,17 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     height: 72px;
   }
 
+  /* El logo no se encoge ni parte: al entrar el interruptor de tema, la
+     barra se quedo sin holgura y flex empezaba a comprimir el nombre hasta
+     partirlo en dos lineas, con el distintivo montado sobre el primer
+     enlace. La navegacion cede espacio antes que la marca. */
   .logo {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
     text-decoration: none;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .logo-name {
@@ -495,7 +505,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     z-index: 1000;
     padding: 0.75rem 1rem;
     background: var(--accent-primary);
-    color: #fff;
+    color: var(--accent-on);
     border-radius: 0 0 var(--radius-md) 0;
     text-decoration: none;
   }
@@ -518,7 +528,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
   .nav {
     display: flex;
     align-items: center;
-    gap: var(--space-lg);
+    gap: clamp(0.85rem, 1.6vw, var(--space-lg));
   }
 
   .nav a:not(.btn) {
@@ -548,7 +558,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
 
   .lang-switch:hover {
     border-color: var(--accent-primary);
-    color: var(--accent-primary) !important;
+    color: var(--accent-text) !important;
   }
 
   .mobile-menu-btn {
@@ -716,7 +726,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
   }
 
   .back-link:hover {
-    color: var(--accent-primary);
+    color: var(--accent-text);
   }
 
   .article-header {
@@ -845,7 +855,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
   }
 
   .article-content :global(a) {
-    color: var(--accent-primary);
+    color: var(--accent-text);
     text-decoration: underline;
   }
 
@@ -901,6 +911,40 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     line-height: 1.5;
   }
 
+  /* El pie de las figuras de esos articulos llevaba el gris escrito en un
+     atributo style, que gana a cualquier hoja de estilos. Pasa a clase para
+     que el color salga del tema y no de la cadena incrustada. */
+  .article-content :global(.cwm-note) {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    margin: -0.5rem 0 1.5rem;
+    text-align: center;
+  }
+
+  /* Dos articulos traen sus figuras y tablas con los colores incrustados
+     en el propio markdown: fondo #1a1a24, texto #94a3b8, bordes blancos al
+     10%. En claro esas tablas quedaban en gris claro sobre blanco.
+     El CSS del layout no puede reescribir lo que hay dentro del markdown,
+     asi que en claro se les da una superficie oscura y se deja que sus
+     colores sigan siendo los correctos: una figura con fondo propio es una
+     convencion aceptada, y asi no hay que tocar contenido publicado. En
+     oscuro no se cambia nada, que ahi ya funcionaban. */
+  :global(:root[data-theme='light']) .article-content :global(.cwm-table) {
+    background: var(--ink-surface);
+    color: var(--ink-text);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  :global(:root[data-theme='light']) .article-content :global(.cwm-table th) {
+    color: var(--ink-text-muted);
+  }
+
+  :global(:root[data-theme='light']) .article-content :global(.cwm-table td),
+  :global(:root[data-theme='light']) .article-content :global(.cwm-table th) {
+    border-bottom-color: var(--ink-border);
+  }
+
   /* Red de seguridad. El plugin rehype envuelve las tablas escritas en
      sintaxis markdown, pero un par de articulos traen la tabla en HTML
      crudo, y eso llega al plugin como nodo `raw`: no lo ve. Sin envoltura
@@ -921,12 +965,12 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
   }
 
   .article-content :global(th) {
-    background: var(--glass-bg, rgba(255, 255, 255, 0.04));
+    background: var(--glass);
     font-weight: 600;
   }
 
   .article-content :global(tbody tr:nth-child(even)) {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--surface-subtle);
   }
 
   /* first column (row labels) can be long — let it wrap, keep numbers on one line */

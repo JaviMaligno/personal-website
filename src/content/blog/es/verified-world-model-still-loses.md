@@ -107,7 +107,7 @@ Para asegurarme de que no era un artefacto de mi sustituto escrito a mano, tambi
 <tr><td><span style="color:#f43f5e">●</span> Sintetizado, regla ausente (Panel B)</td><td class="n">0.345 [0.317, 0.374]</td><td class="n"><strong>0.154</strong></td></tr>
 </tbody></table>
 
-<p style="color:#94a3b8;font-size:.82rem;margin:-.5rem 0 1.5rem;text-align:center">El coste de juego se mide pareado por semilla contra el baseline justo de cada brazo; el coste mayor del brazo sintetizado refleja imperfecciones más allá de la regla omitida. Números completos e ICs en el <a href="https://arxiv.org/abs/2607.14169">preprint</a>.</p>
+<p class="cwm-note">El coste de juego se mide pareado por semilla contra el baseline justo de cada brazo; el coste mayor del brazo sintetizado refleja imperfecciones más allá de la regla omitida. Números completos e ICs en el <a href="https://arxiv.org/abs/2607.14169">preprint</a>.</p>
 
 ## Una ley para cuándo la verificación se queda ciega
 

@@ -99,7 +99,7 @@ Llegado ahí, lo honesto es atacar tu propia explicación. Si es la curvatura, l
 <tr><td>Mayor cobertura angular de los contactos</td><td class="n">0/40</td><td>la cobertura de la evidencia</td></tr>
 </tbody></table>
 
-<p style="color:#94a3b8;font-size:.82rem;margin:-.5rem 0 1.5rem;text-align:center">Cada fila es una campaña completa sobre los mismos 20 bloques muestreados. Ninguna restaura la reparación. La cuarta se registra en vez de contarse: en ese instrumento el objetivo es demostrablemente no identificable, así que un cero ahí no significa nada.</p>
+<p class="cwm-note">Cada fila es una campaña completa sobre los mismos 20 bloques muestreados. Ninguna restaura la reparación. La cuarta se registra en vez de contarse: en ese instrumento el objetivo es demostrablemente no identificable, así que un cero ahí no significa nada.</p>
 
 Dos de ellas merecen una frase. El cuadrado era el que esperaba que funcionase — si el modelo sabe escribir `x2 >= 8.0`, una caja son cuatro de esos. Falló como una imagen especular del disco: los artefactos escribieron *discos* sobre evidencia cuadrada. Y la del interior apuntaba a un teorema del paper: como el parche congela al móvil en su posición anterior, ningún rollout ocupa nunca el interior de la región, así que una muestra solo puede atestiguar *entradas*. Esa censura es real, y yo estaba bastante convencido de que era la causa. Dos campañas la levantaron — una de ellas aportando once veces más evidencia del modo — y la reparación siguió en cero. Equivocarte sobre tu propio mecanismo es la parte del proceso que de verdad lo mueve.
 
