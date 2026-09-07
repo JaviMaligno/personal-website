@@ -183,6 +183,62 @@ Wrap up with actionable takeaways or links.
 - **Code**: Include relevant code snippets with language identifiers
 - **Images**: Always use **absolute URLs** for inline images: `https://www.javieraguilar.ai/blog/image-name.png`. Dev.to cannot resolve relative paths (`/blog/...`), and the publish script auto-converts relative paths but using absolute URLs from the start avoids issues. The `heroImage` frontmatter field can remain a relative path (it's converted by the publish script).
 
+## The Reader Never Saw the Draft You Are Fixing
+
+**Never write a correction into the article.** When a draft is revised — because
+Javier pushed back, because a review caught a false claim, because you got
+something wrong and checked again — the fix is silent. The corrected sentence
+goes in. The story of the correction does not.
+
+Javier has had to say this more than once, which is why it is here. Real
+examples pulled out of drafts:
+
+| What appeared in the draft | Why it is wrong |
+|---|---|
+| "the sloppy version of this argument says the file freezes something. It doesn't." | Arguing with a draft the reader never read. To them there is no sloppy version — there is just a paragraph spending its energy on a strawman. |
+| "I got it wrong myself once before checking the second route." | A confession about the writing process, not about the subject. |
+| "an earlier version of this section claimed…" | Same. |
+| Rebutting an objection nobody raised, because a reviewer raised it | The reviewer is not the audience. |
+
+The rule: **the article is the finished argument, not its changelog.** If a
+revision taught you something the reader genuinely needs, state it as fact in
+its own right — with no trace of it having been a correction. If it does not
+survive that test, it was for you, not for them.
+
+This is different from Javier disclosing his own real position ("I have a stake
+in this", "I have not measured this"), which is honesty about the subject and
+belongs in the piece.
+
+## Do Not Write What the Product Does Not Do Yet
+
+**Never list a product's missing features as a disclaimer**, and never pre-empt
+the roadmap. A line like "it does not chain steps or do conditional logic" reads
+as a limitation announced by the person selling it, before the reader even knows
+what the thing is — and if the feature ships next quarter, the article is now
+wrong and there is nothing to write about, because you already spent it.
+
+Two rules that follow:
+
+- **Explain what it is before anything else.** Do not define a product by
+  negation, and never before the positive description has landed.
+- **Roadmap items are future articles.** Each feature that ships is a thing to
+  write about. Naming them early as absences burns them.
+
+Honest limits that are real and permanent (a browser it does not run in, a
+platform it does not support) can be stated once, plainly, after the reader
+knows what the product is.
+
+## Concrete Before Abstract, Always in That Order
+
+If the article opens by describing a kind of task in the abstract — "repetitive
+work that needs a judgement" — **a concrete instance of that task must appear
+before any mechanism that refers back to it.** Placeholder syntax, screenshots,
+worked examples: none of them land until the reader has one real task in mind.
+
+The failure looks like this: the article says "one prompt with `{{ sector }}` in
+it" while the reader has not yet been shown a task where a sector is what varies
+row to row. The syntax arrives before the thing it is for.
+
 ## Figures — Draw It, Don't Only Describe It
 
 **If the article argues about something with a shape, the article must show that shape.**
