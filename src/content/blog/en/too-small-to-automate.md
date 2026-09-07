@@ -5,6 +5,7 @@ pubDate: 2026-09-13
 tags: ["AI", "Automation", "Productivity", "Engineering", "Tooling"]
 lang: en
 translationKey: too-small-to-automate
+heroImage: "/blog/too-small-to-automate.png"
 linkedinLinks:
   - label: "Prompt Scripter"
     url: "https://promptscripter.javieraguilar.ai"

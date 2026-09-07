@@ -900,7 +900,7 @@ sin texto inventado.
 
 - Artículo: `src/content/blog/en/too-small-to-automate.md`
 - Imagen: `public/blog/too-small-to-automate.png`
-- Generada: PENDIENTE (Codex `codex exec`, herramienta `image_gen`)
+- Generada: **2026-09-07** (`codex exec -s workspace-write -` por stdin, codex-cli 0.153.2)
 - **`heroImage` retirado de los dos frontmatters.** El fichero no existe, así que
   el campo dejaba un `<img>` roto en la página y un `og:image` que devolvía 404;
   `heroImage` es opcional en `src/content/config.ts` y sin él la meta cae al
@@ -926,6 +926,12 @@ Constraints: clean geometric composition; keep text sparse and legible; the CHEC
 Avoid: purple gradient blobs, bokeh, neon cyberpunk excess, photorealistic monitors, clutter, decorative circuitry, illegible pseudo-text, invented statistics or digits, large typography, glowing orb imagery.
 ```
 
-Revisión: PENDIENTE. Comprobar que los únicos textos renderizados son `BUILD`,
-`RUN` y `CHECK`, que no aparece ninguna cifra inventada y que no hay UI de
-producto ni marcas reconocibles.
+Revisión: **hecha el 2026-09-07 y correcta.** Los únicos textos renderizados son
+`BUILD`, `RUN` y `CHECK`; no hay cifras, ni UI de producto, ni marcas, ni
+personas. `CHECK` sale plano y por encima de los otros dos en todo el ancho
+mientras `BUILD` y `RUN` se desploman, que es la tesis del artículo — si en una
+regeneración `CHECK` baja, la imagen dice lo contrario del texto. La banda
+sombreada entre los dos marcadores lleva las filas con su marca de juicio, con
+la tarjeta hecha a mano a la izquierda y el pipeline a la derecha.
+
+`heroImage` devuelto a los dos frontmatters el 2026-09-07.
