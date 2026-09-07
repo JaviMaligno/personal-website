@@ -269,7 +269,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
         <article class:list={["blog-article", showToc && "has-toc"]}>
           {
             showToc && (
-              <nav class="toc" aria-labelledby="toc-title">
+              <nav class="toc toc-side" aria-labelledby="toc-title">
                 <p class="toc-title" id="toc-title">
                   {t("blog").inThisArticle}
                 </p>
@@ -332,6 +332,21 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
               )
             }
           </header>
+
+          {
+            showToc && (
+              <details class="toc-inline">
+                <summary>{t("blog").inThisArticle}</summary>
+                <ul>
+                  {toc.map((h) => (
+                    <li>
+                      <a href={`#${h.slug}`}>{h.text}</a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )
+          }
 
           <div class="article-content">
             <slot />
@@ -627,6 +642,63 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
 
   .toc a[aria-current="true"] {
     color: var(--accent-text);
+  }
+
+  /* Version plegable para pantallas estrechas, donde no hay margen en el
+     que poner el indice lateral. Se duplica el marcado en vez de mover el
+     mismo nodo con CSS porque un <details> no se puede forzar abierto de
+     forma fiable entre navegadores, y porque asi los enlaces de esta
+     version no llevan data-toc-link: plegada no necesita seguir el scroll,
+     y el script no tiene que distinguir entre dos juegos de enlaces. */
+  .toc-inline {
+    margin: var(--space-xl) 0 var(--space-2xl);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+  }
+
+  @media (min-width: 1120px) {
+    .toc-inline {
+      display: none;
+    }
+  }
+
+  .toc-inline summary {
+    cursor: pointer;
+    padding: var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+  }
+
+  .toc-inline summary:hover {
+    color: var(--text-primary);
+  }
+
+  .toc-inline ul {
+    list-style: none;
+    margin: 0;
+    padding: 0 var(--space-md) var(--space-md);
+    border-top: 1px solid var(--border);
+    padding-top: var(--space-md);
+  }
+
+  .toc-inline li + li {
+    margin-top: 0.75rem;
+  }
+
+  .toc-inline a {
+    display: block;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+
+  .toc-inline a:hover {
+    color: var(--text-primary);
   }
 
   /* Sin esto, al saltar a una seccion el titulo queda tapado por la
