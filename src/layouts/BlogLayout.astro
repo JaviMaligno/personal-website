@@ -743,6 +743,13 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     border-radius: var(--radius-sm);
   }
 
+  /* El codigo en linea puede traer cadenas sin espacios —un base64, un hash,
+     una ruta larga— que en movil empujan la pagina entera hacia la derecha.
+     Los bloques <pre> quedan fuera: esos scrollean, no parten. */
+  .article-content :global(:not(pre) > code) {
+    overflow-wrap: anywhere;
+  }
+
   .article-content :global(pre) {
     background: var(--bg-card);
     border: 1px solid var(--glass-border);
@@ -820,6 +827,16 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     border-collapse: collapse;
     font-size: 0.95rem;
     line-height: 1.5;
+  }
+
+  /* Red de seguridad. El plugin rehype envuelve las tablas escritas en
+     sintaxis markdown, pero un par de articulos traen la tabla en HTML
+     crudo, y eso llega al plugin como nodo `raw`: no lo ve. Sin envoltura
+     esas tablas empujaban la pagina entera en movil, asi que se hacen
+     desplazables ellas mismas. */
+  .article-content :global(table:not(.table-wrap *)) {
+    display: block;
+    overflow-x: auto;
   }
 
   .article-content :global(th),
