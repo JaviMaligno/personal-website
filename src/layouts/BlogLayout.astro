@@ -17,6 +17,7 @@ interface Props {
   heroImage?: string;
   tags?: string[];
   translationSlug?: string;
+  readingMinutes?: number;
 }
 
 const {
@@ -27,6 +28,7 @@ const {
   heroImage,
   tags = [],
   translationSlug,
+  readingMinutes,
 } = Astro.props;
 
 const lang = getLangFromUrl(Astro.url) as Language;
@@ -209,6 +211,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
   </head>
   <body>
+    <a href="#contenido" class="skip-link">{lang === 'es' ? 'Saltar al contenido' : 'Skip to content'}</a>
     <!-- Header -->
     <header class="header">
       <div class="container header-container">
@@ -254,7 +257,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
       </div>
     </header>
 
-    <main class="blog-main">
+    <main class="blog-main" id="contenido">
       <div class="container">
         <article class="blog-article">
           <header class="article-header">
@@ -264,6 +267,16 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
             <h1>{title}</h1>
             <div class="article-meta">
               <time datetime={pubDate.toISOString()}>{formattedDate}</time>
+              {
+                readingMinutes && (
+                  <>
+                    <span class="meta-sep" aria-hidden="true">&middot;</span>
+                    <span>
+                      {readingMinutes} {t("blog").readingTime}
+                    </span>
+                  </>
+                )
+              }
               {
                 updatedDate && (
                   <span class="updated">
@@ -383,13 +396,29 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     color: var(--text-primary);
   }
 
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 1000;
+    padding: 0.75rem 1rem;
+    background: var(--accent-primary);
+    color: #fff;
+    border-radius: 0 0 var(--radius-md) 0;
+    text-decoration: none;
+  }
+
+  .skip-link:focus {
+    left: 0;
+  }
+
   .logo-badge {
     font-size: 0.625rem;
     font-weight: 500;
     padding: 0.25rem 0.5rem;
-    background: var(--accent-gradient);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
-    color: white;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -400,14 +429,14 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     gap: var(--space-lg);
   }
 
-  .nav a {
+  .nav a:not(.btn) {
     color: var(--text-secondary);
     font-size: 0.875rem;
     font-weight: 500;
     transition: color var(--transition-fast);
   }
 
-  .nav a:hover {
+  .nav a:not(.btn):hover {
     color: var(--text-primary);
   }
 
@@ -486,8 +515,15 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     align-items: center;
     gap: var(--space-sm);
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     margin-bottom: var(--space-md);
+  }
+
+  .article-meta .meta-sep {
+    opacity: 0.5;
   }
 
   .updated {
@@ -791,7 +827,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     .nav {
       gap: var(--space-sm);
     }
-    .nav a {
+    .nav a:not(.btn) {
       font-size: 0.8125rem;
     }
   }
