@@ -1,5 +1,26 @@
 # Business Landing - Market Validation Strategy
 
+> **Actualización 2026-09-07 — la landing ya no es un mercado aparte.**
+>
+> El plan de abajo daba por hecho una campaña de anuncios que nunca llegó a
+> correr: la landing se creó el 28/12/2025 y no volvió a tocarse. Sin
+> tráfico de pago, mantenerla desenlazada no medía nada — solo la dejaba
+> muerta. Y la separación de públicos que justificaba el aislamiento tampoco
+> existía: usa el `Layout` principal, así que quien llegara veía el menú
+> técnico completo.
+>
+> Decisión: **la oferta es la misma, lo que cambia es el vocabulario.** La
+> home lleva ahora una sección "Con quién trabajo" con tres puertas de
+> entrada, y esta landing es la versión sin jerga de la tercera —negocios
+> sin equipo técnico—, enlazada desde ahí.
+>
+> Lo que sigue vigente de este documento: el vocabulario de beneficios, los
+> proyectos reformulados y las cifras de precios para las llamadas. Lo que
+> **no**: el aislamiento deliberado, la migración a subdominio y el plan de
+> validación por anuncios, que quedan a la espera de que las pymes sean un
+> frente activo (hoy no está en `ESTADO.md` del repo privado, que lista tres:
+> mentoría, VitaminD y Prompt Scripter).
+
 ## Purpose
 
 This landing page (`/en/business`, `/es/business`) tests the viability of offering automation services to non-technical SMEs (small and medium enterprises), as a potential expansion from the current technical audience (CTOs, engineering teams).
