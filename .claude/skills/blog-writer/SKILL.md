@@ -181,7 +181,7 @@ Wrap up with actionable takeaways or links.
 - **Length**: 800-2000 words typically
 - **Structure**: Clear headings, scannable sections
 - **Code**: Include relevant code snippets with language identifiers
-- **Images**: Always use **absolute URLs** for inline images: `https://www.javieraguilar.ai/blog/image-name.png`. Dev.to cannot resolve relative paths (`/blog/...`), and the publish script auto-converts relative paths but using absolute URLs from the start avoids issues. The `heroImage` frontmatter field can remain a relative path (it's converted by the publish script).
+- **Images**: use **relative paths** for inline images: `/blog/image-name.png`. `scripts/devto/publish-to-devto.js` converts them to absolute URLs at publish time, and 36 of the published articles do it this way against 5 that hardcode the domain. **Absolute URLs break the local preview**: the file only exists on the branch, so `https://www.javieraguilar.ai/blog/...` 404s until the article is merged — which means you cannot see your own figures before publishing, and an article shipped that way was reviewed by nobody, including you.
 
 ## The Reader Never Saw the Draft You Are Fixing
 

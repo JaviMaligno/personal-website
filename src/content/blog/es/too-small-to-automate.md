@@ -14,7 +14,7 @@ linkedinLinks:
     url: "https://promptscripter.javieraguilar.ai"
 ---
 
-Ciento cincuenta mensajes de soporte, cada uno con una decisión: ¿problema de facturación o problema de acceso? Noventa campos de texto libre que hay que reescribir en el tono de la casa sin inventarse nada. Cuarenta mercados que dimensionar, un sector y un país cada vez. El trabajo se repite y cada fila pide un juicio, y por eso ya se está haciendo dentro de una ventana de chat: mensaje a mensaje, a mano, con alguien que lee cada respuesta según llega y que en la fila treinta se daría cuenta de que el tono se ha torcido.
+Ciento cincuenta mensajes de soporte, cada uno con una decisión: ¿problema de facturación o problema de acceso? Noventa campos de texto libre que hay que reescribir en el tono de la casa sin inventarse nada. Cuarenta mercados que dimensionar: la misma pregunta sobre el software en España, luego sobre la biotecnología en Portugal, luego la logística en Francia, cuarenta veces — la misma redacción siempre, cambiando dos palabras. El trabajo se repite y cada fila pide un juicio, y por eso ya se está haciendo dentro de una ventana de chat: mensaje a mensaje, a mano, con alguien que lee cada respuesta según llega y que en la fila treinta se daría cuenta de que el tono se ha torcido.
 
 Casi nadie automatiza eso. Y no es porque sea difícil.
 
@@ -36,15 +36,13 @@ La aritmética que casi todos llevamos encima es [la tabla de xkcd](https://xkcd
 
 ## Lo que construí en su lugar
 
-[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [en la Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — coge un prompt con placeholders — `{{ sector }}`, `{{ country }}` — y una lista de filas, y manda un mensaje por fila a la conversación que ya tienes abierta, en ChatGPT, Claude o Gemini. Espera a que cada respuesta termine antes de mandar la siguiente.
+[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [en la Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — coge un prompt con huecos donde iban esas dos palabras — `Analiza el mercado de {{ sector }} en {{ country }}` — y una lista de filas, y manda un mensaje por fila a la conversación que ya tienes abierta, en ChatGPT, Claude o Gemini. Espera a que cada respuesta termine antes de mandar la siguiente.
 
-![El diálogo Guardar como plantilla abierto sobre una conversación de ChatGPT, convirtiendo un prompt de investigación de mercado en plantilla con {{ sector }} y {{ country }} como huecos](https://www.javieraguilar.ai/blog/too-small-save-as-template.png)
+![El diálogo Guardar como plantilla abierto sobre una conversación de ChatGPT, convirtiendo un prompt de investigación de mercado en plantilla con {{ sector }} y {{ country }} como huecos](/blog/too-small-save-as-template.png)
 
 La plantilla sale de un mensaje que ya mandaste. No hay un editor aparte que aprender: el prompt que te costó seis vueltas afinar está ahí, en el hilo, y un botón encima de ese mensaje lo convierte en plantilla.
 
-![Un hilo de ChatGPT donde dos filas de una ejecución ya están respondidas — software en España y luego biotecnología en Portugal — cada respuesta con los títulos, las negritas y las citas de la propia plataforma](https://www.javieraguilar.ai/blog/too-small-run-in-chat.png)
-
-Y las respuestas llegan como respuestas, en el hilo, con el formato y las citas de la propia plataforma — que es la parte que decide si todo esto merece la pena o no. Las respuestas caen en el hilo, que es donde ya las estabas leyendo.
+Y las respuestas llegan como respuestas, en el hilo, con el formato y las citas de la propia plataforma — que es la imagen de arriba del todo, y la parte que decide si esto merece la pena o no. Las respuestas caen en el hilo, que es donde ya las estabas leyendo.
 
 El resto del artículo son los tres costes que la extensión viene a evitar. Ninguno de los tres es el bucle de veinte líneas de Python.
 

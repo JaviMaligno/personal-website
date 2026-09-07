@@ -14,7 +14,7 @@ linkedinLinks:
     url: "https://promptscripter.javieraguilar.ai"
 ---
 
-A hundred and fifty support messages, each needing one call: billing problem or login problem. Ninety free-text fields to rewrite in the house voice without inventing a claim. Forty markets to size, one sector and one country at a time. The work repeats, and every row needs a judgement, which is why it is already being done inside a chat window — one message at a time, by a person who reads each answer as it lands and would notice at row thirty if the wording had drifted.
+A hundred and fifty support messages, each needing one call: billing problem or login problem. Ninety free-text fields to rewrite in the house voice without inventing a claim. Forty markets to size: the same question about software in Spain, then about biotech in Portugal, then logistics in France, forty times over — same wording every time, two words swapped. The work repeats, and every row needs a judgement, which is why it is already being done inside a chat window — one message at a time, by a person who reads each answer as it lands and would notice at row thirty if the wording had drifted.
 
 Almost nobody automates that. Not because it's hard.
 
@@ -36,15 +36,13 @@ The arithmetic most of us carry around is [xkcd's table](https://xkcd.com/1205/)
 
 ## What I built instead
 
-[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [on the Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — takes one prompt with placeholders in it — `{{ sector }}`, `{{ country }}` — and a list of rows, and sends one message per row into the conversation you already have open, in ChatGPT, Claude or Gemini. It waits for each answer to finish before sending the next.
+[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [on the Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — takes one prompt with placeholders where those two words go — `Analyse the {{ sector }} market in {{ country }}` — and a list of rows, and sends one message per row into the conversation you already have open, in ChatGPT, Claude or Gemini. It waits for each answer to finish before sending the next.
 
-![The Save as Template dialog open over a ChatGPT conversation, turning a market-research prompt into a template with {{ sector }} and {{ country }} as its placeholders](https://www.javieraguilar.ai/blog/too-small-save-as-template.png)
+![The Save as Template dialog open over a ChatGPT conversation, turning a market-research prompt into a template with {{ sector }} and {{ country }} as its placeholders](/blog/too-small-save-as-template.png)
 
 The template comes from a message you already sent. There is no separate editor to learn: the prompt you spent six rounds getting right is sitting in the thread, and a button on it turns that message into the template.
 
-![A ChatGPT thread where two rows of a run have already been answered — software in Spain, then biotech in Portugal — each answer rendered with the platform's own headings, bold and citations](https://www.javieraguilar.ai/blog/too-small-run-in-chat.png)
-
-And the answers arrive as answers, in the thread, with the platform's own formatting and its own citations — which is the part that decides whether any of this is worth doing. The answers land in the thread, which is where you were reading them anyway.
+The answers then arrive as answers, in the thread, with the platform's own formatting and its own citations — which is the image at the top of this page, and the part that decides whether any of this is worth doing. The answers land in the thread, which is where you were reading them anyway.
 
 The rest of this piece is the three costs it exists to avoid. None of them is the twenty lines of Python.
 

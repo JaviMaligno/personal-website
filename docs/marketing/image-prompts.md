@@ -898,56 +898,43 @@ sin texto inventado.
 
 ## `too-small-to-automate`
 
-- Artículo: `src/content/blog/{en,es}/too-small-to-automate.md`
-- Hero: `public/blog/too-small-to-automate.png` — generado **2026-09-07** y
-  regenerado **dos veces** el mismo día
-- En el cuerpo, **capturas reales**: `too-small-save-as-template.png` y
-  `too-small-run-in-chat.png`, reutilizadas de las que ya estaban subidas a la
-  ficha de la Chrome Web Store (1280x800). `linkedinImage` apunta a la del hilo.
+**No hay hero generado. Se intentó tres veces y las tres salieron peor.** El
+hero es ahora un recorte 2:1 de una captura real: el hilo de ChatGPT con la
+primera fila ya respondida y el arranque de la segunda.
 
-**Las dos lecciones de las dos regeneraciones, que valen para cualquier artículo:**
+| Fichero | Qué es | Dónde se usa |
+|---|---|---|
+| `too-small-to-automate.png` | Recorte 1280x640 → 1020x510 de la captura del hilo | `heroImage` |
+| `too-small-save-as-template.png` | El modal Guardar como plantilla sobre ChatGPT | En el cuerpo |
+| `too-small-run-in-chat.png` | La captura entera, 1280x800 | `linkedinImage` |
 
-1. **Una imagen no sobrevive a un cambio de tesis.** La primera dibujaba las
-   curvas BUILD, RUN y CHECK, que era el argumento del borrador anterior. Al
-   reescribirse el artículo se quedó ilustrando una fórmula que el texto ya no
-   hacía.
-2. **Pedir un concepto abstracto produce un cacharro.** La segunda pedía "la
-   desproporción" con palabras como *módulos*, *bastidor* y *medidor*, y salió
-   una consola de nave espacial: bonita, tridimensional y sin decir nada. La
-   tercera funciona porque **prohíbe explícitamente el registro equivocado** —
-   nada de 3D, ni paneles, ni carcasas, ni brillos— y describe geometría plana:
-   tres burbujas pequeñas contra seis losas grandes, y el hueco vacío en medio.
+Las tres salen de las que ya estaban subidas a la ficha de la Chrome Web Store.
+Se recuperan de la página pública filtrando por tamaño: las capturas del item
+son las de **1280x800** (las de 440x280 y 1400x560 son los tiles promocionales,
+y las de 128x128 son iconos de otras extensiones).
 
-Si el hero sale "raro", casi siempre es esto: el prompt pedía una idea en vez de
-pedir una forma.
+### Las tres lecciones, que valen para cualquier artículo
 
-**Capturas del producto antes que ilustración.** Cuando el artículo va de una
-herramienta propia, una captura real de la cosa funcionando demuestra en un
-vistazo lo que la prosa tarda párrafos en argumentar — y para LinkedIn rinde
-mejor que un hero conceptual. Las de la ficha de la tienda ya existen y se
-reutilizan: se sacan de la página pública filtrando por tamaño 1280x800.
-**Ojo:** dos de las cuatro llevan copy de marketing incrustado y no valen para
-el cuerpo de un artículo; las limpias son el modal y el hilo.
+**1. Una imagen no sobrevive a un cambio de tesis.** El primer hero dibujaba las
+curvas BUILD, RUN y CHECK, que era el argumento de un borrador anterior. Al
+reescribirse el artículo se quedó ilustrando una fórmula que el texto ya no
+hacía.
 
-Prompt actual del hero:
+**2. Pedir un concepto abstracto produce un cacharro.** El segundo pedía "la
+desproporción" con palabras como *módulos*, *bastidor* y *medidor*, y salió una
+consola de nave espacial: tridimensional, bonita y sin decir nada. El tercero
+prohibía el registro entero (nada de 3D, ni paneles, ni carcasas) y salió plano
+pero vacío: tres burbujas contra seis losas no es una idea, es un gráfico de
+barras sin datos.
 
-```text
-Use case: infographic-diagram
-Asset type: 1020x510 landscape blog hero image
-Primary request: Create a calm, flat editorial diagram of a disproportion between two efforts. Left: a short vertical column of three or four small rounded chat message bubbles, plain and light, with a small paper-plane send mark on one — the work as it is actually done, by hand, one message at a time. Right: a much taller and wider stack of plain rectangular slabs piled and offset like a heavy structure, five or six of them, clearly outweighing the left column in mass and height — the machinery someone is asked to assemble instead. A wide quiet gap separates them. The whole image must read at a glance as "this little, versus all that".
-Scene/backdrop: flat off-black editorial ground with a very faint square grid, like a printed technical page rather than a screen; restrained, no device chrome, no panels, no frames, no bezels, no screws, no vents, no futuristic hardware.
-Subject: the two groups only. Nothing else in the frame. Both groups drawn as simple flat geometry with thin even outlines and soft flat fills, no gloss, no bevel, no reflections, no glow.
-Style/medium: flat vector editorial illustration, the register of a broadsheet infographic — thin consistent line weights, generous negative space, restrained flat colour. Deliberately NOT a 3D render, NOT a dashboard, NOT a sci-fi console, NOT a machine.
-Composition/framing: exact 2:1 landscape for a 1020x510 crop; left group occupies roughly the left quarter and sits small; right group occupies the right half and sits large; the middle gap stays empty and is load-bearing; generous margins; no headline, no title.
-Lighting/mood: none — flat illustration with no dimensional lighting at all. Calm, analytical, quiet.
-Color palette: off-black ground, a soft teal for the small chat bubbles on the left, a warm amber for the heavy stack on the right, one muted slate for the faint grid; four colours total and no gradients.
-Text (verbatim): render no text of any kind. No labels, no words, no numbers, no captions, no pseudo-text.
-Constraints: the left group must be visibly smaller, fewer and lighter than the right; flat 2D only; thin uniform strokes; no people; no logos; no brand marks; no product screenshots; no browser or app UI; no watermark.
-Avoid: 3D rendering, metallic surfaces, machine casings, control panels, dials, gauges, keys, screws, rivets, glowing edges, drop shadows, purple gradients, bokeh, neon, cyberpunk, clutter, symmetry, any text.
-```
+**3. Cuando el artículo va de una herramienta propia, la captura le gana a
+cualquier ilustración.** Y no solo por ser más honesta: **la captura arregló un
+problema del texto.** La plantilla real de la captura es *"Analyse the
+{{ sector }} market in {{ country }}"*, así que el artículo abre ahora con esa
+tarea contada con sus valores — software en España, biotecnología en Portugal —
+y los huecos, cuando aparecen, se reconocen solos. La imagen no ilustraba el
+argumento: lo corregía.
 
-Revisión: **hecha el 2026-09-07 y correcta.** Cero texto renderizado. Lectura
-inmediata de la desproporción, con el lado izquierdo claramente más pequeño.
-Plano, sin iluminación dimensional, sin marcas ni personas. **Lo que hay que
-vigilar en una regeneración:** que el lado izquierdo siga siendo menor, y que no
-vuelva a aparecer nada con aspecto de aparato.
+**Regla práctica:** antes de generar nada, mirar si el producto ya tiene
+capturas. Si el artículo habla de algo que se puede fotografiar funcionando, se
+fotografía.
