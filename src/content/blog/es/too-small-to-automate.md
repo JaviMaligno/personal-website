@@ -1,117 +1,88 @@
 ---
-title: "Demasiado pequeño para automatizar"
-description: "El trabajo que nunca se automatiza no es el difícil. Es el lote de ciento cincuenta filas que queda justo por debajo de la línea a partir de la cual compensa escribir el script — y esa línea se ha movido dos veces, en direcciones opuestas, sin que casi nadie haya vuelto a calcular dónde está."
+title: "Hace falta un producto para mandar mensajes"
+description: "El trabajo que nunca se automatiza no es el difícil. Es el repetitivo que además pide un juicio en cada fila, y que ya se hace a mano dentro de una ventana de chat. Cualquier forma de dejar de hacerlo a mano te obliga a montar antes un producto: una cuenta con factura por tokens, un prompt que ahora hay que probar llamada a llamada de pago, y una interfaz para quien tenga que leer los resultados."
 pubDate: 2026-09-13
-tags: ["IA", "Automatización", "Productividad", "Ingeniería", "Herramientas"]
+tags: ["IA", "Automatización", "LLM", "Herramientas", "Producto"]
 lang: es
 translationKey: too-small-to-automate
 heroImage: "/blog/too-small-to-automate.png"
 linkedinLinks:
+  - label: "Prompt Scripter — Chrome Web Store"
+    url: "https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg"
   - label: "Prompt Scripter"
     url: "https://promptscripter.javieraguilar.ai"
 ---
 
-Tengo una carpeta mental de cosas que nunca automaticé. Las difíciles no están ahí. Los problemas difíciles tuvieron script hace años, porque un problema difícil es interesante y un script es una buena excusa para resolverlo.
+Ciento cincuenta mensajes de soporte, cada uno con una decisión: ¿problema de facturación o problema de acceso? Noventa campos de texto libre que hay que reescribir en el tono de la casa sin inventarse nada. El trabajo se repite y cada fila pide un juicio, y por eso ya se está haciendo dentro de una ventana de chat: mensaje a mensaje, a mano, con alguien que lee cada respuesta según llega y que en la fila treinta se daría cuenta de que el tono se ha torcido.
 
-Lo que hay en la carpeta es pequeño. Ciento cincuenta descripciones cortas que necesitan una decisión cada una. Una columna de texto libre que hay que reescribir en el tono de la casa. Noventa cosas, una decisión por cada una, ninguna difícil.
+Casi nadie automatiza eso. Y no es porque sea difícil.
 
-Sé automatizar todo lo que hay en esa carpeta. Lo sé desde hace años. Esa es la parte que merece explicación.
+## Dos cosas que llamamos difíciles
 
-Ordena la carpeta por lo pesada que es cada tarea y no cuadra nada: los trabajos que sí acabaron en script, hace años, eran igual de pesados que los que no. Lo que ordena la carpeta es el tamaño, y el corte es más limpio de lo que debería: los pesados y grandes acabaron todos en un script; los medianos, ninguno; y la frontera entre unos y otros está en un sitio que nunca he calculado. **El trabajo que nunca se automatiza no es el difícil. Es el que queda justo por debajo de la línea a partir de la cual compensa escribir el script.** Esa línea es lo único de todo esto que nadie recalcula, y se ha movido dos veces desde la última vez que la miramos.
+Hay dos dificultades que comparten palabra, y el argumento se rompe si se dejan mezclar. Una es la intelectual: el problema que todavía no sabes resolver. Esa es la que de verdad se resiste a un script, porque no se puede escribir un procedimiento que no tienes — y encima es la que se lleva la atención, porque es interesante.
 
-## La aritmética que todo el mundo recuerda a medias
+Lo de arriba es la otra cosa, y no se parece en nada. Cada fila es fácil: una decisión, dos segundos, evidente para cualquiera que conozca el dominio. Lo que la vuelve insoportable es que hay ciento cincuenta y que en todas tiene que haber una persona delante. No tiene nada de difícil. Es repetitiva *y* pide juicio, y lo que la deja varada es la pareja: quita cualquiera de las dos mitades y estaría resuelta desde hace años.
 
-La versión que la gente lleva en la cabeza es la de la tabla famosa de xkcd: automatiza cuando el tiempo que ahorrarás supere al que cuesta construirlo. El coste manual total son filas por segundos; el automatizado es la construcción, más un coste por fila mucho menor. Cruzas la línea, escribes el script.
+Ya he escrito que cuando un equipo copia el contexto a un chat y devuelve la respuesta a mano, [la persona es la capa de integración](/es/blog/stop-being-the-cable). Allí la solución suele ser un conector que nadie se acordó de pedir. Aquí no hay nada que instalar, porque lo que se repite no es una llamada a un sistema. Es un mensaje.
 
-Es una buena regla y tiene un agujero. La fórmula tiene tres términos, no dos:
+## La desproporción
 
-- **Construir.** Escribir la cosa.
-- **Ejecutar.** Correrla, por fila.
-- **Comprobar.** Establecer que la salida es correcta, por fila.
+¿Por qué sigue siendo manual, entonces? Por lo que te piden construir a cambio. El trabajo consiste en pegar una fila en un chat, leer la respuesta y pegar la siguiente. En cuanto quieres dejar de hacerlo con las manos, todas las salidas disponibles te sacan del chat y te ponen delante un producto que montar. Una cuenta de proveedor, una clave de API y una factura que cuenta tokens. Un prompt que ahora hay que probar como se prueba el código, salvo que cada prueba es una llamada que se paga y al final no hay ninguna marca verde esperando. Y una salida que tiene que leer una persona, lo que significa una presentación, lo que significa una interfaz con sus filas, su paginación y un inicio de sesión por delante.
 
-En la automatización con la que se crió la mayoría de los ingenieros, el tercer término era invisible, y lo era por un buen motivo: era genuinamente casi cero. Un script que renombra ficheros según una regla o implementa la regla o no. Inspeccionas tres salidas, te convences de que la regla está bien, y las otras trescientas son correctas por construcción. Determinismo significa que verificas el *programa*, una vez, no la *salida*, N veces.
+Eso es un producto. Para mandar mensajes por un chat.
 
-Así que todos aprendimos una fórmula de dos términos, en un mundo donde el tercero se redondeaba a nada. Después el tercer término dejó de redondearse a nada, y seguimos usando la fórmula.
+La aritmética que casi todos llevamos encima es [la tabla de xkcd](https://xkcd.com/1205/), *Is It Worth the Time?*: cuánto tiempo puedes dedicarle a automatizar algo antes de gastar más de lo que ahorras. Es una buena tabla y nada de esto la contradice. Lo que pasa es que le pone precio al único término que ya se ha desplomado. Escribir el bucle no es el problema: un agente de código lo escribe antes de que termines de especificarlo, que es buena parte de lo que quiero decir cuando digo que [construir ya no es el cuello de botella](/es/blog/building-is-no-longer-the-bottleneck). Los tres costes de arriba sobreviven intactos a eso, y ninguno de ellos es código.
 
-## Qué cambió, y cambió dos veces
+## Lo que construí en su lugar
 
-**Construir se abarató.** Esta es la parte que todo el mundo notó. Un agente de código escribe el bucle sobre el CSV más rápido de lo que tardas en especificárselo. El término de construcción, que antes era el argumento entero, se hundió. Por sí solo, eso empuja el umbral hacia abajo: hay más cosas que compensa automatizar de las que compensaban antes, y en ese hueco hay trabajo real.
+[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [en la Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — coge un prompt con huecos `{{variable}}` y una lista de filas, y manda un mensaje por fila a la conversación que ya tienes abierta, en ChatGPT, Claude o Gemini. Espera a que cada respuesta termine antes de mandar la siguiente. Las respuestas caen en el hilo, que es donde ya las estabas leyendo.
 
-**Y una clase nueva de tarea entró en la banda.** Esta parte importa más y se discute menos. Es el trabajo por filas donde la operación es un juicio. Clasifica este mensaje como problema de facturación o de acceso. Señala si esta cláusula es inusual para un contrato de este tipo. Reescribe esto en nuestro tono sin inventarte una afirmación. Resume esto en una línea que entienda alguien que no es del gremio.
+Lo que no es, dicho sin adornos, porque esta categoría está llena de cosas que prometen más: no encadena pasos, no tiene ramas ni reglas, y ninguna fila ve la respuesta de la anterior — todos los mensajes se renderizan antes de que salga el primero. No puntúa nada, no decide qué respuestas son buenas y no corre desatendida: si cierras la pestaña, la ejecución muere con ella. El juicio se queda donde ya estaba, delante de una persona que lee un hilo.
 
-Lo que ha llegado tarde no es la capacidad: es una manera barata y corriente de apuntarla a una lista, algo a lo que se llega sin una integración, sin una partida de presupuesto y sin que lo firme nadie. Por eso nadie tiene un hábito para esta categoría. Para casi todo el mundo nunca tuvo una forma automatizada que mereciera la pena: o era una persona, o era un proyecto que nadie iba a financiar. Nunca hizo falta una regla de umbral, así que no se construyó, y ahora las tareas están llegando y la regla no está.
+El resto del artículo son los tres costes que existe para evitar. Ninguno de ellos son las veinte líneas de Python.
 
-## El único término que no se abarató
+## La factura que antes no tenías
 
-Aquí es donde los dos cambios apuntan en direcciones opuestas.
+Para pasar una fila por un modelo desde un script hace falta una credencial propia. Elegir proveedor, dar de alta un método de pago, guardar una clave en algún sitio que no sea el repositorio — y a partir de ahí cada fila y cada reintento tienen precio unitario. Una tarde de trabajo de oficina se convierte en una partida presupuestaria con alguien vigilando el gasto. En casa es una molestia; en una empresa es una conversación con compras, y si no eres tú quien decide qué te dejan usar, es una conversación que puedes perder.
 
-Las tareas que acaban de volverse automatizables son exactamente aquellas cuyo criterio de aceptación es difuso. No hay un `assert` para *¿se lee bien esto?*. No hay test unitario para *¿es esta la categoría correcta, dada una taxonomía que vive en parte dentro de la cabeza de alguien?*. Lo que significa que el término de comprobación no se hunde como se hundió el de construcción. Se queda más o menos lineal en el número de filas, y la constante es una persona leyendo.
+La forma obvia de hacer soportable esa factura es bajar de modelo, y es justo el movimiento contra el que más avisaría. Llevé la misma tarea por modelos cada vez más flojos y medí que [lo caro era la capacidad](/es/blog/it-was-never-the-restriction): el más débil no fue a mirar ni una sola vez y firmó catorce informes dando por publicada una versión que no existía. Los tokens baratos, en un trabajo que pide juicio, compran respuestas muy seguras de sí mismas que nadie ha comprobado.
 
-|  | construir una vez | ejecutar por fila | comprobar por fila |
-|---|---|---|---|
-| Script determinista, 2019 | horas | ~0 | ~0 — verificas el programa |
-| Script determinista, 2026 | minutos | ~0 | ~0 — verificas el programa |
-| Juicio del modelo por fila | minutos | segundos, más tokens | el trabajo entero |
+La extensión se salta la partida entera porque su llamada al modelo no es una llamada de red suya. Escribe en la página y pulsa enviar: la inferencia la hace ChatGPT, Claude o Gemini, en tu pestaña, con la suscripción que ya pagas. Ni clave que conseguir, ni proveedor que elegir. Cuenta propia sí tiene, y prefiero decir lo que cuesta: un plan plano con topes de plantillas, ejecuciones y filas, no un contador de tokens; un bucle que corre igual sin haber iniciado sesión; y, cuando sí la has iniciado, tus filas viajando por HTTPS a un servidor mío, con la entrada de cada fila y la respuesta del modelo guardadas como resultados de esa ejecución.
 
-Esa tabla es estructura, no medición — no he cronometrado nada de esto y no voy a fingir lo contrario. Pero la forma es el argumento. La automatización solía mover trabajo de *hacer* a *construir*. En el trabajo difuso por filas lo mueve de *hacer* a *comprobar*, y comprobar es el término que no se paraleliza, no se amortiza y no se delega. Es el mismo recurso que ya llamé la moneda real de [las decisiones de construir o comprar](/es/blog/build-vs-buy-attention): tu atención, el único insumo que no se abarató cuando se abarató todo lo demás.
+## Un prompt es código que no se puede leer
 
-Por eso también la actualización ingenua — *construir es gratis ahora, así que automatiza todo* — produce malas decisiones. Optimiza el término que ya se hundió e ignora el que ahora manda. He tenido que hacer [la misma corrección en cómo reviso la salida de un agente](/es/blog/results-oriented-programming): la pregunta dejó de ser *¿está bien la implementación?* y pasó a ser *¿está bien el resultado?*, y responder a una y a otra cuesta cantidades muy distintas.
+Meter un prompt en un fichero y versionarlo no es el problema, y quiero ser exacto aquí porque la versión chapucera de este argumento dice que el fichero congela algo. No congela nada. Para eso está el control de versiones: un prompt vive en un repositorio como cualquier otra cosa y se edita como cualquier otra cosa.
 
-## Por qué el script sale más caro que el script
+El coste es que un prompt es código no determinista, y el código no determinista no se comprueba leyéndolo. Se comprueba ejecutándolo, y una ejecución no vuelve como una aserción que ha pasado. Vuelve como un texto que alguien tiene que juzgar. Ni rojo ni verde: una persona leyendo salidas y decidiendo si están bien, que es exactamente la actividad que la automatización venía a quitar, mudada al banco de pruebas. Y el bucle que hace que un prompt acabe funcionando — reformular, quitar la frase que lo volvía farragoso, añadir un ejemplo, volver a probar — son N ejecuciones sobre M casos, todas facturadas, antes de que salga la primera fila útil.
 
-Soy parte interesada en los tres costes que vienen a continuación, y conviene que los descuentes.
+Por eso [el prompt es el último 10%](/es/blog/llm-as-judge-three-decisions): el primer 90% es decidir qué mides, sobre qué y con qué a la vista. Y es también lo que sobrevivió a la muerte del prompt engineering como artesanía — [el valor nunca estuvo en el fichero de texto](/es/blog/death-of-prompt-engineering), está en la estructura alrededor del bucle, y esa estructura es justamente el producto que no querías montar.
 
-Hay una segunda razón por la que la banda es más ancha de lo que sugiere la fórmula, y es la que un lector técnico se va a resistir a aceptar, porque desde dentro parece una excusa.
+El atajo tentador es poner a otro modelo a juzgar, para que el bucle se cierre sin ti dentro. Eso también lo medí: [las mismas 45 comparaciones ciegas, tres jueces, tres rankings distintos](/es/blog/three-judges-three-rankings), cada juez prefiriendo sus propias respuestas y, en las tareas subjetivas, coincidiendo al nivel del azar. Cada uno de esos 378 juicios fue una llamada de pago, y justo en el tipo de pregunta del que va este artículo el juez resulta ser un participante y no un instrumento. Construir la referencia contra la que comparar tampoco sale más barato: en tres estudios [todos los instrumentos que construí se rompieron al menos una vez, siempre hacia el resultado que esperaba](/es/blog/the-instrument-fails-in-your-favour), y una referencia generada a la ligera te devuelve [el número que querías](/es/blog/the-grader-knew-less).
 
-«Eso lo hago yo en veinte líneas de Python.» Cierto. Pero las veinte líneas no son el coste.
+Lo que evita la extensión no es probar. Es tener que montar el banco de pruebas en otro sitio y pagar sus vueltas aparte. El prompt que automatizas es el que ya afinaste a mano en ese mismo chat, mirando respuestas reales, dentro de una tarifa plana: hay un botón en tus propios mensajes que convierte uno en plantilla. La prueba y el error ocurren donde ya ocurrían; la herramienta los recoge al final en vez de abrir un segundo sitio donde hacerlos.
 
-**La cuenta es un coste.** Para pasar filas por un modelo desde un script necesitas elegir un proveedor, conseguir una clave de API y aceptar una factura que cuenta tokens. En casa eso es dar de alta un método de pago y ponerle un límite de gasto para el trabajo de una tarde. En el trabajo es una conversación con compras, y si no controlas lo que te dejan usar, puede ser una conversación que no ganas. Ya escribí sobre [qué cambia cuando la herramienta no la eliges tú](/es/blog/the-tool-youre-allowed-to-use); este es uno de los sitios donde más aprieta, porque el bloqueo no es técnico y no hay ingeniería que lo quite.
+## Alguien tiene que leer esto
 
-**El prompt es un coste, y no donde crees.** El prompt que funciona de verdad no es el que escribirías en un fichero. Es al que llegaste tras seis rondas de corregirlo en una ventana de chat, mirando una salida, viendo que se desviaba, ajustando una frase. Ese bucle es la razón de que funcione. Congelarlo en un script es comprometerte con él justo en el momento en que menos seguro estás de que sea el bueno — y lo que el script elimina es precisamente el bucle que te llevó hasta ahí.
+Serializar JSON es trivial, y lo es desde hace veinte años. El problema es para quién es ese JSON. Quien tiene que leer ciento cincuenta respuestas no va a abrir un array de objetos. Quiere la entrada al lado de la salida, saltar a la fila 90, releer una respuesta larga sin pisar comillas escapadas y encontrarlo todo ahí mañana. Eso es una vista: emparejar, paginar, texto legible. Es una aplicación. Y una aplicación que guarda las filas de otra gente arrastra todo lo demás — cuentas, permisos, retención.
 
-**La forma de la salida es un coste.** Un script quiere salida estructurada que pueda escribir a un fichero. Lo que significa que ahora estás especificando esquemas JSON, gestionando fallos de parseo y decidiendo qué hacer con la fila 90, y le has añadido un problema de serialización a una tarea que no lo tenía, porque quien va a consumir esas ciento cincuenta respuestas es una persona que iba a leerlas.
+Esa factura la he pagado. Montando un flujo de KYC conversacional acabamos manteniendo a mano [nuestro propio formato de interrupt y un registro de widgets](/es/blog/ag-ui-third-protocol), hasta que apareció un estándar que lo hacía por nosotros. Ese es el precio honesto de presentarle la salida de un modelo a alguien que no eres tú.
 
-Suma todo eso y el término de construcción honesto para un trabajo difuso de ciento cincuenta filas no son las veinte líneas. Es una decisión que quizá no estés autorizado a tomar, un prompt con el que tienes que comprometerte mientras todavía lo estás editando y un problema de serialización que te has inventado por el camino. Por eso existe la carpeta.
+La extensión no construye nada de eso, porque la salida aparece donde ya se estaba leyendo: las respuestas llegan al hilo como mensajes normales, con el formato de la propia plataforma — títulos, listas, bloques de código, botón de copiar. La prueba de que no hacía falta ningún panel está en el código: el cliente de API tiene métodos para listar ejecuciones y exportar resultados, y ninguno se llama desde la interfaz. Hay una exportación a CSV en el servidor para cuando quieras el fichero. Pantalla no hay, porque la pantalla ya estaba puesta.
 
-## Qué quiere realmente esta banda
+## Dónde sí escribiría el script
 
-Vista esa forma, la pregunta interesante no es *cómo construyo el pipeline más rápido*. Es *qué quiere esta banda, si no es un pipeline*.
+Nada de esto elimina el umbral; simplemente no es el punto, así que aquí va en corto. Escribe la tubería cuando el trabajo se repite en un calendario para siempre y el coste de construirla se divide entre todas las veces futuras. Escríbela cuando la salida alimenta a un sistema y no a una persona, porque entonces sí quieres esquemas, validación y política de reintentos. Escríbela cuando el juicio resulta ser determinista después de todo — buena parte de "que decida el modelo" es una regla que nadie ha escrito todavía, y la expresión regular es más rápida y gratis. Y escríbela cuando N es tan grande que comprobar deja de ser leer y pasa a ser muestrear.
 
-Quiere que se quite la repetición sin que se cierre el bucle. Eso es una propiedad, no una lista de características: lo que repita tiene que dejar el juicio exactamente donde ya está, viendo la salida según llega y pudiendo parar en la fila treinta porque la fila treinta ha revelado que el prompt estaba mal. Vale cualquier cosa que mantenga la comprobación así de barata. No vale ningún montaje que recoja la salida para revisarla después, porque ese es justo el montaje que te obliga a comprometerte con la ejecución entera antes de saber si el prompt es el bueno.
+Hay suelo además de techo, y del suelo se acuerda menos gente: por debajo de cierto número de filas, describir el trabajo *es* el trabajo. Si habrías terminado la lista antes de terminar de explicarla, había que terminar la lista.
 
-Es una ambición más pequeña que un pipeline y es la correcta para esta banda. Un pipeline es la respuesta buena cuando el trabajo se repite para siempre, y entonces sus reintentos, sus logs y su capacidad de retomar se ganan el sitio. Por debajo de eso vale [el mismo argumento que hice sobre pruebas de navegador exploratorias frente a scripts](/es/blog/playwright-cli-vs-scripts-ai-agents): el script es el artefacto correcto cuando vas a ejecutarlo muchas veces y el criterio es estable, y el equivocado cuando todavía estás descubriendo qué significa «correcto».
+## La dirección
 
-Construí una cosa que hace exactamente esto: **Prompt Scripter ejecuta el mismo prompt sobre una lista dentro del chat que ya usas — ChatGPT, Claude o Gemini —, sin clave de API propia y sin factura por tokens: la llamada al modelo ocurre en la sesión que ya pagas.** Ese es todo el argumento de venta y no lo voy a adornar. Es una extensión de Chrome, es nueva y tiene cuenta propia — que también es un coste, solo que no una clave de API. Y cuando has entrado con esa cuenta, tus filas viajan por HTTPS a un servidor mío para abrir la ejecución. El registro de conjunto de datos que crea se queda solo con el recuento y con los nombres de columna — pero la entrada de cada fila y la respuesta del modelo a esa fila sí se guardan, como resultados de esa ejecución, que es justo de donde sale la exportación de la cuenta. En un texto cuya postura entera es la precisión, callármelo saldría barato — y yo mismo lo di por bueno al revés antes de mirar la segunda ruta. No tengo ninguna medición de tiempo ahorrado, así que no voy a afirmar ninguna. El razonamiento de arriba es la razón por la que la construí. Si el razonamiento está mal, la herramienta está mal también, y deberías decirlo.
+Lo que no dejo de ver es que todas las salidas disponibles apuntan hacia fuera. El trabajo ocurre en un chat, y cualquier forma de dejar de hacerlo a mano propone un destino nuevo: una consola, un panel, una plataforma con su inicio de sesión, su factura y su pestaña en el navegador de alguien. He defendido lo contrario para los productos en general — [meter tu aplicación dentro del agente que tus usuarios ya usan](/es/blog/bring-your-app-to-the-agent) en vez de pedirles que vengan a ti — y esto es ese mismo argumento girado hacia dentro, hacia el trabajo propio. Si el trabajo vive en el chat, la automatización se queda en el chat.
 
-## Dónde seguiría escribiendo el script
+Prompt Scripter es ese argumento con una implementación pegada. Es nuevo, no he medido nada sobre tiempo ahorrado y no voy a afirmar una cifra que no tengo. La desproporción de arriba es la razón entera de que exista; si la desproporción no es real, la herramienta tampoco, y prefiero que me lo digan.
 
-Que el umbral se mueva no significa que haya desaparecido. Cuatro sitios donde el pipeline es sencillamente la respuesta mejor:
-
-- **Cuando el trabajo vuelve solo, cada semana o cada mes.** La amortización es real. Una vez al mes durante años le gana a cualquier bucle interactivo, y el coste de construcción se divide entre todas las ejecuciones futuras.
-- **Cuando la salida alimenta a un sistema, no a una persona.** Si la respuesta de la fila 90 acaba en una base de datos, necesitas esquemas, validación y una política de reintentos, y una ventana de chat es mal sitio para conseguir cualquiera de las tres.
-- **Cuando el juicio es en realidad determinista.** Una cantidad sorprendente de «que decida el modelo» es una regla que todavía no has escrito. Escribe la expresión regular. Es más rápida, es gratis y se puede probar.
-- **Cuando N es de verdad grande.** A cierta escala la comprobación por fila tiene que pasar de leer a muestrear y hacer estadística, y en cuanto muestreas quieres la infraestructura que hace que muestrear signifique algo.
-
-Y el límite del otro extremo, que importa igual: **por debajo de cierto número de filas, hazlo a mano.** Convertir el prompt en plantilla, separar las columnas y decidir qué significa una fila de cabecera es preparación, y la preparación se paga una vez tanto si la lista tiene treinta filas como si tiene trescientas — así que hay un tamaño por debajo del cual la preparación *es* el trabajo. No he medido dónde cae, y dependerá de la tarea, pero el criterio es fácil de aplicar: si habrías terminado la lista antes de terminar de describirla, describirla sobraba. La banda tiene suelo además de techo, y olvidarse del suelo es lo que lleva a automatizar algo que habrías terminado en diez minutos.
-
-## Límites
-
-Quiero ser exacto sobre en qué se apoya este argumento y en qué no.
-
-Se apoya en la estructura, no en datos. No he medido tiempo de construcción, ni de comprobación, ni rendimiento de nada de lo descrito aquí, y la tabla de arriba es una forma, no un resultado. Cuando sí tengo cifras lo digo, y enseño tanto las que encogieron como las que crecieron — eso fue lo que pasó cuando [medí qué compra realmente el andamiaje prescriptivo](/es/blog/the-scaffolding-you-pay-for), y la versión honesta era menos favorecedora que la corazonada. Este texto no tiene detrás una medición equivalente, así que léelo como un razonamiento que puedes contrastar con tu propia carpeta, no como un hallazgo.
-
-También asume que el término de comprobación es real, lo cual solo es cierto si de verdad compruebas. Si nadie lee las ciento cincuenta salidas, el argumento se cae — pero también se cae el valor del trabajo, y [ese fallo es más silencioso de lo que la gente espera](/es/blog/nobody-will-check-behind-you).
-
-## La pregunta que ordena la carpeta
-
-Resulta que el número de filas es la pregunta equivocada por la que empezar. Antes de escribir nada, me pregunto qué tendría que leer para saber que ha funcionado.
-
-Si la respuesta es «tres salidas y después me fío de la regla», es un trabajo determinista. Escribe el script. El término de comprobación es casi cero y la aritmética que todo el mundo recuerda a medias es la aritmética correcta.
-
-Si la respuesta es «todo», no hay un problema de pipeline. Hay una cola, y lo único que merece la pena quitarle a una cola es la parte que no es leer.
-
-Eso resultó ser mi carpeta, casi entera. Me apostaría algo a que la tuya también.
+La prueba que le aplicaría a tu propia versión de este montón de trabajo: escribe lo que tendrías que construir para dejar de hacerlo a mano. Si la lista sale como una cuenta de proveedor, un banco de pruebas y una interfaz — y el trabajo es mandar mensajes por un chat —, la lista es el argumento.
 
 ---
 
-*Relacionado: [la atención como moneda real en construir o comprar](/es/blog/build-vs-buy-attention), [verificar resultados en vez de implementaciones](/es/blog/results-oriented-programming), [cuándo un script le gana a la exploración interactiva](/es/blog/playwright-cli-vs-scripts-ai-agents), y [por qué envolver una secuencia fija en una conversación es solo un formulario caro](/es/blog/expensive-form).*
+*Relacionado: [la persona como capa de integración](/es/blog/stop-being-the-cable), [lo que cuesta de verdad un juez LLM](/es/blog/three-judges-three-rankings), [lo que cuesta construir la referencia](/es/blog/the-instrument-fails-in-your-favour) y [meter tu aplicación dentro del agente](/es/blog/bring-your-app-to-the-agent). [Prompt Scripter](https://promptscripter.javieraguilar.ai) está en la [Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg).*
