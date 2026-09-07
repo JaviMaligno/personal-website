@@ -35,7 +35,7 @@ The arithmetic most of us carry around is [xkcd's table](https://xkcd.com/1205/)
 
 ## What I built instead
 
-[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [on the Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — takes one prompt with `{{gaps}}` in it and a list of rows, and sends one message per row into the conversation you already have open, in ChatGPT, Claude or Gemini. It waits for each answer to finish before sending the next. The answers land in the thread, which is where you were reading them anyway.
+[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [on the Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — takes one prompt with gaps in it — `{{ sector }}`, `{{ country }}` — and a list of rows, and sends one message per row into the conversation you already have open, in ChatGPT, Claude or Gemini. It waits for each answer to finish before sending the next. The answers land in the thread, which is where you were reading them anyway.
 
 What it is not, said plainly, because this category is full of things claiming more: it doesn't chain steps, it has no branches or rules, and no row ever sees the previous row's answer — every message is rendered before the first one is sent. It doesn't score anything, it doesn't decide which answers are good, and it doesn't run unattended: close the tab and the run dies with it. The judgement stays where it already was, in front of a person reading a thread.
 
@@ -47,7 +47,7 @@ To push a row through a model from a script, you need a credential of your own. 
 
 The obvious way to make that bill tolerable is to drop to a cheaper model, and it's the move I'd warn against hardest. I took the same task through progressively weaker models and measured that [the capability was the expensive part](/en/blog/it-was-never-the-restriction): the weakest one never once went and looked, and filed fourteen reports about a release that didn't exist. Cheap tokens on work that needs judgement buy you confident answers nobody checked.
 
-The extension sidesteps the line item entirely, because the model call isn't a network call of its own. It types into the page and presses send: the inference is ChatGPT, Claude or Gemini, in your tab, on the subscription you already pay for. No key to obtain, no provider to choose. It does have an account of its own, and I'd rather say what that costs: a flat plan with caps on templates, runs and rows rather than a token meter, a loop that runs without signing in at all, and — when you are signed in — rows travelling over HTTPS to a server of mine, each row's input and the model's answer stored as that run's results.
+The extension sidesteps the line item entirely, because the model call isn't a network call of its own. It types into the page and presses send: the inference is ChatGPT, Claude or Gemini, in your tab, on the subscription you already pay for. No key to obtain, no provider to choose. It does have an account of its own, and I'd rather say what that costs: a flat plan with caps on templates, runs and rows rather than a token meter, a loop that runs on a chat page without signing in at all, and — when you are signed in — rows travelling over HTTPS to a server of mine, each row's input and the model's answer stored as that run's results.
 
 ## A prompt is code you can't read
 
@@ -67,7 +67,7 @@ Serialising JSON is trivial, and has been for twenty years. The problem is who t
 
 I've paid that bill. Building a conversational KYC flow, we ended up maintaining [our own interrupt format and a widget registry](/en/blog/ag-ui-third-protocol) by hand, until a standard turned up to do it for us. That's the honest price of presenting a model's output to somebody who isn't you.
 
-The extension builds none of it, because the output appears where the reading was already happening: answers arrive in the thread as ordinary messages, with the platform's own formatting — headings, lists, code blocks, copy button. The proof that no dashboard was needed is in the code: the API client has methods for listing runs and exporting results, and not one of them is called from the interface. There's a CSV export on the server for when you want the file. There is no screen, because the screen was already there.
+The extension builds none of it, because the output appears where the reading was already happening: answers arrive in the thread as ordinary messages, with the platform's own formatting — headings, lists, code blocks, copy button. No screen had to be designed, because the screen was already there. There's a CSV export on the server for when you want the file. There is no screen, because the screen was already there.
 
 ## Where the script is still right
 

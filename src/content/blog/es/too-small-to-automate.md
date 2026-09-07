@@ -35,11 +35,11 @@ La aritmética que casi todos llevamos encima es [la tabla de xkcd](https://xkcd
 
 ## Lo que construí en su lugar
 
-[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [en la Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — coge un prompt con huecos `{{variable}}` y una lista de filas, y manda un mensaje por fila a la conversación que ya tienes abierta, en ChatGPT, Claude o Gemini. Espera a que cada respuesta termine antes de mandar la siguiente. Las respuestas caen en el hilo, que es donde ya las estabas leyendo.
+[Prompt Scripter](https://promptscripter.javieraguilar.ai) — [en la Chrome Web Store](https://chromewebstore.google.com/detail/aamjoicocabhfkomhejfkmnkjkdomadg) — coge un prompt con huecos — `{{ sector }}`, `{{ pais }}` — y una lista de filas, y manda un mensaje por fila a la conversación que ya tienes abierta, en ChatGPT, Claude o Gemini. Espera a que cada respuesta termine antes de mandar la siguiente. Las respuestas caen en el hilo, que es donde ya las estabas leyendo.
 
 Lo que no es, dicho sin adornos, porque esta categoría está llena de cosas que prometen más: no encadena pasos, no tiene ramas ni reglas, y ninguna fila ve la respuesta de la anterior — todos los mensajes se renderizan antes de que salga el primero. No puntúa nada, no decide qué respuestas son buenas y no corre desatendida: si cierras la pestaña, la ejecución muere con ella. El juicio se queda donde ya estaba, delante de una persona que lee un hilo.
 
-El resto del artículo son los tres costes que existe para evitar. Ninguno de ellos son las veinte líneas de Python.
+El resto del artículo son los tres costes que la extensión viene a evitar. Ninguno de los tres es el bucle de veinte líneas de Python.
 
 ## La factura que antes no tenías
 
@@ -47,7 +47,7 @@ Para pasar una fila por un modelo desde un script hace falta una credencial prop
 
 La forma obvia de hacer soportable esa factura es bajar de modelo, y es justo el movimiento contra el que más avisaría. Llevé la misma tarea por modelos cada vez más flojos y medí que [lo caro era la capacidad](/es/blog/it-was-never-the-restriction): el más débil no fue a mirar ni una sola vez y firmó catorce informes dando por publicada una versión que no existía. Los tokens baratos, en un trabajo que pide juicio, compran respuestas muy seguras de sí mismas que nadie ha comprobado.
 
-La extensión se salta la partida entera porque su llamada al modelo no es una llamada de red suya. Escribe en la página y pulsa enviar: la inferencia la hace ChatGPT, Claude o Gemini, en tu pestaña, con la suscripción que ya pagas. Ni clave que conseguir, ni proveedor que elegir. Cuenta propia sí tiene, y prefiero decir lo que cuesta: un plan plano con topes de plantillas, ejecuciones y filas, no un contador de tokens; un bucle que corre igual sin haber iniciado sesión; y, cuando sí la has iniciado, tus filas viajando por HTTPS a un servidor mío, con la entrada de cada fila y la respuesta del modelo guardadas como resultados de esa ejecución.
+La extensión se salta la partida entera porque su llamada al modelo no es una llamada de red suya. Escribe en la página y pulsa enviar: la inferencia la hace ChatGPT, Claude o Gemini, en tu pestaña, con la suscripción que ya pagas. Ni clave que conseguir, ni proveedor que elegir. Cuenta propia sí tiene, y prefiero decir lo que cuesta: una tarifa plana con topes de plantillas, ejecuciones y filas, no un contador de tokens; un bucle que, en una página de chat, corre igual sin haber iniciado sesión; y, cuando sí la has iniciado, tus filas viajando por HTTPS a un servidor mío, con la entrada de cada fila y la respuesta del modelo guardadas como resultados de esa ejecución.
 
 ## Un prompt es código que no se puede leer
 
@@ -59,15 +59,15 @@ Por eso [el prompt es el último 10%](/es/blog/llm-as-judge-three-decisions): el
 
 El atajo tentador es poner a otro modelo a juzgar, para que el bucle se cierre sin ti dentro. Eso también lo medí: [las mismas 45 comparaciones ciegas, tres jueces, tres rankings distintos](/es/blog/three-judges-three-rankings), cada juez prefiriendo sus propias respuestas y, en las tareas subjetivas, coincidiendo al nivel del azar. Cada uno de esos 378 juicios fue una llamada de pago, y justo en el tipo de pregunta del que va este artículo el juez resulta ser un participante y no un instrumento. Construir la referencia contra la que comparar tampoco sale más barato: en tres estudios [todos los instrumentos que construí se rompieron al menos una vez, siempre hacia el resultado que esperaba](/es/blog/the-instrument-fails-in-your-favour), y una referencia generada a la ligera te devuelve [el número que querías](/es/blog/the-grader-knew-less).
 
-Lo que evita la extensión no es probar. Es tener que montar el banco de pruebas en otro sitio y pagar sus vueltas aparte. El prompt que automatizas es el que ya afinaste a mano en ese mismo chat, mirando respuestas reales, dentro de una tarifa plana: hay un botón en tus propios mensajes que convierte uno en plantilla. La prueba y el error ocurren donde ya ocurrían; la herramienta los recoge al final en vez de abrir un segundo sitio donde hacerlos.
+Lo que evita la extensión no es probar. Es tener que montar el banco de pruebas en otro sitio y pagar cada vuelta aparte. El prompt que automatizas es el que ya afinaste a mano en ese mismo chat, mirando respuestas reales, dentro de una tarifa plana: hay un botón en tus propios mensajes que convierte uno en plantilla. La prueba y el error ocurren donde ya ocurrían; la herramienta los recoge al final en vez de abrir un segundo sitio donde hacerlos.
 
 ## Alguien tiene que leer esto
 
-Serializar JSON es trivial, y lo es desde hace veinte años. El problema es para quién es ese JSON. Quien tiene que leer ciento cincuenta respuestas no va a abrir un array de objetos. Quiere la entrada al lado de la salida, saltar a la fila 90, releer una respuesta larga sin pisar comillas escapadas y encontrarlo todo ahí mañana. Eso es una vista: emparejar, paginar, texto legible. Es una aplicación. Y una aplicación que guarda las filas de otra gente arrastra todo lo demás — cuentas, permisos, retención.
+Serializar JSON es trivial, y lo es desde hace veinte años. El problema es para quién es ese JSON. Quien tiene que leer ciento cincuenta respuestas no va a abrir un array de objetos. Quiere la entrada al lado de la salida, saltar a la fila 90, releer una respuesta larga sin tropezar con comillas escapadas y encontrarlo todo ahí mañana. Eso es una vista: emparejar, paginar, texto legible. Es una aplicación. Y una aplicación que guarda las filas de otra gente arrastra todo lo demás — cuentas, permisos, retención.
 
 Esa factura la he pagado. Montando un flujo de KYC conversacional acabamos manteniendo a mano [nuestro propio formato de interrupt y un registro de widgets](/es/blog/ag-ui-third-protocol), hasta que apareció un estándar que lo hacía por nosotros. Ese es el precio honesto de presentarle la salida de un modelo a alguien que no eres tú.
 
-La extensión no construye nada de eso, porque la salida aparece donde ya se estaba leyendo: las respuestas llegan al hilo como mensajes normales, con el formato de la propia plataforma — títulos, listas, bloques de código, botón de copiar. La prueba de que no hacía falta ningún panel está en el código: el cliente de API tiene métodos para listar ejecuciones y exportar resultados, y ninguno se llama desde la interfaz. Hay una exportación a CSV en el servidor para cuando quieras el fichero. Pantalla no hay, porque la pantalla ya estaba puesta.
+La extensión no construye nada de eso, porque la salida aparece donde ya se estaba leyendo: las respuestas llegan al hilo como mensajes normales, con el formato de la propia plataforma — títulos, listas, bloques de código, botón de copiar. No hubo que diseñar ninguna pantalla, porque la pantalla ya estaba puesta. Hay una exportación a CSV en el servidor para cuando quieras el fichero. Pantalla no hay, porque la pantalla ya estaba puesta.
 
 ## Dónde sí escribiría el script
 
@@ -79,7 +79,7 @@ Hay suelo además de techo, y del suelo se acuerda menos gente: por debajo de ci
 
 Lo que no dejo de ver es que todas las salidas disponibles apuntan hacia fuera. El trabajo ocurre en un chat, y cualquier forma de dejar de hacerlo a mano propone un destino nuevo: una consola, un panel, una plataforma con su inicio de sesión, su factura y su pestaña en el navegador de alguien. He defendido lo contrario para los productos en general — [meter tu aplicación dentro del agente que tus usuarios ya usan](/es/blog/bring-your-app-to-the-agent) en vez de pedirles que vengan a ti — y esto es ese mismo argumento girado hacia dentro, hacia el trabajo propio. Si el trabajo vive en el chat, la automatización se queda en el chat.
 
-Prompt Scripter es ese argumento con una implementación pegada. Es nuevo, no he medido nada sobre tiempo ahorrado y no voy a afirmar una cifra que no tengo. La desproporción de arriba es la razón entera de que exista; si la desproporción no es real, la herramienta tampoco, y prefiero que me lo digan.
+Prompt Scripter es ese argumento con una herramienta detrás. Es nuevo, no he medido nada sobre el tiempo ahorrado y no voy a afirmar una cifra que no tengo. La desproporción de arriba es la razón entera de que exista; si la desproporción no es real, la herramienta tampoco, y prefiero que me lo digan.
 
 La prueba que le aplicaría a tu propia versión de este montón de trabajo: escribe lo que tendrías que construir para dejar de hacerlo a mano. Si la lista sale como una cuenta de proveedor, un banco de pruebas y una interfaz — y el trabajo es mandar mensajes por un chat —, la lista es el argumento.
 
