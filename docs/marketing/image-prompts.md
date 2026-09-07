@@ -898,40 +898,44 @@ sin texto inventado.
 
 ## `too-small-to-automate`
 
-- Artículo: `src/content/blog/en/too-small-to-automate.md`
+- Artículo: `src/content/blog/{en,es}/too-small-to-automate.md`
 - Imagen: `public/blog/too-small-to-automate.png`
-- Generada: **2026-09-07** (`codex exec -s workspace-write -` por stdin, codex-cli 0.153.2)
-- **`heroImage` retirado de los dos frontmatters.** El fichero no existe, así que
-  el campo dejaba un `<img>` roto en la página y un `og:image` que devolvía 404;
-  `heroImage` es opcional en `src/content/config.ts` y sin él la meta cae al
-  og-image por defecto. El prompt de abajo sigue archivado: **si se genera la
-  imagen y se coloca en `public/blog/too-small-to-automate.png`, hay que volver a
-  añadir `heroImage: "/blog/too-small-to-automate.png"` a mano en el frontmatter
-  EN y en el ES.** Esa decisión la toma una persona, no un merge.
+- Generada: **2026-09-07**, y **regenerada el mismo día** al reescribirse el artículo
+  (`codex exec -s workspace-write -` por stdin, codex-cli 0.153.2)
 
-Prompt propuesto:
+**Por qué se regeneró, que es la lección aprovechable.** La primera imagen dibujaba
+tres curvas —BUILD, RUN, CHECK— con CHECK plana y por encima. Era una buena
+imagen y era la tesis del **borrador anterior**: una fórmula de tres términos y
+un umbral. Cuando el artículo se reescribió, la tesis pasó a ser la
+desproporción, y la imagen se quedó ilustrando un argumento que el texto ya no
+hace. **Una imagen de cabecera no sobrevive a un cambio de tesis**: si se
+reescribe el artículo, se revisa la imagen antes de dar nada por hecho.
+
+Prompt actual:
 
 ```text
 Use case: infographic-diagram
 Asset type: 1020x510 landscape blog hero image
-Primary request: Create a refined technical editorial illustration of the automation threshold — the narrow band of work that is too large to do by hand and too small to justify building a pipeline. Show three cost terms laid out along one axis, with the third term visibly refusing to shrink.
+Primary request: Create a refined technical editorial illustration of a disproportion. On the left, one small thing: a single chat message bubble being sent, repeated as a short vertical stack of identical small bubbles — the work as it is actually done, by hand, inside a chat. On the right, separated by a wide gap, the machinery someone is asked to build in order to stop doing that by hand: a provider key, a metered token counter, a test harness, and a results table with its own interface chrome — four connected modules in a bounded frame, visibly heavier and more numerous than the left side. The composition must read instantly as "this, to avoid that", with the right side outweighing the left.
 Scene/backdrop: dark graphite developer workspace, dimensional but clean, with a subtle engineered grid; dark but not monochrome.
-Subject: a horizontal axis of stacked row-cards increasing in count from left to right. Above it, three thin descending curves labelled BUILD, RUN and CHECK: BUILD and RUN collapse steeply toward the baseline, CHECK stays flat and high in amber. Between two vertical teal threshold markers, shade a narrow band and fill it with a small cluster of uniform row-cards, each carrying a tiny amber judgement mark rather than a number. Left of the band, a single card done by hand; right of the band, a compact pipeline glyph of connected nodes.
-Style/medium: crisp bitmap technical editorial illustration, vector-like geometry with subtle texture and controlled dimensional lighting; professional AI/developer research blog aesthetic; concrete diagrammatic scene, not an abstract metaphor.
-Composition/framing: exact 2:1 landscape composition designed for a 1020x510 crop; balanced asymmetry; generous margins; strong visual hierarchy; the shaded band is the visual centre; no headline or title.
+Subject: left third holds the small stack of chat bubbles, teal, light, with a soft send arrow; a wide empty gap in the middle carries the tension; the right two thirds hold the four amber-outlined modules wired together inside a frame, one of them a small table of rows with a header bar, one a meter dial, one a key glyph, one a bracketed test block. Keep the left side unmistakably smaller and simpler.
+Style/medium: crisp bitmap technical editorial illustration, vector-like geometry with subtle texture and controlled dimensional lighting; professional AI/developer research blog aesthetic; a concrete diagrammatic scene, not an abstract metaphor.
+Composition/framing: exact 2:1 landscape composition designed for a 1020x510 crop; deliberate imbalance left to right; generous margins; strong visual hierarchy; the empty middle gap is load-bearing and must stay empty; no headline or title.
 Lighting/mood: high contrast, calm, analytical, precise; restrained soft edge lighting only.
-Color palette: graphite and near-black foundation, balanced teal, amber, muted slate, and off-white accents; dark but chromatic.
-Text (verbatim): render only these three labels, once each: "BUILD", "RUN", "CHECK". No other prose, no numbers, no axis values.
-Constraints: clean geometric composition; keep text sparse and legible; the CHECK curve must remain clearly the highest at the right edge; no people; no logos; no brand names; no product screenshots; no browser or extension UI; no watermark; no text-heavy poster.
-Avoid: purple gradient blobs, bokeh, neon cyberpunk excess, photorealistic monitors, clutter, decorative circuitry, illegible pseudo-text, invented statistics or digits, large typography, glowing orb imagery.
+Color palette: graphite and near-black foundation, balanced teal for the chat side, amber for the built machinery, muted slate and off-white accents; dark but chromatic.
+Text (verbatim): render no text at all. No labels, no words, no numbers, no axis values, no captions.
+Constraints: clean geometric composition; the left side must stay visually lighter and smaller than the right; no people; no logos; no brand names; no recognisable product screenshots; no real browser or extension UI; no watermark; no text-heavy poster; no readable pseudo-text anywhere.
+Avoid: purple gradient blobs, bokeh, neon cyberpunk excess, photorealistic monitors, clutter, decorative circuitry, illegible pseudo-text, invented statistics or digits, large typography, glowing orb imagery, balanced symmetrical layouts.
 ```
 
-Revisión: **hecha el 2026-09-07 y correcta.** Los únicos textos renderizados son
-`BUILD`, `RUN` y `CHECK`; no hay cifras, ni UI de producto, ni marcas, ni
-personas. `CHECK` sale plano y por encima de los otros dos en todo el ancho
-mientras `BUILD` y `RUN` se desploman, que es la tesis del artículo — si en una
-regeneración `CHECK` baja, la imagen dice lo contrario del texto. La banda
-sombreada entre los dos marcadores lleva las filas con su marca de juicio, con
-la tarjeta hecha a mano a la izquierda y el pipeline a la derecha.
+Revisión: **hecha el 2026-09-07 y correcta.** No renderiza ni una palabra, que
+es lo que se pedía. La lectura es inmediata: tres burbujas de chat pequeñas y
+teal a la izquierda, y a la derecha un bastidor ámbar con la llave de API, el
+contador de tokens, el bloque de pruebas y una tabla de resultados con cromo de
+ventana — es decir, los tres costes del artículo más la interfaz. El hueco
+central se queda vacío, que es lo que sostiene la desproporción. Ni personas, ni
+marcas, ni interfaz de producto real.
 
-`heroImage` devuelto a los dos frontmatters el 2026-09-07.
+**Lo que hay que vigilar en una regeneración:** que el lado izquierdo siga siendo
+claramente más pequeño y más simple que el derecho. Si se equilibran, la imagen
+deja de decir nada.
