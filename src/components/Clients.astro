@@ -4,7 +4,13 @@ import { getLangFromUrl, useTranslations, type Language } from '../i18n';
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
 
-const logoToken = import.meta.env.CLEARBIT_PK;
+// CLEARBIT_PK solo esta definida en el entorno de produccion de Vercel, asi
+// que en local y en cada despliegue de preview los logos no cargaban y salia
+// el texto de reserva. La clave de logo.dev es publicable —empieza por pk_ y
+// viaja en el HTML de la web publica, no es un secreto— de modo que aqui va
+// como valor por defecto y los logos salen en todos los entornos. La variable
+// de entorno sigue teniendo prioridad si algun dia hay que rotarla.
+const logoToken = import.meta.env.CLEARBIT_PK ?? 'pk_ApbaFjDFQA6vHn9rXOmYGg';
 
 const directClients = [
   { name: 'Simple KYC', domain: 'simplekyc.com' },
@@ -118,14 +124,17 @@ const getLogoUrl = (domain: string) => `https://img.logo.dev/${domain}?token=${l
     object-fit: contain;
   }
 
+  /* Cuando el logo no carga —falta el token de logo.dev, o el servicio no
+     responde— este texto ocupa su sitio. Iba con fondo y esquinas
+     redondeadas, o sea con la forma de un boton, y prometia un clic que no
+     existe. Ahora se lee como lo que es: el nombre de la empresa. */
   .client-fallback {
     display: none;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    color: var(--text-muted);
     font-weight: 500;
-    padding: var(--space-xs) var(--space-sm);
-    background: var(--glass);
-    border-radius: var(--radius-sm);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
   }
 
   @media (max-width: 768px) {

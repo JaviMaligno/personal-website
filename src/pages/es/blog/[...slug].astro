@@ -11,7 +11,11 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content } = await post.render();
+const { Content, headings } = await post.render();
+const readingMinutes = Math.max(
+  1,
+  Math.round(post.body.trim().split(/\s+/).length / 200)
+);
 
 // Find the English translation if it exists
 const allPosts = await getCollection('blog');
@@ -29,6 +33,8 @@ const translationSlug = translation ? translation.slug.replace('en/', '') : unde
   heroImage={post.data.heroImage}
   tags={post.data.tags}
   translationSlug={translationSlug}
+  readingMinutes={readingMinutes}
+  headings={headings}
 >
   <Content />
 </BlogLayout>

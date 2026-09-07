@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeTableWrap from './src/plugins/rehype-table-wrap.mjs';
 
 import sitemap from '@astrojs/sitemap';
 import vercel from '@astrojs/vercel';
@@ -17,7 +18,7 @@ export default defineConfig({
 
   markdown: {
     remarkPlugins: [remarkMath],
-    rehypePlugins: [rehypeKatex],
+    rehypePlugins: [rehypeKatex, rehypeTableWrap],
   },
 
   i18n: {

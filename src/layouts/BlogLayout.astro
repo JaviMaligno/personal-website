@@ -8,6 +8,8 @@ import {
   type Language,
 } from "../i18n";
 import { social } from "../config";
+import ThemeScript from "../components/ThemeScript.astro";
+import ThemeToggle from "../components/ThemeToggle.astro";
 
 interface Props {
   title: string;
@@ -17,6 +19,8 @@ interface Props {
   heroImage?: string;
   tags?: string[];
   translationSlug?: string;
+  readingMinutes?: number;
+  headings?: { depth: number; slug: string; text: string }[];
 }
 
 const {
@@ -27,7 +31,14 @@ const {
   heroImage,
   tags = [],
   translationSlug,
+  readingMinutes,
+  headings = [],
 } = Astro.props;
+
+// Solo los H2: los H3 harian del indice un segundo articulo. Y por debajo
+// de tres secciones un indice no ahorra nada, asi que no se pinta.
+const toc = headings.filter((h) => h.depth === 2);
+const showToc = toc.length >= 3;
 
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
@@ -111,6 +122,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
 <!doctype html>
 <html lang={lang}>
   <head>
+    <ThemeScript />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
@@ -209,6 +221,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
   </head>
   <body>
+    <a href="#contenido" class="skip-link">{lang === 'es' ? 'Saltar al contenido' : 'Skip to content'}</a>
     <!-- Header -->
     <header class="header">
       <div class="container header-container">
@@ -221,10 +234,13 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
           <a href={`${getLocalizedPath("/", lang)}#services`}
             >{t("nav").services}</a
           >
-          <a href={getLocalizedPath("/mentoring", lang)}>{t("nav").mentoring}</a>
+          <a href={`${getLocalizedPath("/", lang)}#process`}
+            >{t("nav").process}</a
+          >
           <a href={`${getLocalizedPath("/", lang)}#projects`}
             >{t("nav").projects}</a
           >
+          <a href={getLocalizedPath("/mentoring", lang)}>{t("nav").mentoring}</a>
           <a href={getLocalizedPath("/blog/", lang)}>{t("nav").blog}</a>
           <a href={getLocalizedPath("/publications/", lang)}
             >{t("nav").publications}</a
@@ -237,6 +253,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
             onclick="window.loadCalendlyPopup && window.loadCalendlyPopup('https://calendly.com/javiecija96/discovery-call?hide_landing_page_details=1&hide_gdpr_banner=1&primary_color=6366f1');return false;"
             class="btn btn-primary btn-sm">{t("cta").bookCall}</a
           >
+          <ThemeToggle />
           <a
             href={langSwitchPath}
             class="lang-switch"
@@ -254,9 +271,28 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
       </div>
     </header>
 
-    <main class="blog-main">
+    <main class="blog-main" id="contenido">
       <div class="container">
-        <article class="blog-article">
+        <article class:list={["blog-article", showToc && "has-toc"]}>
+          {
+            showToc && (
+              <nav class="toc toc-side" aria-labelledby="toc-title">
+                <p class="toc-title" id="toc-title">
+                  {t("blog").inThisArticle}
+                </p>
+                <ul>
+                  {toc.map((h) => (
+                    <li>
+                      <a href={`#${h.slug}`} data-toc-link={h.slug}>
+                        {h.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )
+          }
+          <div class="article-body">
           <header class="article-header">
             <a href={getLocalizedPath("/blog/", lang)} class="back-link">
               &larr; {t("blog").backToBlog}
@@ -264,6 +300,16 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
             <h1>{title}</h1>
             <div class="article-meta">
               <time datetime={pubDate.toISOString()}>{formattedDate}</time>
+              {
+                readingMinutes && (
+                  <>
+                    <span class="meta-sep" aria-hidden="true">&middot;</span>
+                    <span>
+                      {readingMinutes} {t("blog").readingTime}
+                    </span>
+                  </>
+                )
+              }
               {
                 updatedDate && (
                   <span class="updated">
@@ -294,6 +340,21 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
             }
           </header>
 
+          {
+            showToc && (
+              <details class="toc-inline">
+                <summary>{t("blog").inThisArticle}</summary>
+                <ul>
+                  {toc.map((h) => (
+                    <li>
+                      <a href={`#${h.slug}`}>{h.text}</a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )
+          }
+
           <div class="article-content">
             <slot />
           </div>
@@ -312,6 +373,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
               {t("blog").getInTouch}
             </a>
           </footer>
+          </div>
         </article>
       </div>
     </main>
@@ -348,6 +410,56 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
         });
       });
     </script>
+
+    <script>
+      // Marca en el indice la seccion que se esta leyendo. Si no hay
+      // indice (articulo corto, pantalla estrecha) no hace nada.
+      //
+      // Se calcula por posicion en cada fotograma en vez de con
+      // IntersectionObserver: con una banda estrecha, un scroll largo de
+      // rueda salta encabezados que entran y salen entre fotogramas y el
+      // observador no llega a emitirlos, asi que el resaltado se quedaba
+      // clavado en la primera seccion.
+      const tocLinks = document.querySelectorAll("[data-toc-link]");
+      if (tocLinks.length > 0) {
+        const entries = [...tocLinks]
+          .map((link) => ({
+            link,
+            target: document.getElementById(link.getAttribute("data-toc-link")),
+          }))
+          .filter((e) => e.target !== null);
+
+        let current = null;
+        const update = () => {
+          // La ultima seccion cuyo titulo ya ha pasado por debajo de la
+          // cabecera; antes de la primera, se marca la primera.
+          let active = entries[0];
+          for (const entry of entries) {
+            if (entry.target.getBoundingClientRect().top <= 100) active = entry;
+            else break;
+          }
+          if (!active || active.link === current) return;
+          current = active.link;
+          entries.forEach(({ link }) =>
+            link.setAttribute("aria-current", link === current ? "true" : "false")
+          );
+        };
+
+        let queued = false;
+        const onScroll = () => {
+          if (queued) return;
+          queued = true;
+          requestAnimationFrame(() => {
+            queued = false;
+            update();
+          });
+        };
+
+        update();
+        addEventListener("scroll", onScroll, { passive: true });
+        addEventListener("resize", onScroll, { passive: true });
+      }
+    </script>
   </body>
 </html>
 
@@ -358,7 +470,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     left: 0;
     right: 0;
     z-index: 100;
-    background: rgba(10, 10, 15, 0.8);
+    background: var(--header-bg);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--glass-border);
   }
@@ -370,11 +482,17 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     height: 72px;
   }
 
+  /* El logo no se encoge ni parte: al entrar el interruptor de tema, la
+     barra se quedo sin holgura y flex empezaba a comprimir el nombre hasta
+     partirlo en dos lineas, con el distintivo montado sobre el primer
+     enlace. La navegacion cede espacio antes que la marca. */
   .logo {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
     text-decoration: none;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .logo-name {
@@ -383,13 +501,29 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     color: var(--text-primary);
   }
 
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 1000;
+    padding: 0.75rem 1rem;
+    background: var(--accent-primary);
+    color: var(--accent-on);
+    border-radius: 0 0 var(--radius-md) 0;
+    text-decoration: none;
+  }
+
+  .skip-link:focus {
+    left: 0;
+  }
+
   .logo-badge {
     font-size: 0.625rem;
     font-weight: 500;
     padding: 0.25rem 0.5rem;
-    background: var(--accent-gradient);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
-    color: white;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -397,17 +531,17 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
   .nav {
     display: flex;
     align-items: center;
-    gap: var(--space-lg);
+    gap: clamp(0.85rem, 1.6vw, var(--space-lg));
   }
 
-  .nav a {
+  .nav a:not(.btn) {
     color: var(--text-secondary);
     font-size: 0.875rem;
     font-weight: 500;
     transition: color var(--transition-fast);
   }
 
-  .nav a:hover {
+  .nav a:not(.btn):hover {
     color: var(--text-primary);
   }
 
@@ -427,7 +561,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
 
   .lang-switch:hover {
     border-color: var(--accent-primary);
-    color: var(--accent-primary) !important;
+    color: var(--accent-text) !important;
   }
 
   .mobile-menu-btn {
@@ -459,6 +593,133 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     margin: 0 auto;
   }
 
+  /* El indice vive en el margen izquierdo, que en pantallas anchas esta
+     vacio: 220 + 48 + 720 = 988px, y el contenedor da 1200. La columna de
+     lectura conserva sus 720px exactos. */
+  .toc {
+    display: none;
+  }
+
+  @media (min-width: 1120px) {
+    .blog-article.has-toc {
+      max-width: 988px;
+      display: grid;
+      grid-template-columns: 220px minmax(0, 720px);
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+
+    .toc {
+      display: block;
+      position: sticky;
+      top: calc(72px + var(--space-lg));
+      max-height: calc(100vh - 72px - var(--space-2xl));
+      overflow-y: auto;
+      padding-top: var(--space-3xl);
+    }
+  }
+
+  .toc-title {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--space-sm);
+  }
+
+  .toc ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .toc li + li {
+    margin-top: 0.5rem;
+  }
+
+  .toc a {
+    display: block;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+
+  .toc a:hover {
+    color: var(--text-primary);
+  }
+
+  .toc a[aria-current="true"] {
+    color: var(--accent-text);
+  }
+
+  /* Version plegable para pantallas estrechas, donde no hay margen en el
+     que poner el indice lateral. Se duplica el marcado en vez de mover el
+     mismo nodo con CSS porque un <details> no se puede forzar abierto de
+     forma fiable entre navegadores, y porque asi los enlaces de esta
+     version no llevan data-toc-link: plegada no necesita seguir el scroll,
+     y el script no tiene que distinguir entre dos juegos de enlaces. */
+  .toc-inline {
+    margin: var(--space-xl) 0 var(--space-2xl);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+  }
+
+  @media (min-width: 1120px) {
+    .toc-inline {
+      display: none;
+    }
+  }
+
+  .toc-inline summary {
+    cursor: pointer;
+    padding: var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+  }
+
+  .toc-inline summary:hover {
+    color: var(--text-primary);
+  }
+
+  .toc-inline ul {
+    list-style: none;
+    margin: 0;
+    padding: 0 var(--space-md) var(--space-md);
+    border-top: 1px solid var(--border);
+    padding-top: var(--space-md);
+  }
+
+  .toc-inline li + li {
+    margin-top: 0.75rem;
+  }
+
+  .toc-inline a {
+    display: block;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+
+  .toc-inline a:hover {
+    color: var(--text-primary);
+  }
+
+  /* Sin esto, al saltar a una seccion el titulo queda tapado por la
+     cabecera fija. */
+  .article-content :global(h2) {
+    scroll-margin-top: calc(72px + var(--space-md));
+  }
+
   .back-link {
     display: inline-block;
     color: var(--text-muted);
@@ -468,7 +729,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
   }
 
   .back-link:hover {
-    color: var(--accent-primary);
+    color: var(--accent-text);
   }
 
   .article-header {
@@ -486,8 +747,15 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     align-items: center;
     gap: var(--space-sm);
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     margin-bottom: var(--space-md);
+  }
+
+  .article-meta .meta-sep {
+    opacity: 0.5;
   }
 
   .updated {
@@ -560,6 +828,13 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     border-radius: var(--radius-sm);
   }
 
+  /* El codigo en linea puede traer cadenas sin espacios —un base64, un hash,
+     una ruta larga— que en movil empujan la pagina entera hacia la derecha.
+     Los bloques <pre> quedan fuera: esos scrollean, no parten. */
+  .article-content :global(:not(pre) > code) {
+    overflow-wrap: anywhere;
+  }
+
   .article-content :global(pre) {
     background: var(--bg-card);
     border: 1px solid var(--glass-border);
@@ -583,7 +858,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
   }
 
   .article-content :global(a) {
-    color: var(--accent-primary);
+    color: var(--accent-text);
     text-decoration: underline;
   }
 
@@ -639,6 +914,50 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     line-height: 1.5;
   }
 
+  /* El pie de las figuras de esos articulos llevaba el gris escrito en un
+     atributo style, que gana a cualquier hoja de estilos. Pasa a clase para
+     que el color salga del tema y no de la cadena incrustada. */
+  .article-content :global(.cwm-note) {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    margin: -0.5rem 0 1.5rem;
+    text-align: center;
+  }
+
+  /* Dos articulos traen sus figuras y tablas con los colores incrustados
+     en el propio markdown: fondo #1a1a24, texto #94a3b8, bordes blancos al
+     10%. En claro esas tablas quedaban en gris claro sobre blanco.
+     El CSS del layout no puede reescribir lo que hay dentro del markdown,
+     asi que en claro se les da una superficie oscura y se deja que sus
+     colores sigan siendo los correctos: una figura con fondo propio es una
+     convencion aceptada, y asi no hay que tocar contenido publicado. En
+     oscuro no se cambia nada, que ahi ya funcionaban. */
+  :global(:root[data-theme='light']) .article-content :global(.cwm-table) {
+    background: var(--ink-surface);
+    color: var(--ink-text);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  :global(:root[data-theme='light']) .article-content :global(.cwm-table th) {
+    color: var(--ink-text-muted);
+  }
+
+  :global(:root[data-theme='light']) .article-content :global(.cwm-table td),
+  :global(:root[data-theme='light']) .article-content :global(.cwm-table th) {
+    border-bottom-color: var(--ink-border);
+  }
+
+  /* Red de seguridad. El plugin rehype envuelve las tablas escritas en
+     sintaxis markdown, pero un par de articulos traen la tabla en HTML
+     crudo, y eso llega al plugin como nodo `raw`: no lo ve. Sin envoltura
+     esas tablas empujaban la pagina entera en movil, asi que se hacen
+     desplazables ellas mismas. */
+  .article-content :global(table:not(.table-wrap *)) {
+    display: block;
+    overflow-x: auto;
+  }
+
   .article-content :global(th),
   .article-content :global(td) {
     padding: 0.7rem 1.1rem;
@@ -649,12 +968,12 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
   }
 
   .article-content :global(th) {
-    background: var(--glass-bg, rgba(255, 255, 255, 0.04));
+    background: var(--glass);
     font-weight: 600;
   }
 
   .article-content :global(tbody tr:nth-child(even)) {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--surface-subtle);
   }
 
   /* first column (row labels) can be long — let it wrap, keep numbers on one line */
@@ -791,7 +1110,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
     .nav {
       gap: var(--space-sm);
     }
-    .nav a {
+    .nav a:not(.btn) {
       font-size: 0.8125rem;
     }
   }

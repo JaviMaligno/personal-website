@@ -111,7 +111,7 @@ At this point the honest move is to attack your own explanation. If it's curvatu
 <tr><td>Wider angular coverage of contacts</td><td class="n">0/40</td><td>the evidence's coverage</td></tr>
 </tbody></table>
 
-<p style="color:#94a3b8;font-size:.82rem;margin:-.5rem 0 1.5rem;text-align:center">Each row is a full campaign on the same 20 sampled blocks. None of them restores repair. The fourth is recorded rather than counted: on that instrument the target is provably unidentifiable, so a zero there means nothing.</p>
+<p class="cwm-note">Each row is a full campaign on the same 20 sampled blocks. None of them restores repair. The fourth is recorded rather than counted: on that instrument the target is provably unidentifiable, so a zero there means nothing.</p>
 
 Two of those deserve a sentence. The square was the one I expected to work — if the model can write `x2 >= 8.0`, a box is four of those. It failed in a mirror image of the disc: artifacts wrote *discs* on square evidence. And the interior one was aimed at a theorem in the paper: because the patch freezes the mover at its previous position, no rollout ever occupies the region's interior, so a sample can only ever witness *entries* into it. That censoring is real, and I was fairly sure it was the cause. Two campaigns lifted it — one supplying eleven times more mode evidence — and repair stayed at zero. Being wrong about your own mechanism is the part of the process that actually moves it.
 

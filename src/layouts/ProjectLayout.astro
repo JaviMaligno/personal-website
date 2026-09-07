@@ -2,6 +2,8 @@
 import '../styles/global.css';
 import { getLangFromUrl, useTranslations, languages, getLocalizedPath, type Language } from '../i18n';
 import { social } from '../config';
+import ThemeScript from '../components/ThemeScript.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
 
 interface Props {
   title?: string;
@@ -46,6 +48,7 @@ const projectSchema = {
 <!DOCTYPE html>
 <html lang={lang}>
   <head>
+    <ThemeScript />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
@@ -112,12 +115,14 @@ const projectSchema = {
 
         <nav class="nav">
           <a href={`${getLocalizedPath('/', lang)}#services`}>{t('nav').services}</a>
+          <a href={`${getLocalizedPath('/', lang)}#process`}>{t('nav').process}</a>
           <a href={`${getLocalizedPath('/', lang)}#projects`}>{t('nav').projects}</a>
+          <a href={getLocalizedPath('/mentoring', lang)}>{t('nav').mentoring}</a>
           <a href={getLocalizedPath('/blog/', lang)}>{t('nav').blog}</a>
           <a href={getLocalizedPath('/publications/', lang)}>{t('nav').publications}</a>
-          <a href={`${getLocalizedPath('/', lang)}#process`}>{t('nav').process}</a>
           <a href={`${getLocalizedPath('/', lang)}#contact`}>{t('nav').contact}</a>
           <a href="#" onclick="window.loadCalendlyPopup && window.loadCalendlyPopup('https://calendly.com/javiecija96/discovery-call?hide_landing_page_details=1&hide_gdpr_banner=1&primary_color=6366f1');return false;" class="btn btn-primary btn-sm">{t('cta').bookCall}</a>
+          <ThemeToggle />
           <a href={langSwitchPath} class="lang-switch" title={languages[otherLang]}>
             {otherLang.toUpperCase()}
           </a>
@@ -177,7 +182,7 @@ const projectSchema = {
     left: 0;
     right: 0;
     z-index: 100;
-    background: rgba(10, 10, 15, 0.8);
+    background: var(--header-bg);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--glass-border);
   }
@@ -189,11 +194,17 @@ const projectSchema = {
     height: 72px;
   }
 
+  /* El logo no se encoge ni parte: al entrar el interruptor de tema, la
+     barra se quedo sin holgura y flex empezaba a comprimir el nombre hasta
+     partirlo en dos lineas, con el distintivo montado sobre el primer
+     enlace. La navegacion cede espacio antes que la marca. */
   .logo {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
     text-decoration: none;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .logo-name {
@@ -206,9 +217,9 @@ const projectSchema = {
     font-size: 0.625rem;
     font-weight: 500;
     padding: 0.25rem 0.5rem;
-    background: var(--accent-gradient);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
-    color: white;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -216,17 +227,19 @@ const projectSchema = {
   .nav {
     display: flex;
     align-items: center;
-    gap: var(--space-lg);
+    gap: clamp(0.85rem, 1.6vw, var(--space-lg));
   }
 
-  .nav a {
+  /* :not(.btn) porque `.nav a` gana en especificidad a `.btn-primary` y
+     dejaba el texto del boton de la cabecera sin contraste. */
+  .nav a:not(.btn) {
     color: var(--text-secondary);
     font-size: 0.875rem;
     font-weight: 500;
     transition: color var(--transition-fast);
   }
 
-  .nav a:hover {
+  .nav a:not(.btn):hover {
     color: var(--text-primary);
   }
 
@@ -246,7 +259,7 @@ const projectSchema = {
 
   .lang-switch:hover {
     border-color: var(--accent-primary);
-    color: var(--accent-primary) !important;
+    color: var(--accent-text) !important;
   }
 
   .mobile-menu-btn {
@@ -310,7 +323,7 @@ const projectSchema = {
     .nav {
       gap: var(--space-sm);
     }
-    .nav a {
+    .nav a:not(.btn) {
       font-size: 0.8125rem;
     }
   }
@@ -342,7 +355,7 @@ const projectSchema = {
       visibility: visible;
     }
 
-    .nav a {
+    .nav a:not(.btn) {
       font-size: 1.25rem;
     }
 

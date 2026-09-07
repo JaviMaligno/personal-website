@@ -10,6 +10,12 @@ const t = useTranslations(lang);
 const allPosts = await getCollection('blog', ({ data }) => data.lang === 'es');
 const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
+// Cada articulo lleva ya su heroImage en el frontmatter y el fichero
+// existe en /public/blog, pero el listado solo mostraba texto: la portada
+// se estaba usando unicamente para la tarjeta de redes sociales.
+const readingMinutes = (body: string) =>
+  Math.max(1, Math.round(body.trim().split(/\s+/).length / 200));
+
 // Language switch for blog index
 const langSwitchPath = '/en/blog/';
 ---
@@ -31,15 +37,28 @@ const langSwitchPath = '/en/blog/';
           {posts.map((post) => (
             <article class="article-card">
               <a href={`/es/blog/${post.slug.replace('es/', '')}/`}>
+                {post.data.heroImage && (
+                  <img
+                    class="article-cover"
+                    src={post.data.heroImage}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    width="800"
+                    height="450"
+                  />
+                )}
                 <div class="article-content">
                   <div class="article-meta">
                     <time datetime={post.data.pubDate.toISOString()}>
                       {post.data.pubDate.toLocaleDateString('es-ES', {
                         year: 'numeric',
-                        month: 'long',
+                        month: 'short',
                         day: 'numeric'
                       })}
                     </time>
+                    <span class="meta-sep" aria-hidden="true">&middot;</span>
+                    <span>{readingMinutes(post.body)} min de lectura</span>
                   </div>
                   <h2>{post.data.title}</h2>
                   <p>{post.data.description}</p>
@@ -89,34 +108,54 @@ const langSwitchPath = '/en/blog/';
     font-size: 1.125rem;
   }
 
+  /* Rejilla de tres en vez de columna unica: con portada, una sola
+     columna a 800px hacia una pagina de treinta pantallas. */
   .articles-grid {
     display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: var(--space-xl);
-    max-width: 800px;
-    margin: 0 auto;
   }
 
   .article-card {
     background: var(--bg-card);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
-    transition: all var(--transition-base);
+    transition: border-color var(--transition-base), transform var(--transition-base);
   }
 
   .article-card:hover {
-    border-color: var(--accent-primary);
+    border-color: var(--border-strong);
     transform: translateY(-2px);
   }
 
   .article-card a {
-    display: block;
-    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     text-decoration: none;
   }
 
+  .article-cover {
+    display: block;
+    width: 100%;
+    /* height:auto es obligatorio: el atributo height del <img> fija la
+       altura como pista de presentacion y anula el aspect-ratio. */
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .article-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: var(--space-lg);
+  }
+
   .article-content h2 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     color: var(--text-primary);
     margin-bottom: var(--space-sm);
     line-height: 1.3;
@@ -129,33 +168,46 @@ const langSwitchPath = '/en/blog/';
   }
 
   .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     margin-bottom: var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    white-space: nowrap;
   }
 
-  .article-meta time {
-    font-size: 0.875rem;
-    color: var(--text-muted);
+  .meta-sep {
+    opacity: 0.5;
   }
 
   .article-tags {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-xs);
+    margin-top: auto;
+    padding-top: var(--space-sm);
     margin-bottom: var(--space-md);
   }
 
   .tag {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.75rem;
-    background: rgba(99, 102, 241, 0.1);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--border);
     border-radius: var(--radius-full);
-    color: var(--accent-primary);
+    color: var(--text-muted);
   }
 
   .read-more {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--accent-primary);
+    color: var(--accent-text);
   }
 
   @media (max-width: 768px) {
