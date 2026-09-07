@@ -18,6 +18,7 @@ interface Props {
   tags?: string[];
   translationSlug?: string;
   readingMinutes?: number;
+  headings?: { depth: number; slug: string; text: string }[];
 }
 
 const {
@@ -29,7 +30,13 @@ const {
   tags = [],
   translationSlug,
   readingMinutes,
+  headings = [],
 } = Astro.props;
+
+// Solo los H2: los H3 harian del indice un segundo articulo. Y por debajo
+// de tres secciones un indice no ahorra nada, asi que no se pinta.
+const toc = headings.filter((h) => h.depth === 2);
+const showToc = toc.length >= 3;
 
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
@@ -259,7 +266,26 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
 
     <main class="blog-main" id="contenido">
       <div class="container">
-        <article class="blog-article">
+        <article class:list={["blog-article", showToc && "has-toc"]}>
+          {
+            showToc && (
+              <nav class="toc" aria-labelledby="toc-title">
+                <p class="toc-title" id="toc-title">
+                  {t("blog").inThisArticle}
+                </p>
+                <ul>
+                  {toc.map((h) => (
+                    <li>
+                      <a href={`#${h.slug}`} data-toc-link={h.slug}>
+                        {h.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )
+          }
+          <div class="article-body">
           <header class="article-header">
             <a href={getLocalizedPath("/blog/", lang)} class="back-link">
               &larr; {t("blog").backToBlog}
@@ -325,6 +351,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
               {t("blog").getInTouch}
             </a>
           </footer>
+          </div>
         </article>
       </div>
     </main>
@@ -360,6 +387,56 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
           menuBtn?.classList.remove("open");
         });
       });
+    </script>
+
+    <script>
+      // Marca en el indice la seccion que se esta leyendo. Si no hay
+      // indice (articulo corto, pantalla estrecha) no hace nada.
+      //
+      // Se calcula por posicion en cada fotograma en vez de con
+      // IntersectionObserver: con una banda estrecha, un scroll largo de
+      // rueda salta encabezados que entran y salen entre fotogramas y el
+      // observador no llega a emitirlos, asi que el resaltado se quedaba
+      // clavado en la primera seccion.
+      const tocLinks = document.querySelectorAll("[data-toc-link]");
+      if (tocLinks.length > 0) {
+        const entries = [...tocLinks]
+          .map((link) => ({
+            link,
+            target: document.getElementById(link.getAttribute("data-toc-link")),
+          }))
+          .filter((e) => e.target !== null);
+
+        let current = null;
+        const update = () => {
+          // La ultima seccion cuyo titulo ya ha pasado por debajo de la
+          // cabecera; antes de la primera, se marca la primera.
+          let active = entries[0];
+          for (const entry of entries) {
+            if (entry.target.getBoundingClientRect().top <= 100) active = entry;
+            else break;
+          }
+          if (!active || active.link === current) return;
+          current = active.link;
+          entries.forEach(({ link }) =>
+            link.setAttribute("aria-current", link === current ? "true" : "false")
+          );
+        };
+
+        let queued = false;
+        const onScroll = () => {
+          if (queued) return;
+          queued = true;
+          requestAnimationFrame(() => {
+            queued = false;
+            update();
+          });
+        };
+
+        update();
+        addEventListener("scroll", onScroll, { passive: true });
+        addEventListener("resize", onScroll, { passive: true });
+      }
     </script>
   </body>
 </html>
@@ -486,6 +563,76 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
   .blog-article {
     max-width: 720px;
     margin: 0 auto;
+  }
+
+  /* El indice vive en el margen izquierdo, que en pantallas anchas esta
+     vacio: 220 + 48 + 720 = 988px, y el contenedor da 1200. La columna de
+     lectura conserva sus 720px exactos. */
+  .toc {
+    display: none;
+  }
+
+  @media (min-width: 1120px) {
+    .blog-article.has-toc {
+      max-width: 988px;
+      display: grid;
+      grid-template-columns: 220px minmax(0, 720px);
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+
+    .toc {
+      display: block;
+      position: sticky;
+      top: calc(72px + var(--space-lg));
+      max-height: calc(100vh - 72px - var(--space-2xl));
+      overflow-y: auto;
+      padding-top: var(--space-3xl);
+    }
+  }
+
+  .toc-title {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--space-sm);
+  }
+
+  .toc ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .toc li + li {
+    margin-top: 0.5rem;
+  }
+
+  .toc a {
+    display: block;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+
+  .toc a:hover {
+    color: var(--text-primary);
+  }
+
+  .toc a[aria-current="true"] {
+    color: var(--accent-text);
+  }
+
+  /* Sin esto, al saltar a una seccion el titulo queda tapado por la
+     cabecera fija. */
+  .article-content :global(h2) {
+    scroll-margin-top: calc(72px + var(--space-md));
   }
 
   .back-link {
