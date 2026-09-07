@@ -1,0 +1,133 @@
+---
+/**
+ * Tres puertas de entrada al mismo trabajo.
+ *
+ * Existe para que el visitante se reconozca antes de leer nada técnico. La
+ * tercera puerta es la que antes vivía sola en /business como si fuera otro
+ * mercado: el trabajo es el mismo, lo que cambia es el vocabulario, así que
+ * la landing pasa a ser la versión sin jerga de este perfil y no una web
+ * paralela.
+ */
+import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../i18n';
+
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+const audience = t('audience');
+---
+
+<section id="audience" class="audience">
+  <div class="container">
+    <div class="section-header">
+      <h2>{audience.title}</h2>
+      <p>{audience.subtitle}</p>
+    </div>
+
+    <ul class="audience-list">
+      {
+        audience.items.map((item) => (
+          <li class="audience-card">
+            <p class="audience-tag">
+              <span class="audience-number">{item.n}</span>
+              {item.tag}
+            </p>
+            <h3>{item.title}</h3>
+
+            <div class="audience-block">
+              <p class="audience-label">{audience.stuckLabel}</p>
+              <p class="audience-text">{item.stuck}</p>
+            </div>
+
+            <div class="audience-block">
+              <p class="audience-label">{audience.enterLabel}</p>
+              <p class="audience-text">{item.enter}</p>
+            </div>
+
+            {item.link && (
+              <a class="audience-link" href={getLocalizedPath(item.link, lang)}>
+                {item.linkText} <span aria-hidden="true">&rarr;</span>
+              </a>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .audience {
+    background: var(--bg-secondary);
+  }
+
+  .audience-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-xl);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .audience-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+
+  .audience-tag {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+  }
+
+  .audience-number {
+    color: var(--accent-text);
+  }
+
+  .audience-card h3 {
+    font-size: 1.125rem;
+    line-height: 1.35;
+    margin-bottom: var(--space-md);
+  }
+
+  .audience-block + .audience-block {
+    margin-top: var(--space-md);
+  }
+
+  .audience-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .audience-text {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .audience-link {
+    margin-top: auto;
+    padding-top: var(--space-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--accent-text);
+    text-decoration: none;
+  }
+
+  .audience-link:hover {
+    color: var(--text-primary);
+  }
+</style>
