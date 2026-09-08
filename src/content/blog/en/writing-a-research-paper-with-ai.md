@@ -2,6 +2,7 @@
 title: "Writing a Research Paper with AI: Where Model Intelligence Actually Shows Up"
 description: "The real process behind an AI-assisted preprint — and why the hardest frontier isn't prose but planning the science, where a more capable model stops being a convenience and becomes the thing that lets the work go further."
 pubDate: 2026-07-21
+updatedDate: 2026-09-08
 tags: ["AI", "Research", "Writing", "Claude", "GPT"]
 lang: en
 translationKey: writing-a-research-paper-with-ai
@@ -76,6 +77,21 @@ Not every gain is raw capability. Sometimes the value is just a second, *differe
 
 Plenty of the catches were also mine — the point isn't that the models replace the reviewer, it's that they multiply the number of independent passes a claim survives before it ships. I wrote more about this complementarity — how two AI tools disagree productively — in [Writing an Essay with AI: Codex vs Claude Code](/en/blog/writing-an-essay-with-ai-codex-vs-claude-code).
 
+## The reviewer you can't argue with
+
+There is a third kind of pass, and it arrived after this article first went up. In the first paper I proved the theorems — an identifiability result, a coverage bound — by hand and checked them by hand. A week and a half later the propositions of [the second paper](/en/blog/infer-the-rule-in-one-dimension) started going into **Lean 4** against Mathlib, and every paper since has shipped with machine-checked proofs.
+
+The first one was a single proposition about when a risk factorizes, and it paid for itself on the way in. What came back was not a tick. The sufficient condition as the draft stated it is not the one that holds; the machine-checked statement is the corrected one, and the counterexample that separates them is committed beside it. In the commit message I called the formalization the expensive half of a guard on every hand-proved implication in the paper. The cheap half is a Python test that tries to falsify the same propositions numerically.
+
+The third paper leans on it much harder: roughly 3,400 lines of Lean, built in nine tranches over four days, with no `sorry` left anywhere — the metric core, the planner loop, the union bound, the analytic lemmas. It changed the paper the way a good reviewer does. One tranche's commit message is the whole case for the exercise: *"Prop 7's engine is one induction, not a coupling."* The write-up said the proof went through a coupling argument. It doesn't, and the formalization is what found the simpler structure the prose had dressed up.
+
+Two reasons it earns its cost, and only one of them is rigour:
+
+- **It settles what review cannot.** A reviewer, human or model, argues about whether a step follows, and can be talked round. Lean does not argue. The term typechecks or it does not, and how convinced I am is not an input.
+- **It is a guardrail on the model as much as on me.** An LLM writing mathematics produces prose that reads correct, and that is the failure mode with no natural detector, because fluency is the first thing a tired reader checks for. A proof assistant cannot be persuaded by good writing. It also builds in CI on every push, so a claim that stops being true stops building.
+
+That is where the two halves of this article meet. A stronger model plans better experiments and reviews claims like a peer, and both of those are still judgments — mine, or another model's. The formalization is the one part of the loop where no judgment is an input at all. The discipline I started with was to separate the demonstrable from the measured; Lean is what keeps the demonstrable half honest once it is written down.
+
 ## The honest part: it wasn't only the AI
 
 Back to that two-years-to-two-weeks contrast. Several things other than AI explain most of that gap, and it would be dishonest to pocket all of it as an AI multiplier:
@@ -92,7 +108,7 @@ Normalize for all of that and the jump is still real, but it's a multiplier on s
 - **The AI didn't remove the hard part; it moved where the hard part lives.** For me it stopped being "can I write and run this" and became "is this the right experiment, and does this claim survive scrutiny?"
 - **On that hard part, model capability is the binding constraint.** The gap between a model that can plan science — design an experiment that answers its own question, review a claim like a peer — and one that can't is the gap between a paper that stalls and one that goes further. It's why Fable 5 is my default and GPT-5.6 is my reviewer of choice.
 - **Capability isn't the only lever.** A second, different set of eyes — another model, or me — catches what the first pass didn't. Diversity is its own kind of intelligence.
-- **What doesn't automate is the researcher's judgment.** Having been a researcher is the part that carries the weight here: the rigor, the scrutiny, the reflex to distrust a clean result, the habit of reviewing a claim until it either holds or breaks, knowing when something can be *proven* versus merely *measured*. That is the same function a research institution provides — peer review, a critical supervisor, a lab that argues with you — but running with fewer intermediaries and less administration, and more agile at every useful step.
+- **What doesn't automate is the researcher's judgment.** Having been a researcher is the part that carries the weight here: the rigor, the scrutiny, the reflex to distrust a clean result, the habit of reviewing a claim until it either holds or breaks, knowing when something can be *proven* versus merely *measured* — and, once it is proven, handing it to a checker that does not care how convincing the prose is. That is the same function a research institution provides — peer review, a critical supervisor, a lab that argues with you — but running with fewer intermediaries and less administration, and more agile at every useful step.
 
 ---
 
