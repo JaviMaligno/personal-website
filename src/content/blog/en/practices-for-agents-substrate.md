@@ -1,7 +1,7 @@
 ---
 title: "Bad Code Doesn't Hurt an Agent. Until the Repository Is Large."
 description: "I degraded four repositories in nine semantically-equivalent ways and measured 2,929 agent runs. In small code nothing measurable happens. In large interconnected code, degrading how it's written halves what the agent solves."
-pubDate: 2026-09-01
+pubDate: 2026-09-08
 tags: ["AI", "Agents", "Evaluation"]
 lang: en
 translationKey: practices-for-agents-substrate
