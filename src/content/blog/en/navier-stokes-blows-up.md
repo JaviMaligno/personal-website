@@ -1,6 +1,6 @@
 ---
 title: "Navier–Stokes Blows Up, and the Blow-up Is a Vortex You Can Picture"
-description: "OpenAI published a Lean-verified proof that the 3D Navier–Stokes equations can develop a singularity in finite time. Four things the headlines skip: the model wasn't Astra, the break happens exactly where the fluid stops being a fluid, the solution is a spinning skater, and a shelf of conditional theorems just changed status."
+description: "OpenAI published a Lean-verified proof that the 3D Navier–Stokes equations can develop a singularity in finite time. Five things the headlines skip: the model wasn't Astra, the break happens exactly where the fluid stops being a fluid, the solution is a spinning skater, a shelf of conditional theorems just changed status, and the route was opened in Madrid by two mathematicians nobody is paying."
 pubDate: 2026-09-09
 tags: ["AI", "Mathematics", "Agents", "Research", "OpenAI"]
 lang: en
@@ -14,15 +14,20 @@ linkedinLinks:
     url: "https://cdn.openai.com/pdf/32d9f210-8b73-45e0-91bc-82a30aef8a9a/navier-stokes.pdf"
   - label: "Lean formalization"
     url: "https://github.com/openai/NavierStokesAndEuler"
+  - label: "Buckmaster's statement"
+    url: "https://cims.nyu.edu/~tristanb/statement.pdf"
+  - label: "Tao on the Alpöge–Buckmaster results"
+    url: "https://terrytao.wordpress.com/2026/09/07/finite-time-blowup-with-smooth-forcing-term-for-the-incompressible-porous-medium-boussinesq-and-incompressible-euler-equations/"
 ---
 
 On 8 September OpenAI [published a proof](https://openai.com/index/navier-stokes-solution/) that the three-dimensional incompressible Navier–Stokes equations can develop a singularity in finite time: a smooth fluid, starting from rest under a smooth external force, whose speed grows without bound while its total energy stays finite. The proof comes as a [165-page paper](https://cdn.openai.com/pdf/32d9f210-8b73-45e0-91bc-82a30aef8a9a/navier-stokes.pdf) and a [Lean formalization](https://github.com/openai/NavierStokesAndEuler). That is the negative resolution of the Navier–Stokes Millennium Prize problem as Clay wrote it, ninety years after Leray.
 
-The coverage has mostly been about the million dollars and about who got there first. Four things matter more, and none of them fits in a headline: which model did it, what exactly "breaks" and for whom, why the solution is one you can draw on a napkin, and what happens to the theorems that had been waiting on this answer.
+The coverage has been about the million dollars and about who got there first. Both of those are better questions than the coverage makes them, and neither is the most interesting thing here. Five things, none of which fits in a headline: which model did it, what exactly "breaks" and for whom, why the solution is one you can draw on a napkin, what happens to the theorems that had been waiting on this answer, and who the prize would belong to if anyone claimed it.
 
 <style>
 .ns-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
 .ns-fig svg{display:block;width:100%;height:auto;font-family:'Inter',-apple-system,system-ui,sans-serif}
+.ns-fig img{display:block;width:100%;height:auto;margin:0;border:0;border-radius:.6rem}
 .ns-fig figcaption{color:#94a3b8;font-size:.85rem;margin:.9rem .25rem;text-align:center;line-height:1.55}
 </style>
 
@@ -141,7 +146,14 @@ Who does this affect? Almost nobody who uses them. The singularity needs a force
 
 ## The intuitive part
 
-The construction is a vortex that spirals inward while stretching along its axis. The paper's own figure is three sketches of a spinning core getting thinner and taller; anyone who has watched water go down a drain can read it. Here is the mechanism in the paper's own terms, redrawn:
+The construction is a vortex that spirals inward while stretching along its axis. Anyone who has watched water go down a drain can read the shape of it. These are the threads of the core at three successive times, integrated from the leading-order field the paper describes:
+
+<figure class="ns-fig">
+<img src="/blog/navier-stokes-vortex-3d.png" alt="Three snapshots of the vortex core as a bundle of fluid threads: teal threads spiral inward and spin up near a mid-plane while amber threads leave along the axis above and below it, and from one snapshot to the next the bundle thins faster than it shortens" aria-label="Three snapshots of the vortex core as a bundle of fluid threads: teal threads spiral inward and spin up near a mid-plane while amber threads leave along the axis above and below it, and from one snapshot to the next the bundle thins faster than it shortens" />
+<figcaption>Threads integrated from the paper's leading-order field, not traced from its figure: radial inflow, azimuthal spin-up, and axial outflow on both sides of the dividing plane. The axial stretching is exaggerated, as it is in the paper's own schematic, because at the true exponent the difference would be invisible. <a href="https://github.com/JaviMaligno/personal-website/blob/main/scripts/figures/navier-stokes-vortex-3d.py">Script</a>.</figcaption>
+</figure>
+
+Seen from the side, with the scalings written onto it, the same object:
 
 <figure class="ns-fig">
 <svg viewBox="0 0 600 340" role="img" aria-label="Three snapshots of the blow-up vortex at successive times. Fluid spirals inward toward a vertical axis and flows out along the axis above and below a dividing plane. From one snapshot to the next the core's radius shrinks faster than its height, the rotation speeds up, and the peak speed grows without bound while the kinetic energy of the core goes to zero">
@@ -216,17 +228,129 @@ Two things did not move. Statements A and B, regularity of the *unforced* equati
 
 There is also a question that just became concrete. Leray proved in 1934 that weak solutions continue past any singular time. Whether they continue *uniquely* is not known, and Albritton, Brué and Colombo showed in 2022 that with a force singular at the initial time they do not. Until now, "what does the fluid do after the singularity" was a question about a trajectory nobody had exhibited. Now there is a smooth trajectory from rest to a singular point, and what lies past it is a question about a specific object.
 
+## The route was opened in Madrid
+
+Fefferman's C and D do not ask for any old force. They ask for a *smooth* one, and squeezing a singularity out of a force that stays smooth through the singular time is a specific programme with a specific history. That history is not OpenAI's.
+
+For several years Diego Córdoba, at the ICMAT in Madrid, and Luis Martínez-Zoroa, now at Basel, have been building forced blow-ups: allow an external force, get the singularity, then fight to make the force as regular as you can. In 2024, with Fan Zheng, they proved finite-time blow-up with finite energy for the hypo-dissipative Navier–Stokes equations, the real equations with the viscosity weakened, under a force that is Hölder-continuous in space and integrable in time rather than smooth. Two gaps separated that from Fefferman: the dissipation had to be restored to the true Laplacian, and the force had to become smooth.
+
+Buckmaster, whose own results this week stand on that programme, is explicit about the debt in [his public statement](https://cims.nyu.edu/~tristanb/statement.pdf): the credit for the basic idea, he writes, goes to Córdoba and Martínez-Zoroa, and the ideas that make this line of attack possible are theirs. He goes past credit, too, and says in the same statement that in view of this body of work he believes Martínez-Zoroa deserves a Fields Medal.
+
+That makes one detail worth checking rather than assuming. OpenAI's paper carries sixteen references: Leray, Navier, Stokes, Euler, Fefferman, Caffarelli–Kohn–Nirenberg, Escauriaza–Seregin–Šverák, Buckmaster–Vicol, Albritton–Brué–Colombo, Daneri–Székelyhidi, Tao, and five more from hydrodynamic stability and singular integrals. Córdoba, Martínez-Zoroa and Zheng are not among them, and neither the paper nor the announcement mentions them. The ancestry OpenAI does claim is a different one: the unstable vortex in similarity variables from Albritton, Brué and Colombo, and the trick of using fast oscillations to realise a prescribed stress, which comes from the convex-integration literature. Whether that is a genuinely separate lineage or an omission is not something anyone outside can settle. What can be said is that the coverage crediting the "forcing method" to the two of them is describing the other line of work, the one where the debt is stated on the first page of the statement.
+
+<figure class="ns-fig">
+<svg viewBox="0 0 600 348" role="img" aria-label="A ladder of results: at the bottom Cordoba and Martinez-Zoroa's forced blow-up method, then their 2024 hypo-dissipative Navier-Stokes blow-up with a rough force, then Alpoge and Buckmaster's smooth-force results for Euler, Boussinesq and the porous medium equation, then their announced but unreleased hypo-dissipative Navier-Stokes result, then OpenAI's full Navier-Stokes blow-up with a smooth force which settles Fefferman C and D, and at the top the unforced problem, Fefferman A and B, which nobody has closed">
+  <defs>
+    <marker id="ns-up" viewBox="0 0 10 10" refX="5" refY="9" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,10 L5,0 L10,10 z" fill="#64748b"/>
+    </marker>
+  </defs>
+  <line x1="24" y1="336" x2="24" y2="14" stroke="#64748b" stroke-width="1.5" marker-end="url(#ns-up)"/>
+  <text x="13" y="176" font-size="9.5" fill="#94a3b8" text-anchor="middle" transform="rotate(-90 13 176)">closer to the Millennium problem</text>
+
+  <g>
+    <rect x="44" y="22" width="536" height="46" rx="7" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <rect x="44" y="76" width="536" height="46" rx="7" fill="rgba(45,212,191,0.10)" stroke="#2dd4bf" stroke-width="2"/>
+    <rect x="44" y="130" width="536" height="46" rx="7" fill="rgba(245,158,11,0.07)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <rect x="44" y="184" width="536" height="46" rx="7" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+    <rect x="44" y="238" width="536" height="46" rx="7" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+    <rect x="44" y="292" width="536" height="46" rx="7" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+  </g>
+  <g stroke="rgba(255,255,255,0.12)" stroke-width="1">
+    <line x1="336" y1="30" x2="336" y2="60"/>
+    <line x1="336" y1="84" x2="336" y2="114"/>
+    <line x1="336" y1="138" x2="336" y2="168"/>
+    <line x1="336" y1="192" x2="336" y2="222"/>
+    <line x1="336" y1="246" x2="336" y2="276"/>
+    <line x1="336" y1="300" x2="336" y2="330"/>
+  </g>
+
+  <g font-size="12" font-weight="700" fill="#e2e8f0">
+    <text x="58" y="42" fill="#94a3b8">3D Navier&#8211;Stokes</text>
+    <text x="58" y="96" fill="#5eead4">3D Navier&#8211;Stokes</text>
+    <text x="58" y="150">hypo-dissipative Navier&#8211;Stokes</text>
+    <text x="58" y="204">3D Euler, 2D Boussinesq, porous medium</text>
+    <text x="58" y="258">hypo-dissipative Navier&#8211;Stokes</text>
+    <text x="58" y="312">forced blow-ups</text>
+  </g>
+  <g font-size="10" fill="#94a3b8">
+    <text x="58" y="58">no force &#183; Fefferman A and B</text>
+    <text x="58" y="112">smooth force &#183; Fefferman C and D</text>
+    <text x="58" y="166">smooth force</text>
+    <text x="58" y="220">smooth force</text>
+    <text x="58" y="274">rough force, H&#246;lder in space</text>
+    <text x="58" y="328">the construction method</text>
+  </g>
+  <g font-size="11" fill="#e2e8f0">
+    <text x="350" y="42" fill="#94a3b8">nobody</text>
+    <text x="350" y="96" fill="#5eead4" font-weight="700">OpenAI</text>
+    <text x="350" y="150" fill="#fbbf24">Alp&#246;ge &amp; Buckmaster</text>
+    <text x="350" y="204">Alp&#246;ge &amp; Buckmaster</text>
+    <text x="350" y="258">C&#243;rdoba, Mart&#237;nez-Zoroa, Zheng</text>
+    <text x="350" y="312">C&#243;rdoba &amp; Mart&#237;nez-Zoroa</text>
+  </g>
+  <g font-size="10" fill="#94a3b8">
+    <text x="350" y="58">still open</text>
+    <text x="350" y="112">8 Sep 2026 &#183; Lean-verified</text>
+    <text x="350" y="166">announced, not released</text>
+    <text x="350" y="220">7 Sep 2026 &#183; Lean-verified</text>
+    <text x="350" y="274">2024 &#183; finite energy</text>
+    <text x="350" y="328">years of work &#183; the route</text>
+  </g>
+</svg>
+<figcaption>Every rung weakens an assumption the rung below it needed. The top one is the problem as the field reads it, and it is empty.</figcaption>
+</figure>
+
 ## The concurrent work
 
-OpenAI's account says the effort began on 1 September after a rumour that two Millennium problems had been resolved; the rumour turned out to concern Levent Alpöge, an Anthropic employee, and Tristan Buckmaster of NYU, who had a blow-up result for the *forced Euler* equations. OpenAI says it reached out to them on 6 September, after Lean verification, offering a joint announcement, that its researchers and agents saw none of their work before it was public, and that it recognizes their priority on forced Euler. Buckmaster has raised questions about the timing and about drafts he had fed into OpenAI's tools; Sébastien Bubeck has denied any use of them. I have no way to adjudicate that from the outside, and neither does anyone else who wasn't in the room. What can be said is that OpenAI's Euler result is for the *unforced* equations, which is the different statement and the one usually regarded as harder, and that the two proofs are reported to differ substantially.
+The rumour that set OpenAI off was real, and its object was not what the rumour said.
+
+On 7 September, Levent Alpöge, an employee of Anthropic, and Tristan Buckmaster, a mathematician at NYU, published three results: finite-time blow-up with smooth forcing for the incompressible porous medium equation, for the two-dimensional Boussinesq system, and for the three-dimensional incompressible Euler equations, each with a Lean formalization. Terence Tao [wrote them up](https://terrytao.wordpress.com/2026/09/07/finite-time-blowup-with-smooth-forcing-term-for-the-incompressible-porous-medium-boussinesq-and-incompressible-euler-equations/) the same day. They also say they believe they have blow-up for hypo-dissipative Navier–Stokes, held back because the Lean verification is unfinished, and Buckmaster notes it suggests a path to the *unforced* Euler equations, which is the direction that would matter.
+
+Four days earlier, a rumour was going round that Anthropic had resolved a major open problem, with versions of it attaching Alpöge's name to a solution; a prediction market moved on it. OpenAI says that rumour is what made it launch its own effort on 1 September. The object of the rumour was this collaboration, and the framing was wrong in a way worth noting: Buckmaster describes it as a purely personal collaboration with no institutional involvement by either employer, funded out of his own research budget, using Claude, Codex and later Astra. An employer's name travelled further than the work did.
+
+The two accounts of what happened next do not agree, and both are public.
+
+OpenAI says that after finishing the proof and its Lean verification it reached out on 6 September to offer a concurrent release and to recognise the other team's priority on forced Euler, that it offered them visibility into its prompts and later the proof itself, and that no researcher or agent saw their work before it was public.
+
+Buckmaster's account of the same days is longer, and he has written it out:
+
+- He contacted OpenAI first, on 3 September, after the rumour about his own work reached him through a colleague.
+- In the calls of 6 September he was told "very little human input" had been used. That turned out not to be so: an entire team had been working on the problem, and even the prompt he was shown had been written by prompting Codex.
+- It was eventually agreed that the first prompt had gone out within the previous few days, after news of his work reached OpenAI.
+- He asked whether the model had been trained on the Codex sessions holding his drafts, and got no answer about training.
+- Of two arrangements put to him, one had him presenting the result alone, with Alpöge removed from authorship and Alpöge's employment at Anthropic named as the reason. He declined both.
+
+Sébastien Bubeck has called the allegations circulating about him false and inflammatory, and says he handled the discussion according to academic norms.
+
+Buckmaster is careful about what he is not claiming: he has not seen the proof, does not know what the model did, and is not accusing anyone of anything. His own summary of what would be right is the standard worth keeping. If a model did close the gap, he writes, that should be said loudly, by them, "with the history intact".
+
+There is a second thing in that statement with nothing to do with the dispute. The drafts the models produced were, by his account, the most horrendous he had ever read, and the Euler writeup "can only be described as AI slop"; the work of the fortnight before publication was turning a machine proof into something a person can read. Lean settles whether a proof is correct and says nothing about whether it is legible, and those are not the same deliverable. That gap is the whole subject of [what it takes to write a research paper with AI](/en/blog/writing-a-research-paper-with-ai): the drafting moves, the judgment does not.
+
+## Who would the prize belong to?
+
+Nobody, for at least two years, and possibly nobody at all.
+
+The Clay Mathematics Institute does not pay out on a preprint. Its rules require that a solution be published in a qualifying outlet, that at least two years pass after publication, and that it have "received general acceptance in the global mathematics community". A Lean certificate does a great deal for the first condition and nothing for the third: acceptance is a social fact about mathematicians, not a property of a proof. OpenAI, in any case, says it does not intend to claim the prize.
+
+So the live question is not who gets paid, it is who the field will say resolved it. There are four defensible answers.
+
+- **OpenAI.** It produced the proof of C and D, in full, with a formal verification. If the standard is who wrote down the argument that settles the official statement, this is the answer and there is no contest.
+- **Córdoba and Martínez-Zoroa.** They chose the route, and choosing the route is the hard part. Nobody arrives at the smooth-force direction by reading the problem statement; Buckmaster says almost nobody he knew of was working on it. On the mathematics the idea is theirs, and everything above it is engineering, however formidable.
+- **Alpöge and Buckmaster.** They took a programme built for rough forces and pushed it to smooth ones, published the neighbouring cases with formalizations, and hold a claimed hypo-dissipative result that points at the unforced problem. If the last rung turns out to be reachable from theirs, priority arguments will run for years.
+- **Nobody yet.** If the field reads C and D as a loophole in the wording, then the problem people care about is still open, and the strongest future claim belongs to whoever closes the unforced case.
+
+The prize is the wrong instrument for what happened. It was designed to name a person, and this result has a route with two names on it, a completion with two more, a proof produced by a system nobody outside can inspect, and a formal verification done by a fourth model. Any single allocation of that cheque would be a false statement about how the work happened. Buckmaster's standard is the better one, and it costs nothing: say it loudly, and keep the history intact.
 
 ## What to take from it
 
 - **The problem as written is closed, in the negative.** The question most people mean by it, whether a fluid with no external push can blow up, is still open, and the proof's own structure says how far it is from answering it: the force is defined as whatever residual makes the construction work.
 - **Nothing changes for the people who use the equations.** The break happens at scales where the continuum was never a valid description, with vanishing energy, under a force nothing in nature supplies. The equations were already a model with a range; we now know the range has an edge that can be reached from inside.
 - **The model is not one you can use**, and the system around it is a ten-thousand-agent swarm with a coding agent as editor. The Lean step, the only part anyone outside can check, is the part Astra did.
+- **The route is not OpenAI's.** Two mathematicians spent years making forced blow-ups work, another pair pushed their method to smooth forces the day before, and the paper that finished the job cites neither.
 - **The shape was always there.** A skater pulling in their arms, stretched along the spin axis, balanced against viscosity by an exponent smaller than one percent. It took ninety years and a machine to write it down, and about a minute to explain.
+
 
 ---
 
-*Sources: [OpenAI's announcement](https://openai.com/index/navier-stokes-solution/), the [paper](https://cdn.openai.com/pdf/32d9f210-8b73-45e0-91bc-82a30aef8a9a/navier-stokes.pdf), the [Lean formalization](https://github.com/openai/NavierStokesAndEuler), and [Fefferman's official problem statement](https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf) for the Clay Mathematics Institute.*
+*Sources: [OpenAI's announcement](https://openai.com/index/navier-stokes-solution/), the [paper](https://cdn.openai.com/pdf/32d9f210-8b73-45e0-91bc-82a30aef8a9a/navier-stokes.pdf), the [Lean formalization](https://github.com/openai/NavierStokesAndEuler), [Fefferman's official problem statement](https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf) for the Clay Mathematics Institute, [Tristan Buckmaster's statement](https://cims.nyu.edu/~tristanb/statement.pdf), [Terence Tao on the Alpöge–Buckmaster results](https://terrytao.wordpress.com/2026/09/07/finite-time-blowup-with-smooth-forcing-term-for-the-incompressible-porous-medium-boussinesq-and-incompressible-euler-equations/), and [Córdoba, Martínez-Zoroa and Zheng on hypo-dissipative blow-up](https://arxiv.org/abs/2407.06776).*

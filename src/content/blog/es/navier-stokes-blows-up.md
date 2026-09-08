@@ -1,6 +1,6 @@
 ---
 title: "Navier–Stokes explota, y la explosión es un vórtice que se puede dibujar"
-description: "OpenAI ha publicado una demostración verificada en Lean de que las ecuaciones de Navier–Stokes en 3D pueden desarrollar una singularidad en tiempo finito. Cuatro cosas que los titulares se saltan: el modelo no era Astra, la rotura ocurre justo donde el fluido deja de ser un fluido, la solución es una patinadora girando, y una estantería de teoremas condicionales acaba de cambiar de estado."
+description: "OpenAI ha publicado una demostración verificada en Lean de que las ecuaciones de Navier–Stokes en 3D pueden desarrollar una singularidad en tiempo finito. Cinco cosas que los titulares se saltan: el modelo no era Astra, la rotura ocurre justo donde el fluido deja de ser un fluido, la solución es una patinadora girando, una estantería de teoremas condicionales acaba de cambiar de estado, y la ruta la abrieron en Madrid dos matemáticos a los que nadie va a pagar."
 pubDate: 2026-09-09
 tags: ["IA", "Matemáticas", "Agentes", "Investigación", "OpenAI"]
 lang: es
@@ -14,15 +14,20 @@ linkedinLinks:
     url: "https://cdn.openai.com/pdf/32d9f210-8b73-45e0-91bc-82a30aef8a9a/navier-stokes.pdf"
   - label: "Formalización en Lean"
     url: "https://github.com/openai/NavierStokesAndEuler"
+  - label: "La declaración de Buckmaster"
+    url: "https://cims.nyu.edu/~tristanb/statement.pdf"
+  - label: "Tao sobre los resultados de Alpöge y Buckmaster"
+    url: "https://terrytao.wordpress.com/2026/09/07/finite-time-blowup-with-smooth-forcing-term-for-the-incompressible-porous-medium-boussinesq-and-incompressible-euler-equations/"
 ---
 
 El 8 de septiembre OpenAI [publicó una demostración](https://openai.com/index/navier-stokes-solution/) de que las ecuaciones de Navier–Stokes incompresibles en tres dimensiones pueden desarrollar una singularidad en tiempo finito: un fluido suave, que parte del reposo bajo una fuerza externa suave, cuya velocidad crece sin límite mientras su energía total se mantiene finita. La demostración viene como un [paper de 165 páginas](https://cdn.openai.com/pdf/32d9f210-8b73-45e0-91bc-82a30aef8a9a/navier-stokes.pdf) y una [formalización en Lean](https://github.com/openai/NavierStokesAndEuler). Es la resolución negativa del problema del milenio de Navier–Stokes tal y como lo escribió el Instituto Clay, noventa años después de Leray.
 
-La cobertura ha ido sobre todo del millón de dólares y de quién llegó primero. Importan más cuatro cosas, y ninguna cabe en un titular: qué modelo lo hizo, qué es exactamente lo que "se rompe" y para quién, por qué la solución se puede dibujar en una servilleta, y qué pasa con los teoremas que llevaban décadas esperando esta respuesta.
+La cobertura ha ido del millón de dólares y de quién llegó primero. Las dos son mejores preguntas de lo que la cobertura sugiere, y ninguna es lo más interesante que hay aquí. Cinco cosas, y ninguna cabe en un titular: qué modelo lo hizo, qué es exactamente lo que "se rompe" y para quién, por qué la solución se puede dibujar en una servilleta, qué pasa con los teoremas que llevaban décadas esperando esta respuesta, y de quién sería el premio si alguien lo reclamara.
 
 <style>
 .ns-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
 .ns-fig svg{display:block;width:100%;height:auto;font-family:'Inter',-apple-system,system-ui,sans-serif}
+.ns-fig img{display:block;width:100%;height:auto;margin:0;border:0;border-radius:.6rem}
 .ns-fig figcaption{color:#94a3b8;font-size:.85rem;margin:.9rem .25rem;text-align:center;line-height:1.55}
 </style>
 
@@ -141,7 +146,14 @@ Una singularidad es que las ecuaciones salgan de esa imagen desde dentro. En la 
 
 ## La parte intuitiva
 
-La construcción es un vórtice que se enrosca hacia dentro mientras se estira a lo largo de su eje. La propia figura del paper son tres bocetos de un núcleo giratorio que se va haciendo más fino y más alto; cualquiera que haya visto el agua irse por un desagüe la puede leer. Aquí está el mecanismo, en los términos del propio paper, redibujado:
+La construcción es un vórtice que se enrosca hacia dentro mientras se estira a lo largo de su eje. Cualquiera que haya visto el agua irse por un desagüe puede leer su forma. Estos son los hilos del núcleo en tres instantes sucesivos, integrados a partir del campo a orden principal que describe el paper:
+
+<figure class="ns-fig">
+<img src="/blog/navier-stokes-vortex-3d.png" alt="Tres instantáneas del núcleo del vórtice como un haz de hilos de fluido: los hilos teal se enroscan hacia dentro y giran cada vez más rápido cerca de un plano medio, mientras los ámbar salen a lo largo del eje por encima y por debajo, y de una instantánea a la siguiente el haz se afina más rápido de lo que se acorta" aria-label="Tres instantáneas del núcleo del vórtice como un haz de hilos de fluido: los hilos teal se enroscan hacia dentro y giran cada vez más rápido cerca de un plano medio, mientras los ámbar salen a lo largo del eje por encima y por debajo, y de una instantánea a la siguiente el haz se afina más rápido de lo que se acorta" />
+<figcaption>Hilos integrados del campo a orden principal del paper, no calcados de su figura: entrada radial, aceleración azimutal y salida axial a ambos lados del plano divisorio. El estiramiento axial está exagerado, como en el esquema del propio paper, porque con el exponente real la diferencia sería invisible. <a href="https://github.com/JaviMaligno/personal-website/blob/main/scripts/figures/navier-stokes-vortex-3d.py">Script</a>.</figcaption>
+</figure>
+
+Visto de lado, con los escalados escritos encima, el mismo objeto:
 
 <figure class="ns-fig">
 <svg viewBox="0 0 600 340" role="img" aria-label="Tres instantáneas del vórtice que explota en tiempos sucesivos. El fluido se enrosca hacia un eje vertical y sale a lo largo del eje por encima y por debajo de un plano divisorio. De una instantánea a la siguiente el radio del núcleo se encoge más rápido que su altura, la rotación se acelera, y la velocidad máxima crece sin límite mientras la energía cinética del núcleo tiende a cero">
@@ -216,17 +228,131 @@ Dos cosas no se han movido. Los enunciados A y B, la regularidad de las ecuacion
 
 Hay además una pregunta que acaba de volverse concreta. Leray demostró en 1934 que las soluciones débiles continúan más allá de cualquier tiempo singular. Si continúan de forma *única* no se sabe, y Albritton, Brué y Colombo demostraron en 2022 que con una fuerza singular en el instante inicial no lo hacen. Hasta ahora, "qué hace el fluido después de la singularidad" era una pregunta sobre una trayectoria que nadie había exhibido. Ahora hay una trayectoria suave desde el reposo hasta un punto singular, y lo que hay al otro lado es una pregunta sobre un objeto concreto.
 
+## La ruta se abrió en Madrid
+
+Los enunciados C y D de Fefferman no piden una fuerza cualquiera. Piden una fuerza *suave*, y sacar una singularidad de una fuerza que se mantiene suave a través del instante singular es un programa concreto con una historia concreta. Esa historia no es de OpenAI.
+
+Desde hace varios años Diego Córdoba, en el ICMAT de Madrid, y Luis Martínez-Zoroa, ahora en Basilea, han estado construyendo explosiones forzadas: se permite una fuerza externa, se consigue la singularidad y después se pelea por hacer esa fuerza lo más regular posible. En 2024, con Fan Zheng, demostraron explosión en tiempo finito con energía finita para las ecuaciones de Navier–Stokes hipodisipativas, las ecuaciones reales con la viscosidad debilitada, bajo una fuerza Hölder en espacio e integrable en tiempo, no suave. Dos huecos separaban aquello de Fefferman: había que devolver la disipación al laplaciano verdadero, y había que hacer la fuerza suave.
+
+Buckmaster, cuyos propios resultados de esta semana se apoyan en ese programa, es explícito sobre la deuda en [su declaración pública](https://cims.nyu.edu/~tristanb/statement.pdf): el crédito de la idea básica, escribe, es de Córdoba y Martínez-Zoroa, y las ideas que hacen posible esta línea de ataque son suyas. Va más allá del crédito: dice en la misma declaración que, a la vista de este cuerpo de trabajo, cree que Martínez-Zoroa merece una medalla Fields.
+
+Eso hace que un detalle merezca comprobarse en vez de suponerse. El paper de OpenAI lleva dieciséis referencias: Leray, Navier, Stokes, Euler, Fefferman, Caffarelli–Kohn–Nirenberg, Escauriaza–Seregin–Šverák, Buckmaster–Vicol, Albritton–Brué–Colombo, Daneri–Székelyhidi, Tao y cinco más de estabilidad hidrodinámica e integrales singulares. Córdoba, Martínez-Zoroa y Zheng no están entre ellas, y ni el paper ni el anuncio los mencionan. La ascendencia que OpenAI sí reclama es otra: el vórtice inestable en variables autosemejantes de Albritton, Brué y Colombo, y el truco de usar oscilaciones rápidas para realizar una tensión prescrita, que viene de la literatura de integración convexa. Si eso es un linaje genuinamente independiente o una omisión no es algo que pueda dirimir nadie desde fuera. Lo que sí se puede decir es que la cobertura que atribuye el "método de forzamiento" a los dos está describiendo la otra línea de trabajo, la que declara la deuda en la primera página.
+
+Y algo que en español conviene decir sin rodeos: si esto se sostiene, Córdoba y Martínez-Zoroa son probablemente los matemáticos españoles más influyentes de la historia. España no ha tenido una tradición matemática comparable a la francesa o la alemana, y la lista de candidatos es corta: Rey Pastor organizando la disciplina, Santaló en geometría integral, la escuela de análisis de las últimas décadas. Ninguno tiene su nombre en la ruta por la que se resuelve un problema del milenio. Con una medalla Fields propuesta en público por alguien que ha trabajado con el material, la frase deja de ser una exageración patriótica y pasa a ser una descripción.
+
+<figure class="ns-fig">
+<svg viewBox="0 0 600 348" role="img" aria-label="Una escalera de resultados: abajo el metodo de explosiones forzadas de Cordoba y Martinez-Zoroa, despues su explosion de 2024 para Navier-Stokes hipodisipativas con fuerza rugosa, despues los resultados con fuerza suave de Alpoge y Buckmaster para Euler, Boussinesq y el medio poroso, despues su resultado hipodisipativo anunciado pero no publicado, despues la explosion de OpenAI para Navier-Stokes completas con fuerza suave que resuelve los enunciados C y D de Fefferman, y arriba el problema sin forzamiento, los enunciados A y B, que nadie ha cerrado">
+  <defs>
+    <marker id="ns-up" viewBox="0 0 10 10" refX="5" refY="9" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,10 L5,0 L10,10 z" fill="#64748b"/>
+    </marker>
+  </defs>
+  <line x1="24" y1="336" x2="24" y2="14" stroke="#64748b" stroke-width="1.5" marker-end="url(#ns-up)"/>
+  <text x="13" y="176" font-size="9.5" fill="#94a3b8" text-anchor="middle" transform="rotate(-90 13 176)">m&#225;s cerca del problema del milenio</text>
+
+  <g>
+    <rect x="44" y="22" width="536" height="46" rx="7" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <rect x="44" y="76" width="536" height="46" rx="7" fill="rgba(45,212,191,0.10)" stroke="#2dd4bf" stroke-width="2"/>
+    <rect x="44" y="130" width="536" height="46" rx="7" fill="rgba(245,158,11,0.07)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <rect x="44" y="184" width="536" height="46" rx="7" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+    <rect x="44" y="238" width="536" height="46" rx="7" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+    <rect x="44" y="292" width="536" height="46" rx="7" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+  </g>
+  <g stroke="rgba(255,255,255,0.12)" stroke-width="1">
+    <line x1="336" y1="30" x2="336" y2="60"/>
+    <line x1="336" y1="84" x2="336" y2="114"/>
+    <line x1="336" y1="138" x2="336" y2="168"/>
+    <line x1="336" y1="192" x2="336" y2="222"/>
+    <line x1="336" y1="246" x2="336" y2="276"/>
+    <line x1="336" y1="300" x2="336" y2="330"/>
+  </g>
+
+  <g font-size="12" font-weight="700" fill="#e2e8f0">
+    <text x="58" y="42" fill="#94a3b8">Navier&#8211;Stokes 3D</text>
+    <text x="58" y="96" fill="#5eead4">Navier&#8211;Stokes 3D</text>
+    <text x="58" y="150">Navier&#8211;Stokes hipodisipativas</text>
+    <text x="58" y="204">Euler 3D, Boussinesq 2D, medio poroso</text>
+    <text x="58" y="258">Navier&#8211;Stokes hipodisipativas</text>
+    <text x="58" y="312">explosiones forzadas</text>
+  </g>
+  <g font-size="10" fill="#94a3b8">
+    <text x="58" y="58">sin fuerza &#183; Fefferman A y B</text>
+    <text x="58" y="112">fuerza suave &#183; Fefferman C y D</text>
+    <text x="58" y="166">fuerza suave</text>
+    <text x="58" y="220">fuerza suave</text>
+    <text x="58" y="274">fuerza rugosa, H&#246;lder en espacio</text>
+    <text x="58" y="328">el m&#233;todo de construcci&#243;n</text>
+  </g>
+  <g font-size="11" fill="#e2e8f0">
+    <text x="350" y="42" fill="#94a3b8">nadie</text>
+    <text x="350" y="96" fill="#5eead4" font-weight="700">OpenAI</text>
+    <text x="350" y="150" fill="#fbbf24">Alp&#246;ge y Buckmaster</text>
+    <text x="350" y="204">Alp&#246;ge y Buckmaster</text>
+    <text x="350" y="258">C&#243;rdoba, Mart&#237;nez-Zoroa, Zheng</text>
+    <text x="350" y="312">C&#243;rdoba y Mart&#237;nez-Zoroa</text>
+  </g>
+  <g font-size="10" fill="#94a3b8">
+    <text x="350" y="58">sigue abierto</text>
+    <text x="350" y="112">8 sep 2026 &#183; verificado en Lean</text>
+    <text x="350" y="166">anunciado, no publicado</text>
+    <text x="350" y="220">7 sep 2026 &#183; verificado en Lean</text>
+    <text x="350" y="274">2024 &#183; energ&#237;a finita</text>
+    <text x="350" y="328">a&#241;os de trabajo &#183; la ruta</text>
+  </g>
+</svg>
+<figcaption>Cada peldaño debilita una hipótesis que el de abajo necesitaba. El de arriba es el problema tal y como lo lee el campo, y está vacío.</figcaption>
+</figure>
+
 ## El trabajo concurrente
 
-El relato de OpenAI dice que el esfuerzo empezó el 1 de septiembre tras un rumor de que se habían resuelto dos problemas del milenio; el rumor resultó referirse a Levent Alpöge, empleado de Anthropic, y Tristan Buckmaster, de la NYU, que tenían un resultado de explosión para las ecuaciones de *Euler forzadas*. OpenAI dice que contactó con ellos el 6 de septiembre, después de la verificación en Lean, para ofrecerles un anuncio conjunto, que ni sus investigadores ni sus agentes vieron nada de su trabajo antes de que fuera público, y que reconoce su prioridad en Euler forzado. Buckmaster ha planteado dudas sobre los tiempos y sobre borradores que había metido en herramientas de OpenAI; Sébastien Bubeck ha negado cualquier uso de ellos. No tengo manera de dirimir eso desde fuera, y tampoco la tiene nadie que no estuviera en la sala. Lo que sí se puede decir es que el resultado de Euler de OpenAI es para las ecuaciones *sin forzamiento*, que es el enunciado distinto y el que suele considerarse más difícil, y que según se reporta las dos demostraciones difieren sustancialmente.
+El rumor que puso a OpenAI en marcha era real, y su objeto no era lo que decía el rumor.
+
+El 7 de septiembre, Levent Alpöge, empleado de Anthropic, y Tristan Buckmaster, matemático en la NYU, publicaron tres resultados: explosión en tiempo finito con forzamiento suave para la ecuación del medio poroso incompresible, para el sistema de Boussinesq en dos dimensiones y para las ecuaciones de Euler incompresibles en tres, cada uno con su formalización en Lean. Terence Tao [los reseñó](https://terrytao.wordpress.com/2026/09/07/finite-time-blowup-with-smooth-forcing-term-for-the-incompressible-porous-medium-boussinesq-and-incompressible-euler-equations/) ese mismo día. Dicen además que creen tener explosión para Navier–Stokes hipodisipativas, retenida porque la verificación en Lean no está terminada, y Buckmaster apunta que sugiere un camino hacia las ecuaciones de Euler *sin forzamiento*, que es la dirección que importaría.
+
+Cuatro días antes corría el rumor de que Anthropic había resuelto un problema abierto importante, con versiones que asociaban el nombre de Alpöge a una solución; un mercado de predicciones se movió con ello. OpenAI dice que ese rumor es lo que le hizo lanzar su propio esfuerzo el 1 de septiembre. El objeto del rumor era esta colaboración, y el encuadre estaba mal de una forma que merece señalarse: Buckmaster la describe como una colaboración puramente personal, sin implicación institucional de ninguno de los dos empleadores, pagada de su propio presupuesto de investigación, usando Claude, Codex y más tarde Astra. El nombre de una empresa viajó más lejos que el trabajo.
+
+Los dos relatos de lo que pasó después no coinciden, y los dos son públicos.
+
+OpenAI dice que, tras terminar la demostración y su verificación en Lean, contactó el 6 de septiembre para ofrecer una publicación concurrente y reconocer la prioridad del otro equipo en Euler forzado, que les ofreció ver todos sus prompts y después la propia demostración, y que ni sus investigadores ni sus agentes vieron nada de su trabajo antes de que fuera público.
+
+El relato de Buckmaster de esos mismos días es más largo, y lo ha escrito:
+
+- Fue él quien contactó primero con OpenAI, el 3 de septiembre, después de que el rumor sobre su propio trabajo le llegara a través de un colega.
+- En las llamadas del 6 de septiembre le dijeron que se había usado "muy poca intervención humana". Resultó no ser así: había trabajado un equipo entero, y hasta el prompt que le mostraron se había escrito pidiéndoselo a Codex.
+- Se acabó acordando que el primer prompt había salido en los días anteriores, después de que la noticia de su trabajo llegara a OpenAI.
+- Preguntó si el modelo se había entrenado con las sesiones de Codex donde estaban sus borradores, y no obtuvo respuesta sobre el entrenamiento.
+- De las dos propuestas que le hicieron, una consistía en presentar él solo el resultado, con Alpöge retirado de la autoría y citando como razón que Alpöge trabaja en Anthropic. Rechazó las dos.
+
+Sébastien Bubeck ha calificado de falsas e inflamatorias las acusaciones que circulan sobre él y dice que gestionó la conversación según las normas académicas.
+
+Buckmaster es cuidadoso con lo que no está afirmando: no ha visto la demostración, no sabe qué hizo el modelo y no acusa a nadie de nada. Su propio resumen de lo que sería correcto es el criterio que merece la pena guardar. Si un modelo cerró el hueco, escribe, hay que decirlo alto, decirlo ellos, y con la historia intacta.
+
+Hay una segunda cosa en esa declaración que no tiene nada que ver con la disputa. Los borradores que produjeron los modelos fueron, según él, los más horrendos que ha leído nunca, y del texto de Euler dice que "solo se puede describir como AI slop"; el trabajo de las dos semanas anteriores a publicar consistió en convertir una demostración de máquina en algo que una persona pueda leer. Lean resuelve si una demostración es correcta y no dice nada de si es legible, y no son el mismo entregable. Ese hueco es todo el asunto de [lo que hace falta para escribir un paper de investigación con IA](/es/blog/writing-a-research-paper-with-ai): la redacción se mueve, el criterio no.
+
+## ¿De quién sería el premio?
+
+De nadie, durante al menos dos años, y posiblemente de nadie en absoluto.
+
+El Instituto Clay no paga por un preprint. Sus reglas exigen que la solución se publique en un medio cualificado, que pasen al menos dos años desde la publicación, y que haya "recibido aceptación general en la comunidad matemática global". Un certificado de Lean hace mucho por la primera condición y nada por la tercera: la aceptación es un hecho social sobre matemáticos, no una propiedad de una demostración. OpenAI, en cualquier caso, dice que no piensa reclamar el premio.
+
+Así que la pregunta viva no es quién cobra, sino a quién dirá el campo que le corresponde. Hay cuatro respuestas defendibles.
+
+- **OpenAI.** Produjo la demostración de C y D, completa, con verificación formal. Si el criterio es quién escribió el argumento que cierra el enunciado oficial, esta es la respuesta y no hay discusión.
+- **Córdoba y Martínez-Zoroa.** Ellos eligieron la ruta, y elegir la ruta es la parte difícil. A la dirección de la fuerza suave no se llega leyendo el enunciado; Buckmaster dice que casi nadie que él conociera estaba trabajando en ella. En lo matemático la idea es suya, y todo lo que hay por encima es ingeniería, por formidable que sea.
+- **Alpöge y Buckmaster.** Cogieron un programa hecho para fuerzas rugosas y lo empujaron hasta fuerzas suaves, publicaron los casos vecinos con formalización, y tienen un resultado hipodisipativo anunciado que apunta al problema sin forzamiento. Si el último peldaño resulta alcanzable desde el suyo, las discusiones de prioridad van a durar años.
+- **Nadie todavía.** Si el campo lee C y D como un resquicio en la redacción, el problema que le importa a la gente sigue abierto, y la reclamación más fuerte a futuro es de quien cierre el caso sin forzamiento.
+
+El premio es el instrumento equivocado para lo que ha pasado. Se diseñó para nombrar a una persona, y este resultado tiene una ruta con dos nombres, una culminación con otros dos, una demostración producida por un sistema que nadie de fuera puede inspeccionar y una verificación formal hecha por un cuarto modelo. Cualquier asignación única de ese cheque sería una afirmación falsa sobre cómo se hizo el trabajo. El criterio de Buckmaster es mejor, y además no cuesta nada: decirlo alto y dejar la historia intacta.
 
 ## Qué sacar de esto
 
 - **El problema tal y como está escrito está cerrado, en negativo.** La pregunta que la mayoría entiende por él, si un fluido sin empujón externo puede explotar, sigue abierta, y la propia estructura de la demostración dice lo lejos que está de responderla: la fuerza se define como el residuo que haga funcionar la construcción.
 - **No cambia nada para quienes usan las ecuaciones.** La rotura ocurre a escalas donde el continuo nunca fue una descripción válida, con energía que se desvanece, bajo una fuerza que nada en la naturaleza proporciona. Las ecuaciones ya eran un modelo con un rango; ahora sabemos que el rango tiene un borde alcanzable desde dentro.
 - **El modelo no es uno que se pueda usar**, y el sistema a su alrededor es un enjambre de diez mil agentes con un agente de código como editor. El paso de Lean, la única parte que alguien de fuera puede comprobar, es la que hizo Astra.
+- **La ruta no es de OpenAI.** Dos matemáticos pasaron años haciendo funcionar las explosiones forzadas, otra pareja empujó su método hasta las fuerzas suaves el día antes, y el paper que remató el trabajo no cita a ninguno.
 - **La forma siempre estuvo ahí.** Una patinadora recogiendo los brazos, estirada a lo largo del eje de giro, equilibrada contra la viscosidad por un exponente menor que el uno por ciento. Hicieron falta noventa años y una máquina para escribirla, y hace falta un minuto para explicarla.
+
 
 ---
 
-*Fuentes: el [anuncio de OpenAI](https://openai.com/index/navier-stokes-solution/), el [paper](https://cdn.openai.com/pdf/32d9f210-8b73-45e0-91bc-82a30aef8a9a/navier-stokes.pdf), la [formalización en Lean](https://github.com/openai/NavierStokesAndEuler) y el [enunciado oficial del problema por Fefferman](https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf) para el Instituto Clay.*
+*Fuentes: el [anuncio de OpenAI](https://openai.com/index/navier-stokes-solution/), el [paper](https://cdn.openai.com/pdf/32d9f210-8b73-45e0-91bc-82a30aef8a9a/navier-stokes.pdf), la [formalización en Lean](https://github.com/openai/NavierStokesAndEuler), el [enunciado oficial del problema por Fefferman](https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf) para el Instituto Clay, la [declaración de Tristan Buckmaster](https://cims.nyu.edu/~tristanb/statement.pdf), [Terence Tao sobre los resultados de Alpöge y Buckmaster](https://terrytao.wordpress.com/2026/09/07/finite-time-blowup-with-smooth-forcing-term-for-the-incompressible-porous-medium-boussinesq-and-incompressible-euler-equations/) y [Córdoba, Martínez-Zoroa y Zheng sobre explosión hipodisipativa](https://arxiv.org/abs/2407.06776).*

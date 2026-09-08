@@ -1043,3 +1043,14 @@ artefacto: el terminal muestra `lean ---verify` con un guion de más.
 (el vórtice a orden principal) renderizada con Chrome headless con la misma receta que
 `you-already-have-an-ontology-diagram.png`. Las figuras para Dev.to
 (`navier-stokes-blows-up-fig-{1,2,3}.png`) salen del mismo script.
+
+### Figura 3D del vórtice (script, no generación)
+
+`public/blog/navier-stokes-vortex-3d.png` (1200x540) la produce
+`scripts/figures/navier-stokes-vortex-3d.py` con matplotlib: integra trayectorias del campo a
+orden principal que describe el paper (entrada radial, aceleración azimutal, salida axial a
+ambos lados del plano medio — un vórtice de Burgers) y las dibuja en tres instantes con los
+escalados del paper. **No se le pidió a un modelo de imagen y no se calcó la figura del paper**:
+una figura de datos se genera con código y el script se commitea, que es lo que permite decir en
+el artículo de dónde sale cada hilo. El PNG entra en el hueco `-fig-3` de Dev.to porque el
+swap numera los `<figure class="ns-fig">` en orden de documento, sean SVG o imagen.
