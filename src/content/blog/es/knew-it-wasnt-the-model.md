@@ -1,7 +1,7 @@
 ---
 title: "Sabían que no era el modelo. Lo parchearon igual."
 description: "Cambié el modelo de lenguaje por un random forest y pasé el mismo pipeline averiado por cuarenta agentes. Diecinueve de veinte parchean el síntoma a cada lado, con el modelo y sin él. Lo que separa a los dos brazos no es que investiguen menos: es de qué acusan a la cabeza. Al modelo lo llaman aleatorio por naturaleza; al bosque, no."
-pubDate: 2026-09-11
+pubDate: 2026-09-12
 tags: ["IA", "Agentes", "Evaluación", "Investigación"]
 lang: es
 translationKey: knew-it-wasnt-the-model

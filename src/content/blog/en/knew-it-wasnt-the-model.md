@@ -1,7 +1,7 @@
 ---
 title: "They knew it wasn't the model. They patched it anyway."
 description: "I swapped the language model for a random forest and ran the same broken pipeline past forty agents. Nineteen of twenty patch the symptom on each side, with the model and without it. What separates the two arms isn't that they investigate less: it's what they accuse the head of. The model gets called random by nature; the forest doesn't."
-pubDate: 2026-09-11
+pubDate: 2026-09-12
 tags: ["AI", "Agents", "Evaluation", "Research"]
 lang: en
 translationKey: knew-it-wasnt-the-model
