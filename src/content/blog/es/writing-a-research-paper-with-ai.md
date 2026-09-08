@@ -2,6 +2,7 @@
 title: "Escribir un paper de investigación con IA: dónde se nota de verdad la inteligencia del modelo"
 description: "El proceso real detrás de un preprint asistido por IA — y por qué la frontera más difícil no es la prosa, sino planear la ciencia, donde un modelo más capaz deja de ser una comodidad y pasa a ser lo que permite que el trabajo llegue más lejos."
 pubDate: 2026-07-21
+updatedDate: 2026-09-08
 tags: ["IA", "Investigación", "Escritura", "Claude", "GPT"]
 lang: es
 translationKey: writing-a-research-paper-with-ai
@@ -76,6 +77,21 @@ No todo avance es capacidad bruta. A veces el valor es simplemente un segundo pa
 
 Muchos de los hallazgos también fueron míos — la cuestión no es que los modelos sustituyan al revisor, sino que multiplican el número de pasadas independientes que una afirmación sobrevive antes de publicarse. Escribí más sobre esta complementariedad — cómo dos herramientas de IA discrepan de forma productiva — en [Escribir un ensayo con IA: Codex vs Claude Code](/es/blog/writing-an-essay-with-ai-codex-vs-claude-code).
 
+## El revisor con el que no se puede discutir
+
+Hay un tercer tipo de pasada, y llegó después de que este artículo se publicara. En el primer paper demostré los teoremas — un resultado de identificabilidad, una cota de cobertura — a mano, y los comprobé a mano. Una semana y media después las proposiciones del [segundo paper](/es/blog/infer-the-rule-in-one-dimension) empezaron a entrar en **Lean 4** contra Mathlib, y todos los papers desde entonces salen con demostraciones verificadas por máquina.
+
+La primera fue una sola proposición sobre cuándo factoriza un riesgo, y se pagó a sí misma en la entrada. Lo que volvió no fue un visto bueno. La condición suficiente tal y como la enunciaba el borrador no es la que se cumple; el enunciado verificado es el corregido, y el contraejemplo que los separa está commiteado al lado. En el mensaje del commit llamé a la formalización la mitad cara de un guardrail sobre cada implicación demostrada a mano del paper. La mitad barata es un test en Python que intenta falsar numéricamente esas mismas proposiciones.
+
+El tercer paper se apoya en ello mucho más: unas 3.400 líneas de Lean, construidas en nueve tandas a lo largo de cuatro días, sin un solo `sorry` — el núcleo métrico, el bucle del planificador, la cota de la unión, los lemas analíticos. Cambió el paper como lo cambia un buen revisor. El mensaje de commit de una de las tandas es todo el argumento a favor del ejercicio: *"el motor de la Prop 7 es una inducción, no un acoplamiento"*. El texto decía que la demostración pasaba por un argumento de acoplamiento. No pasa, y fue la formalización la que encontró la estructura más simple que la prosa había disfrazado.
+
+Dos razones por las que compensa el coste, y solo una es el rigor:
+
+- **Resuelve lo que la revisión no puede.** Un revisor, humano o modelo, discute si un paso se sigue, y se le puede convencer. Lean no discute. El término tipa o no tipa, y lo convencido que esté yo no es una entrada.
+- **Es un guardrail sobre el modelo tanto como sobre mí.** Un LLM escribiendo matemáticas produce prosa que se lee como correcta, y ese es el modo de fallo que no tiene detector natural, porque la fluidez es lo primero que comprueba un lector cansado. A un asistente de demostración no se le convence escribiendo bien. Además se compila en CI en cada push, así que una afirmación que deja de ser cierta deja de compilar.
+
+Ahí es donde se juntan las dos mitades de este artículo. Un modelo más capaz planea mejores experimentos y revisa afirmaciones como un par, y las dos cosas siguen siendo juicios — míos, o de otro modelo. La formalización es la única parte del bucle donde no entra ningún juicio. La disciplina con la que empecé era separar lo demostrable de lo medido; Lean es lo que mantiene honesta la mitad demostrable una vez está escrita.
+
 ## La parte honesta: no fue solo la IA
 
 Volvamos a ese contraste de dos años a dos semanas. Varias cosas ajenas a la IA explican la mayor parte de ese salto, y sería deshonesto embolsármelo todo como multiplicador de la IA:
@@ -92,7 +108,7 @@ Normaliza por todo eso y el salto sigue siendo real, pero es un multiplicador so
 - **La IA no eliminó la parte difícil; movió dónde vive la parte difícil.** Para mí dejó de ser "¿sé escribir y ejecutar esto?" y pasó a ser "¿es este el experimento correcto, y sobrevive esta afirmación al escrutinio?".
 - **En esa parte difícil, la capacidad del modelo es la restricción vinculante.** La distancia entre un modelo que sabe planear ciencia — diseñar un experimento que responde su propia pregunta, revisar una afirmación como un par — y uno que no, es la distancia entre un paper que se atasca y uno que llega más lejos. Por eso Fable 5 es mi opción por defecto y GPT-5.6 mi revisor preferido.
 - **La capacidad no es la única palanca.** Un segundo par de ojos, distinto — otro modelo, o yo — caza lo que la primera pasada no vio. La diversidad es su propia clase de inteligencia.
-- **Lo que no se automatiza es el juicio del investigador.** Haber sido investigador es la parte que aquí soporta el peso: el rigor, el escrutinio, el reflejo de desconfiar de un resultado limpio, la costumbre de revisar una afirmación hasta que aguanta o se rompe, saber cuándo algo puede *demostrarse* frente a solo *medirse*. Esa es la misma función que da una institución de investigación — el peer review, un supervisor crítico, un laboratorio que discute contigo — pero funcionando con menos intermediarios y menos administración, y más ágil en cada paso útil.
+- **Lo que no se automatiza es el juicio del investigador.** Haber sido investigador es la parte que aquí soporta el peso: el rigor, el escrutinio, el reflejo de desconfiar de un resultado limpio, la costumbre de revisar una afirmación hasta que aguanta o se rompe, saber cuándo algo puede *demostrarse* frente a solo *medirse* — y, una vez demostrado, dárselo a un verificador al que le da igual lo convincente que sea la prosa. Esa es la misma función que da una institución de investigación — el peer review, un supervisor crítico, un laboratorio que discute contigo — pero funcionando con menos intermediarios y menos administración, y más ágil en cada paso útil.
 
 ---
 
