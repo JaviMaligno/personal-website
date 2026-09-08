@@ -1,7 +1,7 @@
 ---
 title: "Nineteen of twenty patched the symptom"
 description: "I gave a hundred and forty agents the same misbehaving classifier and changed one thing: whether they could see its code. What moved wasn't who they blamed — it was whether they looked for the cause at all. And not one of them asked for the data it was missing, even when told outright that asking was allowed."
-pubDate: 2026-09-10
+pubDate: 2026-09-11
 tags: ["AI", "Agents", "Evaluation", "Research"]
 lang: en
 translationKey: patched-the-symptom

@@ -1,7 +1,7 @@
 ---
 title: "Diecinueve de veinte parchearon el síntoma"
 description: "Le di a ciento cuarenta agentes el mismo clasificador averiado y cambié una sola cosa: si podían ver su código. Lo que se movió no fue a quién culpaban, sino si buscaban la causa siquiera. Y ninguno pidió los datos que le faltaban, ni cuando se le dijo expresamente que podía."
-pubDate: 2026-09-10
+pubDate: 2026-09-11
 tags: ["IA", "Agentes", "Evaluación", "Investigación"]
 lang: es
 translationKey: patched-the-symptom
