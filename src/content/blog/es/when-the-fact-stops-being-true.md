@@ -1,7 +1,7 @@
 ---
 title: "Cuando el dato deja de ser cierto"
 description: "Réplica de SKILL.state, un paper de EMNLP que sustituye la historia de conversación de un agente por un estado explícito y mutable. El ahorro en tokens es real y el ahorro en la factura no: 7,5x se queda en 1,4x en cuanto activas la caché. Y donde el estado explícito gana de forma aplastante es justo donde el paper predecía que perdería: 93 correcciones aplicadas de 93, frente a 18 de 82 con el transcript completo."
-pubDate: 2026-09-12
+pubDate: 2026-09-13
 tags: ["IA", "Agentes", "Context Engineering", "Evaluación", "Investigación"]
 lang: es
 translationKey: when-the-fact-stops-being-true

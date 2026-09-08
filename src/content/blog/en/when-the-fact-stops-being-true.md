@@ -1,7 +1,7 @@
 ---
 title: "When the Fact Stops Being True"
 description: "A replication of SKILL.state, an EMNLP paper that replaces an agent's conversation history with an explicit mutable state. The token savings are real and the bill savings are not — 7.5x becomes 1.4x once you turn caching on. And the place explicit state wins decisively is the one the paper predicted it would lose: 93 out of 93 corrections applied, against 18 out of 82 for the full transcript."
-pubDate: 2026-09-12
+pubDate: 2026-09-13
 tags: ["AI", "Agents", "Context Engineering", "Evaluation", "Research"]
 lang: en
 translationKey: when-the-fact-stops-being-true
