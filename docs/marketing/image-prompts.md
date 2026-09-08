@@ -1010,3 +1010,36 @@ reutilizable para cualquier figura SVG inline que quiera llevarse al feed:
 
 El HTML intermedio vive en el scratchpad, no en el repo: la fuente de verdad es el SVG del
 artículo, y la tarjeta se vuelve a generar si la figura cambia.
+
+## Navier–Stokes Blows Up / Navier–Stokes explota (2026-09-08)
+
+- Artículo: `src/content/blog/en/navier-stokes-blows-up.md` · `src/content/blog/es/navier-stokes-blows-up.md`
+- Imagen: `public/blog/navier-stokes-blows-up.png`
+- Generada: 2026-09-08 (Codex CLI 0.153.4, `codex exec -s workspace-write`, herramienta `image_gen`)
+
+Brief dado a Codex: tres instantáneas del vórtice afinándose y estirándose (streamlines teal,
+salida axial ámbar), una hoja con el boceto de la espiral y los escalados `r ~ tau^1/2`,
+`z ~ tau^(1/2-h)`, un portátil con `lean --verify blowup.lean` / `theorem finite_time_blowup`, y
+un racimo de nodos-agentes conectado al terminal. Codex redactó y ejecutó este prompt:
+
+```text
+Create a 1020x510 pixel, 2:1 landscape blog hero image for the technical article "Navier-Stokes Blows Up, and the Blow-up Is a Vortex You Can Picture". Do not print the title.
+
+Refined technical editorial bitmap illustration of a physicist's desk: a working scene with several distinct, balanced zones. The main zone shows three successive scientific visualization snapshots of the same fluid vortex, progressing left to right from thin to thinner to extremely thin, increasingly tall and fast, like spaghetti being pulled along a vertical axis. Use crisp teal helical streamlines spiralling inward toward each dashed vertical axis, with visible directional arrowheads and increasingly tight rotation. Amber axial outflow arrows point upward above the mid-plane and downward below it, showing fluid leaving in both directions. Make the three stages clearly distinct and the slender vortex cores the dominant visual subject. This is a schematic of vortex stretching, not an explosion or a storm.
+
+On the desk in a separate foreground zone, an off-white sheet of paper carries a simple spiral sketch with inward arrows and exactly these two short readable formula lines: "r ~ tau^1/2" and "z ~ tau^(1/2-h)". In a separate side zone, a modest laptop with a dark terminal displays exactly these readable monospace lines: "lean --verify blowup.lean" and "theorem finite_time_blowup". Near the laptop, a small cluster of node-like dots connected by fine lines suggests many agents passing messages; several thin connections lead to the terminal. Keep the paper and terminal text legible and unobstructed.
+
+Dark graphite background and desk, balanced teal, amber, graphite and off-white accents. High contrast, crisp precise edges, restrained dimensional shading, matte surfaces, professional AI/developer editorial aesthetic. Compose the desk and scientific visualizations as one coherent scene with generous breathing room and safe margins. No people, faces, hands, logos, brand marks, extra brand names, title lettering, text-heavy poster, purple gradient blobs, bokeh, neon cyberpunk glow, or watermark.
+```
+
+**Comprobado en la imagen final:** las dos líneas del terminal y las dos fórmulas de la hoja salen
+legibles; los lomos de los libros llevan texto genérico correcto (`Navier–Stokes`, `Fluid Dynamics`,
+`PDE Analysis`, `Geometric Flows`); la ecuación de la pizarra es la de Navier–Stokes real. Único
+artefacto: el terminal muestra `lean ---verify` con un guion de más.
+
+### Imagen de LinkedIn del mismo artículo (render, no generación)
+
+`public/blog/navier-stokes-blows-up-vortex.png` (1200x627) es la tercera figura SVG del artículo
+(el vórtice a orden principal) renderizada con Chrome headless con la misma receta que
+`you-already-have-an-ontology-diagram.png`. Las figuras para Dev.to
+(`navier-stokes-blows-up-fig-{1,2,3}.png`) salen del mismo script.
