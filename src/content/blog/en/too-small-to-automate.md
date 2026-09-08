@@ -1,7 +1,7 @@
 ---
 title: "It Takes a Product to Send Messages"
 description: "The work that never gets automated isn't the hard work. It's repetitive work that needs a judgement on every row — already being done by hand, inside a chat window. And every way out of doing it by hand asks you to build a product first: an account with a token bill, a prompt you now have to test call by paid call, and an interface for whoever reads the results."
-pubDate: 2026-09-13
+pubDate: 2026-09-14
 tags: ["AI", "Automation", "LLM", "Tooling", "Product"]
 lang: en
 translationKey: too-small-to-automate

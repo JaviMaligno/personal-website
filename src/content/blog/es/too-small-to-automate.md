@@ -1,7 +1,7 @@
 ---
 title: "Hace falta un producto para mandar mensajes"
 description: "El trabajo que nunca se automatiza no es el difícil. Es el repetitivo que además pide un juicio en cada fila, y que ya se hace a mano dentro de una ventana de chat. Cualquier forma de dejar de hacerlo a mano te obliga a montar antes un producto: una cuenta con factura por tokens, un prompt que ahora hay que probar llamada a llamada de pago, y una interfaz para quien tenga que leer los resultados."
-pubDate: 2026-09-13
+pubDate: 2026-09-14
 tags: ["IA", "Automatización", "LLM", "Herramientas", "Producto"]
 lang: es
 translationKey: too-small-to-automate
