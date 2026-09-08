@@ -1,7 +1,7 @@
 ---
 title: "El código malo no daña a un agente. Hasta que el repositorio es grande."
 description: "Degradé cuatro repositorios de nueve formas semánticamente equivalentes y medí 2.929 corridas de agente. En código pequeño no pasa nada medible. En código grande e interconectado, degradar cómo está escrito reduce a la mitad lo que el agente resuelve."
-pubDate: 2026-09-01
+pubDate: 2026-09-08
 tags: ["IA", "Agentes", "Evaluación"]
 lang: es
 translationKey: practices-for-agents-substrate
