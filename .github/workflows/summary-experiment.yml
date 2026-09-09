@@ -1,0 +1,53 @@
+name: Experimento — generador de posts de LinkedIn
+
+# Manual y solo de lectura: llama a Gemini, imprime resultados en el log y no
+# publica nada en ningun sitio. Existe porque la clave GEMINI_API_KEY vive en
+# los secretos del repo y no en el .env local, asi que estas pruebas no se
+# pueden correr desde el portatil.
+#
+# Que contesta cada script: scripts/linkedin/experiments/README.md
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: 'Que experimento correr'
+        type: choice
+        options:
+          - summary-matrix
+          - p2-newest
+          - model-probe
+        default: summary-matrix
+
+permissions:
+  contents: read
+
+# Nunca dos a la vez: comparten cupo de la API y se estorban con 429.
+concurrency: linkedin-summary-experiment
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install gray-matter
+
+      # El input es un `choice`, pero aun asi no se interpola en el shell: se
+      # resuelve con un case cerrado, como el resto de workflows del repo.
+      - name: Run
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WHICH: ${{ inputs.script }}
+        run: |
+          case "$WHICH" in
+            summary-matrix) F=scripts/linkedin/experiments/summary-matrix.mjs ;;
+            p2-newest)      F=scripts/linkedin/experiments/p2-newest.mjs ;;
+            model-probe)    F=scripts/linkedin/experiments/model-probe.mjs ;;
+            *) echo "::error::experimento no reconocido: $WHICH"; exit 1 ;;
+          esac
+          echo "Corriendo $F"
+          node "$F"
