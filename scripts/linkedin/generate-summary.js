@@ -14,14 +14,27 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  * @returns {Promise<string>} - LinkedIn-optimized summary
  */
 export async function generateSummary({ title, description, content, tags }) {
+  // MEDIDO 2026-09-09 (scripts/linkedin/experiments/): con el articulo entero
+  // en el prompt, gemini-3.8-flash devuelve 503 UNAVAILABLE y 429
+  // RESOURCE_EXHAUSTED en las tres pruebas, aunque responde 200 a una peticion
+  // minima: la clave lo alcanza, el cupo no da para un articulo. 2.5-flash
+  // fallo 3 de 6 veces. 3.5 y 3.6 respondieron 3/3, mas lentos (12-36 s) que
+  // el preview (7-9 s). Revisar 3.8 cuando cambie el cupo.
   const models = [
-    'gemini-3-flash-preview',  // Primary: Gemini 3.0 Flash (latest, Jan 2026)
-    'gemini-2.5-flash',        // Fallback: Gemini 2.5 Flash
+    'gemini-3-flash-preview',  // Primary: el mas rapido que responde de forma fiable
+    'gemini-3.5-flash',        // Fallback 1: estable, tambien en v1
+    'gemini-3.6-flash',        // Fallback 2
   ];
 
-  const prompt = `You are a LinkedIn content strategist creating engaging posts for AI/tech professionals and CTOs.
+  // El prompt anterior traia tres ganchos de EJEMPLO y el modelo los copiaba:
+  // en la matriz del 2026-09-09, 12 de 12 aperturas eran una de las tres
+  // familias ("X isn't Y, it's Z", "I spent N days...", "Most teams..."), con
+  // cuatro modelos distintos. Tambien exigia una llamada a la accion, asi que
+  // 7 de cada 12 posts acababan en pregunta, y llego a inventar historia
+  // personal que el articulo no dice. Sin ejemplos y sin CTA: 0 de 10.
+  const prompt = `You are writing a LinkedIn post for Javier Aguilar about an article he wrote. Write as him, first person.
 
-BLOG DETAILS:
+ARTICLE
 Title: ${title}
 Description: ${description}
 Tags: ${tags.join(', ')}
@@ -29,25 +42,19 @@ Tags: ${tags.join(', ')}
 FULL CONTENT:
 ${content.substring(0, 4000)}
 
-REQUIREMENTS:
-- Write 2-3 concise paragraphs (max 400 words)
-- Start with a compelling hook that grabs attention (problem, insight, or question)
-- Focus on the "why" and key takeaways, not just implementation details
-- Speak to technical leaders: CTOs, engineering leads, AI architects
-- Use professional but conversational tone
-- Include a subtle call-to-action at the end (e.g., "What's your experience with...", "How are you handling...")
-- Write in first person (I/my/me) as Javier Aguilar, AI Agent Architect
-- DO NOT include hashtags (will be added separately)
-- DO NOT include the blog URL (will be added separately)
-- DO NOT use emojis (except sparingly if they enhance meaning)
+WHAT THE POST MUST DO
+- Lead with the article's own subject and its most concrete finding. If the article is about mathematics, the post is about mathematics; if it is about a measurement, lead with the number.
+- Carry at least two specifics from the article: a number, a name, a mechanism. Never a claim so general it would fit a different article.
+- Keep the author's judgment exactly as the article states it. Do NOT invent personal history, effort, conversions or opinions — no "I used to think", no "this proved me wrong", no "I spent three weeks". If the article does not say it, he did not say it.
+- Assume a reader who knows the field. Do not address CTOs, leaders or "those of us building X" as a group.
 
-OUTPUT FORMAT:
-Plain text only, no markdown formatting.
+WHAT THE POST MUST NOT DO
+- No opening formula. Never start with "The hardest part of X isn't Y, it's Z", "Most teams...", "I spent N days..." or any variant of them.
+- No closing question, no call to action, no "what's your experience", no "how are you thinking about".
+- No hashtags and no URL (both are appended afterwards). No markdown, no emojis.
 
-Example opening hooks:
-- "I spent 3 weeks debugging LinkedIn's API before realizing..."
-- "Most teams waste hours on manual deployments. Here's why..."
-- "The hardest part of AI automation isn't the code—it's..."`;
+LENGTH
+Two or three short paragraphs, under 300 words. End on a statement.`;
 
   for (const modelName of models) {
     try {
