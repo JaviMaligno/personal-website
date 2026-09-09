@@ -1054,3 +1054,34 @@ escalados del paper. **No se le pidió a un modelo de imagen y no se calcó la f
 una figura de datos se genera con código y el script se commitea, que es lo que permite decir en
 el artículo de dónde sale cada hilo. El PNG entra en el hueco `-fig-3` de Dev.to porque el
 swap numera los `<figure class="ns-fig">` en orden de documento, sean SVG o imagen.
+
+## Frontend, Backend, and the Agentic Engine (2026-09-09)
+
+- Artículo: `src/content/blog/en/frontend-backend-agentic-core.md` · `src/content/blog/es/frontend-backend-agentic-core.md`
+- Imagen: `public/blog/frontend-backend-agentic-core.png`
+- Generada: 2026-09-09 (herramienta integrada `image_gen`, sin CLI/API)
+
+Prompt exacto:
+
+```text
+Use case: stylized-concept
+Asset type: technical blog hero, exact 2:1 landscape, intended display 1020x510 pixels.
+Primary request: Create a rich technical editorial bitmap illustration for an article titled "Frontend, Backend, and the Agentic Engine". Do not print the title.
+
+Scene: An architectural cutaway of one cohesive software workbench, presented nearly front-on with restrained depth, on a dark graphite background. One continuous enclosing chassis and work surface contains three connected working zones. They are responsibilities within a single application, not separate repositories or mandatory servers.
+
+The left zone is a polished application interface: a conversation pane next to a document preview, a few progress indicators and result cards. The middle zone is the application's case-management workspace: three case cards, a permission key symbol, a review checklist, a small persistent-record drawer, and an amber approval stamp. The right zone is a denser agent execution workspace: several small workflow tracks branching and rejoining between document, magnifier and tool symbols; a compact prompt card, a context stack, and two tiny evaluation plots. Fine teal and amber signal paths connect the zones and carry small document/result cards across their boundaries. Include one visibly paused workflow awaiting a review signal from the middle zone. Convey a working product with substantial machinery behind its simple interface.
+
+Text: Use only these short readable labels, in crisp unobstructed monospace: "INTERFACE", "APPLICATION", "AGENTIC ENGINE" as modest zone labels; "review" on one case card; "tools", "context", and "evals" within the agent workspace. All other interface details should be pictorial marks or clean line placeholders. No additional words or title.
+
+Style: Refined technical editorial illustration with precise edges, rich but controlled detail, layered matte surfaces, subtle paper and metal textures, balanced geometric composition and professional AI/developer blog finish. The three zones share the same ground plane and continuous enclosure; vary their internal density to communicate distinct responsibilities. Keep labels level and readable, with safe margins and a strong silhouette at thumbnail size.
+
+Palette: Balanced teal, amber, graphite and off-white, dark but not monochrome, warm off-white document surfaces and restrained teal activity highlights, no excessive glow.
+
+Avoid: People, faces, hands, robots, brains, logos, brands, repository icons, three isolated floating cubes, simplistic isometric diagram template, text-heavy poster, generic network cloud, purple gradient blobs, bokeh, neon cyberpunk lighting, watermark.
+```
+
+**Comprobado en la imagen final:** formato 1774×887 (2:1), un único banco de trabajo con tres
+zonas conectadas y etiquetas legibles: `INTERFACE`, `APPLICATION`, `AGENTIC ENGINE`, `review`,
+`tools`, `context` y `evals`. El flujo pausado recibe una conexión ámbar desde la zona de gestión.
+No se aprecian artefactos de texto en esas etiquetas ni logos o personas.
