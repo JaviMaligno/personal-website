@@ -99,10 +99,53 @@ cron slots, 07-21 … 07-25:
 | 11:37 | 1h28m | 1h24m – 1h33m (±5m) | 4 |
 | 14:53 | 1h17m | 1h15m – 1h22m (±4m) | 4 |
 
+**Re-measured on 2026-09-09, and the queue is much slower than that.** The table
+above is the *old* workflow's. `scheduled-publish.yml` now has a history of its
+own: nine complete days (08-31 … 09-08), 36 scheduled runs, and **not one
+dropped slot**.
+
+| Cron (UTC) | Min | Median | Max | Typical arrival |
+|---|---|---|---|---|
+| 08:19 | 3h31m | 4h30m | 7h51m | ~12:49 |
+| 11:07 | 2h43m | 3h56m | 6h51m | ~15:03 |
+| 13:53 | 2h24m | 3h32m | 5h49m | ~17:25 |
+| 16:41 | 1h52m | 2h48m | 4h55m | ~19:29 |
+
+(08-30 is left out of the sample: the workflow only landed on `main` that
+afternoon, so just its last two slots existed. Both fired, 3h55m and 2h44m late.)
+
+Two things changed, one did not:
+
+- **Lateness roughly doubled.** July's median was 2h13m; the first slot now sits
+  at 4h30m and has been as bad as 7h51m. **An article dated D reaches `main` in
+  the afternoon or evening of D, UTC — not in the morning.** Say so when someone
+  is waiting for a publication.
+- **The shape held.** Later slots are still both less late and less variable:
+  4h30m median at 08:19 against 2h48m at 16:41. The first slot earns its place by
+  covering the day, not by being fast.
+- **Nine days, no drops.** The 08-30 loss was the *per-article* workflow, not this
+  one. Nine days is evidence, not a guarantee, which is why the design still keys
+  on **due** rather than on today.
+
+### Late or dropped? Not a question you can answer while you wait
+
+GitHub does not expose scheduled runs that are queued but not yet started. A run
+that is four hours late simply **does not exist in the API** until it starts —
+indistinguishable, from outside, from one that was never dispatched. `gh run
+list` shows nothing in both cases.
+
+So the test is retrospective: count the day's runs against the four slots. If the
+first run of the day arrives after the second slot's window, the first slot was
+dropped; a day with four runs lost nothing. As a working threshold, no first-slot
+run in this sample has ever arrived later than **16:10 UTC** (the 7h51m outlier),
+so silence past that is worth treating as a drop and publishing by hand with
+`workflow_dispatch`.
+
 Consequences to keep in mind:
 
-- **Cron times are departure times, not arrival times.** The first slot is set
-  ~1-2h before the article is actually wanted out.
+- **Cron times are departure times, not arrival times.** The gap is now closer to
+  four hours than to one, so the first slot is the departure for an article wanted
+  out in the early afternoon UTC.
 - **Scheduling earlier buys less than it looks, and costs predictability.** An
   early slot is queued during the European-morning peak, so it is both later *and*
   much noisier (±35m at 09:19 vs ±5m at 11:37).
