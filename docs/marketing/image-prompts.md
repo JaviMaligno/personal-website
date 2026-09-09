@@ -1010,3 +1010,15 @@ reutilizable para cualquier figura SVG inline que quiera llevarse al feed:
 
 El HTML intermedio vive en el scratchpad, no en el repo: la fuente de verdad es el SVG del
 artículo, y la tarjeta se vuelve a generar si la figura cambia.
+
+## benchmaxing
+
+- **Article:** `src/content/blog/{en,es}/benchmaxing.md`
+- **Image:** `public/blog/benchmaxing.png`
+- **Generated:** 2026-09-09, Codex built-in `image_gen`
+- **Status:** generated hero included in the local review draft; publication not scheduled.
+- **Review:** TEST / RETRY / REVIEW are readable; small pseudo-code and test-case rows are illustrative, not measured data. No model winner is depicted.
+
+```text
+Create a wide 1020x510 (2:1) blog hero image for a technical article called Benchmaxing: winning the benchmark versus doing useful work. Refined rich technical editorial bitmap illustration, dark but not monochrome. Show a concrete software evaluation workbench: on the left a tidy test terminal and compact score dashboard with rows of teal checkmarks, a stack of uniform test cases being processed; on the right a realistic incident investigation workspace with an event timeline, linked database records, overlapping windows, one amber unresolved retry, and a small branching dependency map. Both sides belong to the same physical desk/workstation, connected by a cable, so this is a comparison of evaluation contexts, not rival brands. Subtle central divide. Distinct zones with plausible technical detail, clean geometric composition, high contrast, sophisticated developer editorial aesthetic. Balanced teal, amber, graphite and off-white accents. Generic short readable labels only if necessary ('TEST', 'RETRY', 'REVIEW'), no numerical results or fake benchmark scores. No logos, no brand names, no people, no robot, no trophy, no title text, no text-heavy poster, no purple gradient blobs, no bokeh. Do not imply either tested model won. Landscape composition with all important objects inside generous safe margins.
+```
