@@ -14,13 +14,16 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  * @returns {Promise<string>} - LinkedIn-optimized summary
  */
 export async function generateSummary({ title, description, content, tags }) {
-  // MEDIDO 2026-09-09 (scripts/linkedin/experiments/summary-matrix.mjs):
-  // 3.7 y 3.8 aparecen en /models pero la clave no puede llamarlos; 2.5-flash
-  // fallo 3 de 6 veces; 3.6 respondio 3/3 aunque tarda 10-26 s frente a 6-8 s.
+  // MEDIDO 2026-09-09 (scripts/linkedin/experiments/): con el articulo entero
+  // en el prompt, gemini-3.8-flash devuelve 503 UNAVAILABLE y 429
+  // RESOURCE_EXHAUSTED en las tres pruebas, aunque responde 200 a una peticion
+  // minima: la clave lo alcanza, el cupo no da para un articulo. 2.5-flash
+  // fallo 3 de 6 veces. 3.5 y 3.6 respondieron 3/3, mas lentos (12-36 s) que
+  // el preview (7-9 s). Revisar 3.8 cuando cambie el cupo.
   const models = [
-    'gemini-3-flash-preview',  // Primary
-    'gemini-3.6-flash',        // Fallback 1
-    'gemini-2.5-flash',        // Fallback 2
+    'gemini-3-flash-preview',  // Primary: el mas rapido que responde de forma fiable
+    'gemini-3.5-flash',        // Fallback 1: estable, tambien en v1
+    'gemini-3.6-flash',        // Fallback 2
   ];
 
   // El prompt anterior traia tres ganchos de EJEMPLO y el modelo los copiaba:
