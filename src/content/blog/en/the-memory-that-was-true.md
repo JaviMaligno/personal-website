@@ -16,31 +16,29 @@ The memory wasn't wrong. **It was true, and it stopped being true while nobody w
 
 Which led to a more uncomfortable question. If that one was stale and nobody knew, how many others?
 
-## The memory you write and the memory a model writes
+## Two memories with opposite rules
 
-It turns out I run two memory systems at once, with opposite design decisions.
+I run two memory systems at once, and they are built on deliberately opposite criteria.
 
 One is **personal**: the files Claude Code keeps per project. The agent writes them when a session ends, I review them, and they come out of conversations I was present for.
 
 The other is **production**: the knowledge system of an internal DevOps bot that answers requests over chat. There the memory is written by a small model after every response, unsupervised, from interactions with other people that I have never read.
 
-Side by side, the difference isn't where I expected:
+That second system carries machinery the personal one doesn't need, and every piece of it answers a specific problem of writing without supervision. A new fact doesn't enter as true: it enters as a candidate, and only gets promoted when the bot independently reaches it again in a later investigation. Whatever nobody confirms within a month is deleted. Whatever goes ninety days without a single query retrieving it turns obsolete and stops being injected, though it isn't destroyed: confirm it again and it comes back. And every night a job clusters whatever looks too similar and decides whether to merge it.
 
 | | Personal | Production |
 |---|---|---|
-| **Who writes** | the agent at session end, supervised | a small model after each response, alone |
-| **From what** | conversations I was part of | interactions with third parties |
-| **Trust** | goes straight in | `candidate` → `confirmed` after being rediscovered twice |
-| **Staleness** | nobody detects it | `obsolete` status + nightly maintenance |
-| **Contradiction** | they coexist quietly | recorded and resolved |
-| **Usefulness** | not measured | retrieval count per fact |
-| **Retrieval** | index and relevance | semantic search |
+| **Who writes** | the agent at session end | a small model, alone |
+| **Reviewed by** | me, before it's stored | nobody |
+| **From what** | conversations I was part of | third-party interactions |
+| **Trust** | goes straight in | two confirmations |
+| **Staleness** | nobody detects it | expiry through disuse |
+| **Contradiction** | they coexist quietly | resolved |
+| **Usefulness** | not measured | retrieval counted |
 
-The temptation was obvious: production is more sophisticated, so port it to the personal side. I was about to propose exactly that, and it would have been a blunder.
+Seen side by side, the difference isn't sophistication. **It's who writes and with how much supervision.** When I write, or review what gets written, trust comes for free: that's why the personal system can afford to be light, and why working with it feels easy. When a model writes alone, from material nobody has read, trust has to be built from scratch, and without that machinery the system degrades by itself.
 
-**The difference isn't sophistication, it's who writes and with how much supervision.** When I write, or review what gets written, trust comes for free: that's why the personal system can afford to be light, and why working with it feels easy. When a model writes alone, from material nobody has read, trust has to be built from scratch — promotion through repeated evidence, contradiction detection, forgetting whatever nobody uses — and without that machinery the system degrades by itself.
-
-Porting one onto the other would have improved nothing. It would have added ceremony where human review already does that job.
+They are different problems and there is no reason for them to converge. Bringing promotion-by-evidence and nightly forgetting into a folder I review myself would add ceremony where a person is already doing that job.
 
 ## What expires on its own
 
@@ -52,34 +50,25 @@ There's a distinction I was slow to see, and it orders everything else.
 
 So automatic verification only makes sense over the second half. That stops being a limitation and becomes the design criterion: **you can only check what can expire without anyone touching it.**
 
-## Putting a number on it
+## Counting them
 
-I wrote a small verifier to stop speculating. The idea is deliberately dumb: each memory can carry a check that runs against the repository.
+I let an agent build a verifier, to see whether automating it turned up anything that wouldn't show by hand. The idea is simple: attach to each memory a check that runs against the repository, along the lines of *this memory claims those workflows exist, so there should be at least one*. If there isn't, the memory gets flagged.
 
 ```json
-{
-  "project_blog_publishing_mechanism": {
-    "checks": [
-      { "file_matches": ".github/workflows/scheduled-publish-*.yml" }
-    ]
-  }
-}
+{ "file_matches": ".github/workflows/scheduled-publish-*.yml" }
 ```
-
-That check says: *the memory claims single-use workflows exist, so there should be at least one*. Today there are none, the check fails, and the memory comes out **red**.
-
-Every memory lands in one of four piles: **green** (the check passes), **red** (it claims something no longer true), **grey** (no check is possible) and **error** (we can't tell). The fourth matters more than it looks: a badly written check must not count as a stale memory, because that would inflate the result in exactly the direction that suits me.
-
-Before running it I wrote down a prediction, so the result would mean something: grey would be the largest pile, and red small but not zero.
 
 Across the 35 memories for this project:
 
-| state | count |
-|---|---|
-| green | 7 |
-| **red** | **3** |
-| grey | 25 |
-| error | 0 |
+| state | count | |
+|---|---|---|
+| green | 7 | the check passes |
+| **red** | **3** | claims something no longer true |
+| grey | 25 | no check is possible |
+
+Let me give the verdict on the tool up front, because it isn't the interesting part: **it's clumsy**. Every check has to be written by hand, and writing one means reading the whole memory and deciding what it claims. Once you've done that, you already know whether it's still alive; the program only confirms it. Reviewing all 35 by hand would have cost about the same and produced the same number.
+
+What justifies the detour is what turned up along the way, and it isn't the number. ([The code is here](https://github.com/JaviMaligno/personal-website/tree/main/scripts/memory-audit), with its limits documented.)
 
 ## The three reds say the same thing
 
@@ -95,7 +84,7 @@ There's a practical rule in there I hadn't expected to find: **a memory recordin
 
 ## What can't be checked, which is nearly everything
 
-Of the 31 memories with no check, I went through all of them and only 7 admitted one. An adversarial reviewer then rejected another as forced: it was a preference of mine, and the check substituted the presence of a literal string in a file, which is a different thing entirely.
+I went through the 31 memories with no check and only 7 admitted one. Of those 7 I dropped another as forced: it was a preference of mine about how to order a document, and the check substituted the presence of a literal string in a file. Rewriting that heading would have turned it red without my changing my mind, and ignoring the preference while leaving the string in place would have kept it green. It wasn't measuring what it claimed to measure.
 
 So: **about 80% of my memory admits no mechanical check.**
 
@@ -113,27 +102,43 @@ The green is correct and the memory is stale, both at once. **A green certifies 
 
 I left it recorded as a question for a person, still counting as grey. A pending question is not a check.
 
-## The verification can be broken too
+## A check that cannot fail
 
-This is the part that made me think hardest, and it's the part that reflects worst on me.
+There's one last result, and it's about the attempt to automate itself: it's why I don't trust the number beyond what it's worth.
 
-The verifier needed five rounds of adversarial review. The serious bugs that surfaced shared a shape with what this article is complaining about: **they were silent, and every one of them leaned towards "all fine"**. A memory came out green when the directory it looked in didn't exist. Another was classed as "not checkable" if a certain word appeared earlier in the text, and vanished from the report without a sound.
+The first checks that went in described **how the mechanism works today**: that the manifest exists, that no single-use workflows are left. Those are true statements, so they all passed. But a check like that watches nothing: it describes the present, and the present always describes itself. For reality to be able to contradict a memory, you have to encode **what the memory claims**, not what is the case now.
 
-The best one was mine. I wrote the first checks describing **how the mechanism works today**, instead of what the memory claims. They all passed, of course. A check that describes the present can never fail, and **a check that always passes is worse than no check at all, because it hands you false confidence.**
+**A check that always passes is worse than no check at all**, because an unchecked memory is known to be unchecked, while one with a vacuous check looks watched.
 
-The tool that measures whether a memory is still true can be wrong in precisely the same way as the memory it watches, and with the same consequence: nobody notices, because the report says everything is fine.
+And that's the limit of the whole approach: the tool that measures whether a memory is still true can be wrong in the same way as the memory it watches, with the same consequence. Nobody notices, because the report says everything is fine. A real verifier would need someone verifying the verifier, and that doesn't hold up on its own.
 
-The test I now apply before writing a check is two questions: what concrete fact would turn it red, and could that fact happen without the memory ceasing to be true? If the answer to the second is yes, the check is no good.
+## What actually fixes it
+
+After the whole detour, what keeps a memory alive isn't checking it: it's **closing the session by updating it**.
+
+When a piece of work ends — the article goes out, the mechanism changes, the decision gets made — that is the moment the memory describing it stops being true, and it's also the only moment when someone has the whole context in their head to fix it. Half an hour later it already costs something, and a week later it has to be reconstructed.
+
+The good news is that the agent often does this on its own, unprompted. The bad news is that "often" isn't "always", and the three reds above are precisely the cases where it didn't happen. So it's worth making sure: let closing a session include asking what, of what was written down, has stopped being true today.
+
+It's less impressive than a verifier and it works better, because it attacks the problem where it starts instead of detecting it months later.
 
 ## What only shows up when there's more than one of you
 
-All of this is one person and one project. Three reds out of thirty-five is not a staleness rate for anything: it's what came out of my folder.
+All of the above is one person and one project. Three reds out of thirty-five is not a staleness rate for anything: it's what came out of my folder.
 
-The interesting part starts where my case ends. In the production system the memory is written by other people's interactions, and that brings problems that don't exist alone: who maintains the current state when the record has no owner, how you correct something that other decisions already cite, and which information is appropriate to share with each person.
+The interesting part starts where my case ends, and that's where I am now. When several people feed the memory, three questions appear that don't exist alone.
 
-That's what I'm working on now, and it isn't solved. But the small exercise already left me two things:
+**Who maintains the current state when the record has no owner.** There are more options here than it looks, and none is obviously right: name someone responsible; have each person update whatever their own contribution touches, since they're the ones in a position to know; have updates be proposed and then maintained automatically; or let whatever nobody uses wither on its own, the way the production system expires facts through disuse. Several of these probably coexist, depending on the kind of memory.
+
+**How you correct something other decisions already cite.** Here I take the idea from the production system that strikes me as its most transferable: if manual corrections become frequent, what needs fixing is how things get saved, not building a more comfortable deletion tool. Correcting a lot by hand isn't healthy maintenance, it's a symptom.
+
+**And what each person sees**, which framed as "which person sees what" is the wrong framing. Whatever is common to the project has to reach every agent, and therefore every person: that's what common means. The finer point is roles. A PM and a dev on the same project may have different access, or the same access organised differently, so that what is knowledge for one is general context for the other.
+
+What isn't common is the other half: **each person's own practices and methodology**, which differ partly because each of us works with different agents. That shouldn't be unified, and forcing it would repeat the mistake of wanting two systems with different problems to look alike.
+
+But there's a nice case in between. When several of those personal practices **converge on their own** — the same habit showing up in people who never agreed on it — that is exactly the signal the production system uses to promote a fact from candidate to confirmed: someone arriving at it independently. Applied to ways of working rather than to facts, it gives a route to standardise without imposing: what converges gets proposed, and the rest is either decided together or left where it is.
+
+None of it is solved. But the small exercise leaves two things I do take with me:
 
 - **Anything recording a situation in progress should be marked as such**, because it will expire and it helps to know where it will break.
-- **A check that can never fail is noise wearing the clothes of a guarantee.**
-
-The verifier's code is in [this site's repository](https://github.com/JaviMaligno/personal-website/tree/main/scripts/memory-audit), with its limits documented. It's deliberately small: the interesting part was never the tool, it was the number that came out of using it.
+- **The moment to fix a memory is when the work that makes it stale finishes**, not months later with a tool.

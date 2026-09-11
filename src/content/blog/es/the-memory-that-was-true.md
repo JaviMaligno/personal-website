@@ -16,31 +16,29 @@ La memoria no se equivocó. **Fue cierta y dejó de serlo mientras nadie miraba.
 
 Eso me llevó a una pregunta más incómoda: si esa estaba caducada y nadie lo sabía, ¿cuántas más?
 
-## La memoria que escribes tú y la que escribe un modelo
+## Dos memorias con reglas opuestas
 
-Resulta que tengo dos sistemas de memoria funcionando a la vez, con decisiones de diseño opuestas.
+Mantengo dos sistemas de memoria a la vez, y están construidos con criterios contrarios a propósito.
 
-Uno es **personal**: los archivos que Claude Code mantiene por proyecto. Los escribe el agente al cerrar sesión, yo los reviso, y salen de conversaciones en las que estuve delante.
+Uno es **personal**: los archivos que Claude Code guarda por proyecto. Los escribe el agente al cerrar sesión, yo los reviso, y salen de conversaciones en las que estuve delante.
 
 El otro es **de producción**: el sistema de conocimiento de un bot interno de DevOps que atiende peticiones por chat. Ahí la memoria la escribe un modelo pequeño después de cada respuesta, sin que nadie la supervise, a partir de interacciones con terceros que yo no he leído.
 
-Puestos uno al lado del otro, la diferencia no está donde esperaba:
+Ese segundo sistema tiene una maquinaria que el personal no necesita, y cada pieza responde a un problema concreto de escribir sin supervisión. Un hecho nuevo no entra como cierto: entra como candidato, y solo asciende cuando el bot vuelve a deducirlo por su cuenta en otra investigación. Lo que nadie confirma en un mes se borra. Lo que lleva noventa días sin que ninguna consulta lo recupere pasa a obsoleto y deja de inyectarse, aunque no se destruye: si alguien lo vuelve a confirmar, revive. Y cada noche un proceso agrupa lo que se parece demasiado y decide si fusionarlo.
 
 | | Personal | Producción |
 |---|---|---|
-| **Quién escribe** | el agente al cerrar sesión, supervisado | un modelo pequeño tras cada respuesta, solo |
+| **Quién escribe** | el agente al cerrar sesión | un modelo pequeño, solo |
+| **Con qué revisión** | la mía, antes de guardar | ninguna |
 | **A partir de qué** | conversaciones en las que estuve | interacciones con terceros |
-| **Confianza** | entra directa | `candidato` → `confirmado` tras redescubrirlo dos veces |
-| **Obsolescencia** | nadie la detecta | estado `obsoleto` + mantenimiento nocturno |
-| **Contradicción** | conviven en silencio | se registra y se resuelve |
-| **Utilidad** | no se mide | se cuenta cuántas veces se ha usado |
-| **Recuperación** | índice y relevancia | búsqueda semántica |
+| **Confianza** | entra directa | dos confirmaciones |
+| **Obsolescencia** | nadie la detecta | caducidad por desuso |
+| **Contradicción** | conviven en silencio | se resuelve |
+| **Utilidad** | no se mide | se cuenta el uso |
 
-La tentación era clara: el de producción es más sofisticado, así que llevémoslo al personal. Estuve a punto de proponerlo y era un error de bulto.
+Visto así, la diferencia no es de sofisticación. **Es quién escribe y con cuánta supervisión.** Cuando escribo yo, o reviso lo que se escribe, la confianza sale gratis: por eso el sistema personal puede permitirse ser ligero, y por eso trabajar con él es agradable. Cuando escribe un modelo solo, sobre material que nadie ha leído, hay que construir la confianza entera, y sin esa maquinaria el sistema se degrada solo.
 
-**La diferencia no es sofisticación, es quién escribe y con cuánta supervisión.** Cuando escribo yo, o reviso lo que se escribe, la confianza sale gratis: por eso el sistema personal puede permitirse ser ligero, y por eso trabajar con él es agradable. Cuando escribe un modelo solo, sobre material que nadie ha leído, hay que construir la confianza entera —promoción por evidencia repetida, detección de contradicciones, olvido de lo que nadie usa— y sin esa maquinaria el sistema se degrada solo.
-
-Portar una cosa a la otra no habría mejorado nada. Habría añadido ceremonia a un sitio donde la revisión humana ya hace ese trabajo.
+Son problemas distintos y no tiene sentido que se parezcan. Llevar la promoción por evidencia y el olvido nocturno a una carpeta que reviso yo cada día añadiría ceremonia donde ya hay una persona haciendo ese trabajo.
 
 ## Lo que caduca solo
 
@@ -52,34 +50,25 @@ Hay una distinción que tardé en ver y que ordena todo lo demás.
 
 Así que la verificación automática solo tiene sentido sobre la segunda mitad. Eso deja de ser una limitación para convertirse en el criterio de diseño: **solo se puede comprobar lo que puede caducar sin que nadie lo toque.**
 
-## Poner un número
+## Contarlas
 
-Escribí un verificador pequeño para dejar de especular. La idea es tonta a propósito: cada memoria puede llevar asociada una comprobación que se ejecuta contra el repositorio.
+Dejé que un agente montara un verificador, por ver si de la automatización salía algo que a mano no se viera. La idea es simple: asociar a cada memoria una comprobación que se ejecute contra el repositorio, del tipo *esta memoria afirma que existen esos workflows, así que debería haber al menos uno*. Si no lo hay, la memoria queda marcada.
 
 ```json
-{
-  "project_blog_publishing_mechanism": {
-    "checks": [
-      { "file_matches": ".github/workflows/scheduled-publish-*.yml" }
-    ]
-  }
-}
+{ "file_matches": ".github/workflows/scheduled-publish-*.yml" }
 ```
-
-Esa comprobación dice: *la memoria afirma que existen workflows de un solo uso, así que debería haber al menos uno*. Hoy no hay ninguno, la comprobación falla y la memoria sale **roja**.
-
-Cada memoria cae en uno de cuatro montones: **verde** (la comprobación pasa), **rojo** (afirma algo que ya no es cierto), **gris** (no admite comprobación) y **error** (no se puede saber). El cuarto importa más de lo que parece: una comprobación mal escrita no puede contarse como memoria obsoleta, porque inflaría el resultado justo en la dirección que me conviene.
-
-Antes de ejecutarlo dejé escrita una predicción, para que el resultado significara algo: el gris sería el montón mayor, y el rojo pequeño pero no cero.
 
 Sobre las 35 memorias de este proyecto:
 
-| estado | nº |
-|---|---|
-| verde | 7 |
-| **rojo** | **3** |
-| gris | 25 |
-| error | 0 |
+| estado | nº | |
+|---|---|---|
+| verde | 7 | la comprobación pasa |
+| **rojo** | **3** | afirma algo que ya no es cierto |
+| gris | 25 | no admite comprobación |
+
+Adelanto el juicio sobre la herramienta, porque no es lo interesante: **es torpe**. Cada comprobación hay que escribirla a mano, y escribirla obliga a leerse la memoria entera y decidir qué afirma. Hecho eso, ya sabes si sigue viva: el programa solo lo confirma. Revisar las 35 a mano habría costado parecido y habría dado el mismo número.
+
+Lo que sí justifica el rodeo es lo que apareció por el camino, y no es el número. ([El código está aquí](https://github.com/JaviMaligno/personal-website/tree/main/scripts/memory-audit), con sus límites documentados.)
 
 ## Las tres rojas dicen lo mismo
 
@@ -95,7 +84,7 @@ Ahí hay una regla práctica que no esperaba encontrar: **la memoria que registr
 
 ## Lo que no se puede comprobar, que es casi todo
 
-De las 31 memorias que no tenían comprobación, recorrí todas y solo 7 admitían una. Un revisor adversarial rechazó una más por forzada: era una preferencia mía, y la comprobación la sustituía por la presencia de un texto literal en un fichero, que es otra cosa.
+Recorrí las 31 memorias que no tenían comprobación y solo 7 admitían una. De esas 7 descarté otra por forzada: era una preferencia mía sobre cómo ordenar un documento, y la comprobación la sustituía por la presencia de un texto literal en un fichero. Reescribir ese encabezado la habría puesto roja sin que yo cambiara de criterio, y saltarme el criterio dejando el texto donde estaba la habría dejado verde. No medía lo que decía medir.
 
 Es decir: **alrededor del 80% de mi memoria no admite comprobación mecánica.**
 
@@ -113,27 +102,43 @@ El verde es correcto y la memoria está caducada a la vez. **Un verde certifica 
 
 Lo dejé anotado como pregunta para una persona, contando como gris. Una pregunta pendiente no es una comprobación.
 
-## La verificación también puede estar rota
+## Una comprobación que no puede fallar
 
-Esto es lo que más me hizo pensar, y me deja en peor lugar.
+Hay un último resultado, y es sobre el propio intento de automatizar: es la razón por la que no me fío del número más de lo que vale.
 
-El verificador necesitó cinco rondas de revisión adversarial. Los fallos graves que aparecieron compartían forma con lo que este artículo denuncia: **eran silenciosos y todos sesgaban hacia «todo correcto»**. Una memoria salía verde cuando el directorio que miraba no existía. Otra se clasificaba como «no comprobable» si cierta palabra aparecía antes en el texto, y desaparecía del informe sin ruido.
+Las primeras comprobaciones que entraron describían **cómo funciona el mecanismo hoy**: que existe el manifiesto, que ya no quedan workflows de un solo uso. Son afirmaciones ciertas, así que pasaban todas. Pero una comprobación así no vigila nada: describe el presente, y el presente siempre se describe a sí mismo. Para que la realidad pueda contradecir a una memoria, hay que codificar **lo que la memoria afirma**, no lo que pasa ahora.
 
-Y el mejor de todos fue mío. Escribí las primeras comprobaciones describiendo **cómo funciona el mecanismo hoy**, en vez de lo que la memoria afirma. Pasaban todas, claro. Una comprobación que describe el presente no puede fallar nunca, y **una comprobación que siempre pasa es peor que ninguna, porque da confianza falsa.**
+**Una comprobación que siempre pasa es peor que no tener ninguna**, porque una memoria sin comprobar se sabe sin comprobar, y una con una comprobación vacua parece vigilada.
 
-La herramienta que mide si la memoria sigue siendo cierta puede estar equivocada exactamente de la misma manera que la memoria que vigila, y con la misma consecuencia: nadie lo nota, porque el informe dice que todo está bien.
+Y ahí está el límite del enfoque entero: la herramienta que mide si una memoria sigue siendo cierta puede estar equivocada igual que la memoria que vigila, y con la misma consecuencia. Nadie lo nota, porque el informe dice que todo está bien. Un verificador de verdad necesitaría que alguien verificara al verificador, y eso ya no se sostiene solo.
 
-La prueba que uso ahora antes de escribir una comprobación son dos preguntas: qué hecho concreto la pondría en rojo, y si ese hecho podría ocurrir sin que la memoria dejase de ser cierta. Si la respuesta a la segunda es que sí, la comprobación no sirve.
+## Lo que de verdad lo arregla
+
+Después de todo el rodeo, lo que mantiene la memoria viva no es comprobarla: es **cerrar la sesión actualizándola**.
+
+Cuando un trabajo termina —el artículo se publica, el mecanismo cambia, la decisión se toma— ese es el momento en que la memoria que lo describía deja de ser cierta, y es también el único momento en que alguien tiene el contexto entero en la cabeza para corregirla. Media hora después ya cuesta, y una semana después hace falta reconstruirlo.
+
+La buena noticia es que el agente lo hace a menudo por su cuenta, sin que se lo pidan. La mala es que "a menudo" no es "siempre", y las tres rojas de arriba son exactamente los casos en los que no ocurrió. Así que conviene asegurarse: que cerrar sesión incluya preguntarse qué de lo que estaba escrito ha dejado de valer hoy.
+
+Es menos vistoso que un verificador y funciona mejor, porque ataca el problema donde se origina en vez de detectarlo meses después.
 
 ## Lo que solo aparece cuando hay más de uno
 
-Todo esto es de una persona y un proyecto. Tres rojas sobre treinta y cinco no es una tasa de obsolescencia de nada: es lo que salió de mi carpeta.
+Todo lo anterior es de una persona y un proyecto. Tres rojas sobre treinta y cinco no es una tasa de obsolescencia de nada: es lo que salió de mi carpeta.
 
-Lo interesante empieza donde se acaba mi caso. En el sistema de producción la memoria la escriben interacciones de otros, y ahí aparecen problemas que en solitario no existen: quién mantiene lo vigente cuando el archivo no tiene dueño, cómo se corrige algo que ya se ha citado en otras decisiones, y qué información corresponde compartir con cada persona.
+Lo interesante empieza donde se acaba mi caso, y es donde estoy ahora. Cuando la memoria la alimentan varias personas aparecen tres preguntas que en solitario no existen.
 
-Es en lo que estoy trabajando ahora, y no está resuelto. Pero el ejercicio pequeño ya dejó dos cosas que me llevo:
+**Quién mantiene lo vigente cuando el archivo no tiene dueño.** Hay más opciones de las que parece y ninguna es obviamente la buena: nombrar a alguien responsable; que cada uno actualice lo que toca su contribución, que es quien está en posición de saberlo; que las actualizaciones se propongan y luego se mantengan de forma automatizada; o dejar que lo que nadie usa se marchite solo, como hace el sistema de producción caducando por desuso. Probablemente convivan varias según el tipo de memoria.
+
+**Cómo se corrige lo que ya se ha citado.** Aquí me llevo una idea del sistema de producción que me parece la más transferible de todo él: si las correcciones manuales se vuelven frecuentes, lo que hay que arreglar es cómo se guarda, no construir una herramienta de borrado más cómoda. Corregir mucho a mano no es mantenimiento sano, es un síntoma.
+
+**Y qué ve cada uno**, que planteado como «qué persona ve qué» está mal planteado. Lo que es común al proyecto tiene que llegar a cada agente, y por tanto a cada persona: para eso es común. El matiz fino son los roles. Un PM y un dev del mismo proyecto pueden tener accesos distintos, o el mismo acceso organizado de otra forma, de modo que lo que para uno es conocimiento para el otro sea contexto general.
+
+Lo que no es común es la otra mitad: **las prácticas y la metodología de cada uno**, que difieren en parte porque cada uno trabaja con agentes distintos. Eso no hay que unificarlo, y forzarlo sería repetir el error de querer que dos sistemas con problemas distintos se parezcan.
+
+Pero hay un caso bonito en medio. Cuando varias de esas prácticas propias **convergen solas** —la misma costumbre aparece en gente que no se ha puesto de acuerdo— eso es exactamente la señal que el sistema de producción usa para ascender un hecho de candidato a confirmado: que alguien vuelva a llegar a él por su cuenta. Aplicada a la forma de trabajar en vez de a los hechos, da una vía para estandarizar sin imponer: lo que converge se propone, y lo demás se decide en conjunto o se queda donde está.
+
+No está resuelto. Pero el ejercicio pequeño deja dos cosas que sí me llevo:
 
 - **Lo que registra una situación en curso hay que marcarlo como tal**, porque va a caducar y conviene saber por dónde va a romper.
-- **Una comprobación que nunca puede fallar es ruido con aspecto de garantía.**
-
-El código del verificador está en el [repositorio de esta web](https://github.com/JaviMaligno/personal-website/tree/main/scripts/memory-audit), con sus límites documentados. Es pequeño a propósito: lo interesante no era la herramienta, era el número que salió al usarla.
+- **El momento de arreglar una memoria es cuando termina el trabajo que la deja obsoleta**, no meses después con una herramienta.
