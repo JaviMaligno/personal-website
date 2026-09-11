@@ -95,13 +95,15 @@ The instinct when you measure something is to want the number to go up. Here, pu
 
 ## The green that doesn't mean what it looks like
 
-The most useful result of the exercise is one of the greens.
+The most useful result of the exercise was one of the greens.
 
-A memory about publishing automation comes out **green**: its seven files all exist, all verified. And inside, that same memory states that a credential expires on a date that has already passed.
+A memory about publishing automation came out **green**: its seven files all exist, all verified. And inside, that same memory said a credential expired on a date that by then was a month past.
 
-The green is correct and the memory is stale, both at once. **A green certifies what was encoded, not the whole memory.** There's no contradiction here: there's a tool answering exactly the question it was asked, and a reading of mine that wanted it to answer a larger one.
+The green was correct and the memory was stale, both at once. **A green certifies what was encoded, not the whole memory.** There's no contradiction: there's a tool answering exactly the question it was asked, and a reading of mine that wanted it to answer a larger one.
 
-I left it recorded as a question for a person, still counting as grey. A pending question is not a check.
+When I went to fix it, the credential turned out to be perfectly alive: it had been renewed in August and nobody wrote that down anywhere. So the fix wasn't correcting the date, because a new date expires again in sixty days and the problem repeats. It was **removing it and recording where the state can be checked** — which turned out to be a daily workflow that was already checking exactly that and writing it into its own log.
+
+The memory went from asserting a fact with an expiry date to saying where to look. The second kind doesn't age.
 
 ## A check that cannot fail
 

@@ -95,13 +95,15 @@ El instinto al medir algo es querer que el número suba. Aquí subir el número 
 
 ## El verde que no significa lo que parece
 
-El resultado más útil del ejercicio es una de las verdes.
+El resultado más útil del ejercicio fue una de las verdes.
 
-Una memoria sobre la automatización de publicaciones sale **verde**: sus siete ficheros existen, todos comprobados. Y dentro, esa misma memoria dice que una credencial caduca en una fecha que ya pasó.
+Una memoria sobre la automatización de publicaciones salió **verde**: sus siete ficheros existen, todos comprobados. Y dentro, esa misma memoria decía que una credencial caducaba en una fecha que para entonces había pasado hacía un mes.
 
-El verde es correcto y la memoria está caducada a la vez. **Un verde certifica lo que se codificó, no la memoria entera.** No hay contradicción: hay una herramienta que responde exactamente la pregunta que se le hizo, y una lectura mía que quería que respondiera otra más grande.
+El verde era correcto y la memoria estaba caducada a la vez. **Un verde certifica lo que se codificó, no la memoria entera.** No hay contradicción: hay una herramienta respondiendo exactamente la pregunta que se le hizo, y una lectura mía que quería que respondiera otra más grande.
 
-Lo dejé anotado como pregunta para una persona, contando como gris. Una pregunta pendiente no es una comprobación.
+Al ir a arreglarla, la credencial resultó estar perfectamente viva: se había renovado en agosto y nadie lo escribió en ningún sitio. Así que el arreglo no era corregir la fecha, porque una fecha nueva vuelve a caducar en sesenta días y el problema se repite. Era **quitarla y dejar dicho dónde se consulta el estado**, que resultó ser un workflow diario que ya lo comprobaba y lo dejaba escrito en su propio registro.
+
+La memoria pasó de afirmar un hecho con fecha de caducidad a decir dónde mirar. Lo segundo no envejece.
 
 ## Una comprobación que no puede fallar
 
