@@ -59,7 +59,7 @@ Dejé que un agente montara un verificador, por ver si de la automatización sal
 { "file_matches": ".github/workflows/scheduled-publish-*.yml" }
 ```
 
-Sobre las 35 memorias de este proyecto:
+Sobre las 35 memorias que este proyecto tenía el 11 de septiembre:
 
 | estado | nº | |
 |---|---|---|

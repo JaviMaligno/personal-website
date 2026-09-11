@@ -59,7 +59,7 @@ I let an agent build a verifier, to see whether automating it turned up anything
 { "file_matches": ".github/workflows/scheduled-publish-*.yml" }
 ```
 
-Across the 35 memories for this project:
+Across the 35 memories this project had on 11 September:
 
 | state | count | |
 |---|---|---|
