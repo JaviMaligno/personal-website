@@ -1,7 +1,7 @@
 ---
 title: "Making yourself replaceable"
 description: "The ability to let someone else take over your work without needing you for every decision. How to prepare a handover when you work with agents: separating the current state from its history while preserving the reasons."
-pubDate: 2026-09-11
+pubDate: 2026-09-19
 tags: ["Agents", "Context", "Teams", "Memory"]
 lang: en
 translationKey: make-yourself-replaceable

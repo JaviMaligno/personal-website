@@ -1,7 +1,7 @@
 ---
 title: "Conseguir que no dependan de ti"
 description: "La capacidad de conseguir que otro pueda hacerse cargo de tu trabajo sin necesitarte para cada decisión. Cómo preparar un relevo cuando trabajas con agentes: separar el estado actual de su historial y conservar los motivos."
-pubDate: 2026-09-11
+pubDate: 2026-09-19
 tags: ["Agentes", "Contexto", "Equipos", "Memoria"]
 lang: es
 translationKey: make-yourself-replaceable
