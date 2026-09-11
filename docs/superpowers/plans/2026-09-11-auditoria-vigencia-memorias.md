@@ -10,6 +10,45 @@
 
 **Spec:** [`../specs/2026-09-11-dos-regimenes-de-memoria-design.md`](../specs/2026-09-11-dos-regimenes-de-memoria-design.md) §4
 
+> ## Estado: ejecutado el 2026-09-11, con dos desviaciones de fondo
+>
+> Las tareas 1 a 4 se ejecutaron y están en `44058c0`. **El código que aparece
+> más abajo en este plan ya no es el código que hay en el repositorio**, y no
+> debe regenerarse desde aquí: llevaba dentro los fallos que cinco rondas de
+> revisión adversarial fueron encontrando. El estado real está en
+> `scripts/memory-audit/`, y su README documenta el vocabulario, el contrato de
+> salida y el modelo de amenaza asumido.
+>
+> **Desviación 1 — las comprobaciones no viven en el frontmatter.** Este plan
+> las declaraba dentro de cada memoria y las parseaba a mano, con el argumento
+> de que un parser de YAML completo traería una dependencia y una superficie de
+> ataque innecesarias. Salió al revés: ese parser fue la causa común de casi
+> todos los fallos —falso gris cuando la palabra `checks:` aparecía antes en
+> otro campo, falso verde cuando una línea en blanco cortaba la lista, ReDoS
+> cuadrático, comentarios de fin de línea, bloques duplicados, listas en flujo,
+> indentación asimétrica—. Las comprobaciones viven ahora en
+> `scripts/memory-audit/checks.json`, versionado en el repositorio, y
+> `parse-memory.mjs` se borró. El verificador **no lee nunca el cuerpo de una
+> memoria**: recibe solo la lista de nombres de fichero, de modo que la
+> privacidad pasa a ser una propiedad del diseño en vez de depender de que el
+> informe esté bien saneado.
+>
+> **Desviación 2 — un cuarto estado, `error`.** Ya estaba anticipado en el
+> Self-Review de este plan, pero conviene subrayar por qué resultó ser lo más
+> importante: una comprobación que no se puede evaluar no puede contarse como
+> memoria obsoleta, porque inflaría el dato justo en la dirección que conviene a
+> la tesis del artículo.
+>
+> **El principio que faltaba.** Una comprobación codifica *lo que la memoria
+> afirma*, no el estado actual del mundo. Las primeras que escribí describían el
+> mecanismo nuevo, así que pasaban trivialmente: una comprobación que siempre
+> pasa es peor que ninguna, porque da confianza falsa. Está escrito en el
+> `_readme` de `checks.json` con una prueba operativa para escribir las
+> siguientes.
+>
+> **Resultado de la Task 6**, ejecutada con cuatro memorias anotadas: 35
+> memorias, 3 verdes, **1 roja**, 31 grises, 0 errores, 0 huérfanas.
+
 ## Global Constraints
 
 - **Nunca ejecutar shell ni código desde una memoria.** El vocabulario es cerrado: `file_exists`, `file_absent`, `file_contains`, `date_passed`. Cualquier clave desconocida es un error de la memoria, no una extensión.

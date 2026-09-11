@@ -100,17 +100,42 @@ Declarativo e interpretado por el verificador, **nunca por la shell**. Un comand
 arbitrario dentro de un archivo que redacta un agente es ejecución arbitraria; se
 descarta por eso, no por complejidad.
 
-```yaml
-checks:
-  - file_exists: .github/publish-schedule.json
-  - file_absent: .github/workflows/scheduled-publish-*.yml
-  - file_contains: { path: src/content/config.ts, text: linkedinLinks }
-  - date_passed: 2026-09-19
+Las comprobaciones viven en `scripts/memory-audit/checks.json`, **dentro del
+repositorio**, indexadas por nombre de memoria. No en el frontmatter de la memoria:
+se intentó así y el parser de YAML a mano resultó ser la causa común de casi todos
+los fallos encontrados en revisión. La consecuencia importante es que el verificador
+**no lee nunca el cuerpo de una memoria** —recibe solo la lista de nombres—, así que
+la privacidad de §6 es una propiedad del diseño y no depende de sanear el informe.
+
+```json
+{
+  "memories": {
+    "project_blog_publishing_mechanism": {
+      "checks": [{ "file_matches": ".github/workflows/scheduled-publish-*.yml" }]
+    }
+  }
+}
 ```
+
+Vocabulario: `file_exists`, `file_matches` (al menos uno casa), `file_absent`
+(ninguno casa), `file_contains` y `date_passed`.
+
+**Principio de polaridad.** Una comprobación codifica *lo que la memoria afirma*,
+no el estado actual del mundo. Es el error más fácil de cometer y el más difícil de
+ver: las primeras comprobaciones que se escribieron describían el mecanismo nuevo,
+pasaban trivialmente y salían verdes. **Una comprobación que siempre pasa es peor
+que ninguna**, porque da confianza falsa. Prueba antes de añadir una entrada: escriba
+qué hecho la pondría roja, y descártela si ese hecho podría ocurrir sin que la memoria
+dejase de ser cierta.
 
 Lo que no se deje expresar así queda como pregunta de revalidación en texto libre,
 marcada explícitamente como no determinista, para no confundir una comprobación con
 una opinión.
+
+**Un verde certifica lo codificado, no la memoria entera.** Una memoria puede salir
+verde porque los ficheros que nombra existen y contener a la vez una afirmación
+caducada que ninguna comprobación toca. El artículo tiene que decirlo: si no, vende
+la herramienta como algo que no es.
 
 ### 4.4 Salida
 
