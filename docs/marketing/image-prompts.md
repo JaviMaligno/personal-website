@@ -4,6 +4,36 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## the-memory-that-was-true
+
+- **Article:** `src/content/blog/{en,es}/the-memory-that-was-true.md`
+- **Image:** `public/blog/the-memory-that-was-true.png`
+- **Generated:** 2026-09-20 (`codex exec -s workspace-write`)
+- **Watch for:** la desproporción de las tres columnas ES la imagen. GRIS (25)
+  tiene que dominar visualmente sobre VERDE (7) y ROJO (3); si una regeneración
+  las iguala, la ilustración contradice la tesis del artículo, que es que casi
+  toda la memoria no admite comprobación. Los otros dos detalles que deben
+  sobrevivir: la tarjeta roja ampliada con su línea de check fallida, y la
+  tarjeta verde con el aviso ámbar de fecha caducada (el "verde que no significa
+  lo que parece"). Los títulos de las tarjetas son genéricos a propósito: las
+  memorias reales son privadas.
+
+```text
+Asset type: 1020x510, 2:1 hero artwork for a technical developer blog.
+Primary request: A refined technical editorial bitmap illustration of a concrete audit of an agent's stored project memories. Do not include the article title or any decorative headline, prose captions, slogans, notebooks, mugs, or unrelated props.
+Scene/backdrop: a dark graphite technical workspace, entirely devoted to a left-to-right audit diagram, with crisp high-contrast panel edges and lightly textured off-white cards.
+Composition/framing: wide landscape. Left third: a stack of memory cards, small panels with a short title line and date. Centre: a compact vertical verifier module with a readable file tree: .github/ then workflows/ then ci.yml, release.yml, tests.yml; it has no scheduled-publish file. Arrows go from stack to verifier then to the result board.
+Right half: the result board has three truly unequal vertical columns labelled exactly GREEN, RED, GREY. Green: a narrow short column, tally 7, a few cards. Red: a narrow medium column, tally 3, exactly three cards. Grey: a very wide and dramatically tallest column, tally 25, towers far above the other two and dominates the right side visually; it contains a dense tall stack/grid of many small grey cards, visibly at least twice the height of GREEN and RED. This disproportion is the most important visual statement.
+A single RED card is pulled out and enlarged in the foreground, with red border, failed X, title "CI publish schedule", date "30 AUG 2026", and readable JSON line {"file_matches": ".github/workflows/scheduled-publish-*.yml"} followed by "NO MATCHING FILES". Green has one card with a teal passing tick plus an amber warning triangle and the readable expired date "EXPIRES 01 SEP 2026".
+Style/medium: crisp bitmap technical editorial illustration, premium AI/developer blog aesthetic, dense but clean information design, subtly dimensional panels and paper cards; avoid a photorealistic desk scene.
+Lighting/mood: forensic, calm, precise, professional.
+Color palette: dark graphite, off-white, teal, amber. Restrained red ONLY inside the RED column and pulled-out red card; all other components must contain no red. Grey must dominate in scale and quantity, not only via its number.
+Text (verbatim): only "GREEN", "RED", "GREY", "7", "3", "25", card dates, the named file-tree text, and the single JSON check line. Generic small card titles are fine.
+Constraints: no people, robots, mascots, logos, brand names, article title, headline, slogan, prose poster text, purple gradient blobs, bokeh.
+```
+
+---
+
 ## nobody-will-check-behind-you
 
 - **Article:** `src/content/blog/{en,es}/nobody-will-check-behind-you.md`
