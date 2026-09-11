@@ -1,0 +1,76 @@
+{
+  "_readme": [
+    "Comprobaciones de vigencia por memoria. La clave es el nombre del",
+    "fichero de memoria sin extension. Una memoria que no aparece aqui",
+    "es gris: no admite comprobacion, y eso es correcto para las",
+    "preferencias y los criterios.",
+    "",
+    "PRINCIPIO: una comprobacion codifica LO QUE LA MEMORIA AFIRMA, no el",
+    "estado actual del mundo. Solo asi la realidad puede contradecirla: si",
+    "la memoria dice \"esto existe\", la comprobacion pregunta por eso, y el",
+    "dia que deje de existir la memoria sale roja, que es justo para lo que",
+    "existe esta herramienta. Escribir en su lugar lo que hay hoy (\"ya no",
+    "existe aquello, y ahora existe esto otro\") produce una comprobacion",
+    "que pasa siempre: describe el presente, y el presente no se contradice",
+    "a si mismo. Una comprobacion que siempre pasa es PEOR que ninguna,",
+    "porque da confianza falsa; sin entrada la memoria sale gris, que es un",
+    "resultado honesto.",
+    "",
+    "PRUEBA ANTES DE ANADIR UNA ENTRADA: escriba que hecho concreto la",
+    "volveria roja. Si no se le ocurre ninguno, la comprobacion no vigila",
+    "nada y no debe entrar. Y si ese hecho podria ocurrir sin que la",
+    "memoria dejase de ser cierta (un fichero movido de carpeta, un emoji",
+    "cambiado), tampoco: un falso rojo acusa a una memoria sana.",
+    "",
+    "CUIDADO CON date_passed: afirma \"esta fecha ya paso\" y PASA cuando ya",
+    "paso. No sirve para caducar nada (\"el token vence el X\"): saldria",
+    "verde precisamente a partir del dia en que la memoria deja de valer.",
+    "",
+    "Por que esta cada entrada:",
+    "  project_blog_publishing_mechanism: afirma que programar un articulo",
+    "    se hace con un workflow cron de un solo uso POR ARTICULO",
+    "    (scheduled-publish-<slug>.yml). Se codifica como que exista al",
+    "    menos uno de esos ficheros. Hoy no hay ninguno (el mecanismo paso",
+    "    a un workflow generico + manifiesto), asi que sale roja: correcto.",
+    "  project_linkedin_api_automation: nombra literalmente los ficheros de",
+    "    la infraestructura que manda usar. Si dejan de estar, su consejo",
+    "    (\"usa la API, no el navegador\") ya no se puede seguir.",
+    "  feedback_linkedin_external_links: su how-to se apoya en que",
+    "    buildPostText (scripts/linkedin/utils.js) trate el frontmatter",
+    "    repoUrl. Sin eso, la regla que da es inaplicable.",
+    "  project_vitamind_integration: afirma que el blog lleva LaTeX con",
+    "    remark-math + rehype-katex. Si se quitan las dependencias, esa",
+    "    parte de la memoria deja de ser cierta.",
+    "",
+    "Memorias sin entrada a proposito: las de criterio y proceso (voz del",
+    "blog, escalonar publicaciones, ramas desde main, probar en navegador)",
+    "y las que hablan de OTROS repositorios o de acuerdos con personas: no",
+    "hay nada en este repositorio que pueda contradecirlas."
+  ],
+  "memories": {
+    "project_blog_publishing_mechanism": {
+      "checks": [
+        { "file_matches": ".github/workflows/scheduled-publish-*.yml" }
+      ]
+    },
+    "project_linkedin_api_automation": {
+      "checks": [
+        { "file_exists": ".github/workflows/linkedin-post.yml" },
+        { "file_exists": ".github/workflows/linkedin-token-check.yml" },
+        { "file_exists": "scripts/linkedin/post-standalone.js" },
+        { "file_exists": "scripts/linkedin-oauth-setup.js" }
+      ]
+    },
+    "feedback_linkedin_external_links": {
+      "checks": [
+        { "file_contains": { "path": "scripts/linkedin/utils.js", "text": "repoUrl" } }
+      ]
+    },
+    "project_vitamind_integration": {
+      "checks": [
+        { "file_contains": { "path": "package.json", "text": "rehype-katex" } },
+        { "file_contains": { "path": "package.json", "text": "remark-math" } }
+      ]
+    }
+  }
+}
