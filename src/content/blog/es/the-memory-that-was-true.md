@@ -6,6 +6,7 @@ tags: ["Agentes", "Memoria", "Contexto", "Verificación"]
 lang: es
 translationKey: the-memory-that-was-true
 heroImage: "/blog/the-memory-that-was-true.png"
+repoUrl: "https://github.com/JaviMaligno/personal-website/tree/main/scripts/memory-audit"
 ---
 
 El artículo anterior terminaba con una pregunta abierta: dónde vive cada tipo de contexto. Mientras lo preparaba, mi agente me sirvió una memoria obsoleta y estuve a punto de hacerle caso.

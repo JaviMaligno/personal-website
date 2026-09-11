@@ -6,6 +6,7 @@ tags: ["Agents", "Memory", "Context", "Verification"]
 lang: en
 translationKey: the-memory-that-was-true
 heroImage: "/blog/the-memory-that-was-true.png"
+repoUrl: "https://github.com/JaviMaligno/personal-website/tree/main/scripts/memory-audit"
 ---
 
 The previous article ended on an open question: where each kind of context belongs. While I was preparing it, my agent handed me a stale memory and I very nearly acted on it.
