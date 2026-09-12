@@ -32,18 +32,15 @@ That table is what the agent sees. The only thing I varied is **whether it also 
   <rect x="200" y="18" width="200" height="46" rx="6" fill="#1e293b" stroke="#2dd4bf" stroke-width="1.4"/>
   <text x="300" y="40" fill="#e2e8f0" font-size="13" text-anchor="middle">same system, same fault</text>
   <text x="300" y="56" fill="#94a3b8" font-size="12" text-anchor="middle">five passes of one batch</text>
-
   <path d="M300 64 L300 88 M170 88 L430 88 M170 88 L170 106 M430 88 L430 106" stroke="#64748b" stroke-width="1.3" fill="none"/>
   <path d="M166 100 L170 108 L174 100 Z" fill="#64748b"/>
   <path d="M426 100 L430 108 L434 100 Z" fill="#64748b"/>
-
   <rect x="40" y="110" width="260" height="118" rx="6" fill="#171f2e" stroke="#f59e0b" stroke-width="1.4"/>
   <text x="58" y="132" fill="#fbbf24" font-size="13">without the code</text>
   <text x="58" y="156" fill="#cbd5e1" font-size="12">· the results table</text>
   <text x="58" y="176" fill="#cbd5e1" font-size="12">· shallow run logs</text>
   <text x="58" y="196" fill="#cbd5e1" font-size="12">· the document corpus</text>
   <text x="58" y="218" fill="#64748b" font-size="11">n = 20</text>
-
   <rect x="320" y="110" width="240" height="118" rx="6" fill="#172a2a" stroke="#2dd4bf" stroke-width="1.4"/>
   <text x="338" y="132" fill="#5eead4" font-size="13">with the code</text>
   <text x="338" y="156" fill="#cbd5e1" font-size="12">· everything on the left</text>
@@ -74,6 +71,8 @@ The headline isn't the attribution. Blaming the model outright happened four tim
 
 What did survive is the behaviour. **Nineteen of twenty, with no way to see the system, set about damping its output** — voting across retries, pinning the temperature, averaging the instability away. With the code in front of them, nine. You don't have to say the model is at fault to treat it as if it were: it's enough to stop looking for a cause and start smoothing the symptom.
 
+> **Added later.** A control I ran after publishing this took the language model out of the pipeline entirely and put a frozen random forest in its place, same fault, same everything else. The damping didn't move: 19/20 in both arms — so *that* row isn't about language models, it's about diagnosing something you can't open. Finding the cause did move, a little: 0-2/20 with the model against 4-8/20 with the forest. What is large is what they accuse the head of — the model gets called random by nature (14/20 against 4/20), the forest gets accused of being retrained by the system. That's [the third article](/en/blog/knew-it-wasnt-the-model).
+
 ## The second fault: where blaming the model is half right
 
 The first scenario has a weakness I could see from the start. Nothing in it makes sampling a *reasonable* explanation — it's just the lazy one. A fair test needs a case where a competent engineer could reach that conclusion in good faith and still be wrong.
@@ -81,37 +80,29 @@ The first scenario has a weakness I could see from the start. Nothing in it make
 So I built a second one, and this is the part I'd defend hardest.
 
 <figure class="exp-fig">
-<svg viewBox="0 0 600 250" role="img" aria-label="Diagram of the second fault: a page cache shared across a batch is keyed by project name and section, so two different projects that happen to share a name collide. The second one to ask for a section receives the first one's documentation, and classifies it correctly — but it is reading the wrong project.">
+<svg viewBox="0 0 600 215" role="img" aria-label="Diagram of the second fault: a page cache shared across a batch is keyed by project name and section, so two different projects that happen to share a name collide. The second one to ask for a section receives the first one's documentation, and classifies it correctly — but it is reading the wrong project.">
   <rect x="26" y="30" width="150" height="52" rx="6" fill="#1e293b" stroke="#2dd4bf" stroke-width="1.3"/>
   <text x="101" y="52" fill="#e2e8f0" font-size="13" text-anchor="middle">project A</text>
   <text x="101" y="70" fill="#94a3b8" font-size="11" text-anchor="middle">named "atlas"</text>
-
   <rect x="26" y="150" width="150" height="52" rx="6" fill="#1e293b" stroke="#2dd4bf" stroke-width="1.3"/>
   <text x="101" y="172" fill="#e2e8f0" font-size="13" text-anchor="middle">project B</text>
   <text x="101" y="190" fill="#94a3b8" font-size="11" text-anchor="middle">also named "atlas"</text>
-
   <rect x="235" y="86" width="140" height="60" rx="6" fill="#2a1f14" stroke="#f59e0b" stroke-width="1.5"/>
   <text x="305" y="108" fill="#fbbf24" font-size="13" text-anchor="middle">shared cache</text>
   <text x="305" y="128" fill="#fbbf24" font-size="11" text-anchor="middle" font-family="ui-monospace,monospace">key: (name, section)</text>
-
   <path d="M176 56 L235 100" stroke="#2dd4bf" stroke-width="1.3" fill="none"/>
   <path d="M228 94 L237 102 L230 104 Z" fill="#2dd4bf"/>
   <rect x="182" y="64" width="66" height="16" fill="#1a1a24"/>
   <text x="186" y="76" fill="#5eead4" font-size="11">stores first</text>
-
   <path d="M176 176 L235 134" stroke="#f59e0b" stroke-width="1.3" fill="none"/>
   <path d="M228 138 L237 132 L231 128 Z" fill="#f59e0b"/>
   <rect x="182" y="148" width="68" height="16" fill="#1a1a24"/>
   <text x="186" y="160" fill="#fbbf24" font-size="11">asks second</text>
-
   <rect x="424" y="86" width="150" height="60" rx="6" fill="#171f2e" stroke="#64748b" stroke-width="1.3"/>
   <text x="499" y="108" fill="#e2e8f0" font-size="13" text-anchor="middle">the model</text>
   <text x="499" y="128" fill="#94a3b8" font-size="11" text-anchor="middle">reads A, labels B</text>
-
   <path d="M375 116 L424 116" stroke="#f59e0b" stroke-width="1.5" fill="none"/>
   <path d="M416 112 L426 116 L416 120 Z" fill="#f59e0b"/>
-
-  <text x="300" y="228" fill="#94a3b8" font-size="12" text-anchor="middle">which project goes first depends on the batch's iteration order</text>
 </svg>
 <figcaption>A cache shared across the runs of one batch, keyed by project and section. Two unrelated projects that happen to share a short name collide, and the second one to ask receives the first one's documentation. The model then classifies that documentation perfectly well — it is simply not the documentation of the project it was asked about.</figcaption>
 </figure>
@@ -162,15 +153,12 @@ So it isn't incuriosity about data. Several of these responses did genuinely rig
   <text x="20" y="24" fill="#94a3b8" font-size="12">out of 20 responses per group</text>
   <rect x="380" y="14" width="12" height="12" fill="#f59e0b"/><text x="398" y="24" fill="#cbd5e1" font-size="12">without the code</text>
   <rect x="380" y="32" width="12" height="12" fill="#2dd4bf"/><text x="398" y="42" fill="#cbd5e1" font-size="12">with the code</text>
-
   <text x="20" y="72" fill="#e2e8f0" font-size="13">patched the symptom</text>
   <rect x="200" y="60" width="332" height="15" rx="2" fill="#f59e0b"/><text x="540" y="72" fill="#fbbf24" font-size="12">19</text>
   <rect x="200" y="79" width="157" height="15" rx="2" fill="#2dd4bf"/><text x="365" y="91" fill="#5eead4" font-size="12">9</text>
-
   <text x="20" y="132" fill="#e2e8f0" font-size="13">found the cause</text>
   <rect x="200" y="120" width="52" height="15" rx="2" fill="#f59e0b"/><text x="260" y="132" fill="#fbbf24" font-size="12">3</text>
   <rect x="200" y="139" width="350" height="15" rx="2" fill="#2dd4bf"/><text x="558" y="151" fill="#5eead4" font-size="12">20</text>
-
   <text x="20" y="192" fill="#e2e8f0" font-size="13">asked for the data</text>
   <rect x="200" y="180" width="2" height="15" rx="1" fill="#f59e0b"/><text x="210" y="192" fill="#fbbf24" font-size="12">0</text>
   <rect x="200" y="199" width="2" height="15" rx="1" fill="#2dd4bf"/><text x="210" y="211" fill="#5eead4" font-size="12">0</text>
@@ -211,4 +199,4 @@ And the ceremony earns its keep. Scenarios hashed before the run so they can't b
 
 ---
 
-*Code, data, and the script that recomputes every number in this article: [blaming-the-model](https://github.com/JaviMaligno/blaming-the-model). The observation this started from is in [the previous article](/en/blog/blaming-the-model).*
+*Code, data, and the script that recomputes every number in this article: [blaming-the-model](https://github.com/JaviMaligno/blaming-the-model). The series: [the observation](/en/blog/blaming-the-model), this measurement, and [the control that reframed it](/en/blog/knew-it-wasnt-the-model).*
