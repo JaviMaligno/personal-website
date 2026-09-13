@@ -143,7 +143,7 @@ aparezcan conductas que no hemos imaginado, y una rúbrica fijada de antemano la
 aplastaría contra la categoría más cercana.
 
 - 3 modelos —`gpt-5.6-sol-tst` (grande), `gpt-5.6-luna-tst` (pequeño) y
-  `gemini-2.5-pro` (otro proveedor)—, 8 temas, pegotes repartidos por todo el
+  `claude-opus-5` (otro proveedor)—, 8 temas, pegotes repartidos por todo el
   rango de similaridad, 2 longitudes. ≈30 conversaciones.
 - **Lectura manual de las transcripciones completas.** De ahí sale la rúbrica.
 
@@ -239,27 +239,25 @@ Verificado el 2026-09-13. Key del gateway: `blog-paste-experiment`, guardada en
 | Escalera de tamaño, misma familia | `gpt-5.6-sol-tst` ($5/$30), `gpt-5.6-terra-tst` ($2/$12), `gpt-5.6-luna-tst` ($0,20/$1,20) | Gateway LiteLLM (requiere VPN) | ✅ verificados |
 | Generación anterior, control | `gpt-5.4-tst`, `gpt-5.4-mini-tst` | Gateway | ✅ verificados |
 | Similaridad | `text-embedding-3-small-tst` (1536 dim) | Gateway | ✅ verificado |
-| Otro proveedor | `gemini-2.5-pro`, `gemini-2.5-flash` | Vertex, endpoint OpenAI-compat, us-central1 | ✅ verificados. No hay Gemini 3 en el proyecto |
-| Otro proveedor | `claude-opus-5` ($5/$25), `claude-sonnet-5` ($2/$10) | Azure AI Foundry (cuenta AIServices) | ⛔ bloqueado, ver abajo |
+| Otro proveedor | `gemini-2.5-pro`, `gemini-2.5-flash` | Vertex, endpoint OpenAI-compat, `us-central1` | ✅ verificados. No hay Gemini 3 en el proyecto |
+| Otro proveedor | `claude-opus-5` ($5/$25), `claude-sonnet-5` ($2/$10) | Vertex, `rawPredict`, localización **`global`** | ✅ verificados |
 
-**Estado de Claude (2026-09-13).** No está resuelto y la Fase 0 no lo espera.
+**Nueve modelos, tres proveedores, todos comprobados con llamada real el
+2026-09-13** (no con listados de catálogo, que mienten).
 
-- **Vertex**: los modelos aparecen en el catálogo de `us-central1` pero no están
-  habilitados en el proyecto (`Publisher model ... not found`). Habilitarlos en
-  Model Garden implica aceptar términos de Anthropic en nombre de la empresa.
-- **Azure ML serverless endpoint** (única superficie con escritura propia, en el
-  proyecto `javier-2208`): `ServerlessModelNotAvailableInRegion`. Claude no se
-  sirve por esa vía.
-- **Azure AIServices**: es la superficie correcta y **el permiso llega** — el
-  intento falló solo por `ModelProviderData` ausente (industry / organizationName
-  / countryCode), no por autorización. Pero las únicas cuentas AIServices
-  existentes pertenecen a otras personas (`rafae-m9snio9b-eastus2`, `tst-agent`,
-  `tst-neil`), y esta cuenta no puede crear cuentas nuevas
-  (`CognitiveServices/accounts/write` denegado en TEST y ausente en SANDBOX).
+Tres trampas de acceso que costaron encontrar y que el arnés debe respetar:
 
-Decisión: **Fase 0 arranca con GPT y Gemini**, que están verificados. Claude entra
-en Fase 1, que es donde el plantel completo importa. Si no se desbloquea a tiempo,
-el artículo lo dice y compara dos proveedores en vez de tres.
+- **Claude va por `global`, no por `us-central1`.** En `us-central1` la cuota
+  `online_prediction_input_tokens_per_minute` está a cero y la primera llamada
+  devuelve 429. La ruta es
+  `https://aiplatform.googleapis.com/v1/projects/{p}/locations/global/publishers/anthropic/models/{m}:rawPredict`.
+- **Cada modelo de Anthropic es una compra de Marketplace independiente**
+  (`anthropic-904` para Opus 5, `anthropic-896` para Sonnet 5), con su propio
+  cuestionario y su propia aceptación de términos. Añadir un tercer Claude más
+  adelante no es gratis en trámite.
+- **Gemini y Claude no comparten endpoint.** Gemini funciona por el OpenAI-compat
+  de `us-central1`; Claude por ahí devuelve `Precondition check failed`.
+  Dos clientes distintos en el arnés.
 
 Notas que afectan al código del arnés:
 
