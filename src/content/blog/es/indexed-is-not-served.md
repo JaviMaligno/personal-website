@@ -9,8 +9,8 @@ heroImage: "/blog/indexed-is-not-served.png"
 linkedinLinks:
   - label: "VitaminD Explorer"
     url: "https://getvitamind.app"
-  - label: "Cuánto tiempo al sol hace falta"
-    url: "https://getvitamind.app/cuanto-sol-vitamina-d"
+  - label: "How long in the sun you need"
+    url: "https://getvitamind.app/en/how-long-in-sun-vitamin-d"
 ---
 
 El 15 de agosto [VitaminD Explorer](https://getvitamind.app) sirvió 879
