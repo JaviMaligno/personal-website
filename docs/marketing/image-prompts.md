@@ -17,11 +17,12 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
   CRAWLED, SERVED with **only the third one shut**. Reversed, or with a
   different gate closed, the image tells the opposite of the article. The flat
   part of the chart line must sit at zero, not merely lower.
-- **Known defect in the shipped image:** the chart's y-axis is labelled
+- **Known inaccuracy, kept on purpose:** the chart's y-axis is labelled
   10K/20K/30K, i.e. 30,000 impressions *per day*. The real figure is 1,427 on
-  14 Aug; 30K was the 28-day total. Everything else came out right on the first
-  pass. Fix on any regeneration: label the axis 500 / 1K / 1.5K, or drop the
-  numeric labels.
+  14 Aug; 30K was the 28-day total. Flagged and left as is — the hero is an
+  illustration, not a figure from the article, and the shape is what carries the
+  story. Everything else came out right on the first pass. If you ever do
+  regenerate, the axis wants 500 / 1K / 1.5K or no numeric labels at all.
 
 ```text
 Generate a blog hero image and save it to public/blog/indexed-is-not-served.png
