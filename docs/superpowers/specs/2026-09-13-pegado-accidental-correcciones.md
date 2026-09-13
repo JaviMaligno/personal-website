@@ -63,9 +63,35 @@ sobre el índice global hacían estrato ≡ tema ≡ longitud.
 modelo (0-2):
 
 ```
-stratum  = (t + 3 * m) % 8
-n_turns  = LENGTHS[(t + m) % 2]
+STRATUM_SHIFTS = (0, 3, 5)              # un desplazamiento por modelo
+stratum = (t + STRATUM_SHIFTS[m]) % 8
+n_turns = LENGTHS[(t + m) % 2]
 ```
+
+**Esta decisión se corrigió DOS veces. Las dos merecen quedar escritas.**
+
+*Primer intento*: `stratum = (t + 3*m) % 8`. Como 3 es impar, `3m ≡ m (mod 2)` y
+la paridad del estrato era idéntica al índice de longitud: los estratos pares
+caían siempre en conversaciones de 2 turnos y los impares en las de 10. Arreglé
+la confusión estrato↔tema y dejé intacta la de estrato↔longitud.
+
+*Segundo intento*: `stratum = (t + 2*m) % 8`. Con coeficiente par, `2m` siempre
+es par, así que `stratum ≡ t (mod 2)`: los estratos pares solo veían los cuatro
+temas de índice par. Cambié una atadura por otra.
+
+**Ningún mapa lineal módulo 8 sirve**, y la razón es aritmética: la paridad de
+`a*t + b*m` con `a` impar es la de `t` (si `b` es par) o la de `t+m` (si `b` es
+impar). Una acopla el tema, la otra la longitud. No hay tercera opción.
+
+*Versión buena*: un **desplazamiento distinto por modelo**, `(0, 3, 5)`. El
+estrato `s` cae en los temas `{s, s-3, s-5} mod 8`, cuyas paridades son
+`{s, s+1, s+1}` —mixtas—, y cuyas longitudes son `{s, s, s+1}` —mixtas también.
+Verificado después sobre el plan real midiendo las seis parejas de ejes y las dos
+comprobaciones de paridad.
+
+**Test obligatorio que faltaba**: uno que cruce **estrato × longitud**. Era el
+único par de ejes sin comprobar, y por eso la suite en verde certificaba una
+rotación incompleta. Sin ese test, el arreglo no cuenta como hecho.
 
 Cada estrato cae en tres temas distintos y cada tema aparece en ambas longitudes.
 `stratum` va **en el dict del plan**, no se deriva del orden de iteración.

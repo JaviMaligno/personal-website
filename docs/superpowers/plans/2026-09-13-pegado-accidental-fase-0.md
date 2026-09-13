@@ -19,14 +19,14 @@
 - **Sin secretos en el repo.** La key del gateway se lee de `~/.acp-blog-paste-key`; las credenciales de GCP, de ADC. Nada de claves en ficheros versionados.
 - **Registro en crudo, siempre.** Cada conversación se guarda íntegra en JSONL con: transcripción completa con etiquetas, artefacto usado, las dos similaridades, ranking completo, modelo, longitud, semilla, parámetros enviados y `usage` devuelto. El análisis se hace después sobre esos ficheros.
 - **Prefijo compartido y autoría fija (D1).** El prefijo se genera **una vez por (tema, longitud)** con el usuario simulado y un modelo de asistente fijo (`PREFIX_MODEL = gpt-5.6-terra-tst`, el mismo que hace de usuario), se persiste en `runs/prefixes/<prefix_id>.json` y se le sirve **idéntico** a los tres modelos evaluados. Si cada modelo se fabricara su prefijo, el eje x dependería de quién contesta —Opus diluye el embedding con mil tokens de prosa y `luna` no— y las curvas dejarían de ser comparables entre modelos, que es justo lo que el spec §9 quiere comparar. El coste de esta decisión se declara en la sección *Limitaciones declaradas*.
-- **La similaridad se mide sobre el lado del usuario (D2).** La primaria, `similarity_user`, se calcula contra la concatenación de apertura + turnos del usuario simulado: es corta, es independiente del modelo evaluado y es la definición correcta de "de qué va esta conversación". Se registra además `similarity_full` sobre la conversación entera, como secundaria, para poder ver si divergen. Guarda obligatoria antes de embeber: por encima de `MAX_EMBED_CHARS = 24_000` (≈6.000 tokens estimados, holgado frente a los 8.191 del embedder) se recorta **por el principio** conservando el final y se marca `similarity_text_truncated`.
-- **Muestreo explícito (D9).** `temperature = 1.0` va escrita en los tres cuerpos; no se hereda el default de cada proveedor, que ni coincide entre ellos ni está congelado. Los modelos Claude llevan `thinking: {"type": "adaptive"}` siempre, porque si no Sonnet 5 correría sin razonamiento mientras Opus 5 lo lleva por defecto y los dos Claude dejarían de ser comparables. **`budget_tokens` está prohibido: devuelve 400 en Opus 5 y en Sonnet 5.** El cuerpo enviado, sin `messages`, se guarda en cada fila como `request_params`.
-- **Los fallos son datos, no una caída (D6).** `chat()` reintenta 429 y 5xx tres veces con backoff exponencial; `main()` envuelve cada celda en `try/except` y **siempre** escribe fila, con `status ∈ ok | http_error | timeout | refusal | empty` más `error_code`, `error_body` y `attempts`; la tirada se reanuda sobre un fichero a medias saltando los `conversation_id` que ya están. Un JSONL de 19 filas sin marcas es indistinguible de uno completo, y el sesgo de las que faltan es predecible: fallan más las conversaciones largas y los pegotes de coseno alto, justo la zona interesante. **Que un modelo se niegue a responder al pegote es un resultado**, no un error.
+- **La similaridad se mide sobre el lado del usuario (D2).** La primaria, `similarity_user`, se calcula contra la concatenación de apertura + turnos del usuario simulado: es corta, es independiente del modelo evaluado y es la definición correcta de "de qué va esta conversación". Se registra además `similarity_full` sobre la conversación entera, como secundaria, para poder ver si divergen. Guarda obligatoria antes de embeber: por encima de `MAX_EMBED_CHARS = 24_000` (≈6.000 tokens estimados, holgado frente a los 8.191 del embedder) se recorta **por el principio** conservando el final. El truncado se registra **desglosado por texto**: `similarity_user_truncated` (afecta al eje x, el que estratifica) y `similarity_full_truncated` (solo a la métrica secundaria). `similarity_text_truncated` sigue existiendo en la fila como columna derivada —el OR de los dos—, pero quien decida si una fila sirve para el eje x mira el primero: en la práctica el único texto que se pasa de los 24.000 caracteres es el completo, y colapsarlos obligaba a tirar filas perfectamente buenas.
+- **Muestreo explícito donde el proveedor lo admite (D9 corregida).** `temperature = 1.0` va escrita en el cuerpo del gateway y en el de Vertex-OpenAI, para no heredar defaults que ni coinciden entre proveedores ni están congelados. **En Claude no se manda ningún parámetro de muestreo**: en la familia Claude 5 `temperature`, `top_p` y `top_k` están eliminados y devuelven 400, exactamente igual que `budget_tokens`. El cuerpo de Claude lleva solo `thinking: {"type": "adaptive"}` —sin él, Sonnet 5 correría sin razonamiento mientras Opus 5 lo lleva por defecto y los dos Claude dejarían de ser comparables— y el muestreo lo fija el proveedor, cosa que la fila refleja tal cual en `request_params`. La primera versión de D9 pedía temperatura explícita "en los tres cuerpos"; era un error que habría tumbado las ocho celdas de Claude, y hay un test de regresión que lo impide (`test_anthropic_body_nunca_manda_parametros_de_muestreo`). El cuerpo enviado, sin `messages`, se guarda en cada fila como `request_params`.
+- **Los fallos son datos, no una caída (D6).** `chat()` reintenta 429 y 5xx tres veces con backoff exponencial; `main()` envuelve cada celda en `try/except` y **siempre** escribe fila, con `status ∈ ok | http_error | timeout | refusal | empty` más `error_code`, `error_body` y `attempts`; la tirada se reanuda sobre un fichero a medias saltando las celdas **ya hechas**, que son las de `status` en `DONE_STATUSES = {ok, refusal}` — una celda muerta por un 429 transitorio se reintenta, porque si no el hueco se queda justo en la zona interesante. Un JSONL de 19 filas sin marcas es indistinguible de uno completo, y el sesgo de las que faltan es predecible: fallan más las conversaciones largas y los pegotes de coseno alto. **Que un modelo se niegue a responder al pegote es un resultado**, no un error, y por eso `refusal` cuenta como celda hecha.
 - **Claude va por `global`**: `https://aiplatform.googleapis.com/v1/projects/{p}/locations/global/publishers/anthropic/models/{m}:rawPredict`. En `us-central1` la cuota está a cero y devuelve 429.
 - **Gemini va por OpenAI-compat de `us-central1`**: `https://us-central1-aiplatform.googleapis.com/v1beta1/projects/{p}/locations/us-central1/endpoints/openapi/chat/completions`, modelo `google/{m}`.
-- **Proyecto GCP**: `data-science-364702`. Cabecera `x-goog-user-project` obligatoria.
+- **Proyecto GCP**: sale de la variable de entorno `WRONGPASTE_GCP_PROJECT` (ver D17, aquí abajo). Cabecera `x-goog-user-project` obligatoria.
 - **Prefill de turno de asistente está eliminado** en la familia Claude 5. El arnés no puede apoyarse en él.
-- **Repo público (D17).** `runs/` se versiona. Cada fila lleva el alias interno (`model_id`) y la etiqueta pública (`model_label`), y `config.py` versiona el endpoint del gateway y el proyecto GCP. No es secreto, pero es material de trabajo interno: antes de la primera tirada hay que decidir si endpoint y proyecto pasan a variables de entorno (Task 8, Step 1).
+- **Repo público (D17), ya resuelto.** `runs/` se versiona. Cada fila lleva el alias interno (`model_id`) y la etiqueta pública (`model_label`). El endpoint del gateway y el proyecto de GCP **no se versionan**: se leen de `WRONGPASTE_GATEWAY_URL` y `WRONGPASTE_GCP_PROJECT`, **sin valor por defecto** —cualquier default plausible publicaría justo lo que se quiere dejar fuera— y de forma **perezosa**, dentro de la función que necesita el valor, para que importar `config` funcione sin entorno y la suite offline corra en una máquina recién clonada. No son secretos, pero sí material de trabajo interno, y este repo de código es público porque los datos crudos son el producto. La decisión estaba pendiente "antes de la primera tirada"; se tomó al construir la Task 1 y este plan la refleja en el código de `config.py`.
 - **En zsh, usar `${M}` y no `$M:verbo`** al construir URLs: `:r` se interpreta como modificador de expansión y manda la URL mutilada (esto ya costó una hora una vez).
 
 ---
@@ -42,7 +42,7 @@
 
 **Interfaces:**
 - Consumes: nada.
-- Produces: `Model(id: str, provider: str, label: str, tier: str)`, `MODELS: dict[str, Model]`, `GCP_PROJECT: str`, `GATEWAY_URL: str`, `EMBEDDING_MODEL: str`, `gateway_key() -> str`.
+- Produces: `Model(id: str, provider: str, label: str, tier: str)`, `MODELS: dict[str, Model]`, `gateway_url() -> str`, `gcp_project() -> str`, `EMBEDDING_MODEL: str`, `gateway_key() -> str`, `MissingConfig`, y los nombres de las variables de entorno `GATEWAY_URL_ENV` / `GCP_PROJECT_ENV` (D17).
 
 - [ ] **Step 1: Crear el repo y el esqueleto**
 
@@ -114,6 +114,50 @@ def test_size_ladder_tiers_are_distinct():
     assert len(ladder) >= 3
 ```
 
+Y los del repo público (D17), que son la mitad del fichero:
+
+```python
+def test_importar_config_sin_las_variables_no_reventar():
+    # La lectura es perezosa: importar tiene que funcionar en una máquina
+    # recién clonada, o la suite offline entera deja de correr.
+    ...
+
+
+def test_pedir_la_url_del_gateway_sin_variable_lanza_error_util(monkeypatch):
+    monkeypatch.delenv(config.GATEWAY_URL_ENV, raising=False)
+    with pytest.raises(config.MissingConfig) as exc:
+        config.gateway_url()
+    assert config.GATEWAY_URL_ENV in str(exc.value)
+
+
+def test_una_variable_en_blanco_cuenta_como_ausente(monkeypatch):
+    monkeypatch.setenv(config.GATEWAY_URL_ENV, "   ")
+    with pytest.raises(config.MissingConfig):
+        config.gateway_url()
+
+
+def test_los_ajustes_se_releen_en_cada_llamada(monkeypatch):
+    # Nada se congela al importar: si no, el valor quedaría pegado al primer
+    # import y un cambio de entorno no se vería.
+    ...
+
+
+def test_los_nombres_en_mayusculas_siguen_resolviendo_desde_el_entorno(monkeypatch):
+    # `config.GATEWAY_URL` y `config.GCP_PROJECT` siguen funcionando para los
+    # usos que todavía los tratan como constantes (PEP 562, `__getattr__`).
+    ...
+
+
+def test_config_no_versiona_ningun_endpoint_interno():
+    """El fichero es público: ni el host del gateway ni el proyecto de GCP."""
+```
+
+Más: `test_pedir_el_proyecto_gcp_sin_variable_lanza_error_util`,
+`test_la_url_del_gateway_pierde_la_barra_final`,
+`test_el_proyecto_gcp_sale_de_la_variable`,
+`test_un_atributo_inexistente_sigue_siendo_attribute_error` y
+`test_config_no_versiona_el_proyecto_ni_el_gateway_como_constante`.
+
 El plantel son **nueve** modelos verificados. El §6 del spec presupuesta sobre siete y el prerrequisito del juez propone sacar a `claude-sonnet-5`: esa incoherencia es D16 y **se resuelve al planificar la Fase 1**, no aquí (ver *Prerrequisitos pendientes para la Fase 1*).
 
 - [ ] **Step 3: Ejecutar el test y comprobar que falla**
@@ -127,12 +171,16 @@ Esperado: FAIL con `ModuleNotFoundError: No module named 'wrongpaste.config'`.
 
 - [ ] **Step 4: Implementar `config.py`**
 
+El endpoint del gateway y el proyecto de GCP **no van escritos aquí** (D17): se leen del entorno, sin default y de forma perezosa.
+
 ```python
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
-GCP_PROJECT = "data-science-364702"
-GATEWAY_URL = "https://litellm.infra.skyc.cloud"
+GATEWAY_URL_ENV = "WRONGPASTE_GATEWAY_URL"
+GCP_PROJECT_ENV = "WRONGPASTE_GCP_PROJECT"
+
 GATEWAY_KEY_PATH = Path.home() / ".acp-blog-paste-key"
 
 VERTEX_ANTHROPIC_URL = (
@@ -170,7 +218,61 @@ _ROSTER = [
 MODELS = {m.id: m for m in _ROSTER}
 
 
+class MissingConfig(RuntimeError):
+    """Falta un ajuste de entorno obligatorio para hablar con un proveedor."""
+
+
+def _required_env(env_var: str, que_es: str) -> str:
+    """Devuelve la variable de entorno, o explica cómo ponerla.
+
+    El mensaje tiene que bastar para desatascarse sin leer el código: qué
+    falta, para qué sirve y por qué no viene puesta de fábrica.
+    """
+    value = os.environ.get(env_var, "").strip()
+    if not value:
+        raise MissingConfig(
+            f"Falta la variable de entorno {env_var} ({que_es}). "
+            "No se versiona en este repositorio, que es público, así que hay "
+            "que exportarla antes de cualquier llamada real:\n"
+            f"    export {env_var}=...\n"
+            "Los tests offline (`pytest -m \"not live\"`) no la necesitan."
+        )
+    return value
+
+
+def gateway_url() -> str:
+    """URL base del gateway LiteLLM, sin barra final."""
+    return _required_env(GATEWAY_URL_ENV, "URL base del gateway LiteLLM").rstrip("/")
+
+
+def gcp_project() -> str:
+    """Identificador del proyecto de GCP donde vive Vertex AI."""
+    return _required_env(GCP_PROJECT_ENV, "proyecto de GCP con Vertex AI habilitado")
+
+
+def __getattr__(name: str) -> str:
+    """Resuelve `config.GATEWAY_URL` y `config.GCP_PROJECT` de forma perezosa.
+
+    PEP 562: Python solo llama aquí cuando el nombre **no** existe como global
+    del módulo, así que estos dos se leen del entorno en el momento de usarlos
+    —y fallan con el mensaje de `_required_env`— en vez de quedar congelados al
+    importar. Es compatibilidad para los usos que todavía los tratan como
+    constantes; lo que se debe llamar es `gateway_url()` y `gcp_project()`.
+    """
+    if name == "GATEWAY_URL":
+        return gateway_url()
+    if name == "GCP_PROJECT":
+        return gcp_project()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 def gateway_key() -> str:
+    """Clave virtual del gateway, leída del fichero del desarrollador."""
+    if not GATEWAY_KEY_PATH.exists():
+        raise MissingConfig(
+            f"No existe {GATEWAY_KEY_PATH}. Ahí va la clave virtual del "
+            "gateway, en una sola línea y sin comillas."
+        )
     return GATEWAY_KEY_PATH.read_text().strip()
 ```
 
@@ -182,7 +284,7 @@ def gateway_key() -> str:
 uv run pytest tests/test_config.py -v
 ```
 
-Esperado: 4 passed.
+Esperado: 17 passed.
 
 - [ ] **Step 6: Commit**
 
@@ -201,12 +303,12 @@ git commit -m "feat: esqueleto del repo y registro de los nueve modelos"
 - Test: `~/Documents/repos/llm-wrong-paste/tests/test_smoke_live.py`
 
 **Interfaces:**
-- Consumes: `config.MODELS`, `config.gateway_key`, `config.GCP_PROJECT`, las tres URLs.
-- Produces: `Reply(text, usage, raw, stop_reason, response_model, attempts, latency_ms)`, `chat(model_id, messages, max_tokens=1024, request_params_out=None) -> Reply`, `embed(texts) -> numpy.ndarray`, y las constantes `TEMPERATURE`, `MAX_ATTEMPTS`, `BACKOFF_BASE_SECONDS`.
+- Consumes: `config.MODELS`, `config.gateway_key`, `config.gcp_project` (vía `config.GCP_PROJECT`), las tres URLs.
+- Produces: `Reply(text, usage, raw, stop_reason, response_model, attempts, latency_ms)`, `chat(model_id, messages, max_tokens=1024, request_params_out=None) -> Reply`, `embed(texts) -> numpy.ndarray`, y las constantes `TEMPERATURE`, `MAX_ATTEMPTS`, `BACKOFF_BASE_SECONDS`, `POST_PREFIX_TAGS`.
 
-`messages` usa siempre la forma OpenAI (`{"role": "user"|"assistant", "content": str}`); la traducción al formato de Anthropic ocurre dentro del cliente. Así el resto del arnés no sabe de proveedores.
+`messages` usa siempre la forma OpenAI (`{"role": "user"|"assistant", "content": str}`), opcionalmente con el `tag` de D5 colgado de cada mensaje; la traducción al formato de Anthropic —y el saneado del `tag`, que los proveedores rechazan— ocurre dentro del cliente. Así el resto del arnés no sabe de proveedores.
 
-Este fichero carga con cuatro decisiones a la vez: **D9** (temperature explícita, thinking adaptive, nada de `budget_tokens`), **D10** (`cache_control` al final del prefijo), **D6** (reintentos, `stop_reason`, `attempts`) y **D5** (`response_model`, `request_params`).
+Este fichero carga con cuatro decisiones a la vez: **D9** (temperature solo donde el proveedor la admite, thinking adaptive, nada de `budget_tokens` ni de muestreo en Claude), **D10** (`cache_control` al final del prefijo, localizado por `tag`), **D6** (reintentos, `stop_reason`, `attempts`) y **D5** (`response_model`, `request_params`).
 
 - [ ] **Step 1: Escribir los tests que fallan**
 
@@ -251,14 +353,22 @@ def test_vertex_openai_body_prefixes_model_with_google():
 Muestreo y razonamiento (D9):
 
 ```python
-def test_los_tres_cuerpos_mandan_temperature_explicita():
-    # D9: nada de heredar el default de cada proveedor, que ni coincide entre
-    # ellos ni está congelado.
+def test_temperature_explicita_donde_el_proveedor_la_admite():
+    # D9 corregida: nada de heredar el default de los proveedores que sí
+    # aceptan muestreo explícito... y nada de mandárselo a los que no.
     msgs = [{"role": "user", "content": "x"}]
     assert _gateway_body("gpt-5.6-sol-tst", msgs, 32)["temperature"] == TEMPERATURE
     assert _vertex_openai_body("gemini-2.5-pro", msgs, 32)["temperature"] == TEMPERATURE
-    assert _anthropic_body(msgs, max_tokens=32)["temperature"] == TEMPERATURE
     assert TEMPERATURE == 1.0
+
+
+def test_anthropic_body_nunca_manda_parametros_de_muestreo():
+    # Regresión de la D9 original: en la familia Claude 5 `temperature`,
+    # `top_p` y `top_k` están ELIMINADOS y devuelven 400. Mandarlos habría
+    # tumbado las ocho celdas de Claude de la tirada.
+    body = _anthropic_body([{"role": "user", "content": "x"}], max_tokens=32)
+    for prohibido in ("temperature", "top_p", "top_k"):
+        assert prohibido not in body
 
 
 def test_anthropic_body_manda_thinking_adaptive_siempre():
@@ -321,6 +431,37 @@ def test_sin_prefijo_no_hay_cache_control():
     body = _anthropic_body([{"role": "user", "content": "x"}], max_tokens=32)
     assert body["messages"] == [{"role": "user", "content": "x"}]
 ```
+
+Y dónde acaba el prefijo, que **se decide por `tag` y no por posición** — esta es la parte que el plan anterior daba por trivial y no lo es:
+
+```python
+def test_breakpoint_con_turnos_post_no_cae_sobre_la_reaccion():
+    """En los dos turnos `post` de D7 el último mensaje ya no es el pegote.
+
+    Contar posiciones dejaría el breakpoint sobre la reacción al pegote —texto
+    que cambia en cada celda— y ninguna celda leería caché de otra.
+    """
+    msgs = [
+        {"role": "user", "content": "apertura", "tag": "opening"},
+        {"role": "assistant", "content": "respuesta", "tag": "assistant"},
+        {"role": "user", "content": "PEGOTE", "tag": "paste"},
+        {"role": "assistant", "content": "reacción", "tag": "assistant"},
+        {"role": "user", "content": "sigo a lo mío", "tag": "post"},
+    ]
+    enviados = _anthropic_body(msgs, max_tokens=32)["messages"]
+    assert _cache_control_of(enviados[1]) == {"type": "ephemeral"}
+    assert all(_cache_control_of(m) is None for m in enviados[2:])
+```
+
+Más, en la misma línea: `test_breakpoint_en_el_pegote_sigue_al_final_del_prefijo`,
+`test_breakpoint_en_celda_de_control_sin_pegote` (D11: sin pegote, el
+breakpoint sigue siendo el último `assistant` del prefijo),
+`test_breakpoint_durante_la_construccion_del_prefijo`,
+`test_breakpoint_sin_tags_degrada_al_penultimo_mensaje` (transcripciones
+crudas: se asume que el último mensaje es el pegote, y quien llame así asume la
+degradación), `test_breakpoint_sin_respuesta_de_asistente_en_el_prefijo`,
+`test_los_tags_no_se_envian_a_ningun_proveedor` y
+`test_marcar_el_prefijo_no_muta_la_transcripcion_etiquetada`.
 
 Reintentos y trazas (D6), contra un `httpx.post` doblado por `monkeypatch`:
 
@@ -389,8 +530,9 @@ from wrongpaste import config
 
 _TIMEOUT = httpx.Timeout(300.0)
 
-# D9: muestreo explícito. No se delega en el default de cada proveedor, que
-# puede cambiar sin avisar y que no es el mismo en los tres.
+# D9: muestreo explícito **donde el proveedor lo admite**. No se delega en el
+# default de cada proveedor, que puede cambiar sin avisar y que no es el mismo
+# en los tres. En Claude no se manda: ver `_anthropic_body`.
 TEMPERATURE = 1.0
 
 # D6: los fallos son datos, no caída. Tres intentos con backoff exponencial
@@ -412,13 +554,23 @@ class Reply:
     latency_ms: float | None = None
 ```
 
-Los tres cuerpos, con `temperature` en todos (D9) y el breakpoint de caché en el de Anthropic (D10):
+Los tres cuerpos, con `temperature` en los dos que la admiten (D9 corregida) y el breakpoint de caché en el de Anthropic (D10). Los tres sanean el `tag` de D5 con `_api_message`, porque los proveedores rechazan claves desconocidas dentro de `messages`:
 
 ```python
+def _api_message(message: dict) -> dict:
+    """Deja el mensaje como lo espera el proveedor: solo `role` y `content`.
+
+    El transcript lleva además `tag` (D5), que es metadato nuestro. Sanear aquí
+    permite pasarle a `chat()` la transcripción etiquetada, que es la única
+    forma de que el breakpoint de caché sepa dónde acaba el prefijo.
+    """
+    return {"role": message["role"], "content": message["content"]}
+
+
 def _gateway_body(model_id: str, messages: list[dict], max_tokens: int) -> dict:
     return {
         "model": model_id,
-        "messages": messages,
+        "messages": [_api_message(m) for m in messages],
         "max_completion_tokens": max_tokens,
         "temperature": TEMPERATURE,
     }
@@ -427,7 +579,7 @@ def _gateway_body(model_id: str, messages: list[dict], max_tokens: int) -> dict:
 def _vertex_openai_body(model_id: str, messages: list[dict], max_tokens: int) -> dict:
     return {
         "model": f"google/{model_id}",
-        "messages": messages,
+        "messages": [_api_message(m) for m in messages],
         "max_tokens": max_tokens,
         "temperature": TEMPERATURE,
     }
@@ -444,22 +596,61 @@ def _as_blocks(content) -> list[dict]:
     return [dict(block) for block in content]
 
 
+# Etiquetas (D5) que marcan que el prefijo compartido ya se acabó: el primer
+# mensaje con una de ellas es el pegote, la reparación o un turno posterior, y
+# ninguno de los tres pertenece al prefijo que se sirve de caché (D10).
+POST_PREFIX_TAGS: frozenset[str] = frozenset({"paste", "repair", "post"})
+
+
+def _prefix_breakpoint_index(convo: list[dict]) -> int | None:
+    """Índice del mensaje donde acaba el prefijo compartido, o `None`.
+
+    Con etiquetas (el caso normal: todo lo que fabrica `conversation.py`), el
+    prefijo acaba en el **último mensaje con `tag == "assistant"` anterior al
+    primer mensaje etiquetado con `POST_PREFIX_TAGS`**. No se supone ninguna
+    posición: en la llamada del pegote ese mensaje es el penúltimo, pero en los
+    dos turnos `post` de D7 y en las celdas de control de D11 el último mensaje
+    es un turno de usuario posterior, y contar posiciones dejaría el breakpoint
+    sobre la reacción al pegote —texto que cambia de celda en celda y que por
+    tanto no se puede cachear entre celdas que comparten `prefix_id`.
+
+    Sin etiquetas (llamada suelta, transcripciones crudas) no hay forma de
+    saber dónde acaba el prefijo: se **degrada** a marcar el penúltimo mensaje,
+    que es lo correcto solo si el último es el pegote.
+    """
+    if not any(message.get("tag") for message in convo):
+        return len(convo) - 2 if len(convo) >= 2 else None
+
+    boundary = len(convo)
+    for index, message in enumerate(convo):
+        if message.get("tag") in POST_PREFIX_TAGS:
+            boundary = index
+            break
+
+    for index in range(boundary - 1, -1, -1):
+        if convo[index].get("tag") == "assistant":
+            return index
+    # Prefijo sin ninguna respuesta del asistente: no hay nada estable que
+    # cachear delante del pegote.
+    return None
+
+
 def _mark_cacheable_prefix(convo: list[dict]) -> list[dict]:
     """Pone el breakpoint de caché al final del prefijo (D10).
 
-    El pegote es siempre el último mensaje de la lista, así que el breakpoint
-    va en el último bloque del **penúltimo** mensaje: de ese modo el prefijo
-    entero —idéntico entre las celdas que comparten `prefix_id`— se sirve de
-    caché en la llamada del pegote, que es justo el ahorro que la Fase 1
-    necesita medir.
+    El prefijo —idéntico entre todas las celdas que comparten `prefix_id`— es
+    lo que interesa servir de caché; lo que venga después (pegote, reacción,
+    turnos `post`) cambia en cada celda. Dónde acaba lo decide
+    `_prefix_breakpoint_index` a partir de las etiquetas, no de la posición.
 
-    Devuelve una lista nueva: no muta la transcripción del llamante.
+    Devuelve una lista nueva, ya en forma de API (sin `tag`): no muta la
+    transcripción del llamante, que se guarda tal cual en el JSONL.
     """
-    marked = [dict(m) for m in convo]
-    if len(marked) < 2:
-        # Un solo mensaje: no hay prefijo estable que cachear delante de él.
+    marked = [_api_message(m) for m in convo]
+    target_index = _prefix_breakpoint_index(convo)
+    if target_index is None:
         return marked
-    target = marked[-2]
+    target = marked[target_index]
     blocks = _as_blocks(target["content"])
     blocks[-1] = {**blocks[-1], "cache_control": {"type": "ephemeral"}}
     target["content"] = blocks
@@ -481,10 +672,12 @@ def _anthropic_body(messages: list[dict], max_tokens: int) -> dict:
         # adaptativo es la única forma de razonamiento en la familia 5, y hay
         # que mandarlo siempre para que Sonnet 5 y Opus 5 sean comparables.
         "thinking": {"type": "adaptive"},
-        # OJO: D9 exige `temperature` explícita en los tres cuerpos. Verificar
-        # contra el proveedor antes de la tirada: si la familia Claude 5
-        # rechaza el muestreo explícito con 400, esta línea la tumba entera.
-        "temperature": TEMPERATURE,
+        # NO mandar `temperature` / `top_p` / `top_k`: en la familia Claude 5
+        # los parámetros de muestreo están ELIMINADOS y devuelven 400, igual
+        # que `budget_tokens`. La versión original de D9 pedía temperatura
+        # explícita en los tres cuerpos; era un error y habría tumbado todas
+        # las celdas de Claude. Aquí el muestreo lo fija el proveedor, y eso se
+        # registra como tal en `request_params`.
     }
     if system:
         body["system"] = system
@@ -590,17 +783,17 @@ Completan el fichero `_gcp_token()` (`gcloud auth print-access-token`), `_openai
 uv run pytest tests/test_clients.py -v
 ```
 
-Esperado: 21 passed.
+Esperado: 30 passed.
 
 - [ ] **Step 5: Ejecutar el smoke test con red**
 
-Requiere VPN activa (el gateway resuelve a IP privada) y `gcloud auth login` vigente.
+Requiere VPN activa (el gateway resuelve a IP privada), `gcloud auth login` vigente y las dos variables de entorno de D17 exportadas (`WRONGPASTE_GATEWAY_URL`, `WRONGPASTE_GCP_PROJECT`); si faltan, `MissingConfig` dice cuál y cómo ponerla.
 
 ```bash
 uv run pytest tests/test_smoke_live.py -v -m live
 ```
 
-Esperado: 4 passed. Coste: céntimos. **Este es el momento de verificar que la familia Claude 5 acepta `temperature` explícita junto a `thinking: adaptive`**: si devolviera 400, hay que decidirlo aquí y no a mitad de una tirada de dos horas.
+Esperado: 4 passed. Coste: céntimos. **Este es el momento de confirmar contra el proveedor que el cuerpo de Claude pasa con `thinking: adaptive` y sin ningún parámetro de muestreo** (D9 corregida): si algo devolviera 400, hay que verlo aquí y no a mitad de una tirada de dos horas.
 
 - [ ] **Step 6: Commit**
 
@@ -711,20 +904,33 @@ Esperado: FAIL con `ModuleNotFoundError: No module named 'wrongpaste.artifacts'`
 
 - [ ] **Step 3: Escribir el formato y los 64 artefactos**
 
-`data/artifacts/recipe-lentejas.md`:
+El formato, con un artefacto **real del banco** copiado literalmente — `data/artifacts/recipe-pan-centeno.md`:
 
 ```markdown
 ---
-id: recipe-lentejas
+id: recipe-pan-centeno
 kind: recipe
-entities: ["lentejas pardinas", "chorizo", "pimentón de la Vera", "45 minutos"]
+entities: ["masa madre de centeno", "70 % de hidratación", "12 horas de fermentación en frío", "240 °C con vapor"]
 ---
-300 g de lentejas pardinas, remojadas la noche anterior.
-Sofreír cebolla, zanahoria y un diente de ajo. Añadir un chorizo en rodajas
-y una cucharadita de pimentón de la Vera fuera del fuego, que si no se quema.
-Cubrir con caldo, llevar a ebullición y bajar a fuego lento 45 minutos.
-Sal al final.
+Pan de centeno 60/40 — notas de la cuarta hornada.
+400 g de harina de trigo panadero, 260 g de harina integral de centeno.
+Autólisis de 45 minutos solo con harinas y agua, sin sal ni fermento.
+Añadir 130 g de masa madre de centeno refrescada por la mañana y 13 g de sal.
+Trabajar hasta 70 % de hidratación; con más, la miga de centeno se apelmaza
+y el corte se cierra en el horno.
+Tres pliegues cada 40 minutos en bloque, a 24 °C de temperatura ambiente.
+Formar, cesto enharinado y 12 horas de fermentación en frío en la nevera baja.
+Hornear directo de la nevera: 20 minutos a 240 °C con vapor, luego 25 minutos
+a 210 °C sin vapor y con la puerta entreabierta los últimos cinco.
+No cortarlo hasta el día siguiente. La hornada tres se cortó caliente y la miga
+quedó gomosa.
 ```
+
+Tres cosas que este ejemplo enseña y que hay que repetir en los 64:
+
+- El frontmatter son tres claves planas (`id`, `kind`, `entities`) y `entities` es una lista JSON en una sola línea: así la parsea `_parse` sin dependencia de YAML.
+- Las `entities` son términos **distintivos**: cantidades raras, nombres propios, identificadores. `12 horas de fermentación en frío` sirve; `45 minutos` no, y por eso está en el cuerpo pero **no** en `entities` — es la clase de entity de ruido de base que el Step 5 de la Task 9 va a cazar (D8).
+- El artefacto está escrito como nota de portapapeles real, no como distractor del tema `hacer-pan`: el banco se escribe **antes** y sin mirar los temas (§4.1 del spec).
 
 Se escriben 64, repartidos en once `kind`: `changelog` (5), `config` (5), `email` (8), `job_ad` (5), `meeting_notes` (8), `note_to_self` (5), `prompt` (5), `recipe` (5), `shopping_list` (5), `sql` (5), `stacktrace` (8). **Ninguno se escribe pensando en los temas de conversación** (§4.1 del spec): son artefactos de portapapeles, no distractores.
 
@@ -847,7 +1053,7 @@ git commit -m "feat: banco de artefactos de portapapeles y casado de entidades"
 
 Este es el fichero de **D2** (qué texto se embebe) y de **D12** (cómo se mide el ancho del eje).
 
-`rank_artifacts` ya no devuelve solo el ranking: devuelve también si hubo que recortar, porque el runner copia esa bandera a la fila (`similarity_text_truncated`). Un truncado silencioso en el brazo de 10 turnos sería exactamente el fallo que D2 vino a cerrar.
+`rank_artifacts` ya no devuelve solo el ranking: devuelve también si hubo que recortar. El runner la llama **dos veces por prefijo** —una contra el lado del usuario y otra contra la conversación entera— y copia cada bandera a su campo de la fila: `similarity_user_truncated` y `similarity_full_truncated` (ver Task 6). Un truncado silencioso en el brazo de 10 turnos sería exactamente el fallo que D2 vino a cerrar.
 
 `stratified_pick` con `k=12` es lo que consumirá la **Fase 1** (12 pegotes por tema cubriendo el rango). La Fase 0 **no** lo usa: `run_phase0.main()` inlinea su propia lógica porque tiene que garantizar además la cobertura de `kind` de D4. Se construye y se prueba ahora porque es donde vive la lógica y porque probarlo aislado es trivial.
 
@@ -1329,7 +1535,7 @@ git commit -m "feat: ocho temas con hueco de tarea verificable y usuario simulad
 - Consumes: `clients.chat`, `simulated_user.next_user_turn`, `topics.Topic`, `artifacts.Artifact`.
 - Produces:
   - `records`: `ConversationRecord`, `RunHeader`, `run_header_line(...)`, `make_conversation_id(...)`, `SCHEMA_VERSION`, `N_STRATA`, `STATUSES`, `CONDITIONS`, `MESSAGE_TAGS`, `ARMS`, `ARM_NO_REPAIR`.
-  - `conversation`: `api_messages(transcript)`, `build_prefix(model_id, topic, n_turns)`, `conversation_text(transcript)`, `inject_paste(model_id, transcript, artifact) -> (reacción, usage, paste_index)`, `continue_after_paste(model_id, transcript, topic, n_post=2) -> (post_indices, usages)`, `MAX_TOKENS`, `N_POST_TURNS`.
+  - `conversation`: `api_messages(transcript)`, `reply_traces(replies)`, `build_prefix(model_id, topic, n_turns, request_params_out=None) -> (transcript, usages, replies)`, `conversation_text(transcript)`, `inject_paste(model_id, transcript, artifact, request_params_out=None) -> (reacción, usage, paste_index, reply)`, `continue_after_paste(model_id, transcript, topic, n_post=2, request_params_out=None) -> (post_indices, usages, replies)`, `MAX_TOKENS`, `N_POST_TURNS`.
   - `prefixes`: `PREFIX_MODEL`, `PREFIX_DIR`, `prefix_id(...)`, `generate_prefix(topic, n_turns)`, `save_prefix`, `load_prefix`, `find_prefix`, `ensure_prefix(topic, n_turns)`.
 
 **Por qué tres módulos y no uno.** `records.py` es hoja del grafo de importaciones a propósito: el runner, el verificador y el análisis lo importan sin arrastrar clientes HTTP. `conversation.py` conduce turnos. `prefixes.py` es la puerta de D1 — que exista separado es lo que impide que el runner llame a `build_prefix` por su cuenta y devuelva el eje x a depender de quién conteste.
@@ -1352,7 +1558,8 @@ def test_la_fila_lleva_los_campos_que_exige_el_documento_de_correcciones():
         "artifact_id", "artifact_kind", "artifact_text", "artifact_entities",
         # D2: las dos similaridades
         "similarity_user", "similarity_full", "similarity_rank",
-        "similarity_pct", "ranking", "similarity_text_truncated",
+        "similarity_pct", "ranking",
+        "similarity_user_truncated", "similarity_full_truncated",
         # D7: el pegote y los dos turnos posteriores
         "paste_index", "post_indices", "transcript", "reaction",
         # spec §4.2 y D9: lo que se envió
@@ -1367,12 +1574,42 @@ def test_la_fila_lleva_los_campos_que_exige_el_documento_de_correcciones():
 
 Más: que una celda de control (D11) se construya y serialice sin artefacto ni similaridades; que `conversation_id` siga el formato de D5 y no se pise si viene dado; que `to_json()` no pierda ningún campo; que un `status` o un `condition` fuera del vocabulario revienten; y que `run_header_line` serialice con `kind="run_header"` delante, acepte campos sueltos y rechace campos inventados.
 
-`tests/test_conversation.py` — etiquetas y turnos posteriores, con dobles, sin red:
+Y el desglose del truncado de D2, que es lo que sustituye al booleano único:
+
+```python
+def test_los_dos_truncados_existen_por_separado_y_se_serializan():
+    ...
+
+
+@pytest.mark.parametrize(
+    "user, full, esperado",
+    [(False, False, False), (True, False, True), (False, True, True), (True, True, True)],
+)
+def test_similarity_text_truncated_es_el_or_de_los_dos(user, full, esperado):
+    """El nombre viejo sobrevive como columna derivada, no como campo."""
+    ...
+
+
+def test_similarity_text_truncated_no_se_puede_asignar():
+    ...
+
+
+def test_el_nombre_viejo_sigue_aceptandose_en_el_constructor():
+    """Un llamador sin migrar marca los DOS truncados y se lleva un aviso.
+
+    El valor colapsado era un OR y un OR no se deshace: no hay forma de saber
+    cuál de los dos textos se recortó, así que se marcan los dos (lado
+    pesimista: una fila de más marcada como sospechosa, nunca una de menos sin
+    marcar) y se emite `DeprecationWarning`.
+    """
+```
+
+`tests/test_conversation.py` — etiquetas, turnos posteriores y trazabilidad, con dobles, sin red:
 
 ```python
 def test_prefix_tags_opening_user_sim_and_assistant(monkeypatch):
     _stub(monkeypatch)
-    transcript, _ = conv.build_prefix("gpt-5.6-luna-tst", TOPIC, n_turns=3)
+    transcript, _, _ = conv.build_prefix("gpt-5.6-luna-tst", TOPIC, n_turns=3)
 
     assert [m["tag"] for m in transcript] == [
         "opening", "assistant", "user_sim", "assistant", "user_sim", "assistant",
@@ -1383,7 +1620,7 @@ def test_chat_never_sees_the_tag_field(monkeypatch):
     seen: list[list[dict]] = []
     _stub(monkeypatch, seen=seen)
 
-    transcript, _ = conv.build_prefix("gpt-5.6-luna-tst", TOPIC, n_turns=2)
+    transcript, _, _ = conv.build_prefix("gpt-5.6-luna-tst", TOPIC, n_turns=2)
     conv.inject_paste("gpt-5.6-luna-tst", transcript, ART)
     conv.continue_after_paste("gpt-5.6-luna-tst", transcript, TOPIC)
 
@@ -1395,30 +1632,50 @@ def test_chat_never_sees_the_tag_field(monkeypatch):
 
 def test_continue_after_paste_adds_four_messages(monkeypatch):
     _stub(monkeypatch)
-    transcript, _ = conv.build_prefix("gpt-5.6-luna-tst", TOPIC, n_turns=2)
+    transcript, _, _ = conv.build_prefix("gpt-5.6-luna-tst", TOPIC, n_turns=2)
     conv.inject_paste("gpt-5.6-luna-tst", transcript, ART)
     before = len(transcript)
 
-    post_indices, usages = conv.continue_after_paste(
+    post_indices, usages, replies = conv.continue_after_paste(
         "gpt-5.6-luna-tst", transcript, TOPIC
     )
 
     assert len(transcript) - before == 4
-    assert len(usages) == 2
+    assert len(usages) == len(replies) == 2
     assert post_indices == [before, before + 1, before + 2, before + 3]
 
 
 def test_continue_after_paste_never_repairs(monkeypatch):
     """La variante (a) del spec §7: nadie menciona el pegote por el usuario."""
     _stub(monkeypatch)
-    transcript, _ = conv.build_prefix("gpt-5.6-luna-tst", TOPIC, n_turns=2)
+    transcript, _, _ = conv.build_prefix("gpt-5.6-luna-tst", TOPIC, n_turns=2)
     conv.inject_paste("gpt-5.6-luna-tst", transcript, ART)
     conv.continue_after_paste("gpt-5.6-luna-tst", transcript, TOPIC)
 
     assert all(m["tag"] != "repair" for m in transcript)
 ```
 
-Más: que el prefijo alterne roles y acabe en `assistant` (Claude lo exige), que solo el primer mensaje lleve `opening`, que el pegote vaya literal y sin preámbulo, que `inject_paste` etiquete `paste` y devuelva el índice, y que los `post_indices` apunten a mensajes posteriores a la reacción.
+Y la trazabilidad de D5/D6, que es lo que hace que la fila no salga vacía de datos del proveedor:
+
+```python
+def test_la_trazabilidad_llega_entera_de_extremo_a_extremo(monkeypatch):
+    """`stop_reason`, `response_model`, `attempts` y `latency_ms` por llamada.
+
+    Sin devolver los `Reply`, las 27 filas salían con `stop_reasons=[]`,
+    `response_model=""` y `attempts=1`: la fila afirmaba que ninguna llamada
+    había reintentado nunca.
+    """
+
+
+def test_build_prefix_solo_cuenta_las_llamadas_al_modelo_evaluado(monkeypatch):
+    """Los turnos del usuario simulado los paga otro modelo: no son trazas."""
+
+
+def test_las_tres_funciones_ceden_request_params_out_a_chat(monkeypatch):
+    """D9: el cuerpo enviado tiene que poder llegar a la fila desde cualquiera."""
+```
+
+Más: que el prefijo alterne roles y acabe en `assistant` (Claude lo exige), que solo el primer mensaje lleve `opening`, que el pegote vaya literal y sin preámbulo, que `inject_paste` etiquete `paste` y devuelva el índice **y el `Reply` de la llamada del pegote** (que es la que decide la conducta que mide el experimento), que los `post_indices` apunten a mensajes posteriores a la reacción, que `reply_traces` dé exactamente las columnas que espera la fila y aguante un `Reply` sin trazas, y que sin `request_params_out` no se le pase ningún dict a `chat`.
 
 `tests/test_prefixes.py` — D1, con `PREFIX_DIR` redirigido a `tmp_path` por un fixture `autouse` y `build_prefix` doblado:
 
@@ -1500,7 +1757,9 @@ def make_conversation_id(
     return f"p0-{model_id}-{topic_id}-{n_turns}-r{replicate_idx}"
 ```
 
-`ConversationRecord` lleva **todos** los campos con valor por defecto, para que las celdas de control (D11, sin artefacto) y las fallidas (D6, sin reacción) se puedan construir sin inventar datos. Los bloques, en orden: identidad (D5) · modelo evaluado con `model_id` + `model_label` + `response_model` (D17) · celda del diseño con `stratum`, `n_strata` y `prefix_id` (D3, D1) · brazo con `condition`, `arm` y `parent_id` (D11, spec §7) · artefacto opcional con `artifact_kind` para poder medir la colinealidad de D15 · similaridades `similarity_user` y `similarity_full` más rango, percentil, `ranking` completo y `similarity_text_truncated` (D2) · transcripción con `paste_index` y `post_indices` (D5, D7) · lo enviado, con `request_params`, `system_prompt`, `prefix_model` y `stop_reasons` (D9, spec §4.2) · reloj · resultado con `status`, `error_code`, `error_body` y `attempts` (D6).
+`ConversationRecord` lleva **todos** los campos con valor por defecto, para que las celdas de control (D11, sin artefacto) y las fallidas (D6, sin reacción) se puedan construir sin inventar datos. Los bloques, en orden: identidad (D5) · modelo evaluado con `model_id` + `model_label` + `response_model` (D17) · celda del diseño con `stratum`, `n_strata` y `prefix_id` (D3, D1) · brazo con `condition`, `arm` y `parent_id` (D11, spec §7) · artefacto opcional con `artifact_kind` para poder medir la colinealidad de D15 · similaridades `similarity_user` y `similarity_full` más rango, percentil, `ranking` completo y los **dos** truncados por separado, `similarity_user_truncated` y `similarity_full_truncated` (D2) · transcripción con `paste_index` y `post_indices` (D5, D7) · lo enviado, con `request_params`, `system_prompt`, `prefix_model` y `stop_reasons` (D9, spec §4.2) · reloj · resultado con `status`, `error_code`, `error_body` y `attempts` (D6).
+
+El booleano colapsado de antes, `similarity_text_truncated`, **ya no es un campo**: es una propiedad derivada (el OR de los dos) que `to_json()` sigue escribiendo como columna, más un `InitVar` que lo acepta en el constructor marcando los dos truncados y avisando con `DeprecationWarning`. Quien decida si una fila sirve para el eje x mira `similarity_user_truncated`; la columna derivada no distingue cuál de los dos textos se recortó, y en la práctica el que se pasa de los 24.000 caracteres es siempre el completo.
 
 `__post_init__` resuelve el `conversation_id` si no viene dado y **valida** `condition` y `status` contra sus vocabularios: un typo en un `status` convertiría una celda fallida en una celda buena a ojos del análisis.
 
@@ -1520,13 +1779,43 @@ def api_messages(transcript: list[dict]) -> list[dict]:
     return [{"role": m["role"], "content": m["content"]} for m in transcript]
 
 
+def reply_traces(replies: list[Reply]) -> list[dict]:
+    """Los campos de trazabilidad de cada `Reply`, listos para el JSONL (D5).
+
+    Un dict por llamada al modelo evaluado, en orden, con `stop_reason`,
+    `response_model`, `attempts` y `latency_ms`. Existe para que el runner no
+    tenga que conocer el dataclass ni repetir el mismo bucle en tres sitios:
+    `Reply` no es serializable tal cual (lleva `raw`, la respuesta entera).
+    """
+    return [
+        {
+            "stop_reason": r.stop_reason,
+            "response_model": r.response_model,
+            "attempts": r.attempts,
+            "latency_ms": r.latency_ms,
+        }
+        for r in replies
+    ]
+
+
 def build_prefix(
-    model_id: str, topic: Topic, n_turns: int
-) -> tuple[list[dict], list[dict]]:
+    model_id: str,
+    topic: Topic,
+    n_turns: int,
+    request_params_out: dict | None = None,
+) -> tuple[list[dict], list[dict], list[Reply]]:
     """Conduce n_turns de conversación normal sobre el tema.
 
     Devuelve la transcripción (siempre terminada en assistant, que es lo que
-    Claude exige para poder continuar) y los `usage` de cada llamada.
+    Claude exige para poder continuar), los `usage` de cada llamada y los
+    `Reply` completos de esas mismas llamadas, en el mismo orden: sin ellos las
+    filas saldrían con `stop_reasons=[]`, `response_model=""` y `attempts=1`
+    aunque hubiera habido reintentos (D5/D6).
+
+    `request_params_out`, si se pasa, se le cede a `chat()`, que lo rellena con
+    el cuerpo enviado sin `messages` (D9). Queda con el de la **última**
+    llamada, que es representativo porque todas las de una celda van al mismo
+    modelo con el mismo `max_tokens`.
 
     Etiquetas (D5): el mensaje de apertura es `opening`, los demás mensajes de
     usuario son `user_sim` (los escribe el usuario simulado) y las respuestas
@@ -1539,10 +1828,17 @@ def build_prefix(
         {"role": "user", "content": topic.opening, "tag": "opening"}
     ]
     usages: list[dict] = []
+    replies: list[Reply] = []
 
-    reply = chat(model_id, api_messages(transcript), max_tokens=MAX_TOKENS)
+    reply = chat(
+        model_id,
+        api_messages(transcript),
+        max_tokens=MAX_TOKENS,
+        request_params_out=request_params_out,
+    )
     transcript.append({"role": "assistant", "content": reply.text, "tag": "assistant"})
     usages.append(reply.usage)
+    replies.append(reply)
 
     for _ in range(n_turns - 1):
         transcript.append(
@@ -1552,13 +1848,19 @@ def build_prefix(
                 "tag": "user_sim",
             }
         )
-        reply = chat(model_id, api_messages(transcript), max_tokens=MAX_TOKENS)
+        reply = chat(
+            model_id,
+            api_messages(transcript),
+            max_tokens=MAX_TOKENS,
+            request_params_out=request_params_out,
+        )
         transcript.append(
             {"role": "assistant", "content": reply.text, "tag": "assistant"}
         )
         usages.append(reply.usage)
+        replies.append(reply)
 
-    return transcript, usages
+    return transcript, usages, replies
 
 
 def conversation_text(transcript: list[dict]) -> str:
@@ -1567,21 +1869,32 @@ def conversation_text(transcript: list[dict]) -> str:
 
 
 def inject_paste(
-    model_id: str, transcript: list[dict], artifact: Artifact
-) -> tuple[str, dict, int]:
+    model_id: str,
+    transcript: list[dict],
+    artifact: Artifact,
+    request_params_out: dict | None = None,
+) -> tuple[str, dict, int, Reply]:
     """Añade el pegote TAL CUAL, sin preámbulo ni envoltorio, y pide respuesta.
 
     Muta `transcript` in place: el registro guarda la conversación completa.
 
-    Devuelve (reacción, usage, índice del mensaje del pegote). El índice va al
-    campo `paste_index` de la fila (D5): sin él, el análisis tendría que volver
-    a localizar el pegote comparando textos.
+    Devuelve (reacción, usage, índice del mensaje del pegote, `Reply`). El
+    índice va al campo `paste_index` de la fila (D5): sin él, el análisis
+    tendría que volver a localizar el pegote comparando textos. El `Reply` es el
+    de **la llamada del pegote**, que es la que decide la conducta que mide el
+    experimento: si un modelo se corta por `max_tokens` en vez de terminar, la
+    fila tiene que decirlo (D6).
     """
     paste_index = len(transcript)
     transcript.append({"role": "user", "content": artifact.text, "tag": "paste"})
-    reply = chat(model_id, api_messages(transcript), max_tokens=MAX_TOKENS)
+    reply = chat(
+        model_id,
+        api_messages(transcript),
+        max_tokens=MAX_TOKENS,
+        request_params_out=request_params_out,
+    )
     transcript.append({"role": "assistant", "content": reply.text, "tag": "assistant"})
-    return reply.text, reply.usage, paste_index
+    return reply.text, reply.usage, paste_index, reply
 
 
 def continue_after_paste(
@@ -1589,7 +1902,8 @@ def continue_after_paste(
     transcript: list[dict],
     topic: Topic,
     n_post: int = N_POST_TURNS,
-) -> tuple[list[int], list[dict]]:
+    request_params_out: dict | None = None,
+) -> tuple[list[int], list[dict], list[Reply]]:
     """Dos turnos más con el usuario simulado, SIN reparación (D7).
 
     Es la variante (a) del spec §7: el usuario sigue a lo suyo como si el
@@ -1600,13 +1914,16 @@ def continue_after_paste(
     Muta `transcript` in place. El mensaje de usuario se etiqueta `post` y la
     respuesta `assistant`.
 
-    Devuelve (post_indices, usages). `post_indices` son los índices de **todos**
-    los mensajes añadidos aquí, usuario y asistente, en orden: el recuento de
-    fuga de entidades se hace sobre las respuestas, así que dejarlas fuera
-    obligaría al análisis a recalcular posiciones.
+    Devuelve (post_indices, usages, replies). `post_indices` son los índices de
+    **todos** los mensajes añadidos aquí, usuario y asistente, en orden: el
+    recuento de fuga de entidades se hace sobre las respuestas, así que dejarlas
+    fuera obligaría al análisis a recalcular posiciones. `replies` son los
+    `Reply` completos de los `n_post` turnos del modelo evaluado, con la misma
+    trazabilidad que los demás (D5/D6).
     """
     post_indices: list[int] = []
     usages: list[dict] = []
+    replies: list[Reply] = []
 
     for _ in range(n_post):
         post_indices.append(len(transcript))
@@ -1617,17 +1934,25 @@ def continue_after_paste(
                 "tag": "post",
             }
         )
-        reply = chat(model_id, api_messages(transcript), max_tokens=MAX_TOKENS)
+        reply = chat(
+            model_id,
+            api_messages(transcript),
+            max_tokens=MAX_TOKENS,
+            request_params_out=request_params_out,
+        )
         post_indices.append(len(transcript))
         transcript.append(
             {"role": "assistant", "content": reply.text, "tag": "assistant"}
         )
         usages.append(reply.usage)
+        replies.append(reply)
 
-    return post_indices, usages
+    return post_indices, usages, replies
 ```
 
-`tag` es metadato nuestro, no del protocolo: **todas** las llamadas pasan por `api_messages()`, porque los proveedores rechazan campos desconocidos dentro de `messages`.
+`tag` es metadato nuestro, no del protocolo: **todas** las llamadas pasan hoy por `api_messages()`, porque los proveedores rechazan campos desconocidos dentro de `messages`.
+
+**Pendiente conocido, y hay que resolverlo antes de fiarse del ahorro de caché.** `clients._prefix_breakpoint_index` localiza el final del prefijo **por `tag`** (Task 2), y `clients._api_message` ya sanea el `tag` dentro de cada cuerpo; pero `conversation.py` llama a `chat()` con `api_messages(transcript)`, que quita las etiquetas **antes**. Con lo cual el cliente nunca las ve y siempre cae en la rama degradada: marcar el penúltimo mensaje. Eso es correcto en la llamada del pegote y **no lo es** en los dos turnos `post` de D7 ni en las celdas de control de D11, donde el breakpoint acaba sobre la reacción —texto que cambia en cada celda y que por tanto no se cachea entre celdas. La sonda de caché de D10 (Task 7) lo mide sobre la llamada del pegote, así que puede salir en verde sin que esto esté arreglado. Arreglo: pasarle a `chat()` la transcripción etiquetada, que es justo lo que `_api_message` permite.
 
 - [ ] **Step 3c: Implementar `prefixes.py`**
 
@@ -1677,7 +2002,7 @@ def generate_prefix(topic: Topic, n_turns: int) -> dict[str, Any]:
     No lo guarda: eso es cosa de `save_prefix`, para que los tests y el paso de
     medición de ejes (D12) puedan generar sin ensuciar el repo.
     """
-    transcript, usages = build_prefix(PREFIX_MODEL, topic, n_turns)
+    transcript, usages, _ = build_prefix(PREFIX_MODEL, topic, n_turns)
     return {
         "prefix_id": prefix_id(topic.id, n_turns, PREFIX_MODEL, transcript),
         "topic_id": topic.id,
@@ -1707,13 +2032,15 @@ Completan el fichero `prefix_path`, `save_prefix` (escribe `runs/prefixes/<prefi
 
 Los prefijos se versionan: son el eje x de la campaña entera y su coste ya está pagado.
 
+**Defecto abierto en `prefixes.py`, a cerrar antes de la primera llamada real.** El fichero tal y como está hoy escribe `transcript, usages = build_prefix(...)`, con dos nombres para la tupla de **tres** que `build_prefix` devuelve desde que lleva los `Reply`. Eso levanta `ValueError` en cuanto se genera el primer prefijo de verdad; la suite offline no lo ve porque `tests/test_prefixes.py` dobla `build_prefix`. El arreglo es la línea de arriba (`transcript, usages, _ = ...`), y conviene además que el doble del test devuelva una tupla de tres, que es lo que habría cazado esto.
+
 - [ ] **Step 4: Ejecutar los tests y comprobar que pasan**
 
 ```bash
 uv run pytest tests/test_records.py tests/test_conversation.py tests/test_prefixes.py -v
 ```
 
-Esperado: 41 passed (17 + 12 + 12).
+Esperado: 62 passed (27 + 23 + 12).
 
 - [ ] **Step 5: Commit**
 
@@ -1733,16 +2060,17 @@ git commit -m "feat: esquema de fila, motor de conversación etiquetado y prefij
 
 **Interfaces:**
 - Consumes: todo lo anterior.
-- Produces: `plan_phase0(seed) -> list[dict]`, `stratum_window(ranked, stratum, n_strata)`, `pick_artifact(ranked, stratum, kind_counts, rng, n_strata)`, `measure_axis(topics, arts, n_turns, run_id) -> dict`, `resume_state(path)`, `run_cell(...)`, `failed_record(...)`, `main(seed, out=None, measure=True)` que escribe `runs/phase0/<timestamp>.jsonl`, `runs/phase0/axis-<run_id>.json` y `runs/phase0/summary-<run_id>.json`.
+- Produces: `plan_phase0(seed) -> list[dict]`, `stratum_window(ranked, stratum, n_strata)`, `pick_artifact(ranked, stratum, kind_counts, rng, n_strata)`, `measure_axis(topics, arts, lengths, run_id) -> dict`, `probe_cache(...) -> dict`, `bank_sha`, `topics_sha`, `code_sha`, `resume_state(path)`, `read_run_header(path)`, `is_resumable(path)`, `looks_like_content_filter(body)`, `status_for_stop_reasons(stop_reasons)`, `rank_for_prefix(...)`, `run_cell(...)`, `failed_record(...)`, `build_header(...)`, `main(seed, out=None, measure=True)`, y las rutas laterales `axis_path`, `summary_path`, `cache_probe_path`. `main` escribe `runs/phase0/<timestamp>.jsonl`, `axis-<run_id>.json` y `summary-<run_id>.json`; `probe_cache` escribe `cache-probe-<run_id>.json`.
 
-Este fichero es donde aterrizan seis decisiones:
+Este fichero es donde aterrizan siete decisiones:
 
-- **D3 — rotación de ejes.** El estrato va *en el plan*, como `(t + 3·m) % 8` sobre el índice de tema y el de modelo, y la longitud alterna como `LENGTHS[(t + m) % 2]`. Antes, `LENGTHS[i % 2]` sobre el índice de tema y `stratum = i % STRATA` sobre el índice global hacían que estrato ≡ tema ≡ longitud: tres ejes que eran el mismo. El orden de ejecución es **round-robin de modelos dentro de cada tema**, no modelo-mayor: con dos horas de tirada contra un gateway compartido, modelo-mayor confunde el modelo con la hora de reloj.
+- **D3 — rotación de ejes.** El estrato va *en el plan*, como `(t + 2·m) % 8` sobre el índice de tema y el de modelo, y la longitud alterna como `LENGTHS[(t + m) % 2]`. **El coeficiente tiene que ser par.** Antes, `LENGTHS[i % 2]` sobre el índice de tema y `stratum = i % STRATA` sobre el índice global hacían que estrato ≡ tema ≡ longitud: tres ejes que eran el mismo. La primera corrección de D3 puso `(t + 3·m) % 8`, que arregló estrato↔tema y **dejó intacto estrato↔longitud**: como `3m ≡ m (mod 2)`, la paridad del estrato era exactamente el índice de longitud, y los cuatro estratos pares caían siempre en conversaciones de 2 turnos y los impares siempre en las de 10. Cualquier coeficiente impar tiene ese problema, porque módulo 2 todos valen 1. Con coeficiente par la paridad del estrato depende solo de `t`, la longitud depende de `(t + m)`, y los dos ejes se separan; cada estrato sigue cayendo en tres temas distintos (`t = s, s−2, s−4`) y cada modelo sigue recorriendo los ocho estratos. El orden de ejecución es **round-robin de modelos dentro de cada tema**, no modelo-mayor: con dos horas de tirada contra un gateway compartido, modelo-mayor confunde el modelo con la hora de reloj.
 - **D4 — cobertura de `kind`.** Dentro del estrato se elige el artefacto cuyo género esté menos representado hasta ese momento.
-- **D5 — identidad.** Primera línea `run_header`; cada fila con `conversation_id` determinista y legible.
-- **D6 — fallos como datos.** `try/except` por celda, fila siempre, reanudación y resumen final.
-- **D11 — tres celdas de control** sin pegote.
-- **D12 — ancho del eje medido antes de gastar.**
+- **D5 — identidad.** Primera línea `run_header`; cada fila con `conversation_id` determinista y legible, más lo que se envió (`request_params`, `system_prompt`) y lo que contestó el proveedor (`response_model`, `stop_reasons`, `attempts`).
+- **D6 — fallos como datos.** `try/except` por celda, fila siempre, reanudación que solo da por hechas las celdas con `status` en `DONE_STATUSES`, y resumen final.
+- **D10 — sonda de caché.** `probe_cache()` repite dos veces la misma llamada contra un modelo de cada proveedor. Es el único sitio donde el criterio de D10 se puede comprobar de verdad; ver el Step 3d.
+- **D11 — tres celdas de control** sin pegote, repartidas entre las dos longitudes y los tres modelos.
+- **D12 — ancho del eje medido antes de gastar**, en **las dos longitudes**.
 
 El prefijo **no** se construye aquí: viene de `prefixes.ensure_prefix` (D1).
 
@@ -1750,9 +2078,47 @@ El prefijo **no** se construye aquí: viene de `prefixes.ensure_prefix` (D1).
 
 `tests/test_run_phase0.py` no hace una sola llamada a un modelo: `ensure_prefix`, `rank_artifacts`, `inject_paste` y `continue_after_paste` se sustituyen por dobles deterministas en un fixture `harness` que además redirige `OUT_DIR` a `tmp_path`.
 
-Rotación de ejes (D3):
+Rotación de ejes (D3). **El par de ejes que faltaba —estrato × longitud— es paso obligatorio**: sin él, la suite salía en verde certificando una rotación incompleta, y esa es la razón de que el fallo sobreviviera a una revisión.
 
 ```python
+def test_the_stratum_step_is_even():
+    """Un salto impar confunde estrato y longitud: 3·m ≡ m (mod 2)."""
+    assert STRATUM_STEP % 2 == 0, (
+        "con salto impar la paridad del estrato ES el índice de longitud"
+    )
+
+
+def test_every_stratum_crosses_both_lengths():
+    """El test que faltaba (D3): estrato × longitud.
+
+    Con `stratum = (t + 3·m) % 8` los ocho estratos existían, cada uno caía en
+    tres temas... y los pares salían **siempre** en conversaciones de 2 turnos y
+    los impares **siempre** en las de 10. Saber el estrato era saber la
+    longitud, así que cualquier efecto de la similaridad y cualquier efecto de
+    la longitud quedaban pegados sin forma de separarlos después.
+    """
+    plan = _paste_cells(plan_phase0(seed=1))
+    per_stratum: dict[int, set[int]] = {}
+    for cell in plan:
+        per_stratum.setdefault(cell["stratum"], set()).add(cell["n_turns"])
+    assert set(per_stratum) == set(range(STRATA))
+    for stratum, lengths in sorted(per_stratum.items()):
+        assert lengths == set(LENGTHS), (
+            f"el estrato {stratum} solo aparece con n_turns={sorted(lengths)}: "
+            "estrato y longitud están confundidos"
+        )
+
+
+def test_the_parity_of_the_stratum_does_not_determine_the_length():
+    """La forma concreta en que fallaba la fórmula impar, escrita como test."""
+    plan = _paste_cells(plan_phase0(seed=1))
+    for parity in (0, 1):
+        lengths = {c["n_turns"] for c in plan if c["stratum"] % 2 == parity}
+        assert lengths == set(LENGTHS), (
+            f"los estratos de paridad {parity} solo salen con {sorted(lengths)}"
+        )
+
+
 def test_stratum_travels_inside_the_plan():
     """El estrato es un dato de la celda, no el orden de iteración."""
     plan = plan_phase0(seed=1)
@@ -1787,6 +2153,10 @@ def test_every_stratum_lands_on_three_different_topics():
     ...
 
 
+def test_every_model_walks_the_eight_strata():
+    ...
+
+
 def test_every_topic_appears_in_both_lengths():
     ...
 
@@ -1807,6 +2177,22 @@ def test_plan_includes_three_control_cells_without_paste():
     assert len(controls) == rp.N_CONTROL_CELLS == 3
     assert all(c["condition"] == "no_paste" for c in controls)
     assert all(c["stratum"] == -1 for c in controls)
+
+
+def test_control_cells_cover_both_lengths():
+    """Sin control corto, la tasa base no vale para la mitad de las celdas."""
+    controls = _control_cells(plan_phase0(seed=1))
+    assert {c["n_turns"] for c in controls} == set(LENGTHS)
+
+
+def test_control_cells_spread_over_the_three_models():
+    controls = _control_cells(plan_phase0(seed=1))
+    assert {c["model_id"] for c in controls} == set(PHASE0_MODELS)
+
+
+def test_control_cells_use_distinct_topics():
+    controls = _control_cells(plan_phase0(seed=1))
+    assert len({c["topic_id"] for c in controls}) == len(controls)
 
 
 def test_control_cells_reuse_a_length_that_the_plan_already_builds():
@@ -1854,9 +2240,13 @@ def test_sampling_without_the_kind_rule_would_miss_kinds():
     ...
 ```
 
-Ancho del eje (D12): `test_measure_axis_reports_min_median_and_max_per_topic`, `test_measure_axis_embeds_the_user_side_of_the_prefix`, `test_measure_axis_flags_a_narrow_topic` y `test_main_writes_the_axis_report_before_the_run`.
+Ancho del eje (D12): `test_measure_axis_reports_min_median_and_max_per_topic_and_length`, `test_measure_axis_measures_both_lengths`, `test_measure_axis_with_one_length_reports_only_that_one`, `test_measure_axis_embeds_the_user_side_of_the_prefix`, `test_measure_axis_flags_a_narrow_topic` y `test_main_writes_the_axis_report_for_both_lengths`.
 
-Sobre la tirada (D5/D6/D7/D11): que la cabecera vaya primero; una fila por celda con identidad; dos turnos después del pegote; `post_indices` y `paste_index` en la fila; las filas de control sin artefacto ni similaridad; las de pegote con **las dos** similaridades y el ranking completo; que los tres modelos de un tema compartan prefijo y ranking; idempotencia y reanudación; que la reanudación mantenga la cobertura de géneros; y que `resume_state` sobreviva a una última línea truncada.
+Sonda de caché (D10): `test_probe_cache_repeats_the_very_same_call_twice_per_model`, `test_probe_cache_reports_the_cache_read_of_each_call`, `test_probe_cache_fails_the_criterion_when_nothing_is_cached`, `test_probe_cache_records_a_failed_call_instead_of_dying`, `test_probe_cache_writes_its_report_next_to_the_run`, `test_probe_cache_defaults_to_one_model_per_provider` y `test_main_never_spends_money_on_the_cache_probe` (la sonda se lanza a mano; `main` no la llama).
+
+Sobre la tirada (D5/D6/D7/D11): que la cabecera vaya primero; una fila por celda con identidad; dos turnos después del pegote; `post_indices` y `paste_index` en la fila; las filas de control sin artefacto ni similaridad; las de pegote con **las dos** similaridades y el ranking completo; que los tres modelos de un tema compartan prefijo y ranking; que la fila lleve los `request_params` que de verdad se enviaron, los `stop_reasons`, el `response_model` y los `attempts` —incluido `test_a_retried_turn_is_visible_in_the_row`—; que el `system_prompt` salga de lo enviado y en Fase 0 sea `None`; que los dos truncados se registren por separado y el runner no use el booleano colapsado; idempotencia y reanudación; que la reanudación mantenga la cobertura de géneros; que solo `ok` y `refusal` cuenten como hechas (`test_only_ok_and_refusal_count_as_done`, `test_a_cell_that_died_on_a_transient_error_is_retried_on_resume`, `test_a_row_without_status_is_treated_as_done`); que un fichero de salida vacío **no** sea una reanudación y que uno con filas pero sin cabecera no se reanude ni se pise; y que `resume_state` sobreviva a una última línea truncada.
+
+Y una familia entera sobre lo que **no** es una negativa, porque clasificar un fallo del arnés como conducta del modelo contamina justo la variable que mide el experimento: `test_a_malformed_request_mentioning_content_is_not_a_refusal`, `test_a_non_json_body_with_the_word_content_is_not_a_refusal`, `test_an_openai_content_filter_is_a_refusal`, `test_a_nested_responsible_ai_violation_is_a_refusal`, `test_a_vertex_block_reason_is_a_refusal`, `test_a_server_error_is_never_a_refusal`, `test_the_body_is_analysed_whole_and_stored_truncated` y `test_stop_reasons_decide_a_refusal_without_an_http_error`.
 
 Fallos como datos (D6):
 
@@ -1916,14 +2306,19 @@ PHASE0_MODELS = ["gpt-5.6-sol-tst", "gpt-5.6-luna-tst", "claude-opus-5"]
 LENGTHS = [2, 10]
 STRATA = N_STRATA
 
-# Salto de estrato entre modelos consecutivos (D3). Con 8 estratos y 3 modelos,
-# 3 es coprimo con 8: los tres modelos de un mismo tema caen siempre en estratos
-# distintos y el estrato deja de ser una función del tema.
-STRATUM_STEP = 3
+# Salto de estrato entre modelos consecutivos (D3). **Par a propósito.** Con 8
+# estratos, un salto par deja la paridad del estrato dependiendo solo del índice
+# de tema, mientras la longitud depende de `(t + m)`: los dos ejes se separan.
+# Cualquier salto impar (la versión original de D3 usaba 3) hace que la paridad
+# del estrato sea exactamente el índice de longitud, porque módulo 2 todos los
+# impares valen 1, y entonces los cuatro estratos pares caen siempre en
+# conversaciones de 2 turnos y los impares siempre en las de 10.
+STRATUM_STEP = 2
 
 # D11: tres celdas sin pegote. No pretenden dar una tasa base creíble —eso es de
 # la Fase 2—, sino demostrar que el formato, el runner y el verificador soportan
-# el brazo de control.
+# el brazo de control. Se reparten entre las dos longitudes: un control que solo
+# existe en conversaciones largas no sirve de tasa base para las cortas.
 N_CONTROL_CELLS = 3
 
 # D12: por debajo de este rango de coseno, el tema no separa nada y la
@@ -1936,6 +2331,26 @@ AXIS_TOP_N = 3
 
 MASTER_SEED = 20260913
 OUT_DIR = Path(__file__).resolve().parents[2] / "runs" / "phase0"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+# Rutas declaradas en la cabecera (D5). Viven en el repo del blog, no en este.
+PLAN_PATH = "docs/superpowers/plans/2026-09-13-pegado-accidental-fase-0.md"
+SPEC_PATH = "docs/superpowers/specs/2026-09-13-pegado-accidental-design.md"
+
+# El system prompt del usuario simulado es privado de su módulo; se lee así para
+# poder registrarlo en la cabecera sin tocar un fichero que no es de este.
+USER_SYSTEM_PROMPT = getattr(simulated_user, "_SYSTEM", "")
+
+# Cuánto del cuerpo de error se guarda en la fila cuando una celda falla (D6).
+ERROR_BODY_CHARS = 2000
+
+# D6: qué cuenta como celda hecha al reanudar. `ok` es el resultado normal y
+# `refusal` es **un resultado** —que un modelo se niegue es conducta, no
+# avería—, así que ninguno de los dos se repite. `http_error`, `timeout` y
+# `empty` son averías del arnés o del proveedor: se vuelven a intentar, porque
+# si no, una celda que murió por un 429 transitorio no se corre jamás y el hueco
+# queda en la zona interesante del diseño (largas, cosenos altos).
+DONE_STATUSES: frozenset[str] = frozenset({"ok", "refusal"})
 
 
 def plan_phase0(seed: int) -> list[dict]:
@@ -1943,20 +2358,24 @@ def plan_phase0(seed: int) -> list[dict]:
 
     Con `t` el índice del tema y `m` el del modelo (D3)::
 
-        stratum = (t + 3 * m) % 8
+        stratum = (t + 2 * m) % 8
         n_turns = LENGTHS[(t + m) % 2]
 
     El estrato viaja **en el dict**: no se deriva del orden de iteración, que es
     precisamente lo que hacía que estrato, tema y longitud fueran el mismo eje.
+    El coeficiente 2 no es intercambiable por cualquier otro: ver `STRATUM_STEP`.
 
     El bucle exterior es el tema y el interior el modelo, o sea round-robin de
     modelos: si el gateway se degrada a mitad de tirada, la degradación se
     reparte entre los tres modelos en vez de caer entera sobre el último.
 
     Al final se añaden las tres celdas de control sin pegote (D11). Cada una
-    reutiliza el prefijo de la longitud que **no** usa ese mismo modelo en ese
-    mismo tema: así no genera ningún prefijo nuevo y su `conversation_id`, que
-    lleva la longitud dentro, no puede chocar con el de la celda con pegote.
+    coge la longitud **contraria** a la de la celda con pegote de ese mismo
+    (tema, modelo): así no genera ningún prefijo nuevo (cada tema se fabrica en
+    las dos longitudes de todos modos) y su `conversation_id`, que lleva la
+    longitud dentro, no puede chocar con el de la celda con pegote. Los tres
+    (tema, modelo) se eligen con `t = 2·i` para que `t + m` cambie de paridad
+    entre controles y los tres no acaben en la misma longitud.
     """
     topics = load_topics()
     rng = np.random.default_rng(seed)
@@ -1978,7 +2397,7 @@ def plan_phase0(seed: int) -> list[dict]:
             )
 
     for i in range(N_CONTROL_CELLS):
-        t = i % len(topics)
+        t = (2 * i) % len(topics)
         m = i % len(PHASE0_MODELS)
         # La longitud contraria a la de la celda con pegote de ese (tema, modelo).
         n_turns = LENGTHS[(t + m + 1) % len(LENGTHS)]
@@ -2048,119 +2467,308 @@ def pick_artifact(
 
 - [ ] **Step 3c: Ancho del eje (D12)**
 
+Los ficheros laterales de una tirada (informe de ejes, resumen, sonda de caché) siguen **al fichero de salida** y no a `OUT_DIR`: si alguien corre la tirada con `out=/otro/sitio/tirada.jsonl`, el informe que explica los datos tiene que quedar al lado de los datos, y no huérfano —o peor, pisando el de otra tirada con el mismo `run_id`.
+
 ```python
+def _sidecar_path(name: str, run_id: str, out: Path | str | None = None) -> Path:
+    base = Path(out).parent if out is not None else OUT_DIR
+    return base / f"{name}-{run_id}.json"
+
+
+def axis_path(run_id, out=None):  # runs/phase0/axis-<run_id>.json
+    return _sidecar_path("axis", run_id, out)
+
+
+def summary_path(run_id, out=None):  # summary-<run_id>.json
+    return _sidecar_path("summary", run_id, out)
+
+
+def cache_probe_path(run_id, out=None):  # cache-probe-<run_id>.json
+    return _sidecar_path("cache-probe", run_id, out)
+
+
 def measure_axis(
     topics: list[Topic] | None = None,
     arts: list[Artifact] | None = None,
-    n_turns: int = LENGTHS[0],
+    lengths: Iterable[int] | int = tuple(LENGTHS),
     run_id: str = "",
 ) -> dict[str, Any]:
-    """Embebe los ocho prefijos contra el banco y mide el rango por tema (D12).
+    """Embebe los prefijos contra el banco y mide el rango por (tema, longitud).
 
     Se corre **antes** de la tirada y cuesta céntimos. Sirve para no gastar el
     presupuesto en un eje que no separa: si un tema tiene un rango de coseno por
     debajo de `NARROW_RANGE`, o su cola alta está vacía, la estratificación de
     ese tema es decorativa y hay que completar el banco antes de seguir.
 
-    Usa el prefijo corto de cada tema, que es el que `ensure_prefix` ya va a
-    fabricar para la tirada: no genera trabajo extra, solo lo adelanta.
+    Mide **las dos longitudes** por defecto. El ancho del eje es criterio
+    GO/NO-GO (D12) y la mitad de las celdas corren sobre el prefijo largo: un
+    prefijo de diez turnos habla de bastantes más cosas que uno de dos, así que
+    su rango de cosenos no tiene por qué parecerse. Medir solo el corto
+    certificaba media tirada sin haberla mirado.
 
-    Devuelve el informe (que `main` guarda en `runs/phase0/axis-<run_id>.json`)
-    y lo imprime por pantalla de camino.
+    Usa los prefijos que `ensure_prefix` ya va a fabricar para la tirada (cada
+    tema se construye en las dos longitudes): no genera trabajo extra, solo lo
+    adelanta.
+
+    Devuelve el informe (que `main` guarda en `axis-<run_id>.json`) y lo imprime
+    por pantalla de camino.
     """
     topics = load_topics() if topics is None else topics
     arts = load_artifacts() if arts is None else arts
+    lengths = [int(lengths)] if isinstance(lengths, int) else [int(n) for n in lengths]
 
-    per_topic: list[dict[str, Any]] = []
-    print(f"--- ancho del eje (D12): {len(arts)} artefactos, n_turns={n_turns}")
+    entries: list[dict[str, Any]] = []
+    print(f"--- ancho del eje (D12): {len(arts)} artefactos, longitudes={lengths}")
     for topic in topics:
-        prefix = ensure_prefix(topic, n_turns)
-        ranking, truncated = rank_artifacts(user_text(prefix["transcript"]), arts)
-        stats = rank_stats(ranking)
-        entry = {
-            "topic_id": topic.id,
-            "prefix_id": prefix["prefix_id"],
-            "n_turns": int(n_turns),
-            "min": stats["min"],
-            "median": stats["median"],
-            "max": stats["max"],
-            "range": stats["max"] - stats["min"],
-            "narrow": (stats["max"] - stats["min"]) < NARROW_RANGE,
-            "truncated": bool(truncated),
-            # La cola alta, para poder juzgar si está vacía de dominio.
-            "top": [
-                {"artifact_id": art.id, "kind": art.kind, "similarity": sim}
-                for art, sim in ranking[-AXIS_TOP_N:][::-1]
-            ],
-        }
-        per_topic.append(entry)
-        print(
-            f"  {topic.id:<16} min={entry['min']:.3f} "
-            f"med={entry['median']:.3f} max={entry['max']:.3f} "
-            f"rango={entry['range']:.3f}"
-            + ("  <-- ESTRECHO" if entry["narrow"] else "")
-        )
+        for n_turns in lengths:
+            prefix = ensure_prefix(topic, n_turns)
+            ranking, truncated = rank_artifacts(user_text(prefix["transcript"]), arts)
+            stats = rank_stats(ranking)
+            entry = {
+                "topic_id": topic.id,
+                "prefix_id": prefix["prefix_id"],
+                "n_turns": int(n_turns),
+                "min": stats["min"],
+                "median": stats["median"],
+                "max": stats["max"],
+                "range": stats["max"] - stats["min"],
+                "narrow": (stats["max"] - stats["min"]) < NARROW_RANGE,
+                "truncated": bool(truncated),
+                # La cola alta, para poder juzgar si está vacía de dominio.
+                "top": [
+                    {"artifact_id": art.id, "kind": art.kind, "similarity": sim}
+                    for art, sim in ranking[-AXIS_TOP_N:][::-1]
+                ],
+            }
+            entries.append(entry)
+            print(
+                f"  {topic.id:<16} n={n_turns:<3} min={entry['min']:.3f} "
+                f"med={entry['median']:.3f} max={entry['max']:.3f} "
+                f"rango={entry['range']:.3f}"
+                + ("  <-- ESTRECHO" if entry["narrow"] else "")
+            )
 
-    narrow = [e["topic_id"] for e in per_topic if e["narrow"]]
-    if narrow:
-        print(f"  OJO: temas con rango < {NARROW_RANGE}: {', '.join(narrow)}")
+    narrow_cells = [
+        {"topic_id": e["topic_id"], "n_turns": e["n_turns"]}
+        for e in entries
+        if e["narrow"]
+    ]
+    narrow_topics = sorted({c["topic_id"] for c in narrow_cells})
+    if narrow_cells:
+        detalle = ", ".join(f"{c['topic_id']}(n={c['n_turns']})" for c in narrow_cells)
+        print(f"  OJO: rango < {NARROW_RANGE} en: {detalle}")
 
     return {
         "run_id": run_id,
         "embedding_model": config.EMBEDDING_MODEL,
         "prefix_model": PREFIX_MODEL,
-        "n_turns": int(n_turns),
+        "lengths": lengths,
         "n_artifacts": len(arts),
         "narrow_threshold": NARROW_RANGE,
-        "narrow_topics": narrow,
-        "topics": per_topic,
+        "narrow_cells": narrow_cells,
+        "narrow_topics": narrow_topics,
+        "entries": entries,
     }
 ```
 
-- [ ] **Step 3d: Identidad, reanudación y traducción de errores (D5, D6)**
+- [ ] **Step 3d: Sonda de caché (D10)**
 
-`bank_sha`, `topics_sha` y `code_sha` alimentan la cabecera. `code_sha` lee el `.git` a pelo en vez de llamar a `git rev-parse`: una tirada de dos horas no se cae por no saber el sha.
+**Por qué existe.** El criterio escrito de D10 es «dos celdas con el mismo `prefix_id` deben mostrar `cache_read > 0` en la llamada del pegote, desglosado por proveedor». Sobre el plan de la Fase 0 ese criterio **no se puede comprobar nunca**: cada (tema, longitud) tiene su propio `prefix_id` y los tres modelos que lo comparten son de proveedores distintos, así que no hay ninguna pareja de celdas del mismo proveedor con el mismo prefijo. Un chequeo que no puede fallar tampoco verifica nada.
+
+`probe_cache()` monta prefijo + pegote una sola vez y manda **exactamente esa misma petición** dos veces a un modelo de cada proveedor. La primera llamada escribe la caché y la segunda tiene que leerla. Son cuatro llamadas de céntimos y responden la pregunta de verdad —¿el breakpoint está donde creemos y el proveedor lo respeta?— antes de presupuestar la Fase 1 contando con el ahorro.
+
+```python
+# Un modelo por proveedor: D10 se declara «desglosado por proveedor», y lo que
+# cambia entre proveedores es justo el mecanismo (Claude necesita el
+# `cache_control` explícito que pone `clients._mark_cacheable_prefix`; el
+# gateway cachea el prefijo solo).
+CACHE_PROBE_MODELS = ["claude-opus-5", "gpt-5.6-sol-tst"]
+
+# Dos es el mínimo que responde a la pregunta: la primera escribe, la segunda lee.
+CACHE_PROBE_REPEATS = 2
+
+
+def _cache_read_tokens(usage: dict) -> int | None:
+    """Tokens servidos de caché, o None si el proveedor no lo dice.
+
+    Dos formas: Anthropic lo pone en `cache_read_input_tokens`, y los cuerpos
+    estilo OpenAI en `usage.prompt_tokens_details.cached_tokens`.
+    """
+
+
+def probe_cache(
+    models=None, topic=None, artifact=None, n_turns=LENGTHS[0],
+    repeats=CACHE_PROBE_REPEATS, run_id="", out=None, write=True,
+) -> dict[str, Any]:
+    """Repite dos veces la misma llamada y reporta el `cache_read` de cada una.
+
+    No la llama `main()`: se lanza a mano (`python -m wrongpaste.run_phase0
+    probe-cache`) porque gasta dinero y su respuesta vale para toda la fase, no
+    para una tirada. Una llamada que falle se registra como llamada fallida en
+    vez de tumbar la sonda (D6).
+    """
+```
+
+Cada entrada del informe lleva `model_id`, `model_label`, `provider`, las `calls` con su `usage`, la lista `cache_reads` y el veredicto:
+
+```python
+        after_first = [c["cache_read_input_tokens"] for c in calls[1:]]
+        entry = {
+            ...,
+            # El criterio de D10, hecho comprobable: a partir de la segunda
+            # llamada, el proveedor tiene que decir que ha leído caché.
+            "criterion_met": bool(after_first)
+            and all(value is not None and value > 0 for value in after_first),
+        }
+```
+
+y el informe de arriba añade `by_provider` (`{proveedor: criterio}`) y un `criterion_met` global. Se escribe en `cache-probe-<run_id>.json` (`run_id` vale `"manual"` cuando se lanza suelta).
+
+- [ ] **Step 3e: Identidad, reanudación y clasificación de fallos (D5, D6)**
+
+`bank_sha`, `topics_sha` y `code_sha` alimentan la cabecera. `topics_sha` incluye `task`, `expected` y `verifier` (D13): sin ellos, dos tiradas con temas distintos —misma apertura, tareas distintas— declararían el mismo sha, que es justo lo que el sha existe para impedir. `code_sha` lee el `.git` a pelo en vez de llamar a `git rev-parse`: una tirada de dos horas no se cae por no saber el sha.
 
 ```python
 def resume_state(path: Path) -> tuple[set[str], Counter]:
     """Lee un JSONL a medias: qué celdas ya están y qué géneros se han gastado.
 
-    Los `conversation_id` presentes se saltan al reanudar, y los `artifact_kind`
-    ya escritos vuelven al contador de D4: sin eso, reanudar rompería la
-    cobertura de géneros justo en las celdas que quedan por correr.
+    **Solo cuentan como hechas las filas con `status` en `DONE_STATUSES`.** Una
+    fila `http_error` o `timeout` es una celda que no llegó a correrse: darla por
+    hecha significaba que una celda muerta por un 429 transitorio no se
+    reintentaba jamás, y el hueco no cae al azar —fallan más las conversaciones
+    largas y los cosenos altos, que es la zona interesante—. `empty` tampoco
+    cuenta: es una reacción que no está. Una fila sin `status` es de un formato
+    anterior a D6 y se trata como `ok`, que es el valor por defecto del esquema.
+
+    Los géneros que vuelven al contador de D4 son los de esas mismas filas
+    hechas: contar el género de una celda que se va a reintentar lo gastaría dos
+    veces y rompería la cobertura en las celdas que quedan.
 
     Una línea ilegible se ignora en vez de tumbar la reanudación: un fichero
     truncado a mitad de escritura es exactamente el caso que esto tiene que
     sobrevivir.
+    """
+    done: set[str] = set()
+    kinds: Counter = Counter()
+    if not path.exists():
+        return done, kinds
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if row.get("kind") == "run_header":
+            continue
+        if row.get("status", "ok") not in DONE_STATUSES:
+            continue
+        cid = row.get("conversation_id")
+        if cid:
+            done.add(cid)
+        if row.get("artifact_kind"):
+            kinds[row["artifact_kind"]] += 1
+    return done, kinds
+
+
+def read_run_header(path: Path) -> dict:
+    """La primera línea del fichero, si es una cabecera; `{}` si no."""
+
+
+def is_resumable(path: Path) -> bool:
+    """¿Ese fichero es una tirada empezada que se puede continuar?
+
+    Que el fichero **exista** no basta: un fichero vacío —lo crea cualquier
+    `touch`, o una ejecución anterior que murió antes de escribir nada— se
+    tomaba por reanudación, se abría en modo `a` y la tirada entera quedaba sin
+    `run_header`. Sin cabecera no hay `run_id`, ni shas, ni forma de saber si el
+    fichero está completo: el JSONL nace inservible.
+
+    Reanudable = existe, tiene contenido y su primera línea es una cabecera
+    válida. Un fichero con contenido y **sin** cabecera válida no es ninguna de
+    las dos cosas: ni se reanuda (no se sabe de qué tirada es) ni se pisa (tiene
+    datos de alguien), así que se levanta un error en vez de decidir por el
+    usuario.
+    """
+```
+
+La clasificación de fallos es la parte delicada, porque **un fallo del arnés contado como negativa del modelo inventa conducta**, y contamina justo la variable que mide el experimento:
+
+```python
+def looks_like_content_filter(body: str) -> bool:
+    """¿El cuerpo de error dice, SIN AMBIGÜEDAD, que fue un filtro de contenido?
+
+    Se exige que el proveedor lo declare en un **campo de código** (`code`,
+    `type`, `blockReason`, `finish_reason`...) con uno de los valores de
+    `REFUSAL_CODES`. La versión anterior se conformaba con que la subcadena
+    `content` apareciera en cualquier parte del cuerpo de un 400 — y esa
+    subcadena sale en errores de petición malformada corrientes («invalid
+    content type», «messages: content must be a string»).
+    """
+
+
+def status_for_stop_reasons(stop_reasons: Iterable[str | None]) -> str | None:
+    """`refusal` si algún turno acabó en una negativa declarada; si no, None.
+
+    Es la vía normal: una negativa llega con HTTP 200 y el proveedor la marca en
+    `stop_reason` (`refusal` en Claude, `content_filter` en los cuerpos estilo
+    OpenAI). Que un modelo se niegue **es un resultado** (D6), no una avería, y
+    por eso cuenta como celda hecha al reanudar.
     """
 
 
 def _status_for_error(exc: BaseException) -> tuple[str, int | str | None, str]:
     """Traduce una excepción al vocabulario cerrado de `status` (D6).
 
-    `refusal` no se decide aquí: una negativa del modelo llega con HTTP 200 y
-    texto, así que es `ok` en el fichero y la marca quien anota. Lo que sí es
-    `refusal` es que el proveedor corte por filtro de contenido, y eso llega
-    como error del proveedor con su propio código.
+    Regla de oro: **un fallo del arnés nunca se cuenta como conducta del
+    modelo**. Ante la duda, `http_error`. Solo se marca `refusal` cuando el
+    proveedor lo declara en un campo de código del cuerpo
+    (`looks_like_content_filter`); una negativa normal ni siquiera pasa por
+    aquí, porque llega con HTTP 200 y la ve `status_for_stop_reasons`.
     """
+    if isinstance(exc, httpx.HTTPStatusError):
+        # Se analiza el cuerpo entero y se guarda recortado: recortar antes
+        # rompería el JSON y dejaría el análisis ciego justo en los errores
+        # largos.
+        full_body = exc.response.text
+        body = full_body[:ERROR_BODY_CHARS]
+        if looks_like_content_filter(full_body):
+            return "refusal", exc.response.status_code, body
+        return "http_error", exc.response.status_code, body
+    if isinstance(exc, httpx.TimeoutException):
+        return "timeout", exc.__class__.__name__, str(exc)[:ERROR_BODY_CHARS]
+    # Cualquier otra cosa entra como `http_error` porque el vocabulario está
+    # cerrado; el tipo real de la excepción queda en `error_code`.
+    return "http_error", exc.__class__.__name__, str(exc)[:ERROR_BODY_CHARS]
 ```
 
-- [ ] **Step 3e: Una celda (D1, D2, D4, D7, D11)**
+Alrededor viven los vocabularios que esto consulta, todos listas cerradas a propósito: `REFUSAL_CODES` (los códigos con los que un proveedor declara un filtro de contenido), `_CODE_KEYS` (las claves cuyo valor es un código y no prosa — `message` queda fuera adrede: es texto libre y la palabra «content» aparece ahí a diario), `REFUSAL_STOP_REASONS` y `_MAX_ERROR_DEPTH`, que limita lo hondo que se baja buscando códigos dentro del JSON de error.
 
-`rank_for_prefix` cachea el ranking por `prefix_id`. No es una optimización cualquiera: como el prefijo es el mismo para los tres modelos (D1), el eje x de una celda **tiene** que salir idéntico para los tres, y recalcularlo por celda lo dejaría a merced del ruido del embedder. Devuelve el ranking primario (lado del usuario), el diccionario de similaridades secundarias por `artifact_id`, y si hubo truncado.
+- [ ] **Step 3f: Una celda (D1, D2, D4, D7, D11)**
+
+`rank_for_prefix` cachea el ranking por `prefix_id`. No es una optimización cualquiera: como el prefijo es el mismo para los tres modelos (D1), el eje x de una celda **tiene** que salir idéntico para los tres, y recalcularlo por celda lo dejaría a merced del ruido del embedder. Devuelve el ranking primario (lado del usuario), el diccionario de similaridades secundarias por `artifact_id`, y **los dos truncados por separado** —el del texto de usuario y el de la conversación entera—, porque colapsarlos obligaba a tirar filas perfectamente buenas: en la práctica el único texto que se pasa de los 24.000 caracteres es el completo.
+
+`_system_prompt(request_params, transcript)` saca el system prompt **de lo que se envió de verdad** (la clave `system` en Claude, un mensaje `role: "system"` en los cuerpos estilo OpenAI). En Fase 0 el modelo evaluado corre sin system prompt a propósito, así que sale `None` — pero sale de mirar la petición, no de una constante: el día que la Fase 1 añada uno, la fila lo dirá sola.
 
 ```python
 def run_cell(cell, topic, arts, rank_cache, kind_counts, run_id, started_at, partial):
     """Corre una celda entera y devuelve su fila.
 
     `partial` se va rellenando sobre la marcha con lo que ya se sabe (prefijo,
-    artefacto, transcripción), para que si esto revienta a mitad, la fila de
-    fallo que escribe `main` no salga vacía (D6).
+    artefacto, transcripción, cuerpo enviado, respuestas recibidas), para que si
+    esto revienta a mitad, la fila de fallo que escribe `main` no salga vacía
+    (D6).
 
     Secuencia: prefijo compartido (D1), muestreo del artefacto dentro del
     estrato del plan (D3/D4), pegote literal, y dos turnos más con el usuario
     simulado sin reparación (D7). En las celdas de control (D11) se salta el
     pegote y se va directo a los turnos posteriores.
+
+    Trazabilidad (D5/D9): el mismo dict `request_params` viaja a las puertas de
+    `conversation`, que se lo ceden a `chat()`; y los `Reply` completos que
+    devuelven esas puertas son los que rellenan `stop_reasons`,
+    `response_model` y `attempts`. Antes se descartaban y las 27 filas salían
+    con `{}`, `[]`, `""` y `1`.
     """
     model_id = cell["model_id"]
     prefix = ensure_prefix(topic, cell["n_turns"])
@@ -2169,10 +2777,26 @@ def run_cell(cell, topic, arts, rank_cache, kind_counts, run_id, started_at, par
     # Copia: el prefijo cacheado lo comparten los tres modelos y no se muta.
     transcript = [dict(m) for m in prefix["transcript"]]
     partial["transcript"] = transcript
-    ...
+
+    # `chat()` lo vacía y lo rellena antes de cada POST, así que queda con el
+    # cuerpo de la última llamada —el mismo turno a turno— y ya está puesto
+    # aunque la llamada acabe en error.
+    request_params: dict = {}
+    partial["request_params"] = request_params
+    replies: list = []
+    partial["replies"] = replies
+
+    artifact = similarity_user = similarity_full = None
+    similarity_rank = similarity_pct = ranking_rows = None
+    truncated_user = truncated_full = False
+    paste_index = reaction = None
+    usages: list[dict] = []
+
     if cell["condition"] == "paste":
         rng = np.random.default_rng(cell["seed"])
-        ranking, full_by_id, truncated = rank_for_prefix(prefix, arts, rank_cache)
+        ranking, full_by_id, truncated_user, truncated_full = rank_for_prefix(
+            prefix, arts, rank_cache
+        )
         artifact, similarity_user = pick_artifact(
             ranking, cell["stratum"], kind_counts, rng
         )
@@ -2188,29 +2812,89 @@ def run_cell(cell, topic, arts, rank_cache, kind_counts, run_id, started_at, par
             {"artifact_id": art.id, "similarity": sim} for art, sim in ranking
         ]
 
-        reaction, paste_usage, paste_index = inject_paste(
-            model_id, transcript, artifact
+        reaction, paste_usage, paste_index, paste_reply = inject_paste(
+            model_id, transcript, artifact, request_params_out=request_params
         )
         usages.append(paste_usage)
+        replies.append(paste_reply)
 
-    post_indices, post_usages = continue_after_paste(
-        model_id, transcript, topic, n_post=N_POST_TURNS
+    post_indices, post_usages, post_replies = continue_after_paste(
+        model_id, transcript, topic,
+        n_post=N_POST_TURNS, request_params_out=request_params,
     )
     usages.extend(post_usages)
+    replies.extend(post_replies)
 
-    # Una celda con pegote que devuelve reacción vacía no es un `ok`: es texto
-    # que no está, y el análisis tiene que poder descartarla sin leerla.
-    status = "ok"
-    if cell["condition"] == "paste" and not (reaction or "").strip():
-        status = "empty"
-    ...
+    traces = reply_traces(replies)
+    stop_reasons = [trace["stop_reason"] for trace in traces]
+
+    # Una negativa declarada por el proveedor es un resultado (D6) y manda sobre
+    # todo lo demás: un filtro de contenido suele devolver además texto vacío, y
+    # marcar eso como `empty` escondería la conducta que el experimento mide.
+    status = status_for_stop_reasons(stop_reasons)
+    if status is None:
+        # Una celda con pegote que devuelve reacción vacía no es un `ok`: es
+        # texto que no está, y el análisis tiene que poder descartarla sin
+        # leerla.
+        if cell["condition"] == "paste" and not (reaction or "").strip():
+            status = "empty"
+        else:
+            status = "ok"
+
+    ended_at = time.time()
+    return ConversationRecord(
+        run_id=run_id,
+        conversation_id=cell["conversation_id"],
+        cell_index=cell["cell_index"],
+        replicate_idx=cell["replicate_idx"],
+        model_id=model_id,
+        model_label=_model_label(model_id),
+        response_model=_response_model(traces),
+        topic_id=topic.id,
+        n_turns=cell["n_turns"],
+        stratum=cell["stratum"],
+        n_strata=STRATA,
+        prefix_id=prefix["prefix_id"],
+        condition=cell["condition"],
+        arm=ARM_NO_REPAIR,
+        artifact_id=artifact.id if artifact else None,
+        artifact_kind=artifact.kind if artifact else None,
+        artifact_text=artifact.text if artifact else None,
+        artifact_entities=list(artifact.entities) if artifact else None,
+        similarity_user=similarity_user,
+        similarity_full=similarity_full,
+        similarity_rank=similarity_rank,
+        similarity_pct=similarity_pct,
+        ranking=ranking_rows,
+        similarity_user_truncated=bool(truncated_user),
+        similarity_full_truncated=bool(truncated_full),
+        paste_index=paste_index,
+        post_indices=post_indices,
+        transcript=transcript,
+        reaction=reaction,
+        request_params=dict(request_params),
+        system_prompt=_system_prompt(request_params, transcript),
+        user_model=USER_MODEL,
+        prefix_model=prefix.get("prefix_model", PREFIX_MODEL),
+        max_tokens=MAX_TOKENS,
+        stop_reasons=stop_reasons,
+        # Solo las llamadas pagadas por esta celda: las del prefijo se pagaron
+        # una vez y viven en `runs/prefixes/<prefix_id>.json` (D1).
+        usages=usages,
+        seed=cell["seed"],
+        started_at=started_at,
+        ended_at=ended_at,
+        latency_ms=int((ended_at - started_at) * 1000),
+        status=status,
+        attempts=_attempts(traces),
+    )
 ```
 
-En `usages` van **solo** las llamadas que paga esta celda: las del prefijo se pagaron una vez y viven en `runs/prefixes/<prefix_id>.json` (D1).
+Tres ayudantes pequeños y con criterio: `_model_label` (la etiqueta pública de D17), `_response_model` (lo que el proveedor dice haber ejecutado, de la primera llamada que lo diga) y `_attempts`, que devuelve los intentos del **peor** turno y no la suma: lo que interesa al leer una fila es si el proveedor obligó a reintentar, no cuántas llamadas tuvo la celda —eso ya se sabe por el plan.
 
-`failed_record(...)` construye la fila cuando la celda revienta, con todo lo que se llegó a saber (`prefix_id`, artefacto, transcripción parcial) más `status`, `error_code`, `error_body` y `attempts`.
+`failed_record(...)` construye la fila cuando la celda revienta, con todo lo que se llegó a saber: `prefix_id`, artefacto, transcripción parcial, **el cuerpo que se envió** (`chat()` rellena `request_params` antes del POST) y las trazas de los turnos que sí contestaron, más `status`, `error_code`, `error_body` y `attempts` (el del intento que falló, o el peor de todos si el fallo llegó después de turnos buenos).
 
-- [ ] **Step 3f: La tirada (`main`)**
+- [ ] **Step 3g: La tirada (`main`)**
 
 ```python
 def main(
@@ -2220,16 +2904,121 @@ def main(
 ) -> Path:
     """Corre la Fase 0 entera y devuelve la ruta del JSONL.
 
-    Si `out` apunta a un fichero que ya existe, la tirada **se reanuda**: se
-    saltan los `conversation_id` que ya están dentro y se sigue escribiendo al
-    final del mismo fichero (D6). Si no, se crea uno nuevo con la cabecera.
+    Si `out` apunta a una tirada ya empezada —fichero con contenido y con
+    `run_header` válido en la primera línea—, la tirada **se reanuda**: se
+    saltan las celdas ya hechas (`status` en `DONE_STATUSES`) y se sigue
+    escribiendo al final del mismo fichero (D6). Si el fichero no existe o está
+    vacío, se empieza de cero escribiendo la cabecera; si tiene contenido pero
+    no cabecera, `is_resumable` levanta un error en vez de pisarlo.
+
+    Los ficheros laterales (informe de ejes, resumen) se escriben **al lado del
+    JSONL**, no en `OUT_DIR`, para que una tirada dirigida a otro directorio no
+    deje sus datos separados del informe que los explica.
 
     `measure=False` salta el paso de ancho de eje (D12); solo para pruebas, la
     tirada de verdad lo quiere delante.
     """
+    topics = load_topics()
+    topics_by_id = {t.id: t for t in topics}
+    arts = load_artifacts()
+    plan = plan_phase0(seed)
+
+    path = (
+        Path(out) if out is not None
+        else OUT_DIR / f"{time.strftime('%Y%m%dT%H%M%S')}.jsonl"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    resuming = is_resumable(path)
+
+    if resuming:
+        run_id = read_run_header(path).get("run_id") or path.stem
+        done, kind_counts = resume_state(path)
+        print(f"reanudando {path.name}: {len(done)} celdas ya hechas")
+    else:
+        run_id = path.stem
+        done, kind_counts = set(), Counter()
+
+    if measure:
+        axis = measure_axis(topics=topics, arts=arts, lengths=LENGTHS, run_id=run_id)
+        axis_file = axis_path(run_id, out=path)
+        axis_file.parent.mkdir(parents=True, exist_ok=True)
+        axis_file.write_text(
+            json.dumps(axis, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+
+    rank_cache: dict[str, tuple] = {}
+    completed = failed = skipped = 0
+
+    with path.open("a" if resuming else "w", encoding="utf-8") as fh:
+        if not resuming:
+            header = build_header(run_id, seed, plan, arts, topics, time.time())
+            fh.write(json.dumps(header, ensure_ascii=False) + "\n")
+            fh.flush()
+
+        for cell in plan:
+            if cell["conversation_id"] in done:
+                skipped += 1
+                continue
+
+            topic = topics_by_id[cell["topic_id"]]
+            started_at = time.time()
+            partial: dict[str, Any] = {}
+            try:
+                rec = run_cell(
+                    cell, topic, arts, rank_cache, kind_counts,
+                    run_id, started_at, partial,
+                )
+            except Exception as exc:  # D6: una celda rota no tumba la tirada.
+                rec = failed_record(
+                    cell, cell["topic_id"], run_id, started_at, partial, exc
+                )
+
+            # Fila siempre, y `flush()` siempre: si la máquina se cae, lo que
+            # ya se pagó está en disco.
+            fh.write(json.dumps(rec.to_json(), ensure_ascii=False) + "\n")
+            fh.flush()
+
+            if rec.status in DONE_STATUSES:
+                completed += 1
+            else:
+                failed += 1
+            print(_cell_line(rec, cell))
+
+    summary = {
+        "run_id": run_id,
+        "path": str(path),
+        "planned": len(plan),
+        "completed": completed,
+        "failed": failed,
+        "skipped": skipped,
+        "kinds": dict(sorted(kind_counts.items())),
+    }
+    summary_file = summary_path(run_id, out=path)
+    summary_file.parent.mkdir(parents=True, exist_ok=True)
+    summary_file.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(
+        f"--- planificadas: {summary['planned']} | completadas: {completed} "
+        f"| fallidas: {failed} | saltadas: {skipped}"
+    )
+    print(f"--- géneros cubiertos: {len(kind_counts)} -> {summary['kinds']}")
+    return path
 ```
 
-El cuerpo, en orden: cargar temas, banco y plan · decidir fichero (nuevo con timestamp, o reanudación) · `measure_axis` y volcado de `axis-<run_id>.json` · escribir la cabecera si no se reanuda · por cada celda, `try`/`except` alrededor de `run_cell`, fila siempre, `flush()` siempre y una línea impresa por celda · al final, `summary-<run_id>.json` con planificadas, completadas, fallidas, saltadas y el recuento de géneros, más el mismo resumen por pantalla.
+`build_header(...)` arma la primera línea con `run_header_line(RunHeader(...))` y `planned_cells=len(plan)`, que en la Fase 0 son **27**. `_cell_line(rec, cell)` es la línea que se imprime por celda: índice, modelo, tema, longitud, estrato, condición, similaridad, género y `status`.
+
+Y el punto de entrada, con la sonda de caché aparte porque gasta dinero:
+
+```python
+if __name__ == "__main__":
+    # `probe-cache` se pide a mano y a propósito (D10): gasta dinero y su
+    # respuesta vale para toda la fase, no para una tirada.
+    if len(sys.argv) > 1 and sys.argv[1] == "probe-cache":
+        print(json.dumps(probe_cache(), ensure_ascii=False, indent=2))
+    else:
+        print(main())
+```
 
 - [ ] **Step 4: Ejecutar los tests y comprobar que pasan**
 
@@ -2237,7 +3026,7 @@ El cuerpo, en orden: cargar temas, banco y plan · decidir fichero (nuevo con ti
 uv run pytest tests/test_run_phase0.py -v
 ```
 
-Esperado: 40 passed.
+Esperado: 80 passed.
 
 - [ ] **Step 5: Ejecutar la suite entera sin red**
 
@@ -2245,7 +3034,7 @@ Esperado: 40 passed.
 uv run pytest -q -m "not live"
 ```
 
-Esperado: `149 passed, 4 deselected`.
+Esperado: `253 passed, 4 deselected`. La suite offline no necesita ni red ni las variables de entorno de D17.
 
 - [ ] **Step 6: Commit**
 
@@ -2256,24 +3045,165 @@ git commit -m "feat: runner de la Fase 0 con rotación de ejes, cobertura de gé
 
 ---
 
-### Task 8: Correr la Fase 0 y derivar la rúbrica
+### Task 8: Formato de las anotaciones manuales (D14)
+
+**Files:**
+- Create: `~/Documents/repos/llm-wrong-paste/src/wrongpaste/annotations.py`
+- Test: `~/Documents/repos/llm-wrong-paste/tests/test_annotations.py`
+
+**Interfaces:**
+- Consumes: nada (módulo hoja, como `records.py`: ni clientes ni red, para poder usarlo desde un análisis o un cuaderno).
+- Produces: `Annotation(conversation_id, annotator, category_guess, quote="", notes="")`, `ANNOTATION_DIR`, `ANNOTATION_PATH(run_id)`, `write_annotations(run_id, anns)`, `load_annotations(run_id)`, `validate_against_run(anns, record_ids)`.
+
+Las 27 conversaciones se leen enteras a mano y de esa lectura sale la rúbrica v1. **Es el único conjunto etiquetado a mano que va a existir** y el que semilla el acuerdo juez-humano del spec §6: si se pierde, se desordena o se desincroniza del JSONL, no hay contra qué medir al juez-LLM de la Fase 1. Por eso la anotación no vive en "un fichero de trabajo" sino en `runs/phase0/annotations-<run_id>.jsonl`, con esquema y con un chequeo de cuadre.
+
+Lo que este módulo **no** hace, a propósito: validar `category_guess`. La rúbrica todavía no existe —derivarla es el producto de la Fase 0—, así que la categoría es texto libre. Un vocabulario cerrado aquí sería el error de fondo: obligaría a encajar en las cinco categorías previas del spec §5 justo la conducta nueva (por ejemplo, que un modelo **ejecute** un artefacto `prompt`) que D4 se ha molestado en garantizar que aparezca en la muestra.
+
+- [ ] **Step 1: Escribir los tests que fallan**
+
+```python
+def test_ruta_sigue_el_formato_de_d14():
+    assert ANNOTATION_PATH("20260913T101500").name == (
+        "annotations-20260913T101500.jsonl"
+    )
+
+
+def test_el_fichero_es_jsonl_de_verdad_una_linea_por_anotacion():
+    ...
+
+
+def test_las_citas_se_guardan_legibles_con_acentos():
+    """`ensure_ascii=False`: medio sentido de que esto sea JSONL es leerlo a ojo."""
+
+
+def test_category_guess_es_texto_libre():
+    """La rúbrica no existe todavía: cerrar el vocabulario aquí sería el error."""
+
+
+@pytest.mark.parametrize("campo", ["conversation_id", "annotator", "category_guess"])
+def test_los_campos_que_sostienen_el_cuadre_no_pueden_ir_vacios(campo):
+    ...
+
+
+def test_un_campo_desconocido_al_leer_es_un_error():
+    """Se escriben a mano: una errata en el nombre de un campo se tiene que ver."""
+
+
+def test_validate_detecta_una_conversacion_sin_anotar():
+    ...
+
+
+def test_dos_anotadores_sobre_la_misma_conversacion_no_son_un_duplicado():
+    """Es el material con el que se mide el acuerdo entre lectores."""
+
+
+def test_validate_cuadra_con_lo_que_escribe_el_runner():
+    """El cuadre se hace contra los `conversation_id` reales de la tirada."""
+```
+
+Más: el ida y vuelta de escritura y lectura, que escribir reemplace el fichero entero, que leer una tirada sin anotar reviente (igual que `prefixes.load_prefix`: que falte la anotación es un error que hay que ver), que una línea que no es JSON diga **qué línea** es, que las líneas en blanco se ignoren, que `quote` y `notes` puedan faltar, que se detecte un id que no existe en la tirada y un duplicado del mismo anotador, y que los tres problemas se junten en una sola llamada.
+
+- [ ] **Step 2: Ejecutar los tests y comprobar que fallan**
+
+```bash
+uv run pytest tests/test_annotations.py -v
+```
+
+Esperado: FAIL con `ModuleNotFoundError: No module named 'wrongpaste.annotations'`.
+
+- [ ] **Step 3: Implementar `annotations.py`**
+
+```python
+# Dónde viven las anotaciones: el mismo directorio que el JSONL de la tirada,
+# para que la anotación viaje siempre pegada a los datos que describe. Se lee
+# como global en cada función para que los tests lo redirijan a un `tmp_path`.
+ANNOTATION_DIR = Path(__file__).resolve().parents[2] / "runs" / "phase0"
+
+
+@dataclass
+class Annotation:
+    """Lo que una persona anota tras leer una conversación entera.
+
+    - `conversation_id`: la fila de la tirada que se anota; es la clave que
+      permite cuadrar la anotación con el JSONL.
+    - `annotator`: quién la escribió. Va en la fila porque el acuerdo entre dos
+      lectores solo se puede calcular si se sabe quién dijo qué.
+    - `category_guess`: **texto libre**, a propósito.
+    - `quote`: la cita literal que justifica la categoría. Es lo que después se
+      copia como ejemplo en la rúbrica v1.
+    - `notes`: lo demás — dudas, conductas que no encajan, desempates.
+    """
+
+    conversation_id: str
+    annotator: str
+    category_guess: str
+    quote: str = ""
+    notes: str = ""
+
+
+def validate_against_run(anns, record_ids) -> dict[str, list[str]]:
+    """Cuadra las anotaciones contra los `conversation_id` de la tirada.
+
+    Devuelve tres listas ordenadas: `unknown_ids` (anotaciones que apuntan a una
+    conversación que no está en la tirada), `unannotated_ids` (conversaciones
+    sin anotar: con 27 que hay que leer enteras, es el recuento que dice cuánto
+    queda) y `duplicate_ids` (conversaciones que **el mismo anotador** ha
+    anotado dos veces; dos anotadores distintos sobre la misma conversación no
+    son un duplicado, son el material del acuerdo entre lectores).
+
+    Las tres vacías significa que la anotación cuadra con la tirada.
+    """
+```
+
+`write_annotations` reescribe el fichero entero, una línea por anotación, con `sort_keys=True` y `ensure_ascii=False`; para añadir a una tanda anterior el camino es `load_annotations` + `write_annotations` con la lista completa, así el fichero nunca queda a medias entre dos formatos. `Annotation.from_json` es estricta con las claves desconocidas.
+
+- [ ] **Step 4: Ejecutar los tests y comprobar que pasan**
+
+```bash
+uv run pytest tests/test_annotations.py -v
+```
+
+Esperado: 21 passed.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/wrongpaste/annotations.py tests/test_annotations.py
+git commit -m "feat: formato y cuadre de las anotaciones manuales de la Fase 0"
+```
+
+---
+
+### Task 9: Correr la Fase 0 y derivar la rúbrica
 
 **Files:**
 - Create: `~/Documents/repos/llm-wrong-paste/runs/prefixes/*.json` (16: ocho temas × dos longitudes)
 - Create: `~/Documents/repos/llm-wrong-paste/runs/phase0/<timestamp>.jsonl` (el timestamp lo pone el runner)
 - Create: `~/Documents/repos/llm-wrong-paste/runs/phase0/axis-<run_id>.json`
 - Create: `~/Documents/repos/llm-wrong-paste/runs/phase0/summary-<run_id>.json`
+- Create: `~/Documents/repos/llm-wrong-paste/runs/phase0/cache-probe-manual.json` (sonda de D10, lanzada a mano)
 - Create: `~/Documents/repos/llm-wrong-paste/runs/phase0/annotations-<run_id>.jsonl`
 - Create: `~/Documents/repos/llm-wrong-paste/docs/rubrica-v1.md`
 - Create: `~/Documents/repos/personal-website/docs/superpowers/specs/<fecha-de-la-tirada>-pegado-accidental-fase-0-resultados.md`
 
 **Interfaces:**
-- Consumes: `run_phase0.measure_axis`, `run_phase0.main`, `artifacts.entity_hits`.
+- Consumes: `run_phase0.measure_axis`, `run_phase0.probe_cache`, `run_phase0.main`, `artifacts.entity_hits`, `annotations.write_annotations` / `validate_against_run`.
 - Produces: la rúbrica que la Fase 1 necesita como entrada. **Sin esto, la Fase 1 no se puede planificar.**
+
+- [ ] **Step 0: Exportar las dos variables de entorno (D17)**
+
+Sin ellas, la primera llamada real muere con `MissingConfig` diciendo cuál falta. La suite offline no las necesita; cualquier cosa que toque red, sí.
+
+```bash
+export WRONGPASTE_GATEWAY_URL=...   # endpoint del gateway LiteLLM
+export WRONGPASTE_GCP_PROJECT=...   # proyecto de GCP con Vertex AI
+```
+
+Ninguna de las dos se versiona: este repo de código es público y son material de trabajo interno. El pendiente que D17 dejaba abierto ("decidir antes de la primera tirada") está cerrado; aquí solo queda exportarlas.
 
 - [ ] **Step 1: Medir el ancho del eje ANTES de gastar (D12)**
 
-Este paso va primero, no después. Cuesta céntimos —una tanda de embeddings y los ocho prefijos cortos, que además quedan persistidos y los reutiliza la tirada— y es lo que impide gastar el presupuesto en un eje que no separa.
+Este paso va primero, no después. Cuesta céntimos —una tanda de embeddings y los dieciséis prefijos, que además quedan persistidos y los reutiliza la tirada— y es lo que impide gastar el presupuesto en un eje que no separa. Se miden **las dos longitudes**: la mitad de las celdas corren sobre el prefijo largo, y medir solo el corto certificaba media tirada sin haberla mirado.
 
 ```bash
 cd ~/Documents/repos/llm-wrong-paste
@@ -2285,15 +3215,13 @@ axis_path('preflight').parent.mkdir(parents=True, exist_ok=True)
 axis_path('preflight').write_text(
     json.dumps(axis, ensure_ascii=False, indent=2) + '\n', encoding='utf-8'
 )
-print('temas estrechos:', axis['narrow_topics'])
+print('celdas estrechas:', axis['narrow_cells'])
 "
 ```
 
-Criterio: **ningún tema por debajo de `NARROW_RANGE = 0,15` de rango, y ninguna cola alta vacía de dominio.** Si algún tema falla, se completa el banco con artefactos de portapapeles plausibles que rocen ese dominio **sin estar escritos como distractores**, y se vuelve a medir. Sospechosos comprobados: `viaje-japon`, `elegir-camara` y `mudanza` no tienen hoy ningún artefacto de su dominio en el banco.
+Criterio: **ninguna (tema, longitud) por debajo de `NARROW_RANGE = 0,15` de rango, y ninguna cola alta vacía de dominio.** Si alguna falla, se completa el banco con artefactos de portapapeles plausibles que rocen ese dominio **sin estar escritos como distractores**, y se vuelve a medir. Sospechosos comprobados: `viaje-japon`, `elegir-camara` y `mudanza` no tienen hoy ningún artefacto de su dominio en el banco.
 
-El rango observado por tema **entra como criterio explícito del GO/NO-GO** del Step 8.
-
-Aquí también se cierra el pendiente de D17: decidir si `GATEWAY_URL` y `GCP_PROJECT` se quedan en `config.py` o pasan a variables de entorno antes de la primera tirada. Es material de trabajo interno en un repo público.
+El rango observado **entra como criterio explícito del GO/NO-GO** del Step 9.
 
 - [ ] **Step 2: Estimar antes de gastar**
 
@@ -2308,7 +3236,7 @@ cd ~/Documents/repos/llm-wrong-paste
 uv run python -m wrongpaste.run_phase0
 ```
 
-Si se corta a mitad, **no se relanza de cero**: se reanuda sobre el mismo fichero, que se salta las celdas ya escritas (D6).
+Si se corta a mitad, **no se relanza de cero**: se reanuda sobre el mismo fichero, que se salta las celdas ya **hechas** —`status` en `ok` o `refusal`— y reintenta las que murieron por avería (`http_error`, `timeout`, `empty`), que es donde el hueco sería sesgado (D6).
 
 ```bash
 uv run python -c "
@@ -2319,43 +3247,27 @@ print(main(out='runs/phase0/<fichero>.jsonl'))
 
 Al acabar, mirar `summary-<run_id>.json` antes que nada: planificadas 27, completadas, fallidas, saltadas y géneros cubiertos. **Las filas fallidas son datos**: si se concentran en las conversaciones de 10 turnos o en los estratos altos, eso se dice en los resultados, porque es exactamente el sesgo que D6 anticipaba.
 
-- [ ] **Step 4: Comprobar el caché de prefijo con el criterio de D10**
+- [ ] **Step 4: Comprobar el caché con la sonda de D10**
 
-El criterio no es "que haya alguna lectura de caché". Es: **dos celdas que comparten `prefix_id` deben mostrar `cache_read > 0` en la llamada del pegote**, y se mira desglosado por proveedor. Mezclar las lecturas de dentro de una conversación con las de entre celdas daría verde validando algo que no es el ahorro que la Fase 1 necesita.
+El criterio escrito de D10 —«dos celdas con el mismo `prefix_id` deben mostrar `cache_read > 0` en la llamada del pegote, desglosado por proveedor»— **no se puede comprobar sobre la tirada**: cada (tema, longitud) tiene su propio `prefix_id`, y los tres modelos que lo comparten son de tres proveedores distintos, así que no hay ninguna pareja de celdas del mismo proveedor con el mismo prefijo. Un chequeo que no puede fallar no verifica nada. Por eso el criterio se comprueba con la sonda, que repite dos veces la misma petición contra un modelo de cada proveedor:
+
+```bash
+cd ~/Documents/repos/llm-wrong-paste
+uv run python -m wrongpaste.run_phase0 probe-cache
+```
+
+Cuatro llamadas, céntimos, y el informe queda en `runs/phase0/cache-probe-manual.json`. Lo que hay que mirar es `by_provider` y el `criterion_met` de cada modelo: a partir de la segunda llamada, el proveedor tiene que decir que ha leído caché.
+
+Interpretación: si `vertex_anthropic` sale a cero, el breakpoint de D10 no está llegando y hay que arreglarlo **antes** de la Fase 1, donde el caché es la diferencia entre 20 $ y bastante más. Si el cero sale con el prefijo de 2 turnos, la explicación probable es el mínimo de tokens que cada proveedor exige para cachear: repetir la sonda con `n_turns=10` antes de tocar nada.
 
 ```bash
 uv run python -c "
-import json, pathlib
-from collections import defaultdict
-from wrongpaste import config
-
-p = sorted(pathlib.Path('runs/phase0').glob('*.jsonl'))[-1]
-rows = [json.loads(l) for l in p.read_text(encoding='utf-8').splitlines() if l.strip()]
-rows = [r for r in rows if r.get('kind') != 'run_header' and r['condition'] == 'paste']
-
-def cache_read(usage):
-    return int(
-        usage.get('cache_read_input_tokens')
-        or usage.get('prompt_tokens_details', {}).get('cached_tokens', 0)
-        or 0
-    )
-
-por_prefijo = defaultdict(list)
-for r in rows:
-    por_prefijo[r['prefix_id']].append(r)
-
-for pid, grupo in sorted(por_prefijo.items()):
-    if len(grupo) < 2:
-        continue
-    # La primera celda del prefijo escribe caché; las siguientes deben leerlo.
-    for r in sorted(grupo, key=lambda r: r['cell_index'])[1:]:
-        prov = config.MODELS[r['model_id']].provider
-        leido = cache_read(r['usages'][0]) if r['usages'] else 0
-        print(f\"{pid}  {prov:<16} {r['model_id']:<18} cache_read={leido}\")
+from wrongpaste.run_phase0 import probe_cache
+print(probe_cache(n_turns=10, run_id='manual-largo')['by_provider'])
 "
 ```
 
-Interpretación: si `vertex_anthropic` sale a cero, el breakpoint de D10 no está llegando y hay que arreglarlo **antes** de la Fase 1, donde el caché es la diferencia entre 20 $ y bastante más. Si los cero se concentran en el brazo de 2 turnos, la explicación probable es el mínimo de tokens que cada proveedor exige para cachear: mirar entonces las celdas de 10 turnos antes de tocar nada.
+Y sobre la tirada ya corrida se puede mirar, como dato descriptivo (no como criterio), qué `cache_read` reportó cada celda en la llamada del pegote: está en `usages[0]` de cada fila con `condition == "paste"`, en `cache_read_input_tokens` (Anthropic) o en `prompt_tokens_details.cached_tokens` (cuerpos estilo OpenAI).
 
 - [ ] **Step 5: Contar entidades sobre los prefijos pre-pegote (D8)**
 
@@ -2399,7 +3311,22 @@ Las anotaciones van a `runs/phase0/annotations-<run_id>.jsonl` con el formato de
 {"conversation_id": "p0-claude-opus-5-hacer-pan-10-r0", "annotator": "javier", "category_guess": "puente_confabulado", "quote": "Entiendo que el log tiene que ver con la fermentación…", "notes": "no pregunta; enlaza el stacktrace con el horno en la primera frase"}
 ```
 
-Es el **único conjunto etiquetado a mano que va a existir**, y el que semilla el acuerdo juez-humano del spec §6. Va al commit.
+Es el **único conjunto etiquetado a mano que va a existir**, y el que semilla el acuerdo juez-humano del spec §6. Va al commit. El fichero lo escribe y lo valida `wrongpaste.annotations` (Task 8), no un script suelto:
+
+```bash
+uv run python -c "
+import json, pathlib
+from wrongpaste.annotations import load_annotations, validate_against_run
+
+p = sorted(pathlib.Path('runs/phase0').glob('*.jsonl'))[-1]
+rows = [json.loads(l) for l in p.read_text(encoding='utf-8').splitlines() if l.strip()]
+ids = [r['conversation_id'] for r in rows if r.get('kind') != 'run_header']
+
+print(json.dumps(validate_against_run(load_annotations(p.stem), ids), indent=2))
+"
+```
+
+Las tres listas vacías (`unknown_ids`, `unannotated_ids`, `duplicate_ids`) es la condición para dar la lectura por terminada: `unannotated_ids` dice cuántas conversaciones quedan por leer, y `duplicate_ids` caza que el mismo anotador haya dejado dos categorías para la misma fila sin decir cuál vale.
 
 Preguntas que la lectura debe contestar:
 - ¿Aparecen conductas que no están en las cinco categorías? En particular, ¿algún modelo **ejecuta** un artefacto de tipo `prompt`? Esa sería la sexta conducta que D4 obliga a poder ver.
@@ -2418,17 +3345,19 @@ En el repo del blog, siguiendo el formato de `2026-08-14-fase-0-resultados.md`: 
 
 El GO/NO-GO se apoya en criterios que ya están medidos, no en impresiones:
 
-1. **Ancho del eje (D12)**: rango de coseno por tema ≥ 0,15 y cola alta no vacía, en los ocho temas. Si no, completar el banco es un prerrequisito, no una mejora opcional.
+1. **Ancho del eje (D12)**: rango de coseno ≥ 0,15 y cola alta no vacía, en las dieciséis celdas (ocho temas × dos longitudes). Si no, completar el banco es un prerrequisito, no una mejora opcional.
 2. **Integridad de la tirada (D6)**: celdas fallidas y **cómo se reparten** entre longitudes, estratos y proveedores.
 3. **Cobertura de género (D4)**: los once `kind` vistos al menos una vez, `prompt` incluido.
-4. **Caché (D10)**: lectura de caché confirmada por proveedor entre celdas que comparten prefijo.
+4. **Caché (D10)**: `criterion_met` de la sonda, por proveedor — la segunda llamada de la misma petición lee caché.
 5. **Ruido de base de entidades (D8)**: lista de entities a sustituir antes de la Fase 2.
-6. **Rúbrica**: categorías estables, con ejemplos, y desempates escritos.
+6. **Anotación cuadrada (D14)**: `validate_against_run` con las tres listas vacías sobre las 27 conversaciones.
+7. **Rúbrica**: categorías estables, con ejemplos, y desempates escritos.
 
 - [ ] **Step 10: Commit en los dos repos**
 
 ```bash
 cd ~/Documents/repos/llm-wrong-paste
+# runs/phase0 incluye el JSONL, axis-*, summary-*, cache-probe-* y annotations-*.
 git add runs/prefixes runs/phase0 docs/rubrica-v1.md
 git commit -m "data: Fase 0 — 27 conversaciones, anotaciones a mano y rúbrica v1"
 
@@ -2451,7 +3380,7 @@ Van al artículo tal cual. No son deuda pendiente: son el precio de decisiones t
 
 ## Lo que este plan NO cubre, y por qué
 
-- **Fase 1 y Fase 2 no tienen tareas aquí.** Su diseño depende de la rúbrica que produce la Task 8. Escribirlas ahora sería inventarse nombres de categorías que van a cambiar. Se planifican en un documento aparte cuando exista `rubrica-v1.md`.
+- **Fase 1 y Fase 2 no tienen tareas aquí.** Su diseño depende de la rúbrica que produce la Task 9. Escribirlas ahora sería inventarse nombres de categorías que van a cambiar. Se planifican en un documento aparte cuando exista `rubrica-v1.md`.
 - **Fase 3 no existe todavía**, por decisión del spec §8.
 - **Los brazos (b), (c) y (d) de reparación** del spec §7 no se corren en Fase 0: el campo `arm` existe y vale siempre `"a"`. La Fase 0 pilota solo la variante sin reparación (D7).
 
@@ -2463,5 +3392,5 @@ Se resuelven **antes** de planificar la Fase 1, no durante.
   - *Opción recomendada*: añadir `gpt-5.5-tst` a la key. Ya está registrado en el gateway y no forma parte del plantel, así que sirve de juez sin tocar el diseño.
   - *Alternativa*: usar `claude-sonnet-5` como juez y sacarlo del conjunto evaluado, a costa de perder el segundo Claude.
 - **Incoherencia del plantel: 7 frente a 9 modelos (D16).** El §6 del spec presupuesta 2.688 = 384 × **7** modelos; el §9 lista **nueve** verificados, que son los que `config.py` registra; y la alternativa del punto anterior propone sacar a `claude-sonnet-5`, lo que dejaría ocho. Los tres números no pueden ser correctos a la vez. **Se resuelve al planificar la Fase 1**, junto con la decisión del juez, porque las dos cosas son la misma decisión mirada desde dos lados: cuántos modelos se evalúan y quién queda fuera para juzgar. Hasta entonces queda anotado aquí para que no se pierda.
-- **Sustitución de las entities ruidosas** que salgan del Step 5 de la Task 8 (D8), antes de que la Fase 2 cuente fugas.
+- **Sustitución de las entities ruidosas** que salgan del Step 5 de la Task 9 (D8), antes de que la Fase 2 cuente fugas.
 - **Completar el banco** en los temas que el informe de ejes marque como estrechos (D12).
