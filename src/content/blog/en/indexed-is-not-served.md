@@ -7,8 +7,10 @@ lang: en
 translationKey: indexed-is-not-served
 heroImage: "/blog/indexed-is-not-served.png"
 linkedinLinks:
-  - label: "The site in question"
+  - label: "VitaminD Explorer"
     url: "https://getvitamind.app"
+  - label: "How long in the sun you need"
+    url: "https://getvitamind.app/en/how-long-in-sun-vitamin-d"
 ---
 
 On 15 August [VitaminD Explorer](https://getvitamind.app) served 879 impressions

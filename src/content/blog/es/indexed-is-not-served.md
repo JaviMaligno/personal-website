@@ -7,8 +7,10 @@ lang: es
 translationKey: indexed-is-not-served
 heroImage: "/blog/indexed-is-not-served.png"
 linkedinLinks:
-  - label: "El sitio en cuestión"
+  - label: "VitaminD Explorer"
     url: "https://getvitamind.app"
+  - label: "Cuánto tiempo al sol hace falta"
+    url: "https://getvitamind.app/cuanto-sol-vitamina-d"
 ---
 
 El 15 de agosto [VitaminD Explorer](https://getvitamind.app) sirvió 879
