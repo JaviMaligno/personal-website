@@ -1,6 +1,6 @@
 ---
 title: "When the Fact Stops Being True"
-description: "A replication of SKILL.state, an EMNLP paper that replaces an agent's conversation history with an explicit mutable state. The token savings are real and the bill savings are not — 7.5x becomes 1.4x once you turn caching on. And the place explicit state wins decisively is the one the paper predicted it would lose: 93 out of 93 corrections applied, against 18 out of 82 for the full transcript."
+description: "A replication of SKILL.state, an EMNLP paper that replaces an agent's conversation history with an explicit mutable state. The token savings are real and the bill savings are not — 7.5x becomes 1.4x once you turn caching on. And where explicit state wins decisively it confirms the paper's own recovery experiment, with a metric the paper never used: 93 out of 93 corrections applied, against 18 out of 82 for the full transcript."
 pubDate: 2026-09-13
 tags: ["AI", "Agents", "Context Engineering", "Evaluation", "Research"]
 lang: en
@@ -13,7 +13,7 @@ linkedinSummary: |
 
   With the entire transcript in context — the original record, the correction, everything in between — Claude Haiku 4.5 gets that decision right 3 times out of 44. Given a 200-character JSON state object instead, and no transcript at all, it gets it right 44 out of 44. Sonnet 5 goes from 15/38 to 49/49. Explicit state does not miss a single correction in 93 dependent steps across both models.
 
-  That is a replication of SKILL.state, an EMNLP paper proposing exactly this substitution, and the result contradicts one of the paper's own stated limitations. It also fails to reproduce the headline: on the paper's own kind of task, three of the four runtimes score a clean 1.00, because the information a warehouse agent needs is never more than about two positions away.
+  That is a replication of SKILL.state, an EMNLP paper proposing exactly this substitution, and it turns the paper's own recovery experiment, reported there as a yes/no over four hand-built scenarios, into a count of decisions. It also fails to reproduce the headline: on the paper's own kind of task, three of the four runtimes score a clean 1.00, because the information a warehouse agent needs is never more than about two positions away.
 
   The cost half is worse than it looks. The token savings are real — a flat 2,157-token prompt against one growing to 16,437 — and they are not bill savings. An append-only transcript is the ideal cacheable prefix; a state object that mutates invalidates the cache. Measured with caching on, a 7.5x advantage in tokens becomes 1.4x in money, and the two orderings disagree about second place. The same content with the state block moved in front of the transcript, which is where the paper's own template puts it, costs 5.7 times more.
 
@@ -34,7 +34,7 @@ An agent reads an event at step 10: *the pallet you filed at step 3 was never ac
 
 With the entire transcript in its context — the original record, the correction, everything in between — Claude Haiku 4.5 gets that decision right **3 times out of 44**. Given a 200-character JSON state object instead, and no transcript at all, the same model gets it right **44 out of 44**.
 
-That is the strongest effect in this replication, and the paper being replicated predicts the opposite.
+That is the strongest effect in this replication. It is also the paper's own claim: its Experiment 3 reports that history-based runtimes hallucinate for five to eight turns after a correction while explicit state recovers in zero. What is new below is the unit of measurement, not the sign.
 
 ## What the paper proposes
 
@@ -282,7 +282,7 @@ On Sonnet 5, at 3x the input price, those become $2,546 against $486. Per thousa
 
 ## Where explicit state actually wins
 
-The paper's stated limitation **L2** predicts that the method will fail when the objective depends on provenance — on *why* a fact is in the state, not just what it says. So the natural probe is the case where a fact's provenance is overturned: the agent files a pallet at step `t`; at `t+10` a correction says that put-away never completed and the shelf is empty. From then on that shelf is the lowest free one, and **every subsequent decision** depends on having applied the correction.
+The paper's Experiment 3 tests what happens when the world changes underneath the agent, and reports it as a yes/no over four hand-built scenarios: history-based runtimes recover after five to eight turns, SKILL.state after zero. It is the one result of theirs that reproduces here, and the probe below measures it per decision instead of per scenario: the agent files a pallet at step `t`; at `t+10` a correction says that put-away never completed and the shelf is empty. From then on that shelf is the lowest free one, and **every subsequent decision** depends on having applied the correction.
 
 Two design choices make this measurable at all. First, the unit of counting is not the episode or the seed but the **dependent step**: each step after the notice whose correct action changes because of it. Second, the seeds are chosen by measured range before spending anything — a perfect-but-deaf agent, one that executes everything correctly and simply never applies the correction, defines the floor, and seeds differ enormously in how much room there is above it:
 
@@ -508,7 +508,7 @@ Three things only visible when you count decisions rather than average episodes:
 
 The mechanism is unglamorous. Explicit state has exactly one place where the fact lives, and correcting it is the operation the runtime already performs every step. The transcript erases nothing: it holds the original record and its retraction simultaneously, and every subsequent step has to resolve the contradiction again from scratch.
 
-**Having a single place where the truth lives is an advantage precisely when the truth changes** — which is the opposite of what L2 predicts, and it replicates across both models.
+**Having a single place where the truth lives is an advantage precisely when the truth changes.** That is the paper's claim, not a counter-result. What this adds is a number under it — every dependent decision rather than four scenarios — and a replication in two models it never tested.
 
 ## Where explicit state does nothing
 
@@ -558,7 +558,7 @@ Here explicit state, by itself, does nothing at all. At `k=40`, Haiku with a sta
 
 Three interventions, measured paired on the same seeds:
 
-- **A schema field that names the fact** (`quarantined_shelves`) takes Haiku from 0/24 to 100% and Sonnet from 12% to 75%. It works because the schema's designer anticipated exactly this fact — which is the paper's limitation **L1**, now with a number attached.
+- **A schema field that names the fact** (`quarantined_shelves`) takes Haiku from 0/24 to 100% and Sonnet from 12% to 75%. It works because the schema's designer anticipated exactly this fact — which is one of the three settings the paper's Limitations section declares and does not measure (a state update that depends on an observation whose relevance was not recognised when it was read), now with a number attached.
 - **A generic free-text field** (`notes`, no indication of what to put in it) scores 5/24 = 21% on Sonnet, confidence interval 9–40%, statistically indistinguishable from having no field at all. On one seed it scores 0/8, *worse* than nothing.
 - **Re-injecting the standing fact into every observation** takes Haiku from 0/24 to **24/24** and Sonnet from 12% to 83%, and requires anticipating nothing.
 
@@ -588,3 +588,5 @@ The claims here are scoped to two models, one environment that discriminates, an
 ---
 
 *Replication of [SKILL.state: Scalable Long-Horizon Agent Skills](https://arxiv.org/abs/2608.26263) (Badhe, Tiwari and Chung, accepted at EMNLP). Related: [The Scaffolding You Pay For](/en/blog/the-scaffolding-you-pay-for) on interventions that cost more than they buy, and [The Forgetting You Don't Measure](/en/blog/forgetting-you-dont-measure) on what a single benchmark number hides.*
+
+*Correction, 13 September 2026: an earlier version of this article framed the retroactive-invalidation result as contradicting a limitation stated in the paper. It does not. The paper reserves that case for tasks whose objective is the history itself — auditing, explaining past actions — which this probe does not test, and its own Experiment 3 already reports the same direction qualitatively. The contribution is the metric, not the sign.*

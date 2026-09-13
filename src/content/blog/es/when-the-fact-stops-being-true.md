@@ -1,6 +1,6 @@
 ---
 title: "Cuando el dato deja de ser cierto"
-description: "Réplica de SKILL.state, un paper de EMNLP que sustituye la historia de conversación de un agente por un estado explícito y mutable. El ahorro en tokens es real y el ahorro en la factura no: 7,5x se queda en 1,4x en cuanto activas la caché. Y donde el estado explícito gana de forma aplastante es justo donde el paper predecía que perdería: 93 correcciones aplicadas de 93, frente a 18 de 82 con el transcript completo."
+description: "Réplica de SKILL.state, un paper de EMNLP que sustituye la historia de conversación de un agente por un estado explícito y mutable. El ahorro en tokens es real y el ahorro en la factura no: 7,5x se queda en 1,4x en cuanto activas la caché. Y donde el estado explícito gana de forma aplastante confirma el experimento de recuperación del propio paper, con una métrica que él no usa: 93 correcciones aplicadas de 93, frente a 18 de 82 con el transcript completo."
 pubDate: 2026-09-13
 tags: ["IA", "Agentes", "Context Engineering", "Evaluación", "Investigación"]
 lang: es
@@ -22,7 +22,7 @@ Un agente lee un evento en el paso 10: *el palé que registraste en el paso 3 nu
 
 Con el transcript entero en su contexto —el registro original, la corrección, y todo lo que hay en medio— Claude Haiku 4.5 acierta esa decisión **3 veces de 44**. Dándole en su lugar un objeto JSON de 200 caracteres, y ningún transcript, el mismo modelo acierta **44 de 44**.
 
-Es el efecto más fuerte de toda la réplica, y el paper replicado predice lo contrario.
+Es el efecto más fuerte de toda la réplica, y también es lo que el paper afirma: su Experimento 3 dice que los runtimes con historia alucinan entre cinco y ocho turnos tras una corrección, y que el estado explícito recupera en cero. Lo nuevo de aquí abajo es la unidad de medida, no el signo.
 
 ## Qué propone el paper
 
@@ -270,7 +270,7 @@ En Sonnet 5, con la entrada a 3x, eso son $2.546 frente a $486. Por cada mil epi
 
 ## Dónde gana de verdad el estado explícito
 
-La limitación **L2** que declara el paper predice que el método fallará cuando el objetivo dependa de la procedencia: de *por qué* un dato está en el estado, no solo de qué dice. Así que la sonda natural es el caso en que la procedencia de un dato queda desmentida: el agente registra un palé en el paso `t`; en `t+10` una corrección dice que aquella colocación nunca se completó y la estantería está vacía. Desde ahí esa estantería es la libre más baja, y **todas las decisiones posteriores** dependen de haber aplicado la corrección.
+El Experimento 3 del paper prueba qué pasa cuando el mundo cambia por debajo del agente, y lo cuenta como un sí/no sobre cuatro escenarios hechos a mano: los runtimes con historia se recuperan tras cinco a ocho turnos, SKILL.state tras cero. Es el resultado suyo que sí reproduce aquí, y la sonda de abajo lo mide por decisión en vez de por escenario: el agente registra un palé en el paso `t`; en `t+10` una corrección dice que aquella colocación nunca se completó y la estantería está vacía. Desde ahí esa estantería es la libre más baja, y **todas las decisiones posteriores** dependen de haber aplicado la corrección.
 
 Dos decisiones de diseño hacen que esto sea medible. La primera: la unidad de recuento no es el episodio ni la seed, sino el **paso dependiente** —cada paso posterior al aviso cuya acción correcta cambia por él—. La segunda: las seeds se eligen por rango medido antes de gastar nada. Un agente perfecto pero sordo, que lo ejecuta todo bien y simplemente nunca aplica la corrección, define el suelo, y las seeds difieren enormemente en cuánto sitio dejan por encima:
 
@@ -496,7 +496,7 @@ Tres cosas que solo se ven contando decisiones en vez de promediando episodios:
 
 El mecanismo no tiene ningún glamour. El estado explícito tiene exactamente un sitio donde vive el dato, y corregirlo es la operación que el runtime ya ejecuta en cada paso. El transcript no borra nada: sostiene a la vez la afirmación y su desmentido, y cada paso posterior tiene que resolver la contradicción otra vez desde cero.
 
-**Tener un único sitio donde vive la verdad es una ventaja justo cuando la verdad cambia**, que es lo contrario de lo que predice L2, y replica en los dos modelos.
+**Tener un único sitio donde vive la verdad es una ventaja justo cuando la verdad cambia.** Es lo que afirma el paper, no un contraejemplo. Lo que esto añade es un número debajo — todas las decisiones dependientes en vez de cuatro escenarios — y una réplica en dos modelos que él no probó.
 
 ## Dónde el estado explícito no hace nada
 
@@ -546,7 +546,7 @@ Y aquí el estado explícito, por sí solo, no hace absolutamente nada. Con `k=4
 
 Tres intervenciones, medidas pareadas sobre las mismas seeds:
 
-- **Un campo de esquema que nombra el dato** (`quarantined_shelves`) lleva a Haiku de 0/24 al 100% y a Sonnet del 12% al 75%. Funciona porque quien diseñó el esquema anticipó exactamente ese dato, que es la limitación **L1** del paper, ahora con un número al lado.
+- **Un campo de esquema que nombra el dato** (`quarantined_shelves`) lleva a Haiku de 0/24 al 100% y a Sonnet del 12% al 75%. Funciona porque quien diseñó el esquema anticipó exactamente ese dato, que es uno de los tres casos que el paper declara en Limitaciones y no mide (una actualización de estado que depende de una observación cuya relevancia no se reconoció al leerla), ahora con un número al lado.
 - **Un campo genérico de texto libre** (`notes`, sin decir qué poner en él) saca 5/24 = 21% en Sonnet, intervalo 9–40%, estadísticamente indistinguible de no tener campo. En una seed saca 0/8, *peor* que nada.
 - **Reinyectar el dato vigente en cada observación** lleva a Haiku de 0/24 a **24/24** y a Sonnet del 12% al 83%, y no exige anticipar nada.
 
@@ -576,3 +576,5 @@ Todo esto está acotado a dos modelos, un entorno que discrimina y un procedimie
 ---
 
 *Réplica de [SKILL.state: Scalable Long-Horizon Agent Skills](https://arxiv.org/abs/2608.26263) (Badhe, Tiwari y Chung, aceptado en EMNLP). Relacionados: [El andamiaje que pagas](/es/blog/the-scaffolding-you-pay-for), sobre intervenciones que cuestan más de lo que compran, y [El olvido que no mides](/es/blog/forgetting-you-dont-measure), sobre lo que esconde un número de benchmark.*
+
+*Corrección, 13 de septiembre de 2026: una versión anterior de este artículo presentó el resultado de invalidación retroactiva como una contradicción de una limitación declarada en el paper. No lo es. El paper reserva ese caso para tareas cuyo objetivo es la propia historia — auditar, explicar acciones pasadas —, que esta sonda no prueba, y su Experimento 3 ya informa de la misma dirección de forma cualitativa. La aportación es la métrica, no el signo.*
