@@ -104,14 +104,47 @@ El usuario simulado se fija a un único modelo durante toda la campaña. Cambiar
 a mitad haría las celdas incomparables (ver
 `feedback_experiment_run_estimates`).
 
+### 4.1 De dónde salen los pegotes
+
+Punto crítico y fácil de hacer mal. **Los pegotes no se generan condicionados al
+tema de la conversación.** Si un modelo escribe "un pegote moderadamente parecido
+a una charla sobre migraciones de base de datos", deja de ser un accidente y pasa
+a ser un distractor diseñado, que es justo lo que ya estudia GSM-DC.
+
+Procedimiento:
+
+1. Se escribe un **banco de artefactos realistas e independientes** —lo que de
+   verdad hay en un portapapeles: un fragmento de configuración, un trozo de
+   correo, una lista de la compra, un stack trace, unas notas de reunión, una
+   receta, un prompt entero de otro chat, un bloque de SQL. Del orden de 60-80.
+2. Para cada conversación se calcula la similaridad coseno de **cada** artefacto
+   del banco contra la conversación hasta el turno del pegote.
+3. Se **muestrea estratificado** sobre esa distribución para cubrir el rango, en
+   lugar de fabricar el pegote a medida.
+
+Así la similaridad es una propiedad emergente del cruce tema×artefacto, no un
+parámetro que hayamos fijado nosotros. El banco es el mismo para todos los temas
+y todos los modelos.
+
+### 4.2 Controles de reproducibilidad
+
+- **Juez**: un modelo que **no esté bajo evaluación**, para evitar que se
+  puntúe a sí mismo. Se fija al principio y no se cambia.
+- **Temperatura y muestreo**: fijos y registrados. Las réplicas existen para medir
+  varianza del modelo, no para promediar configuraciones distintas.
+- **Todo se registra en crudo**: transcripción completa, similaridad medida,
+  artefacto usado, modelo, condición. El análisis se hace después sobre esos
+  ficheros, nunca sobre resúmenes generados al vuelo.
+
 ## 5. Fase 0 — observar antes de medir
 
 **No se cierran las métricas antes de mirar los datos.** Es muy probable que
 aparezcan conductas que no hemos imaginado, y una rúbrica fijada de antemano las
 aplastaría contra la categoría más cercana.
 
-- 3 modelos (uno grande, uno pequeño, uno de otro proveedor), 8 temas, pegotes
-  repartidos por todo el rango de similaridad, 2 longitudes. ≈30 conversaciones.
+- 3 modelos —`gpt-5.6-sol-tst` (grande), `gpt-5.6-luna-tst` (pequeño) y
+  `gemini-2.5-pro` (otro proveedor)—, 8 temas, pegotes repartidos por todo el
+  rango de similaridad, 2 longitudes. ≈30 conversaciones.
 - **Lectura manual de las transcripciones completas.** De ahí sale la rúbrica.
 
 Hipótesis previa de taxonomía, explícitamente revisable —se confirma, se parte,
@@ -135,8 +168,12 @@ hundido deliberado, y es barato.
 
 Rúbrica ya fijada por la Fase 0.
 
-- Todos los modelos (§7), ≈12 pegotes por tema cubriendo el rango de similaridad,
-  2 longitudes, réplicas para estimar varianza.
+- Todos los modelos (§9), ≈12 pegotes por tema cubriendo el rango de similaridad,
+  2 longitudes, 2 réplicas para estimar varianza.
+- **N por modelo**: 8 temas × 12 pegotes × 2 longitudes × 2 réplicas = **384
+  conversaciones**. Con 7 modelos, 2.688 conversaciones en total. Es el grueso
+  del presupuesto de §10 y la razón de que el caché de prefijo importe: dentro de
+  un mismo tema y longitud, las 12 condiciones comparten prefijo exacto.
 - **Salida principal**: reacción frente a similaridad, como curva.
 - Clasificación por juez-LLM con la rúbrica, **más verificación manual de una
   muestra** para reportar acuerdo juez-humano. Sin ese número, la clasificación
@@ -166,8 +203,20 @@ La variante (d) es la extensión que planteó el autor y hace de control decisiv
 **si un modelo responde igual a (b) que a (d), no está leyendo la intención del
 usuario, está adivinando.**
 
+**Cómo se comprueba la tarea aguas abajo.** Sin comprobación automática esto es
+opinión, así que cada tema de Fase 2 lleva asociada una función de verificación
+escrita a mano antes de correr nada:
+
+- tareas de código → se ejecuta el fragmento contra tests preescritos;
+- tareas de cálculo → comparación exacta con el resultado esperado;
+- tareas de listado → comprobación de que aparecen los elementos obligatorios.
+
+La respuesta correcta **no cambia** por el pegote: esa es toda la gracia. Cualquier
+caída de acierto es atribuible a la contaminación.
+
 Métricas: acierto en la tarea aguas abajo, y reaparición de entidades del pegote
-en los turnos +1..+3.
+en los turnos +1..+3. La segunda se cuenta automáticamente sobre las entidades
+del artefacto, que se conocen porque el banco es nuestro.
 
 **El hallazgo que se persigue**, y que sería el titular si aparece: **que decir
 "ignóralo" contamine más que no decir nada**. Efecto oso blanco. Sería un consejo
