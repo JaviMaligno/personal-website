@@ -5,6 +5,7 @@ pubDate: 2026-09-21
 tags: ["SEO", "Datos", "Producto", "Investigación"]
 lang: es
 translationKey: indexed-is-not-served
+heroImage: "/blog/indexed-is-not-served.png"
 linkedinLinks:
   - label: "El sitio en cuestión"
     url: "https://getvitamind.app"

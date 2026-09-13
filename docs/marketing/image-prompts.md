@@ -4,6 +4,72 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## indexed-is-not-served
+
+- **Article:** `src/content/blog/{en,es}/indexed-is-not-served.md`
+- **Image:** `public/blog/indexed-is-not-served.png` (1020×510)
+- **Generated:** 2026-09-13, Codex 0.154.0 (`codex exec --approve-for-me`, one
+  pass, `image_gen` + a PowerShell resize to exactly 1020×510).
+  **It has to be run from a real terminal.** Launched from a non-interactive
+  background shell — both `-s workspace-write` and `--approve-for-me` — it
+  produced no output and no file, the process idling at a few seconds of CPU.
+- **Watch for:** the three gate labels must stay in the order DISCOVERED,
+  CRAWLED, SERVED with **only the third one shut**. Reversed, or with a
+  different gate closed, the image tells the opposite of the article. The flat
+  part of the chart line must sit at zero, not merely lower.
+- **Known defect in the shipped image:** the chart's y-axis is labelled
+  10K/20K/30K, i.e. 30,000 impressions *per day*. The real figure is 1,427 on
+  14 Aug; 30K was the 28-day total. Everything else came out right on the first
+  pass. Fix on any regeneration: label the axis 500 / 1K / 1.5K, or drop the
+  numeric labels.
+
+```text
+Generate a blog hero image and save it to public/blog/indexed-is-not-served.png
+in this repository. Size 1020x510 (2:1), PNG.
+
+Use the image_gen tool. The article is "Indexed Is Not Served": a website keeps
+every health metric green — pages indexed and rising, sitemap read, no
+penalties, average position unchanged — while its search traffic collapses in a
+single day and stays at zero for a month. The point is that being *indexed*,
+being *crawled* and being *served* are three different states, and the
+dashboards only report the first two.
+
+Style: refined technical editorial illustration, dark background but not
+monochrome, cool blues and slate greys with one warm accent for the failure. It
+must depict a concrete working system, not an abstract metaphor. No
+photorealism, no stock-photo people, no logos of real companies, no Google
+branding.
+
+Compose three legible zones, left to right:
+
+1. A monitoring panel, all of it green and healthy, with readable generic lines:
+   "indexed pages  3,180  up"
+   "sitemap  read 10 Sep  ok"
+   "manual actions  none"
+   "avg position  9.9"
+   Every row has a green check. This panel must look reassuring.
+
+2. A line chart directly under or beside that panel showing a cliff: a steady
+   line at a healthy height, then a single vertical drop to the floor, then a
+   long flat line along the bottom that runs off the right edge of the chart.
+   Label the drop point with a small tick reading "16 Aug". This is the only
+   warm-accent element: the flat part of the line is the warm colour.
+
+3. A pipeline of three gates in a row, labelled in order "DISCOVERED",
+   "CRAWLED", "SERVED". The first two gates are open and lit, with page cards
+   flowing through them and stacking up in a full archive shelf behind. The
+   third gate, "SERVED", is shut, and beyond it is an empty results panel with
+   blank rows and nobody in front of it. The page cards pile up against the
+   closed third gate.
+
+The reading order should be: everything is green -> the traffic died on one day
+-> the archive is full but the door to the audience is closed.
+
+Keep all text short and legible at 1020x510.
+```
+
+---
+
 ## nobody-will-check-behind-you
 
 - **Article:** `src/content/blog/{en,es}/nobody-will-check-behind-you.md`
