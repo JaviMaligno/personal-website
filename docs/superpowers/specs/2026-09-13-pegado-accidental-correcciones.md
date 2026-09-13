@@ -163,12 +163,20 @@ defaults distintos por proveedor que pueden cambiar sin avisar. Y `_anthropic_bo
 no manda `thinking`, así que **Sonnet 5 correría sin razonamiento mientras Opus 5
 lo lleva por defecto**: los dos Claude no serían comparables.
 
-**Decisión.** `temperature=1.0` explícito en los tres cuerpos.
-`thinking: {"type": "adaptive"}` para los modelos Claude. `request_params` (el
-cuerpo enviado sin `messages`) va en cada fila.
+**Decisión (corregida).** `temperature=1.0` explícito **solo en gateway y
+Vertex-OpenAI**. En Claude, **nada de muestreo explícito**:
+`thinking: {"type": "adaptive"}` y punto. `request_params` (el cuerpo enviado sin
+`messages`) va en cada fila, y en Claude reflejará que el muestreo lo fija el
+proveedor.
 
-**Ojo:** `budget_tokens` devuelve 400 en Opus 5 y Sonnet 5. Dos auditores
-propusieron usarlo; aplicar su sugerencia tumbaría la tirada.
+**Corrección de este propio documento.** La primera versión de D9 pedía
+temperatura explícita "en los tres cuerpos". Era un error que habría devuelto 400
+en las ocho celdas de Claude: en la familia Claude 5, `temperature`, `top_p` y
+`top_k` están **eliminados**, exactamente igual que `budget_tokens`. Están en la
+misma fila de la misma tabla de referencia de la que salió el aviso sobre
+`budget_tokens` dos párrafos más arriba. Lo detectó el agente que implementó
+`clients.py`, que en vez de obedecer la decisión a ciegas la marcó como conflicto.
+Test de regresión: `test_anthropic_body_nunca_manda_parametros_de_muestreo`.
 
 ## D10. Caché: medir lo correcto y declarar el breakpoint
 
