@@ -1,10 +1,12 @@
 # Publish checklist — "Count the Rings or Sear the Squid"
 
-Artículo del paper de los calamares. Programado para **2026-09-22** (pendiente
-de añadir la entrada a `.github/publish-schedule.json`; ver abajo).
+Artículo del paper de los calamares. **Programado para 2026-09-22** en
+`.github/publish-schedule.json` (entrada en `main` desde el 2026-09-14), rama
+`blog/count-the-rings`, ya empujada a origin.
 
-Rama: `blog/count-the-rings`. Compañero: el artículo 2
-(`proved-certified-swept-sampled`, 2026-09-24), que aún no está escrito.
+Su compañero, **`proved-certified-swept-sampled`**, está escrito y programado
+para **2026-09-24** en la rama `blog/proved-certified-swept-sampled`, también
+empujada. Todo lo de este documento aplica a los dos salvo donde se diga.
 
 ## Bloqueantes — el artículo NO puede publicarse sin esto
 
@@ -69,14 +71,18 @@ Javier se encarga de esta decisión.
 
 ## Pendiente, no bloqueante
 
-- **La entrada de `.github/publish-schedule.json` no está puesta**, a propósito:
-  se añade en `main` (no en la rama; es el patrón del repo) cuando Javier dé el
-  visto bueno al artículo. Sin ella no se publica nada.
-- **La rama no está empujada**: la cuenta activa de `gh` era `JavierSapiraAI` y
-  este repo es personal, hace falta `gh auth switch --user JaviMaligno`.
-- Conflicto de fechas a vigilar: `indexed-is-not-served` está el 21 y la rama
-  `blog/pegado-accidental` programa `that-was-for-another-chat` también el 21.
-  Si ambas entran, una se arrastra al 22 y desplaza este artículo al 23.
+- ~~Entrada del calendario~~ y ~~push de las ramas~~: hechos el 2026-09-14.
+  Para empujar hizo falta `gh auth switch --user JaviMaligno`; la cuenta activa
+  era la de la empresa y el push pedía contraseña.
+- ~~Choque de fechas el 21~~: resuelto moviendo `that-was-for-another-chat` al
+  23 (fecha del manifiesto **y** `pubDate` de sus dos ficheros, que también
+  decía 21). La semana queda 21 → 22 → 23 → 24, un artículo por día.
+- **El selector no se puede ejecutar a mano en Windows**: la última línea de
+  `scripts/publish/select-due-article.mjs` compara `import.meta.url` con
+  `process.argv[1]`, que aquí son `file:///C:/…` y `C:\…`, así que `main()`
+  nunca corre y el script sale en silencio con código 0. En Actions (Linux)
+  funciona. Para validar en local, importar `validateManifest` y
+  `selectDueArticle` desde otro script.
 - Dos ejemplos citados sin figura: el contraejemplo cuadrado y el ejemplo que
   distingue 2D de 3D. Faltan las coordenadas del testigo completo en las notas;
   con ellas se dibujan igual que los demás.
