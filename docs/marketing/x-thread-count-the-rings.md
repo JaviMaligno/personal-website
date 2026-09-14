@@ -112,8 +112,26 @@ The information isn't in the state. It's in the rings you haven't looked at.
 **10/**
 
 ```
-There's also a conjecture that died: the natural threshold looked like the Tribonacci constant (1.839…) and an explicit golden family breaks it earlier, at φ.
+There's also a conjecture that died: the natural threshold looked like the Tribonacci constant (1.839…), and an explicit golden family breaks it earlier, at φ ≈ 1.618.
 
+Proved in one direction. The matching lower bound is still open.
+```
+
+**11/**
+
+```
+Since the preprint went out I checked whether the sharp half is really about round pans.
+
+In balls of any dimension, nothing moves — same counterexample, same twins, same floor.
+
+In a SQUARE the constant changes: the bound there is ≈ 1.6845, not φ. The corner is what changes it.
+```
+
+**12/**
+
+```
 Preprint: https://arxiv.org/abs/XXXX.XXXXX
-Code, figures, Lean certificates: https://github.com/JaviMaligno/calamares
+Code, figures and Lean certificates: https://github.com/JaviMaligno/calamares
+
+Full write-up, with the phase diagram and the twins: https://www.javieraguilar.ai/en/blog/count-the-rings
 ```

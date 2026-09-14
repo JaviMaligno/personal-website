@@ -59,6 +59,22 @@ STRINGS = {
         "worstfit": "worst fit — 4 rings",
         "stranded": "4.8 fits nowhere",
         "cap3": "Same four rings, two placement rules. Nesting the 5 looks tidy and strands the 4.8.",
+        "thick_area": "area optimum: 1 ring",
+        "thick_count": "count optimum: 2 rings",
+        "thick_cap": "Thick rings, no hole big enough to nest in: the problem has quietly become circle packing.",
+        "twins_hole": "hole of the 10 = 9.495",
+        "twins_i1": "I₁ tail: 4.99 + 4.50 = 9.49  ≤  9.495   →  the 5 belongs in the pan",
+        "twins_i2": "I₂ tail: 4.76 + 4.74 = 9.50  >  9.495   →  the 5 belongs in the hole",
+        "twins_state": "identical at the decisive step: same containers, same capacities,\nsame occupants, same incoming ring, same R and w",
+        "twins_cap": "The rule must decide where the 5 goes. Everything it can observe is the same; the right answer is opposite.",
+        "incoming": "incoming: 5",
+        "rigid": "the model: rigid rings",
+        "real": "real squid: rings bend",
+        "overlap_lost": "contact lost only here",
+        "overlap_cap": "A ring resting on another still sears everywhere outside the overlap. The rigid model forbids the pose entirely.",
+        "card_greedy": "greedy: 2 rings, best area",
+        "card_more": "but three rings fit",
+        "card_cap": "Superincreasing radii, and the greedy still loses on count: cardinality is not superadditive.",
     },
     "es": {
         "sear": "óptimo de área",
@@ -77,6 +93,22 @@ STRINGS = {
         "worstfit": "worst fit — 4 aros",
         "stranded": "el 4,8 no cabe en ningún sitio",
         "cap3": "Los mismos cuatro aros, dos reglas de colocación. Anidar el 5 parece ordenado y deja fuera al 4,8.",
+        "thick_area": "óptimo de área: 1 aro",
+        "thick_count": "óptimo de número: 2 aros",
+        "thick_cap": "Aros gruesos, ningún agujero en el que anidar: el problema ha degenerado en empaquetamiento de círculos.",
+        "twins_hole": "agujero del 10 = 9,495",
+        "twins_i1": "cola de I₁: 4,99 + 4,50 = 9,49  ≤  9,495   →  el 5 va a la sartén",
+        "twins_i2": "cola de I₂: 4,76 + 4,74 = 9,50  >  9,495   →  el 5 va al agujero",
+        "twins_state": "idéntico en el paso decisivo: mismos contenedores, mismas capacidades,\nmismos ocupantes, mismo aro entrante, mismos R y w",
+        "twins_cap": "La regla decide dónde va el 5. Todo lo que puede observar es igual; la respuesta correcta es la contraria.",
+        "incoming": "entra: 5",
+        "rigid": "el modelo: aros rígidos",
+        "real": "calamar real: los aros se doblan",
+        "overlap_lost": "solo aquí se pierde contacto",
+        "overlap_cap": "Un aro apoyado sobre otro sigue dorando fuera del solape. El modelo rígido prohíbe la postura entera.",
+        "card_greedy": "el voraz: 2 aros, área óptima",
+        "card_more": "pero caben tres aros",
+        "card_cap": "Radios superincrecientes, y aun así el voraz pierde en número: la cardinalidad no es superaditiva.",
     },
 }
 
@@ -297,11 +329,181 @@ def figure_n4(lang):
     save(fig, f"count-the-rings-fig-3-{lang}.png")
 
 
+# ---------------------------------------------------------------- figure 0
+
+def figure_thick(lang):
+    """Three thick rings: the degenerate divergence, where no hole can nest."""
+    s = STRINGS[lang]
+    R, w = 10.0, 4.5
+    big, p, q = 8.0, 101 / 20, 99 / 20
+
+    fig = plt.figure(figsize=(9.6, 5.2), dpi=110)
+    fig.patch.set_facecolor(BG)
+    left = fig.add_axes([0.04, 0.16, 0.44, 0.70])
+    right = fig.add_axes([0.52, 0.16, 0.44, 0.70])
+    for ax in (left, right):
+        frame(ax, R)
+        pan(ax, R)
+
+    ring(left, (0, 0), big, w, AMBER)
+    label(left, (0, big - w / 2), "8", AMBER)
+
+    # p and q are exactly diametral: p + q = 10, so both are tangent to the
+    # pan wall and to each other.
+    assert abs(p + q - R) < 1e-12
+    ring(right, (-(R - p), 0), p, w, TEAL)
+    ring(right, ((R - q), 0), q, w, TEAL)
+    label(right, (-(R - p), 0), "5.05" if lang == "en" else "5,05")
+    label(right, ((R - q), 0), "4.95" if lang == "en" else "4,95")
+
+    a_left, a_right = area(big, w), area(p, w) + area(q, w)
+    assert a_left > a_right
+    fmt = (lambda v: f"{v:.1f}") if lang == "en" else (lambda v: f"{v:.1f}".replace(".", ","))
+
+    fig.text(0.26, 0.93, s["thick_area"], color=AMBER, fontsize=13.5, ha="center", fontweight="bold")
+    fig.text(0.74, 0.93, s["thick_count"], color=TEAL, fontsize=13.5, ha="center", fontweight="bold")
+    fig.text(0.26, 0.10, f"207π/4 = {fmt(a_left)}", color=TEXT, fontsize=12, ha="center", family="monospace")
+    fig.text(0.74, 0.10, f"198π/4 = {fmt(a_right)}", color=TEXT, fontsize=12, ha="center", family="monospace")
+    fig.text(0.5, 0.025, s["thick_cap"], color=MUTED, fontsize=10, ha="center", fontstyle="italic")
+    save(fig, f"count-the-rings-fig-0-{lang}.png")
+
+
+# ---------------------------------------------------------------- figure 4
+
+def figure_twins(lang):
+    """The twins: identical observable state, opposite correct decisions."""
+    s = STRINGS[lang]
+    R, w = 15.0, 0.505
+    hole = 10.0 - w
+    assert abs(hole - 9.495) < 1e-12
+    assert 4.99 + 4.50 <= hole and 4.76 + 4.74 > hole
+
+    fig = plt.figure(figsize=(10.0, 5.6), dpi=110)
+    fig.patch.set_facecolor(BG)
+    top = fig.add_axes([0.02, 0.50, 0.27, 0.34])
+    bottom = fig.add_axes([0.02, 0.10, 0.27, 0.34])
+
+    for ax in (top, bottom):
+        frame(ax, R)
+        pan(ax, R)
+        ring(ax, (-5.0, 0.0), 10.0, w, AMBER)
+        label(ax, (-5.0, 10.0 - 1.4), "10", AMBER)
+        # The 5 shown at the rim, still undecided: this is the ring the rule
+        # is about to place, not a placement.
+        ring(ax, (10.0, 0.0), 5.0, w, TEAL, alpha=0.5)
+        label(ax, (10.0, 0.0), "5")
+
+    fig.text(0.5, 0.955, s["twins_state"], color=MUTED, fontsize=11,
+             ha="center", va="top", linespacing=1.5)
+    fig.text(0.155, 0.865, s["incoming"], color=TEXT, fontsize=10.5,
+             ha="center", family="monospace")
+    fig.text(0.155, 0.055, s["twins_hole"], color=MUTED, fontsize=10,
+             ha="center", family="monospace")
+
+    fig.text(0.33, 0.665, s["twins_i1"], color=TEAL, fontsize=11.5, family="monospace")
+    fig.text(0.33, 0.265, s["twins_i2"], color=AMBER, fontsize=11.5, family="monospace")
+    fig.text(0.5, 0.012, s["twins_cap"], color=MUTED, fontsize=10,
+             ha="center", fontstyle="italic")
+    save(fig, f"count-the-rings-fig-4-{lang}.png")
+
+
+# ---------------------------------------------------------------- figure 5
+
+def figure_cardinality(lang):
+    """Superincreasing radii where the greedy is still suboptimal for count."""
+    s = STRINGS[lang]
+    R, w = 10.0, 4.8
+    radii = [9.95, 5.0, 4.3, 0.6]
+    for i, r in enumerate(radii):  # the instance really is superincreasing
+        assert r > sum(radii[i + 1:]) - 1e-12, (r, radii[i + 1:])
+
+    fig = plt.figure(figsize=(9.6, 5.2), dpi=110)
+    fig.patch.set_facecolor(BG)
+    left = fig.add_axes([0.04, 0.16, 0.44, 0.70])
+    right = fig.add_axes([0.52, 0.16, 0.44, 0.70])
+    for ax in (left, right):
+        frame(ax, R)
+        pan(ax, R)
+
+    ring(left, (0, 0), 9.95, w, AMBER)
+    label(left, (0, 9.95 - w / 2), "9.95" if lang == "en" else "9,95", AMBER)
+    ring(left, (0, 0), 5.0, w, AMBER)   # nests: 5.0 <= 9.95 - 4.8 = 5.15
+    label(left, (0, 0), "5")
+    assert 5.0 <= 9.95 - w
+
+    # In a row across the pan: diameters 10 + 8.6 + 1.2 = 19.8 <= 20.
+    xs, prev = [], -R
+    for r in (5.0, 4.3, 0.6):
+        xs.append(prev + r)
+        prev = xs[-1] + r
+    assert prev <= R + 1e-12
+    for x, r, lab in zip(xs, (5.0, 4.3, 0.6), ("5", "4.3" if lang == "en" else "4,3", "")):
+        ring(right, (x, 0), r, w, TEAL)
+        if lab:
+            label(right, (x, 0), lab)
+    right.annotate("0.6" if lang == "en" else "0,6", (xs[2], 0), textcoords="offset points",
+                   xytext=(2, 26), fontsize=9.5, color=TEXT, ha="center", family="monospace")
+
+    fig.text(0.26, 0.93, s["card_greedy"], color=AMBER, fontsize=13, ha="center", fontweight="bold")
+    fig.text(0.74, 0.93, s["card_more"], color=TEAL, fontsize=13, ha="center", fontweight="bold")
+    fig.text(0.5, 0.025, s["card_cap"], color=MUTED, fontsize=10, ha="center", fontstyle="italic")
+    save(fig, f"count-the-rings-fig-5-{lang}.png")
+
+
+# ---------------------------------------------------------------- figure 6
+
+def figure_overlap(lang):
+    """The idealization the model makes: rings never ride on top of each other."""
+    s = STRINGS[lang]
+    R, w = 10.0, 1.0
+    r1, r2 = 5.2, 4.4
+
+    fig = plt.figure(figsize=(9.6, 5.2), dpi=110)
+    fig.patch.set_facecolor(BG)
+    left = fig.add_axes([0.04, 0.16, 0.44, 0.70])
+    right = fig.add_axes([0.52, 0.16, 0.44, 0.70])
+    for ax in (left, right):
+        frame(ax, R)
+        pan(ax, R)
+
+    # Left: the model. Siblings are packed as balls with disjoint interiors —
+    # here at exact tangency, the closest the model ever allows them.
+    ring(left, (-(R - r1) + 0.4, 0), r1, w, TEAL)
+    ring(left, ((R - r2) - 0.4, 0), r2, w, TEAL)
+
+    # Right: the same two rings overlapping. Centres closer than r1 + r2, so
+    # the annuli cross: the pose the model has no room for.
+    d = (r1 + r2) * 0.62
+    cl, cr = (-d / 2, 0.0), (d / 2, 0.0)
+    assert d < r1 + r2
+    ring(right, cl, r1, w, TEAL)
+    ring(right, cr, r2, w, AMBER)
+    # Mark where the annuli actually cross. Two circles of radii r1, r2 whose
+    # centres are d apart meet at x = (d^2 + r1^2 - r2^2) / 2d from the left
+    # centre, at y = +/- sqrt(r1^2 - x^2) — two points, above and below the
+    # axis, not on it.
+    ax_ = (d**2 + r1**2 - r2**2) / (2 * d)
+    ay = math.sqrt(r1**2 - ax_**2)
+    for sign in (1, -1):
+        right.add_patch(Circle((cl[0] + ax_, sign * ay), 1.05,
+                               facecolor="#f87171", edgecolor="none", alpha=0.32))
+
+    fig.text(0.26, 0.93, s["rigid"], color=TEAL, fontsize=13.5, ha="center", fontweight="bold")
+    fig.text(0.74, 0.93, s["real"], color=AMBER, fontsize=13.5, ha="center", fontweight="bold")
+    fig.text(0.74, 0.10, s["overlap_lost"], color="#f87171", fontsize=10.5, ha="center")
+    fig.text(0.5, 0.025, s["overlap_cap"], color=MUTED, fontsize=10, ha="center", fontstyle="italic")
+    save(fig, f"count-the-rings-fig-6-{lang}.png")
+
+
 def main():
     for lang in ("en", "es"):
+        figure_thick(lang)
         figure_minimal(lang)
         figure_phase(lang)
         figure_n4(lang)
+        figure_twins(lang)
+        figure_cardinality(lang)
+        figure_overlap(lang)
 
 
 if __name__ == "__main__":
