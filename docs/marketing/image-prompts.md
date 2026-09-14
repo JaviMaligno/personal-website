@@ -1209,3 +1209,17 @@ argumento: lo corregía.
 **Regla práctica:** antes de generar nada, mirar si el producto ya tiene
 capturas. Si el artículo habla de algo que se puede fotografiar funcionando, se
 fotografía.
+
+## Proved, Certified, Swept, Sampled (`proved-certified-swept-sampled`, 2026-09-24)
+
+Hero: `public/blog/proved-certified-swept-sampled.png` (the four labels as a
+ladder). In-article figures: `-fig-1-{en,es}.png` (the tolerance swallowing the
+tangency) and `-fig-2-{en,es}.png` (the four rounds of the certificate).
+
+Not image-generated. Deterministic matplotlib source, one version per language,
+in `docs/marketing/hero-sources/proved-certified-swept-sampled.py`.
+
+Figure 1 is **schematic by design** and says so in its own caption: the margin
+curve is illustrative, the mechanism is not. The real tolerance was 1e-12 and
+would be invisible at any honest scale, so the band is drawn exaggerated. No
+data is being implied.
