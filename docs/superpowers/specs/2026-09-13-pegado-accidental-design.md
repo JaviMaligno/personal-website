@@ -307,13 +307,46 @@ contenido: no aparece ninguna clave, ni nombres de recursos internos.
 - **Que el usuario simulado se comporte de forma poco humana** y contamine todas
   las celdas por igual. Se revisa en Fase 0, que para eso es de lectura manual.
 
-## 13. Estructura tentativa del artículo
+## 13. Tres artículos, uno por hallazgo
+
+Decidido el 2026-09-14, después de leer la Fase 0. No es "uno por fase" mecánico:
+es uno por hallazgo que se sostenga solo.
+
+### Artículo 1 — «Perdona, eso era de otro chat» (Fase 0)
 
 1. La anécdota del portapapeles, contada como fue (§Origen).
 2. Por qué esto no es prompt injection ni un cambio de tema: la ambigüedad.
 3. Lo que ya se sabía y lo que no (§2).
-4. Qué hicimos, y por qué se leyó a mano antes de medir.
-5. La curva: dónde deja de saltar la alarma.
-6. Transcripciones literales. Los puentes confabulados, sin retocar.
-7. La reparación, y si "ignóralo" ayuda o estorba.
-8. Qué hacer la próxima vez que te pase.
+4. El resultado: en las 24 que leí, nadie se plantea que te hayas equivocado.
+5. Las seis conductas, con transcripciones literales.
+6. La que sí lo hace bien: detectar que no cuadra y descartar la relación con
+   razones.
+7. Qué hacer la próxima vez que te pase.
+
+**Restricción de escritura, innegociable.** La Fase 0 no es una medición: 24
+conversaciones, sin preregistro, un pegote por conversación y ejes rotados para
+que nada quede medido con potencia. El artículo se escribe **como observación**:
+«en las veinticuatro que leí», nunca «los modelos nunca». Si la Fase 1 matiza o
+desmiente esto, el artículo 2 lo dice y eso lo mejora, pero solo si el 1 no se
+pasó de rotundo. Ver `feedback_blog_voice_nuance`.
+
+**Los errores de construcción del arnés NO van en ningún artículo** —fórmulas de
+rotación mal, topes de tokens, dobles de test desfasados—. Son fallos genéricos
+de agente, no el objeto de estudio. Viven en el documento de correcciones, que
+es donde sirven. Ver `feedback_no_atribuir_mis_errores`.
+
+### Artículo 2 — La curva (Fase 1)
+
+Los números: reacción frente a similaridad, comparación entre modelos, acuerdo
+juez-humano. Es donde se puede afirmar algo sobre tasas.
+
+### Artículo 3 — «Ignóralo» (Fase 2)
+
+La reparación, el control de pivote real, y si decirlo contamina más que
+callarse.
+
+### Salida prevista
+
+Si al revisarlo el artículo 1 se lee flojo, **se fusiona con el 2** y se publica
+uno solo con observación y medida juntas. Decisión del autor al revisar, no
+automática.
