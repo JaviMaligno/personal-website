@@ -1209,3 +1209,41 @@ argumento: lo corregía.
 **Regla práctica:** antes de generar nada, mirar si el producto ya tiene
 capturas. Si el artículo habla de algo que se puede fotografiar funcionando, se
 fotografía.
+
+## Count the Rings or Sear the Squid (`count-the-rings`, 2026-09-22)
+
+Hero: `public/blog/count-the-rings.png`.
+In-article figures: `public/blog/count-the-rings-fig-{1,2,3}-{en,es}.png`.
+
+Not image-generated. Both are deterministic matplotlib sources, committed so
+the geometry can be re-derived rather than re-drawn:
+
+- `docs/marketing/hero-sources/count-the-rings.py` — the hero: the minimal
+  divergence instance, both arrangements to scale, with the contact areas
+  computed from the paper's own formula rather than hardcoded.
+- `docs/marketing/hero-sources/count-the-rings-figures.py` — the three
+  in-article figures, one version per language. The paper's own figures were
+  not reused: they are labelled in Spanish, and the phase diagram writes the
+  small-ring radius as rho, which is the symbol the article uses for the
+  violation of superincreasingness.
+
+Fallback `image_gen` prompt, if the hero ever has to be regenerated without
+matplotlib:
+
+```text
+Create a 1020x510 blog hero image. Style: refined technical editorial
+illustration, dark but not monochrome, showing a CONCRETE SCENE: two round
+frying pans seen from directly above, side by side, same size. In the left pan,
+one large ring with a smaller ring resting inside its hole. In the right pan,
+three small rings of equal size lying separately, none of them nested. The
+rings are drawn as annuli — real holes, not discs. Clean geometric composition,
+crisp edges, the two pans clearly comparable.
+
+TEXT MUST BE EXACTLY AND ONLY: '2 rings', '3 rings'. No other label, no
+numbers, no axis titles, no units.
+
+No logos, no brand names, no people, no food photography, no text-heavy poster.
+Crisp bitmap illustration, high contrast, professional AI/developer blog
+aesthetic, balanced teal, amber, graphite and off-white accents on dark, no
+purple gradient blobs, no bokeh.
+```
