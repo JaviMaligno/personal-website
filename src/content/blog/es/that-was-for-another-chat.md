@@ -17,6 +17,8 @@ repoUrl: "https://github.com/JaviMaligno/llm-wrong-paste"
 
 Lo has hecho. Tienes algo en el portapapeles que era de otra conversación —lo copiaste por otro motivo, o se te olvidó que estaba ahí— y acaba pegado en un chat donde no pinta nada. La mayoría de las veces te das cuenta antes de enviar. Otras no.
 
+Hay una versión más moderna del mismo error, y si trabajas con agentes la has vivido esta semana: veinte sesiones abiertas en paralelo, cada una esperando algo, y contestas a la que no era. La respuesta era cierta — pero no ahí.
+
 Estaba montando un experimento sobre exactamente esto cuando me pasó. Un agente acababa de dejarme una clave de API en el portapapeles y, en el mismo mensaje, me propuso un comando para guardarla. Copié el comando para ejecutarlo. El comando pisó la clave. El fichero acabó conteniendo el texto del comando en lugar del secreto.
 
 Ahí está el fenómeno entero en un solo movimiento, y conviene ser preciso sobre por qué es interesante.
@@ -36,30 +38,25 @@ Hay cuatro líneas de trabajo que rozan esto y ninguna lo cubre.
 El pegado accidental no es nada de eso. Su propiedad definitoria es que **es ambiguo**. Ese bloque de texto puede ser tres cosas distintas, y el modelo no tiene forma de distinguirlas:
 
 <figure class="wp-fig">
-<svg viewBox="0 0 600 250" role="img" aria-label="Tres lecturas posibles de un bloque pegado: basura del portapapeles, un cambio de tema deliberado, o contexto relevante que el usuario olvidó explicar. En las 24 conversaciones leídas, todos los modelos eligieron el cambio de tema deliberado.">
-  <rect x="205" y="14" width="190" height="38" rx="6" fill="#1a1a24" stroke="#2dd4bf" stroke-width="1.5"/>
-  <text x="300" y="38" text-anchor="middle" fill="#5eead4" font-size="14" font-family="ui-monospace,'JetBrains Mono',monospace">un bloque pegado</text>
-
-  <path d="M270 52 L110 96" stroke="#64748b" stroke-width="1.5" fill="none"/>
-  <path d="M300 52 L300 96" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
-  <path d="M330 52 L490 96" stroke="#64748b" stroke-width="1.5" fill="none"/>
-
-  <rect x="20" y="96" width="180" height="58" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.18)"/>
-  <text x="110" y="120" text-anchor="middle" fill="#e2e8f0" font-size="13">basura del portapapeles</text>
-  <text x="110" y="140" text-anchor="middle" fill="#94a3b8" font-size="12">«ignóralo»</text>
-
-  <rect x="210" y="96" width="180" height="58" rx="6" fill="#1a1a24" stroke="#f59e0b" stroke-width="2"/>
-  <text x="300" y="120" text-anchor="middle" fill="#fbbf24" font-size="13">un pivote deliberado</text>
-  <text x="300" y="140" text-anchor="middle" fill="#94a3b8" font-size="12">«hablemos de esto»</text>
-
-  <rect x="400" y="96" width="180" height="58" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.18)"/>
-  <text x="490" y="120" text-anchor="middle" fill="#e2e8f0" font-size="13">contexto que olvidé</text>
-  <text x="490" y="140" text-anchor="middle" fill="#94a3b8" font-size="12">«te hace falta para responder»</text>
-
-  <text x="110" y="192" text-anchor="middle" fill="#64748b" font-size="26" font-family="ui-monospace,'JetBrains Mono',monospace">0</text>
-  <text x="300" y="192" text-anchor="middle" fill="#fbbf24" font-size="26" font-family="ui-monospace,'JetBrains Mono',monospace">24</text>
-  <text x="490" y="192" text-anchor="middle" fill="#64748b" font-size="26" font-family="ui-monospace,'JetBrains Mono',monospace">0</text>
-  <text x="300" y="222" text-anchor="middle" fill="#94a3b8" font-size="12">de las 24 conversaciones que leí</text>
+<svg viewBox="0 0 600 236" role="img" aria-label="Tres lecturas posibles de un bloque pegado: basura del portapapeles, un cambio de tema deliberado, o contexto relevante que el usuario olvidó explicar. En las 24 conversaciones leídas, todos los modelos eligieron el cambio de tema deliberado.">
+<rect x="200" y="10" width="200" height="36" rx="6" fill="#1a1a24" stroke="#2dd4bf" stroke-width="1.5"/>
+<text x="300" y="33" text-anchor="middle" fill="#5eead4" font-size="14" font-family="ui-monospace,'JetBrains Mono',monospace">un bloque pegado</text>
+<path d="M265 46 L110 88" stroke="#64748b" stroke-width="1.5" fill="none"/>
+<path d="M300 46 L300 88" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+<path d="M335 46 L490 88" stroke="#64748b" stroke-width="1.5" fill="none"/>
+<rect x="20" y="88" width="180" height="56" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+<text x="110" y="111" text-anchor="middle" fill="#e2e8f0" font-size="13">basura del portapapeles</text>
+<text x="110" y="131" text-anchor="middle" fill="#94a3b8" font-size="11.5">«ignóralo»</text>
+<rect x="210" y="88" width="180" height="56" rx="6" fill="#1a1a24" stroke="#f59e0b" stroke-width="2"/>
+<text x="300" y="111" text-anchor="middle" fill="#fbbf24" font-size="13">un pivote deliberado</text>
+<text x="300" y="131" text-anchor="middle" fill="#94a3b8" font-size="11.5">«hablemos de esto»</text>
+<rect x="400" y="88" width="180" height="56" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+<text x="490" y="111" text-anchor="middle" fill="#e2e8f0" font-size="13">contexto que olvidé</text>
+<text x="490" y="131" text-anchor="middle" fill="#94a3b8" font-size="11.5">«te hace falta para responder»</text>
+<text x="110" y="188" text-anchor="middle" fill="#64748b" font-size="30" font-family="ui-monospace,'JetBrains Mono',monospace">0</text>
+<text x="300" y="188" text-anchor="middle" fill="#fbbf24" font-size="30" font-family="ui-monospace,'JetBrains Mono',monospace">24</text>
+<text x="490" y="188" text-anchor="middle" fill="#64748b" font-size="30" font-family="ui-monospace,'JetBrains Mono',monospace">0</text>
+<text x="300" y="218" text-anchor="middle" fill="#94a3b8" font-size="12">de las 24 conversaciones que leí</text>
 </svg>
 <figcaption>La lectura es una decisión que el modelo no puede evitar tomar. En las veinticuatro conversaciones que leí, no se resolvió ni una sola vez hacia «probablemente te has equivocado».</figcaption>
 </figure>
@@ -81,34 +78,27 @@ Ni una sola respuesta contiene algo parecido a *«¿esto era para esta conversac
 Lo que salió, en cambio, fueron seis conductas, y el eje de variación no es la detección. Es cuánto trabajo no solicitado hace el modelo.
 
 <figure class="wp-fig">
-<svg viewBox="0 0 600 300" role="img" aria-label="Seis conductas observadas en 24 conversaciones: hace la tarea implícita en silencio 14, pregunta qué hacer sin cuestionar el encaje 5, señala el salto 2, razona sobre la relación y la descarta 1, inventa un puente 1, adopta el rol del prompt pegado 1.">
-  <g font-size="12.5" fill="#e2e8f0">
-    <text x="8" y="34">Hace la tarea implícita, en silencio</text>
-    <rect x="310" y="22" width="228" height="17" rx="3" fill="#f59e0b"/>
-    <text x="548" y="35" fill="#fbbf24" font-size="13" font-family="ui-monospace,monospace">14</text>
-
-    <text x="8" y="75">Pregunta qué hacer, no si encaja</text>
-    <rect x="310" y="63" width="81" height="17" rx="3" fill="#f59e0b" opacity="0.75"/>
-    <text x="548" y="76" fill="#fbbf24" font-size="13" font-family="ui-monospace,monospace">5</text>
-
-    <text x="8" y="116">Señala el salto y obedece igual</text>
-    <rect x="310" y="104" width="33" height="17" rx="3" fill="#2dd4bf"/>
-    <text x="548" y="117" fill="#5eead4" font-size="13" font-family="ui-monospace,monospace">2</text>
-
-    <text x="8" y="157">Sopesa la relación y la descarta</text>
-    <rect x="310" y="145" width="16" height="17" rx="3" fill="#2dd4bf"/>
-    <text x="548" y="158" fill="#5eead4" font-size="13" font-family="ui-monospace,monospace">1</text>
-
-    <text x="8" y="198">Se inventa un puente al tema viejo</text>
-    <rect x="310" y="186" width="16" height="17" rx="3" fill="#64748b"/>
-    <text x="548" y="199" fill="#94a3b8" font-size="13" font-family="ui-monospace,monospace">1</text>
-
-    <text x="8" y="239">Adopta el rol del prompt pegado</text>
-    <rect x="310" y="227" width="16" height="17" rx="3" fill="#64748b"/>
-    <text x="548" y="240" fill="#94a3b8" font-size="13" font-family="ui-monospace,monospace">1</text>
-  </g>
-  <line x1="310" y1="260" x2="538" y2="260" stroke="rgba(255,255,255,0.12)"/>
-  <text x="310" y="282" fill="#94a3b8" font-size="11.5">Ámbar: nunca menciona el salto · Turquesa: lo menciona · Gris: casos únicos</text>
+<svg viewBox="0 0 600 252" role="img" aria-label="Seis conductas observadas en 24 conversaciones: hace la tarea implícita en silencio 14, pregunta qué hacer sin cuestionar el encaje 5, señala el salto 2, razona sobre la relación y la descarta 1, inventa un puente 1, adopta el rol del prompt pegado 1.">
+<text x="8" y="35" fill="#e2e8f0" font-size="12.5">Hace la tarea implícita, en silencio</text>
+<rect x="320" y="22" width="200" height="17" rx="3" fill="#f59e0b" opacity="1.0"/>
+<text x="560" y="35" fill="#fbbf24" font-size="13" font-family="ui-monospace,monospace">14</text>
+<text x="8" y="69" fill="#e2e8f0" font-size="12.5">Pregunta qué hacer, no si encaja</text>
+<rect x="320" y="56" width="71" height="17" rx="3" fill="#f59e0b" opacity="0.75"/>
+<text x="560" y="69" fill="#fbbf24" font-size="13" font-family="ui-monospace,monospace">5</text>
+<text x="8" y="103" fill="#e2e8f0" font-size="12.5">Señala el salto y obedece igual</text>
+<rect x="320" y="90" width="29" height="17" rx="3" fill="#2dd4bf" opacity="1.0"/>
+<text x="560" y="103" fill="#5eead4" font-size="13" font-family="ui-monospace,monospace">2</text>
+<text x="8" y="137" fill="#e2e8f0" font-size="12.5">Sopesa la relación y la descarta</text>
+<rect x="320" y="124" width="14" height="17" rx="3" fill="#2dd4bf" opacity="1.0"/>
+<text x="560" y="137" fill="#5eead4" font-size="13" font-family="ui-monospace,monospace">1</text>
+<text x="8" y="171" fill="#e2e8f0" font-size="12.5">Se inventa un puente al tema viejo</text>
+<rect x="320" y="158" width="14" height="17" rx="3" fill="#64748b" opacity="1.0"/>
+<text x="560" y="171" fill="#94a3b8" font-size="13" font-family="ui-monospace,monospace">1</text>
+<text x="8" y="205" fill="#e2e8f0" font-size="12.5">Adopta el rol del prompt pegado</text>
+<rect x="320" y="192" width="14" height="17" rx="3" fill="#64748b" opacity="1.0"/>
+<text x="560" y="205" fill="#94a3b8" font-size="13" font-family="ui-monospace,monospace">1</text>
+<line x1="320" y1="232" x2="545" y2="232" stroke="rgba(255,255,255,0.12)"/>
+<text x="8" y="246" fill="#94a3b8" font-size="11">Ámbar: nunca menciona el salto · Turquesa: lo menciona · Gris: casos únicos</text>
 </svg>
 <figcaption>Diecinueve de veinticuatro respuestas no reconocen en ningún momento que algo haya cambiado. La minoría interesante es pequeña, y es donde vive la conducta buena.</figcaption>
 </figure>

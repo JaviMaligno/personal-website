@@ -17,6 +17,8 @@ repoUrl: "https://github.com/JaviMaligno/llm-wrong-paste"
 
 You have done this. There is something in your clipboard that belonged to a different conversation — you copied it for another reason, or you forgot it was there at all — and it ends up pasted into a chat where it makes no sense. Most of the time you catch it before sending. Sometimes you don't.
 
+There is a newer version of the same mistake, and if you work with agents you have lived it this week: twenty sessions open in parallel, each one waiting on something, and you answer the wrong one. The reply was true — just not there.
+
 I was setting up an experiment about exactly this when it happened to me. An agent had just put an API key on my clipboard, and in the same breath suggested a shell command to save it. I copied the command to run it. The command overwrote the key. The file ended up containing the text of the command instead of the secret.
 
 That is the whole phenomenon in one move, and it is worth being precise about why it is interesting.
@@ -36,30 +38,25 @@ Four research lines sit next to this and none of them cover it.
 The accidental paste is none of these. Its defining property is that **it is ambiguous**. That block of text could be three different things, and the model has no way to tell them apart:
 
 <figure class="wp-fig">
-<svg viewBox="0 0 600 250" role="img" aria-label="Three possible readings of a pasted block — clipboard junk, a deliberate topic change, or relevant context the user forgot to explain. In all 24 conversations read, every model chose the deliberate topic change.">
-  <rect x="215" y="14" width="170" height="38" rx="6" fill="#1a1a24" stroke="#2dd4bf" stroke-width="1.5"/>
-  <text x="300" y="38" text-anchor="middle" fill="#5eead4" font-size="14" font-family="ui-monospace,'JetBrains Mono',monospace">a pasted block</text>
-
-  <path d="M270 52 L110 96" stroke="#64748b" stroke-width="1.5" fill="none"/>
-  <path d="M300 52 L300 96" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
-  <path d="M330 52 L490 96" stroke="#64748b" stroke-width="1.5" fill="none"/>
-
-  <rect x="20" y="96" width="180" height="58" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.18)"/>
-  <text x="110" y="120" text-anchor="middle" fill="#e2e8f0" font-size="13">clipboard junk</text>
-  <text x="110" y="140" text-anchor="middle" fill="#94a3b8" font-size="12">"ignore it"</text>
-
-  <rect x="210" y="96" width="180" height="58" rx="6" fill="#1a1a24" stroke="#f59e0b" stroke-width="2"/>
-  <text x="300" y="120" text-anchor="middle" fill="#fbbf24" font-size="13">a deliberate pivot</text>
-  <text x="300" y="140" text-anchor="middle" fill="#94a3b8" font-size="12">"let's talk about this"</text>
-
-  <rect x="400" y="96" width="180" height="58" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.18)"/>
-  <text x="490" y="120" text-anchor="middle" fill="#e2e8f0" font-size="13">context I forgot</text>
-  <text x="490" y="140" text-anchor="middle" fill="#94a3b8" font-size="12">"you need this to answer"</text>
-
-  <text x="110" y="192" text-anchor="middle" fill="#64748b" font-size="26" font-family="ui-monospace,'JetBrains Mono',monospace">0</text>
-  <text x="300" y="192" text-anchor="middle" fill="#fbbf24" font-size="26" font-family="ui-monospace,'JetBrains Mono',monospace">24</text>
-  <text x="490" y="192" text-anchor="middle" fill="#64748b" font-size="26" font-family="ui-monospace,'JetBrains Mono',monospace">0</text>
-  <text x="300" y="222" text-anchor="middle" fill="#94a3b8" font-size="12">of the 24 conversations I read</text>
+<svg viewBox="0 0 600 236" role="img" aria-label="Three possible readings of a pasted block — clipboard junk, a deliberate topic change, or relevant context the user forgot to explain. In all 24 conversations read, every model chose the deliberate topic change.">
+<rect x="200" y="10" width="200" height="36" rx="6" fill="#1a1a24" stroke="#2dd4bf" stroke-width="1.5"/>
+<text x="300" y="33" text-anchor="middle" fill="#5eead4" font-size="14" font-family="ui-monospace,'JetBrains Mono',monospace">a pasted block</text>
+<path d="M265 46 L110 88" stroke="#64748b" stroke-width="1.5" fill="none"/>
+<path d="M300 46 L300 88" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+<path d="M335 46 L490 88" stroke="#64748b" stroke-width="1.5" fill="none"/>
+<rect x="20" y="88" width="180" height="56" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+<text x="110" y="111" text-anchor="middle" fill="#e2e8f0" font-size="13">clipboard junk</text>
+<text x="110" y="131" text-anchor="middle" fill="#94a3b8" font-size="11.5">"ignore it"</text>
+<rect x="210" y="88" width="180" height="56" rx="6" fill="#1a1a24" stroke="#f59e0b" stroke-width="2"/>
+<text x="300" y="111" text-anchor="middle" fill="#fbbf24" font-size="13">a deliberate pivot</text>
+<text x="300" y="131" text-anchor="middle" fill="#94a3b8" font-size="11.5">"let's talk about this"</text>
+<rect x="400" y="88" width="180" height="56" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+<text x="490" y="111" text-anchor="middle" fill="#e2e8f0" font-size="13">context I forgot</text>
+<text x="490" y="131" text-anchor="middle" fill="#94a3b8" font-size="11.5">"you need this to answer"</text>
+<text x="110" y="188" text-anchor="middle" fill="#64748b" font-size="30" font-family="ui-monospace,'JetBrains Mono',monospace">0</text>
+<text x="300" y="188" text-anchor="middle" fill="#fbbf24" font-size="30" font-family="ui-monospace,'JetBrains Mono',monospace">24</text>
+<text x="490" y="188" text-anchor="middle" fill="#64748b" font-size="30" font-family="ui-monospace,'JetBrains Mono',monospace">0</text>
+<text x="300" y="218" text-anchor="middle" fill="#94a3b8" font-size="12">of the 24 conversations I read</text>
 </svg>
 <figcaption>The reading is a choice the model cannot avoid making. In the twenty-four conversations I read, it was never once resolved towards "you probably made a mistake".</figcaption>
 </figure>
@@ -81,34 +78,27 @@ Not one reply contains anything like *"was this meant for this conversation?"*. 
 What I got instead was six behaviours, and the axis of variation is not detection. It is how much unrequested work the model does.
 
 <figure class="wp-fig">
-<svg viewBox="0 0 600 300" role="img" aria-label="Six observed behaviours across 24 conversations: performs the implied task silently 14, asks what to do without questioning the fit 5, flags the topic jump 2, reasons about the relation and dismisses it 1, invents a bridge 1, adopts the pasted prompt's role 1.">
-  <g font-size="12.5" fill="#e2e8f0">
-    <text x="8" y="34">Performs the implied task, silently</text>
-    <rect x="300" y="22" width="238" height="17" rx="3" fill="#f59e0b"/>
-    <text x="548" y="35" fill="#fbbf24" font-size="13" font-family="ui-monospace,monospace">14</text>
-
-    <text x="8" y="75">Asks what to do — never if it fits</text>
-    <rect x="300" y="63" width="85" height="17" rx="3" fill="#f59e0b" opacity="0.75"/>
-    <text x="548" y="76" fill="#fbbf24" font-size="13" font-family="ui-monospace,monospace">5</text>
-
-    <text x="8" y="116">Flags the jump, then complies</text>
-    <rect x="300" y="104" width="34" height="17" rx="3" fill="#2dd4bf"/>
-    <text x="548" y="117" fill="#5eead4" font-size="13" font-family="ui-monospace,monospace">2</text>
-
-    <text x="8" y="157">Weighs the relation, dismisses it</text>
-    <rect x="300" y="145" width="17" height="17" rx="3" fill="#2dd4bf"/>
-    <text x="548" y="158" fill="#5eead4" font-size="13" font-family="ui-monospace,monospace">1</text>
-
-    <text x="8" y="198">Invents a bridge to the old topic</text>
-    <rect x="300" y="186" width="17" height="17" rx="3" fill="#64748b"/>
-    <text x="548" y="199" fill="#94a3b8" font-size="13" font-family="ui-monospace,monospace">1</text>
-
-    <text x="8" y="239">Adopts the pasted prompt's role</text>
-    <rect x="300" y="227" width="17" height="17" rx="3" fill="#64748b"/>
-    <text x="548" y="240" fill="#94a3b8" font-size="13" font-family="ui-monospace,monospace">1</text>
-  </g>
-  <line x1="300" y1="260" x2="538" y2="260" stroke="rgba(255,255,255,0.12)"/>
-  <text x="300" y="282" fill="#94a3b8" font-size="11.5">Amber: never mentions the jump · Teal: mentions it · Grey: one-offs worth their own paragraph</text>
+<svg viewBox="0 0 600 252" role="img" aria-label="Six observed behaviours across 24 conversations: performs the implied task silently 14, asks what to do without questioning the fit 5, flags the topic jump 2, reasons about the relation and dismisses it 1, invents a bridge 1, adopts the pasted prompt's role 1.">
+<text x="8" y="35" fill="#e2e8f0" font-size="12.5">Performs the implied task, silently</text>
+<rect x="320" y="22" width="200" height="17" rx="3" fill="#f59e0b" opacity="1.0"/>
+<text x="560" y="35" fill="#fbbf24" font-size="13" font-family="ui-monospace,monospace">14</text>
+<text x="8" y="69" fill="#e2e8f0" font-size="12.5">Asks what to do — never if it fits</text>
+<rect x="320" y="56" width="71" height="17" rx="3" fill="#f59e0b" opacity="0.75"/>
+<text x="560" y="69" fill="#fbbf24" font-size="13" font-family="ui-monospace,monospace">5</text>
+<text x="8" y="103" fill="#e2e8f0" font-size="12.5">Flags the jump, then complies</text>
+<rect x="320" y="90" width="29" height="17" rx="3" fill="#2dd4bf" opacity="1.0"/>
+<text x="560" y="103" fill="#5eead4" font-size="13" font-family="ui-monospace,monospace">2</text>
+<text x="8" y="137" fill="#e2e8f0" font-size="12.5">Weighs the relation, dismisses it</text>
+<rect x="320" y="124" width="14" height="17" rx="3" fill="#2dd4bf" opacity="1.0"/>
+<text x="560" y="137" fill="#5eead4" font-size="13" font-family="ui-monospace,monospace">1</text>
+<text x="8" y="171" fill="#e2e8f0" font-size="12.5">Invents a bridge to the old topic</text>
+<rect x="320" y="158" width="14" height="17" rx="3" fill="#64748b" opacity="1.0"/>
+<text x="560" y="171" fill="#94a3b8" font-size="13" font-family="ui-monospace,monospace">1</text>
+<text x="8" y="205" fill="#e2e8f0" font-size="12.5">Adopts the pasted prompt's role</text>
+<rect x="320" y="192" width="14" height="17" rx="3" fill="#64748b" opacity="1.0"/>
+<text x="560" y="205" fill="#94a3b8" font-size="13" font-family="ui-monospace,monospace">1</text>
+<line x1="320" y1="232" x2="545" y2="232" stroke="rgba(255,255,255,0.12)"/>
+<text x="8" y="246" fill="#94a3b8" font-size="11">Amber: never mentions the jump · Teal: mentions it · Grey: one-offs</text>
 </svg>
 <figcaption>Nineteen of twenty-four replies never acknowledge that anything changed. The interesting minority is small, and it is where the good behaviour lives.</figcaption>
 </figure>
