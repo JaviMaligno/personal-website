@@ -17,7 +17,7 @@
 - **N2 no entra en ninguna comparación con N0 ni N1.** Es un distractor de diseño y se reporta aparte. Cualquier tabla que los mezcle es un error.
 - **N1 se escribe SIN saber cuáles son los temas y sin buscarlo.** La señal es intrínseca al artefacto, nunca relacional.
 - **Entorno**: `WRONGPASTE_GATEWAY_URL` y `WRONGPASTE_GCP_PROJECT` exportadas; key en `~/.acp-blog-paste-key`; VPN activa y `gcloud auth login` vigente.
-- **Los dos jueces están fuera del plantel evaluado.** Hoy solo `gpt-5.5-tst` está liberado; el segundo es prerrequisito bloqueante (§9 del spec).
+- **Los dos jueces están fuera del plantel evaluado**: `gpt-5.5-tst` (OpenAI) y `gemini-2.5-flash` (Google), verificados el 2026-09-14. `gemini-2.5-flash` SALE del plantel, que pasa de nueve modelos a ocho. En `config.py`, `MODELS` es el registro invocable y `EVALUATED` nombra a los ocho.
 - **Claude 5 no admite `temperature`/`top_p`/`top_k` ni `budget_tokens`**: devuelven 400.
 - **En zsh usar `${M}` y no `$M:verbo`** al construir URLs.
 - **Registro en crudo siempre**: ninguna celda se descarta en silencio; los fallos se escriben como filas con `status`.
@@ -242,7 +242,8 @@ git commit -m "feat: rúbrica v2 legible por máquina, con la categoría G"
 - Create: `data/artifacts-n1/*.md` (~30 ficheros)
 - Modify: `src/wrongpaste/artifacts.py`
 - Modify: `src/wrongpaste/records.py`
-- Test: `tests/test_artifacts.py`, `tests/test_records.py`
+- Modify: `src/wrongpaste/config.py`
+- Test: `tests/test_artifacts.py`, `tests/test_records.py`, `tests/test_config.py`
 
 **Interfaces:**
 - Consumes: `rubric` no; `artifacts.Artifact`.
@@ -378,6 +379,26 @@ obligatorio en N1) y pasa `level`.
 
 En `records.py`, añadir a `ConversationRecord` el campo
 `paste_level: str | None = None`, junto a `artifact_kind`.
+
+En `config.py`, separar el registro invocable del plantel evaluado. `MODELS`
+sigue teniendo todo lo que `chat()` puede llamar —incluidos los jueces— y se
+añade:
+
+```python
+# El plantel EVALUADO. `gemini-2.5-flash` está en MODELS porque hay que poder
+# llamarlo, pero es juez (§9 del spec de Fase 1) y por eso no se evalúa: nadie
+# se puntúa a sí mismo.
+EVALUATED: tuple[str, ...] = (
+    "gpt-5.6-sol-tst", "gpt-5.6-terra-tst", "gpt-5.6-luna-tst",
+    "gpt-5.4-tst", "gpt-5.4-mini-tst",
+    "claude-opus-5", "claude-sonnet-5",
+    "gemini-2.5-pro",
+)
+```
+
+Y en `tests/test_config.py`, sustituir `test_roster_has_nine_models` por uno que
+compruebe que `EVALUATED` tiene ocho, que todos están en `MODELS`, y que ningún
+juez está en `EVALUATED`.
 
 - [ ] **Step 5: Ejecutar los tests y comprobar que pasan**
 
@@ -637,10 +658,19 @@ def test_kappa_penaliza_el_acuerdo_por_azar():
 
 
 def test_los_dos_jueces_estan_fuera_del_plantel():
-    from wrongpaste.config import MODELS
+    from wrongpaste.config import EVALUATED, MODELS
     for j in jd.JUDGES:
-        assert j not in MODELS, f"{j} está en el plantel evaluado"
+        assert j in MODELS, f"{j} tiene que ser invocable por chat()"
+        assert j not in EVALUATED, f"{j} está en el plantel evaluado"
     assert len(jd.JUDGES) == 2
+
+
+def test_los_jueces_son_de_familias_distintas():
+    # Si los dos fueran de la misma familia que los evaluados, un sesgo de
+    # familia no se vería en el acuerdo entre jueces.
+    from wrongpaste.config import MODELS
+    proveedores = {MODELS[j].provider for j in jd.JUDGES}
+    assert len(proveedores) == 2, f"los dos jueces salen de {proveedores}"
 ```
 
 - [ ] **Step 2: Ejecutar y comprobar que falla**
@@ -670,7 +700,7 @@ from wrongpaste.rubric import CATEGORY_IDS, RUBRIC_VERSION, rubric_prompt
 
 # Spec §6 y §9: fuera del plantel, y de familias distintas para que el
 # acuerdo entre ellos signifique algo.
-JUDGES: tuple[str, ...] = ("gpt-5.5-tst", "claude-haiku-4-5")
+JUDGES: tuple[str, ...] = ("gpt-5.5-tst", "gemini-2.5-flash")
 
 JUDGE_MAX_TOKENS = 1200
 
@@ -736,9 +766,8 @@ def cohen_kappa(a: list[str], b: list[str]) -> float:
 uv run pytest tests/test_judging.py -v
 ```
 
-Esperado: 6 passed. **Si falla `test_los_dos_jueces_estan_fuera_del_plantel`
-porque `claude-haiku-4-5` no está habilitado, ese es el prerrequisito
-bloqueante del §9 del spec: pararse y decirlo, no cambiar el test.**
+Esperado: 7 passed. Los dos jueces están verificados (2026-09-14); si alguno
+deja de responder, pararse y decirlo, no cambiar el test.
 
 - [ ] **Step 5: Commit**
 
@@ -1032,10 +1061,11 @@ git commit -m "feat: runner de la Fase 1a con los tres niveles de pegote"
 - Create: `runs/phase1a/annotations-<run_id>.jsonl`
 - Create: `docs/superpowers/specs/<fecha>-pegado-accidental-fase-1a-resultados.md` (repo del blog)
 
-- [ ] **Step 1: Comprobar el prerrequisito bloqueante**
+- [ ] **Step 1: Comprobar que los dos jueces responden**
 
-`claude-haiku-4-5` tiene que responder en Vertex. Si no, **parar y decirlo**: sin
-segundo juez no hay acuerdo entre jueces, y el §6 del spec lo exige.
+`gpt-5.5-tst` por el gateway y `gemini-2.5-flash` por Vertex. Si alguno falla,
+**parar y decirlo**: sin dos jueces no hay acuerdo entre jueces, y el §6 del
+spec lo exige.
 
 ```bash
 uv run pytest tests/test_judging.py::test_los_dos_jueces_estan_fuera_del_plantel -v

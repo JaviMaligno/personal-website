@@ -127,8 +127,8 @@ transcripciones a mano:
    arreglarla antes de contar nada. Es media hora de su tiempo y es lo que
    convierte el número en defendible.
 
-**Los dos jueces tienen que estar fuera del plantel evaluado.** Hoy solo hay uno
-liberado (`gpt-5.5-tst`). Ver §9.
+**Los dos jueces están fuera del plantel evaluado** (§9): `gpt-5.5-tst` y
+`gemini-2.5-flash`, de familias distintas.
 
 ## 7. Las tres tandas y sus puertas
 
@@ -163,7 +163,7 @@ El ancho del eje está medido y es suficiente: rangos de coseno entre 0,236 y
 
 ### Fase 1c — el plantel completo (opcional por diseño)
 
-Los nueve modelos sobre N0 y N1: **288 conversaciones, ≈ 45 $**, más caras porque
+Los ocho modelos evaluados sobre N0 y N1: **288 conversaciones, ≈ 45 $**, más caras porque
 entran `sol`, `opus-5` y `gemini-2.5-pro`.
 
 **Solo tiene sentido si el contraste por familia aguanta en 1a**, que ya lleva
@@ -196,24 +196,27 @@ ser constante.
   sirviendo como material citable para el artículo 1.
 - **No se toca el turno de reparación.** Eso es la Fase 2 y su propio artículo.
 
-## 9. Prerrequisito bloqueante: el segundo juez
+## 9. Los dos jueces: resuelto
 
-`gpt-5.5-tst` ya está liberado y verificado. Falta el segundo, y **tiene que
-estar fuera del plantel**. Lo ideal es que sean de familias distintas, para que
-un sesgo de familia no pase desapercibido. Tres salidas:
+`gpt-5.5-tst` (OpenAI, vía gateway) y **`gemini-2.5-flash` (Google, vía Vertex)**.
+Los dos verificados el 2026-09-14. Familias distintas, que era el requisito real:
+si los dos fueran de la misma familia que tres de los evaluados, un sesgo de
+familia no se vería en el acuerdo entre jueces.
 
-1. **Habilitar `claude-haiku-4-5` en Vertex** como juez 2. Está en el catálogo de
-   `us-central1`. Cuesta otra compra de Marketplace con su cuestionario y su
-   firma, como Opus y Sonnet.
-2. **Sacar `gemini-2.5-flash` del plantel evaluado** y usarlo de juez. Gratis en
-   trámite, pero se pierde un modelo de los nueve.
-3. **Usar `gpt-5-mini-tst`**, ya registrado en el gateway. Sin trámite, pero es
-   de la misma familia que tres de los evaluados y es débil para una tarea de
-   clasificación con rúbrica de siete categorías.
+**`gemini-2.5-flash` sale del plantel evaluado**, que pasa de nueve modelos a
+ocho. Se va el Gemini pequeño; `gemini-2.5-pro` se queda, así que la familia
+sigue representada entre los evaluados.
 
-Recomendación: la 1. El coste es un trámite que ya sabemos hacer, y tener jueces
-de dos familias distintas es lo que hace que el acuerdo entre ellos signifique
-algo.
+**Por qué no `claude-haiku-4-5`, que era la recomendación inicial.** En Model
+Garden su botón *Enable* está deshabilitado y exige completar el **Cyber
+Verification Program**: inscripción con Anthropic y aceptación del *Advanced AI
+Safety Addendum* en nombre de la organización. Ese programa es para trabajo de
+ciberseguridad de alto riesgo y doble uso. Nuestro caso es un modelo clasificando
+transcripciones de un experimento de blog: inscribirse ahí sería **declarar un uso
+que no es el nuestro**, así que se descarta por motivos que no son técnicos.
+
+A diferencia de Opus 5 y Sonnet 5, Haiku 4.5 no ofrece la vía *Standard use
+cases*. Queda anotado por si alguien vuelve a intentarlo.
 
 ## 10. Riesgos
 
