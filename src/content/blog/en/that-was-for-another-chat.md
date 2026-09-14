@@ -67,7 +67,7 @@ Eight deliberately unrelated topics — a house move, training for a 10K, choosi
 
 The pasted blocks come from a bank of 64 clipboard artefacts — a recipe, an SSH config, a stack trace, meeting minutes, a shopping list, a SQL migration, a job ad, a prompt from another chat. **They were written without any knowledge of the conversation topics.** That constraint matters more than it looks: if you generate a paste that is "moderately related to a conversation about bread", you have built a designed distractor, which is what GSM-DC already studies. Here similarity is an emergent property of crossing topic × artefact, measured afterwards with embeddings, not a dial I set.
 
-Three models: two sizes of the same GPT-5.6 family, and Claude Opus 5. Twenty-four conversations with a paste, three controls without one. I read all of them, in full, by hand.
+Three models: two sizes of the same GPT-5.6 family — sol, the larger, and luna, the smaller — and Claude Opus 5. Twenty-four conversations with a paste, three controls without one. I read all of them, in full, by hand.
 
 ## Nobody thinks you made a mistake
 
@@ -161,8 +161,8 @@ tiny:
 
 | | Does the work | Asks about format | Mentions the jump | Other |
 |---|---|---|---|---|
-| GPT-5.6, larger | 5 | **3** | 0 | — |
-| GPT-5.6, smaller | 5 | **2** | 0 | 1 (the good one) |
+| GPT-5.6 sol | 5 | **3** | 0 | — |
+| GPT-5.6 luna | 5 | **2** | 0 | 1 (the good one) |
 | Claude Opus 5 | 4 | **0** | **2** | 1 bridge, 1 role |
 
 Every single "what would you like me to do with this?" came from the two GPT

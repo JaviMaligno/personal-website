@@ -67,7 +67,7 @@ Ocho temas deliberadamente dispares: una mudanza, preparar un 10K, elegir colegi
 
 Los bloques salen de un banco de 64 artefactos de portapapeles: una receta, una configuración de SSH, un stack trace, un acta de reunión, una lista de la compra, una migración SQL, una oferta de trabajo, un prompt de otro chat. **Se escribieron sin saber cuáles eran los temas de conversación.** Esa restricción importa más de lo que parece: si generas un pegote «moderadamente parecido a una charla sobre pan», has construido un distractor de diseño, que es lo que ya estudia GSM-DC. Aquí la similaridad es una propiedad emergente del cruce tema × artefacto, medida después con embeddings, no un mando que yo haya girado.
 
-Tres modelos: dos tamaños de la misma familia GPT-5.6 y Claude Opus 5. Veinticuatro conversaciones con pegote y tres de control sin él. Las leí todas, enteras, a mano.
+Tres modelos: dos tamaños de la misma familia GPT-5.6 —sol, el grande, y luna, el pequeño— y Claude Opus 5. Veinticuatro conversaciones con pegote y tres de control sin él. Las leí todas, enteras, a mano.
 
 ## Nadie piensa que te hayas equivocado
 
@@ -161,8 +161,8 @@ minúsculos:
 
 | | Hace el trabajo | Pregunta por el formato | Menciona el salto | Otras |
 |---|---|---|---|---|
-| GPT-5.6, el grande | 5 | **3** | 0 | — |
-| GPT-5.6, el pequeño | 5 | **2** | 0 | 1 (la buena) |
+| GPT-5.6 sol | 5 | **3** | 0 | — |
+| GPT-5.6 luna | 5 | **2** | 0 | 1 (la buena) |
 | Claude Opus 5 | 4 | **0** | **2** | 1 puente, 1 rol |
 
 Todos y cada uno de los «¿qué quieres que haga con esto?» salieron de los dos
