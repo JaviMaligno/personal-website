@@ -109,7 +109,7 @@ A wrong label is worse than a weak one. It gets trusted.
 **11/**
 
 ```
-Your tests, types, property checks and one careful read-through are four kinds of evidence with four silent regions — and CI paints them all the same green.
+Your tests, types, property checks and one careful read-through are four kinds of evidence — and CI paints them all the same green.
 
 Which of yours is proved, and which is just unrefuted so far?
 
