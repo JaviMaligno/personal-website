@@ -153,11 +153,36 @@ One reply, out of twenty-four, did the thing I would want. The topic was an elec
 
 It spots the mismatch, explicitly considers whether there could be a real relation, and dismisses it with a reason. That is the opposite of the invented bridge: a link considered and rejected. It matters because it proves the ceiling exists — this is not a capability problem.
 
+## The split by family, on eight conversations each
+
+The six behaviours are not spread evenly across the three models, and the
+contrast is sharp enough to be worth writing down even though the numbers are
+tiny:
+
+| | Does the work | Asks about format | Mentions the jump | Other |
+|---|---|---|---|---|
+| GPT-5.6, larger | 5 | **3** | 0 | — |
+| GPT-5.6, smaller | 5 | **2** | 0 | 1 (the good one) |
+| Claude Opus 5 | 4 | **0** | **2** | 1 bridge, 1 role |
+
+Every single "what would you like me to do with this?" came from the two GPT
+models, and neither of them ever mentioned that the subject had changed. Opus
+never asked about format once, and it is the only model that ever named the jump
+— as well as the only one that invented a bridge, and the only one that took on
+the pasted prompt's role.
+
+Two different default postures, in other words: one asks you to pick an output
+format, the other comments on what just happened and then gets on with it. Which
+is more useful probably depends on what you were actually doing.
+
+**Eight conversations per model.** That is not a finding, it is a pattern worth
+testing properly, and it is now the first thing I want out of the next round.
+
 ## What I am not claiming
 
 Twenty-four conversations, one paste each, no preregistration, and the design deliberately rotates topics and lengths so that nothing is measured with any statistical power. **This is an observation, not a measurement.** I cannot tell you a detection rate, and I cannot tell you whether similarity between the paste and the conversation changes anything — across these 24 the acknowledgements land at 0.23, 0.26, 0.26 and 0.37 cosine, and the silent ones spread across the entire range.
 
-The next article has 384 conversations per model and an actual grid. If it contradicts this one, I will say so there.
+The next article runs a proper grid, with enough conversations per cell to talk about rates. If it contradicts this one, I will say so there.
 
 ## What to do the next time it happens to you
 

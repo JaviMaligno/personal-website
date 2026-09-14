@@ -153,11 +153,37 @@ Una respuesta, de veinticuatro, hizo lo que a mí me gustaría. El tema era la f
 
 Detecta el desajuste, se plantea explícitamente si podría haber una relación real, y la descarta con un motivo. Es lo contrario del puente inventado: un vínculo considerado y rechazado. Importa porque demuestra que el techo existe: esto no es un problema de capacidad.
 
+## El reparto por familia, sobre ocho conversaciones cada uno
+
+Las seis conductas no se reparten por igual entre los tres modelos, y el
+contraste es lo bastante nítido como para dejarlo escrito aunque los números sean
+minúsculos:
+
+| | Hace el trabajo | Pregunta por el formato | Menciona el salto | Otras |
+|---|---|---|---|---|
+| GPT-5.6, el grande | 5 | **3** | 0 | — |
+| GPT-5.6, el pequeño | 5 | **2** | 0 | 1 (la buena) |
+| Claude Opus 5 | 4 | **0** | **2** | 1 puente, 1 rol |
+
+Todos y cada uno de los «¿qué quieres que haga con esto?» salieron de los dos
+modelos GPT, y ninguno de los dos mencionó nunca que el tema hubiera cambiado.
+Opus no preguntó por el formato ni una sola vez, y es el único que nombró el
+salto — además del único que se inventó un puente y el único que asumió el rol
+del prompt pegado.
+
+Dos posturas por defecto distintas, en resumen: una te pide que elijas formato de
+salida, la otra comenta lo que acaba de pasar y sigue adelante. Cuál es más útil
+depende bastante de qué estuvieras haciendo.
+
+**Ocho conversaciones por modelo.** Eso no es un hallazgo, es un patrón que
+merece comprobarse en condiciones, y es lo primero que quiero de la siguiente
+tanda.
+
 ## Lo que no estoy afirmando
 
 Veinticuatro conversaciones, un pegote cada una, sin preregistro, y un diseño que rota temas y longitudes a propósito para que nada quede medido con potencia estadística. **Esto es una observación, no una medición.** No puedo darte una tasa de detección, y no puedo decirte si la similaridad entre el pegote y la conversación cambia algo: en estas 24, los reconocimientos del salto caen en 0,23, 0,26, 0,26 y 0,37 de coseno, y los silenciosos se reparten por todo el rango.
 
-El siguiente artículo tiene 384 conversaciones por modelo y una rejilla de verdad. Si contradice a este, lo diré allí.
+El siguiente artículo corre una rejilla en condiciones, con conversaciones suficientes por celda para hablar de tasas. Si contradice a este, lo diré allí.
 
 ## Qué hacer la próxima vez que te pase
 
