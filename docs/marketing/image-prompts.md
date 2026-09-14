@@ -1167,3 +1167,45 @@ hay cifras ni estadísticas inventadas.
 
 Figuras del artículo (SVG inline rasterizado a PNG para Dev.to con Chrome
 headless, ver `blog-writer`): `when-the-fact-stops-being-true-fig-{1..4}.png`.
+## `too-small-to-automate`
+
+**No hay hero generado. Se intentó tres veces y las tres salieron peor.** El
+hero es ahora un recorte 2:1 de una captura real: el hilo de ChatGPT con la
+primera fila ya respondida y el arranque de la segunda.
+
+| Fichero | Qué es | Dónde se usa |
+|---|---|---|
+| `too-small-to-automate.png` | Recorte 1280x640 → 1020x510 de la captura del hilo | `heroImage` |
+| `too-small-save-as-template.png` | El modal Guardar como plantilla sobre ChatGPT | En el cuerpo |
+| `too-small-run-in-chat.png` | La captura entera, 1280x800 | `linkedinImage` |
+
+Las tres salen de las que ya estaban subidas a la ficha de la Chrome Web Store.
+Se recuperan de la página pública filtrando por tamaño: las capturas del item
+son las de **1280x800** (las de 440x280 y 1400x560 son los tiles promocionales,
+y las de 128x128 son iconos de otras extensiones).
+
+### Las tres lecciones, que valen para cualquier artículo
+
+**1. Una imagen no sobrevive a un cambio de tesis.** El primer hero dibujaba las
+curvas BUILD, RUN y CHECK, que era el argumento de un borrador anterior. Al
+reescribirse el artículo se quedó ilustrando una fórmula que el texto ya no
+hacía.
+
+**2. Pedir un concepto abstracto produce un cacharro.** El segundo pedía "la
+desproporción" con palabras como *módulos*, *bastidor* y *medidor*, y salió una
+consola de nave espacial: tridimensional, bonita y sin decir nada. El tercero
+prohibía el registro entero (nada de 3D, ni paneles, ni carcasas) y salió plano
+pero vacío: tres burbujas contra seis losas no es una idea, es un gráfico de
+barras sin datos.
+
+**3. Cuando el artículo va de una herramienta propia, la captura le gana a
+cualquier ilustración.** Y no solo por ser más honesta: **la captura arregló un
+problema del texto.** La plantilla real de la captura es *"Analyse the
+{{ sector }} market in {{ country }}"*, así que el artículo abre ahora con esa
+tarea contada con sus valores — software en España, biotecnología en Portugal —
+y los huecos, cuando aparecen, se reconocen solos. La imagen no ilustraba el
+argumento: lo corregía.
+
+**Regla práctica:** antes de generar nada, mirar si el producto ya tiene
+capturas. Si el artículo habla de algo que se puede fotografiar funcionando, se
+fotografía.
