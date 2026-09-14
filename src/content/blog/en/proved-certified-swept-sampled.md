@@ -68,7 +68,7 @@ The third version repaired the tangency but still leaned on `mpmath` for the inv
 
 - $\arcsin$ is bounded by a **pure rational series**, with $\sin^2$ and $\cos$ bracketed in $\mathbb{Q}$ by an alternating Lagrange remainder — so the bound is a theorem about the series, not a call to a library.
 - Every interval addition and subtraction uses directed rounding, stepping one ULP outward after each operation, so the interval is a genuine outer bound rather than a hopeful one.
-- $\pi$ and $2\pi$ are themselves certified in $\mathbb{Q}$ by the same series, because a certificate that hardcodes a float for $\pi$ has just assumed the thing it is checking.
+- $\pi$ and $2\pi$ are enclosed between **rational bounds** proved by that same series. They are not rational, of course; the bounds are, and bounds are all the certificate ever needs. One that hardcodes a float for $\pi$ has just assumed part of what it is checking.
 - The library's `math.asin` is still called — as an **oracle that is not believed**. It proposes where to look; a bracket with certainty in each direction decides. If the oracle lied, the search would widen rather than accept.
 
 The result closes the domain with zero tolerances, zero exclusions, and no floating-point fact assumed anywhere.

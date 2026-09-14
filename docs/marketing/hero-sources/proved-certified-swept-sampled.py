@@ -180,31 +180,33 @@ def fig_tolerance(lang):
 
 
 def fig_rounds(lang):
+    """Four stacked rows, not four columns: at blog column width a 1x4 grid
+    shrinks the text below reading size."""
     s = STR[lang]
     rounds = s["rounds"]
-    fig = plt.figure(figsize=(9.8, 5.0), dpi=110)
+    fig = plt.figure(figsize=(9.6, 5.9), dpi=110)
     fig.patch.set_facecolor(BG)
     ax = fig.add_axes([0, 0, 1, 1])
-    ax.set_xlim(0, 9.8)
-    ax.set_ylim(0.95, 5.0)
+    ax.set_xlim(0, 9.6)
+    ax.set_ylim(0.42, 5.9)
     ax.axis("off")
 
-    ax.text(0.35, 4.62, s["f2_title"], color=TEXT, fontsize=14, fontweight="bold")
+    ax.text(0.35, 5.45, s["f2_title"], color=TEXT, fontsize=16, fontweight="bold")
 
     for i, (name, blurb, colour) in enumerate(rounds):
-        x = 0.35 + i * 2.40
-        ax.add_patch(FancyBboxPatch((x, 1.95), 2.05, 2.05,
-                                    boxstyle="round,pad=0.03,rounding_size=0.10",
+        y = 4.28 - i * 1.02
+        ax.add_patch(FancyBboxPatch((0.35, y), 8.9, 0.86,
+                                    boxstyle="round,pad=0.02,rounding_size=0.08",
                                     facecolor=PANEL, edgecolor=colour, linewidth=1.8))
-        ax.text(x + 0.22, 3.68, name, color=colour, fontsize=15,
-                family="monospace", fontweight="bold")
-        ax.text(x + 0.18, 3.32, textwrap.fill(blurb, 27), color=MUTED, fontsize=8.4,
-                va="top", linespacing=1.6)
+        ax.text(0.62, y + 0.43, name, color=colour, fontsize=15,
+                va="center", family="monospace", fontweight="bold")
+        ax.text(1.55, y + 0.43, textwrap.fill(blurb, 66), color=MUTED, fontsize=10.8,
+                va="center", linespacing=1.45)
         if i < len(rounds) - 1:
-            ax.annotate("", xy=(x + 2.36, 2.95), xytext=(x + 2.09, 2.95),
-                        arrowprops=dict(arrowstyle="-|>", color=SLATE, lw=1.6))
+            ax.annotate("", xy=(4.8, y - 0.15), xytext=(4.8, y - 0.02),
+                        arrowprops=dict(arrowstyle="-|>", color=SLATE, lw=1.5))
 
-    ax.text(0.35, 1.25, s["f2_cap"], color=MUTED, fontsize=10, fontstyle="italic")
+    ax.text(0.35, 0.72, s["f2_cap"], color=MUTED, fontsize=11, fontstyle="italic")
     save(fig, f"{SLUG}-fig-2-{lang}.png")
 
 

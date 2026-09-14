@@ -82,7 +82,7 @@ v4 assumes no floating-point fact at all:
 
 • arcsine bounded by a pure rational series (alternating Lagrange remainder)
 • directed rounding, one ULP outward per operation
-• π certified in ℚ by that same series
+• rational bounds for π proved by that series
 • math.asin called as an oracle that is NOT believed
 ```
 

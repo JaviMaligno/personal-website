@@ -68,7 +68,7 @@ La tercera versión reparó la tangencia pero seguía apoyándose en `mpmath` pa
 
 - $\arcsin$ se acota por una **serie racional pura**, con $\sin^2$ y $\cos$ encajonados en $\mathbb{Q}$ mediante un resto de Lagrange alternante — así que la cota es un teorema sobre la serie, no una llamada a una librería.
 - Toda suma y resta de intervalos usa redondeo dirigido, avanzando un ULP hacia fuera tras cada operación, de modo que el intervalo es una cota exterior de verdad y no una esperanza.
-- $\pi$ y $2\pi$ se certifican en $\mathbb{Q}$ con la misma serie, porque un certificado que mete un float para $\pi$ acaba de asumir justo lo que está comprobando.
+- $\pi$ y $2\pi$ quedan encerrados entre **cotas racionales** demostradas con esa misma serie. Racionales no son, claro; las cotas sí, y cotas es todo lo que el certificado necesita. Uno que mete un float para $\pi$ acaba de asumir parte de lo que está comprobando.
 - La `math.asin` de la librería se sigue llamando — como **oráculo al que no se cree**. Propone dónde mirar; decide un bracket con certeza en cada dirección. Si el oráculo mintiera, la búsqueda se ensancharía en vez de aceptar.
 
 El resultado cierra el dominio con cero tolerancias, cero exclusiones y ningún hecho en coma flotante asumido en ninguna parte.
