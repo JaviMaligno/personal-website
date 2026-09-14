@@ -281,6 +281,33 @@ GCP. No es secreto, pero es material de trabajo interno
 `Model.label` y nunca llegaba al JSONL) junto a `model_id`, y **antes de la
 primera tirada** se decide si endpoint y proyecto van a variables de entorno.
 
+## D18. Cubrir géneros no cubre señales
+
+El muestreador de artefactos (`pick_artifact`, D4) fuerza cobertura por
+**género**: dentro de la ventana del estrato se queda con los géneros menos
+usados y desempata al azar. Sobre el banco N0 eso bastaba, porque el género era
+lo único que había que equilibrar.
+
+El banco N1 tiene dos ejes: 11 géneros y **4 señales** —lo que delata al pegote,
+que es la variable interesante del nivel—, repartidas de forma desigual entre
+los géneros. Empatar por género deja la señal al sorteo del ranking. Medido
+sobre 300 rankings simulados con el banco real y el plan real: entre la señal
+más y la menos muestreada había **14 celdas de 96** (mediana), y el **46 %** de
+las tiradas dejaba alguna señal por debajo de 18.
+
+Esto **no sesga la comparación N0 contra N1**, que es la que decide la puerta de
+la Fase 1a: los dos brazos tienen la misma mezcla de géneros (D-banco N1) y la
+señal solo existe en uno. Lo que estropea es la pregunta de dentro de N1 —*qué
+señal hace preguntar*—, que se quedaría sin potencia en la señal que perdiera el
+sorteo.
+
+**Arreglo:** `pick_artifact` acepta un contador de señales y, entre los
+candidatos que ya empatan en género, prefiere la señal menos vista. El contador
+viaja por el mismo camino que el de géneros, reanudación incluida, y la señal
+pasa a registrarse en cada fila (`artifact_signal`) para que el análisis no
+dependa de que el banco siga igual cuando se haga. Con el arreglo, el spread
+baja a 2,3 de media y ninguna señal baja de 20 celdas de 96.
+
 ---
 
 ## Errores de los auditores, para que no se reintroduzcan
