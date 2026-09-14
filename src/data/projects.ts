@@ -142,6 +142,15 @@ export const projects: Project[] = [
   },
   // Products
   {
+    slug: 'prompt-scripter',
+    key: 'promptScripter',
+    category: 'products',
+    tags: ['Chrome MV3', 'TypeScript', 'FastAPI', 'Stripe'],
+    github: null,
+    liveUrl: 'https://promptscripter.javieraguilar.ai',
+    hasDiagram: false
+  },
+  {
     slug: 'vitamin-d-explorer',
     key: 'vitaminD',
     category: 'products',
