@@ -1,8 +1,8 @@
 # X thread — "Proved, Certified, Swept, Sampled"
 
-Manual thread (there is no X automation in this repo). Post on publication day,
-after the arXiv ID exists. **Replace `XXXX.XXXXX` before posting** — it appears
-in tweet 11.
+Manual thread (there is no X automation in this repo). Post on publication day.
+**The arXiv ID is already in place** (`2609.15554`, announced 2026-09-15), so
+there is nothing left to edit before posting.
 
 Each tweet is kept under 280 characters so it works on a free account. Post the
 first on its own, then each following one as a reply to the previous.

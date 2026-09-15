@@ -9,7 +9,7 @@ heroImage: "/blog/proved-certified-swept-sampled.png"
 repoUrl: https://github.com/JaviMaligno/calamares
 linkedinLinks:
   - label: "Preprint"
-    url: "https://arxiv.org/abs/XXXX.XXXXX"
+    url: "https://arxiv.org/abs/2609.15554"
 linkedinSummary: |
   Una afirmación de un paper puede estar respaldada por una demostración escrita, por un teorema comprobado por el kernel de Lean, por aritmética racional exacta en toda una región, o por «muestreé diez millones de puntos y no se rompió nada». Las cuatro se imprimen igual: una frase que suena verdadera.
 
@@ -113,4 +113,4 @@ De ahí salen tres cosas, y son las que yo usaría:
 
 Lo último es la razón de que mis papers lleven ahora un apéndice que nadie ha pedido, emparejando cada afirmación computacional con el script que hay detrás y con un registro por rondas de cada refutación y cada reparación. Es la parte menos lucida del trabajo y la única que permitiría pillarme en un error.
 
-*El preprint está [aquí](https://arxiv.org/abs/XXXX.XXXXX), el [código, los certificados y los informes de verificación están abiertos](https://github.com/JaviMaligno/calamares), y las matemáticas de las que van esos certificados están en [el artículo compañero](/es/blog/count-the-rings). Una costumbre emparentada, desde otro ángulo: [el instrumento falla a tu favor](/es/blog/the-instrument-fails-in-your-favour).*
+*El preprint está [aquí](https://arxiv.org/abs/2609.15554), el [código, los certificados y los informes de verificación están abiertos](https://github.com/JaviMaligno/calamares), y las matemáticas de las que van esos certificados están en [el artículo compañero](/es/blog/count-the-rings). Una costumbre emparentada, desde otro ángulo: [el instrumento falla a tu favor](/es/blog/the-instrument-fails-in-your-favour).*

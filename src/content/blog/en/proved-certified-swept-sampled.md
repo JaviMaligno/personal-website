@@ -9,7 +9,7 @@ heroImage: "/blog/proved-certified-swept-sampled.png"
 repoUrl: https://github.com/JaviMaligno/calamares
 linkedinLinks:
   - label: "Preprint"
-    url: "https://arxiv.org/abs/XXXX.XXXXX"
+    url: "https://arxiv.org/abs/2609.15554"
 linkedinSummary: |
   A claim in a paper can be backed by a written proof, by a kernel-checked theorem, by exact rational arithmetic over a whole region, or by "I sampled ten million points and nothing broke". All four print the same way: a sentence that sounds true.
 
@@ -113,4 +113,4 @@ Three things follow, and they are the ones I would actually use:
 
 The last one is the reason my papers now carry an appendix nobody asked for, pairing each computational claim with the script behind it and a per-round record of every refutation and repair. It is the least glamorous part of the work and the only part that would let you catch me being wrong.
 
-*The preprint is [here](https://arxiv.org/abs/XXXX.XXXXX), the [code, certificates and verification reports are open](https://github.com/JaviMaligno/calamares), and the mathematics those certificates are about is in [the companion article](/en/blog/count-the-rings). A related habit, from a different angle: [the instrument fails in your favour](/en/blog/the-instrument-fails-in-your-favour).*
+*The preprint is [here](https://arxiv.org/abs/2609.15554), the [code, certificates and verification reports are open](https://github.com/JaviMaligno/calamares), and the mathematics those certificates are about is in [the companion article](/en/blog/count-the-rings). A related habit, from a different angle: [the instrument fails in your favour](/en/blog/the-instrument-fails-in-your-favour).*
