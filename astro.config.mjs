@@ -11,6 +11,13 @@ import vercel from '@astrojs/vercel';
 export default defineConfig({
   site: 'https://www.javieraguilar.ai',
 
+  // Every page is canonically the version with the trailing slash, and until
+  // now the version without one answered 200 as well. Search Console shows
+  // what that cost: the same article indexed twice, and several of the
+  // slashless variants sitting in "Crawled - currently not indexed". This
+  // makes Vercel redirect them instead of serving a second copy.
+  trailingSlash: 'always',
+
   // The site stays static — every page is still prerendered. The adapter is
   // here only so a single endpoint (src/pages/api/assessment.ts) can run on
   // demand, which it opts into with `export const prerender = false`.
