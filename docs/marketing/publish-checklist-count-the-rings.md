@@ -27,30 +27,31 @@ anotado en `docs/arxiv-envio.md` del repo `calamares`.
 Las entradas del manifiesto conservan su `blockIfMatches` a propósito: ya no
 dispara, y si alguien reintrodujera el marcador volvería a proteger.
 
-### 2. La v2 del preprint — **decisión de Javier**
+### 2. ~~La v2 del preprint~~ — RESUELTO el 2026-09-15
 
-La sección *"What the edge looks like outside the frying pan"* / *"Qué aspecto
-tiene el filo fuera de la sartén"* cuenta resultados que **no están en la v1
-publicada**: la generalización a contenedor arbitrario y cualquier dimensión
-(G1–G7) y los del cuadrado (contraejemplo con `rho = 337/200`, gemelas en
-cuadrado, `tau_cuadrado <= Y ~ 1.684487745872346`).
+La v2 está **enviada**: `submit/8082585`, un reemplazo de `2609.15554`, en
+estado `submitted` a la espera de moderación y anuncio. Compilada por arXiv sin
+errores, 73 páginas.
 
-A 2026-09-14 ese material estaba **sin commitear** en el repo `calamares`
-(`docs/drafts/generalizacion_dimensional.md`, `cuadrado_certificado.md`,
-`cuadrado_gemelas.md`, `cuadrado_limite.md` y sus scripts y tests), escrito y
-comprobado pero sin revisión adversaria independiente.
+Con ella, lo que los artículos citaban como "escrito pero no público" pasa a ser
+parte del preprint, y además cambia un resultado central: **la igualdad
+$	au = arphi$ está demostrada**, vía el criterio de los tres mayores. Los dos
+artículos ya están actualizados en consecuencia:
 
-El artículo lo etiqueta explícitamente como no público y sin revisar. Aun así,
-antes del 22 hay que elegir una de dos:
+- `count-the-rings`: la sección del umbral ya no dice que la cota inferior sea
+  conjetural, e incorpora el teorema de los tres mayores; la sección del filo
+  pierde el aviso de "no público" y gana los cinco aros en toda dimensión, las
+  gemelas cuadradas con la cota `Y`, y los agujeros independientes con la
+  garantía de área `min(1, kappa^-2 - 1)` y su umbral `1/raíz(2)`. El hilo de X
+  pasa a trece tuits.
+- `proved-certified-swept-sampled`: anota que el lema del quinteto pertenece al
+  programa de casos especializados que el teorema global ya no necesita como
+  premisa, y que el certificado sigue siendo correcto aunque ya no sostenga nada.
 
-- **Subir la v2** (o al menos publicar esas notas en el repo público, que el
-  artículo enlaza), de modo que el lector pueda comprobar lo que lee; o
-- **Quitar esa sección** del artículo en los dos idiomas y guardarla para
-  cuando la v2 exista. Es una sección autocontenida: se corta entera sin tocar
-  el resto, y el único arreglo pendiente sería el tuit 11 del hilo, que también
-  se cae.
-
-Javier se encarga de esta decisión.
+**Único cabo pendiente**: si arXiv anuncia la v2 *después* del 22, los artículos
+citarán `arXiv:2609.15554` — que es correcto, porque el identificador no cambia
+— pero el lector que entre ese día verá la v1. No rompe nada y no bloquea la
+publicación.
 
 ## Ya hecho
 
