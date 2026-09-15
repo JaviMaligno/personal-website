@@ -111,6 +111,32 @@ export const books: Book[] = [
 
 export const research: ResearchItem[] = [
   {
+    slug: 'greedy-packing-nested-rings',
+    key: 'nestedRings',
+    kind: 'preprint',
+    title: 'Greedy Packing of Nested Rings: Placement Rules, a Golden Counterexample, and a Tribonacci Floor',
+    authors: ['Javier Aguilar Martín'],
+    venue: 'arXiv (math.MG, cs.CG, math.CO)',
+    year: 2026,
+    url: 'https://arxiv.org/abs/2609.15554',
+    arxivId: 'arXiv:2609.15554',
+    doi: 'https://doi.org/10.48550/arXiv.2609.15554',
+    relatedArticle: 'count-the-rings',
+  },
+  {
+    slug: 'enclosed-mode-gauge-choice',
+    key: 'enclosedMode',
+    kind: 'preprint',
+    title: 'An Enclosed Mode Is a Gauge Choice: Topology Relative to Reach in Certified Code World Models',
+    authors: ['Javier Aguilar Martín'],
+    venue: 'arXiv (cs.LG, cs.AI, eess.SY)',
+    year: 2026,
+    url: 'https://arxiv.org/abs/2608.28541',
+    arxivId: 'arXiv:2608.28541',
+    doi: 'https://doi.org/10.48550/arXiv.2608.28541',
+    relatedArticle: 'being-wrong-can-be-free',
+  },
+  {
     slug: 'omitted-mode-rare-rule',
     key: 'omittedMode',
     kind: 'preprint',
