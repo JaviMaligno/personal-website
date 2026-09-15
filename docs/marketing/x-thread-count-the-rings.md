@@ -1,8 +1,8 @@
 # X thread — "Count the Rings or Sear the Squid"
 
-Manual thread (there is no X automation in this repo). Post on publication day,
-after the arXiv ID exists. **Replace `XXXX.XXXXX` before posting** — it appears
-in tweet 10.
+Manual thread (there is no X automation in this repo). Post on publication day.
+**The arXiv ID is already in place** (`2609.15554`, announced 2026-09-15), so
+there is nothing left to edit before posting.
 
 Each tweet is kept under 280 characters so it works on a free account. Post the
 first on its own, then each following one as a reply to the previous.
@@ -130,7 +130,7 @@ In a SQUARE the constant changes: the bound there is ≈ 1.6845, not φ. The cor
 **12/**
 
 ```
-Preprint: https://arxiv.org/abs/XXXX.XXXXX
+Preprint: https://arxiv.org/abs/2609.15554
 Code, figures and Lean certificates: https://github.com/JaviMaligno/calamares
 
 Full write-up, with the phase diagram and the twins: https://www.javieraguilar.ai/en/blog/count-the-rings

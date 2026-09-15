@@ -9,7 +9,7 @@ heroImage: "/blog/count-the-rings.png"
 repoUrl: https://github.com/JaviMaligno/calamares
 linkedinLinks:
   - label: "Preprint"
-    url: "https://arxiv.org/abs/XXXX.XXXXX"
+    url: "https://arxiv.org/abs/2609.15554"
 linkedinSummary: |
   Drop squid rings into a frying pan and you have already made a decision, whether or not you noticed making it.
 
@@ -42,7 +42,7 @@ The flexible version is a named open direction rather than an oversight. Let $\d
 
 Stripped of the squid, the rigid problem is a selection-flavoured relative of the Recursive Circle Packing Problem, introduced by Pedroso, Cunha and Tavares (*International Transactions in Operational Research*, 2016) to model telescoping tubes in shipping containers and later solved exactly by Gleixner, Maher, Müller and Pedroso. That literature is algorithmic: it asks how to pack a fixed set of rings into as few containers as possible, and its methods are heuristics — procedures that propose placements without guaranteeing that the placement mattered. I wanted the structural questions instead. Which objective does the obvious greedy algorithm *provably* optimise? When is the choice of *where* to put each ring provably irrelevant? And which condition on the sizes decides the answer?
 
-The preprint is [*Greedy Packing of Nested Rings*](https://arxiv.org/abs/XXXX.XXXXX); the [code, figures and Lean certificates are open](https://github.com/JaviMaligno/calamares). This is the readable version of what is in it.
+The preprint is [*Greedy Packing of Nested Rings*](https://arxiv.org/abs/2609.15554); the [code, figures and Lean certificates are open](https://github.com/JaviMaligno/calamares). This is the readable version of what is in it.
 
 ## Two goals that sound like one goal
 
@@ -220,4 +220,4 @@ The first is that "what am I actually maximising?" is not a philosophical warm-u
 
 The second is more cheerful. There exist regimes where the hard part evaporates: where every objective in a broad class agrees, where the obvious algorithm is provably right, and where the decision you would have spent your time on has no consequence at all. Knowing whether you are inside one is worth more than any amount of cleverness spent on the decision itself. Here the test fits on one line — is every ring bigger than the sum of the rest? — and the reward for passing it is that you get to stop thinking.
 
-This is a long way from the algebra I spent my [doctorate on](/en/publications), and it started, genuinely, in a frying pan. The [preprint](https://arxiv.org/abs/XXXX.XXXXX) has the proofs; the [repository](https://github.com/JaviMaligno/calamares) has the code, the figures and the Lean certificates for the exact identities.
+This is a long way from the algebra I spent my [doctorate on](/en/publications), and it started, genuinely, in a frying pan. The [preprint](https://arxiv.org/abs/2609.15554) has the proofs; the [repository](https://github.com/JaviMaligno/calamares) has the code, the figures and the Lean certificates for the exact identities.

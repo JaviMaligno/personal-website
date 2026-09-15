@@ -9,7 +9,7 @@ heroImage: "/blog/count-the-rings.png"
 repoUrl: https://github.com/JaviMaligno/calamares
 linkedinLinks:
   - label: "Preprint"
-    url: "https://arxiv.org/abs/XXXX.XXXXX"
+    url: "https://arxiv.org/abs/2609.15554"
 linkedinSummary: |
   Echas aros de calamar a la sartén y ya has tomado una decisión, te hayas dado cuenta o no.
 
@@ -42,7 +42,7 @@ La versión flexible es una dirección abierta con nombre propio, no un descuido
 
 Quitado el calamar, el problema rígido es un pariente con sabor a selección del *Recursive Circle Packing Problem*, que introdujeron Pedroso, Cunha y Tavares (*International Transactions in Operational Research*, 2016) para modelar el telescopaje de tubos en contenedores de transporte, y que resolvieron exactamente Gleixner, Maher, Müller y Pedroso. Esa literatura es algorítmica: pregunta cómo empaquetar un conjunto fijo de aros en el menor número de contenedores, y sus métodos son heurísticas — procedimientos que proponen colocaciones sin garantizar que la colocación importara. Yo quería las preguntas estructurales. ¿Qué objetivo optimiza *demostrablemente* el algoritmo voraz obvio? ¿Cuándo es *demostrablemente* irrelevante dónde pongas cada aro? ¿Y qué condición sobre los tamaños decide la respuesta?
 
-El preprint es [*Greedy Packing of Nested Rings*](https://arxiv.org/abs/XXXX.XXXXX); el [código, las figuras y los certificados en Lean están abiertos](https://github.com/JaviMaligno/calamares). Esta es la versión legible de lo que hay dentro.
+El preprint es [*Greedy Packing of Nested Rings*](https://arxiv.org/abs/2609.15554); el [código, las figuras y los certificados en Lean están abiertos](https://github.com/JaviMaligno/calamares). Esta es la versión legible de lo que hay dentro.
 
 ## Dos objetivos que suenan a uno solo
 
@@ -220,4 +220,4 @@ La primera es que "¿qué estoy maximizando de verdad?" no es una pregunta de ca
 
 La segunda es más alegre. Existen regímenes donde la parte difícil se evapora: donde todos los objetivos de una clase amplia coinciden, donde el algoritmo obvio es demostrablemente correcto, y donde la decisión en la que habrías invertido tu tiempo no tiene ninguna consecuencia. Saber si estás dentro de uno de ellos vale más que cualquier cantidad de ingenio gastado en la decisión. Aquí el test cabe en una línea — ¿es cada aro mayor que la suma de los demás? — y el premio por pasarlo es que puedes dejar de pensar.
 
-Esto queda muy lejos del álgebra a la que dediqué [mi doctorado](/es/publications), y empezó, de verdad, en una sartén. El [preprint](https://arxiv.org/abs/XXXX.XXXXX) tiene las demostraciones; el [repositorio](https://github.com/JaviMaligno/calamares) tiene el código, las figuras y los certificados en Lean de las identidades exactas.
+Esto queda muy lejos del álgebra a la que dediqué [mi doctorado](/es/publications), y empezó, de verdad, en una sartén. El [preprint](https://arxiv.org/abs/2609.15554) tiene las demostraciones; el [repositorio](https://github.com/JaviMaligno/calamares) tiene el código, las figuras y los certificados en Lean de las identidades exactas.
