@@ -1505,6 +1505,15 @@ decide si 1c aporta»*. El criterio, declarado antes de mirar:
   mueve la tasa, entre los extremos del barrido, más que su propio suelo de
   ruido: **9 puntos para H1, 7 para H2, 13 para H3**.
 
+  **Los extremos se miden sobre la curva AGREGADA, no por modelo.** Con 12
+  posiciones y 96 celdas por modelo, cada punto de una curva por modelo tiene
+  n≈8: la diferencia entre dos puntos así es ruido binomial y basta para cruzar
+  cualquier umbral. La curva agregada tiene n≈23 por punto. Aplicado a los datos
+  reales de la Fase 1b, el criterio por modelo habría dicho «se mueve» para Opus
+  (0,14 → 0,38) mientras la prueba de tendencia sobre sus 12 posiciones daba
+  p=0,11: dos puntos ruidosos contra doce. La prueba de tendencia manda; los
+  extremos son solo el segundo filtro, y se leen donde hay denominador.
+
   Esos tres números no son uno solo por un motivo que costó encontrarse: el
   acuerdo entre réplicas de N0 sobre la **etiqueta** de siete categorías es 0,73,
   pero cada hipótesis es una tasa **binaria**, y ahí la mayoría de los
