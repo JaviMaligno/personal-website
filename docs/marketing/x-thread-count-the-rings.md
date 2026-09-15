@@ -112,22 +112,32 @@ The information isn't in the state. It's in the rings you haven't looked at.
 **10/**
 
 ```
-There's also a conjecture that died: the natural threshold looked like the Tribonacci constant (1.839…), and an explicit golden family breaks it earlier, at φ ≈ 1.618.
+A conjecture died on the way: the natural threshold looked like the Tribonacci constant (1.839…), and an explicit golden family breaks it earlier, at φ ≈ 1.618.
 
-Proved in one direction. The matching lower bound is still open.
+The second version of the paper closes it: for disks the global threshold is exactly φ.
 ```
 
 **11/**
 
 ```
-Since the preprint went out I checked whether the sharp half is really about round pans.
+What closes it is the statement I keep repeating to myself:
 
-In balls of any dimension, nothing moves — same counterexample, same twins, same floor.
+With every tail bounded by φ, a whole list of rings fits a disk IF AND ONLY IF its three largest fit.
 
-In a SQUARE the constant changes: the bound there is ≈ 1.6845, not φ. The corner is what changes it.
+Everything after the third ring comes along for free. n rings collapses, exactly, to three.
 ```
 
 **12/**
+
+```
+The shape of the pan matters, though.
+
+In balls of ANY dimension nothing moves: same counterexample, same twins, same floor.
+
+In a SQUARE the constant changes — the bound there is ≈ 1.6845, not φ. The corner is what changes it.
+```
+
+**13/**
 
 ```
 Preprint: https://arxiv.org/abs/2609.15554

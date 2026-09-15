@@ -21,6 +21,8 @@ linkedinSummary: |
 
   Esa garantía es afilada de una forma que no esperaba: vale hasta tres aros y se rompe en cuatro. Y no hay regla más lista que lo arregle — existen dos instancias idénticas en toda magnitud que una regla pueda observar en el momento decisivo, y que exigen decisiones opuestas.
 
+  Y hay un umbral en medio, que ha costado una segunda versión del paper cerrar: mide lo mal que cada aro es batido por la suma de todos los menores, y por debajo del número áureo no falla nunca nada. Lo que lo cierra es el enunciado que no dejo de repetirme — con las colas acotadas por el número áureo, una lista entera de aros cabe en un disco si y solo si caben sus tres mayores. Todo lo que viene después del tercero entra de regalo.
+
   La pregunta de debajo me la encuentro a menudo fuera de las matemáticas: ¿qué estoy maximizando de verdad, y el sustituto que optimizo es lo mismo que lo que quiero — o solo dentro de la región en la que resulta que estoy?
 ---
 
@@ -190,28 +192,37 @@ $$
 
 y la conjetura de Tribonacci está muerta. El número áureo llega antes.
 
-Lo que me encantaría contarte es que $\tau = \varphi$. No puedo, y quiero ser exacto sobre dónde está el hueco, porque es lo primero que uno da por hecho al ver la cota superior. La cota inferior correspondiente $\tau \ge \varphi$ está demostrada para perfiles de pares, y demostrada fuera de una región pesada explícita — pero no en general. Así que el valor áureo es teorema en una dirección y problema abierto en la otra, y Tribonacci queda degradado de "el umbral" a "el suelo exacto de la familia rígida anidada": sigue siendo una constante afilada, solo que no la que yo esperaba.
+Durante un tiempo eso fue medio resultado: $\tau \le \varphi$ estaba demostrado, y la cota inferior solo para perfiles de pares y fuera de una región pesada explícita. Ya está cerrado. **Para discos, el umbral global es exactamente $\tau = \varphi$** — ni un fallo en $\rho \le \varphi$, para todo inventario finito, e incluso permitiendo que cada aro tenga su propio radio de agujero independiente. Tribonacci queda degradado de "el umbral" a "el suelo exacto de una subfamilia rígida": sigue siendo una constante afilada, solo que no la que yo esperaba.
+
+Lo que lo cierra es el teorema más bonito del paper, y es de los enunciados que uno puede llevarse puestos:
+
+> Ordena los aros $a > b \ge c \ge r_4 \ge \dots \ge r_n$ y supón que toda cola está acotada por $\varphi$ veces su radio. Entonces la lista entera cabe en un disco **si y solo si caben los tres mayores.**
+
+Todo lo que viene después del tercer aro entra de regalo. No "suele caber", ni "cabe con alta probabilidad": la pregunta sobre $n$ aros se colapsa, exactamente, a una pregunta sobre tres. Eso es lo que da el intercambio uniforme que necesita la prueba del umbral, y se encuentra con los contraejemplos áureos de cuatro aros que bajan desde arriba: pasado el filo áureo el colapso falla, por debajo ya no queda fallo que encontrar.
 
 ## Qué aspecto tiene el filo fuera de la sartén
 
-Todo lo anterior sobre el *filo* — la transición en cuatro, las gemelas, el suelo, la familia áurea — era en origen una afirmación sobre una sartén redonda en el plano. La mitad positiva nunca necesitó la forma; la mitad afilada solo se había medido ahí. A cuál de las dos pertenece de verdad esa frontera es una pregunta que no sabía responder cuando salió el preprint, así que fui a hacérsela.
+Todo lo anterior sobre el *filo* — el fallo en cuatro, las gemelas, los suelos — era en origen una afirmación sobre una sartén redonda en el plano. La mitad positiva nunca necesitó la forma; la afilada solo se había medido ahí. Así que fui a preguntar a cuál de las dos pertenece de verdad esa frontera.
 
-Lo que sigue está escrito y comprobado, pero **todavía no es público**: va en la segunda versión del preprint y no ha pasado por revisión adversaria independiente como sí pasaron los resultados de la v1. Léelo como un conjunto de afirmaciones con demostración adjunta, no como literatura asentada.
+En bolas de cualquier dimensión no se mueve nada. La garantía de tres aros vale para un contenedor compacto arbitrario en cualquier dimensión, y el fallo en cuatro sobrevive con la *misma* instancia $\{10;\ 5;\ 4{,}9;\ 4{,}8\}$, y también sobreviven las gemelas y el suelo de Tribonacci. La razón es un lema de reducción que merece enunciarse aparte: unas bolas de radios $a_1, \dots, a_k$ caben como hermanos dentro de una bola de radio $R$ en $\mathbb{R}^d$ si y solo si caben en $\mathbb{R}^{k-1}$. Las consultas de tres o menos hermanos tienen por tanto respuestas idénticas en toda dimensión $d \ge 2$, y todo resultado cuya demostración solo haga preguntas de ese tamaño viene incluido de regalo. Un argumento aparte sube el propio umbral áureo hasta **cinco aros** en esas dimensiones. La primera consulta capaz de distinguir la dimensión 2 de la 3 necesita cuatro piezas, y hay una explícita: radios $\{441;\ 440;\ 439;\ 438\}/1000$ en una bola de radio $1$, que cabe en 3D con los centros en los cuatro puntos de signo par $(\pm a, \pm a, \pm a)$, con $a = 8/25$, y no cabe en el plano.
 
-En bolas de cualquier dimensión no se mueve nada. La garantía de tres aros vale para un contenedor compacto arbitrario en cualquier dimensión — la demostración de la v1 se apoyaba en $r_1 + r_2 \le R$, pero lo que de verdad necesita es que encoger una bola manteniendo su centro preserve la factibilidad, cosa cierta para cualquier contenedor, cuadrado incluido. El fallo en cuatro también sobrevive, con la *misma* instancia $\{10;\ 5;\ 4{,}9;\ 4{,}8\}$, y también sobreviven las gemelas, y también el suelo de Tribonacci. La razón es un lema de reducción que merece enunciarse aparte: unas bolas de radios $a_1, \dots, a_k$ caben como hermanos dentro de una bola de radio $R$ en $\mathbb{R}^d$ si y solo si caben en $\mathbb{R}^{k-1}$. Las consultas de tres o menos hermanos tienen por tanto respuestas idénticas en toda dimensión $d \ge 2$, y todo resultado cuya demostración solo haga preguntas de ese tamaño viene incluido de regalo.
-
-La primera consulta capaz de distinguir la dimensión 2 de la 3 necesita **cuatro** piezas, y hay una explícita: radios $\{441;\ 440;\ 439;\ 438\}/1000$ en una bola de radio $1$, que cabe en 3D con los centros en los cuatro puntos $(\pm a, \pm a, \pm a)$ de signo par, con $a = 8/25$ — los márgenes son racionales exactos — y no cabe en el plano.
-
-Donde la constante cambia de verdad es en la sartén cuadrada. Ya hay un contraejemplo explícito de cuatro aros en un cuadrado con $\rho = 337/200 = 1{,}685$, con la exclusión geométrica del trío culpable comprobada por el kernel de Lean para todas las coordenadas en vez de muestreada; hay instancias gemelas en cuadrado, que matan también allí las reglas basadas en el estado; y la cota ha bajado a
+Donde la constante cambia de verdad es en la sartén cuadrada. Allí la irrelevancia de la colocación también falla en cuatro, las instancias gemelas matan igualmente las reglas basadas en el estado, y la cota ha bajado a
 
 $$
 1 \le \tau_{\square} \le Y \approx 1{,}684487745872346
 $$
 
-donde $Y$ es la raíz positiva de $(17 + 10\sqrt2)Y^2 + (72 + 16\sqrt2)Y - (112 + 96\sqrt2) = 0$. Así que el disco y el cuadrado no comparten umbral: $\varphi \approx 1{,}618$ frente a algo cercano a $1{,}684$. La forma de la sartén cambia la constante, y lo que la cambia es la esquina.
+donde $Y$ es la raíz positiva de $(17 + 10\sqrt2)Y^2 + (72 + 16\sqrt2)Y - (112 + 96\sqrt2) = 0$. Así que el disco y el cuadrado no comparten umbral: $\varphi \approx 1{,}618$ frente a algo cercano a $1{,}684$. Lo que lo cambia es la esquina. Si $Y$ es óptimo, sigue abierto.
 
-Para bolas, la afirmación honesta es más débil de lo que me gustaría: $1 \le \tau_d \le \varphi$ para todo $d \ge 2$, y nada más. No se deduce que $\tau_d = \tau_2$, ni que $\tau_d = \varphi$ — los contraejemplos con cuatro o más hermanos no tienen por qué reducirse a un plano.
+Y los aros ya no tienen por qué compartir grosor. Deja que cada aro lleve su propio radio de agujero $h_i < r_i$ — equivalentemente, su propio grosor — y el resultado de selección sobrevive intacto: con $\rho \le 1$, todo voraz descendente sigue produciendo el conjunto lex-máximo, en cualquier contenedor compacto y cualquier dimensión. Lo que *no* sobrevive es la optimalidad en área, y falla de una forma a la que se le puede poner número. Fija $\rho \le \kappa < 1$; entonces
 
+$$
+A_{\text{voraz}} \ \ge\ c(\kappa)\, A_{\text{opt}}, \qquad c(\kappa) = \min\left(1,\ \kappa^{-2} - 1\right)
+$$
+
+y esa constante es la mejor posible. Por debajo de $\kappa = 1/\sqrt2$ la garantía es $1$: el conjunto del voraz es el *único* óptimo de área, y la divergencia con la que abría este artículo no puede ocurrir. Por encima, la garantía decae, y bastan dos aros en una sartén redonda para ver que la constante no se puede mejorar.
+
+Lo que sigue abierto: el umbral global en dimensión tres y superiores — la reducción a un plano cubre consultas de tres hermanos, no contraejemplos construidos con cuatro o más — y si $Y$ es la constante verdadera del cuadrado.
 ## Qué me llevo de esto
 
 Dos cosas, y ninguna va de calamares.

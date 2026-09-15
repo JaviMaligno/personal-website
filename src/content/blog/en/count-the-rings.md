@@ -21,6 +21,8 @@ linkedinSummary: |
 
   That guarantee is sharp in a way I did not expect: it holds for up to three rings and breaks at four. And no cleverer rule fixes it — there are two instances that are identical in every quantity a rule could observe at the decisive moment, and that require opposite decisions.
 
+  And there is a threshold in between, which took a second version of the paper to close: measure how badly each ring is beaten by the sum of everything smaller, and below the golden ratio nothing ever fails. What closes it is the statement I keep repeating to myself — with tails bounded by the golden ratio, a whole list of rings fits a disk if and only if its three largest do. Everything after the third comes along for free.
+
   The question underneath is one I keep meeting outside mathematics: what am I actually maximising, and is the proxy I optimise the same as the thing I want — or only inside the region I happen to be standing in?
 ---
 
@@ -190,28 +192,37 @@ $$
 
 and the Tribonacci conjecture is dead. The golden ratio gets there first.
 
-What I would love to tell you is that $\tau = \varphi$. I can't, and I want to be exact about where the gap is, because it is the obvious thing to assume once you have seen the upper bound. The matching lower bound $\tau \ge \varphi$ is proved for pair profiles, and proved outside an explicit heavy region — but not in general. So the golden value is a theorem in one direction and an open problem in the other, and Tribonacci is demoted from "the threshold" to "the exact floor of the rigid nested family": still a sharp constant, just not the one I expected it to be.
+For a while that was only half a result: $\tau \le \varphi$ was proved, and the matching lower bound only for pair profiles and outside an explicit heavy region. It is now closed. **For disks the global threshold is exactly $\tau = \varphi$** — no failure at all at $\rho \le \varphi$, for every finite inventory, and even when each ring is allowed its own independent hole radius. Tribonacci is demoted from "the threshold" to "the exact floor of a rigid subfamily": still a sharp constant, just not the one I expected it to be.
+
+What closes it is the nicest theorem in the paper, and it is the kind of statement you can carry around:
+
+> Order the rings $a > b \ge c \ge r_4 \ge \dots \ge r_n$, and suppose every tail is bounded by $\varphi$ times its radius. Then the whole list fits in a disk **if and only if the three largest fit.**
+
+Everything after the third ring comes along for free. Not "usually fits", not "fits with high probability": the question about $n$ rings collapses, exactly, to a question about three. That is what supplies the uniform exchange the threshold proof needs, and it meets the four-ring golden counterexamples coming down from above — beyond the golden bound the collapse fails, below it there is no failure left to find.
 
 ## What the edge looks like outside the frying pan
 
-Everything above about the *edge* — the transition at four, the twins, the floor, the golden family — was originally a statement about a round pan in the plane. The positive half never needed the shape; the sharp half had only ever been measured there. Which of the two the boundary really belongs to is a question I could not answer when the preprint went out, so I went and asked it.
+Everything above about the *edge* — the failure at four, the twins, the floors — was originally a statement about a round pan in the plane. The positive half never needed the shape; the sharp half had only been measured there. So I went and asked which of the two the boundary really belongs to.
 
-What follows is written and checked but **not yet public**: it is going into the second version of the preprint, and it has not been through independent adversarial review the way the v1 results were. Read it as a set of claims with proofs attached, not as settled literature.
+In balls of any dimension, nothing moves. The three-ring guarantee holds for an arbitrary compact container in any dimension, and the failure at four survives with the *same* instance $\{10,\ 5,\ 4.9,\ 4.8\}$, and so do the twins, and so does the Tribonacci floor. The reason is a reduction lemma worth stating on its own: balls of radii $a_1, \dots, a_k$ fit as siblings inside a ball of radius $R$ in $\mathbb{R}^d$ if and only if they fit in $\mathbb{R}^{k-1}$. Sibling queries of three or fewer rings therefore have identical answers in every dimension $d \ge 2$, and every result whose proof only asks such questions comes along for free. A separate argument pushes the golden threshold itself up to **five rings** in those dimensions. The first query that can tell dimension 2 from dimension 3 needs four pieces, and there is an explicit one: radii $\{441,\ 440,\ 439,\ 438\}/1000$ in a ball of radius $1$, which fits in 3D with centres at the four even-sign points $(\pm a, \pm a, \pm a)$, $a = 8/25$, and does not fit in the plane.
 
-In balls of any dimension, nothing moves. The three-ring guarantee holds for an arbitrary compact container in any dimension — the v1 proof leaned on $r_1 + r_2 \le R$, but what it actually needs is that shrinking a ball while keeping its centre preserves feasibility, which is true for any container, a square included. The failure at four survives too, with the *same* instance $\{10,\ 5,\ 4.9,\ 4.8\}$, and so do the twins, and so does the Tribonacci floor. The reason is a reduction lemma worth stating on its own: balls of radii $a_1, \dots, a_k$ fit as siblings inside a ball of radius $R$ in $\mathbb{R}^d$ if and only if they fit in $\mathbb{R}^{k-1}$. Sibling queries of three or fewer rings therefore have identical answers in every dimension $d \ge 2$, and every result whose proof only ever asks such questions comes along for free.
-
-The first query that can tell dimension 2 from dimension 3 needs **four** pieces, and there is an explicit one: radii $\{441,\ 440,\ 439,\ 438\}/1000$ in a ball of radius $1$, which fits in 3D with centres at the four points $(\pm a, \pm a, \pm a)$ of even sign, $a = 8/25$ — the margins are exact rationals — and does not fit in the plane.
-
-Square pans are where the constant genuinely changes. There is now an explicit four-ring counterexample in a square with $\rho = 337/200 = 1.685$, with the geometric exclusion of the offending trio kernel-checked in Lean for all coordinates rather than sampled; there are twin instances in a square, killing state-based rules there too; and the bound has been pushed down to
+Square pans are where the constant genuinely changes. Placement irrelevance fails at four there too, twin instances kill state-based rules in a square as well, and the bound has been pushed down to
 
 $$
 1 \le \tau_{\square} \le Y \approx 1.684487745872346
 $$
 
-where $Y$ is the positive root of $(17 + 10\sqrt2)Y^2 + (72 + 16\sqrt2)Y - (112 + 96\sqrt2) = 0$. So the disk and the square do not share a threshold: $\varphi \approx 1.618$ against something near $1.684$. The shape of the pan changes the constant, and the corner is what changes it.
+where $Y$ is the positive root of $(17 + 10\sqrt2)Y^2 + (72 + 16\sqrt2)Y - (112 + 96\sqrt2) = 0$. So the disk and the square do not share a threshold: $\varphi \approx 1.618$ against something near $1.684$. The corner is what changes it. Whether $Y$ is optimal is open.
 
-For balls the honest statement is weaker than I would like: $1 \le \tau_d \le \varphi$ for every $d \ge 2$, and that is all. It does not follow that $\tau_d = \tau_2$, and it does not follow that $\tau_d = \varphi$ — counterexamples with four or more siblings need not reduce to a plane.
+And the rings no longer have to share a width. Let each ring carry its own hole radius $h_i < r_i$ — equivalently, its own thickness — and the selection result survives untouched: at $\rho \le 1$ every descending greedy still produces the lex-max set, in any compact container and any dimension. What does *not* survive is area optimality, and it fails in a way you can put a number on. Fix $\rho \le \kappa < 1$; then
 
+$$
+A_{\text{greedy}} \ \ge\ c(\kappa)\, A_{\text{opt}}, \qquad c(\kappa) = \min\left(1,\ \kappa^{-2} - 1\right)
+$$
+
+and that constant is the best possible. Below $\kappa = 1/\sqrt2$ the guarantee is $1$ — the greedy set is the *only* area optimum, and the divergence this article opened with cannot happen. Above it, the guarantee decays, and two rings in a round pan are already enough to show the constant cannot be improved.
+
+What is still open: the global threshold in dimension three and above — the reduction to a plane covers queries of three siblings, not counterexamples built from four or more — and whether $Y$ is the true square constant.
 ## What I take from this
 
 Two things, and neither is about squid.
