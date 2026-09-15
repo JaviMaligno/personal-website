@@ -1500,10 +1500,21 @@ EOF
 El §7 del spec la deja escrita: *«si la curva sale plana, se dice tal cual y se
 decide si 1c aporta»*. El criterio, declarado antes de mirar:
 
-- **Curva plana** = ninguna de las tres hipótesis alcanza `p < 0,05` en ningún
-  modelo, **y** ninguna mueve la tasa más de 15 puntos entre los extremos del
-  barrido. Quince puntos no es arbitrario: es el orden de lo que mueve volver a
-  tirar el mismo estímulo (acuerdo entre réplicas de N0, 0,73).
+- **Curva plana** = ninguna de las tres hipótesis sobrevive a la corrección de
+  Holm sobre la familia de nueve pruebas (3 hipótesis × 3 modelos), **y** ninguna
+  mueve la tasa, entre los extremos del barrido, más que su propio suelo de
+  ruido: **9 puntos para H1, 7 para H2, 13 para H3**.
+
+  Esos tres números no son uno solo por un motivo que costó encontrarse: el
+  acuerdo entre réplicas de N0 sobre la **etiqueta** de siete categorías es 0,73,
+  pero cada hipótesis es una tasa **binaria**, y ahí la mayoría de los
+  desacuerdos de categoría no cruzan la frontera del conjunto —de los 12 pares
+  que cambian de letra, solo 4 cambian de lado en `MENTIONS_JUMP`—. Medido sobre
+  los mismos 45 pares: 0,911 para *menciona el salto*, 0,933 para E, 0,867 para
+  A. Usar el 0,73 habría puesto el umbral en 27 puntos, casi el triple del que
+  toca, y habría bastado para declarar plana una curva que se mueve. El código
+  lleva los tres en `curve.REPLICATE_AGREEMENT_BY_MEMBER` y cada informe arrastra
+  el suyo.
 - **Si la curva sale plana:** el resultado es *«lo que hacen con un pegote neutro
   no depende de cuánto se parezca»*, que es publicable y cierra el eje de
   similaridad para siempre. Entonces 1c —los ocho modelos sobre N0 y N1— pasa a
