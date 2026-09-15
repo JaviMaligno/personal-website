@@ -10,24 +10,22 @@ empujada. Todo lo de este documento aplica a los dos salvo donde se diga.
 
 ## Bloqueantes — el artículo NO puede publicarse sin esto
 
-### 1. El ID de arXiv
+### 1. ~~El ID de arXiv~~ — RESUELTO el 2026-09-15
 
-El envío es `submit/8077477` (2026-09-14, primary math.MG), y a fecha de
-escritura seguía en `submitted`, pendiente de moderación y anuncio. Los dos
-ficheros del artículo y el hilo de X llevan el marcador `XXXX.XXXXX`.
+El preprint salió anunciado como
+**[`arXiv:2609.15554`](https://arxiv.org/abs/2609.15554)** (DOI
+`10.48550/arXiv.2609.15554`). Verificado contra la página de arXiv: título,
+autor, primaria math.MG y cross-lists cs.CG y math.CO coinciden con el envío.
 
-Cuando arXiv anuncie, sustituirlo en:
+El marcador `XXXX.XXXXX` está sustituido en los seis sitios — cuerpo y
+`linkedinLinks` de los cuatro ficheros de artículo, y los dos hilos de X, cuya
+nota de cabecera ya no pide sustituir nada. Ambas ramas empujadas. Los dos
+preprints (este y el de paper 3, `arXiv:2608.28541`) están en
+`src/data/publications.ts` con sus resúmenes en los dos idiomas, y el ID queda
+anotado en `docs/arxiv-envio.md` del repo `calamares`.
 
-- `src/content/blog/en/count-the-rings.md` (cuerpo y `linkedinLinks`)
-- `src/content/blog/es/count-the-rings.md` (cuerpo y `linkedinLinks`)
-- `docs/marketing/x-thread-count-the-rings.md` (tuit 12)
-
-Y anotarlo en `docs/arxiv-envio.md` del repo `calamares`, donde hay una casilla
-esperándolo, y añadir el paper a `src/data/publications.ts`.
-
-La entrada del manifiesto debe llevar `blockIfMatches: "XXXX\\.XXXXX"`, así que
-mientras el marcador siga ahí el workflow se niega a publicar y abre issue. Es
-la única red de seguridad automática que tiene este artículo.
+Las entradas del manifiesto conservan su `blockIfMatches` a propósito: ya no
+dispara, y si alguien reintrodujera el marcador volvería a proteger.
 
 ### 2. La v2 del preprint — **decisión de Javier**
 
