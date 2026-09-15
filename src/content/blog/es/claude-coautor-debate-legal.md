@@ -1,5 +1,5 @@
 ---
-title: "¿Es Claude un Co-Autor? El Debate Legal que Nadie Anticipa"
+title: "Co-Authored-By: Claude — el debate legal que nadie anticipa"
 description: "Análisis de las implicaciones legales y éticas del 'Co-Authored-By: Claude' que aparece en los commits. ¿Herramienta o autor? El futuro de la propiedad intelectual del código IA."
 pubDate: 2026-02-03
 tags: ["IA", "Legal", "Copyright", "Claude", "Ética", "Desarrollo"]

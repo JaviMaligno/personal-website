@@ -1,5 +1,5 @@
 ---
-title: "Is Claude a Co-Author? The Legal Debate No One Saw Coming"
+title: "Co-Authored-By: Claude — The Legal Debate No One Saw Coming"
 description: "Analyzing the legal and ethical implications of 'Co-Authored-By: Claude' appearing in commits. Tool or author? The future of AI-generated code ownership."
 pubDate: 2026-02-03
 tags: ["AI", "Legal", "Copyright", "Claude", "Ethics", "Development"]
