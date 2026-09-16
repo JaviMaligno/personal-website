@@ -127,6 +127,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config merge.schedule.driver 'node scripts/publish/merge-schedule.mjs %O %A %B'
           # Idempotente: si ya esta dentro, no hay nada que hacer.
           if git merge-base --is-ancestor "origin/$BRANCH" HEAD; then
             echo "La rama ya esta en main — nada que hacer."
@@ -134,7 +135,12 @@ jobs:
           fi
           # El conflicto recurrente en docs/marketing/image-prompts.md lo resuelve
           # solo el driver "union" declarado en .gitattributes.
-          git merge --no-ff "origin/$BRANCH" -m "Publish: $SLUG article (scheduled $DATE)"
+          # La limpieza forma parte del mismo merge: nunca hay un articulo
+          # publicado con su entrada pendiente, ni un segundo commit Publish.
+          git merge --no-ff --no-commit "origin/$BRANCH"
+          node scripts/publish/prune-schedule.mjs
+          git add .github/publish-schedule.json
+          git commit -m "Publish: $SLUG article (scheduled $DATE)"
           git push origin main
           echo "published=true" >> "$GITHUB_OUTPUT"
 

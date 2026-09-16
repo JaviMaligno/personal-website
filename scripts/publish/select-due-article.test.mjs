@@ -1,6 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -120,7 +122,7 @@ test('validateManifest caza slugs duplicados', () => {
 test('el manifiesto del repo es valido', () => {
   const manifest = JSON.parse(readFileSync(join(REPO, '.github/publish-schedule.json'), 'utf-8'))
   assert.deepEqual(validateManifest(manifest), [])
-  assert.ok(manifest.articles.length > 0)
+  // An empty queue is valid after the last scheduled article is published.
 })
 
 // Una fecha libre tiene que estarlo en los dos calendarios. Esto ya se colo una
@@ -146,4 +148,25 @@ test('ningun articulo del manifiesto comparte fecha con otro', () => {
   }
   const doubled = [...byDate].filter(([, slugs]) => slugs.length > 1)
   assert.deepEqual(doubled, [], 'un articulo al dia')
+})
+
+test('CLI forced retry of an already published and pruned slug is a no-op', t => {
+  const dir = mkdtempSync(join(tmpdir(), 'publish-retry-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  mkdirSync(join(dir, '.github'))
+  mkdirSync(join(dir, 'src/content/blog/en'), { recursive: true })
+  writeFileSync(join(dir, '.github/publish-schedule.json'), '{"articles":[]}')
+  writeFileSync(join(dir, 'src/content/blog/en/published.md'), '# Published')
+  const output = join(dir, 'outputs')
+  const run = slug => spawnSync(process.execPath, [join(REPO, 'scripts/publish/select-due-article.mjs'), '--slug', slug], {
+    cwd: dir, encoding: 'utf8', env: { ...process.env, GITHUB_OUTPUT: output },
+  })
+  const retry = run('published')
+  assert.equal(retry.status, 0, retry.stderr)
+  assert.match(retry.stdout, /ya esta en main/)
+  assert.match(readFileSync(output, 'utf8'), /action=none/)
+  const unknown = run('unknown')
+  assert.equal(unknown.status, 2)
+  assert.match(unknown.stderr, /no esta en/)
+  assert.equal(run('../../../../published').status, 2)
 })

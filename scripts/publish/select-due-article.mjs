@@ -6,6 +6,7 @@
 // Ver scripts/publish/select-due-article.test.mjs.
 
 import { appendFileSync, existsSync, readFileSync } from 'node:fs'
+import { pathToFileURL } from 'node:url'
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -107,6 +108,13 @@ function main() {
     // Sirve para recuperar un atraso a mano sin tocar el manifiesto.
     const entry = manifest.articles.find((e) => e.slug === forcedSlug)
     if (!entry) {
+      // Published entries are removed from the queue. A manual retry must
+      // remain a no-op, while typos and path traversal still fail explicitly.
+      if (/^[a-zA-Z0-9_-]+$/.test(forcedSlug) && existsSync(`src/content/blog/en/${forcedSlug}.md`)) {
+        console.log(`Nada que publicar: ${forcedSlug} ya esta en main (retirado de la cola).`)
+        if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, 'action=none\n')
+        return
+      }
       console.error(`::error::slug "${forcedSlug}" no esta en ${manifestPath}`)
       process.exit(2)
     }
@@ -145,4 +153,4 @@ function main() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) main()
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main()

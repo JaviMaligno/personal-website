@@ -68,6 +68,41 @@ The guards it keeps:
 `workflow_dispatch` takes an optional `slug` to publish one article immediately,
 skipping the date but none of the other guards.
 
+### A pending-only queue and JSON-aware merges
+
+The manifest is a queue, not a publication archive. The publisher merges with
+`--no-commit`, runs `node scripts/publish/prune-schedule.mjs`, and then makes the
+usual `Publish: ...` merge commit. Cleanup removes entries whose EN article is
+tracked in the merged index, including the article just published. It never
+removes an article merely because its date has passed, and ignores untracked
+draft files. Git history retains the old schedule. An empty queue is valid.
+Manual publication should use the same cleanup-before-commit sequence.
+
+`.gitattributes` assigns `.github/publish-schedule.json` to the `schedule` merge
+driver. Both the publisher and canary configure it. For local article merges:
+
+```sh
+git config merge.schedule.driver 'node scripts/publish/merge-schedule.mjs %O %A %B'
+```
+
+The driver parses the ancestor and both versions, matches entries by `slug`,
+and combines independent additions. Identical edits are deduplicated; one-sided
+edits and deletions are preserved. Conflicting edits to the same pending entry,
+including deletion versus modification, stop the merge. Entries already
+published in HEAD are discarded even if a stale branch tries to reintroduce
+them. This is a semantic JSON merge, not `merge=union` on text lines.
+
+Before cleanup, pending dates are checked for collisions with each other and
+with standalone LinkedIn posts. Cleanup validates even textually clean merges,
+so bypassing the Git driver cannot hide a conflicting publication date. The
+article and cleanup are committed together, preserving the daily publication
+guard. For an already published canonical slug, a forced retry remains a no-op
+after its entry has been removed; unknown slugs still fail.
+
+The canary rehearses exactly this merge/cleanup/commit sequence. It retains a
+snapshot of the initial queue for orphan detection and fails the run after
+reporting blockers, rather than leaving a green workflow with only an issue.
+
 ### The cron runs late — and can be dropped entirely
 
 Measured on 2026-07-25 over 20 consecutive days of this repo's daily 08:00 UTC

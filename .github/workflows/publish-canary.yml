@@ -12,7 +12,8 @@ name: Publish canary — dry-run every pending article merge
 #
 # It catches what `.gitattributes merge=union` cannot:
 #   - conflicts in files where union would be dangerous and is deliberately not
-#     configured (src/content/config.ts, scripts/**, *.py, *.json)
+#     configured (src/content/config.ts, scripts/**, *.py, other *.json files).
+#     The publication manifest uses a JSON-aware three-way merge driver.
 #   - failures that are not git's at all: a duplicate slug, an internal link to
 #     an article that is not in main yet, a schema violation in frontmatter.
 #
@@ -47,6 +48,12 @@ jobs:
           git fetch origin '+refs/heads/blog/*:refs/remotes/origin/blog/*' --quiet
           git config user.name "canary"
           git config user.email "canary@localhost"
+          git config merge.schedule.driver 'node scripts/publish/merge-schedule.mjs %O %A %B'
+
+      - name: Set up Node for schedule merging
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
       - name: Merge every pending manifest entry in publication order
         id: rehearse
@@ -58,6 +65,8 @@ jobs:
           set +e
           set -uo pipefail
           MANIFEST=.github/publish-schedule.json
+          # Keep the original queue for orphan detection after per-merge cleanup.
+          cp "$MANIFEST" /tmp/canary-manifest.json
           REPORT=/tmp/canary-report.md
           STATUS=/tmp/canary-status.txt
           : > "$REPORT"; : > "$STATUS"
@@ -113,7 +122,11 @@ jobs:
               continue
             fi
 
-            if git merge --no-ff -m "canary: $branch" "origin/$branch" >/tmp/merge.log 2>&1; then
+            BEFORE_MERGE=$(git rev-parse HEAD)
+            if { git merge --no-ff --no-commit "origin/$branch" &&
+                 node scripts/publish/prune-schedule.mjs &&
+                 git add "$MANIFEST" &&
+                 git commit -m "canary: $branch"; } >/tmp/merge.log 2>&1; then
               echo "OK    $date  $branch" | tee -a "$STATUS"
             else
               FAILED=1
@@ -131,7 +144,7 @@ jobs:
                   # No unmerged paths: the merge never started (bad ref, dirty
                   # tree, …). Without the log this is indistinguishable from a
                   # content conflict, and it is a completely different fix.
-                  echo "The merge did not start — this is not a content conflict:"
+                  echo "Merge or schedule validation failed:"
                   echo
                   echo '```'
                   tail -5 /tmp/merge.log
@@ -142,7 +155,7 @@ jobs:
               echo "$files"
               # Only abort a merge that actually began, and leave the tree clean
               # either way so the next entry is rehearsed honestly.
-              git merge --abort 2>/dev/null || git reset --hard -q HEAD
+              git merge --abort 2>/dev/null || git reset --hard -q "$BEFORE_MERGE"
             fi
           done <<< "$PENDING"
 
@@ -151,7 +164,7 @@ jobs:
           # holding a duplicate article is how two branches end up fighting.
           for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/blog/); do
             b="${ref#origin/}"
-            if jq -e --arg b "$b" '.articles[] | select(.branch == $b)' "$MANIFEST" >/dev/null 2>&1; then
+            if jq -e --arg b "$b" '.articles[] | select(.branch == $b)' /tmp/canary-manifest.json >/dev/null 2>&1; then
               continue
             fi
             git merge-base --is-ancestor "$ref" main && continue   # already merged
@@ -239,3 +252,9 @@ jobs:
             gh issue close "$EXISTING" --comment "Queue merges cleanly and the fully-merged site builds. Closing." \
               || echo "close failed (non-fatal)"
           fi
+
+      - name: Fail the run when the rehearsal found blockers
+        if: always() && steps.rehearse.outputs.failed == '1'
+        run: |
+          echo '::error::The pending publication queue has blockers; see the run summary and canary issue.'
+          exit 1
