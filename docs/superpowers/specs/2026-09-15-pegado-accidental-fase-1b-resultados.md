@@ -1,4 +1,16 @@
-# Fase 1b del pegado accidental: la curva es plana
+# Fase 1b del pegado accidental: la curva sale plana, pero la tanda no podía verla
+
+> **CORRECCIÓN, 2026-09-16.** Este documento decía que el eje de similaridad
+> quedaba cerrado. **No se sostiene: la tanda estaba infrapotenciada y no se
+> calculó la potencia antes de concluir.** Con 288 conversaciones repartidas en
+> 12 posiciones y 3 modelos, la prueba primaria —por modelo, 8 observaciones por
+> punto— tenía un **11 % de potencia** a alfa 0,05 y un **2 %** con el alfa de
+> Holm, y su caída mínima detectable era de **34 a 43 puntos**. Agregando los
+> tres modelos: 24 % de potencia y 20 puntos de caída mínima. La caída que el
+> propio plan declaraba relevante, 9 puntos, **nunca estuvo al alcance**.
+>
+> Lo que sigue en pie y lo que no está marcado sección por sección. La frase
+> «el eje de similaridad queda cerrado» del §7 se retira.
 
 Fecha: 2026-09-15
 Plan: [`../plans/2026-09-15-pegado-accidental-fase-1b.md`](../plans/2026-09-15-pegado-accidental-fase-1b.md)
@@ -12,10 +24,14 @@ Datos: `runs/phase1b/20260915T114537.jsonl` del repo
 
 ## 1. El resultado
 
-**Lo que los modelos hacen con un pegote neutro no depende de cuánto se parezca
-a la conversación.** Ninguna de las tres hipótesis preregistradas sobrevive a la
-corrección de Holm sobre la familia de nueve pruebas, y ninguna mueve la tasa
-más que su propio suelo de ruido entre los extremos del barrido.
+**Ninguna de las tres hipótesis preregistradas sobrevive a Holm**, y ninguna
+mueve la tasa más que su propio suelo de ruido entre los extremos del barrido.
+
+**Lo que eso NO significa:** que la conducta no dependa del parecido. Con la
+potencia que tenía esta tanda (11 % por modelo, 24 % agregada), un efecto de 9
+puntos habría salido no significativo casi siempre. Lo único que estos datos
+descartan es un efecto **grande**: de unos 20 puntos hacia arriba en la curva
+agregada, y de 34 o más por modelo.
 
 | Hipótesis | Tasa global | Mejor `p` crudo | Tras Holm | Extremos (curva agregada) | Suelo |
 |---|---|---|---|---|---|
@@ -43,21 +59,27 @@ prácticamente idéntico**: 0,259 y 0,261.
 | Fase 1a, brazo N0 | 91 | **25,3 %** |
 | Fase 1b | 275 | **16,4 %** |
 
-Nueve puntos de diferencia entre dos tandas de la misma condición — **más de lo
-que el eje de similaridad mueve dentro de cualquiera de las dos** (8,2 puntos
-entre los extremos, y no significativos). Sea por el muestreo de artefactos (1a
+Nueve puntos de diferencia entre dos tandas de la misma condición. **Tampoco
+esta diferencia alcanza significación**: `z = +1,89`, `p = 0,058`. Se reporta
+porque es la única estimación que tenemos de cuánto se mueve una medida al
+repetirla, y porque fija un listón prudente —no reclamar efectos menores que lo
+que mueve volver a tirar— pero no está establecida. Sea por el muestreo de artefactos (1a
 forzaba cobertura de géneros y usó 31 artefactos distintos; 1b barre posiciones
 y usó 63) o por variación entre ejecuciones, la lectura es la misma y es el
 resultado más útil de esta fase: **la varianza de estas medidas no está en el
 parecido**. Cualquier efecto que queramos publicar tiene que ser mayor que esto.
 
-## 3. La categoría E se desvanece
+## 3. La categoría E se desvanece — y esto SÍ está establecido
 
 *Puente confabulado* pasó de 7 de 91 en el N0 de la Fase 1a a **1 de 275** aquí.
 No es deriva del juez: se volvieron a juzgar hoy las 18 filas que en su día
 dieron E y **16 siguen dando E**. Tampoco es sesgo de género: las mezclas de los
 dos brazos coinciden y 1b usa el doble de artefactos distintos. Los dos jueces
 lo ven igual —gpt-5.5 encontró una E, gemini ninguna—.
+
+La diferencia entre tandas es grande y resiste la prueba: `z = +4,14`,
+`p < 0,0001`. Es el único contraste de este documento que sobrevive a la
+revisión de potencia, y sobrevive con holgura.
 
 H2 no queda refutada: queda **sin nada que medir**. Con una observación en 275,
 la hipótesis tal como la escribí no era contrastable en este diseño, y eso es un
@@ -179,8 +201,12 @@ declaración previa, no por conveniencia.
 El §7 del spec decía: *«si la curva sale plana, se dice tal cual y se decide si
 1c aporta»*. La curva sale plana por las dos vías del criterio.
 
-**Se dice tal cual**, y el eje de similaridad queda cerrado: con un pegote
-neutro, el parecido no predice lo que el modelo hace con él.
+**Se dice tal cual, con la corrección de la cabecera:** con un pegote neutro no
+se detectó relación entre el parecido y lo que el modelo hace, **y el diseño no
+podía detectar nada menor que 20 puntos**. El eje no queda cerrado; queda sin
+resolver por falta de potencia. Cerrarlo costaría del orden de **1.600
+conversaciones** (≈225 $) para ver una caída de 9 puntos con un 80 % de
+potencia.
 
 **Recomendación para la tanda siguiente, que estaba escrita antes de ver los
 datos y se mantiene:** no la Fase 1c —los ocho modelos sobre el mismo eje— sino
