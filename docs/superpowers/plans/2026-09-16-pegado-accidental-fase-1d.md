@@ -1,5 +1,16 @@
 # Fase 1d: la similaridad sobre el brazo con señal — plan de implementación
 
+> **SUPERSEDIDO (2026-09-16).** El muestreo que describe este documento
+> —doce posiciones exactas del ranking, 288 celdas, banco N1 de 44, los tres
+> modelos viendo cada pegote— se descartó por falta de potencia (16 % para la
+> caída de 9 puntos) antes de correrse: no hay ninguna tirada con este
+> diseño. Lo sustituye
+> [`2026-09-16-pegado-accidental-fase-1d-bandas.md`](2026-09-16-pegado-accidental-fase-1d-bandas.md),
+> que muestrea por bandas y da un modelo por estímulo, y es el que declara la
+> cabecera de la tanda. Lo que se conserva vigente de aquí es todo lo que no
+> es el muestreo: la puerta de D12, las hipótesis, la familia de Holm y el
+> control de composición por señal.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Averiguar si el parecido entre el pegote y la conversación cambia la probabilidad de que el modelo **dude de la intención** cuando el pegote se delata solo.
@@ -39,12 +50,16 @@ no existe— y lo que se barre es cuánto se parece al tema en curso.
   por celda entre 0,219 y 0,369, mediana 0,290, ninguna celda por debajo del
   0,15 de D12. Medido en la Fase 1a sobre los 16 prefijos. La puerta se vuelve a
   comprobar antes de gastar, pero se espera GO.
-- **Las señales no se ordenan por coseno**, que era el riesgo serio de este
-  diseño: si las cuatro señales se separaran a lo largo del eje, un efecto de
-  posición sería un efecto de señal disfrazado. Medido sobre las 96 filas N1 de
-  la Fase 1a: la separación entre las medias de las señales es **0,055** frente a
-  una dispersión **dentro** de cada señal de **0,226**. Cada señal recorre casi
-  todo el eje.
+- **Las señales SÍ se ordenan por coseno, y hay que controlarlo.** Era el riesgo
+  serio de este diseño —si las cuatro señales se separan a lo largo del eje, un
+  efecto de posición es un efecto de señal disfrazado— y una versión anterior de
+  este plan lo daba por descartado comparando la **separación entre las medias**
+  de las cuatro señales (0,055) con la **dispersión dentro** de cada señal
+  (0,226). Los dos números son correctos y la comparación no vale: un rango de 4
+  medias y una media de rangos de ~24 observaciones no son el mismo estadístico,
+  y un rango crece con `n`. Sobre esas mismas 96 filas, la sd entre medias es
+  0,023 y la sd dentro 0,070, y un ANOVA de un factor da **F(3,92) = 3,15,
+  eta² = 0,093, p = 0,029**: las señales difieren en coseno.
 
 | Señal | n | Coseno medio | Rango |
 |---|---|---|---|
@@ -52,6 +67,30 @@ no existe— y lo que se barre es cuánto se parece al tema en curso.
 | `presupone` | 24 | 0,272 | 0,157 – 0,374 |
 | `cortado` | 26 | 0,245 | 0,108 – 0,374 |
 | `responde` | 22 | 0,219 | 0,144 – 0,385 |
+
+  Y lo decisivo no es la distribución marginal, porque **el barrido no la
+  muestrea**: muestrea doce puestos fijos del ranking. Reconstruyendo los 16
+  rankings N1 desde el campo `ranking` de las filas de 1a y aplicando
+  `sweep_index(p, 44)` sobre el plan real (`plan_phase1b(20260916,
+  level="N1")`), la composición por posición es **17 de 24 `cortado` en la
+  posición 0** y **cero `cortado` contra 12 `dirigido` en la 11**. Mitad baja
+  {`cortado` 58, `responde` 41, `presupone` 27, `dirigido` 18} contra mitad alta
+  {`presupone` 53, `dirigido` 48, `cortado` 23, `responde` 20}: chi² = 44,4 con
+  3 gl.
+
+  Magnitud propagada sobre G con las tasas por señal de 1a en N1 (`dirigido`
+  4/22, `presupone` 3/23, `cortado` 4/26, `responde` 8/22): **la composición
+  sola mueve la tasa esperada +2,2 puntos agregada y +7,4 en `gpt-5.6-sol-tst`**
+  entre la posición 0 y la 11, del mismo orden que el listón de 9 puntos de la
+  puerta. En esta tanda la deriva va hacia ARRIBA, o sea **en contra de H4**, que
+  predice bajada: enmascara el resultado primario en vez de fabricarlo. Pero nada
+  en el diseño garantiza ese signo —con la señal de más G arriba en vez de abajo,
+  la misma composición habría fabricado una subida que se leería como refutación
+  fuerte— así que el control no es opcional y va en el código, no en la prosa:
+  `curve.signal_confound` cuelga de todo `trend_report` y dice cuánto de la curva
+  predice la mezcla por sí sola, y `curve.by_signal` da la curva DENTRO de cada
+  señal. `by_kind` no cubre esto: controla por género (`artifact_kind`), no por
+  señal.
 
 - **El suelo de ruido entre réplicas**, medido en la Fase 1a: 0,87 sobre la
   etiqueta A–G en N1, y por conjunto binario hay que medirlo (Task 1, Paso 1).
@@ -90,8 +129,13 @@ para poder poner las dos tandas una al lado de la otra. Van fuera de la familia
 de Holm **y el informe lo dice**: entran como descripción, no como contraste.
 
 **Y una pregunta descriptiva, sin hipótesis:** ¿qué señal aguanta mejor el
-parecido? Con ~34 observaciones por señal y mitad del eje, da para una tabla de
-dos columnas (mitad baja / mitad alta), no para cuatro curvas.
+parecido? Tabla de dos columnas (mitad baja / mitad alta), no cuatro curvas.
+**Con el denominador de cada celda a la vista, que no es el mismo**: la versión
+anterior de este plan suponía «~34 observaciones por señal y mitad del eje» y no
+las hay —`dirigido` pone 18 en la mitad baja y `cortado` 23 en la alta, y en la
+posición 11 `cortado` no aparece ni una vez—, así que las cuatro señales no ven
+el mismo eje y la tabla no se puede leer como si lo vieran. Sale de
+`curve.by_signal`, que lleva el `n` de cada mitad dentro.
 
 ---
 
@@ -101,8 +145,8 @@ dos columnas (mitad baja / mitad alta), no para cuatro curvas.
 |---|---|
 | `src/wrongpaste/run_phase1b.py` | **Modificar.** `plan_phase1b` y `main` aceptan `level`. Sin runner nuevo: la única diferencia real es de qué banco sale el pegote. |
 | `tests/test_run_phase1b.py` | **Modificar.** Que el barrido sobre N1 lleve la señal en la fila y que los identificadores no choquen con los de 1b. |
-| `src/wrongpaste/curve.py` | **Modificar.** `PRIMARY_HYPOTHESES` deja de ser una constante única: cada tanda declara la suya, y el suelo de ruido binario de N1 se añade medido. |
-| `tests/test_curve.py` | **Modificar.** Que una familia mal declarada falle. |
+| `src/wrongpaste/curve.py` | **Modificar.** `PRIMARY_HYPOTHESES` deja de ser una constante única: cada tanda declara la suya, y el suelo de ruido binario de N1 se añade medido. Y el control de composición por señal (`signal_confound`, `by_signal`), sin el cual la curva de N1 no se puede leer. |
+| `tests/test_curve.py` | **Modificar.** Que una familia mal declarada falle, y que una composición de señales desequilibrada no pase por curva. |
 
 ---
 
@@ -362,16 +406,27 @@ tramo alto del eje. Página de auditoría como las anteriores, con `db`.
 ```bash
 .venv/bin/python - <<'EOF'
 import sys; sys.path.insert(0,'src')
-from wrongpaste.curve import HYPOTHESIS_FAMILIES, primary_family_report, trend_report, by_kind
+from wrongpaste.curve import (
+    HYPOTHESIS_FAMILIES, primary_family_report, trend_report, by_kind, by_signal)
 from wrongpaste.rubric import ENTERTAINS_ERROR
 # H4: tendencia de G contra la posición, por modelo
 rep = primary_family_report(filas, family=HYPOTHESIS_FAMILIES["1d"])
+# Y ANTES de leer ninguna pendiente: cuánto de esa curva predice la mezcla de
+# señales por sí sola. `signal_confound` cuelga de cada informe de hipótesis.
+for nombre, inf in rep["hypotheses"].items():
+    c = inf["signal_confound"]
+    print(nombre, "| composición equilibrada:", c["balanced"],
+          "| la mezcla sola mueve:", round(c["expected_span"], 3),
+          "| observado extremo a extremo:", round(c["observed_delta"], 3))
 # H5: G por longitud, con su intervalo
 for n in (2, 10):
     sub=[f for f in filas if f["n_turns"]==n]
     g=sum(1 for f in sub if f["judge_category"]=="G")
     print(f"n={n}: {g}/{len(sub)} = {g/len(sub):.3f}")
-# descriptivo: qué señal aguanta el parecido
+# descriptivo: qué señal aguanta el parecido, con el `n` de cada mitad delante
+desc = by_signal(filas, ENTERTAINS_ERROR)
+for senal, sub in desc["by_signal"].items():
+    print(senal, sub["halves"])
 EOF
 ```
 
@@ -384,10 +439,31 @@ Criterio declarado antes de mirar, y con el listón que dejó la Fase 1b:
   es lo que separó a dos tandas de la misma condición en 1a/1b. Ese listón no es
   opcional: un efecto menor que la variación entre tandas no se distingue de
   haber vuelto a tirar.
-- **Si ninguna se sostiene**, el resultado de la serie es: *la conducta de dudar
-  depende de que el pegote lleve una señal dentro, y de nada más que hayamos
-  sabido medir* — ni del parecido, ni de la longitud. Es un resultado corto y
-  fuerte, y cierra la Fase 1.
+- **Y una condición más, por la composición**: lo que se compara con ese listón
+  es el movimiento observado **descontado el que la mezcla de señales predice
+  por sí sola** (`signal_confound["expected_span"]`, estimado a priori en 2,2
+  puntos agregados y 7,4 en `gpt-5.6-sol-tst`). Una pendiente que no supere lo
+  que la composición ya explica no es un efecto del eje, y en este brazo la
+  composición empuja hacia arriba, así que a H4 —que predice bajada— le juega en
+  contra: una bajada observada está, si acaso, infraestimada.
+- **Si ninguna se sostiene**, lo primero que hay que mirar NO es la conclusión
+  sino `null_is_informative` del informe de familia. 288 celdas entre 3 modelos y
+  12 posiciones son **8 observaciones por punto y por modelo**, y con las tasas
+  base de G medidas en N1 en la Fase 1a (Opus 16/29, sol 3/32, luna 0/32) eso
+  **no** ve la caída de 9 puntos que este mismo paso declara relevante: la
+  potencia de H4 en Opus es del 2 % con el alfa que paga el `p` más pequeño de
+  una familia de seis, y lo que sí vería —al 80 %— es una caída de **56 puntos**.
+  Para ver los 9 harían falta ~313 observaciones por punto y modelo, o sea unas
+  39 veces esta tanda. Así que:
+  - Con `null_is_informative: false` —que es lo que el diseño actual devuelve—
+    el resultado que se escribe es **«no lo hemos podido ver»**, con el efecto
+    mínimo detectable al lado, igual que la Fase 1b escribió H2 como «sin nada
+    que medir». Un nulo sin potencia no es evidencia de ausencia, y publicar
+    *«el parecido no importa»* con este n sería certificar como resultado el
+    desenlace casi seguro del diseño.
+  - Solo con `null_is_informative: true` se puede escribir el resultado fuerte:
+    *la conducta de dudar depende de que el pegote lleve una señal dentro, y de
+    nada más que hayamos sabido medir* — ni del parecido, ni de la longitud.
 - **Si alguna se sostiene**, hay curva que dibujar y el artículo 2 tiene su
   figura principal.
 
