@@ -6,10 +6,9 @@ Fase anterior: [`2026-09-15-pegado-accidental-fase-1a-resultados.md`](2026-09-15
 Datos: `runs/phase1b/20260915T114537.jsonl` del repo
 [llm-wrong-paste](https://github.com/JaviMaligno/llm-wrong-paste)
 
-> **Estado: pendiente de la auditoría del autor** sobre 10 conversaciones. Las
-> cifras de abajo no cambiarán con ella —la frontera en disputa no entra en
-> ninguna de las tres tasas—, pero la validación del instrumento sí queda
-> abierta hasta entonces.
+> **Auditoría del autor hecha: 9 de 10 confirmadas.** La única corrección va de
+> B a C, y no mueve ninguna tasa porque el juez —de quien salen las cifras— ya
+> decía C.
 
 ## 1. El resultado
 
@@ -71,19 +70,44 @@ fallo del diseño, no un resultado sobre los modelos.
 | Acuerdo entre jueces (kappa) | 0,725 | **0,902** |
 | Uso de la categoría Z | 0,2 % | **0 %** |
 | Veredictos usables | 558/558 (tras reintentar) | **550/550 a la primera** |
-| Acuerdo juez-humano, `gpt-5.5` | 0,819 | **0,875** |
-| Acuerdo juez-humano, `gemini` | 0,623 | **0,788** |
+| Acuerdo juez-humano, `gpt-5.5` | 0,819 | **0,896** |
+| Acuerdo juez-humano, `gemini` | 0,623 | **0,768** |
 | G, agente frente a `gpt-5.5` | 13/13 | **12/12** |
+| Auditoría del autor | 19/20 | **9/10** |
 
 `gemini` se comporta mucho mejor aquí que en 1a, y tiene explicación: su defecto
 conocido es inflar G, y en el brazo neutro G apenas se disputa. Las tasas siguen
 saliendo de `gpt-5.5`, que es el juez validado.
 
-**El desacuerdo que queda es F frente a B**, y es del etiquetador humano: el
-agente puso 8 F y el juez dice que 3 son B. El autor ya había fallado en el
-mismo sentido en la auditoría de la Fase 1a. Ni F ni B entran en ninguna de las
-tres tasas, así que no mueve ninguna cifra — pero está dicho porque es un sesgo
-conocido de quien etiquetó.
+**El desacuerdo que queda es F frente a B, y la auditoría dice que se equivoca
+el juez, no el humano.** El agente puso 8 F y el juez llamó B a tres de ellas.
+Las tres entraron en la auditoría y el autor **confirmó las tres como F**. En
+total, de las cinco discrepancias auditadas dio la razón al agente en cuatro y
+al juez en una:
+
+| | Aciertos sobre los 10 auditados |
+|---|---|
+| Etiquetador humano (agente) | **9/10** |
+| Juez `gpt-5.5` | 6/10 |
+
+Esas cifras **no son tasas generalizables**: la muestra se cargó a propósito con
+cinco discrepancias, así que mide dónde falla cada uno, no cuánto. Lo que
+establece es en qué dirección falla el juez, y es una sola: **infravalora F**,
+confundiéndola con B cuando un pegote de tipo instrucción llega sin su texto.
+El techo de ese error son **5 filas de 275** —las que el juez llama B y vienen
+de un pegote `prompt`— y ninguna de las tres tasas se mueve, porque F y B están
+las dos fuera de las tres.
+
+Esto tiene una consecuencia para la tanda siguiente, y no es menor: **el juez no
+es fiable para medir F**, que es justo la categoría que el banco arreglado del
+§5 está diseñado para provocar. Cualquier análisis de «el pegote secuestra la
+sesión» necesitará etiquetas humanas o un desempate de rúbrica más afilado antes
+de fiarse de la clasificación automática.
+
+Nota sobre el sentido del fallo: en la auditoría de la Fase 1a el autor había
+corregido una F del agente a B, y aquí confirma tres en sentido contrario. No es
+una contradicción suya sino la misma frontera mal escrita vista dos veces, que
+es lo que el §5 acaba diagnosticando.
 
 ## 5. Limitación que esta fase destapó: el género `prompt` medía el sorteo
 
