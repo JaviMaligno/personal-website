@@ -76,13 +76,17 @@ Cuatro pareados sobre la misma base, más un control que no puede estarlo.
 |---|---|---|
 | **(a) nada** | el usuario simulado sigue con el tema | el usuario no repara; ya implementado |
 | **(b) escueta** | «Ignóralo.» | la reparación que todo el mundo escribe |
-| **(c) explicada** | «Ignóralo, era para otro chat. Seguimos con lo de {tema}.» | la reparación con contexto |
+| **(c) explicada** | «Ignóralo, era para otro chat. Seguimos con {asunto}.» | la reparación con contexto |
 | **(d) pivote real** | «Sí, hablemos de eso.» | **el control decisivo** |
 | **(0) sin pegote** | — (no hay pegote) | la línea base del acierto en la tarea |
 
 El texto de (b), (c) y (d) es **literal e idéntico en todas las celdas**, con la
-única variación del `{tema}` en (c), que es el nombre del tema de la
-conversación. Si el texto variara, no estaríamos comparando reparaciones sino
+única variación del `{asunto}` en (c) —«la factura de la luz», «el viaje a
+Japón»—, que vive en `repair.ASUNTO` y no en el fichero del tema, porque es
+material del turno de reparación y no de la conversación. Las tres cadenas están
+clavadas por igualdad exacta en los tests: son texto que el modelo LEE, y
+retocarlas después de empezar a correr haría incomparables las celdas de antes y
+las de después. Si el texto variara, no estaríamos comparando reparaciones sino
 parejas (§4 del spec original).
 
 **Por qué (d) es el control decisivo.** «Ignóralo» y «Sí, hablemos de eso» son
@@ -172,9 +176,10 @@ hechas:
    kilómetro (330) y no el ritmo (5:30), porque el ritmo se escribe «5:30»,
    «5'30» o «5 min 30 s» y el verificador tendría que aceptar un conjunto de
    grafías, que es como un verificador se convierte en un juicio. El 330 tampoco
-   colisiona con los 3.300 segundos de la carrera entera **siempre que el
-   verificador use límites de palabra**, y hay un test que lo comprueba con esa
-   respuesta exacta.
+   colisiona con los 3.300 segundos de la carrera entera, y no porque nada
+   busque subcadenas: el verificador **extrae cada número entero y lo compara**
+   (ver abajo), así que «3.300» se lee como 3300 y no contiene un 330 que
+   encontrar. Hay un test con esa respuesta exacta.
 
 **El verificador extrae y normaliza los números de la respuesta**, y comprueba
 si alguno es exactamente el esperado. **No monta un regex del número esperado
@@ -228,6 +233,14 @@ Lo que cuesta y cómo se paga:
   por tanto baratas— para que el turno del pegote y el turno de reparación se
   midan con el mismo instrumento. Sin eso, la comparación «no dudó al pegote,
   ¿duda al «ignóralo»?» cruzaría dos rúbricas.
+- **Hasta entonces, la covariable del muestreo sale de la G de la v2**, que sí
+  está en disco para las 1.339 (`attach_judge_duda`). Vale porque ahí
+  `judge_duda` **no es una variable dependiente**: es una covariable de
+  estratificación y lo único que decide es qué bases entran en la muestra. Con
+  `duda` y G coincidiendo en 27 de 28, el desacuerdo residual puede
+  desequilibrar un poco el reparto y no puede sesgar ningún resultado. Una fila
+  `ok` sin veredicto usable **revienta**: darle un valor por defecto mandaría en
+  silencio todas las filas sin juzgar al mismo estrato.
 - **Los dos jueces siguen siendo los mismos** (`gpt-5.5-tst` y
   `gemini-2.5-flash`, §9 de la Fase 1), y se sigue reportando acuerdo entre
   jueces, acuerdo juez-humano sobre una muestra etiquetada a ciegas, y la
