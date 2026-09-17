@@ -59,56 +59,6 @@ behind you."
 
 Do not add any instruction to verify, and do not mention the registry in the
 card. Retitle the card to exactly "Release ownership".
-## being-wrong-can-be-free
-
-- **Article:** `src/content/blog/{en,es}/being-wrong-can-be-free.md`
-- **Image:** `public/blog/being-wrong-can-be-free.png`
-- **Generated:** 2026-08-28 — **not** `image_gen`: this one is a deterministic
-  diagram, source at `docs/marketing/hero-sources/being-wrong-can-be-free.py`
-  (matplotlib, 1020x510 exact, site palette). Re-run with
-  `python docs/marketing/hero-sources/being-wrong-can-be-free.py`.
-
-**Why a diagram rather than an illustration.** The article's whole point is a
-contrast between two pictures that differ in one rotation: the same annular
-no-go band with the same channel width, once where the planner drives through
-it and once hidden behind the goal. An editorial illustration cannot carry
-"these two are geometrically identical" as reliably as drawing them to scale
-does, and both play costs (0.029 facing, 1.116 hidden, same gamma = 0.6, same
-arm) are on the image straight from the result JSON. If a generated hero is
-ever preferred for style consistency, the prompt to use is:
-
-```text
-Use case: infographic-diagram
-Asset type: 1020x510 (exact 2:1 aspect ratio) blog hero image
-Primary request: Create a refined technical editorial illustration of one
-geometric contrast: two side-by-side plan views of the SAME annular no-go band
-around a small bright goal marker, where the band has an identical narrow gap
-in both panels, and the only difference is the gap's orientation — in the left
-panel the gap faces the entry point so a dashed straight path passes through it
-to the goal; in the right panel the gap is rotated to the far side so the dashed
-path is stopped at the band.
-Scene/backdrop: Dark graphite technical panel, subtle grid, crisp borders, two
-equal zones separated by a thin divider.
-Subject and composition: Left panel labelled exactly "CHANNEL FACING THE START",
-right panel labelled exactly "SAME CHANNEL, HIDDEN BEHIND THE GOAL". Each panel
-shows a thick ring with one clean gap, a small star at the centre, a dot at the
-left edge, and a dashed arrow from the dot toward the star. Left: the arrow
-passes through the gap and reaches the star. Right: the arrow stops at the ring
-with a small cross. Beneath each panel one monospace figure: "play cost 0.029"
-(left) and "play cost 1.116" (right). A single top line reads exactly
-"SAME BAND · SAME GAP WIDTH · SAME TOPOLOGY".
-Style/medium: Crisp bitmap illustration with vector-like precision, clean
-sans-serif and monospace UI typography, sharp edges, high contrast, publication
-ready.
-Color palette: Indigo for the reachable panel, rose for the unreachable one,
-amber for the goal, graphite and off-white; dark background.
-Lighting/mood: Controlled, analytical, serious.
-Text requirements: Render only the specified labels and figures, spelled
-exactly; no headline, no prose, no captions.
-Constraints: 2:1 landscape; the two rings must be visibly identical apart from
-the gap's orientation; no people, faces, hands, logos, brand names, watermarks.
-Avoid: purple gradient blobs, glow, bokeh, holograms, clutter, tiny unreadable
-text, photorealism, wall of text.
 ```
 
 ---
@@ -161,28 +111,6 @@ dark, no purple gradient blobs, no bokeh.
 **Comprobar en la imagen final:** que los cuatro paneles se distingan (el de abajo-derecha debe ser
 el más degradado), que no aparezca ninguna cifra ni porcentaje, y que los nombres de fichero salgan
 legibles y genéricos.
-## the-bug-nobody-can-reach
-
-- **Article:** `src/content/blog/{en,es}/the-bug-nobody-can-reach.md`
-- **Image:** `public/blog/the-bug-nobody-can-reach.png`
-- **Generated:** 2026-08-29 — deterministic, not `image_gen`. Emitted as SVG by
-  `docs/marketing/figure-sources/ring_figures.py` (figure `hero-bug`) and
-  rasterised with headless Chrome:
-
-```bash
-python docs/marketing/figure-sources/ring_figures.py --preview /tmp/figs
-chrome --headless=new --hide-scrollbars   --screenshot=public/blog/the-bug-nobody-can-reach.png   --window-size=1020,510 file:///tmp/figs/hero-bug.html
-```
-
-The first version of this hero drew the doughnut flat, which undersold the
-result: the object in that experiment is a solid torus in three dimensions and
-the whole point is that you can go *around* it. The hero now draws it in 3D —
-standing, with the route threading its hole (0.019), against the same object
-lying flat with the route running into the tube (0.898) and a contact-free path
-arcing over the top. Numbers from `results/tubefield_mechanism.json`. Sharing
-the generator with the in-body figures keeps one source of truth for the
-geometry; the earlier matplotlib hero source was deleted rather than left to
-rot.
 
 ---
 
@@ -1239,56 +1167,152 @@ hay cifras ni estadísticas inventadas.
 
 Figuras del artículo (SVG inline rasterizado a PNG para Dev.to con Chrome
 headless, ver `blog-writer`): `when-the-fact-stops-being-true-fig-{1..4}.png`.
-## `too-small-to-automate`
 
-**No hay hero generado. Se intentó tres veces y las tres salieron peor.** El
-hero es ahora un recorte 2:1 de una captura real: el hilo de ChatGPT con la
-primera fila ya respondida y el arranque de la segunda.
+---
 
-| Fichero | Qué es | Dónde se usa |
-|---|---|---|
-| `too-small-to-automate.png` | Recorte 1280x640 → 1020x510 de la captura del hilo | `heroImage` |
-| `too-small-save-as-template.png` | El modal Guardar como plantilla sobre ChatGPT | En el cuerpo |
-| `too-small-run-in-chat.png` | La captura entera, 1280x800 | `linkedinImage` |
+## that-was-for-another-chat
 
-Las tres salen de las que ya estaban subidas a la ficha de la Chrome Web Store.
-Se recuperan de la página pública filtrando por tamaño: las capturas del item
-son las de **1280x800** (las de 440x280 y 1400x560 son los tiles promocionales,
-y las de 128x128 son iconos de otras extensiones).
+- Artículo: `src/content/blog/en/that-was-for-another-chat.md`
+- Imagen: `public/blog/that-was-for-another-chat.png` (1020x510)
+- Generada: 2026-09-14
+- **Modelo final: ChatGPT (gpt-image), a mano por Javier.** El intento con
+  `gemini-2.5-flash-image` en Vertex se descartó por cutre: composición plana y
+  texto mutilado que hubo que tapar con Pillow. Se conserva abajo por lo que
+  enseña sobre Vertex, no como referencia de estilo.
 
-### Las tres lecciones, que valen para cualquier artículo
+**Por qué no Codex.** `codex exec` devolvió `Your workspace is out of credits`.
+Además la CLI cambió: `--full-auto` ya no existe (v0.154.0) y `--sandbox` no se
+puede combinar con `--approve-for-me`. La invocación que funciona hoy es
+`codex exec --approve-for-me "..."`.
 
-**1. Una imagen no sobrevive a un cambio de tesis.** El primer hero dibujaba las
-curvas BUILD, RUN y CHECK, que era el argumento de un borrador anterior. Al
-reescribirse el artículo se quedó ilustrando una fórmula que el texto ya no
-hacía.
+**Trampas de Vertex, para la próxima:**
 
-**2. Pedir un concepto abstracto produce un cacharro.** El segundo pedía "la
-desproporción" con palabras como *módulos*, *bastidor* y *medidor*, y salió una
-consola de nave espacial: tridimensional, bonita y sin decir nada. El tercero
-prohibía el registro entero (nada de 3D, ni paneles, ni carcasas) y salió plano
-pero vacío: tres burbujas contra seis losas no es una idea, es un gráfico de
-barras sin datos.
+1. **La relación de aspecto hay que pasarla por parámetro**, no en el texto del
+   prompt: pedirla en prosa se ignora y sale cuadrada (1024x1024). Va en
+   `generationConfig.imageConfig.aspectRatio`.
+2. **No acepta `"2:1"`**: devuelve 400 `INVALID_ARGUMENT`. El máximo apaisado es
+   `"16:9"` (1344x768), que se recorta después a 2:1 con
+   `sips -c 672 1344` y se escala con `sips -Z 1020`. El recorte va bien porque
+   el modelo deja bandas muertas arriba y abajo.
+3. **Solo `gemini-2.5-flash-image` está habilitado** en `data-science-364702`.
+   Imagen 3/4 y los `gemini-3-*-image` dan 404 «Publisher model not found»:
+   habría que habilitarlos en Model Garden, con cuestionario y términos.
+4. **Ese modelo escribe mal el texto.** Salió un título de ventana mutilado
+   («Inspat Inspart») y una etiqueta tenue ilegible en el panel derecho. Se
+   taparon con Pillow muestreando el color de la propia barra — una barra de
+   título sin etiqueta es interfaz normal y no se nota. Si hace falta texto
+   legible de verdad en una imagen, este modelo no vale.
 
-**3. Cuando el artículo va de una herramienta propia, la captura le gana a
-cualquier ilustración.** Y no solo por ser más honesta: **la captura arregló un
-problema del texto.** La plantilla real de la captura es *"Analyse the
-{{ sector }} market in {{ country }}"*, así que el artículo abre ahora con esa
-tarea contada con sus valores — software en España, biotecnología en Portugal —
-y los huecos, cuando aparecen, se reconocen solos. La imagen no ilustraba el
-argumento: lo corregía.
+Prompt (el de la variante elegida, con `aspectRatio: "16:9"`):
 
-**Regla práctica:** antes de generar nada, mirar si el producto ya tiene
-capturas. Si el artículo habla de algo que se puede fotografiar funcionando, se
-fotografía.
-## benchmaxing
+```
+Wide 2:1 landscape technical editorial illustration for a developer blog, dark
+graphite background, crisp bitmap style, high contrast.
 
-- **Article:** `src/content/blog/{en,es}/benchmaxing.md`
-- **Image:** `public/blog/benchmaxing.png`
-- **Generated:** 2026-09-09, Codex built-in `image_gen`
-- **Status:** generated hero included in the local review draft; publication not scheduled.
-- **Review:** TEST / RETRY / REVIEW are readable; small pseudo-code and test-case rows are illustrative, not measured data. No model winner is depicted.
+Three distinct zones filling the full width, left to right:
 
-```text
-Create a wide 1020x510 (2:1) blog hero image for a technical article called Benchmaxing: winning the benchmark versus doing useful work. Refined rich technical editorial bitmap illustration, dark but not monochrome. Show a concrete software evaluation workbench: on the left a tidy test terminal and compact score dashboard with rows of teal checkmarks, a stack of uniform test cases being processed; on the right a realistic incident investigation workspace with an event timeline, linked database records, overlapping windows, one amber unresolved retry, and a small branching dependency map. Both sides belong to the same physical desk/workstation, connected by a cable, so this is a comparison of evaluation contexts, not rival brands. Subtle central divide. Distinct zones with plausible technical detail, clean geometric composition, high contrast, sophisticated developer editorial aesthetic. Balanced teal, amber, graphite and off-white accents. Generic short readable labels only if necessary ('TEST', 'RETRY', 'REVIEW'), no numerical results or fake benchmark scores. No logos, no brand names, no people, no robot, no trophy, no title text, no text-heavy poster, no purple gradient blobs, no bokeh. Do not imply either tested model won. Landscape composition with all important objects inside generous safe margins.
+LEFT: a chat conversation panel about moving house, three or four short rounded
+message bubbles in teal and off-white. Keep any lettering minimal and simple.
+
+CENTRE: the same chat's input box, and inside it a block of dense monospace code
+lines on a darker panel, outlined in a glowing amber border — visibly foreign to
+the conversation around it. This is the focal point.
+
+RIGHT: a small amber clipboard icon and a faded, dimmed second window of code,
+connected to the centre block by a thin amber arrow, suggesting the block came
+from somewhere else.
+
+Composition: balanced across the full 2:1 frame, no large empty areas, several
+layered panels giving depth. Palette strictly teal, amber, graphite and
+off-white. No purple, no gradient blobs, no bokeh, no logos, no brand names, no
+people, no headline text, no captions, no paragraphs of prose.
+
+
+**Lo que sí funcionó (el prompt que se usó de verdad, en ChatGPT).** La diferencia
+clave frente a la versión de Vertex: como este modelo escribe bien, el prompt
+**pide texto legible** en vez de prohibirlo, y ahí es donde la imagen gana — el
+stack trace real junto a las burbujas domésticas es lo que cuenta la historia.
+
+```
+Create a 1020x510 (2:1 landscape) hero image for a technical blog article
+titled "Sorry, That Was For Another Chat", about what AI models do when you
+accidentally paste content from a completely different conversation into a chat.
+
+Style: refined technical editorial illustration, dark but not monochrome. Crisp,
+high-contrast, professional AI/developer blog aesthetic. Several distinct zones,
+layered panels with depth — density is a feature, avoid large empty areas.
+
+Scene, left to right across the full width:
+
+LEFT — a chat panel, dark rounded window. Three message bubbles in teal and
+off-white with short, clearly legible text: "Moving day is in two weeks",
+"Boxes everywhere", "Where do I even start?".
+
+CENTRE, the focal point — the same chat's message input box, and sitting inside
+it a block of dense monospace code on a darker panel, wrapped in a glowing amber
+border. The code is a Java-style stack trace, legible and plausible, beginning
+with a line like "Exception in thread main" — visibly, jarringly foreign to the
+domestic conversation next to it.
+
+RIGHT — a dimmed, faded second window showing the same stack trace, with a small
+amber clipboard glyph in its corner, connected to the centre block by a thin
+curved amber arrow pointing left. This suggests where the pasted block came from.
+
+Palette: strictly teal, amber, graphite and off-white on a dark graphite
+background.
+
+All text in the image must be correctly spelled English. No headline text, no
+title overlay, no captions. No logos, no brand names, no people, no purple, no
+gradient blobs, no bokeh, no glossy 3D render look.
+```
+
+Salida 1774x887, reescalada a 1020x510 con `sips -Z 1020`.
+
+## what-gives-a-paste-away
+
+- Artículo: `src/content/blog/en/what-gives-a-paste-away.md`
+- Imagen: `public/blog/what-gives-a-paste-away.png` (1774x887, 2:1)
+- Generada: 2026-09-17, por Javier en ChatGPT (el workspace de Codex estaba sin créditos)
+- Tres iteraciones, y las dos correcciones valen para la próxima vez:
+  1. La primera salió con `access_token` y `db_password` en el bloque pegado.
+     Enmarcaba el artículo como una pieza de **fuga de secretos**, que no es de
+     lo que va. Hay que decir explícitamente que el pegote sea inocuo.
+  2. La segunda dibujaba el intervalo de confianza **entero a la derecha del
+     cero** y las tres barras ascendentes — o sea, lo contrario de los dos
+     titulares del artículo. Si el panel lleva las etiquetas reales de las
+     medidas, el modelo hay que darle las FORMAS numéricas o inventa las suyas.
+
+```
+Create a 1020x510 blog hero image for a technical article titled
+"What gives an accidental paste away".
+
+Style: refined technical editorial illustration, dark but not monochrome,
+showing a concrete scene: two chat windows side by side on a desk screen, a
+block of text visibly travelling from the wrong one into the other, and next
+to it a measurement panel — a small bar chart with three bars and a horizontal
+confidence-interval whisker crossing a dashed zero line.
+
+Visual motifs: two overlapping chat panes with short readable generic lines, a
+highlighted pasted block mid-flight between them, a magnifier over the pasted
+block suggesting inspection of the text itself rather than of the
+conversation, a compact bar chart, a whisker plot crossing a zero line, clean
+geometric composition.
+
+IMPORTANT — the pasted block must NOT contain credentials, tokens or
+passwords: this is not about leaking secrets. Make it an innocuous fragment of
+a different conversation, e.g. three lines of a cooking recipe, clearly
+mundane.
+
+The data shown must match the article:
+1. The bar chart "Doubt rate by paste type" has THREE bars of heights 0.07,
+   0.20 and 0.00 — the third bar is ZERO, essentially a flat line at the axis.
+   That contrast is the point.
+2. The whisker plot "Effect of similarity (95% CI)" is CENTRED ON ZERO and
+   clearly CROSSING the dashed zero line: the dot sits just left of zero and
+   the whiskers extend to both sides. It must read as "no effect".
+
+No logos, no brand names, no people, no text-heavy poster.
+Crisp bitmap illustration, high contrast, professional AI/developer blog
+aesthetic, balanced teal, amber, graphite and off-white accents, no purple
+gradient blobs, no bokeh.
 ```
