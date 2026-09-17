@@ -161,6 +161,28 @@ dark, no purple gradient blobs, no bokeh.
 **Comprobar en la imagen final:** que los cuatro paneles se distingan (el de abajo-derecha debe ser
 el más degradado), que no aparezca ninguna cifra ni porcentaje, y que los nombres de fichero salgan
 legibles y genéricos.
+## the-bug-nobody-can-reach
+
+- **Article:** `src/content/blog/{en,es}/the-bug-nobody-can-reach.md`
+- **Image:** `public/blog/the-bug-nobody-can-reach.png`
+- **Generated:** 2026-08-29 — deterministic, not `image_gen`. Emitted as SVG by
+  `docs/marketing/figure-sources/ring_figures.py` (figure `hero-bug`) and
+  rasterised with headless Chrome:
+
+```bash
+python docs/marketing/figure-sources/ring_figures.py --preview /tmp/figs
+chrome --headless=new --hide-scrollbars   --screenshot=public/blog/the-bug-nobody-can-reach.png   --window-size=1020,510 file:///tmp/figs/hero-bug.html
+```
+
+The first version of this hero drew the doughnut flat, which undersold the
+result: the object in that experiment is a solid torus in three dimensions and
+the whole point is that you can go *around* it. The hero now draws it in 3D —
+standing, with the route threading its hole (0.019), against the same object
+lying flat with the route running into the tube (0.898) and a contact-free path
+arcing over the top. Numbers from `results/tubefield_mechanism.json`. Sharing
+the generator with the in-body figures keeps one source of truth for the
+geometry; the earlier matplotlib hero source was deleted rather than left to
+rot.
 
 ---
 
