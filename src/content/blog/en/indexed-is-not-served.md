@@ -1,7 +1,7 @@
 ---
 title: "Indexed Is Not Served: A Month of Flat Zero With Every Metric Green"
 description: "A site lost 98.7% of its impressions overnight and stayed there for a month. No manual action, no deindexing, 3,180 pages indexed and rising. What the numbers ruled out, what they reframed, and what I still cannot explain."
-pubDate: 2026-09-21
+pubDate: 2026-09-30
 tags: ["SEO", "Data", "Product", "Research"]
 lang: en
 translationKey: indexed-is-not-served

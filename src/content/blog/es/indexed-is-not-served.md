@@ -1,7 +1,7 @@
 ---
 title: "Indexado no es mostrado: un mes plano en cero con todas las métricas en verde"
 description: "Un sitio pierde el 98,7 % de sus impresiones de un día para otro y se queda ahí un mes. Sin acción manual, sin desindexación, 3.180 páginas indexadas y subiendo. Qué descartaron los números, qué replantearon y qué sigo sin poder explicar."
-pubDate: 2026-09-21
+pubDate: 2026-09-30
 tags: ["SEO", "Datos", "Producto", "Investigación"]
 lang: es
 translationKey: indexed-is-not-served
