@@ -1,7 +1,7 @@
 ---
 title: "Frontend, Backend, and the Agentic Engine"
 description: "When AI logic deserves its own architectural block alongside the frontend and application backend. Real projects, earlier patterns, and a simpler alternative."
-pubDate: 2026-09-18
+pubDate: 2026-09-21
 tags: ["AI Agents", "Architecture", "Development"]
 lang: en
 translationKey: frontend-backend-agentic-core

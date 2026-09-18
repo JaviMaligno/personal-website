@@ -1,7 +1,7 @@
 ---
 title: "Frontend, backend y motor agéntico"
 description: "Cuándo conviene dar a la lógica de IA un bloque propio junto al frontend y al backend de aplicación. Casos reales, antecedentes y una alternativa más sencilla."
-pubDate: 2026-09-18
+pubDate: 2026-09-21
 tags: ["Agentes IA", "Arquitectura", "Desarrollo"]
 lang: es
 translationKey: frontend-backend-agentic-core
