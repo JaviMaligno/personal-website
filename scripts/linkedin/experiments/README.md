@@ -8,7 +8,7 @@ secretos del repo y **no está en el `.env` local**, así que en local no corren
 
 | Script | Qué contesta |
 |---|---|
-| `summary-matrix.mjs` | ¿La culpa es del prompt o del modelo? Matriz de 3 artículos × 3 prompts × 4 modelos, con conteo de defectos. |
+| `summary-matrix.mjs` | ¿La culpa es del prompt o del modelo? Matriz de 3 artículos × 4 prompts × 4 modelos, con conteo de defectos. `P3_produccion` **importa** el prompt desplegado de `scripts/linkedin/prompt.js`, así que el banco no puede medir un texto distinto del que sale. |
 | `p2-newest.mjs` | ¿El prompt bueno aguanta en los modelos más nuevos? Un prompt, los flash recientes, con reintentos. |
 | `model-probe.mjs` | ¿Por qué falla un modelo? Llama a `v1beta` y a `v1` y enseña el status y el cuerpo del error. |
 
@@ -38,6 +38,49 @@ Dos conclusiones que conviene no volver a re-derivar:
 
 Y un fallo que no se buscaba: el prompt viejo **fabricaba esfuerzo del autor**
 ("I spent five days analyzing…") que el artículo no dice.
+
+## Lo medido el 2026-09-18, sobre lo que se publicó de verdad
+
+Los cinco posts que salieron entre el 12 y el 17 de septiembre, pasados por los
+detectores nuevos. No son salidas de laboratorio: es el texto que LinkedIn tiene
+publicado.
+
+| Post | Caracteres de la 1ª línea | Se corta | Abre definiendo | Acaba en pregunta |
+|---|---|---|---|---|
+| `when-the-fact-stops-being-true` | 185 | no | no | **sí** |
+| `the-bug-nobody-can-reach` | 151 | no | no | **sí** |
+| `being-wrong-can-be-free` | 293 | **sí** | no | **sí** |
+| `knew-it-wasnt-the-model` | 445 | **sí** | no | no |
+| `benchmaxing` | 543 | **sí** | **sí** | no |
+
+Tres defectos, todos de **forma**, que el prompt anterior no nombraba:
+
+- **La apertura no sobrevive al corte.** LinkedIn esconde tras "…ver más" todo
+  lo que pase de unos 200 caracteres. Tres de las cinco primeras líneas miden
+  293, 445 y 543: se publican partidas a media frase, y esa mitad es lo único
+  que ve quien pasa por el feed.
+- **La pregunta final sigue saliendo**, 3 de 5, aunque el prompt la prohibía en
+  una línea entera. Prohibirla solo como *última frase* no basta; ahora se
+  prohíbe en todo el párrafo de cierre.
+- **`benchmaxing` abrió definiendo el tema en tercera persona** ("Benchmaxing
+  directs model optimization toward…"), y el post entero se lee como un
+  abstract. Es el único de los cinco que lo hace, y el único que el detector
+  `apertura_definicion` marca.
+
+Y una cosa que conviene no re-derivar: **lo que hace "catchy" a un post no es
+una fórmula de apertura**. Eso ya se probó el 09-09 y sale plantilla 12 de 12.
+Lo que lo hace catchy es que el hecho más concreto del artículo quepa antes del
+corte. Por eso P3 no añade ni un ejemplo de gancho; añade un límite de longitud
+y una orden sobre *qué* va en esa primera línea.
+
+### Un detector descartado, y por qué
+
+La primera versión miraba si el primer párrafo tenía `I/my/me`, suponiendo que
+un arranque sin narrador era el síntoma del abstract. Marcaba justo los dos
+ganchos **buenos** (`the-bug-nobody-can-reach`, `when-the-fact-stops-being-true`),
+cuya primera línea es una escena sin narrador, y no marcaba `benchmaxing`, que
+sí dice "a pilot set of probes I conducted". El que quedó mira el sujeto y el
+verbo de la primera frase, y de los cinco posts marca solo el que falla.
 
 ## La trampa que hay que recordar
 
