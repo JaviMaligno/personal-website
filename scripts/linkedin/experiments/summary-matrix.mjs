@@ -11,6 +11,7 @@
 import { readFileSync } from 'fs';
 import matter from 'gray-matter';
 import { generate, listFlashModels } from './gemini.mjs';
+import { buildSummaryPrompt } from '../prompt.js';
 
 const ARTICLES = [
   { key: 'matematicas', path: 'src/content/blog/en/navier-stokes-blows-up.md',
@@ -103,6 +104,14 @@ WHAT THE POST MUST NOT DO
 
 LENGTH
 Two or three short paragraphs, under 300 words. End on a statement.`,
+  // P3: el reescrito + la forma que LinkedIn impone. P2 arreglo el contenido
+  // (sin formula, sin CTA, sin yo inventado) pero dejo la forma sin decir, y
+  // por ahi se cuelan dos fallos medidos en los posts de septiembre: aperturas
+  // que no sobreviven al corte de "...ver mas" y un arranque de abstract en
+  // tercera persona (benchmaxing, 2026-09-16).
+  // P3 = el prompt de produccion, importado. Nunca copiado: si se copia,
+  // a la segunda edicion el banco mide algo que no se despliega.
+  P3_produccion: ({ title, description, tags, content }) => buildSummaryPrompt({ title, description, content, tags }),
 };
 
 const N = '(a|one|two|three|four|five|six|seven|\d+)';
@@ -119,6 +128,22 @@ const SCORES = {
   ).test(t),
   acaba_en_pregunta: t => /\?\s*$/.test(t.trim()),
   llamada_a_la_accion: t => /what'?s your experience|how are you (thinking|handling|approaching)|what do you think|curious how/i.test(t),
+  // Lo que LinkedIn impone y P2 no decia. El corte de "...ver mas" ronda los
+  // 200 caracteres en movil: una primera linea mas larga se publica cortada a
+  // media frase, y esa mitad es todo lo que ve quien pasa por el feed.
+  apertura_cortada: t => (t.trim().split('\n')[0] || '').length > 200,
+  // benchmaxing (2026-09-16) abrio definiendo el tema en tercera persona
+  // ("Benchmaxing directs model optimization toward...") y el post entero se
+  // leyo como un abstract. La firma es el sujeto = tema y un verbo descriptivo
+  // en segunda o tercera posicion. Probado contra los cinco posts de
+  // septiembre: marca benchmaxing y ninguno de los otros cuatro.
+  // Ojo: "sin I/my/me en el primer parrafo" NO sirve — marcaba justo los dos
+  // ganchos buenos, cuya primera linea es una escena sin narrador.
+  apertura_definicion: t => /^[A-Z][\w-]*( \w+)? (is|are|means|refers to|directs|describes|involves|represents|remains) /
+    .test((t.trim().split('\n')[0] || '').trim()),
+  // Un parrafo de mas de 600 caracteres es un muro en el feed.
+  muro_de_texto: t => t.trim().split(/\n\s*\n/).some(p => p.length > 600),
+  pregunta_en_el_cierre: t => /\?/.test(t.trim().split(/\n\s*\n/).pop() || ''),
 };
 
 async function run() {
@@ -152,6 +177,7 @@ async function run() {
           console.log('--- apertura:', (text.split('\n')[0] || '').slice(0, 160));
           console.log('--- cierre  :', (text.trim().split('\n').filter(Boolean).pop() || '').slice(0, 160));
           console.log(`--- formula=${flags.formula_gancho} yo_inventado=${flags.primera_persona_inventada} pregunta=${flags.acaba_en_pregunta} cta=${flags.llamada_a_la_accion} concreto=${specific}`);
+          console.log(`--- apertura_cortada=${flags.apertura_cortada} (${(text.trim().split('\n')[0]||'').length} car) definicion=${flags.apertura_definicion} muro=${flags.muro_de_texto} pregunta_cierre=${flags.pregunta_en_el_cierre}`);
         }
         await new Promise(r => setTimeout(r, 1200));
       }
@@ -165,6 +191,7 @@ async function run() {
     const r = rows.filter(x => x.prompt === pname && !x.err);
     const pct = k => `${r.filter(x => x.flags[k]).length}/${r.length}`;
     console.log(`${pname.padEnd(16)} formula=${pct('formula_gancho')} yo_inventado=${pct('primera_persona_inventada')} pregunta=${pct('acaba_en_pregunta')} cta=${pct('llamada_a_la_accion')} concreto=${r.filter(x => x.specific).length}/${r.length}`);
+    console.log(`${''.padEnd(16)} apertura_cortada=${pct('apertura_cortada')} definicion=${pct('apertura_definicion')} muro=${pct('muro_de_texto')} pregunta_cierre=${pct('pregunta_en_el_cierre')}`);
   }
   console.log('\nPor modelo (solo con el prompt actual P0):');
   for (const m of wanted) {
@@ -173,10 +200,10 @@ async function run() {
     console.log(`  ${m.padEnd(26)} formula=${r.filter(x => x.flags.formula_gancho).length}/${r.length} cta=${r.filter(x => x.flags.llamada_a_la_accion).length}/${r.length}`);
   }
 
-  console.log('\n\nTEXTOS COMPLETOS DEL PROMPT REESCRITO (P2), para leerlos:');
-  for (const row of rows.filter(x => x.prompt === 'P2_reescrito' && x.text)) {
+  console.log('\n\nTEXTOS COMPLETOS DE P2 (el anterior) Y P3 (el de produccion), para leerlos:');
+  for (const row of rows.filter(x => (x.prompt === 'P2_reescrito' || x.prompt === 'P3_produccion') && x.text)) {
     console.log('\n' + '-'.repeat(78));
-    console.log(`${row.art} | ${row.model}`);
+    console.log(`${row.prompt} | ${row.art} | ${row.model}`);
     console.log('-'.repeat(78));
     console.log(row.text);
   }
