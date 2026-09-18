@@ -103,6 +103,43 @@ WHAT THE POST MUST NOT DO
 
 LENGTH
 Two or three short paragraphs, under 300 words. End on a statement.`,
+  // P3: el reescrito + la forma que LinkedIn impone. P2 arreglo el contenido
+  // (sin formula, sin CTA, sin yo inventado) pero dejo la forma sin decir, y
+  // por ahi se cuelan dos fallos medidos en los posts de septiembre: aperturas
+  // que no sobreviven al corte de "...ver mas" y un arranque de abstract en
+  // tercera persona (benchmaxing, 2026-09-16).
+  P3_catchy: ({ title, description, tags, content }) => `You are writing a LinkedIn post for Javier Aguilar about an article he wrote. Write as him, first person.
+
+ARTICLE
+Title: ${title}
+Description: ${description}
+Tags: ${tags.join(', ')}
+
+FULL CONTENT:
+${content.substring(0, 4000)}
+
+THE FIRST LINE IS THE WHOLE POST
+LinkedIn truncates after about 200 characters; everything past that is hidden behind "see more" and most readers never open it. So:
+- The first line is a single sentence, under 150 characters, standing alone on its own line with a blank line after it.
+- It states the most surprising concrete thing the article actually found — a number, a result, a specific event. The strangest true fact, not the topic.
+- If a reader could guess the sentence from the title alone, it is the wrong sentence.
+- Never open by defining or characterising the subject ("Benchmaxing directs model optimization toward...", "Multi-agent systems are..."). No sentence whose subject is the topic and whose verb is "is", "means" or "refers to".
+- Never open with the article's context, background, or what you argued last week. Open with the finding.
+
+THE REST
+- Two or three short paragraphs after the first line, each at most three sentences, separated by blank lines. Never a wall of text.
+- Carry at least two more specifics from the article: a number, a name, a mechanism. Never a claim so general it would fit a different article.
+- Keep the author's judgment exactly as the article states it. Do NOT invent personal history, effort, conversions or opinions — no "I used to think", no "this proved me wrong", no "I spent three weeks". If the article does not say it, he did not say it.
+- Assume a reader who knows the field. Do not address CTOs, leaders or "those of us building X" as a group.
+
+WHAT THE POST MUST NOT DO
+- No opening formula. Never start with "The hardest part of X isn't Y, it's Z", "Most teams...", "I spent N days..." or any variant of them.
+- No question anywhere in the final paragraph, and no question as the last sentence. The post ends on a full stop. If your closing sentence ends in "?", rewrite it as a statement.
+- No call to action, no "what's your experience", no "how are you thinking about".
+- No hashtags and no URL (both are appended afterwards). No markdown, no emojis.
+
+LENGTH
+Under 250 words in total, first line included. End on a statement.`,
 };
 
 const N = '(a|one|two|three|four|five|six|seven|\d+)';
@@ -119,6 +156,22 @@ const SCORES = {
   ).test(t),
   acaba_en_pregunta: t => /\?\s*$/.test(t.trim()),
   llamada_a_la_accion: t => /what'?s your experience|how are you (thinking|handling|approaching)|what do you think|curious how/i.test(t),
+  // Lo que LinkedIn impone y P2 no decia. El corte de "...ver mas" ronda los
+  // 200 caracteres en movil: una primera linea mas larga se publica cortada a
+  // media frase, y esa mitad es todo lo que ve quien pasa por el feed.
+  apertura_cortada: t => (t.trim().split('\n')[0] || '').length > 200,
+  // benchmaxing (2026-09-16) abrio definiendo el tema en tercera persona
+  // ("Benchmaxing directs model optimization toward...") y el post entero se
+  // leyo como un abstract. La firma es el sujeto = tema y un verbo descriptivo
+  // en segunda o tercera posicion. Probado contra los cinco posts de
+  // septiembre: marca benchmaxing y ninguno de los otros cuatro.
+  // Ojo: "sin I/my/me en el primer parrafo" NO sirve — marcaba justo los dos
+  // ganchos buenos, cuya primera linea es una escena sin narrador.
+  apertura_definicion: t => /^[A-Z][\w-]*( \w+)? (is|are|means|refers to|directs|describes|involves|represents|remains) /
+    .test((t.trim().split('\n')[0] || '').trim()),
+  // Un parrafo de mas de 600 caracteres es un muro en el feed.
+  muro_de_texto: t => t.trim().split(/\n\s*\n/).some(p => p.length > 600),
+  pregunta_en_el_cierre: t => /\?/.test(t.trim().split(/\n\s*\n/).pop() || ''),
 };
 
 async function run() {
@@ -152,6 +205,7 @@ async function run() {
           console.log('--- apertura:', (text.split('\n')[0] || '').slice(0, 160));
           console.log('--- cierre  :', (text.trim().split('\n').filter(Boolean).pop() || '').slice(0, 160));
           console.log(`--- formula=${flags.formula_gancho} yo_inventado=${flags.primera_persona_inventada} pregunta=${flags.acaba_en_pregunta} cta=${flags.llamada_a_la_accion} concreto=${specific}`);
+          console.log(`--- apertura_cortada=${flags.apertura_cortada} (${(text.trim().split('\n')[0]||'').length} car) definicion=${flags.apertura_definicion} muro=${flags.muro_de_texto} pregunta_cierre=${flags.pregunta_en_el_cierre}`);
         }
         await new Promise(r => setTimeout(r, 1200));
       }
@@ -165,6 +219,7 @@ async function run() {
     const r = rows.filter(x => x.prompt === pname && !x.err);
     const pct = k => `${r.filter(x => x.flags[k]).length}/${r.length}`;
     console.log(`${pname.padEnd(16)} formula=${pct('formula_gancho')} yo_inventado=${pct('primera_persona_inventada')} pregunta=${pct('acaba_en_pregunta')} cta=${pct('llamada_a_la_accion')} concreto=${r.filter(x => x.specific).length}/${r.length}`);
+    console.log(`${''.padEnd(16)} apertura_cortada=${pct('apertura_cortada')} definicion=${pct('apertura_definicion')} muro=${pct('muro_de_texto')} pregunta_cierre=${pct('pregunta_en_el_cierre')}`);
   }
   console.log('\nPor modelo (solo con el prompt actual P0):');
   for (const m of wanted) {
@@ -173,10 +228,10 @@ async function run() {
     console.log(`  ${m.padEnd(26)} formula=${r.filter(x => x.flags.formula_gancho).length}/${r.length} cta=${r.filter(x => x.flags.llamada_a_la_accion).length}/${r.length}`);
   }
 
-  console.log('\n\nTEXTOS COMPLETOS DEL PROMPT REESCRITO (P2), para leerlos:');
-  for (const row of rows.filter(x => x.prompt === 'P2_reescrito' && x.text)) {
+  console.log('\n\nTEXTOS COMPLETOS DE P2 Y P3, para leerlos:');
+  for (const row of rows.filter(x => (x.prompt === 'P2_reescrito' || x.prompt === 'P3_catchy') && x.text)) {
     console.log('\n' + '-'.repeat(78));
-    console.log(`${row.art} | ${row.model}`);
+    console.log(`${row.prompt} | ${row.art} | ${row.model}`);
     console.log('-'.repeat(78));
     console.log(row.text);
   }
