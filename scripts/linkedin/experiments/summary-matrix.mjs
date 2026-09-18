@@ -11,6 +11,7 @@
 import { readFileSync } from 'fs';
 import matter from 'gray-matter';
 import { generate, listFlashModels } from './gemini.mjs';
+import { buildSummaryPrompt } from '../prompt.js';
 
 const ARTICLES = [
   { key: 'matematicas', path: 'src/content/blog/en/navier-stokes-blows-up.md',
@@ -108,38 +109,9 @@ Two or three short paragraphs, under 300 words. End on a statement.`,
   // por ahi se cuelan dos fallos medidos en los posts de septiembre: aperturas
   // que no sobreviven al corte de "...ver mas" y un arranque de abstract en
   // tercera persona (benchmaxing, 2026-09-16).
-  P3_catchy: ({ title, description, tags, content }) => `You are writing a LinkedIn post for Javier Aguilar about an article he wrote. Write as him, first person.
-
-ARTICLE
-Title: ${title}
-Description: ${description}
-Tags: ${tags.join(', ')}
-
-FULL CONTENT:
-${content.substring(0, 4000)}
-
-THE FIRST LINE IS THE WHOLE POST
-LinkedIn truncates after about 200 characters; everything past that is hidden behind "see more" and most readers never open it. So:
-- The first line is a single sentence, under 150 characters, standing alone on its own line with a blank line after it.
-- It states the most surprising concrete thing the article actually found — a number, a result, a specific event. The strangest true fact, not the topic.
-- If a reader could guess the sentence from the title alone, it is the wrong sentence.
-- Never open by defining or characterising the subject ("Benchmaxing directs model optimization toward...", "Multi-agent systems are..."). No sentence whose subject is the topic and whose verb is "is", "means" or "refers to".
-- Never open with the article's context, background, or what you argued last week. Open with the finding.
-
-THE REST
-- Two or three short paragraphs after the first line, each at most three sentences, separated by blank lines. Never a wall of text.
-- Carry at least two more specifics from the article: a number, a name, a mechanism. Never a claim so general it would fit a different article.
-- Keep the author's judgment exactly as the article states it. Do NOT invent personal history, effort, conversions or opinions — no "I used to think", no "this proved me wrong", no "I spent three weeks". If the article does not say it, he did not say it.
-- Assume a reader who knows the field. Do not address CTOs, leaders or "those of us building X" as a group.
-
-WHAT THE POST MUST NOT DO
-- No opening formula. Never start with "The hardest part of X isn't Y, it's Z", "Most teams...", "I spent N days..." or any variant of them.
-- No question anywhere in the final paragraph, and no question as the last sentence. The post ends on a full stop. If your closing sentence ends in "?", rewrite it as a statement.
-- No call to action, no "what's your experience", no "how are you thinking about".
-- No hashtags and no URL (both are appended afterwards). No markdown, no emojis.
-
-LENGTH
-Under 250 words in total, first line included. End on a statement.`,
+  // P3 = el prompt de produccion, importado. Nunca copiado: si se copia,
+  // a la segunda edicion el banco mide algo que no se despliega.
+  P3_produccion: ({ title, description, tags, content }) => buildSummaryPrompt({ title, description, content, tags }),
 };
 
 const N = '(a|one|two|three|four|five|six|seven|\d+)';
@@ -228,8 +200,8 @@ async function run() {
     console.log(`  ${m.padEnd(26)} formula=${r.filter(x => x.flags.formula_gancho).length}/${r.length} cta=${r.filter(x => x.flags.llamada_a_la_accion).length}/${r.length}`);
   }
 
-  console.log('\n\nTEXTOS COMPLETOS DE P2 Y P3, para leerlos:');
-  for (const row of rows.filter(x => (x.prompt === 'P2_reescrito' || x.prompt === 'P3_catchy') && x.text)) {
+  console.log('\n\nTEXTOS COMPLETOS DE P2 (el anterior) Y P3 (el de produccion), para leerlos:');
+  for (const row of rows.filter(x => (x.prompt === 'P2_reescrito' || x.prompt === 'P3_produccion') && x.text)) {
     console.log('\n' + '-'.repeat(78));
     console.log(`${row.prompt} | ${row.art} | ${row.model}`);
     console.log('-'.repeat(78));
