@@ -1,7 +1,7 @@
 ---
 title: "Perdona, eso era de otro chat"
 description: "Pegué el contenido equivocado en 24 conversaciones a propósito y leí todas las respuestas a mano. Ni un solo modelo contempló que pudiera ser un error. Lo que varía no es si lo detectan, sino cuánto trabajo hacen sobre algo que no pediste."
-pubDate: 2026-09-23
+pubDate: 2026-10-06
 tags: ["IA", "Agentes", "Evaluación", "Claude"]
 lang: es
 translationKey: that-was-for-another-chat

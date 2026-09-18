@@ -1,7 +1,7 @@
 ---
 title: "Sorry, That Was For Another Chat"
 description: "I pasted the wrong thing into 24 conversations on purpose and read every reply by hand. Not one model considered that it might have been a mistake. What varies is not whether they notice — it's how much work they do on something you never asked for."
-pubDate: 2026-09-23
+pubDate: 2026-10-06
 tags: ["AI", "Agents", "Evaluation", "Claude"]
 lang: en
 translationKey: that-was-for-another-chat
