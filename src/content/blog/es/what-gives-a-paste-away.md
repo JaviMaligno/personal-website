@@ -1,7 +1,7 @@
 ---
 title: "Lo que delata un pegado accidental"
 description: "Contradecir al usuario no levanta sospechas: las apaga del todo. 1.920 conversaciones para averiguar qué hace que un modelo se plantee que te has equivocado de ventana, y dos fallos del juez automático que solo aparecieron etiquetando a mano."
-pubDate: 2026-09-30
+pubDate: 2026-10-12
 tags: ["IA", "Agentes", "Evaluación", "Claude"]
 lang: es
 translationKey: what-gives-a-paste-away

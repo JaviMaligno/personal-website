@@ -1,7 +1,7 @@
 ---
 title: "What gives an accidental paste away"
 description: "Contradicting the user doesn't raise suspicion — it removes it entirely. 1,920 conversations to find out what makes a model consider you pasted into the wrong window, and two failures of the automated judge that only surfaced from hand-labelling."
-pubDate: 2026-09-30
+pubDate: 2026-10-12
 tags: ["AI", "Agents", "Evaluation", "Claude"]
 lang: en
 translationKey: what-gives-a-paste-away
