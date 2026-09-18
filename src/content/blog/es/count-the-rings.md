@@ -1,7 +1,7 @@
 ---
 title: "Contar aros no es freír calamares"
 description: "Echas aros de calamar a la sartén y dos objetivos igual de razonables — que quepan cuantos más mejor, o que se dore la mayor superficie posible — resultan ser problemas distintos con respuestas distintas. Salvo que los tamaños cumplan una condición: entonces no solo coinciden, sino que dónde colocas cada aro deja de importar por completo."
-pubDate: 2026-09-22
+pubDate: 2026-10-03
 tags: ["Matemáticas", "Geometría", "Optimización", "Investigación"]
 lang: es
 translationKey: count-the-rings

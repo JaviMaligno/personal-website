@@ -1,7 +1,7 @@
 ---
 title: "Count the Rings or Sear the Squid"
 description: "Drop squid rings into a frying pan and two reasonable goals — fit as many as possible, or sear as much surface as possible — turn out to be different problems with different answers. Unless the sizes obey one condition, and then not only do the goals agree: where you put each ring stops mattering at all."
-pubDate: 2026-09-22
+pubDate: 2026-10-03
 tags: ["Mathematics", "Geometry", "Optimization", "Research"]
 lang: en
 translationKey: count-the-rings
