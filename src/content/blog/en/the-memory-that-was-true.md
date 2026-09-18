@@ -1,7 +1,7 @@
 ---
 title: "The memory that was true"
 description: "I audited the 35 memories my agent keeps about this project. Three were stale, and none of them had been wrong when written: they described a state that expired on its own. The other 80% can't be checked at all, and that isn't a flaw."
-pubDate: 2026-09-20
+pubDate: 2026-09-27
 tags: ["Agents", "Memory", "Context", "Verification"]
 lang: en
 translationKey: the-memory-that-was-true

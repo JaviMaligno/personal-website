@@ -1,7 +1,7 @@
 ---
 title: "La memoria que fue cierta"
 description: "Audité las 35 memorias que mi agente guarda de este proyecto. Tres estaban obsoletas, y ninguna se había equivocado al escribirse: describían un estado que caducó solo. El 80% restante no admite comprobación, y eso no es un defecto."
-pubDate: 2026-09-20
+pubDate: 2026-09-27
 tags: ["Agentes", "Memoria", "Contexto", "Verificación"]
 lang: es
 translationKey: the-memory-that-was-true
