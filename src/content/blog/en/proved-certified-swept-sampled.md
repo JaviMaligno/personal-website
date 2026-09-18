@@ -1,7 +1,7 @@
 ---
 title: "Proved, Certified, Swept, Sampled"
 description: "A sixty-page paper where written proofs, kernel-checked theorems, exact box certificates and plain sampling all print with the same face. Four labels, one per claim, and the case that made me insist on them: a certificate that reported green at exactly the configuration the proof turned on."
-pubDate: 2026-09-24
+pubDate: 2026-10-09
 tags: ["Mathematics", "Verification", "Research", "AI"]
 lang: en
 translationKey: proved-certified-swept-sampled

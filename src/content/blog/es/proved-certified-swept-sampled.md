@@ -1,7 +1,7 @@
 ---
 title: "Probado, certificado, barrido, muestreado"
 description: "Un paper de sesenta páginas donde las demostraciones escritas, los teoremas comprobados por el kernel, los certificados exactos por cajas y el muestreo a secas se imprimen todos con la misma cara. Cuatro etiquetas, una por afirmación, y el caso que me hizo insistir en ellas: un certificado que daba verde justo en la configuración de la que dependía la prueba."
-pubDate: 2026-09-24
+pubDate: 2026-10-09
 tags: ["Matemáticas", "Verificación", "Investigación", "IA"]
 lang: es
 translationKey: proved-certified-swept-sampled
