@@ -44,6 +44,10 @@ Hay al menos tres fenómenos que conviene distinguir.
 
 También hay [testimonios públicos](https://www.reddit.com/r/Anthropic/comments/1v5q1ju/opus_5_first_impressions_vs_fable/) parecidos a mi percepción: un usuario relata diagnósticos equivocados y confusión entre comentarios del código y comportamiento efectivo, y prefiere Fable para investigar. En el mismo hilo hay opiniones favorables a Opus. Mi experiencia, las conversaciones directas y ese hilo son fuentes de hipótesis, no una encuesta representativa.
 
+Donde más noto la diferencia no es en una respuesta acotada. Es en la multitarea y en la gestión de flujos de agentes: una sesión de Claude Code con varias tareas en marcha, subagentes que lanzar y esperar, resultados que hay que integrar en un solo entregable y una decisión sobre qué hacer mientras termina un paso lento. Ninguno de los benchmarks del anuncio mide a un modelo gestionando a otros agentes, así que la tabla y mi percepción miran trabajos distintos.
+
+Existen instrumentos públicos para ese trabajo, y son recientes. [ClawArena-Team](https://arxiv.org/abs/2606.31174) puntúa a un director de solo texto que crea, habilita y planifica un conjunto de subagentes en 41 escenarios de varios turnos, y que debe integrar sus resultados en un entregable correcto en lugar de limitarse a reenviarlos. Fable 5 lidera sus doce modelos con una puntuación de gestión de subagentes del 60,0 %, por delante de Gemini 3.5 Flash con 53,8 % y GPT-5.5 con 51,0 %, evaluado tal como se distribuye, con el fallback a Opus 4.8 que recomienda el proveedor ante rechazos. Opus 5 no aparece: el artículo se envió el 30 de junio de 2026 y Opus 5 salió el 24 de julio. [AsyncTool](https://arxiv.org/abs/2605.27995) se acerca más a la multitarea propiamente dicha: tareas concurrentes con respuestas de herramientas retrasadas y desordenadas, donde la pregunta es qué hace el agente con el tiempo de espera. No incluye ningún modelo de Claude, y su líder global es GPT-4.1 con 38,06, por delante de GPT-5 con 31,32. Ninguno de los dos benchmarks pone a prueba mi percepción. Muestran que la dimensión donde siento la diferencia se puede medir, y no encontré ninguna ejecución publicada que enfrente a los dos modelos en ella.
+
 Que Opus gane ciertas pruebas y Fable resulte más útil en otros trabajos puede ser perfectamente coherente. Resolver un encargo delimitado y descubrir correctamente qué hay que resolver son exigencias distintas. Lo que quería examinar era si esa diferencia aparecía en casos concretos.
 
 ## Un piloto que podía salir en contra
@@ -113,7 +117,7 @@ Esos casos no separaron a los modelos en los criterios centrales. No los descart
 
 ## Qué queda de la sospecha
 
-Mi percepción inicial sigue siendo una experiencia válida. **Estas pruebas no la convierten en una demostración de que Opus 5 esté benchmaxeado**, y tampoco establecen que Fable sea mejor en general. No medí sesiones largas, investigación de repositorios ni minutos de supervisión humana. No inspeccioné el entrenamiento de ninguno de los dos modelos.
+Mi percepción inicial sigue siendo una experiencia válida. **Estas pruebas no la convierten en una demostración de que Opus 5 esté benchmaxeado**, y tampoco establecen que Fable sea mejor en general. No medí sesiones largas, investigación de repositorios, orquestación de subagentes ni minutos de supervisión humana, que es donde vive esa percepción. El piloto puso a prueba razonamiento acotado. No inspeccioné el entrenamiento de ninguno de los dos modelos.
 
 Sí encontré algo concreto: dos sistemas capaces pueden diagnosticar bien una parte del problema y prometer más de lo que su solución garantiza. En [un trabajo anterior sobre modelos del mundo verificados](/es/blog/verified-world-model-still-loses) exploré otro desajuste entre pasar una comprobación y servir para el uso previsto. El mecanismo no es idéntico, pero la pregunta vuelve a ser qué autoriza realmente la métrica a concluir.
 
