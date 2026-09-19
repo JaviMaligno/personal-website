@@ -44,6 +44,10 @@ At least three different phenomena need separating.
 
 There are also [public accounts](https://www.reddit.com/r/Anthropic/comments/1v5q1ju/opus_5_first_impressions_vs_fable/) resembling my perception: one user reports incorrect diagnoses and confusion between code comments and actual behavior, preferring Fable for investigation. The same thread contains favorable opinions of Opus. My experience, direct conversations and that thread are sources of hypotheses, not a representative survey.
 
+Where I notice the difference most is not in a bounded answer. It is in multitasking and in managing flows of agents: a Claude Code session with several tasks in flight, subagents to launch and wait for, results to fold back into one deliverable, and a decision about what to do while a slow step finishes. None of the benchmarks in the announcement measures a model managing other agents, so the table and my perception are looking at different work.
+
+Public instruments for that work exist, and they are recent. [ClawArena-Team](https://arxiv.org/abs/2606.31174) scores a text-only conductor that creates, empowers and schedules a pool of subagents across 41 multi-turn scenarios, and must integrate their returns into a correct deliverable rather than relay them. Fable 5 leads its twelve models with a subagent-management score of 60.0%, ahead of Gemini 3.5 Flash at 53.8% and GPT-5.5 at 51.0%, evaluated as shipped with the vendor-recommended fallback to Opus 4.8 on refusals. Opus 5 is absent: the paper was submitted on 30 June 2026 and Opus 5 shipped on 24 July. [AsyncTool](https://arxiv.org/abs/2605.27995) is closer to multitasking proper: concurrent tasks with delayed, out-of-order tool feedback, where the question is what the agent does with the idle time. It includes no Claude model, and its overall leader is GPT-4.1 at 38.06, ahead of GPT-5 at 31.32. Neither benchmark tests my perception. They show that the dimension where I feel the gap can be measured, and I found no published run that puts both models on it.
+
 Opus winning some tests while Fable proves more useful for other work can be entirely coherent. Solving a bounded assignment and correctly discovering what needs solving make different demands. I wanted to see whether that distinction appeared in concrete cases.
 
 ## A pilot allowed to contradict me
@@ -113,7 +117,7 @@ Those cases did not separate the models on the core criteria. I did not discard 
 
 ## What remains of the suspicion
 
-My initial perception remains a valid experience. **These tests do not turn it into a demonstration that Opus 5 has been benchmaxed**, and they do not establish that Fable is generally better. I did not measure long sessions, repository investigation, or minutes of human supervision. I did not inspect either model's training.
+My initial perception remains a valid experience. **These tests do not turn it into a demonstration that Opus 5 has been benchmaxed**, and they do not establish that Fable is generally better. I did not measure long sessions, repository investigation, orchestration of subagents, or minutes of human supervision, which is where that perception lives. The pilot tested bounded reasoning. I did not inspect either model's training.
 
 I did find something concrete: two capable systems can diagnose part of a problem correctly and promise more than their proposed solution guarantees. In [earlier work on verified world models](/en/blog/verified-world-model-still-loses), I explored a different mismatch between passing a check and being adequate for the intended use. The mechanism differs, but the question is again what the metric actually licenses me to conclude.
 
