@@ -34,11 +34,25 @@
  * - benchmaxing abrio definiendo el tema en tercera persona, que es lo que
  *   hace que un post se lea como un abstract.
  *
+ * 2026-09-21 — frontend-backend-agentic-core se publico nombrando sus tres
+ * bloques en una sola frase ("the frontend, the application backend, and the
+ * agentic engine") y dando responsabilidad solo a uno de los tres. El articulo
+ * los separa con una figura por bloque; el post los dejaba como nombres. De
+ * ahi la regla de componentes, con su interruptor en la firma.
+ *
  * De ahi el bloque THE FIRST LINE IS THE WHOLE POST. Lo que hace "catchy" a un
  * post no es una formula de apertura — eso ya se probo y sale plantilla 12 de
  * 12 — sino que el hecho mas concreto del articulo quepa antes del corte.
  */
-export function buildSummaryPrompt({ title, description, content, tags = [] }) {
+export function buildSummaryPrompt({ title, description, content, tags = [] }, { componentRule = true } = {}) {
+  // La regla de componentes va detras de un interruptor por una sola razon:
+  // el banco necesita el mismo prompt con y sin ella para poder atribuirle un
+  // efecto. En produccion esta puesta; si el banco no la respalda, se quita de
+  // aqui y el interruptor desaparece con ella.
+  const componentLines = componentRule ? `
+- If the article names a set of components, layers or stages, do not compress them into one sentence that only lists their names. Give each one its own short line, naming the responsibility the article assigns to it.
+- Only when the article separates them itself. Never invent a set, and never turn the post into a list of things the article treats as one.` : '';
+
   return `You are writing a LinkedIn post for Javier Aguilar about an article he wrote. Write as him, first person.
 
 ARTICLE
@@ -58,7 +72,7 @@ LinkedIn truncates after about 200 characters; everything past that is hidden be
 - Never open with the article's context, background, or what you argued last week. Open with the finding.
 
 THE REST
-- Two or three short paragraphs after the first line, each at most three sentences, separated by blank lines. Never a wall of text.
+- Two or three short paragraphs after the first line, each at most three sentences, separated by blank lines. Never a wall of text.${componentLines}
 - Carry at least two more specifics from the article: a number, a name, a mechanism. Never a claim so general it would fit a different article.
 - Keep the author's judgment exactly as the article states it. Do NOT invent personal history, effort, conversions or opinions — no "I used to think", no "this proved me wrong", no "I spent three weeks". If the article does not say it, he did not say it.
 - Assume a reader who knows the field. Do not address CTOs, leaders or "those of us building X" as a group.
