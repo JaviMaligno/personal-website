@@ -82,6 +82,37 @@ cuya primera línea es una escena sin narrador, y no marcaba `benchmaxing`, que
 sí dice "a pilot set of probes I conducted". El que quedó mira el sujeto y el
 verbo de la primera frase, y de los cinco posts marca solo el que falla.
 
+## Lo medido el 2026-09-21 (cupo, y por que este banco puede dejar sin post)
+
+Dos tiradas de `component-rule.mjs` perdidas seguidas, ninguna por culpa de lo
+que se queria medir:
+
+| Tirada | Celdas con texto | Que las mato |
+|---|---|---|
+| 1a | 15 de 40 | `gemini-3.8-flash` (503/429) + cupo agotado a mitad |
+| 2a | 0 de 40 | cupo agotado del todo: 429 en las 20 parejas |
+
+Tres cosas que conviene no volver a descubrir:
+
+- **`gemini-3.8-flash` sigue sin servir**, dos semanas despues de medirlo la
+  primera vez. Un experimento que elija modelos solo ("los mas nuevos que
+  ofrezca la API") volvera a cogerlo. Los modelos se fijan a mano, y se fijan
+  a los de produccion.
+- **El orden del recorrido decide que se pierde.** Con el recorrido secuencial,
+  el cupo se agoto a mitad y se llevo por delante justo los dos articulos de
+  control, que iban al final: el brazo que medía el riesgo se quedo en n=1. De
+  ahi que las celdas vayan emparejadas y barajadas con semilla fija.
+- **Un 200 al sondear no dice que quepa un articulo.** `model-probe` respondio
+  200 con los dos modelos de produccion y el experimento siguiente devolvio 429
+  en todas sus celdas: seis palabras cabian en lo que quedaba de cupo, 2.000
+  tokens no.
+
+Y lo que hay que tener presente antes de lanzar nada aqui: **`GEMINI_API_KEY` es
+la misma clave que usa `generate-summary.js` en produccion**. Un run de 40
+llamadas con el articulo entero agota el cupo del dia, asi que si ese dia se
+publica un articulo, el post de LinkedIn no se genera. Mirar
+`.github/publish-schedule.json` antes de gastar el cupo en un experimento.
+
 ## La trampa que hay que recordar
 
 La primera versión de la matriz usaba el SDK `@google/generative-ai` 0.21.0, que
