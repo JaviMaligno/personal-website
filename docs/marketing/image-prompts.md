@@ -1322,3 +1322,14 @@ Avoid: People, faces, hands, robots, brains, logos, brands, repository icons, th
 zonas conectadas y etiquetas legibles: `INTERFACE`, `APPLICATION`, `AGENTIC ENGINE`, `review`,
 `tools`, `context` y `evals`. El flujo pausado recibe una conexión ámbar desde la zona de gestión.
 No se aprecian artefactos de texto en esas etiquetas ni logos o personas.
+
+
+## Jev: what survives the hype
+
+- Article: `src/content/blog/en/jev-after-the-hype.md`
+- Image: `public/blog/jev-after-the-hype.png`
+- Generated: 2026-09-21, built-in image_gen. Hero approved by Javier in this session; also used as the LinkedIn image via the default fallback.
+
+```text
+Create a 1020x510 blog hero image for a technical article titled 'Jev: what survives the hype'. Refined technical editorial bitmap illustration. Show a concrete developer evaluation workbench: on the left a small laptop displaying three short terminal rows reading 'CLASSIFY', 'VERIFY', 'ROUTE'; at center a transparent mechanical sorting apparatus routes plain document cards along a teal accepted path and an amber review path; at right a compact server cabinet behind a physical access gate with a small globe and a lock symbol. Three connected work areas represent a personal coding workflow, a product decision pipeline, and infrastructure constraints. The central sorting device is small and practical rather than an all-powerful robot. Several crisp details, orderly composition with breathing space, diagram-like precision without a text-heavy poster. Dark graphite background with balanced teal, amber, off-white and slate accents, professional AI/developer publication aesthetic. No people, no logos, no brand names, no giant title, no purple gradient blobs, no bokeh. Any tiny labels must be legible; prefer symbols over extra text.
+```
