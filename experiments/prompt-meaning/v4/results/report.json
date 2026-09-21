@@ -1,0 +1,454 @@
+{
+  "calls": 40,
+  "attempts": 40,
+  "invalid": [],
+  "notes": [
+    {
+      "chain": "dose--gpt-sol",
+      "stage": "h2",
+      "model": "claude-opus",
+      "words": 519,
+      "text": "REVIEWER BRIEF: Evidence-Dose Sampling/Refinement — Batch-Run Performance Refactor\n\nMandate\nReview a performance-only refactor. The current implementation and regression tests are authoritative wherever they conflict with earlier design docs or plans. Observable behavior — selected source indices, ordering, prompt text, classifications, metadata, provider call counts, iteration counts, final accuracy, and seeded determinism — must be identical. Redesign is out of scope; do not \"fix\" discrepancies with the old plan.\n\nBehavior you are protecting\nEvidence dose controls the transcript with a nominal 40-example sample: m positive (contact) transitions, m distinct matched negatives, and up to 40−2m background transitions. Supported m satisfies 0 < 2m <= 40. \"small\" span clusters positive boundary projections around a random anchor; \"large\" span uses farthest-point sampling over those projections.\n\nEvery transition carries a stable source_index assigned in original collection order. It is the identity linking full-gate failures to the controlled sample. It must never be replaced by an index from a shuffled, filtered, or batched representation, and must survive array conversion.\n\nPositive depth and negative proximity are measured from the proposed endpoint before contact clamping, via `_proposed_endpoint` calling `env._integrate`. Using recorded `next_state` for contacts is wrong because contact freezes/clamps state. Boundary-normal distance is Euclidean distance to `env.shape.project_to_boundary(endpoint)`.\n\nMatching: for each selected positive, choose the unused negative minimizing |negative boundary distance − positive penetration depth|. Ties resolve by original negative iteration order. Vectorized or batched matching must reproduce that tie behavior exactly — no unordered sets, unstable sorts, or reassociated floating-point reductions.\n\nBackground is sampled only from non-contact transitions, excluding selected positives and matched negatives. This exclusion fixed a regression where unselected positives leaked into background; seeded tests cover it. Underfill is tolerated and the actual count recorded, though normal regression data expects exactly 40.\n\n`allowed_source_indices` includes every controlled example, background included, so refinement may legitimately report a failed background observation. Preserve this.\n\nPrompt/refinement semantics\n`build_controlled_initial_messages` presents all controlled examples as \"controlled observations,\" never failures; keep wording and ordering stable. `refine_capped` evaluates every candidate against the full `gate_transitions`, not just the controlled sample, then filters attributable failures by `allowed_source_indices` and sends at most the first 20 failure texts in gate order. An `evidence_capped_failure` is gate accuracy below 1.0 with no remaining attributable failure in the allowed set; it halts refinement. A global execution/sandbox failure uses `source_index=None`, is not evidence-capped, and must be fed back and retried through `max_iters` — a regression test asserts invalid Python gets all retries.\n\nOptimization targets and risks\nLikely safe: precompute proposed endpoints/projections for all negatives once, reduce repeated Python scans, batch full-gate execution. Negative geometry is currently computed lazily inside each positive's search (expensive; caching helps, costs memory). Shape projection is scalar and family-dependent — broad vectorization may alter numerics or multimodal projections. Full-gate sandbox evaluation is likely the dominant refinement cost.\n\nWatch for: endpoints inferred from clamped states; reused matched negatives; contacts in background; per-case provider calls or a changed 20-failure cap; evaluating only the controlled sample; None-indexed infra failures reclassified as evidence-capped; mutation of transition dicts while caching batch fields.\n\nRequire: benchmarks for sampling and refinement separately, failure-heavy and infra-failure cases included, and a green full regression suite, especially `test_evidence_dose.py`.",
+      "status": "ok",
+      "finish_reason": "end_turn",
+      "valid": true
+    },
+    {
+      "chain": "dose--claude-opus",
+      "stage": "h1",
+      "model": "claude-opus",
+      "words": 0,
+      "text": "",
+      "status": "ok",
+      "finish_reason": "refusal",
+      "valid": false
+    },
+    {
+      "chain": "geometry--gpt-sol",
+      "stage": "h1",
+      "model": "gpt-sol",
+      "words": 641,
+      "text": "Maintenance handoff: geometry metrics and artifact classification\n\nScope and authority\n\nThe next task is review of a batch-run performance refactor. Treat the current implementation and regression tests as authoritative wherever they differ from the earlier design. Preserve behavior exactly; redesigns, metric changes, stronger statistical claims, and API cleanup are outside this ticket.\n\nGeometry metrics\n\nThe implementation lives in metrics_geom.py. The primary metric is state–action disagreement, not planar IoU. stratified_probes returns exactly n_per probes for five strata: inside, outside, band, uniform, and planner. It raises rather than silently underfilling.\n\nConstructed probes use invert_integrator so a selected endpoint is reached by the forward dynamics. The band alternates inward/outward offsets and is intended to be class-balanced; band is the primary stratum. Inside/outside probes geometrically increase their boundary offset until env.contact produces the requested label. Uniform probes are sampled in state–action space but retained only when their endpoint remains in the box. Planner probes are real supplied queries, cycled if fewer than n_per; an empty planner list is an error.\n\nAt cone vertices, the effective outward normal is the normalized sum of face normals. Contact truth always comes from env.contact, not signed-distance sign assumptions.\n\ndisagreement_scores detects modeled contact through the exact freeze signature: unchanged previous x/y and exactly zero vx/vy. Do not replace this with tolerance-based comparison in the performance refactor. “Disagreement” is one minus balanced accuracy. If a stratum lacks one class, the unavailable rate is NaN and is dropped; preserve this current behavior.\n\nEndpoint-space terminology is important. forbidden_mask grids desired next-position endpoints, inverts each endpoint to a previous state, runs model_step, and detects the freeze signature. It must not evaluate the grid point as the previous position, which would translate the apparent forbidden region. The mask is indexed as mask[x_index, y_index]. It currently uses fixed shared physics constants dt=0.1, gain=3.0, drag=0.3, a_max=1.0.\n\nA positional guard has substantially the same endpoint mask across velocity preimages. preimage_invariant compares every mask with the first using Jaccard >= 0.98; two empty masks score 1.0. iou_vs_truth returns class=non_positional and iou=None if this check fails. Otherwise it reports truth/model Jaccard using the first velocity sample.\n\nboundary_of_set returns coordinates of true mask cells having a false or off-grid four-neighbor. It is only a marching-squares-style cell-edge approximation, not an interpolated contour. symmetric_boundary_distance pools both directed nearest-neighbor distances and reports normalized maximum (“hausdorff”), p95, and mean. An empty model boundary yields infinities.\n\nArtifact classification\n\nartifact_class.py enforces three exact classes:\n\ninvalid: syntax failure, missing/non-callable step or reward, or either function raising during sandbox preflight;\ngate_failing: executable, but contract accuracy is below exactly 1.0;\ngate_passing: accuracy equals exactly 1.0.\n\nast.parse and static guard_features run in-process, but candidate execution must remain sandboxed. Never introduce in-process exec/eval for gate-failing or otherwise unaccepted artifacts.\n\ndynamic_metrics_sandboxed computes an endpoint-space mask in one sandbox subprocess. The child loops over the whole grid, packs mask bits, base64-encodes them in a JSON envelope, and the parent reconstructs a boolean ndarray. Despite accepting velocity_samples, current behavior uses only velocity_samples[0]. Per-cell step exceptions are treated as “not fired.” Preserve both behaviors unless separately approved.\n\nRegression anchors\n\ntest_metrics_geom verifies full strata, truth/blind band disagreement, positional invariance, rejection of a velocity guard, grid-bounded true-boundary error, and positive shifted-boundary error. test_artifact_class verifies missing step is invalid, runnable wrong code is gate_failing, and sandbox mask shape is correct. Existing cart/contract golden behavior must also remain untouched.\n\nPerformance-refactor review risks\n\nCheck that batching preserves endpoint inversion, x/y mask orientation, probe order, RNG consumption, exact freeze comparisons, first-velocity semantics, and exception handling. Avoid recomputing masks where safely cacheable, but key caches by model, box, grid, velocity, and action. Sandbox batching must remain one isolated call and retain timeout/error propagation. Watch memory at 256²/512² and avoid changing floating-point operation order near boundaries, where Jaccard and regression thresholds are sensitive. Current tests cover circles most strongly; polygons, cone vertices, empty boundaries, malformed sandbox output, and multi-velocity sandbox metrics remain coverage gaps.",
+      "status": "ok",
+      "finish_reason": "stop",
+      "valid": true
+    },
+    {
+      "chain": "geometry--claude-opus",
+      "stage": "h1",
+      "model": "claude-opus",
+      "words": 0,
+      "text": "",
+      "status": "ok",
+      "finish_reason": "refusal",
+      "valid": false
+    },
+    {
+      "chain": "geometry--gpt-sol",
+      "stage": "h2",
+      "model": "claude-opus",
+      "words": 505,
+      "text": "REVIEWER BRIEF: batch-run performance refactor for geometry metrics and artifact classification\n\nYour authority and limits\nReview the proposed refactor only. The current implementation (metrics_geom.py, artifact_class.py) and the regression tests are authoritative wherever they conflict with earlier design notes. Behavior must be preserved exactly. Reject, or defer to a separate ticket, any metric redesign, stronger statistical claims, API cleanup, or \"obvious\" correctness fixes — including ones that look like improvements.\n\nInvariants a performance change must not disturb\n\nProbes. stratified_probes returns exactly n_per probes for five strata (inside, outside, band, uniform, planner) and raises rather than underfilling. Constructed probes use invert_integrator so the selected endpoint is reached by forward dynamics. Band alternates inward/outward offsets, is class-balanced, and is the primary stratum. Inside/outside grow the boundary offset geometrically until env.contact returns the requested label. Uniform probes are sampled in state–action space and kept only if the endpoint stays in the box. Planner probes are real supplied queries, cycled if short; an empty planner list is an error. Contact truth always comes from env.contact. At cone vertices the outward normal is the normalized sum of face normals.\n\nDisagreement. The primary metric is state–action disagreement, not planar IoU. Modeled contact is detected by the exact freeze signature: unchanged previous x/y and exactly zero vx/vy. Do not accept tolerance-based comparison. Disagreement is one minus balanced accuracy; a single-class stratum yields NaN for the missing rate and is dropped.\n\nEndpoint space. forbidden_mask grids desired next-position endpoints, inverts each to a previous state, runs model_step, and checks the freeze signature. Treating the grid point as the previous position shifts the region and is a regression. Indexing is mask[x_index, y_index]. Shared constants are dt=0.1, gain=3.0, drag=0.3, a_max=1.0.\n\nPositional check. preimage_invariant compares each mask to the first with Jaccard >= 0.98; two empty masks score 1.0. iou_vs_truth returns class=non_positional, iou=None on failure, else truth/model Jaccard from the first velocity sample. boundary_of_set returns true cells with a false or off-grid four-neighbor (cell-edge approximation only). symmetric_boundary_distance pools both directed distances and reports normalized hausdorff, p95, mean; empty model boundary gives infinities.\n\nArtifacts. Exactly three classes: invalid (syntax failure, missing/non-callable step or reward, or a preflight raise), gate_failing (accuracy below exactly 1.0), gate_passing (exactly 1.0). ast.parse and guard_features may run in-process; candidate execution must stay sandboxed — never in-process exec/eval for unaccepted artifacts. dynamic_metrics_sandboxed stays one isolated subprocess call with timeout and error propagation intact: bit-packed, base64 JSON envelope, parent rebuilds a boolean ndarray, only velocity_samples[0] used, per-cell step exceptions counted as \"not fired.\"\n\nReview focus\nConfirm batching preserves endpoint inversion, mask orientation, probe order, RNG consumption, exact freeze comparisons, first-velocity semantics, and exception handling. Caching is welcome but must key on model, box, grid, velocity, and action. Check memory at 256² and 512², and reject changes to floating-point operation order near boundaries, where Jaccard and thresholds are sensitive. Reporting should stay uniform across strata, including NaN drops and None/infinity cases.\n\nKnown coverage gaps (ask for tests, don't trust green alone): polygons, cone vertices, empty boundaries, malformed sandbox output, multi-velocity sandbox metrics. Cart/contract golden behavior must remain untouched.",
+      "status": "ok",
+      "finish_reason": "end_turn",
+      "valid": true
+    },
+    {
+      "chain": "dose--gpt-sol",
+      "stage": "h1",
+      "model": "gpt-sol",
+      "words": 735,
+      "text": "MAINTENANCE HANDOFF: Evidence-dose sampling/refinement and batch-run performance review\n\nScope and priority\n\nThe next task is to review a batch-run performance refactor around evidence-dose sampling and refinement. Treat the current implementation and regression tests as authoritative wherever they differ from the earlier design. Preserve observable behavior, ordering, prompt text, classifications, and seeded determinism. A conceptual redesign is outside this ticket.\n\nCurrent behavior\n\nEvidence dose controls the complete transcript with a nominal 40-example sample:\n\n- m positive/contact transitions.\n- m distinct matched negative/non-contact transitions.\n- Up to 40−2m background transitions.\n- Supported m requires 0 < 2m <= 40.\n- “small” span clusters positive boundary projections around a random anchor.\n- “large” span uses farthest-point sampling over boundary projections.\n\nEach transition has a stable source_index assigned in the original collection order. Never replace it with an index from a shuffled, filtered, or batched representation. It is the identity used to connect full-gate failures to the controlled sample.\n\nPositive depth and negative proximity are measured from the proposed endpoint before contact clamping. `_proposed_endpoint` calls `env._integrate`; using recorded `next_state` for contacts would be wrong because contact freezes/clamps the state. Boundary-normal distance is Euclidean distance to `env.shape.project_to_boundary(endpoint)`.\n\nFor every selected positive, matching chooses the unused negative minimizing absolute difference between the negative’s boundary distance and the positive’s penetration depth. Ties currently resolve by original negative iteration order. Any vectorized/batched implementation must preserve that deterministic tie behavior unless tests are deliberately expanded and behavior change is approved.\n\nBackground examples are sampled only from non-contact transitions and exclude selected positives and matched negatives. This exclusion fixed a prior regression where unselected positives leaked into the background. Tests exercise known seeds for that bug. The implementation gracefully underfills if insufficient eligible background exists and records the actual count, although normal regression data expects exactly 40. Do not “correct” this discrepancy from the old plan during a performance-only change.\n\n`allowed_source_indices` currently contains every controlled example, including background. Refinement may therefore report a failed background observation if it is in the controlled set. Preserve this behavior.\n\nPrompt/refinement semantics\n\n`build_controlled_initial_messages` presents all controlled examples as “controlled observations,” not failures. Keep wording and ordering stable unless prompt changes are explicitly in scope.\n\n`refine_capped` evaluates every candidate against the full `gate_transitions`, not merely the controlled examples. It then filters attributable failures by `allowed_source_indices` and sends at most the first 20 failure texts, in gate order, to the provider.\n\nAn `evidence_capped_failure` occurs when gate accuracy is below 1.0 but no remaining attributable failure belongs to the allowed set. It stops refinement immediately.\n\nA global execution/sandbox failure is represented by `source_index=None`. This is not evidence-capped. It must be fed back to the model and retried through `max_iters`. A dedicated regression test verifies that invalid Python receives all retries and is never mislabeled evidence-capped.\n\nRelevant terminology\n\n- Full gate: normally all transitions, historically 40×80 = 3200.\n- Controlled sample/dose: examples visible to the model.\n- Positive/contact: the true mode fired.\n- Matched negative: nearby non-contact selected by boundary-distance matching.\n- Background: controlled non-contact observation that is not a matched negative.\n- V_transcript: mode evidence actually reaching prompts; this is the visibility notion that matters.\n- Evidence-capped failure: remaining full-gate errors exist only outside the correctable source-index set.\n- Infra failure: global parse, sandbox, timeout, or malformed-output failure with no attributable transition.\n\nPerformance-refactor review checklist\n\nLikely safe optimization targets are precomputing proposed endpoints/projections for all negatives once, reducing repeated Python scans, and batching full-gate execution. Verify identical selected source indices, ordering, metadata, provider calls, failure text, iteration counts, and final accuracy across fixed seeds.\n\nDo not accidentally:\n\n- Infer endpoints from clamped next states.\n- Reuse matched negatives.\n- Admit contacts into background.\n- Lose source_index during array conversion.\n- Change stable tie resolution through unordered sets, unstable sorting, or floating-point reductions.\n- Evaluate only the controlled sample instead of the full gate.\n- Turn `None`-indexed infra failures into evidence-capped failures.\n- Run one provider call per case or alter the 20-failure prompt cap.\n- Mutate transition dictionaries while caching batch fields.\n\nPending risks\n\nThe current matching path is expensive because negative geometry is lazily computed inside each positive’s search; caching should help substantially but may increase memory. Shape projection remains scalar and family-dependent, so broad vectorization may change numerical or multimodal projection behavior. Full-gate sandbox evaluation is probably the dominant refinement cost. Benchmark sampling and refinement separately, include failure-heavy and infra-failure cases, and require the full regression suite—especially `test_evidence_dose.py`—to remain green.",
+      "status": "ok",
+      "finish_reason": "stop",
+      "valid": true
+    },
+    {
+      "chain": "geometry--gpt-sol",
+      "stage": "h3",
+      "model": "gpt-sol",
+      "words": 367,
+      "text": "Session start: review the batch-run performance refactor for geometry metrics and artifact classification. Decide mergeability strictly by behavior preservation. The current implementation in metrics_geom.py and artifact_class.py, plus regression tests, is authoritative over earlier plans. Defer metric redesigns, stronger statistical claims, API cleanup, and “obvious” fixes to separate tickets.\n\nRequired behavior:\n\n- stratified_probes must return exactly n_per probes for each of inside, outside, band, uniform, and planner, raising instead of underfilling. Preserve probe order and RNG consumption. Constructed probes use invert_integrator so forward dynamics reach the selected endpoint. Band is primary, class-balanced, and alternates inward/outward offsets. Inside/outside geometrically increase boundary offset until env.contact gives the requested label. Uniform samples state–action space and retains only in-box endpoints. Planner queries are real inputs, cycled when short; empty input is an error. Contact truth always comes from env.contact. Cone-vertex outward normals are normalized sums of face normals.\n\n- Disagreement remains state–action disagreement: 1 minus balanced accuracy. Modeled contact uses the exact freeze signature—unchanged previous x/y and exactly zero vx/vy—with no tolerances. Missing rates in single-class strata are NaN and dropped.\n\n- forbidden_mask grids desired next-position endpoints, inverts them to previous states, executes model_step, and checks the freeze signature. Preserve mask[x_index, y_index], dt=0.1, gain=3.0, drag=0.3, and a_max=1.0. Do not reinterpret grid points as previous positions.\n\n- preimage_invariant compares every mask with the first at Jaccard >= 0.98; two empty masks score 1.0. iou_vs_truth returns non_positional with iou=None on failure; otherwise it uses the first velocity sample. boundary_of_set uses false/off-grid four-neighbors. symmetric_boundary_distance pools both directions and reports normalized Hausdorff, p95, and mean; an empty model boundary produces infinities.\n\nArtifact classes remain exactly invalid, gate_failing, and gate_passing, with the gate threshold exactly 1.0. Candidate execution must remain sandboxed. dynamic_metrics_sandboxed must stay one isolated subprocess call with timeout/error propagation, bit-packed base64 JSON transport, parent-side boolean ndarray reconstruction, first-velocity-only semantics, and per-cell step exceptions treated as “not fired.”\n\nReview batching for inversion, orientation, ordering, RNG, exact comparisons, floating-point operation order, and exception behavior. Cache keys must include model, box, grid, velocity, and action. Assess memory at 256² and 512². Require targeted tests for polygons, cone vertices, empty boundaries, malformed sandbox output, and multiple velocity samples. Green tests alone are insufficient; cart/contract golden behavior must remain unchanged.",
+      "status": "ok",
+      "finish_reason": "stop",
+      "valid": true
+    },
+    {
+      "chain": "dose--gpt-sol",
+      "stage": "h3",
+      "model": "gpt-sol",
+      "words": 401,
+      "text": "Session Start — Evidence-Dose Sampling/Refinement Performance Refactor Review\n\nObjective: decide whether this performance-only refactor is safe to merge. Current implementation and regression tests are authoritative over earlier plans. Do not redesign or “correct” existing behavior. Merge only if observable behavior is identical: selected source indices, ordering, prompt text, classifications, metadata, provider-call and iteration counts, final accuracy, and seeded determinism.\n\nProtected sampling behavior:\n- Evidence dose nominally contains 40 examples: m contact positives, m distinct matched negatives, and up to 40−2m background transitions, with 0 < 2m <= 40.\n- “small” span clusters positive boundary projections around a random anchor. “large” uses farthest-point sampling.\n- `source_index`, assigned in original collection order, is stable identity. It must survive conversion/batching and never be replaced by shuffled or filtered indices.\n- Compute positive penetration and negative proximity from `_proposed_endpoint`, which calls `env._integrate`, before contact clamping. Do not infer contact geometry from recorded `next_state`.\n- Boundary distance is Euclidean distance to `env.shape.project_to_boundary(endpoint)`.\n- For each positive, select the unused negative minimizing the absolute difference between negative boundary distance and positive penetration depth. Ties follow original negative iteration order exactly. Avoid unstable sorting, unordered containers, or floating-point reassociation that changes choices.\n- Background comes only from non-contact transitions and excludes selected positives and matched negatives. Underfill is allowed and actual count must be recorded.\n- `allowed_source_indices` contains every controlled example, including background.\n\nProtected refinement behavior:\n- Initial messages call all examples “controlled observations,” never failures; preserve exact wording and ordering.\n- `refine_capped` evaluates each candidate against full `gate_transitions`, then filters failures by `allowed_source_indices`. It sends at most the first 20 failure texts in gate order.\n- Gate accuracy below 1.0 with no attributable allowed failure is `evidence_capped_failure` and stops refinement.\n- Global sandbox/execution failures have `source_index=None`; they are not evidence-capped and must be retried through `max_iters`. Invalid Python must receive all retries.\n- Do not introduce per-case provider calls or evaluate only the controlled sample.\n\nLikely safe optimizations include caching proposed endpoints/projections for negatives, reducing repeated scans, and batching full-gate execution. Verify caches do not mutate transition dictionaries. Treat broad shape-projection vectorization as high risk because projections are scalar, family-dependent, and potentially multimodal.\n\nMerge requirements:\n1. Green full regression suite, especially `test_evidence_dose.py`.\n2. Before/after equivalence for all protected observables and fixed seeds.\n3. Separate sampling and refinement benchmarks, including failure-heavy and infrastructure-failure cases.\n4. Demonstrated performance improvement without altered call counts, retries, classifications, or numerical selection behavior.",
+      "status": "ok",
+      "finish_reason": "stop",
+      "valid": true
+    }
+  ],
+  "groups": [
+    {
+      "model": "claude-opus",
+      "variant": "first",
+      "subset": "all",
+      "expected": 64,
+      "valid": 64,
+      "correct": 63,
+      "abstain": 1,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "first",
+      "subset": "boundary",
+      "expected": 48,
+      "valid": 48,
+      "correct": 47,
+      "abstain": 1,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "first",
+      "subset": "routine",
+      "expected": 16,
+      "valid": 16,
+      "correct": 16,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "full",
+      "subset": "all",
+      "expected": 64,
+      "valid": 64,
+      "correct": 64,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "full",
+      "subset": "boundary",
+      "expected": 48,
+      "valid": 48,
+      "correct": 48,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "full",
+      "subset": "routine",
+      "expected": 16,
+      "valid": 16,
+      "correct": 16,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "last",
+      "subset": "all",
+      "expected": 64,
+      "valid": 64,
+      "correct": 64,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "last",
+      "subset": "boundary",
+      "expected": 48,
+      "valid": 48,
+      "correct": 48,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "last",
+      "subset": "routine",
+      "expected": 16,
+      "valid": 16,
+      "correct": 16,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "opaque",
+      "subset": "all",
+      "expected": 64,
+      "valid": 64,
+      "correct": 63,
+      "abstain": 1,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "opaque",
+      "subset": "boundary",
+      "expected": 48,
+      "valid": 48,
+      "correct": 47,
+      "abstain": 1,
+      "wrong": 0
+    },
+    {
+      "model": "claude-opus",
+      "variant": "opaque",
+      "subset": "routine",
+      "expected": 16,
+      "valid": 16,
+      "correct": 16,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "first",
+      "subset": "all",
+      "expected": 64,
+      "valid": 64,
+      "correct": 63,
+      "abstain": 1,
+      "wrong": 0
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "first",
+      "subset": "boundary",
+      "expected": 48,
+      "valid": 48,
+      "correct": 48,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "first",
+      "subset": "routine",
+      "expected": 16,
+      "valid": 16,
+      "correct": 15,
+      "abstain": 1,
+      "wrong": 0
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "full",
+      "subset": "all",
+      "expected": 64,
+      "valid": 64,
+      "correct": 64,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "full",
+      "subset": "boundary",
+      "expected": 48,
+      "valid": 48,
+      "correct": 48,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "full",
+      "subset": "routine",
+      "expected": 16,
+      "valid": 16,
+      "correct": 16,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "last",
+      "subset": "all",
+      "expected": 64,
+      "valid": 64,
+      "correct": 62,
+      "abstain": 2,
+      "wrong": 0
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "last",
+      "subset": "boundary",
+      "expected": 48,
+      "valid": 48,
+      "correct": 48,
+      "abstain": 0,
+      "wrong": 0
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "last",
+      "subset": "routine",
+      "expected": 16,
+      "valid": 16,
+      "correct": 14,
+      "abstain": 2,
+      "wrong": 0
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "opaque",
+      "subset": "all",
+      "expected": 64,
+      "valid": 64,
+      "correct": 62,
+      "abstain": 0,
+      "wrong": 2
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "opaque",
+      "subset": "boundary",
+      "expected": 48,
+      "valid": 48,
+      "correct": 46,
+      "abstain": 0,
+      "wrong": 2
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "opaque",
+      "subset": "routine",
+      "expected": 16,
+      "valid": 16,
+      "correct": 16,
+      "abstain": 0,
+      "wrong": 0
+    }
+  ],
+  "stable_later_errors": [],
+  "stable_initial_errors": [],
+  "stable_lexical_changes": [
+    {
+      "chain": "geometry--gpt-sol",
+      "model": "gpt-sol",
+      "case": {
+        "id": "p04",
+        "expected": "reject",
+        "proposal": "Treat candidate code that cannot execute its step function as gate_failing rather than invalid.",
+        "source": "test_artifact_class.py:test_missing_step_is_invalid_not_gate_failing",
+        "routine": true
+      },
+      "observations": {
+        "full": [
+          {
+            "decision": "reject",
+            "reason": "Candidate code whose step function cannot execute is explicitly classified and regression-tested as invalid rather than gate_failing."
+          },
+          {
+            "decision": "reject",
+            "reason": "The artifact classification contract and regression tests require code whose step function cannot execute to be classified as `invalid`, not `gate_failing`."
+          }
+        ],
+        "first": [
+          {
+            "decision": "reject",
+            "reason": "A candidate whose step function raises during sandbox preflight is explicitly classified as invalid, not gate_failing."
+          },
+          {
+            "decision": "reject",
+            "reason": "A candidate whose step function raises during sandbox preflight is classified as invalid, not gate_failing."
+          }
+        ],
+        "last": [
+          {
+            "decision": "needs_context",
+            "reason": "The supplied context preserves the three artifact classes but does not define whether inability to execute a step function maps to invalid or gate_failing."
+          },
+          {
+            "decision": "needs_context",
+            "reason": "The supplied context preserves the three artifact classes but does not define whether failure to execute a step function is invalid or gate_failing."
+          }
+        ],
+        "opaque": [
+          {
+            "decision": "reject",
+            "reason": "A candidate that cannot execute its step function is invalid rather than merely gate_failing, while only isolated per-cell step exceptions are treated as not fired."
+          },
+          {
+            "decision": "reject",
+            "reason": "A candidate whose step function cannot execute is invalid, not an executable candidate that merely fails the gate threshold."
+          }
+        ]
+      }
+    }
+  ],
+  "routine_success_boundary_errors": [],
+  "unstable": [
+    {
+      "chain": "dose--gpt-sol",
+      "model": "claude-opus",
+      "id": "p15",
+      "variant": "first",
+      "labels": [
+        "needs_context",
+        "reject"
+      ]
+    },
+    {
+      "chain": "dose--gpt-sol",
+      "model": "claude-opus",
+      "id": "p15",
+      "variant": "opaque",
+      "labels": [
+        "needs_context",
+        "reject"
+      ]
+    },
+    {
+      "chain": "geometry--gpt-sol",
+      "model": "gpt-sol",
+      "id": "p03",
+      "variant": "first",
+      "labels": [
+        "needs_context",
+        "accept"
+      ]
+    },
+    {
+      "chain": "geometry--gpt-sol",
+      "model": "gpt-sol",
+      "id": "p07",
+      "variant": "opaque",
+      "labels": [
+        "reject",
+        "accept"
+      ]
+    },
+    {
+      "chain": "geometry--gpt-sol",
+      "model": "gpt-sol",
+      "id": "p08",
+      "variant": "opaque",
+      "labels": [
+        "accept",
+        "reject"
+      ]
+    }
+  ],
+  "costs": [
+    {
+      "model": "claude-opus",
+      "input": 287141,
+      "output": 33290,
+      "reference_usd": 2.267955
+    },
+    {
+      "model": "gpt-sol",
+      "input": 184965,
+      "output": 20663,
+      "reference_usd": 1.15312
+    }
+  ],
+  "wall_seconds": 430.798074
+}

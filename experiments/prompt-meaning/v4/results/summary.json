@@ -1,0 +1,207 @@
+{
+  "calls": 76,
+  "attempts": 76,
+  "accounting": [
+    {
+      "model": "claude-opus",
+      "calls": 28,
+      "input": 377799,
+      "output": 39910,
+      "reference_usd": 2.886745
+    },
+    {
+      "model": "gpt-sol",
+      "calls": 48,
+      "input": 269081,
+      "output": 50288,
+      "reference_usd": 2.082084
+    }
+  ],
+  "reference_total_usd": 4.9688289999999995,
+  "elapsed_first_to_last_seconds": 1747.284465,
+  "boundary": [
+    {
+      "model": "claude-opus",
+      "variant": "first",
+      "rep": 0,
+      "s01": {
+        "decision": "needs_context",
+        "reason": "The supplied context defines evidence-capped detection within the refinement loop but says nothing about whether that flag is computed when max_iters=0 and no iteration runs, so the expected value is unsettled."
+      }
+    },
+    {
+      "model": "claude-opus",
+      "variant": "first",
+      "rep": 1,
+      "s01": {
+        "decision": "needs_context",
+        "reason": "The context does not specify whether the evidence-capped check is evaluated before entering the refinement loop, so the correct flag value when max_iters=0 is unsettled."
+      }
+    },
+    {
+      "model": "claude-opus",
+      "variant": "full",
+      "rep": 0,
+      "s01": {
+        "decision": "reject",
+        "reason": "With max_iters=0 the `while acc < 1.0 and iterations < max_iters` loop never runs, so the current implementation returns evidence_capped_failure=False, not True."
+      }
+    },
+    {
+      "model": "claude-opus",
+      "variant": "full",
+      "rep": 1,
+      "s01": {
+        "decision": "reject",
+        "reason": "With max_iters=0 the loop never executes, so the current code leaves evidence_capped_failure=False rather than True."
+      }
+    },
+    {
+      "model": "claude-opus",
+      "variant": "last",
+      "rep": 0,
+      "s01": {
+        "decision": "accept",
+        "reason": "Accuracy below 1.0 with all failure source IDs outside allowed_source_indices is exactly the evidence_capped_failure condition, and with max_iters=0 zero repair iterations is the expected outcome."
+      }
+    },
+    {
+      "model": "claude-opus",
+      "variant": "last",
+      "rep": 1,
+      "s01": {
+        "decision": "needs_context",
+        "reason": "The context does not specify whether the evidence-capped determination is made before or only inside the repair loop, so with max_iters=0 it is unclear whether the current implementation would report evidence_capped_failure=True."
+      }
+    },
+    {
+      "model": "claude-opus",
+      "variant": "opaque",
+      "rep": 0,
+      "s01": {
+        "decision": "accept",
+        "reason": "Accuracy below 1.0 with all failure source IDs (311, 512) outside allowed_source_indices means no attributable allowed failure, so flag_q7 with zero repair iterations is the specified behavior (and max_iters=0 permits none anyway)."
+      }
+    },
+    {
+      "model": "claude-opus",
+      "variant": "opaque",
+      "rep": 1,
+      "s01": {
+        "decision": "accept",
+        "reason": "Accuracy below 1.0 with all failures (311, 512) outside allowed_source_indices is exactly the flag_q7-and-stop case, so zero repair iterations is correct."
+      }
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "first",
+      "rep": 0,
+      "s01": {
+        "decision": "accept",
+        "reason": "Gate accuracy is below 1.0 and no failure is attributable to an allowed source index, so current semantics classify it as evidence-capped with zero repair iterations."
+      }
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "first",
+      "rep": 1,
+      "s01": {
+        "decision": "accept",
+        "reason": "The imperfect initial gate has no failure attributable to the allowed set, so it is evidence-capped even though max_iters permits no repair iterations."
+      }
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "full",
+      "rep": 0,
+      "s01": null
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "full",
+      "rep": 1,
+      "s01": {
+        "decision": "reject",
+        "reason": "With max_iters=0, the loop never evaluates whether failures are outside the allowed set, so evidence_capped_failure remains False."
+      }
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "last",
+      "rep": 0,
+      "s01": {
+        "decision": "accept",
+        "reason": "Gate accuracy is below 1.0 with no failure attributable to an allowed source index, so current behavior is to stop with evidence_capped_failure=True and no repair iterations."
+      }
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "last",
+      "rep": 1,
+      "s01": {
+        "decision": "accept",
+        "reason": "With accuracy below 1.0, no failure attributable to an allowed source, and zero permitted iterations, returning evidence_capped_failure with zero repair iterations preserves the specified behavior."
+      }
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "opaque",
+      "rep": 0,
+      "s01": {
+        "decision": "accept",
+        "reason": "Gate accuracy is below 1.0 and no failure is attributable to an allowed source index, so flag_q7=True with zero repair iterations is required even when max_iters=0."
+      }
+    },
+    {
+      "model": "gpt-sol",
+      "variant": "opaque",
+      "rep": 1,
+      "s01": {
+        "decision": "accept",
+        "reason": "Accuracy is below 1.0 with no failure attributable to an allowed source, so flag_q7=True and zero repair iterations are required even when max_iters=0."
+      }
+    }
+  ],
+  "factor_cells": [
+    {
+      "variant": "explicit_named",
+      "calls": 5,
+      "valid": 5,
+      "target_pair_correct": 5,
+      "target_wrong_decisions": 0,
+      "target_abstentions": 0,
+      "all_wrong": 0,
+      "all_abstain": 7
+    },
+    {
+      "variant": "explicit_opaque",
+      "calls": 5,
+      "valid": 5,
+      "target_pair_correct": 5,
+      "target_wrong_decisions": 0,
+      "target_abstentions": 0,
+      "all_wrong": 0,
+      "all_abstain": 5
+    },
+    {
+      "variant": "implicit_named",
+      "calls": 5,
+      "valid": 5,
+      "target_pair_correct": 5,
+      "target_wrong_decisions": 0,
+      "target_abstentions": 0,
+      "all_wrong": 0,
+      "all_abstain": 2
+    },
+    {
+      "variant": "implicit_opaque",
+      "calls": 5,
+      "valid": 4,
+      "target_pair_correct": 4,
+      "target_wrong_decisions": 0,
+      "target_abstentions": 0,
+      "all_wrong": 0,
+      "all_abstain": 4
+    }
+  ]
+}

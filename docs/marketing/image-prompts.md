@@ -2,6 +2,43 @@
 
 Exact prompts used to generate blog hero images (via Codex `image_gen`), for reproducibility and iteration. Newest first.
 
+## now-it-seems-to-mean-something — real-code case
+
+- **Article:** `src/content/blog/{en,es}/now-it-seems-to-mean-something.md`
+- **Image:** `public/blog/now-it-seems-to-mean-something-v4.png`
+- **Generated:** 2026-09-21, built-in image generation tool.
+- **Review:** 1774×887. The loop bypass reaches `False`; the summary-fed review shows `True`. All four requested labels are legible. Editorial illustration, separate from the data-derived figures.
+
+```text
+Use case: stylized-concept.
+Asset type: a wide 2:1 technical editorial blog hero, ideally 1536x768 pixels, for an essay titled "The definition looked complete". Do not print the title.
+
+Create a refined, richly detailed bitmap illustration of a developer's review desk showing a program being condensed into an agent handoff note. The concrete subject is a condition lost when code is summarised: a flag is set only inside a repair loop, while the summary makes its definition look unconditional.
+
+On the left, a substantial dark code-editor screen shows a few short indented code-like lines, a clearly visible amber loop bracket enclosing the inner lines, and a thin teal execution path that bypasses the bracket and reaches a terminal result labelled exactly "False". The only other readable text on this screen is "max_iters = 0". Use restrained line marks for other code, not invented prose.
+
+At the centre, a warm off-white handoff sheet rests on the desk, with the small readable heading "definition", three clean horizontal text marks, and a tidy border. A detached amber bracket lies beside the sheet as a subtle visual clue that the condition did not enter the summary. The sheet should look coherent and usable, not visibly torn or corrupted.
+
+On the right, a second compact review screen receives the handoff sheet's visual connection and displays the result "True" in amber. It also contains a modest row of small teal checkmarks, suggesting prior successful checks without putting numbers in the image.
+
+Use physical paper, crisp display frames, a few understated annotation tabs and cables, subtle depth, and a balanced near-frontal composition. This is an editorial illustration of the case, not an experimental chart. Leave breathing room around the four readable text fragments. Use only the exact texts "max_iters = 0", "False", "definition", and "True"; no additional labels.
+
+Palette: dark graphite, off-white paper, restrained teal and amber accents, dark but not monochrome. Precise edges, professional developer-publication aesthetic, rich matte textures with controlled detail. No people, hands, robots, brains, logos, brand names, floating cubes, purple gradient blobs, bokeh, neon cyberpunk lighting, watermark or text-heavy poster.
+```
+
+---
+
+## now-it-seems-to-mean-something — previous draft hero
+
+- **Article:** `src/content/blog/{en,es}/now-it-seems-to-mean-something.md`
+- **Image:** `public/blog/now-it-seems-to-mean-something.png`
+- **Generated:** 2026-09-21, built-in image generation tool.
+- **Review:** Draft hero. Editorial illustration; the instruction sheet is illustrative, not a transcript of the experimental policy. The actual observations are in the separately generated figures.
+
+```text
+Create a wide 2:1 blog hero image, ideally 1536x768, for a technical essay titled "Now it seems to mean something". Refined technical editorial bitmap illustration, showing a concrete developer's inspection desk with a prompt editor and two execution panels. The subject is a missing approval rule concealed by a successful AI result. At left, an off-white printed instruction sheet on a graphite desk has three short rule lines and one conspicuous empty ruled gap; an amber sticky annotation next to the gap reads only "approval?". At centre, a dark prompt editor has a single amber-highlighted line with the exact readable text "conditional approval closure". At right, two compact terminal panels each show the teal word "review". Below them a small outlined checklist has a teal checkmark. A thin amber annotation line connects the empty gap to the highlighted phrase; teal connectors lead from the prompt editor to both results. Make the physical sheet, editor, and terminals distinct objects with subtle depth, precise typography, rich restrained detail, balanced composition, and generous breathing room. This is an editorial illustration, not an empirical chart; do not add numeric results or claim a mechanism. Dark but not monochrome: graphite background, balanced teal, amber, off-white accents. Crisp edges, professional developer publication aesthetic, no people, robots, brand names, logos, floating cubes, purple gradient blobs, bokeh, decorative code wallpaper, or text-heavy poster. Do not put the article title in the image.
+```
+
 ---
 
 ## nobody-will-check-behind-you
