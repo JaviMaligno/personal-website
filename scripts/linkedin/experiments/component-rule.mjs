@@ -17,7 +17,7 @@
  */
 import { readFileSync } from 'fs';
 import matter from 'gray-matter';
-import { generate, listFlashModels } from './gemini.mjs';
+import { generate } from './gemini.mjs';
 import { buildSummaryPrompt } from '../prompt.js';
 import { SCORES, componentes, listaInventada } from './scores.mjs';
 
@@ -61,42 +61,74 @@ const PROMPTS = {
 
 const REPS = 2;  // una tirada por celda no distingue la regla del azar del muestreo
 
+// Fijos, y no "los mas nuevos que ofrezca la API": la primera tirada de este
+// experimento (2026-09-21) dejo que el script eligiera y cogio gemini-3.8-flash,
+// que es exactamente el que el README documenta desde el 2026-09-09 como el que
+// NO aguanta un articulo entero — 503 y 429 en todas sus celdas. Estos dos son
+// los que usa produccion.
+const MODELOS = ['gemini-3-flash-preview', 'gemini-3.5-flash'];
+
+/** PRNG con semilla: el orden cambia, pero el mismo run se puede repetir. */
+function barajar(xs, semilla = 42) {
+  let s = semilla;
+  const r = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const a = [...xs];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 async function run() {
-  const flash = await listFlashModels();
-  const wanted = ['gemini-3-flash-preview'];
-  wanted.push(...flash.filter(m => !wanted.includes(m)).slice(0, 1));
-  console.log('Modelos a probar:', wanted.join(', '));
-  console.log(`Celdas: ${ARTICLES.length} articulos x ${Object.keys(PROMPTS).length} prompts x ${wanted.length} modelos x ${REPS} tiradas\n`);
+  console.log('Modelos:', MODELOS.join(', '));
+  // Las celdas van EMPAREJADAS (sin_regla y con_regla seguidas, mismo articulo,
+  // modelo y tirada) y en orden barajado. En la primera tirada el orden era
+  // secuencial, el cupo se agoto a mitad y se llevo por delante justo los dos
+  // articulos de control, que iban al final: el brazo que medía el riesgo de la
+  // regla se quedo en n=1. Emparejado, un corte se lleva los dos brazos a la
+  // vez y el par entero se descarta, en vez de sesgar la comparacion.
+  const pares = [];
+  for (const art of ARTICLES)
+    for (const modelName of MODELOS)
+      for (let rep = 1; rep <= REPS; rep++)
+        pares.push({ art, modelName, rep });
+  const orden = barajar(pares);
+  console.log(`Pares: ${orden.length} (${ARTICLES.length} articulos x ${MODELOS.length} modelos x ${REPS} tiradas), 2 llamadas cada uno\n`);
 
   const rows = [];
-  for (const art of ARTICLES) {
+  for (const { art, modelName, rep } of orden) {
     const { data, content } = matter(readFileSync(art.path, 'utf-8'));
     const params = { title: data.title, description: data.description, tags: data.tags || [], content };
+    const par = [];
 
     for (const [pname, build] of Object.entries(PROMPTS)) {
-      for (const modelName of wanted) {
-        for (let rep = 1; rep <= REPS; rep++) {
-          const r = await generate(modelName, build(params));
-          const text = r.text || '';
-          const flags = Object.fromEntries(Object.entries(SCORES).map(([k, f]) => [k, text ? f(text) : null]));
-          const comp = text ? componentes(text, art.components) : null;
-          const lista = text ? listaInventada(text) : null;
-          rows.push({ art: art.key, prompt: pname, model: modelName, rep, err: r.err || '', flags, comp, lista, text });
+      const r = await generate(modelName, build(params));
+      const text = r.text || '';
+      const flags = Object.fromEntries(Object.entries(SCORES).map(([k, f]) => [k, text ? f(text) : null]));
+      const comp = text ? componentes(text, art.components) : null;
+      const lista = text ? listaInventada(text) : null;
+      par.push({ art: art.key, prompt: pname, model: modelName, rep, err: r.err || '', flags, comp, lista, text });
 
-          console.log('='.repeat(78));
-          console.log(`${art.key} | ${pname} | ${modelName} | rep ${rep} | ${r.secs}s${r.err ? ' | ERROR: ' + r.err : ''}`);
-          if (text) {
-            console.log('--- apertura:', (text.split('\n')[0] || '').slice(0, 170));
-            if (comp) console.log(`--- componentes: atribuidos=${comp.atribuidos}/${comp.total} mencionados=${comp.mencionados}/${comp.total} amontonados_en_una_frase=${comp.amontonados}`);
-            console.log(`--- lista=${lista} apertura_cortada=${flags.apertura_cortada} definicion=${flags.apertura_definicion} muro=${flags.muro_de_texto} pregunta_cierre=${flags.pregunta_en_el_cierre}`);
-          }
-          await new Promise(res => setTimeout(res, 1200));
-        }
+      console.log('='.repeat(78));
+      console.log(`${art.key} | ${pname} | ${modelName} | rep ${rep} | ${r.secs}s${r.err ? ' | ERROR: ' + r.err : ''}`);
+      if (text) {
+        console.log('--- apertura:', (text.split('\n')[0] || '').slice(0, 170));
+        if (comp) console.log(`--- componentes: atribuidos=${comp.atribuidos}/${comp.total} mencionados=${comp.mencionados}/${comp.total} amontonados_en_una_frase=${comp.amontonados}`);
+        console.log(`--- lista=${lista} apertura_cortada=${flags.apertura_cortada} definicion=${flags.apertura_definicion} muro=${flags.muro_de_texto} pregunta_cierre=${flags.pregunta_en_el_cierre}`);
       }
+      await new Promise(res => setTimeout(res, 1200));
     }
+
+    // Solo cuentan los pares donde respondieron los dos brazos.
+    const completo = par.every(x => x.text);
+    if (!completo) console.log(`--- PAR DESCARTADO (${art.key} | ${modelName} | rep ${rep}): falto un brazo`);
+    par.forEach(x => rows.push({ ...x, completo }));
   }
 
-  const ok = rows.filter(r => r.text);
+  const ok = rows.filter(r => r.text && r.completo);
+  const descartados = new Set(rows.filter(r => !r.completo).map(r => `${r.art}|${r.model}|${r.rep}`));
+  console.log(`\n\nPares completos: ${ok.length / 2} de ${orden.length}. Descartados por error de la API: ${descartados.size}.`);
   console.log('\n\n' + '#'.repeat(78));
   console.log('RESUMEN — articulos que SI separan componentes');
   console.log('#'.repeat(78));
