@@ -10,12 +10,12 @@ repoUrl: "https://github.com/JaviMaligno/llm-wrong-paste"
 ---
 
 <style>
-  .ign-fig { margin: 2.5rem 0; }
-  .ign-fig svg { width: 100%; height: auto; display: block; }
-  .ign-fig figcaption {
-    color: #94a3b8; font-size: 0.9rem; line-height: 1.5;
-    margin-top: 0.75rem; text-align: left;
-  }
+.ign-fig { margin: 2.5rem 0; }
+.ign-fig svg { width: 100%; height: auto; display: block; }
+.ign-fig figcaption {
+color: #94a3b8; font-size: 0.9rem; line-height: 1.5;
+margin-top: 0.75rem; text-align: left;
+}
 </style>
 
 At the end of [the first article in this series](/en/blog/that-was-for-another-chat) I wrote down a guess I could not test:
@@ -44,62 +44,52 @@ What I measure is **leakage**: whether any of the pasted artefact's distinctive 
 ## The result
 
 <figure class="ign-fig">
-  <svg viewBox="0 0 600 224" role="img" aria-label="Saying &quot;ignore it&quot; produces entity leakage in 19.2 per cent of conversations, against 3.3 per cent when the user says nothing at all. Explaining where to go next brings it back down to 8.3 per cent, and saying &quot;yes, let's talk about that&quot; gives the lowest rate of the four at 2.5 per cent.">
-    <rect x="0" y="0" width="600" height="224" fill="#1a1a24"/>
-    <rect x="12" y="10" width="576" height="204" rx="8" fill="none" stroke="rgba(255,255,255,0.1)"/>
-    <text x="32" y="38" fill="#94a3b8" font-family="ui-monospace,'JetBrains Mono',monospace" font-size="11" letter-spacing="1.2">THE PASTE LEAKS INTO WHAT COMES NEXT</text>
-
-    <text x="32" y="72" fill="#e2e8f0" font-size="13">(a) say nothing</text>
-    <rect x="232" y="61" width="50" height="14" rx="2" fill="#64748b"/>
-    <text x="292" y="73" fill="#94a3b8" font-family="ui-monospace,monospace" font-size="12">3.3%</text>
-
-    <text x="32" y="106" fill="#f8fafc" font-size="13" font-weight="600">(b) "ignore it"</text>
-    <rect x="232" y="95" width="292" height="14" rx="2" fill="#f59e0b"/>
-    <text x="534" y="107" fill="#fbbf24" font-family="ui-monospace,monospace" font-size="12" font-weight="600">19.2%</text>
-
-    <text x="32" y="140" fill="#e2e8f0" font-size="13">(c) + where to go</text>
-    <rect x="232" y="129" width="126" height="14" rx="2" fill="#2dd4bf"/>
-    <text x="368" y="141" fill="#5eead4" font-family="ui-monospace,monospace" font-size="12">8.3%</text>
-
-    <text x="32" y="174" fill="#e2e8f0" font-size="13">(d) "yes, let's talk"</text>
-    <rect x="232" y="163" width="38" height="14" rx="2" fill="#2dd4bf"/>
-    <text x="280" y="175" fill="#5eead4" font-family="ui-monospace,monospace" font-size="12">2.5%</text>
-
-    <line x1="32" y1="192" x2="568" y2="192" stroke="rgba(255,255,255,0.08)"/>
-    <text x="32" y="207" fill="#94a3b8" font-size="11.5">The instruction to discard the text produces six times the residue of not mentioning it.</text>
-  </svg>
-  <figcaption>120 conversations per arm, all four hanging off the same paste and the same reaction to it. Only the user's next sentence differs.</figcaption>
+<svg viewBox="0 0 600 224" role="img" aria-label="Saying &quot;ignore it&quot; produces entity leakage in 19.2 per cent of conversations, against 3.3 per cent when the user says nothing at all. Explaining where to go next brings it back down to 8.3 per cent, and saying &quot;yes, let's talk about that&quot; gives the lowest rate of the four at 2.5 per cent.">
+<rect x="0" y="0" width="600" height="224" fill="#1a1a24"/>
+<rect x="12" y="10" width="576" height="204" rx="8" fill="none" stroke="rgba(255,255,255,0.1)"/>
+<text x="32" y="38" fill="#94a3b8" font-family="ui-monospace,'JetBrains Mono',monospace" font-size="11" letter-spacing="1.2">THE PASTE LEAKS INTO WHAT COMES NEXT</text>
+<text x="32" y="72" fill="#e2e8f0" font-size="13">(a) say nothing</text>
+<rect x="232" y="61" width="50" height="14" rx="2" fill="#64748b"/>
+<text x="292" y="73" fill="#94a3b8" font-family="ui-monospace,monospace" font-size="12">3.3%</text>
+<text x="32" y="106" fill="#f8fafc" font-size="13" font-weight="600">(b) "ignore it"</text>
+<rect x="232" y="95" width="292" height="14" rx="2" fill="#f59e0b"/>
+<text x="534" y="107" fill="#fbbf24" font-family="ui-monospace,monospace" font-size="12" font-weight="600">19.2%</text>
+<text x="32" y="140" fill="#e2e8f0" font-size="13">(c) + where to go</text>
+<rect x="232" y="129" width="126" height="14" rx="2" fill="#2dd4bf"/>
+<text x="368" y="141" fill="#5eead4" font-family="ui-monospace,monospace" font-size="12">8.3%</text>
+<text x="32" y="174" fill="#e2e8f0" font-size="13">(d) "yes, let's talk"</text>
+<rect x="232" y="163" width="38" height="14" rx="2" fill="#2dd4bf"/>
+<text x="280" y="175" fill="#5eead4" font-family="ui-monospace,monospace" font-size="12">2.5%</text>
+<line x1="32" y1="192" x2="568" y2="192" stroke="rgba(255,255,255,0.08)"/>
+<text x="32" y="207" fill="#94a3b8" font-size="11.5">The instruction to discard the text produces six times the residue of not mentioning it.</text>
+</svg>
+<figcaption>120 conversations per arm, all four hanging off the same paste and the same reaction to it. Only the user's next sentence differs.</figcaption>
 </figure>
 
 Because the arms are paired, the right test is on the conversations where two arms disagree. All three declared comparisons survive Holm correction:
 
 <figure class="ign-fig">
-  <svg viewBox="0 0 600 214" role="img" aria-label="All three paired comparisons are statistically significant after Holm correction: saying ignore it adds 15.8 points of leakage over saying nothing, explaining where to go next removes 10.8 points, and saying ignore it adds 16.7 points over saying yes let's talk about that.">
-    <rect x="0" y="0" width="600" height="214" fill="#1a1a24"/>
-    <rect x="12" y="10" width="576" height="194" rx="8" fill="none" stroke="rgba(255,255,255,0.1)"/>
-    <text x="32" y="36" fill="#94a3b8" font-family="ui-monospace,'JetBrains Mono',monospace" font-size="11" letter-spacing="1.2">PAIRED DIFFERENCE, 95% INTERVAL</text>
-
-    <line x1="348" y1="50" x2="348" y2="166" stroke="#64748b" stroke-dasharray="3 3"/>
-    <text x="348" y="182" fill="#94a3b8" font-size="10.5" text-anchor="middle">0</text>
-
-    <text x="32" y="76" fill="#e2e8f0" font-family="ui-monospace,monospace" font-size="12">(b) vs (a)</text>
-    <line x1="399" y1="72" x2="505" y2="72" stroke="#f59e0b" stroke-width="3"/>
-    <circle cx="452" cy="72" r="4.5" fill="#fbbf24"/>
-    <text x="515" y="76" fill="#fbbf24" font-family="ui-monospace,monospace" font-size="11">+15.8</text>
-
-    <text x="32" y="114" fill="#e2e8f0" font-family="ui-monospace,monospace" font-size="12">(c) vs (b)</text>
-    <line x1="233" y1="110" x2="318" y2="110" stroke="#2dd4bf" stroke-width="3"/>
-    <circle cx="276" cy="110" r="4.5" fill="#5eead4"/>
-    <text x="225" y="114" fill="#5eead4" font-family="ui-monospace,monospace" font-size="11" text-anchor="end">&#8722;10.8</text>
-
-    <text x="32" y="152" fill="#e2e8f0" font-family="ui-monospace,monospace" font-size="12">(b) vs (d)</text>
-    <line x1="409" y1="148" x2="507" y2="148" stroke="#f59e0b" stroke-width="3"/>
-    <circle cx="458" cy="148" r="4.5" fill="#fbbf24"/>
-    <text x="517" y="152" fill="#fbbf24" font-family="ui-monospace,monospace" font-size="11">+16.7</text>
-
-    <text x="32" y="198" fill="#94a3b8" font-size="11">No interval touches zero. Holm-corrected p: 0.0011, 0.0036, 0.0003.</text>
-  </svg>
-  <figcaption>Percentage points of leakage, measured within conversation. The arms are the ones in the first figure. The middle row is the one worth keeping: adding a destination to the same instruction removes about eleven points.</figcaption>
+<svg viewBox="0 0 600 214" role="img" aria-label="All three paired comparisons are statistically significant after Holm correction: saying ignore it adds 15.8 points of leakage over saying nothing, explaining where to go next removes 10.8 points, and saying ignore it adds 16.7 points over saying yes let's talk about that.">
+<rect x="0" y="0" width="600" height="214" fill="#1a1a24"/>
+<rect x="12" y="10" width="576" height="194" rx="8" fill="none" stroke="rgba(255,255,255,0.1)"/>
+<text x="32" y="36" fill="#94a3b8" font-family="ui-monospace,'JetBrains Mono',monospace" font-size="11" letter-spacing="1.2">PAIRED DIFFERENCE, 95% INTERVAL</text>
+<line x1="348" y1="50" x2="348" y2="166" stroke="#64748b" stroke-dasharray="3 3"/>
+<text x="348" y="182" fill="#94a3b8" font-size="10.5" text-anchor="middle">0</text>
+<text x="32" y="76" fill="#e2e8f0" font-family="ui-monospace,monospace" font-size="12">(b) vs (a)</text>
+<line x1="399" y1="72" x2="505" y2="72" stroke="#f59e0b" stroke-width="3"/>
+<circle cx="452" cy="72" r="4.5" fill="#fbbf24"/>
+<text x="515" y="76" fill="#fbbf24" font-family="ui-monospace,monospace" font-size="11">+15.8</text>
+<text x="32" y="114" fill="#e2e8f0" font-family="ui-monospace,monospace" font-size="12">(c) vs (b)</text>
+<line x1="233" y1="110" x2="318" y2="110" stroke="#2dd4bf" stroke-width="3"/>
+<circle cx="276" cy="110" r="4.5" fill="#5eead4"/>
+<text x="225" y="114" fill="#5eead4" font-family="ui-monospace,monospace" font-size="11" text-anchor="end">&#8722;10.8</text>
+<text x="32" y="152" fill="#e2e8f0" font-family="ui-monospace,monospace" font-size="12">(b) vs (d)</text>
+<line x1="409" y1="148" x2="507" y2="148" stroke="#f59e0b" stroke-width="3"/>
+<circle cx="458" cy="148" r="4.5" fill="#fbbf24"/>
+<text x="517" y="152" fill="#fbbf24" font-family="ui-monospace,monospace" font-size="11">+16.7</text>
+<text x="32" y="198" fill="#94a3b8" font-size="11">No interval touches zero. Holm-corrected p: 0.0011, 0.0036, 0.0003.</text>
+</svg>
+<figcaption>Percentage points of leakage, measured within conversation. The arms are the ones in the first figure. The middle row is the one worth keeping: adding a destination to the same instruction removes about eleven points.</figcaption>
 </figure>
 
 ## The control answered a question I hadn't asked
@@ -117,43 +107,37 @@ And (c) closes the argument from the other side. Same instruction to ignore, but
 This is the part where I have to take something back off the table.
 
 <figure class="ign-fig">
-  <svg viewBox="0 0 600 240" role="img" aria-label="All of the leakage happens in the model's reply to the repair itself. In the two later turns every arm sits at or near zero, including the arm that leaks 19.2 per cent in the first reply.">
-    <rect x="0" y="0" width="600" height="240" fill="#1a1a24"/>
-    <rect x="12" y="10" width="576" height="220" rx="8" fill="none" stroke="rgba(255,255,255,0.1)"/>
-    <text x="32" y="36" fill="#94a3b8" font-family="ui-monospace,'JetBrains Mono',monospace" font-size="11" letter-spacing="1.2">LEAKAGE BY TURN</text>
-
-    <text x="196" y="58" fill="#94a3b8" font-size="10.5" text-anchor="middle">reply to repair</text>
-    <text x="352" y="58" fill="#94a3b8" font-size="10.5" text-anchor="middle">next turn</text>
-    <text x="474" y="58" fill="#94a3b8" font-size="10.5" text-anchor="middle">turn after</text>
-
-    <text x="32" y="88" fill="#e2e8f0" font-size="12.5">(a) nothing</text>
-    <rect x="160" y="78" width="12" height="12" rx="2" fill="#64748b"/>
-    <text x="180" y="88" fill="#94a3b8" font-family="ui-monospace,monospace" font-size="11">3.3%</text>
-    <text x="330" y="88" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.0%</text>
-    <text x="452" y="88" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.8%</text>
-
-    <text x="32" y="122" fill="#f8fafc" font-size="12.5" font-weight="600">(b) "ignore it"</text>
-    <rect x="160" y="112" width="66" height="12" rx="2" fill="#f59e0b"/>
-    <text x="234" y="122" fill="#fbbf24" font-family="ui-monospace,monospace" font-size="11" font-weight="600">19.2%</text>
-    <text x="330" y="122" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.0%</text>
-    <text x="452" y="122" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.0%</text>
-
-    <text x="32" y="156" fill="#e2e8f0" font-size="12.5">(c) + destination</text>
-    <rect x="160" y="146" width="26" height="12" rx="2" fill="#2dd4bf"/>
-    <text x="194" y="156" fill="#5eead4" font-family="ui-monospace,monospace" font-size="11">7.5%</text>
-    <text x="330" y="156" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.0%</text>
-    <text x="452" y="156" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.8%</text>
-
-    <text x="32" y="190" fill="#e2e8f0" font-size="12.5">(d) "yes, let's talk"</text>
-    <rect x="160" y="180" width="9" height="12" rx="2" fill="#2dd4bf"/>
-    <text x="177" y="190" fill="#5eead4" font-family="ui-monospace,monospace" font-size="11">2.5%</text>
-    <text x="330" y="190" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.8%</text>
-    <text x="452" y="190" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.8%</text>
-
-    <line x1="32" y1="206" x2="568" y2="206" stroke="rgba(255,255,255,0.08)"/>
-    <text x="32" y="222" fill="#94a3b8" font-size="11.5">The residue is an immediate echo, not a drift. But see the caveat: the next turn is a hard question.</text>
-  </svg>
-  <figcaption>The effect is concentrated entirely in the model's reply to the repair. What the design cannot separate is how much of the two zeros belongs to the residue fading and how much to the question that follows being very specific.</figcaption>
+<svg viewBox="0 0 600 240" role="img" aria-label="All of the leakage happens in the model's reply to the repair itself. In the two later turns every arm sits at or near zero, including the arm that leaks 19.2 per cent in the first reply.">
+<rect x="0" y="0" width="600" height="240" fill="#1a1a24"/>
+<rect x="12" y="10" width="576" height="220" rx="8" fill="none" stroke="rgba(255,255,255,0.1)"/>
+<text x="32" y="36" fill="#94a3b8" font-family="ui-monospace,'JetBrains Mono',monospace" font-size="11" letter-spacing="1.2">LEAKAGE BY TURN</text>
+<text x="196" y="58" fill="#94a3b8" font-size="10.5" text-anchor="middle">reply to repair</text>
+<text x="352" y="58" fill="#94a3b8" font-size="10.5" text-anchor="middle">next turn</text>
+<text x="474" y="58" fill="#94a3b8" font-size="10.5" text-anchor="middle">turn after</text>
+<text x="32" y="88" fill="#e2e8f0" font-size="12.5">(a) nothing</text>
+<rect x="160" y="78" width="12" height="12" rx="2" fill="#64748b"/>
+<text x="180" y="88" fill="#94a3b8" font-family="ui-monospace,monospace" font-size="11">3.3%</text>
+<text x="330" y="88" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.0%</text>
+<text x="452" y="88" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.8%</text>
+<text x="32" y="122" fill="#f8fafc" font-size="12.5" font-weight="600">(b) "ignore it"</text>
+<rect x="160" y="112" width="66" height="12" rx="2" fill="#f59e0b"/>
+<text x="234" y="122" fill="#fbbf24" font-family="ui-monospace,monospace" font-size="11" font-weight="600">19.2%</text>
+<text x="330" y="122" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.0%</text>
+<text x="452" y="122" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.0%</text>
+<text x="32" y="156" fill="#e2e8f0" font-size="12.5">(c) + destination</text>
+<rect x="160" y="146" width="26" height="12" rx="2" fill="#2dd4bf"/>
+<text x="194" y="156" fill="#5eead4" font-family="ui-monospace,monospace" font-size="11">7.5%</text>
+<text x="330" y="156" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.0%</text>
+<text x="452" y="156" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.8%</text>
+<text x="32" y="190" fill="#e2e8f0" font-size="12.5">(d) "yes, let's talk"</text>
+<rect x="160" y="180" width="9" height="12" rx="2" fill="#2dd4bf"/>
+<text x="177" y="190" fill="#5eead4" font-family="ui-monospace,monospace" font-size="11">2.5%</text>
+<text x="330" y="190" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.8%</text>
+<text x="452" y="190" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.8%</text>
+<line x1="32" y1="206" x2="568" y2="206" stroke="rgba(255,255,255,0.08)"/>
+<text x="32" y="222" fill="#94a3b8" font-size="11.5">The residue is an immediate echo, not a drift. But see the caveat: the next turn is a hard question.</text>
+</svg>
+<figcaption>The effect is concentrated entirely in the model's reply to the repair. What the design cannot separate is how much of the two zeros belongs to the residue fading and how much to the question that follows being very specific.</figcaption>
 </figure>
 
 All of the leakage is in the reply to the repair itself. The model names the other conversation's entities **in the act of promising to forget them** — *"understood, I'll set aside the thing about Marta's invoice"* — and then, two turns later, nothing.
