@@ -2,6 +2,32 @@
 
 Exact prompts used to generate blog hero images (via Codex `image_gen`), for reproducibility and iteration. Newest first.
 
+## dont-just-say-ignore-it
+
+- **Article:** `src/content/blog/{en,es}/dont-just-say-ignore-it.md`
+- **Image:** `public/blog/dont-just-say-ignore-it.png`
+- **Generated:** 2026-09-21, Codex CLI `image_gen`. 1774x887, 2:1 exacto.
+- **Review:** aceptada a la primera. La escena ES el hallazgo: el asistente
+  repite los mismos identificadores que acaba de prometer olvidar, con líneas
+  de anotación que los conectan al bloque descartado. Las cuatro barras de la
+  derecha están en la proporción real del resultado (17/100/43/13, que es
+  3,3 / 19,2 / 8,3 / 2,5 %).
+
+```text
+Use case: illustration-story.
+Asset type: wide 2:1 blog hero image, 1536x768 pixels.
+Create a refined technical editorial bitmap illustration about an assistant repeating the very labels it promises to forget. Dark but not monochrome, crisp edges, professional developer publication aesthetic, restrained surface texture and subtle depth.
+
+On a dark graphite ground, compose one large chat panel occupying roughly the left two-thirds, with a small clean four-bar comparison beside it on the right. Leave generous outer margins and breathing room. The chat is a concrete, readable interface, viewed straight on, with three vertically ordered elements:
+1. A greyed-out pasted block with a thin dashed border and the small clear status label "SET ASIDE". Within it, three short generic labels read "ITEM-A", "ZONE-B", "FILE-C", with a few subdued placeholder lines. This block must visibly look inactive, but the labels remain legible.
+2. A short right-aligned user message bubble reading exactly "Ignore that paste."
+3. An assistant reply below reading exactly "Understood. I'll set aside ITEM-A, ZONE-B and FILE-C." Highlight only the three repeated labels with small amber and teal token backgrounds. Draw three fine annotation lines from these highlighted tokens back up to their matching labels in the greyed-out pasted block. Route the lines through clear gutters without crossing the readable message text; use tiny endpoint dots. The immediate echo in the promise to forget is the central visual idea.
+
+Beside the chat, show exactly four unlabelled vertical bars on a subtle shared baseline, with relative heights 17, 100, 43, 13. The second bar is amber and by far the tallest; the first is slate grey, and the third and fourth are teal. No chart title, numbers, tick labels or legend. Keep the chart secondary to the conversation.
+
+Balanced teal, amber, graphite and off-white palette. Off-white message text, muted grey discarded content, precise thin borders, modest corner rounding, clean readable sans-serif interface typography with monospace token labels. A polished editorial illustration rather than a text-heavy poster. No article title, real names, brands, logos, watermarks, people, robots, floating cubes, purple gradient blobs, bokeh or decorative clutter.
+```
+
 ---
 
 ## nobody-will-check-behind-you
