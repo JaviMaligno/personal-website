@@ -4,7 +4,8 @@ Fecha: 2026-09-21
 Spec: [`2026-09-17-pegado-accidental-fase-2-design.md`](2026-09-17-pegado-accidental-fase-2-design.md)
 Piloto: [`2026-09-18-pegado-accidental-fase-2-piloto.md`](2026-09-18-pegado-accidental-fase-2-piloto.md)
 Fases anteriores: [1a](2026-09-15-pegado-accidental-fase-1a-resultados.md) · [1b](2026-09-15-pegado-accidental-fase-1b-resultados.md) · [1d](2026-09-17-pegado-accidental-fase-1d-resultados.md)
-Datos: `runs/phase2/main-20260921.jsonl` del repo
+Datos: `runs/phase2/main-20260921.jsonl` (tanda principal) y
+`runs/phase2/sin-tarea-20260922.jsonl` (réplica con turno +2 neutro), del repo
 [llm-wrong-paste](https://github.com/JaviMaligno/llm-wrong-paste)
 
 ## 1. El resultado
@@ -51,7 +52,7 @@ Y (c) lo confirma por el otro lado. La misma orden de ignorar, pero **con un
 destino al que ir**, baja del 19,2 % al 8,3 %: −10,8 puntos, significativo tras
 Holm. Lo que arregla la reparación no es pedir el olvido, es dar adónde mirar.
 
-## 3. Dónde vive el residuo, y una salvedad que lo limita
+## 3. Dónde vive el residuo
 
 **Toda la fuga está en el turno +1**, la respuesta al propio mensaje de
 reparación:
