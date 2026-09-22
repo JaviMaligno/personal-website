@@ -68,12 +68,39 @@ contaminación que se arrastra por la conversación, es un eco inmediato. El
 modelo repite las entidades del pegote **en el acto mismo de prometer que las
 olvida**.
 
-**La salvedad, y es seria.** El turno +2 es una pregunta numérica literal, con
-una única respuesta correcta, idéntica en los cinco brazos. Es un turno que
-domina lo que el modelo puede decir, así que un 0 % ahí **no se puede atribuir
-limpiamente al decaimiento del residuo**: parte de ese cero es una propiedad del
-diseño. La afirmación defendible es *«el residuo no sobrevive a una pregunta
-concreta»*, no *«el residuo desaparece solo»*.
+**La salvedad que tenía, y cómo se cerró.** El turno +2 es una pregunta
+numérica literal, con una única respuesta correcta, idéntica en los cinco
+brazos: un turno que domina lo que el modelo puede decir. Un 0 % ahí no se podía
+atribuir limpiamente al decaimiento del residuo, porque parte de ese cero era
+una propiedad del diseño.
+
+Se resolvió corriendo la **tanda sin tarea** (`runs/phase2/sin-tarea-20260922.jsonl`,
+22-sep): las mismas 120 bases, brazos (a) y (b), con el turno +2 sustituido por
+una continuación cualquiera del usuario simulado. **El cero aguanta**: 0,0 % en
++2 en los dos brazos. La afirmación defendible pasa a ser *«el residuo no
+sobrevive al turno siguiente, sea el que sea»*.
+
+| Tanda | (a) +1 | (a) +2 | (b) +1 | (b) +2 | (b) vs (a) pareado |
+|---|---|---|---|---|---|
+| con tarea (480 celdas) | 3,3 % | 0,0 % | 19,2 % | 0,0 % | +15,8 pp, Holm 0,0011 |
+| **sin tarea** (240 celdas) | 1,7 % | 0,0 % | 13,3 % | 0,0 % | **+10,8 pp, p = 0,0059** |
+
+O sea que además **el efecto principal se replica sobre otra forma de
+conversación**, que es bastante más que una sola tanda.
+
+**Y un confusor que hay que declarar, porque juega a favor del resultado.** Sin
+la pregunta numérica el modelo escribe libre y se come el tope de tokens: la
+tasa de `truncated` sube del 3,3 % al **12,5 %**, y desbalanceada —21 en (a) y 9
+en (b)—. Una respuesta cortada no puede contener una entidad, y en efecto la
+fuga es **0 % en TODAS las celdas truncadas de los dos brazos**. El truncado
+desinfla la medición. Restringiendo a las **95 bases con los dos brazos `ok`**,
+el efecto crece: (a) 2,1 %, (b) 15,8 %, **+13,7 pp [+5,6, +21,7], p = 0,0036**.
+Lo que se publica es el número conservador.
+
+**Lo que NO se puede afirmar.** Sin tarea, (b) baja de 19,2 % a 13,3 %.
+Contrastado pareado sobre las mismas bases: **−5,8 pp, p = 0,12**. Sugiere que
+la pregunta exigente podía añadir algo de eco, y no sobrevive a nada: queda como
+observación.
 
 ## 4. La tarea, cerrada como instrumento
 
