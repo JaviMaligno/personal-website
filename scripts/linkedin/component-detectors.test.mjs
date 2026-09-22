@@ -62,3 +62,27 @@ test('listaInventada marca tres lineas de lista y no la prosa', () => {
 test('sin componentes declarados el detector se abstiene', () => {
   assert.equal(componentes(PUBLICADO, []), null);
 });
+
+// 2026-09-22: el formato que la regla produce de verdad en los posts generados
+// usa dos puntos, no guion largo. El detector partia las frases por ":" y
+// contaba estos tres como no atribuidos.
+const CON_DOS_PUNTOS = `Changing how an agent investigates a data source requires a different cycle than updating how a user approves its results.
+
+This structure defines three clear layers:
+
+Frontend: Handles interaction, user supervision, and displaying results.
+
+Application backend: Manages permissions, rules, and the work lifecycle.
+
+Agentic engine: Runs workflows, manages context, connects tools, and executes evaluations.`;
+
+test('el formato "Componente: responsabilidad" cuenta como atribuido', () => {
+  const r = componentes(CON_DOS_PUNTOS, BLOQUES);
+  assert.equal(r.atribuidos, 3, 'los dos puntos no deben partir nombre y responsabilidad');
+  assert.equal(r.amontonados, false);
+});
+
+test('una enumeracion con dos puntos delante sigue siendo amontonamiento', () => {
+  const enumerado = 'I separate code into three blocks: the frontend, the application backend, and the agentic engine.';
+  assert.equal(componentes(enumerado, BLOQUES).amontonados, true);
+});

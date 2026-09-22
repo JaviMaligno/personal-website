@@ -113,6 +113,35 @@ llamadas con el articulo entero agota el cupo del dia, asi que si ese dia se
 publica un articulo, el post de LinkedIn no se genera. Mirar
 `.github/publish-schedule.json` antes de gastar el cupo en un experimento.
 
+## Lo medido el 2026-09-22 (la regla de componentes)
+
+Run 35723543236: 14 parejas completas de 20 (las 6 perdidas se llevaron entero
+el articulo del prototipo RLM). Cifras ya con el detector corregido:
+
+| | responsabilidad propia | posts con TODOS | amontonados | listas en los controles |
+|---|---|---|---|---|
+| sin regla | 16/32 (50%) | 0/8 | 2/8 | 0/6 |
+| con regla | 23/32 (72%) | 4/8 | 0/8 | 0/6 |
+
+Por articulo, que es donde se ve lo que pasa:
+
+- **tres bloques** (el caso que motivo la regla): 2/3 en las cuatro tiradas sin
+  ella, 3/3 en las cuatro con ella. Cuatro de cuatro contra cero de cuatro.
+- **cinco capas**: 2, 2, 1, 3 sin regla; 3, 3, 4, 1 con ella. Sube la media y
+  no la fiabilidad — con cinco capas el post sigue dejandose alguna.
+
+Nada de lo ganado en septiembre se pierde (apertura cortada, definicion, muro
+y pregunta de cierre siguen a 0 de 14 en los dos brazos), y los dos articulos
+de control no reciben ninguna lista inventada.
+
+**El detector medía al reves de lo que creía.** La primera lectura de este run
+daba 50% contra 53%, o sea nada. El motivo: `frases()` partia tambien por ":",
+y la regla induce justamente el formato "Frontend: handles interaction…", asi
+que el nombre quedaba en una frase y su responsabilidad en otra y el componente
+contaba como NO atribuido. El sesgo iba en contra de la regla, y el test no lo
+cogia porque estaba escrito con guion largo en vez de dos puntos. Corregido, con
+un test por cada uno de los dos formatos.
+
 ## La trampa que hay que recordar
 
 La primera versión de la matriz usaba el SDK `@google/generative-ai` 0.21.0, que

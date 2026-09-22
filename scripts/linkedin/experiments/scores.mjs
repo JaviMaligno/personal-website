@@ -40,7 +40,12 @@ export const SCORES = {
   pregunta_en_el_cierre: t => /\?/.test(t.trim().split(/\n\s*\n/).pop() || ''),
 };
 
-export const frases = text => text.split(/\n+|(?<=[.:;!?])\s+/).map(s => s.trim()).filter(Boolean);
+// Ojo con los dos puntos: NO se parte por ellos. La regla de componentes
+// induce justamente el formato "Frontend: interaccion, supervision, resultados",
+// y partir por ":" dejaba el nombre en una frase y su responsabilidad en otra,
+// asi que el detector contaba como no atribuido justo el formato que la regla
+// produce. Medido el 2026-09-22: sesgaba el resultado EN CONTRA de la regla.
+export const frases = text => text.split(/\n+|(?<=[.;!?])\s+/).map(s => s.trim()).filter(Boolean);
 
 /** Cuantos componentes reciben frase propia, y si el post los amontona en una. */
 export function componentes(text, comps) {
