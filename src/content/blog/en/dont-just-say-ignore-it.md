@@ -102,12 +102,10 @@ So the model reads intent perfectly well. That was never the problem. The proble
 
 And (c) closes the argument from the other side. Same instruction to ignore, but with somewhere to go — *"let's carry on with the electricity bill"* — and the rate falls from 19.2% to 8.3%. What repairs the conversation is not requesting the forgetting. It is supplying the replacement.
 
-## Where the residue actually lives, and why I'm hedging
-
-This is the part where I have to take something back off the table.
+## Where the residue lives
 
 <figure class="ign-fig">
-<svg viewBox="0 0 600 240" role="img" aria-label="All of the leakage happens in the model's reply to the repair itself. In the two later turns every arm sits at or near zero, including the arm that leaks 19.2 per cent in the first reply.">
+<svg viewBox="0 0 600 240" role="img" aria-label="All of the leakage happens in the model's reply to the repair itself. In the two later turns every arm sits at or near zero, including the arm that leaks 19.2 per cent in the first reply, and a second run with a neutral following turn reproduces the same zeros.">
 <rect x="0" y="0" width="600" height="240" fill="#1a1a24"/>
 <rect x="12" y="10" width="576" height="220" rx="8" fill="none" stroke="rgba(255,255,255,0.1)"/>
 <text x="32" y="36" fill="#94a3b8" font-family="ui-monospace,'JetBrains Mono',monospace" font-size="11" letter-spacing="1.2">LEAKAGE BY TURN</text>
@@ -135,16 +133,22 @@ This is the part where I have to take something back off the table.
 <text x="330" y="190" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.8%</text>
 <text x="452" y="190" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0.8%</text>
 <line x1="32" y1="206" x2="568" y2="206" stroke="rgba(255,255,255,0.08)"/>
-<text x="32" y="222" fill="#94a3b8" font-size="11.5">The residue is an immediate echo, not a drift. But see the caveat: the next turn is a hard question.</text>
+<text x="32" y="222" fill="#94a3b8" font-size="11.5">An immediate echo, not a drift: a re-run with a neutral next turn gives the same zeros.</text>
 </svg>
-<figcaption>The effect is concentrated entirely in the model's reply to the repair. What the design cannot separate is how much of the two zeros belongs to the residue fading and how much to the question that follows being very specific.</figcaption>
+<figcaption>The effect is concentrated entirely in the model's reply to the repair. The two zeros are the residue and not the question: a second run of 240 conversations, with that following turn replaced by an ordinary continuation, reproduces them.</figcaption>
 </figure>
 
 All of the leakage is in the reply to the repair itself. The model names the other conversation's entities **in the act of promising to forget them** — *"understood, I'll set aside the thing about Marta's invoice"* — and then, two turns later, nothing.
 
 That makes the finding smaller in scope and sharper in mechanism. It is not drift. It is an echo.
 
-But I am not going to claim the residue simply decays, because my own design gets in the way. The turn immediately after the repair is a literal arithmetic question with one correct answer, identical across all arms. That is a turn which dominates what the model can say. A zero there is partly a property of the instrument, not of the phenomenon. The defensible sentence is *"the residue does not survive a specific question"* — which is still useful advice, just not the same claim.
+The first time I looked at those two zeros I could not use them. The turn immediately after the repair was a literal arithmetic question with one correct answer — a turn that dominates what the model can say — so a zero there was partly a property of my instrument rather than of the phenomenon.
+
+So I ran it again without that turn: the same 120 bases, arms (a) and (b), with the second turn replaced by an ordinary continuation of the conversation. **The zero holds.** With nothing in particular being asked, leakage at the following turn is still 0.0% in both arms. The residue does not survive the next turn, whatever the next turn is.
+
+The re-run also replicates the main effect on a different conversation shape: 2.5% against 13.3%, a paired difference of **+10.8 points** (p = 0.006). Two designs, same direction, same rough size.
+
+One thing surfaced there that cuts against me if nobody checks it. Without the arithmetic question the model writes freely and hits the token ceiling more often — 12.5% of cells truncated against 3.3% before, and lopsided: 21 in the arm that says nothing, 9 in the arm that says *"ignore it"*. A truncated reply cannot contain an entity, and indeed leakage is 0% in every single truncated cell. So truncation deflates the measurement rather than inflating it: restricted to the 95 bases where both arms finished cleanly, the gap widens to 2.1% against 15.8%. The number I am publishing is the conservative one.
 
 ## The thing that didn't work
 
@@ -163,19 +167,9 @@ That is a null result and I am reporting it as one: in this model, accidental-pa
 - **Don't send "ignore it" on its own.** It is the worst of the four things I tested, by a factor of six over saying nothing.
 - **Say where to go instead.** *"Ignore that, wrong window — back to the invoice"* costs you one clause and removes about eleven points of echo. This is the one recommendation here with a corrected p-value behind it.
 - **Saying nothing is fine.** If you can just carry on with your question, do. It sits at 3.3%, statistically indistinguishable from the best arm.
-- **Don't read this as lasting contamination.** The echo showed up in the immediate reply and was gone by the next specific question. If your next message is concrete, you are probably fine either way.
+- **Don't read this as lasting contamination.** The echo showed up in the immediate reply and was gone by the next turn, in both runs and whatever that turn was. One exchange later it is over.
 
 One more thing, which is the most concrete lead this leaves and which I am not claiming, only reporting: the leakage after *"ignore it"* was almost double when the model had **not** already flagged the paste as odd — 25.0% against 13.3%. The one that noticed nothing is the one that handles being told to forget worst.
-
-## Two ways I nearly fooled myself
-
-Both are the same shape, and it is the shape this whole series keeps running into: **a well-formed number that reads like a finding when it is an artefact.**
-
-The first was a gate I had written to stop the experiment sizing itself on a dead variable — *if arm (a) barely leaks, there's no range for a repair to move.* It was written assuming repairs **reduce** leakage. This effect goes the other way, so a floor in (a) is the best case, not the worst: it is the clean background the effect stands against. The gate was measuring correctly and concluding backwards, and it declared the finding unmeasurable at precisely the moment the pilot found it.
-
-The second: the power formula refuses to run when the base rate is exactly zero, and it is right to refuse — a normal approximation over a rate pinned to the floor describes nothing. But my report was recording that refusal as *"no sample size achieves the declared power"*, which is a statement about the experiment rather than about the formula. Published as written, it would have closed the phase on a conclusion the data does not support.
-
-Neither was caught by a test. Both were caught by going back and asking what each number was actually a number *of*.
 
 ---
 

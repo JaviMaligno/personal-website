@@ -102,12 +102,10 @@ O sea que el modelo lee la intención perfectamente. Eso nunca fue el problema. 
 
 Y (c) cierra el argumento por el otro lado. La misma instrucción de ignorar, pero con un sitio al que ir —*«seguimos con la factura de la luz»*— y la tasa cae del 19,2 % al 8,3 %. Lo que repara la conversación no es pedir el olvido: es suministrar el reemplazo.
 
-## Dónde vive el residuo de verdad, y por qué me contengo
-
-Esta es la parte en la que tengo que retirar algo de la mesa.
+## Dónde vive el residuo
 
 <figure class="ign-fig">
-<svg viewBox="0 0 600 240" role="img" aria-label="Toda la fuga ocurre en la respuesta del modelo a la propia reparación. En los dos turnos siguientes todos los brazos están en cero o cerca, incluido el que fuga un 19,2 por ciento en la primera respuesta.">
+<svg viewBox="0 0 600 240" role="img" aria-label="Toda la fuga ocurre en la respuesta del modelo a la propia reparación. En los dos turnos siguientes todos los brazos están en cero o cerca, incluido el que fuga un 19,2 por ciento en la primera respuesta, y una segunda tanda con turno siguiente neutro reproduce los mismos ceros.">
 <rect x="0" y="0" width="600" height="240" fill="#1a1a24"/>
 <rect x="12" y="10" width="576" height="220" rx="8" fill="none" stroke="rgba(255,255,255,0.1)"/>
 <text x="32" y="36" fill="#94a3b8" font-family="ui-monospace,'JetBrains Mono',monospace" font-size="11" letter-spacing="1.2">FUGA POR TURNO</text>
@@ -135,16 +133,22 @@ Esta es la parte en la que tengo que retirar algo de la mesa.
 <text x="330" y="190" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0,8 %</text>
 <text x="452" y="190" fill="#64748b" font-family="ui-monospace,monospace" font-size="11">0,8 %</text>
 <line x1="32" y1="206" x2="568" y2="206" stroke="rgba(255,255,255,0.08)"/>
-<text x="32" y="222" fill="#94a3b8" font-size="11.5">El residuo es un eco inmediato, no una deriva. Pero ojo a la salvedad: el turno siguiente es una pregunta dura.</text>
+<text x="32" y="222" fill="#94a3b8" font-size="11.5">Un eco inmediato, no una deriva: repetirlo con turno neutro da los mismos ceros.</text>
 </svg>
-<figcaption>El efecto está concentrado por completo en la respuesta del modelo a la reparación. Lo que el diseño no puede separar es cuánto de esos dos ceros es el residuo apagándose y cuánto es que la pregunta siguiente es muy concreta.</figcaption>
+<figcaption>El efecto está concentrado por completo en la respuesta del modelo a la reparación. Los dos ceros son el residuo y no la pregunta: una segunda tanda de 240 conversaciones, con ese turno siguiente sustituido por una continuación cualquiera, los reproduce.</figcaption>
 </figure>
 
 Toda la fuga está en la respuesta a la propia reparación. El modelo nombra las entidades de la otra conversación **en el acto mismo de prometer que las olvida** —*«entendido, dejo aparte lo de la factura de Marta»*— y dos turnos después, nada.
 
 Eso hace el hallazgo más pequeño en alcance y más nítido en mecanismo. No es deriva. Es un eco.
 
-Pero no voy a afirmar que el residuo simplemente decae, porque mi propio diseño se interpone. El turno inmediatamente posterior a la reparación es una pregunta aritmética literal con una sola respuesta correcta, idéntica en todos los brazos. Es un turno que domina lo que el modelo puede decir. Un cero ahí es en parte una propiedad del instrumento, no del fenómeno. La frase defendible es *«el residuo no sobrevive a una pregunta concreta»*, que sigue siendo un consejo útil, pero no es la misma afirmación.
+La primera vez que miré esos dos ceros no pude usarlos. El turno inmediatamente posterior a la reparación era una pregunta aritmética literal con una sola respuesta correcta —un turno que domina lo que el modelo puede decir—, así que un cero ahí era en parte propiedad de mi instrumento y no del fenómeno.
+
+Así que lo corrí otra vez sin ese turno: las mismas 120 bases, brazos (a) y (b), con el segundo turno sustituido por una continuación cualquiera de la conversación. **El cero aguanta.** Sin que se pregunte nada en particular, la fuga en el turno siguiente sigue siendo del 0,0 % en los dos brazos. El residuo no sobrevive al turno siguiente, sea el que sea.
+
+La repetición replica además el efecto principal sobre otra forma de conversación: 2,5 % frente a 13,3 %, una diferencia pareada de **+10,8 puntos** (p = 0,006). Dos diseños, misma dirección, tamaño parecido.
+
+Ahí salió una cosa que juega en mi contra si nadie la comprueba. Sin la pregunta aritmética el modelo escribe libre y se come el tope de tokens más a menudo —un 12,5 % de celdas cortadas frente al 3,3 % de antes, y desbalanceado: 21 en el brazo que no dice nada y 9 en el que dice *«ignóralo»*—. Una respuesta cortada no puede contener una entidad, y en efecto la fuga es del 0 % en todas y cada una de las celdas cortadas. O sea que el truncado desinfla la medición en vez de inflarla: restringido a las 95 bases en las que los dos brazos terminaron limpios, la diferencia se ensancha a 2,1 % frente a 15,8 %. El número que publico es el conservador.
 
 ## Lo que no funcionó
 
@@ -163,19 +167,9 @@ Es un resultado nulo y lo reporto como tal: en este modelo, la contaminación po
 - **No mandes «ignóralo» a secas.** Es lo peor de las cuatro cosas que probé, por un factor de seis frente a no decir nada.
 - **Di adónde ir en su lugar.** *«Ignora eso, ventana equivocada — volvemos a la factura»* te cuesta una frase y quita unos once puntos de eco. Es la única recomendación de aquí con una p corregida detrás.
 - **No decir nada está bien.** Si puedes seguir con tu pregunta, sigue. Se queda en el 3,3 %, estadísticamente indistinguible del mejor brazo.
-- **No leas esto como contaminación duradera.** El eco apareció en la respuesta inmediata y había desaparecido para la siguiente pregunta concreta. Si tu mensaje siguiente es específico, probablemente da igual lo que hagas.
+- **No leas esto como contaminación duradera.** El eco apareció en la respuesta inmediata y había desaparecido para el turno siguiente, en las dos tandas y fuera cual fuera ese turno. Un intercambio después, se acabó.
 
 Una cosa más, que es la pista más concreta que deja esto y que no afirmo, solo reporto: la fuga tras *«ignóralo»* fue casi el doble cuando el modelo **no** había señalado ya el pegote como raro —25,0 % frente a 13,3 %—. El que no se olió nada es el que peor lleva que le digan que lo olvide.
-
-## Dos veces que casi me engaño solo
-
-Las dos tienen la misma forma, y es la forma con la que esta serie se tropieza una y otra vez: **un número bien construido que se lee como hallazgo cuando es un artefacto.**
-
-La primera fue una puerta que había escrito para impedir que el experimento se dimensionara sobre una variable muerta — *si el brazo (a) apenas fuga, no hay rango donde una reparación pueda mover nada*. Estaba escrita dando por hecho que las reparaciones **bajan** la fuga. Este efecto va al revés, así que un suelo en (a) es el mejor caso y no el peor: es el fondo limpio contra el que el efecto se ve. La puerta medía bien y concluía al revés, y declaró el hallazgo no medible justo en el momento en que el piloto lo encontró.
-
-La segunda: la fórmula de potencia se niega a correr cuando la tasa base es exactamente cero, y hace bien en negarse —una aproximación normal sobre una tasa pegada al suelo no describe nada—. Pero mi informe recogía esa negativa como *«ningún tamaño de muestra alcanza la potencia declarada»*, que es una afirmación sobre el experimento y no sobre la fórmula. Publicada tal cual, habría cerrado la fase con una conclusión que los datos no sostienen.
-
-Ninguna de las dos la cazó un test. Las dos las cacé volviendo atrás a preguntarme de qué era número cada número.
 
 ---
 
