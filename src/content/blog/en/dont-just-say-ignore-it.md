@@ -6,6 +6,7 @@ tags: ["AI", "Agents", "Evaluation", "Claude"]
 lang: en
 translationKey: dont-just-say-ignore-it
 heroImage: "/blog/dont-just-say-ignore-it.png"
+linkedinImage: /blog/dont-just-say-ignore-it-fig-1.png
 repoUrl: "https://github.com/JaviMaligno/llm-wrong-paste"
 ---
 
