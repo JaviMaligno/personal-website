@@ -511,4 +511,4 @@ Rules:
 ## Publication Completion
 
 - [ ] For an authorized publication or scheduling task, the same agent has completed the native LinkedIn article workflow in [references/linkedin-articles.md](references/linkedin-articles.md), unless the user excluded that channel.
-- [ ] Report the native article's verified URL or scheduled date, time and timezone separately from the automated feed post. If blocked, report the saved draft and the specific blocker; do not claim publication or scheduling succeeded.
+- [ ] Report the native article's verified URL or scheduled date and time separately from the automated feed post. If blocked, report the saved draft and the specific blocker; do not claim publication or scheduling succeeded.

@@ -48,8 +48,8 @@ publishing two native LinkedIn articles.
    Check `.github/publish-schedule.json`, `scripts/linkedin/posts/schedule.json`
    and the visible LinkedIn schedule. Allow for the feed update accompanying
    the native article when avoiding multiple publications on the same day.
-   Confirm the editor's timezone against `Atlantic/Canary`; record the actual
-   selected date, time and timezone. Do not invent a fixed two-day offset.
+   Record the date and time the editor actually selected. Do not invent a fixed
+   two-day offset.
 5. Publish now or use the editor's native scheduling control, according to the
    authorized task. Set suitable introductory feed text without manually
    duplicating the existing automated post. These browser-scheduled articles
