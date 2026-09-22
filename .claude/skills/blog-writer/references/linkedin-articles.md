@@ -65,6 +65,65 @@ challenge appears, or the editor cannot complete the action, preserve the draft
 when possible and report the specific blocker. Do not claim success or create
 another copy to work around an uncertain result.
 
+## Editor mechanics (observed September 2026)
+
+These notes come from building twelve native articles in one session. They
+describe how the editor behaved then; confirm them against the current editor
+before relying on them.
+
+**Body.** The body is a ProseMirror editor (`.ProseMirror`). Building the text as
+HTML and dispatching a `paste` event with a `DataTransfer` holding `text/html` is
+far faster and more reliable than typing or using the Style menu. The paste
+keeps links, bold, italics, lists, `<blockquote>` and `<pre><code>` blocks.
+Heading levels shift down one: `<h1>` becomes the native "Heading" and `<h2>`
+becomes "Subheading". Inline `<code>` survives but renders as plain text.
+Paste in chunks that end where a figure goes. Before each paste, put the cursor
+in an empty paragraph at the end of the document, or the first pasted paragraph
+merges into the previous one.
+
+**What does not survive.** There are no tables: rewrite each row as a list item
+and fix any sentence that refers to "columns". There is no maths rendering:
+write inline maths in Unicode (π, ρ, φ, ≤, subscripts) and put displayed
+equations in a code block. Remove website-only HTML such as inline SVG; use the
+pre-rendered figure PNGs.
+
+**Figures.** No `input[type=file]` exists until the upload button runs, and the
+native file picker is out of reach. Override `HTMLInputElement.prototype.click`
+so that a file input is captured and attached to the DOM instead of opening the
+picker. Then upload into it with the browser's file-upload tool, from files
+copied into the session scratchpad. The image dialog has an ALT field, which
+took about 450 characters without complaint. The caption is a textarea on the
+inserted figure with `maxlength=250`, and it truncates silently. Rewrite longer
+website captions to fit rather than letting them be cut.
+
+**Code blocks.** Pressing Enter after a `<pre>` stays inside the code block, and
+undo reverts the whole paste. When a chunk ends in a code block, end it with a
+marker paragraph (for example `<p>@@</p>`). Select the marker text and delete
+it, which leaves an empty paragraph after the block.
+
+**Cover.** The cover is cropped to 16:9. A 2:1 hero with labels or panels near
+its left or right edge loses them. Pad it with
+[`scripts/pad_cover_16x9.py`](../scripts/pad_cover_16x9.py) and upload the padded
+file, but look at the result before using it. Illustrations whose edges carry
+nothing can go up unchanged. Large files (about 1.5 MB or more) take up to 20
+seconds to process. Wait for the cover before clicking into the title, or the
+typed title is lost.
+
+**Autolinks.** The editor turns link-like text into links. The visible
+`javieraguilar.ai/...` link text becomes an `http://` link that redirects
+correctly. A bare filename such as `findings.md` becomes a link to
+`http://findings.md`. After the last paste, list every `href` in the body and fix
+any that the source article does not contain. The link dialog cannot remove a
+link, so point it at the correct target instead.
+
+**Scheduling.** Set the date and time before writing the introductory feed text,
+because returning from the schedule dialog clears it. Scheduling reached about
+three months ahead (the calendar stopped at 20 December from 22 September). The
+schedule dialog shrinks after the calendar closes, so a click on its old
+position can land outside it and open "Discard draft". Choose **Go back**.
+The Scheduled list shows the first ten entries; use "Show more results" to
+verify the rest.
+
 ## Platform references
 
 - [Write, publish and schedule articles](https://www.linkedin.com/help/learning/answer/a522427)
