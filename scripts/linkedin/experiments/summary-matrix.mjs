@@ -12,6 +12,7 @@ import { readFileSync } from 'fs';
 import matter from 'gray-matter';
 import { generate, listFlashModels } from './gemini.mjs';
 import { buildSummaryPrompt } from '../prompt.js';
+import { SCORES } from './scores.mjs';
 
 const ARTICLES = [
   { key: 'matematicas', path: 'src/content/blog/en/navier-stokes-blows-up.md',
@@ -112,38 +113,6 @@ Two or three short paragraphs, under 300 words. End on a statement.`,
   // P3 = el prompt de produccion, importado. Nunca copiado: si se copia,
   // a la segunda edicion el banco mide algo que no se despliega.
   P3_produccion: ({ title, description, tags, content }) => buildSummaryPrompt({ title, description, content, tags }),
-};
-
-const N = '(a|one|two|three|four|five|six|seven|\d+)';
-const SCORES = {
-  // las tres familias de gancho que el prompt actual da como EJEMPLO
-  formula_gancho: t => new RegExp(
-    "(isn'?t (the|about) [^.]{0,45}(—|-|;|,) ?it'?s|hardest part|most (fascinating|interesting) thing about|real story behind)"
-    + "|^I spent " + N + " (day|days|week|weeks|hour|hours)"
-    + "|^Most (teams|engineers|engineering leaders|companies|people)", 'i'
-  ).test(t.split('\n')[0] || ''),
-  primera_persona_inventada: t => new RegExp(
-    "I used to think|proved me wrong|I've always|I was wrong|my first question wasn'?t"
-    + "|I spent " + N + " (day|days|week|weeks)", 'i'
-  ).test(t),
-  acaba_en_pregunta: t => /\?\s*$/.test(t.trim()),
-  llamada_a_la_accion: t => /what'?s your experience|how are you (thinking|handling|approaching)|what do you think|curious how/i.test(t),
-  // Lo que LinkedIn impone y P2 no decia. El corte de "...ver mas" ronda los
-  // 200 caracteres en movil: una primera linea mas larga se publica cortada a
-  // media frase, y esa mitad es todo lo que ve quien pasa por el feed.
-  apertura_cortada: t => (t.trim().split('\n')[0] || '').length > 200,
-  // benchmaxing (2026-09-16) abrio definiendo el tema en tercera persona
-  // ("Benchmaxing directs model optimization toward...") y el post entero se
-  // leyo como un abstract. La firma es el sujeto = tema y un verbo descriptivo
-  // en segunda o tercera posicion. Probado contra los cinco posts de
-  // septiembre: marca benchmaxing y ninguno de los otros cuatro.
-  // Ojo: "sin I/my/me en el primer parrafo" NO sirve — marcaba justo los dos
-  // ganchos buenos, cuya primera linea es una escena sin narrador.
-  apertura_definicion: t => /^[A-Z][\w-]*( \w+)? (is|are|means|refers to|directs|describes|involves|represents|remains) /
-    .test((t.trim().split('\n')[0] || '').trim()),
-  // Un parrafo de mas de 600 caracteres es un muro en el feed.
-  muro_de_texto: t => t.trim().split(/\n\s*\n/).some(p => p.length > 600),
-  pregunta_en_el_cierre: t => /\?/.test(t.trim().split(/\n\s*\n/).pop() || ''),
 };
 
 async function run() {
