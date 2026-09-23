@@ -1,11 +1,17 @@
 ---
 name: blog-writer
-description: Write bilingual blog articles for the personal website. Use when creating a new blog post, article, or writing content for the blog. Handles EN/ES translations, frontmatter, and content structure.
+description: Write bilingual blog articles for the personal website and handle their publication workflow, including native LinkedIn articles through the browser. Use when creating, preparing, publishing, or scheduling a blog article. Handles EN/ES translations, frontmatter, and content structure.
 ---
 
 # Blog Article Writer
 
 Create bilingual (English/Spanish) blog articles for javieraguilar.ai.
+
+When publishing or scheduling an article, the authoring agent also publishes or
+schedules its native LinkedIn article through the browser. Read
+[references/linkedin-articles.md](references/linkedin-articles.md) for this step.
+The brief LinkedIn post continues through the existing automated workflow.
+Writing or reviewing a draft alone does not authorize publication.
 
 ## File Locations
 
@@ -35,7 +41,7 @@ heroImage: "/blog/article-slug.png"
 |-------|----------|-------|
 | `title` | Yes | Translated per language |
 | `description` | Yes | Translated, SEO-friendly, 1-2 sentences |
-| `pubDate` | Yes | Same date for both languages. **Must be the date the article actually gets merged to `main`** — if the publication is scheduled via `scheduled-publish-<slug>.yml`, use that cron's date, and update it if the schedule moves. The blog index sorts and displays by `pubDate`, so a stale draft date makes the article appear under an older date instead of as the newest post. |
+| `pubDate` | Yes | Same date for both languages. Use the website publication date in `.github/publish-schedule.json`, or today for immediate publication; update it if the schedule moves. See `docs/blog-publishing.md` for backlog behavior. The native LinkedIn article has its own publication date and does not change this field. |
 | `tags` | Yes | Translated (e.g., "AI" → "IA") |
 | `lang` | Yes | Must be `en` or `es` |
 | `translationKey` | Yes | Same value for EN/ES pair (kebab-case) |
@@ -491,7 +497,7 @@ Rules:
 - [ ] Both EN and ES files created
 - [ ] Matching `translationKey` in both
 - [ ] Same `pubDate` in both
-- [ ] **`pubDate` equals the actual publication date** (the `scheduled-publish-<slug>.yml` cron date, or today if merging manually) — not the date the draft was written
+- [ ] **`pubDate` matches the website publication schedule** (`.github/publish-schedule.json`, or today if merging manually) — not the draft date or the native LinkedIn article date
 - [ ] Tags translated appropriately
 - [ ] `lang` field matches file location
 - [ ] Hero image generated, reviewed by user, and placed in `public/blog/`
@@ -501,3 +507,8 @@ Rules:
 - [ ] **If the article involves code, `repoUrl:` set in both EN and ES frontmatter** — the LinkedIn auto-post (`scripts/linkedin/utils.js`) adds a "💻 Code:" line only when this field is present. Omitting it means editing the LinkedIn post by hand after publish.
 - [ ] Links are valid and functional
 - [ ] **Every mention of Javier's own work is a link** — previous articles, skills, projects, mentoring, experiment repos — with language-matched paths (`/en/...` in EN, `/es/...` in ES) and slugs verified to exist
+
+## Publication Completion
+
+- [ ] For an authorized publication or scheduling task, the same agent has completed the native LinkedIn article workflow in [references/linkedin-articles.md](references/linkedin-articles.md), unless the user excluded that channel.
+- [ ] Report the native article's verified URL or scheduled date and time separately from the automated feed post. If blocked, report the saved draft and the specific blocker; do not claim publication or scheduling succeeded.

@@ -1332,4 +1332,20 @@ No se aprecian artefactos de texto en esas etiquetas ni logos o personas.
 
 ```text
 Create a 1020x510 blog hero image for a technical article titled 'Jev: what survives the hype'. Refined technical editorial bitmap illustration. Show a concrete developer evaluation workbench: on the left a small laptop displaying three short terminal rows reading 'CLASSIFY', 'VERIFY', 'ROUTE'; at center a transparent mechanical sorting apparatus routes plain document cards along a teal accepted path and an amber review path; at right a compact server cabinet behind a physical access gate with a small globe and a lock symbol. Three connected work areas represent a personal coding workflow, a product decision pipeline, and infrastructure constraints. The central sorting device is small and practical rather than an all-powerful robot. Several crisp details, orderly composition with breathing space, diagram-like precision without a text-heavy poster. Dark graphite background with balanced teal, amber, off-white and slate accents, professional AI/developer publication aesthetic. No people, no logos, no brand names, no giant title, no purple gradient blobs, no bokeh. Any tiny labels must be legible; prefer symbols over extra text.
+## When AI chooses the questions — 2026-09-21
+
+- Articles: `src/content/blog/en/when-ai-chooses-the-questions.md`, `src/content/blog/es/when-ai-chooses-the-questions.md`
+- Image: `public/blog/when-ai-chooses-the-questions.png`
+- Generator: built-in image_gen; original followed by a targeted edit removing mathematical text.
+
+Initial prompt:
+
+```text
+Use case: stylized-concept. Create a wide 2:1 landscape blog hero image, approximately 1020x510, for an essay titled 'When AI chooses the questions'. Refined, rich technical editorial illustration of a contemporary mathematics research workspace, with no people. A long graphite desk under a large dark chalkboard, seen in three-quarter perspective. On the left, a small neat pile of completed proof pages, with subtle teal check marks and a laptop displaying a compact proof verification view. Across the central chalkboard, carefully drawn chalk mathematical relations and sketches are organized into a few meaningful connected families. On the right, several new research directions remain unfinished, drawn in amber chalk with open branches and small question marks, extending into generous empty chalkboard space. An open research notebook in the foreground connects a worked example to a fresh question; a pencil rests on it. The image should convey that proving a theorem enables new inquiry, and that selecting a direction matters more than piling up answers. Concrete academic tools and plausible sparse mathematical notation; avoid meaningless walls of text. Sophisticated crisp bitmap illustration with tactile chalk and paper, restrained depth, balanced teal, amber, graphite and off-white. No title text, no logos, no brand names, no robots, no brains, no glowing cubes, no purple gradient blobs, no bokeh. Keep the main elements readable at thumbnail size and within the central safe region.
+```
+
+Final edit prompt:
+
+```text
+Edit this editorial research-workspace illustration while preserving its composition, desk, lighting, graphite/teal/amber palette, laptop, chalkboard, books and notebook. Remove EVERY mathematical equation, EVERY word, EVERY number and EVERY written label everywhere in the image, including chalkboard headings, notebook, laptop, book spines and paper edges. Replace text areas on the chalkboard and notebook with clean unlabelled geometric sketches, small example diagrams, curves and unfinished exploratory branches. Keep only a few small question marks and teal check marks as symbols. The laptop may show unlabeled interface lines. This is a conceptual editorial illustration, not an actual mathematical proof: do not add any formulas or claims. The purpose is to suggest moving from completed proofs toward new questions, without invented mathematical statements. No new objects. Keep the wide 2:1 landscape aspect ratio.
 ```
