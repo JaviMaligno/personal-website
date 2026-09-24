@@ -4,6 +4,64 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## make-yourself-replaceable
+
+- **Article:** `src/content/blog/{en,es}/make-yourself-replaceable.md`
+- **Image:** `public/blog/make-yourself-replaceable.png`
+- **Generated:** 2026-09-11 (`codex exec -s workspace-write`; note the CLI no
+  longer accepts `--full-auto`). Regenerated the same day as a
+  `precise-object-edit` over the first output — see the second prompt below,
+  which is the one that produced the shipped image.
+- **Watch for:** the two destination panels must stay distinguishable — the
+  ARCHIVE holds every dated conversation, the PROJECT MEMORY only the current
+  state with `source: archive/NN` links back. The superseded/replacement pair at
+  the bottom is the article's central point; if a regeneration drops it or
+  crosses out the wrong one, the image argues against the text. Three defects in
+  the first pass, all fixed by the edit prompt: the terminal read `agent ---read`
+  (three dashes), a cartoon robot sat in the bottom-right, and the top-right
+  carried slogan copy (`LESS CONTEXT SWITCHING / MORE PROGRESS`) plus a
+  `CAPTURE / ORGANIZE / DISTILL / EMPOWER` checklist that came from nowhere in
+  the article. Editing the previous PNG rather than regenerating from scratch
+  kept the composition and palette identical.
+
+### First pass (superseded)
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 (2:1) blog hero image for a technical article titled "Helping the team work without depending on you".
+Primary request: Create a refined technical editorial bitmap illustration of a concrete project-handover system. Show scattered raw communications—an email message, a chat thread, and meeting notes—flowing via clear arrows into two distinct destinations. Left destination: a chronological ARCHIVE, a dense vertical stack of dated conversation cards and records. Right destination: a maintained PROJECT MEMORY panel that shows only current state, with compact entries labeled "decision" and "proposal" and small source-link lines pointing back to dated archive cards. A coding-agent terminal window reads from the PROJECT MEMORY panel.
+Scene/backdrop: a clean, dark graphite workspace arranged as a precise systems diagram, with several distinct zones and a clear left-to-right information flow.
+Subject: communications capture, historical archive, distilled project memory, and an agent terminal operating independently from the maintained memory. Include one superseded entry visibly crossed out directly beside its replacement.
+Style/medium: crisp bitmap editorial illustration, polished professional AI/developer blog aesthetic; dense but legible, strong geometric layout, fine grid lines, sharp interface panels, subtle paper/card texture only.
+Composition/framing: wide 2:1 landscape. Top-left: three raw communication cards. Bottom-left: chronological archive stack. Center: directional arrows and a small distillation/filter module. Right-center: PROJECT MEMORY panel. Far right: terminal window visibly reading memory content. Keep balanced negative space around zones but make information density a feature.
+Lighting/mood: dark, focused, confident, high contrast without being monochrome.
+Color palette: graphite and near-black foundation, teal flow arrows and active states, amber highlights and dates, off-white text and cards, restrained muted blue-gray details. No purple gradients.
+Text: readable generic interface copy only, such as "EMAIL", "CHAT", "MEETING NOTE", dates "MON 12", "TUE 14", "FRI 17", "ARCHIVE", "PROJECT MEMORY", "decision", "proposal", "superseded", "source: archive/17", and terminal lines like "$ agent --read project-memory", "current delivery: next Friday", "dependency: pending", "decision loaded". Avoid title text and paragraph-length copy.
+Constraints: no logos, no brand names, no people, no text-heavy poster, no photorealism. Make the distinctions between complete chronological history and concise current memory obvious; show source links from memory back to archive; ensure the superseded item and its replacement are both clear.
+Avoid: purple gradient blobs, bokeh, glossy 3D, floating abstract shapes, excessive empty space, illegible tiny text, watermarks.
+```
+
+### Shipped image (regeneration)
+
+Run as an edit over the first PNG, with the previous prompt as the style reference:
+
+```text
+Use case: precise-object-edit
+Asset type: exact 1020x510 (2:1) blog hero image for a technical article titled "Helping the team work without depending on you".
+Input image: the previous hero image shown in this conversation; edit target and composition/palette reference.
+Primary request: Preserve the input image's refined technical editorial bitmap illustration style, wide 2:1 composition, dark graphite workspace, crisp panels, fine grid lines, teal flow arrows and active states, amber highlights and dates, off-white text/cards, and muted blue-gray details. Preserve all existing system-diagram elements and their relative layout: the three raw communication cards at top-left; the chronological ARCHIVE stack of dated entries at bottom-left; the central DISTILL module and flow arrows; the PROJECT MEMORY panel with current-state-only entries labeled "decision" and "proposal" and source links formatted like "source: archive/NN"; and the crucial superseded-versus-replacement pair at the bottom of PROJECT MEMORY, with a crossed-out "Launch date: next Monday" directly beside a live "Launch date: next Friday". Keep the ARCHIVE and PROJECT MEMORY clearly distinguishable.
+
+Make exactly these corrections only:
+1. In the terminal window, render the command exactly as "$ agent --read project-memory" with exactly two hyphens before read. Do not use three hyphens.
+2. Remove the cartoon robot character in the bottom-right entirely. No characters, mascots, anthropomorphic figures, people, faces, hands, or robots anywhere. Replace it with a clean dark desk/panel surface below and beside the terminal, visually integrated with the workspace.
+3. Remove the entire top-right motivational slogan block reading "LESS CONTEXT SWITCHING / MORE PROGRESS" and remove the nearby checklist card with "CAPTURE / ORGANIZE / DISTILL / EMPOWER". No motivational or marketing copy anywhere in the image. Fill that space naturally with the dark graphite workspace backdrop and/or an unobtrusive extension of the technical diagram; interface labels belonging to the depicted system are allowed.
+
+Text: Keep readable generic system interface labels only, including "EMAIL", "CHAT", "MEETING NOTE", dates such as "MON 12", "TUE 14", "FRI 17", "ARCHIVE", "PROJECT MEMORY", "CURRENT STATE ONLY", "DISTILL", "decision", "proposal", "superseded", source links such as "source: archive/17", and terminal lines. Terminal command must be exactly "$ agent --read project-memory".
+Constraints: no logos, brand names, title text, slogans, marketing copy, paragraph-length copy, people, robot, mascot, anthropomorphic figure, photorealism, watermarks. Do not alter, omit, or swap the crossed-out superseded entry and the live replacement pair. Avoid purple gradient blobs, bokeh, glossy 3D, floating abstract shapes, excessive empty space, illegible tiny text.
+```
+
+---
+
 ## nobody-will-check-behind-you
 
 - **Article:** `src/content/blog/{en,es}/nobody-will-check-behind-you.md`
