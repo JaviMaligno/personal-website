@@ -1,6 +1,6 @@
 ---
 title: "Cuando el dato deja de ser cierto"
-description: "Réplica de SKILL.state, un paper de EMNLP que sustituye la historia de conversación de un agente por un estado explícito y mutable. El ahorro en tokens es real y el ahorro en la factura no: 7,5x se queda en 1,4x en cuanto activas la caché. Y donde el estado explícito gana de forma aplastante confirma el experimento de recuperación del propio paper, con una métrica que él no usa: 93 correcciones aplicadas de 93, frente a 18 de 82 con el transcript completo."
+description: "Réplica de SKILL.state, un paper de EMNLP que sustituye la historia de conversación de un agente por un estado explícito y mutable. El ahorro en tokens es real y el ahorro en la factura no: 7,5x se queda en 1,4x en cuanto activas la caché. Y donde el estado explícito gana de forma aplastante confirma el experimento de recuperación del propio paper, con una métrica que él no usa: el estado explícito aplica la corrección en 70 de 72 episodios, frente a 10 de 72 con el transcript completo."
 pubDate: 2026-09-13
 tags: ["IA", "Agentes", "Context Engineering", "Evaluación", "Investigación"]
 lang: es
@@ -15,6 +15,8 @@ repoUrl: https://github.com/JaviMaligno/delayed-relevance
 .wfs-fig svg { width: 100%; height: auto; background: #1a1a24; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; }
 .wfs-fig figcaption { margin-top: 0.6rem; font-size: 0.9rem; color: #94a3b8; line-height: 1.5; }
 </style>
+
+> **Corrección.** El recuento principal de este artículo —Haiku con 3/44 frente a 44/44, y «93 de 93 pasos dependientes» con estado explícito— salió de un instrumento que no podía registrar todos los fallos: leía los pasos dependientes de una trayectoria simulada en lugar de la trayectoria real del agente, y aplicaba la acción correcta cuando un runtime no devolvía ninguna. Medido de nuevo por episodio sobre la trayectoria real, con tres modelos, el estado explícito aplica la corrección en **70 de 72 episodios** y el transcript completo en **10 de 72** (solo Haiku: 24/24 frente a 1/24). La dirección se sostiene; la perfección no. La nueva medida está en el [paper de la réplica](https://github.com/JaviMaligno/delayed-relevance/blob/main/docs/paper-draft.md).
 
 > **Réplica de *SKILL.state: Scalable Long-Horizon Agent Skills* (Badhe, Tiwari y Chung, aceptado en EMNLP) con dos modelos y más de 500 episodios.** Cada número de este artículo es un recuento de decisiones, no un promedio de episodios.
 
