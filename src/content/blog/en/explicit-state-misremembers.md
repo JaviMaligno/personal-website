@@ -1,7 +1,7 @@
 ---
 title: "Explicit State Doesn't Forget. It Misremembers."
 description: "The second half of my SKILL.state replication, on the paper's own model and a second one, with every cell repeated. Explicit state holds exactly where the paper says it does. Where it breaks, it breaks by writing the state wrong — and the runtime that keeps the transcript alongside it barely notices."
-pubDate: 2026-10-21
+pubDate: 2026-09-26
 tags: ["AI", "Agents", "Context Engineering", "Evaluation", "Research"]
 lang: en
 translationKey: explicit-state-misremembers

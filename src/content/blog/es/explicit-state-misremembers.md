@@ -1,7 +1,7 @@
 ---
 title: "El estado explícito no olvida. Recuerda mal."
 description: "La segunda mitad de mi réplica de SKILL.state, con el modelo del propio paper y un segundo modelo, y cada celda repetida. El estado explícito aguanta justo donde el paper dice. Donde falla, falla escribiendo mal el estado, y el runtime que conserva la historia al lado apenas lo nota."
-pubDate: 2026-10-21
+pubDate: 2026-09-26
 tags: ["IA", "Agentes", "Context Engineering", "Evaluación", "Investigación"]
 lang: es
 translationKey: explicit-state-misremembers
