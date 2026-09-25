@@ -100,9 +100,12 @@ El nombre del modelo es el suyo, pero `gemini-3-flash-preview` puede no ser exac
 checkpoint que hay detrás de su `Gemini-3-Flash`, así que no puedo descartar el modelo:
 solo decir que no lo cambié.
 
-Un brazo no cuadra con el suyo por una razón mía: en T=200 el prompt medio de nuestro
-Memory es catorce veces más pequeño que el suyo, y en T=100 y T=200 queda el último. Eso
-mide nuestra política de resumen, no el resumen como categoría.
+Memory es el único brazo en el que la comparación es entre dos cosas distintas. El paper no
+especifica cómo resume su Memory, así que una réplica tiene que elegir una política, y la
+nuestra guarda un resumen mucho más apretado: en T=200 su prompt medio es la catorceava
+parte del suyo. Con ese resumen más apretado, Memory es el brazo que más degrada, el último
+en T=100 y T=200. Cuánto de eso es del resumen como tal y cuánto de lo fuerte que comprime,
+estas tiradas no lo pueden decir.
 
 ## Con un segundo modelo, el estado explícito escribe mal el estado
 

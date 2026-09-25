@@ -99,9 +99,12 @@ The model name is theirs, but `gemini-3-flash-preview` may not be the exact chec
 behind their `Gemini-3-Flash`, so I cannot rule the model out — only say I did not change
 it.
 
-One arm does not line up with theirs for a reason of mine: at T=200 our Memory's mean
-prompt is fourteen times smaller than theirs, and at T=100 and T=200 it comes last. That
-measures our summarisation policy, not summarisation as a category.
+Memory is the one arm where the comparison is between two different things. The paper
+does not specify how its Memory summarises, so a replication has to pick a policy, and
+ours keeps a much tighter summary: at T=200 its mean prompt is a fourteenth of theirs.
+With that tighter summary Memory is the arm that degrades most, last at T=100 and T=200.
+How much of that belongs to summarisation as such, and how much to how hard it
+compresses, these runs cannot say.
 
 ## On a second model, explicit state writes the state wrong
 
