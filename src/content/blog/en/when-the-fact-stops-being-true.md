@@ -1,6 +1,6 @@
 ---
 title: "When the Fact Stops Being True"
-description: "A replication of SKILL.state, an EMNLP paper that replaces an agent's conversation history with an explicit mutable state. The token savings are real and the bill savings are not — 7.5x becomes 1.4x once you turn caching on. And where explicit state wins decisively it confirms the paper's own recovery experiment, with a metric the paper never used: 93 out of 93 corrections applied, against 18 out of 82 for the full transcript."
+description: "A replication of SKILL.state, an EMNLP paper that replaces an agent's conversation history with an explicit mutable state. The token savings are real and the bill savings are not — 7.5x becomes 1.4x once you turn caching on. And where explicit state wins decisively it confirms the paper's own recovery experiment, with a metric the paper never used: explicit state applies the correction in 70 of 72 episodes, against 10 of 72 for the full transcript."
 pubDate: 2026-09-13
 tags: ["AI", "Agents", "Context Engineering", "Evaluation", "Research"]
 lang: en
@@ -27,6 +27,8 @@ linkedinSummary: |
 .wfs-fig svg { width: 100%; height: auto; background: #1a1a24; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; }
 .wfs-fig figcaption { margin-top: 0.6rem; font-size: 0.9rem; color: #94a3b8; line-height: 1.5; }
 </style>
+
+> **Correction.** The headline count of this article — Haiku at 3/44 against 44/44, and "93 of 93 dependent steps" with explicit state — came from an instrument that could not register every miss: it read its dependent steps off a simulated trajectory instead of the agent's real one, and applied the correct action whenever a runtime returned none. Re-measured per episode on the real trajectory, across three models, explicit state applies the correction in **70 of 72 episodes** and the full transcript in **10 of 72** (Haiku alone: 24/24 against 1/24). The direction stands; the perfection does not. The re-measurement is in the [replication paper](https://github.com/JaviMaligno/delayed-relevance/blob/main/docs/paper-draft.md).
 
 > **A replication of *SKILL.state: Scalable Long-Horizon Agent Skills* (Badhe, Tiwari and Chung, accepted at EMNLP) across two models and 500+ episodes.** Every headline number here is a count of decisions, not an average of episodes.
 
