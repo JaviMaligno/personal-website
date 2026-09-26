@@ -1407,3 +1407,33 @@ Final edit prompt:
 ```text
 Edit this editorial research-workspace illustration while preserving its composition, desk, lighting, graphite/teal/amber palette, laptop, chalkboard, books and notebook. Remove EVERY mathematical equation, EVERY word, EVERY number and EVERY written label everywhere in the image, including chalkboard headings, notebook, laptop, book spines and paper edges. Replace text areas on the chalkboard and notebook with clean unlabelled geometric sketches, small example diagrams, curves and unfinished exploratory branches. Keep only a few small question marks and teal check marks as symbols. The laptop may show unlabeled interface lines. This is a conceptual editorial illustration, not an actual mathematical proof: do not add any formulas or claims. The purpose is to suggest moving from completed proofs toward new questions, without invented mathematical statements. No new objects. Keep the wide 2:1 landscape aspect ratio.
 ```
+
+
+## Explicit state doesn't forget. It misremembers — 2026-09-25
+
+- Articles: `src/content/blog/en/explicit-state-misremembers.md`, `src/content/blog/es/explicit-state-misremembers.md`
+- Image: `public/blog/explicit-state-misremembers.png`
+- Generator: built-in image_gen via Codex, resized to 1020x510 with `sips`.
+
+Prompt:
+
+```text
+Use case: infographic-diagram
+Asset type: 1020x510 blog hero image, 2:1 landscape.
+Primary request: Create a refined technical editorial bitmap illustration of an AI agent's explicit JSON state panel beside a concrete warehouse shelf grid. Show a successful "Move 7 -> 3" action followed by an incorrect state write: the state claims SKU-J on shelf 3, while the real shelf 3 holds SKU-K. The action is correct; the recorded value is wrong.
+Composition: Clean geometric composition on a dark graphite background, generous margins, balanced visual weight. Place a compact terminal/state window beside a slightly dimensional warehouse rack with nine numbered shelf compartments, 1 through 9 in row-major order. Keep the JSON and shelf grid prominent and legible at hero size. No headline. A thin amber comparison connector links the erroneous shelf_3 JSON row to the teal real shelf 3.
+State window: Small off-white label "EXPLICIT STATE", an amber warning triangle near the label, crisp readable monospace JSON exactly:
+{
+  "shelf_3": "SKU-J",
+  "shelf_6": "SKU-J",
+  "shelf_7": null
+}
+Highlight only the shelf_3 row with an amber tint and amber text to identify the disagreement.
+Warehouse: Small off-white label "REAL SHELVES". Number each compartment clearly. Shelf 3 contains a teal pallet of boxes labeled "SKU-K"; shelf 6 contains an amber pallet labeled "SKU-J"; shelf 7 is empty after the move. Other compartments contain a few muted off-white or graphite pallets. Draw one clear teal directional arrow starting at empty shelf 7 and ending at occupied shelf 3, routed neatly around the rack without obscuring shelf numbers. Near this arrow place the readable label "Move 7 -> 3" with a small teal check mark.
+Log: A small terminal/log strip below the JSON, with only two short readable monospace lines:
+"132  Move 7 -> 3   OK"
+"137  Ship 3 SKU-J  REJECTED"
+Use teal for OK and amber for REJECTED. The rejection is secondary, not a large banner.
+Style/medium: Crisp bitmap illustration, refined technical editorial art, subtly dimensional pallets and metal shelving, sharp edges, restrained surface texture, high contrast, professional AI/developer blog aesthetic. Dark but not monochrome; balanced teal, amber, graphite, and off-white accents.
+Constraints: Preserve the concrete cause and effect: successful physical move, wrong JSON value, later rejected action. Keep text sparse and readable, limited to the specified labels, JSON, log, shelf numbers, and two SKU labels. No logos, no brand names, no people, no robots, no text-heavy poster, no purple gradient blobs, no bokeh, no watermark.
+```
