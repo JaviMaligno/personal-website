@@ -1463,3 +1463,18 @@ Use teal for OK and amber for REJECTED. The rejection is secondary, not a large 
 Style/medium: Crisp bitmap illustration, refined technical editorial art, subtly dimensional pallets and metal shelving, sharp edges, restrained surface texture, high contrast, professional AI/developer blog aesthetic. Dark but not monochrome; balanced teal, amber, graphite, and off-white accents.
 Constraints: Preserve the concrete cause and effect: successful physical move, wrong JSON value, later rejected action. Keep text sparse and readable, limited to the specified labels, JSON, log, shelf numbers, and two SKU labels. No logos, no brand names, no people, no robots, no text-heavy poster, no purple gradient blobs, no bokeh, no watermark.
 ```
+## The subagent said so — 2026-09-29
+
+- Article: `src/content/blog/en/the-subagent-said-so.md`
+- Image: `public/blog/the-subagent-said-so.png`
+- Generator: built-in image_gen; resized to 1020x510 with `sips`.
+
+```text
+Create a 1020x510 blog hero image, wide 2:1 landscape, for the technical article "The subagent said so". Use case: stylized-concept. Refined technical editorial illustration depicting a concrete coding-agent workflow as a working system.
+
+Arrange exactly three terminal/editor windows in a clean, balanced geometric composition on a dark graphite workspace: a small subagent window on the left, the main coding agent's larger terminal in the center, and a teammate's notes editor beside it on the right. A thin amber delegation arrow runs from the main terminal to the subagent; a stronger amber return arrow carries a sealed report from the subagent into the main terminal. The report is a compact digital document packet labeled "report.md", with an intact seal and a prominent but proportionate "ACCEPTED" stamp. In the main terminal, show the sparse readable monospace lines "Agent -> tool_result" and "verify: pending". Below them, a compact verification checklist remains unchecked. Make it visually unmistakable that the report has been accepted while verification is still pending.
+
+The right-hand editor is labeled "teammate-notes.md". Show a few short, generic code-like lines, line numbers, and a magnifier enlarging one selected line. Teal checkmarks align individually with the inspected lines, forming a clear line-by-line checklist. Use restrained off-white linework for the notes and teal highlights for active inspection. Both reports belong to the same developer workflow; the visual contrast is how they are checked. The subagent window needs only the label "SUBAGENT" and two or three short generic terminal lines; label the central window "MAIN AGENT". Keep all specified text legible and sparse, with no article title or explanatory paragraphs inside the image.
+
+Crisp bitmap illustration with sharp edges, subtle dimensional depth, refined surface texture, and high contrast. Dark but not monochrome: balanced teal, amber, graphite, slate, and off-white accents. Professional AI/developer blog aesthetic, carefully spaced windows and connectors, generous outer margins, clear hierarchy readable at thumbnail size. The sealed report and magnified notes are the focal points. No people, hands, robots, logos, brand names, watermark, text-heavy poster, abstract floating nodes, purple gradient blobs, or bokeh.
+```
