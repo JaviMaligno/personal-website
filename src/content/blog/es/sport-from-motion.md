@@ -7,6 +7,7 @@ lang: es
 translationKey: sport-from-motion
 heroImage: "/blog/sport-from-motion.png"
 repoUrl: "https://github.com/JaviMaligno/sport-from-motion"
+linkedinImage: "/blog/sport-from-motion-quiz.png"
 ---
 
 <style>
@@ -23,9 +24,11 @@ repoUrl: "https://github.com/JaviMaligno/sport-from-motion"
 .sfm-fig .trk{stroke:#5eead4;stroke-width:1.6;fill:none}
 </style>
 
-Viendo un vídeo en el que no se distinguía bien el campo, supe que era rugby y no fútbol. No por el campo ni por el balón: por **cómo se movían los jugadores**.
+Cuando vemos deporte, hay algo que hacemos sin pensar: reconocemos lo que estamos viendo antes de saber explicar por qué. Me di cuenta viendo un vídeo en el que apenas se distinguía el campo. Aun así, supe enseguida que era rugby y no fútbol. Lo que lo delataba no era el escenario, sino **cómo se movían los jugadores**.
 
-Así que le hice la misma prueba a varios modelos. Esto es lo que recibieron:
+Me quedé con la pregunta de si eso se puede aislar. Si quito todo lo demás (el campo, el balón, los colores, las camisetas) y dejo a los jugadores convertidos en puntos, ¿sigue ahí el deporte? ¿Y lo ve un modelo?
+
+Para probarlo preparé imágenes como esta, que es exactamente lo que recibieron los modelos:
 
 ![Ocho instantes de una misma jugada: diez puntos grises sobre fondo blanco, sin campo ni balón](/blog/sport-from-motion-quiz.png)
 
@@ -131,7 +134,7 @@ Ninguno de estos atajos es exótico. Son lo que pasa cuando se mezclan datos de 
 
 ## Los modelos frontera
 
-Con los datos limpios, preparé una corrida con cinco modelos frontera: **GPT-5.6 Sol, GPT-5.6 Terra, Claude Opus 5.5, Claude Sonnet 5 y Gemini 3.1 Pro**. Antes de ver una sola respuesta dejé escrito un [pre-registro](https://github.com/JaviMaligno/sport-from-motion/blob/main/docs/preregistration.md): las hipótesis, los cuatro contrastes principales por modelo, la corrección por comparaciones múltiples y la regla exacta para decir que un modelo «lee el movimiento». Con 20 contrastes y datos de este tipo, sin reglas fijadas de antemano es muy fácil encontrar algo.
+Con los datos limpios, preparé una corrida con cinco modelos frontera: **GPT-5.6 Sol, GPT-5.6 Terra, Claude Opus 5.5, Claude Sonnet 5 y Gemini 3.1 Pro**. Añadí también [Jev](/es/blog/jev-after-the-hype), un modelo de decisión tipada que solo lee texto y devuelve directamente una probabilidad por opción. Antes de ver una sola respuesta dejé escrito un [pre-registro](https://github.com/JaviMaligno/sport-from-motion/blob/main/docs/preregistration.md): las hipótesis, los cuatro contrastes principales por modelo, la corrección por comparaciones múltiples y la regla exacta para decir que un modelo «lee el movimiento». Con 20 contrastes y datos de este tipo, sin reglas fijadas de antemano es muy fácil encontrar algo.
 
 <figure class="sfm-fig">
 <img src="/blog/sport-from-motion-accuracy-es.png" alt="Exactitud con 8 instantes en orden: los modelos frontera quedan entre 0,26 y 0,47 una vez corregido su sesgo de respuesta; MiniRocket llega a 0,83 y DeepSets a 0,80." aria-label="Exactitud con 8 instantes en orden: los modelos frontera quedan entre 0,26 y 0,47 una vez corregido su sesgo de respuesta; MiniRocket llega a 0,83 y DeepSets a 0,80." />
@@ -166,7 +169,7 @@ Hay matices que importan:
 
 Probé también tres cosas que parecían prometedoras, y ninguna movió los resultados de forma clara:
 
-- **Coordenadas en texto en lugar de imágenes.** Ni empeora ni mejora de forma consistente. Gemini acierta algo más con texto, sin llegar a ser significativo.
+- **Coordenadas en texto en lugar de imágenes.** Ni empeora ni mejora de forma consistente. Gemini acierta algo más con texto, sin llegar a ser significativo. Jev, que solo puede leer texto, queda en el azar: contesta «fútbol» en el 90-100 % de los clips. Sus probabilidades parecen moverse algo con el orden (corregido su sesgo, 0,34 con los instantes en orden frente a 0,21-0,23 desordenados), pero casi nunca llegan a cambiar su respuesta, y no es una diferencia que pusiera a prueba.
 - **Decirle qué mirar.** Un prompt que describe cómo se mueve cada deporte, sin números, sube el acierto entre 0 y 3 puntos. Nada que sobreviva a la corrección.
 - **Estelas y vídeo.** Dibujar la estela de cada jugador no ayuda a nadie, y a Sol le quita 7 puntos. Con vídeo, Gemini acierta unos 7 puntos más que con la hoja, pero es exploratorio y no alcanza para afirmarlo.
 

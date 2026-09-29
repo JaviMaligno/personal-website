@@ -7,6 +7,7 @@ lang: en
 translationKey: sport-from-motion
 heroImage: "/blog/sport-from-motion.png"
 repoUrl: "https://github.com/JaviMaligno/sport-from-motion"
+linkedinImage: "/blog/sport-from-motion-quiz.png"
 ---
 
 <style>
@@ -23,9 +24,11 @@ repoUrl: "https://github.com/JaviMaligno/sport-from-motion"
 .sfm-fig .trk{stroke:#5eead4;stroke-width:1.6;fill:none}
 </style>
 
-Watching a video where you could barely make out the pitch, I knew it was rugby and not football. Not from the pitch or the ball: from **how the players moved**.
+When we watch sport, there is something we do without thinking: we recognise what we are watching before we can explain why. I noticed it while watching a video where you could barely make out the pitch. Even so, I knew straight away it was rugby and not football. What gave it away was not the setting but **how the players moved**.
 
-So I gave several models the same test. This is what they received:
+I was left wondering whether that can be isolated. If I remove everything else (the pitch, the ball, the colours, the kits) and turn the players into dots, is the sport still there? And does a model see it?
+
+To test it I prepared images like this one, which is exactly what the models received:
 
 ![Eight snapshots of the same play: ten grey dots on a white background, no pitch, no ball](/blog/sport-from-motion-quiz.png)
 
@@ -131,7 +134,7 @@ None of these shortcuts is exotic. They are what happens when you mix data from 
 
 ## The frontier models
 
-With clean data, I prepared a run with five frontier models: **GPT-5.6 Sol, GPT-5.6 Terra, Claude Opus 5.5, Claude Sonnet 5 and Gemini 3.1 Pro**. Before seeing a single answer I wrote down a [pre-registration](https://github.com/JaviMaligno/sport-from-motion/blob/main/docs/preregistration.md): the hypotheses, the four primary contrasts per model, the correction for multiple comparisons, and the exact rule for saying that a model "reads motion". With 20 contrasts and data like this, it is very easy to find something without rules fixed in advance.
+With clean data, I prepared a run with five frontier models: **GPT-5.6 Sol, GPT-5.6 Terra, Claude Opus 5.5, Claude Sonnet 5 and Gemini 3.1 Pro**. I also added [Jev](/en/blog/jev-after-the-hype), a typed-decision model that only reads text and returns a probability per option directly. Before seeing a single answer I wrote down a [pre-registration](https://github.com/JaviMaligno/sport-from-motion/blob/main/docs/preregistration.md): the hypotheses, the four primary contrasts per model, the correction for multiple comparisons, and the exact rule for saying that a model "reads motion". With 20 contrasts and data like this, it is very easy to find something without rules fixed in advance.
 
 <figure class="sfm-fig">
 <img src="/blog/sport-from-motion-accuracy-en.png" alt="Accuracy with 8 snapshots in order: frontier models land between 0.26 and 0.47 once their response bias is corrected; MiniRocket reaches 0.83 and DeepSets 0.80." aria-label="Accuracy with 8 snapshots in order: frontier models land between 0.26 and 0.47 once their response bias is corrected; MiniRocket reaches 0.83 and DeepSets 0.80." />
@@ -166,7 +169,7 @@ Some nuances matter:
 
 I also tried three things that looked promising, and none of them moved the results clearly:
 
-- **Coordinates as text instead of images.** Neither consistently worse nor better. Gemini does somewhat better with text, without reaching significance.
+- **Coordinates as text instead of images.** Neither consistently worse nor better. Gemini does somewhat better with text, without reaching significance. Jev, which can only read text, stays at chance: it answers "soccer" on 90-100% of clips. Its probabilities seem to move a little with the order (bias-corrected, 0.34 with the snapshots in order against 0.21-0.23 shuffled), but they almost never change its answer, and it is not a difference I tested.
 - **Telling it what to look for.** A prompt that describes how each sport moves, without numbers, raises accuracy by 0 to 3 points. Nothing that survives the correction.
 - **Trails and video.** Drawing each player's trail helps no one, and costs Sol 7 points. With video, Gemini is about 7 points better than with the sheet, but it is exploratory and not enough to claim.
 
