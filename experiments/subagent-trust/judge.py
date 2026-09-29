@@ -47,7 +47,7 @@ def main():
     args = ap.parse_args()
     bank = load()
     scen = {s["id"]: s for s in bank["scenarios"]}
-    judge = json.loads((HERE / "models.json").read_text())[args.judge]
+    judge = {**json.loads((HERE / "models.json").read_text()), **(json.loads((HERE / "models.local.json").read_text()) if (HERE / "models.local.json").exists() else {})}[args.judge]
     run_dir = HERE / "runs" / args.campaign
     lock = threading.Lock()
 

@@ -276,3 +276,18 @@ clasificación manual.
   a mitad de campaña haría esos episodios incomparables, así que el brazo L de GPT
   no se completa y sus 17 episodios no se analizan.
 - El juez corre en el gateway (`gpt-5.4-mini`), sin Vertex.
+
+## Enmienda 3 — brazo M, aviso del harness (29-sep-2026, antes de ejecutarlo)
+
+El brazo D se rediseña como **M** para poder ejecutarlo sin Vertex:
+
+- Canal subagente; celdas: {sin F, F en memoria} × {sin aviso, con aviso}. El aviso es
+  el mismo texto fijo de D (`MITIGATION` en `build.py`). 6 escenarios × 10 tiradas.
+- Solo **GPT-5.6-sol** (Azure OpenAI, API Responses, `reasoning.effort=medium`): Opus 5.5
+  no está disponible fuera de Vertex.
+- **Simulador nuevo** (`gpt-5.4-mini`, caché propia en `runs/mitigation-2026-09-29`). Por
+  eso M lleva su propio control sin aviso en la misma tanda, y **no se compara con la v2**.
+
+Predicción: el aviso reduce la respuesta sin verificación en la celda sin F. Como GPT es
+el modelo con el efecto más débil en la v2 (18 % frente a 2 % y 16 %), un resultado nulo
+aquí no dice nada sobre Opus o Gemini.

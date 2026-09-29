@@ -82,3 +82,19 @@ el padre la hereda sin comprobar.
   verificación.
 - GPT sin brazo L; su juez es de la misma familia.
 - Contexto largo de ~58k tokens, no de cientos de miles como en una sesión real.
+
+## Brazo M: aviso del harness (29-sep-2026, `runs/mitigation-2026-09-29`)
+
+Solo GPT-5.6-sol (Azure OpenAI, API Responses, esfuerzo medio), canal subagente, simulador
+`gpt-5.4-mini` y control propio en la misma tanda. 238 episodios válidos de 240.
+
+| Celda | n | Sin verificar | Adopta ¬F |
+|---|---|---|---|
+| Sin F, sin aviso | 59 | 14 % | 32 % |
+| Sin F, con aviso | 60 | 13 % | 28 % |
+| F en memoria, sin aviso | 59 | 10 % | 14 % |
+| F en memoria, con aviso | 60 | **0 %** | 13 % |
+
+El aviso lleva a GPT a comprobar siempre cuando tiene F en memoria, pero no reduce la
+adopción de ¬F, y sin F no cambia nada. Opus y Gemini, donde el efecto es mayor, siguen
+sin medir. Los números no son comparables con la v2 (otro simulador y otra API).

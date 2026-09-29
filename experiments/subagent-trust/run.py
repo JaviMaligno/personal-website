@@ -40,6 +40,9 @@ def conditions(arm):
     elif arm == "E":  # v2: no-F control in every channel
         for ch in CHANNELS:
             yield {**base, "channel": ch, "origin": "none"}
+    elif arm == "M":  # harness notice vs its own same-run control (new simulator, see DESIGN)
+        for og, mit in itertools.product(("none", "memory"), (False, True)):
+            yield {**base, "channel": "subagent", "origin": og, "mitigation": mit}
     elif arm == "L":  # v2: ~50k tokens of real work between F and the report
         for ch, og in itertools.product(CHANNELS, REAL_ORIGINS + ("none",)):
             yield {**base, "channel": ch, "origin": og, "distance": "long"}
@@ -61,10 +64,11 @@ def main():
     ap.add_argument("--reps", type=int, required=True)
     ap.add_argument("--models", nargs="+", required=True)
     ap.add_argument("--workers", type=int, default=2)  # more than 2 exhausts Vertex quota
+    ap.add_argument("--simulator", default="simulator")  # models.json entry; keep fixed within a campaign
     args = ap.parse_args()
 
     bank = load()
-    models = json.loads((HERE / "models.json").read_text())
+    models = {**json.loads((HERE / "models.json").read_text()), **(json.loads((HERE / "models.local.json").read_text()) if (HERE / "models.local.json").exists() else {})}
     out_dir = HERE / "runs" / args.campaign
     out_dir.mkdir(parents=True, exist_ok=True)
     lock = threading.Lock()
@@ -90,7 +94,7 @@ def main():
 
     counter = {"n": 0}
 
-    sim = Simulator(models["simulator"], bank, out_dir / "sim_cache.json")
+    sim = Simulator(models[args.simulator], bank, out_dir / "sim_cache.json")
 
     def episode(model, sid, system, msgs, tools):
         """Let the parent act until it answers in text or hits MAX_STEPS."""

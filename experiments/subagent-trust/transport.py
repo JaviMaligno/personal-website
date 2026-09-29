@@ -102,6 +102,28 @@ def render_gemini(system, msgs, tools):
     return body
 
 
+def render_responses(system, msgs, tools):
+    """OpenAI Responses API. The model's own turns are replayed as its raw output items."""
+    items = []
+    for m in msgs:
+        if m["role"] == "user":
+            items.append({"role": "user", "content": m["text"]})
+        elif m["role"] == "tool":
+            items.append({"type": "function_call_output", "call_id": m["id"], "output": m["content"]})
+        elif m.get("raw_kind") == "responses":
+            items.extend(m["raw"])
+        else:
+            if m["text"]:
+                items.append({"role": "assistant", "content": m["text"]})
+            items += [{"type": "function_call", "call_id": c["id"], "name": c["name"],
+                       "arguments": json.dumps(c["input"])} for c in m["tool_calls"]]
+    body = {"instructions": system, "input": items}
+    if tools:
+        body["tools"] = [{"type": "function", "name": t["name"], "description": t["description"],
+                          "parameters": t["schema"]} for t in tools]
+    return body
+
+
 # ---------- calls ----------
 
 def _post(url, headers, payload, secret):
@@ -115,6 +137,12 @@ def call(model, system, msgs, tools):
     """Return a normalized result. On a Vertex 401, refresh the gcloud token and retry once:
     `gcloud auth print-access-token` can hand back a cached token about to expire."""
     r = _call(model, system, msgs, tools)
+    for attempt in range(6):  # rate limit only: the same request, later; counted in the record
+        if not r.get("error", "").startswith("HTTP 429"):
+            break
+        time.sleep(min(120, 10 * 2 ** attempt))
+        r = _call(model, system, msgs, tools)
+        r["rate_limit_retries"] = attempt + 1
     if model["transport"].startswith("vertex") and r.get("error", "").startswith("HTTP 401"):
         try:
             gcloud_token(force=True)
@@ -168,7 +196,11 @@ def _call(model, system, msgs, tools):
             body = render_openai(system, msgs, tools)
             body.update(model=model["model"], max_completion_tokens=model["max_tokens"],
                         **model.get("params", {}))
-            data = _post(model["endpoint"], {"Authorization": f"Bearer {key}"}, body, key)
+            if not tools:
+                body.pop("tools")
+            auth = ({"api-key": key} if model.get("auth_header") == "api-key"
+                    else {"Authorization": f"Bearer {key}"})
+            data = _post(model["endpoint"], auth, body, key)
             choice = data["choices"][0]
             msg = choice["message"]
             res = {"text": msg.get("content") or "",
@@ -178,6 +210,21 @@ def _call(model, system, msgs, tools):
                    "stop": choice["finish_reason"], "usage": data.get("usage", {}),
                    "response_id": data.get("id"), "raw_kind": "openai",
                    "raw": {k: v for k, v in msg.items() if k in ("role", "content", "tool_calls")}}
+        elif kind == "responses":
+            key = Path(model["key_file"]).expanduser().read_text().strip()
+            body = render_responses(system, msgs, tools)
+            body.update(model=model["model"], max_output_tokens=model["max_tokens"],
+                        **model.get("params", {}))
+            data = _post(model["endpoint"], {"api-key": key}, body, key)
+            out = data.get("output", [])
+            text = "".join(c.get("text", "") for o in out if o.get("type") == "message"
+                           for c in o.get("content", []) if c.get("type") == "output_text")
+            res = {"text": text,
+                   "tool_calls": [{"id": o["call_id"], "name": o["name"],
+                                   "input": json.loads(o.get("arguments") or "{}")}
+                                  for o in out if o.get("type") == "function_call"],
+                   "stop": data.get("status"), "usage": data.get("usage", {}),
+                   "response_id": data.get("id"), "raw_kind": "responses", "raw": out}
         else:
             raise ValueError(f"unknown transport {kind}")
         return {"status": "ok", **res, "latency_s": round(time.monotonic() - start, 2)}
