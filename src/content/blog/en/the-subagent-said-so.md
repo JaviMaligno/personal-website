@@ -1,7 +1,7 @@
 ---
 title: "The subagent said so"
 description: "When my agent delegates, it tends to take the subagent's report as fact, even when the subagent knew less than it did. I measured it on three model families. With the contradicting fact in plain sight, it almost never believes the report. What it does is skip checking it: the same text gets verified when a teammate wrote it, and not when its own subagent did."
-pubDate: 2026-10-24
+pubDate: 2026-10-21
 tags: ["Agents", "Multi-Agent", "Verification", "Claude"]
 lang: en
 translationKey: the-subagent-said-so

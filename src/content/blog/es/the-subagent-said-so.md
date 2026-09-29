@@ -1,7 +1,7 @@
 ---
 title: "Lo dijo el subagente"
 description: "Cuando mi agente delega, suele dar por bueno el informe del subagente aunque este supiera menos que él. Lo medí en tres familias de modelos. Con el dato que lo contradice a la vista, casi nunca se lo cree. Lo que hace es no comprobarlo: el mismo texto se verifica si lo escribió un compañero, y no si lo escribió su propio subagente."
-pubDate: 2026-10-24
+pubDate: 2026-10-21
 tags: ["Agentes", "Multiagente", "Verificación", "Claude"]
 lang: es
 translationKey: the-subagent-said-so
