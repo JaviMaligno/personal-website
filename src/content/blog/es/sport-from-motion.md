@@ -7,7 +7,7 @@ lang: es
 translationKey: sport-from-motion
 heroImage: "/blog/sport-from-motion.png"
 repoUrl: "https://github.com/JaviMaligno/sport-from-motion"
-linkedinImage: "/blog/sport-from-motion-quiz.png"
+linkedinImage: "/blog/sport-from-motion-linkedin-es.png"
 ---
 
 <style>
