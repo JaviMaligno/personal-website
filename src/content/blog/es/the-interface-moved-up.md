@@ -118,7 +118,7 @@ En las dos, el humano mira el **diff**, y la unidad de trabajo es una tarea.
 
 ## La nube: el portátil tiene techo
 
-El siguiente paso parece que debería haber sido la app, pero las fechas dicen otra cosa. Primero llegaron los agentes en la nube, tres de ellos en cinco días de mayo de 2025: los [Background Agents de Cursor](https://cursor.com/changelog/0-50), [Codex dentro de ChatGPT](https://openai.com/index/introducing-codex/) y el [coding agent de Copilot](https://github.blog/changelog/2025-05-19-github-copilot-coding-agent-in-public-preview/), que toma una issue de GitHub y abre una pull request. [Claude Code en la web](https://www.anthropic.com/news/claude-code-on-the-web) llegó en octubre.
+Los agentes en la nube llegaron antes que las apps que hoy los gestionan. Tres salieron en cinco días de mayo de 2025: los [Background Agents de Cursor](https://cursor.com/changelog/0-50), [Codex dentro de ChatGPT](https://openai.com/index/introducing-codex/) y el [coding agent de Copilot](https://github.blog/changelog/2025-05-19-github-copilot-coding-agent-in-public-preview/), que toma una issue de GitHub y abre una pull request. [Claude Code en la web](https://www.anthropic.com/news/claude-code-on-the-web) llegó en octubre.
 
 La comodidad es solo parte de la razón. La otra es la capacidad. Lanzar varios agentes a la vez, cada uno con su rama y su suite de tests, satura un portátil normal mucho antes de saturar tu atención. Los [agentes en paralelo con worktrees](/es/blog/parallel-ai-agent-development) funcionan, hasta que el cuello de botella pasa a ser la máquina.
 
@@ -210,10 +210,12 @@ Cuando el humano deja de mirar cada paso, las preguntas cambian. Ya no son «có
 
 - **Permisos.** Qué puede tocar sin preguntar, qué no puede tocar nunca y en qué entorno. Desplegar, escribir en una base de datos compartida o enviar algo hacia fuera es otra categoría que editar un fichero.
 - **Entradas.** Con qué contexto arranca: el ticket, la especificación, las instrucciones del repositorio, la memoria de sesiones anteriores. Un agente que arranca sin los hechos que cambian su juicio toma decisiones que no tomaría quien los conoce.
-- **Salidas.** Qué cuenta como hecho y en qué forma vuelve: una pull request con evidencias, un informe con fuentes, tests que fallan antes y pasan después. El formato de la salida es lo que permite comprobar sin reabrirlo todo.
+- **Salidas.** Qué cuenta como hecho y en qué forma vuelve: una pull request con evidencias, un informe con fuentes, tests que fallan antes y pasan después. El formato de la salida es lo que permite comprobar, a ti o al siguiente agente, sin reabrirlo todo.
 - **Escalado.** Cuándo para y pregunta, y a quién. Un agente que nunca escala toma decisiones que no le tocan; uno que escala siempre te devuelve el trabajo.
 
-Para la superficie, eso se traduce en una lista corta. La pantalla para gestionar agentes tiene que enseñar el estado de cada uno, qué espera de ti, qué está bloqueado y por qué, y la evidencia de cada resultado a un clic. Todo lo demás es decoración. Es también la lista que fija cuántos agentes puede supervisar de verdad una persona, que es [un límite humano, no técnico](/es/blog/human-limits-managing-ai-agents).
+Y la salida no siempre va a una persona. Cada vez más, la salida de un agente es la entrada de otro: un plan que ejecuta un implementador, un informe que revisa un revisor, una pull request que recoge un tester. Eso convierte el formato de la salida en un contrato entre agentes. Y añade algo que gestionar que una sola sesión nunca tuvo: la comunicación entre ellos. Qué le cuenta un agente a otro, si es verdad y quién se da cuenta cuando no lo es. Cuando [leí los mensajes entre sesiones paralelas](/es/blog/what-agents-say-to-each-other), el canal se usaba sobre todo para contarle a la otra sesión algo verdadero sobre su propio trabajo, y en el experimento una sesión pilló a otra publicando una release que no existía. Ese tráfico es parte de lo que necesita ver quien gestiona los agentes.
+
+Para la superficie, eso se traduce en una lista corta. La pantalla para gestionar agentes tiene que enseñar el estado de cada uno, qué espera de ti, qué está bloqueado y por qué, qué se están pasando los agentes entre sí, y la evidencia de cada resultado a un clic. Todo lo demás es decoración. Es también la lista que fija cuántos agentes puede supervisar de verdad una persona, que es [un límite humano, no técnico](/es/blog/human-limits-managing-ai-agents).
 
 ## Agentes que van por detrás
 
@@ -229,7 +231,7 @@ Hay casos en los que quieres estar cerca del código: un cambio delicado, una pi
 
 ## Lo que viene
 
-La terminal no se muere. Se convierte en sustrato: el sitio donde el agente ejecuta, y una superficie más para quien la prefiera. El editor tampoco se muere; es lo que abres cuando necesitas mirar de cerca. Lo que está pasando es que la interfaz se desacopla del agente. Elegirás la superficie según el momento y el dispositivo, mientras el harness de debajo sigue siendo el mismo.
+La terminal no se muere. Se convierte en sustrato: el sitio donde el agente ejecuta, y una superficie más para quien la prefiera. El editor tampoco se muere. Es lo que abres para mirar el código de cerca, y sigue siendo una forma de trabajar los ficheros que no son código y que producen los agentes, como reportes e informes, aunque ahí es una opción entre otras: un artefacto, un documento compartido, un drive. Lo que está pasando es que la interfaz se desacopla del agente. Elegirás la superficie según el momento y el dispositivo, mientras el harness de debajo sigue siendo el mismo.
 
 Lo que distinguirá a un equipo, entonces, no es qué ventana usa. Es lo bien que ha definido qué pueden hacer sus agentes, qué reciben, qué devuelven y cuándo llaman a un humano. Eso es un problema de gestión, y es hacia donde va la interfaz: menos teclados y más paneles.
 

@@ -118,7 +118,7 @@ In both, the human looks at the **diff**, and the unit of work is a task.
 
 ## The cloud: the laptop has a ceiling
 
-The next step looks like it should have been the app, but the dates say otherwise. Cloud agents came first, three of them within five days of May 2025: [Cursor's Background Agents](https://cursor.com/changelog/0-50), [Codex inside ChatGPT](https://openai.com/index/introducing-codex/) and the [Copilot coding agent](https://github.blog/changelog/2025-05-19-github-copilot-coding-agent-in-public-preview/), which takes a GitHub issue and opens a pull request. [Claude Code on the web](https://www.anthropic.com/news/claude-code-on-the-web) followed in October.
+Cloud agents arrived before the apps that manage them today. Three launched within five days of May 2025: [Cursor's Background Agents](https://cursor.com/changelog/0-50), [Codex inside ChatGPT](https://openai.com/index/introducing-codex/) and the [Copilot coding agent](https://github.blog/changelog/2025-05-19-github-copilot-coding-agent-in-public-preview/), which takes a GitHub issue and opens a pull request. [Claude Code on the web](https://www.anthropic.com/news/claude-code-on-the-web) followed in October.
 
 Convenience is only part of the reason. The other part is capacity. Running several agents at once, each with its own branch and test suite, saturates a normal laptop long before it saturates your attention. [Parallel agents with worktrees](/en/blog/parallel-ai-agent-development) work, until the machine becomes the bottleneck.
 
@@ -210,10 +210,12 @@ When the human stops watching each step, the questions change. They are no longe
 
 - **Permissions.** What it may touch without asking, what it may never touch, and in which environment. Deploying, writing to a shared database or sending anything outside is a different category from editing a file.
 - **Inputs.** Which context it starts with: the ticket, the specification, the repository's instructions, the memory of previous sessions. An agent that starts without the facts that change its judgement makes decisions that someone who knows them wouldn't.
-- **Outputs.** What counts as done and in what form it comes back: a pull request with evidence, a report with sources, tests that fail before and pass after. The output format is what lets you check without reopening everything.
+- **Outputs.** What counts as done and in what form it comes back: a pull request with evidence, a report with sources, tests that fail before and pass after. The output format is what lets you, or the next agent, check without reopening everything.
 - **Escalation.** When it stops and asks, and to whom. An agent that never escalates makes decisions it shouldn't; one that always escalates gives the work back to you.
 
-For the surface, that translates into a short list. The screen for managing agents needs to show the state of each one, what it's waiting for from you, what's blocked and why, and the evidence of each result, one click away. Everything else is decoration. It's also the list that fixes how many agents one person can really supervise, which is [a human limit, not a technical one](/en/blog/human-limits-managing-ai-agents).
+And the output doesn't always go to a person. More and more, one agent's output is another agent's input: a plan that an implementer executes, a report that a reviewer checks, a pull request that a tester picks up. That turns the output format into a contract between agents. It also adds something to manage that a single session never had: the communication between them. What one agent tells another, whether it is true, and who notices when it isn't. When I [read the messages between parallel sessions](/en/blog/what-agents-say-to-each-other), the channel was mostly used to tell the other session something true about its own work, and in the experiment one session caught another shipping a release that did not exist. That traffic is part of what whoever manages the agents needs to see.
+
+For the surface, that translates into a short list. The screen for managing agents needs to show the state of each one, what it's waiting for from you, what's blocked and why, what the agents are passing to each other, and the evidence of each result, one click away. Everything else is decoration. It's also the list that fixes how many agents one person can really supervise, which is [a human limit, not a technical one](/en/blog/human-limits-managing-ai-agents).
 
 ## Agents that run behind
 
@@ -229,7 +231,7 @@ There are cases where you want to be close to the code: a delicate change, a pie
 
 ## What comes next
 
-The terminal isn't dying. It is becoming the substrate: the place where the agent executes, and a surface among others for whoever prefers it. The editor isn't dying either; it's what you open when you need to look closely. What's happening is that the interface is decoupling from the agent. You'll choose the surface by moment and by device, while the harness underneath stays the same.
+The terminal isn't dying. It is becoming the substrate: the place where the agent executes, and a surface among others for whoever prefers it. The editor isn't dying either. It's what you open to look closely at code, and it remains one way of working on the non-code files that agents produce, such as reports and write-ups, although there it is one option among others: an artefact, a shared document, a drive. What's happening is that the interface is decoupling from the agent. You'll choose the surface by moment and by device, while the harness underneath stays the same.
 
 What will set a team apart, then, is not which window it uses. It's how well it has defined what its agents may do, what they receive, what they return and when they call a human. That's a management problem, and it's where the interface is heading: fewer keyboards and more dashboards.
 
