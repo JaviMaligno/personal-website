@@ -8,7 +8,7 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 - **Article:** `src/content/blog/{en,es}/the-interface-moved-up.md`
 - **Image:** `public/blog/the-interface-moved-up.png`
-- **Generated:** 2026-09-30 (`codex exec -s workspace-write`), first pass accepted.
+- **Generated:** 2026-09-30 (`codex exec -s workspace-write`), first pass.
 - **Watch for:** the four surfaces must rise as steps and all hang from ONE shared
   "harness" layer; that shared base is the article's central claim. No brand names.
 
