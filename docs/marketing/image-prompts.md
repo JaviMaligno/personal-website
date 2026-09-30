@@ -4,6 +4,38 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## the-interface-moved-up
+
+- **Article:** `src/content/blog/{en,es}/the-interface-moved-up.md`
+- **Image:** `public/blog/the-interface-moved-up.png`
+- **Generated:** 2026-09-30 (`codex exec -s workspace-write`), first pass accepted.
+- **Watch for:** the four surfaces must rise as steps and all hang from ONE shared
+  "harness" layer; that shared base is the article's central claim. No brand names.
+
+```text
+Create a 1020x510 pixel (2:1 landscape) blog hero image for the technical article "The Interface Moved Up". Do not render the article title.
+
+Use case: infographic-diagram.
+Style: refined technical editorial bitmap illustration, crisp edges, high contrast, clean geometric composition, restrained depth and subtle shadows. Dark but not monochrome: graphite background and panels, balanced teal and amber accents, off-white text. Professional AI/developer blog aesthetic.
+
+Show a concrete working system: the same coding agent is accessible through four coexisting interface surfaces, arranged on clearly rising steps from lower left to upper right. The earlier surfaces remain present. Use mostly front-facing windows so their sparse text is readable; allow slight depth in the supporting steps. Fit the whole system comfortably inside the wide frame with generous outer margins.
+
+1. Lower left: a compact window labeled "editor", showing a few syntax-colored code lines.
+2. Next step up: a window labeled "terminal", showing the exact generic lines "$ agent run tests" and "diff: 3 files changed".
+3. Next step up: a larger window labeled "app", with a sidebar listing "local", "cloud", "chat", a clear diff viewer with teal additions and muted amber removals, and a small browser preview showing the resulting page.
+4. Top right: a window labeled "dashboard", showing three agent status rows labeled exactly "running", "waiting for you", and "blocked", with small status indicators. A small queue of ticket cards feeds into this dashboard through a directional connector, making clear that work arrives automatically without someone launching a session.
+
+Beneath all four surfaces, draw ONE continuous shared horizontal base layer labeled exactly "harness". Thin, precise connector lines descend from EACH interface to this same layer, with visible connection nodes. This common harness is the system's foundation, not four separate bases. The stepped arrangement should communicate the rising level of human attention from code to diff to result to supervision.
+
+Include a small laptop and a phone in the open space below the app, above the harness; both show the same session with matching tiny teal session indicators and the short label "session 01". Connect them subtly to the shared system. Keep these devices secondary to the four main windows.
+
+Typography: sparse, readable generic UI labels in a clean sans serif, with monospace terminal and code text. Labeled boxes, clean spacing, deliberate visual hierarchy. Show only essential UI marks and the specified short labels; this is an editorial illustration, not a text-heavy poster.
+
+Constraints: no big title, no logos, no brand names, no Cursor, Claude, Copilot, Codex or GitHub branding, no people, no robot mascots, no purple gradient blobs, no bokeh, no decorative floating code, no watermark. Keep every window and the entire harness visible, with no cropped content.
+```
+
+---
+
 ## make-yourself-replaceable
 
 - **Article:** `src/content/blog/{en,es}/make-yourself-replaceable.md`
