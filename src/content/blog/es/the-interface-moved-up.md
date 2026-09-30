@@ -8,7 +8,7 @@ translationKey: the-interface-moved-up
 heroImage: "/blog/the-interface-moved-up.png"
 ---
 
-Empecé a trabajar con IA dentro del editor, como casi todo el mundo. Después me pasé a la terminal, con un editor ligero abierto al lado. Hoy, en mi propia máquina, sigo pasando la mayor parte del tiempo en la terminal: por costumbre, porque pesa menos y porque estoy pegado a la shell. Pero cada mes uso más la app de escritorio, sobre todo cuando no estoy en la mesa. Gestiona mejor varios proyectos y conversaciones, y me deja mezclar en la misma barra lateral un chat normal, una sesión de código que corre en la nube y otra que corre en mi portátil.
+Empecé a trabajar con IA dentro del editor, como casi todo el mundo. Después me pasé a la terminal, con un editor ligero abierto al lado. Hoy, en mi propia máquina, sigo pasando la mayor parte del tiempo en la terminal: por costumbre, porque pesa menos y porque estoy pegado a la shell. Pero cada mes uso más la app: en el escritorio, y en el móvil cuando no estoy en la mesa. Gestiona mejor varios proyectos y conversaciones, y me deja mezclar en la misma barra lateral un chat normal, una sesión de código que corre en la nube y otra que corre en mi portátil.
 
 Esa deriva no es solo mía. Cursor, OpenAI, Anthropic y GitHub se han pasado 2026 sacando el mismo tipo de producto: una ventana para gestionar agentes, no para editar ficheros. Puestos uno al lado del otro, los movimientos tienen un patrón. **Cada salto subió lo que mira el humano.** Primero el código, después el diff, después el resultado. El siguiente salto ya se ve, y en él el humano ni siquiera arranca el trabajo.
 
@@ -21,13 +21,13 @@ Esa deriva no es solo mía. Cursor, OpenAI, Anthropic y GitHub se han pasado 202
 </style>
 
 <figure class="imu-fig">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 770" role="img" aria-label="Cronología de 2021 a septiembre de 2026 con cinco carriles: editor, terminal, nube, app y agentes disparados por eventos. El editor recorre todo el periodo. Los agentes en terminal aparecen en 2023 y se vuelven la vía principal en 2025. Los agentes en la nube llegan en mayo de 2025, las apps nativas desde noviembre de 2025 y los agentes que arrancan tickets y calendarios desde mayo de 2025. Ningún carril se cierra: las superficies se acumulan.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 770" role="img" aria-label="Cronología de 2021 a septiembre de 2026 con cinco carriles: editor, terminal, nube, app y agentes desatendidos. El editor recorre todo el periodo. Los agentes en terminal aparecen en 2023 y se vuelven la vía principal en 2025. Los agentes en la nube llegan en mayo de 2025, las apps nativas desde noviembre de 2025 y los agentes que arrancan tickets y calendarios desde mayo de 2025. Ningún carril se cierra: las superficies se acumulan.">
   <g font-size="13" font-weight="600" text-anchor="start">
     <text x="60" y="36" fill="#cbd5e1">Editor</text>
     <text x="169" y="36" fill="#5eead4">Terminal</text>
     <text x="278" y="36" fill="#7dd3fc">Nube</text>
     <text x="387" y="36" fill="#fbbf24">App</text>
-    <text x="496" y="36" fill="#f8fafc">Por eventos</text>
+    <text x="496" y="36" fill="#f8fafc">Desatendidos</text>
   </g>
   <path d="M56 50H600" stroke="rgba(255,255,255,.1)"/>
   <g font-size="12" fill="#94a3b8">
@@ -146,7 +146,7 @@ El coste es el peso. Consume más recursos que una terminal, y es parte de por q
 Junta las etapas y aparece la tesis. No es que las interfaces se hayan vuelto más bonitas. Es que lo que el humano necesita ver ha subido un nivel cada vez.
 
 <figure class="imu-fig">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 330" role="img" aria-label="Cuatro escalones ascendentes. En el editor, el humano mira el código y la unidad es una línea o un fichero. En la terminal, el diff, y la unidad es una tarea. En la app con la nube, el resultado, y la unidad es una sesión. Con agentes por detrás, las métricas, y la unidad es un flujo de tickets.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 330" role="img" aria-label="Cuatro escalones ascendentes. En el editor, el humano mira el código y la unidad es una línea o un fichero. En la terminal, el diff, y la unidad es una tarea. En la app con la nube, el resultado, y la unidad es una sesión. Con agentes desatendidos, las métricas, y la unidad es un flujo de tickets.">
   <text x="20" y="30" fill="#94a3b8" font-size="15">QUÉ MIRA EL HUMANO</text>
   <rect x="20" y="220" width="135" height="90" rx="8" fill="#283240" stroke="#94a3b8"/>
   <text x="32" y="244" fill="#cbd5e1" font-size="15" font-weight="600">Editor</text>
@@ -163,7 +163,7 @@ Junta las etapas y aparece la tesis. No es que las interfaces se hayan vuelto m�
   <text x="322" y="194" fill="#94a3b8" font-size="12">PR · preview</text>
   <text x="322" y="212" fill="#94a3b8" font-size="12">artefacto</text>
   <rect x="455" y="55" width="135" height="255" rx="8" fill="#2a2a33" stroke="#f8fafc"/>
-  <text x="467" y="79" fill="#f8fafc" font-size="15" font-weight="600">Por detrás</text>
+  <text x="467" y="79" fill="#f8fafc" font-size="15" font-weight="600">Desatendidos</text>
   <text x="467" y="101" fill="#f8fafc" font-size="13">las métricas</text>
   <text x="467" y="121" fill="#94a3b8" font-size="12">flujo de tickets</text>
   <text x="467" y="139" fill="#94a3b8" font-size="12">evals · feedback</text>

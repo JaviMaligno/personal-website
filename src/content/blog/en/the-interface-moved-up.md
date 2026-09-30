@@ -8,7 +8,7 @@ translationKey: the-interface-moved-up
 heroImage: "/blog/the-interface-moved-up.png"
 ---
 
-I started working with AI inside the editor, like almost everyone. Then I moved to the terminal, with a light editor open next to it. Today, on my own machine, I still spend most of my time in the terminal: habit, a lighter footprint, and being right next to the shell. But I use the desktop app more every month, especially when I'm away from the desk. It handles several projects and conversations better, and it lets me mix an ordinary chat, a coding session running in the cloud and a coding session running on my laptop in the same sidebar.
+I started working with AI inside the editor, like almost everyone. Then I moved to the terminal, with a light editor open next to it. Today, on my own machine, I still spend most of my time in the terminal: habit, a lighter footprint, and being right next to the shell. But I use the app more every month: on the desktop, and on my phone when I'm away from it. It handles several projects and conversations better, and it lets me mix an ordinary chat, a coding session running in the cloud and a coding session running on my laptop in the same sidebar.
 
 That drift isn't only mine. Cursor, OpenAI, Anthropic and GitHub have spent 2026 shipping the same kind of product: a window for managing agents rather than editing files. Laid side by side, the moves have a pattern. **Each jump raised what the human looks at.** First the code, then the diff, then the result. The next jump is already visible, and in it the human doesn't even start the work.
 
@@ -21,13 +21,13 @@ That drift isn't only mine. Cursor, OpenAI, Anthropic and GitHub have spent 2026
 </style>
 
 <figure class="imu-fig">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 770" role="img" aria-label="Timeline from 2021 to September 2026 with five lanes: editor, terminal, cloud, app and triggered agents. The editor lane runs the whole period. Terminal agents appear in 2023 and become mainstream in 2025. Cloud agents arrive in May 2025, native apps from November 2025, and agents started by tickets and schedules from May 2025. No lane closes: surfaces accumulate.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 770" role="img" aria-label="Timeline from 2021 to September 2026 with five lanes: editor, terminal, cloud, app and unattended agents. The editor lane runs the whole period. Terminal agents appear in 2023 and become mainstream in 2025. Cloud agents arrive in May 2025, native apps from November 2025, and agents started by tickets and schedules from May 2025. No lane closes: surfaces accumulate.">
   <g font-size="13" font-weight="600" text-anchor="start">
     <text x="60" y="36" fill="#cbd5e1">Editor</text>
     <text x="169" y="36" fill="#5eead4">Terminal</text>
     <text x="278" y="36" fill="#7dd3fc">Cloud</text>
     <text x="387" y="36" fill="#fbbf24">App</text>
-    <text x="496" y="36" fill="#f8fafc">Triggered</text>
+    <text x="496" y="36" fill="#f8fafc">Unattended</text>
   </g>
   <path d="M56 50H600" stroke="rgba(255,255,255,.1)"/>
   <g font-size="12" fill="#94a3b8">
@@ -146,7 +146,7 @@ The cost is weight. It uses more resources than a terminal, which is part of why
 Put the stages together and the thesis appears. It isn't that the interfaces got prettier. It's that what the human needs to see went up one level each time.
 
 <figure class="imu-fig">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 330" role="img" aria-label="Four rising steps. In the editor, the human looks at the code and the unit is a line or file. In the terminal, the diff and the unit is a task. In the app with the cloud, the result, and the unit is a session. With background agents, the metrics, and the unit is a flow of tickets.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 330" role="img" aria-label="Four rising steps. In the editor, the human looks at the code and the unit is a line or file. In the terminal, the diff and the unit is a task. In the app with the cloud, the result, and the unit is a session. With unattended agents, the metrics, and the unit is a flow of tickets.">
   <text x="20" y="30" fill="#94a3b8" font-size="15">WHAT THE HUMAN LOOKS AT</text>
   <rect x="20" y="220" width="135" height="90" rx="8" fill="#283240" stroke="#94a3b8"/>
   <text x="32" y="244" fill="#cbd5e1" font-size="15" font-weight="600">Editor</text>
@@ -163,7 +163,7 @@ Put the stages together and the thesis appears. It isn't that the interfaces got
   <text x="322" y="194" fill="#94a3b8" font-size="12">PR · preview</text>
   <text x="322" y="212" fill="#94a3b8" font-size="12">artefact</text>
   <rect x="455" y="55" width="135" height="255" rx="8" fill="#2a2a33" stroke="#f8fafc"/>
-  <text x="467" y="79" fill="#f8fafc" font-size="15" font-weight="600">Background</text>
+  <text x="467" y="79" fill="#f8fafc" font-size="15" font-weight="600">Unattended</text>
   <text x="467" y="101" fill="#f8fafc" font-size="13">the metrics</text>
   <text x="467" y="121" fill="#94a3b8" font-size="12">a flow of tickets</text>
   <text x="467" y="139" fill="#94a3b8" font-size="12">evals · feedback</text>
