@@ -6,6 +6,7 @@ tags: ["Agentes de IA", "Herramientas de desarrollo", "Claude Code", "Futuro del
 lang: es
 translationKey: the-interface-moved-up
 heroImage: "/blog/the-interface-moved-up.png"
+linkedinImage: /blog/the-interface-moved-up-fig-1.png
 ---
 
 Empecé a trabajar con IA dentro del editor, como casi todo el mundo. Después me pasé a la terminal, con un editor ligero abierto al lado. Hoy, en mi propia máquina, sigo pasando la mayor parte del tiempo en la terminal: por costumbre, porque pesa menos y porque estoy pegado a la shell. Pero cada mes uso más la app: en el escritorio, y en el móvil cuando no estoy en la mesa. Gestiona mejor varios proyectos y conversaciones, y me deja mezclar en la misma barra lateral un chat normal, una sesión de código que corre en la nube y otra que corre en mi portátil.

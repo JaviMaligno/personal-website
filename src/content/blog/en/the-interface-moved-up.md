@@ -6,6 +6,7 @@ tags: ["AI Agents", "Developer Tools", "Claude Code", "Future of Work"]
 lang: en
 translationKey: the-interface-moved-up
 heroImage: "/blog/the-interface-moved-up.png"
+linkedinImage: /blog/the-interface-moved-up-fig-1.png
 ---
 
 I started working with AI inside the editor, like almost everyone. Then I moved to the terminal, with a light editor open next to it. Today, on my own machine, I still spend most of my time in the terminal: habit, a lighter footprint, and being right next to the shell. But I use the app more every month: on the desktop, and on my phone when I'm away from it. It handles several projects and conversations better, and it lets me mix an ordinary chat, a coding session running in the cloud and a coding session running on my laptop in the same sidebar.
