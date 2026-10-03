@@ -1525,4 +1525,41 @@ Log: A small terminal/log strip below the JSON, with only two short readable mon
 Use teal for OK and amber for REJECTED. The rejection is secondary, not a large banner.
 Style/medium: Crisp bitmap illustration, refined technical editorial art, subtly dimensional pallets and metal shelving, sharp edges, restrained surface texture, high contrast, professional AI/developer blog aesthetic. Dark but not monochrome; balanced teal, amber, graphite, and off-white accents.
 Constraints: Preserve the concrete cause and effect: successful physical move, wrong JSON value, later rejected action. Keep text sparse and readable, limited to the specified labels, JSON, log, shelf numbers, and two SKU labels. No logos, no brand names, no people, no robots, no text-heavy poster, no purple gradient blobs, no bokeh, no watermark.
+
+## Count the Rings or Sear the Squid (`count-the-rings`, 2026-09-22)
+
+Hero: `public/blog/count-the-rings.png`.
+In-article figures: `public/blog/count-the-rings-fig-{1,2,3}-{en,es}.png`.
+
+Not image-generated. Both are deterministic matplotlib sources, committed so
+the geometry can be re-derived rather than re-drawn:
+
+- `docs/marketing/hero-sources/count-the-rings.py` — the hero: the minimal
+  divergence instance, both arrangements to scale, with the contact areas
+  computed from the paper's own formula rather than hardcoded.
+- `docs/marketing/hero-sources/count-the-rings-figures.py` — the three
+  in-article figures, one version per language. The paper's own figures were
+  not reused: they are labelled in Spanish, and the phase diagram writes the
+  small-ring radius as rho, which is the symbol the article uses for the
+  violation of superincreasingness.
+
+Fallback `image_gen` prompt, if the hero ever has to be regenerated without
+matplotlib:
+
+```text
+Create a 1020x510 blog hero image. Style: refined technical editorial
+illustration, dark but not monochrome, showing a CONCRETE SCENE: two round
+frying pans seen from directly above, side by side, same size. In the left pan,
+one large ring with a smaller ring resting inside its hole. In the right pan,
+three small rings of equal size lying separately, none of them nested. The
+rings are drawn as annuli — real holes, not discs. Clean geometric composition,
+crisp edges, the two pans clearly comparable.
+
+TEXT MUST BE EXACTLY AND ONLY: '2 rings', '3 rings'. No other label, no
+numbers, no axis titles, no units.
+
+No logos, no brand names, no people, no food photography, no text-heavy poster.
+Crisp bitmap illustration, high contrast, professional AI/developer blog
+aesthetic, balanced teal, amber, graphite and off-white accents on dark, no
+purple gradient blobs, no bokeh.
 ```
