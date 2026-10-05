@@ -1563,3 +1563,26 @@ Crisp bitmap illustration, high contrast, professional AI/developer blog
 aesthetic, balanced teal, amber, graphite and off-white accents on dark, no
 purple gradient blobs, no bokeh.
 ```
+
+
+## Teaching a Small Model to Recognise a Sport From Moving Dots — 2026-10-05
+
+- Article: `src/content/blog/en/sport-from-motion-laya.md`
+- Image: `public/blog/sport-from-motion-laya.png`
+- Generator: built-in image_gen via Codex, resized to 1020x510 with `sips`.
+
+Prompt:
+
+```text
+Create a 1020x510 blog hero image, landscape 2:1, for an article about teaching a small language model to recognise a sport from moving dots.
+
+Style: refined technical editorial illustration, dark but not monochrome. Depict the actual fine-tuning experiment as a working system on a compact developer workstation, with crisp bitmap rendering, precise edges, subtle material texture and restrained dimensional depth. Balanced teal, amber, graphite and off-white accents; high contrast, professional AI/developer blog aesthetic.
+
+Composition: a cohesive wide scene with three readable zones and generous outer margins. At left, an input-data display contains exactly ten bright point-light dots, five teal and five off-white, each with one short fine motion trail indicating movement across ordered snapshots. These are tracked positions seen from above, never human figures or skeletons. The display background is plain dark graphite: no pitch, no court markings, no ball. Beneath it, a tiny coordinate-text strip suggests that the positions are supplied as text. A tidy connector leads into a compact model-training panel labeled "322M" within the central monitor. Show a real unbranded GPU card on the desk in the foreground, with visible circuit board, heatsink, fan and gold connector, connected to the workstation; avoid a floating abstract chip.
+
+The central monitor prominently shows training loss versus epochs: fine subdued grid, small axis labels "loss" and "epoch", with three distinct curves starting at the same high level. An amber control curve drops early toward zero. A teal motion curve stays level for a while and then drops later. An off-white seed curve remains perfectly flat across the whole chart. The difference between learning and failing to learn must be obvious at thumbnail size. Add only a small status line "epoch 26" and a tiny control-data label "tag: Q7".
+
+At right, an integrated results panel shows a clean grid of fifteen small cells, three rows by five columns, representing seeds and folds. First two rows mix mostly teal successful cells with a few muted amber stalled cells; the third row has four muted amber cells and one teal cell, showing seed-dependent training. Small row labels "seed 0", "seed 1", "seed 2"; cells use tiny simple sparklines rather than dense numbers. Keep this a laboratory readout, not a scoreboard.
+
+No headline or article title in the image. Readable generic text is welcome only in the specified small interface labels. No text-heavy poster, no logos, no brand names, no people, no humanoid robots, no sports equipment, no purple gradient blobs, no bokeh, no decorative floating neural-network metaphor, no watermark. Keep every essential object inside the frame.
+```
