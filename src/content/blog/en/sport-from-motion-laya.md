@@ -53,7 +53,7 @@ The training loss shows why. On the dots it did not just fail to generalise: it 
 
 ## With enough training, it reads the order
 
-So I let it train for up to 32 epochs and, for each split, kept the epoch that did best on that held-out slice of training, never on the test clips. That is ordinary early stopping, written into the pre-registration before running it.
+So I let it train for up to 32 epochs and, for each split, kept the epoch that did best on that held-out slice of training, never on the test clips. That is ordinary early stopping, written into the pre-registration before running it. Laya's official training tool does not include it yet, so I opened [an issue proposing early stopping on that same held-out slice and a warning when training stays at chance](https://github.com/NandhaKishorM/laya/issues/963).
 
 <figure class="sfml-fig">
 <img src="/blog/sport-from-motion-laya-configs-en.png" alt="Accuracy on the 400 clips: with 4 epochs, 0.23; with 8 epochs, 0.28 in order, 0.22 shuffled and 0.25 with a single snapshot; with up to 32 epochs and early stopping, 0.36 in order against 0.27 shuffled and 0.27 with a single snapshot. MiniRocket is at 0.83." aria-label="Accuracy on the 400 clips: with 4 epochs, 0.23; with 8 epochs, 0.28 in order, 0.22 shuffled and 0.25 with a single snapshot; with up to 32 epochs and early stopping, 0.36 in order against 0.27 shuffled and 0.27 with a single snapshot. MiniRocket is at 0.83." />

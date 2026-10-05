@@ -53,7 +53,7 @@ La pérdida de entrenamiento explica por qué. Con los puntos no es que no gener
 
 ## Con entrenamiento suficiente, lee el orden
 
-Así que lo dejé entrenar hasta 32 épocas y, en cada partición, me quedé con la época que mejor lo hacía en esa porción apartada del entrenamiento, nunca en los clips de test. Es una parada temprana normal, escrita en el pre-registro antes de correrla.
+Así que lo dejé entrenar hasta 32 épocas y, en cada partición, me quedé con la época que mejor lo hacía en esa porción apartada del entrenamiento, nunca en los clips de test. Es una parada temprana normal, escrita en el pre-registro antes de correrla. La herramienta oficial de entrenamiento de Laya todavía no la incluye, así que abrí [un issue que propone esa parada temprana sobre la misma porción apartada y un aviso cuando el entrenamiento se queda en el azar](https://github.com/NandhaKishorM/laya/issues/963).
 
 <figure class="sfml-fig">
 <img src="/blog/sport-from-motion-laya-configs-es.png" alt="Acierto en los 400 clips: con 4 épocas, 0,23; con 8 épocas, 0,28 en orden, 0,22 barajado y 0,25 con una sola foto; con hasta 32 épocas y parada temprana, 0,36 en orden frente a 0,27 barajado y 0,27 con una sola foto. MiniRocket está en 0,83." aria-label="Acierto en los 400 clips: con 4 épocas, 0,23; con 8 épocas, 0,28 en orden, 0,22 barajado y 0,25 con una sola foto; con hasta 32 épocas y parada temprana, 0,36 en orden frente a 0,27 barajado y 0,27 con una sola foto. MiniRocket está en 0,83." />
