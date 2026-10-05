@@ -40,7 +40,7 @@ Laya ships with a fine-tuning notebook for exactly this hardware. I used it as i
 
 That number alone says nothing about Laya. A model can end up at chance because there is nothing to learn, because the code is broken, or because it was not trained for long enough, and from the outside the three look identical. To separate them I ran a **positive control**: the same clips, but with an arbitrary tag at the top of each one that encodes the answer (`tag: Q7` for soccer, `tag: M2` for basketball, and so on). The tag means nothing, so the untrained model cannot use it; a model that learns during training can.
 
-With the official recipe, the control reached 72%. So the code trains, but even a perfect clue is only half learned in that budget. The notebook fine-tunes on about 6,000 examples, which comes to some 375 weight updates; here there are about 1,100 per fold, and 72 updates in total.
+With the official recipe, the control reached 72%. So the code trains, but even a perfect clue is not fully learned in that budget. The notebook fine-tunes on about 6,000 examples, which comes to some 375 weight updates; here there are about 1,100 per fold, and 72 updates in total.
 
 The fix had to be chosen without looking at the result I wanted to measure, so I used the control for that too: the number of epochs became the first point at which the control is learned (≥ 95% on a slice of training held out for the purpose). That was 8. With 8 epochs, motion stayed at chance.
 
