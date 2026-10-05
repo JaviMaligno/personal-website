@@ -40,7 +40,7 @@ Laya ships with a fine-tuning notebook for exactly this hardware. I used it as i
 
 That number alone says nothing about Laya. A model can end up at chance because there is nothing to learn, because the code is broken, or because it was not trained for long enough, and from the outside the three look identical. To separate them I ran a **positive control**: the same clips, but with an arbitrary tag at the top of each one that encodes the answer (`tag: Q7` for soccer, `tag: M2` for basketball, and so on). The tag means nothing, so the untrained model cannot use it; a model that learns during training can.
 
-With the official recipe, the control reached 72%. So the code trains, but even a perfect clue is only half learned in that budget. The notebook is designed for around 30,000 examples; here there are about 1,100 per fold, which comes to 72 weight updates in total.
+With the official recipe, the control reached 72%. So the code trains, but even a perfect clue is only half learned in that budget. The notebook fine-tunes on about 6,000 examples, which comes to some 375 weight updates; here there are about 1,100 per fold, and 72 updates in total.
 
 The fix had to be chosen without looking at the result I wanted to measure, so I used the control for that too: the number of epochs became the first point at which the control is learned (≥ 95% on a slice of training held out for the purpose). That was 8. With 8 epochs, motion stayed at chance.
 
@@ -56,7 +56,7 @@ The training loss shows why. On the dots it did not just fail to generalise: it 
 So I let it train for up to 32 epochs and, for each split, kept the epoch that did best on that held-out slice of training, never on the test clips. That is ordinary early stopping, written into the pre-registration before running it.
 
 <figure class="sfml-fig">
-<img src="/blog/sport-from-motion-laya-configs-en.png" alt="Accuracy on the 400 clips: with 4 epochs, 0.23; with 8 epochs, 0.28 in order, 0.22 shuffled and 0.25 with a single snapshot; with up to 32 epochs and early stopping, 0.36 in order against 0.27 shuffled and 0.27 with a single snapshot. MiniRocket is at 0.84." aria-label="Accuracy on the 400 clips: with 4 epochs, 0.23; with 8 epochs, 0.28 in order, 0.22 shuffled and 0.25 with a single snapshot; with up to 32 epochs and early stopping, 0.36 in order against 0.27 shuffled and 0.27 with a single snapshot. MiniRocket is at 0.84." />
+<img src="/blog/sport-from-motion-laya-configs-en.png" alt="Accuracy on the 400 clips: with 4 epochs, 0.23; with 8 epochs, 0.28 in order, 0.22 shuffled and 0.25 with a single snapshot; with up to 32 epochs and early stopping, 0.36 in order against 0.27 shuffled and 0.27 with a single snapshot. MiniRocket is at 0.83." aria-label="Accuracy on the 400 clips: with 4 epochs, 0.23; with 8 epochs, 0.28 in order, 0.22 shuffled and 0.25 with a single snapshot; with up to 32 epochs and early stopping, 0.36 in order against 0.27 shuffled and 0.27 with a single snapshot. MiniRocket is at 0.83." />
 <figcaption>Only the longest training separates the conditions: with the snapshots in order Laya reaches 0.36; shuffled or reduced to one snapshot, it stays near chance. Three seeds per bar, except the official recipe.</figcaption>
 </figure>
 
@@ -71,7 +71,22 @@ With three seeds, the four pre-registered contrasts:
 
 The second row is the one I was after. Shuffling the snapshots costs Laya 8 points, of the same order as the 10 it cost Opus 5.5, the only frontier model that showed it read the order. A 322M model trained on about 1,100 clips extracts something from the coordinates written as text that depends on time, not only on where the players are.
 
-The rest puts it in proportion. With 0.36, Laya sits level with the frontier models that read the same text (GPT-5.6 Sol and Terra, with no significant difference), and 48 points below MiniRocket, which works on the coordinates directly. It recognises American football and basketball about half the time, handball a third of the time and soccer almost never, the same sports the frontier models struggled with.
+## How it compares
+
+<figure class="sfml-fig">
+<img src="/blog/sport-from-motion-laya-compare-en.png" alt="Left: accuracy with the snapshots in order on the same 400 clips. MiniRocket 0.83 and DeepSets 0.80; Claude Opus 5.5 0.52 with text and 0.47 with images; the other frontier models between 0.28 and 0.42; fine-tuned Laya 0.36; Jev 0.25; untrained Laya 0.24. Right: accuracy lost when the snapshots are shuffled. MiniRocket 0.12, Opus 0.10 and fine-tuned Laya 0.08 lose clearly; the other frontier models and Jev stay around zero." aria-label="Left: accuracy with the snapshots in order on the same 400 clips. MiniRocket 0.83 and DeepSets 0.80; Claude Opus 5.5 0.52 with text and 0.47 with images; the other frontier models between 0.28 and 0.42; fine-tuned Laya 0.36; Jev 0.25; untrained Laya 0.24. Right: accuracy lost when the snapshots are shuffled. MiniRocket 0.12, Opus 0.10 and fine-tuned Laya 0.08 lose clearly; the other frontier models and Jev stay around zero." />
+<figcaption>Left: in accuracy, fine-tuned Laya sits among the frontier models, below Opus 5.5 and far from the specialists. Right: in what it does with the order, it sits with MiniRocket and Opus, the only ones that lose accuracy when the snapshots are shuffled. Lines are 95% intervals; circles read the coordinates as text, triangles as an image.</figcaption>
+</figure>
+
+Same 400 clips, snapshots in order, every model in the previous article next to Laya:
+
+- **Against the specialists**, Laya is 48 points below MiniRocket (0.83) and 45 below DeepSets (0.80), which work on the coordinates directly.
+- **Against the frontier models reading the same text**, it is level with GPT-5.6 Sol (0.41), GPT-5.6 Terra (0.36), Claude Sonnet 5 (0.35) and Gemini 3.1 Pro (0.42): none of the differences is significant. Claude Opus 5.5 reads the text better (0.52, 16 points above Laya).
+- **Against Jev**, the other decision model, which received the same text without training, it is 11 points higher (0.25 against 0.36), a difference that does not reach significance with these 400 clips.
+
+The panel on the right is where it changes company. In accuracy, Laya is one more of the frontier models. In what it does with the order, it sits with MiniRocket and Opus, the only three that lose accuracy when the snapshots are shuffled; the other four frontier models and Jev stay around zero.
+
+By sport, Laya recognises American football and basketball about half the time, handball a third of the time and soccer almost never, the same sports the frontier models struggled with.
 
 ## Same data, same recipe, different seed
 
@@ -92,7 +107,7 @@ A small open model can learn to read the order of the snapshots from coordinates
 
 The two things that nearly hid that result seem more general to me than the result itself:
 
-- **A model card's recipe is tuned for its own data size.** With twenty times fewer examples, the official notebook gives a model at chance. A cheap positive control (a trivial clue the model can only learn by training) tells apart "this model does not learn this" from "it was not trained enough", which otherwise look the same.
+- **A model card's recipe is tuned for its own data size.** With five times fewer examples, the official notebook gives a model at chance. A cheap positive control (a trivial clue the model can only learn by training) tells apart "this model does not learn this" from "it was not trained enough", which otherwise look the same.
 - **One fine-tuning run is a sample, not a measurement.** Here the same configuration learns or does not depending on the seed. Three seeds were enough to see it; one would have hidden it in either direction.
 
 ---

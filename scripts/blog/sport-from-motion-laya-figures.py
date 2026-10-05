@@ -37,7 +37,23 @@ FLAT = [1.419, 1.394, 1.389, 1.388, 1.387, 1.389, 1.388, 1.387, 1.388, 1.386, 1.
 # accuracy on the 400 clips; 4 epochs = motion only, seed 0; 8 and 32 = mean of 3 seeds
 CONFIGS = {'4': {'motion': 0.23}, '8': {'motion': 0.28, 'motion_shuffled': 0.22, 'formation': 0.25},
            '32': {'motion': 0.36, 'motion_shuffled': 0.27, 'formation': 0.27}}
-UNTUNED, MINIROCKET = 0.24, 0.84
+UNTUNED, MINIROCKET = 0.24, 0.83
+
+# snapshots in order, the same 400 clips: accuracy and match-clustered 95% CI; text or image input.
+# Frontier and Jev cells from results-final (Sonnet 5 text = full re-run with reasoning headroom, A17).
+COMPARE = [('MiniRocket', 'spec', 0.833, (0.798, 0.868)), ('DeepSets', 'spec', 0.802, (0.761, 0.847)),
+           ('Claude Opus 5.5', 'text', 0.515, (0.419, 0.624)), ('Claude Opus 5.5', 'image', 0.468, (0.369, 0.583)),
+           ('GPT-5.6 Sol', 'image', 0.422, (0.349, 0.515)), ('Gemini 3.1 Pro', 'text', 0.417, (0.322, 0.527)),
+           ('GPT-5.6 Sol', 'text', 0.412, (0.35, 0.488)), ('GPT-5.6 Terra', 'image', 0.38, (0.304, 0.465)),
+           ('GPT-5.6 Terra', 'text', 0.36, (0.283, 0.454)), ('Laya, fine-tuned', 'laya', 0.355, (0.307, 0.408)),
+           ('Claude Sonnet 5', 'text', 0.347, (0.26, 0.439)), ('Gemini 3.1 Pro', 'image', 0.315, (0.259, 0.388)),
+           ('Claude Sonnet 5', 'image', 0.278, (0.204, 0.354)), ('Jev', 'text', 0.247, (0.138, 0.349)),
+           ('Laya, untrained', 'laya0', 0.24, None)]
+# accuracy lost when the snapshots are shuffled (paired, 400 clips); image cells for the frontier models
+ORDER = [('MiniRocket', 'spec', 0.117, (0.07, 0.162)), ('Claude Opus 5.5', 'image', 0.10, (0.051, 0.156)),
+         ('Laya, fine-tuned', 'laya', 0.083, (0.027, 0.137)), ('GPT-5.6 Sol', 'image', 0.01, (-0.038, 0.061)),
+         ('GPT-5.6 Terra', 'image', 0.005, (-0.049, 0.059)), ('Jev', 'text', -0.005, (-0.029, 0.017)),
+         ('Gemini 3.1 Pro', 'image', -0.007, (-0.062, 0.052)), ('Claude Sonnet 5', 'image', -0.018, (-0.065, 0.032))]
 
 # DL2, motion: test accuracy per (seed, fold) and the epoch chosen on calibration
 GRID = [[0.50, 0.42, 0.53, 0.46, 0.22], [0.47, 0.38, 0.53, 0.41, 0.22], [0.25, 0.20, 0.24, 0.23, 0.47]]
@@ -131,8 +147,50 @@ def seeds(lang):
     plt.close(fig)
 
 
+def compare(lang):
+    names_es = {'Laya, fine-tuned': 'Laya, afinado', 'Laya, untrained': 'Laya, sin entrenar'}
+    kind_lab = {'spec': txt(lang, 'especialista', 'specialist'), 'laya': 'Laya', 'laya0': 'Laya',
+                'text': txt(lang, 'texto', 'text'), 'image': txt(lang, 'imagen', 'image')}
+    col = {'spec': MUTED, 'laya': TEAL, 'laya0': TEAL, 'text': AMBER, 'image': FG}
+    mk = {'spec': 's', 'laya': 'D', 'laya0': 'D', 'text': 'o', 'image': '^'}
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 6.6), gridspec_kw={'width_ratios': [1.35, 1]})
+
+    def label(n, k):
+        n = names_es.get(n, n) if lang == 'es' else n
+        return n if k in ('spec', 'laya', 'laya0') else f'{n} ({kind_lab[k]})'
+
+    def panel(ax, rows, ref, xlim, xlabel):
+        y = np.arange(len(rows))[::-1]
+        for yy, (n, k, v, ci) in zip(y, rows):
+            if k == 'laya':
+                ax.axhspan(yy - 0.45, yy + 0.45, color=TEAL, alpha=0.10, lw=0)
+            if ci:
+                ax.plot(ci, [yy, yy], color=col[k], lw=1.6, alpha=0.85)
+            ax.plot(v, yy, mk[k], color=col[k], ms=8, mfc=col[k] if k != 'laya0' else BG, mew=1.6)
+        ax.axvline(ref, color=SLATE, ls=':', lw=1)
+        ax.set_yticks(y, [label(n, k) for n, k, _, _ in rows])
+        for t, (n, k, _, _) in zip(ax.get_yticklabels(), rows):
+            t.set_color(TEAL if k in ('laya', 'laya0') else FG)
+        ax.set_xlim(*xlim)
+        ax.set_xlabel(xlabel)
+        ax.tick_params(axis='y', length=0)
+        for sp in ('top', 'right', 'left'):
+            ax.spines[sp].set_visible(False)
+
+    panel(a1, COMPARE, 0.25, (0.1, 0.92), txt(lang, 'acierto, fotos en orden', 'accuracy, snapshots in order'))
+    a1.text(0.255, len(COMPARE) - 0.4, txt(lang, 'azar', 'chance'), color=MUTED, fontsize=9.5)
+    panel(a2, ORDER, 0.0, (-0.09, 0.2), txt(lang, 'acierto perdido al barajar', 'accuracy lost when shuffled'))
+    fig.tight_layout()
+    if lang == 'es':
+        for ax in (a1, a2):
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.1f}'.replace('.', ',')))
+    fig.savefig(OUT / f'{SLUG}-compare-{lang}.png', dpi=150)
+    plt.close(fig)
+
+
 if __name__ == '__main__':
     for lang in ('en', 'es'):
         curves(lang)
         configs(lang)
         seeds(lang)
+        compare(lang)

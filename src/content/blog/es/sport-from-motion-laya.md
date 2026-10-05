@@ -40,7 +40,7 @@ Laya trae un notebook de ajuste fino para exactamente este hardware. Lo usé tal
 
 Ese número, solo, no dice nada de Laya. Un modelo puede acabar en el azar porque no hay nada que aprender, porque el código está roto o porque no se ha entrenado lo suficiente, y desde fuera las tres cosas se ven igual. Para separarlas hice un **control positivo**: los mismos clips, pero con una etiqueta arbitraria al principio de cada uno que codifica la respuesta (`tag: Q7` para fútbol, `tag: M2` para baloncesto, etcétera). La etiqueta no significa nada, así que el modelo sin entrenar no puede usarla; uno que aprende durante el entrenamiento, sí.
 
-Con la receta oficial, el control llegó al 72 %. El código entrena, pero ni una pista perfecta se aprende del todo con ese presupuesto. El notebook está pensado para unos 30.000 ejemplos; aquí hay unos 1.100 por fold, que dan 72 actualizaciones de pesos en total.
+Con la receta oficial, el control llegó al 72 %. El código entrena, pero ni una pista perfecta se aprende del todo con ese presupuesto. El notebook afina con unos 6.000 ejemplos, que dan unas 375 actualizaciones de pesos; aquí hay unos 1.100 por fold, y 72 actualizaciones en total.
 
 El arreglo había que elegirlo sin mirar el resultado que quería medir, así que también usé el control para eso: el número de épocas pasó a ser el primer punto en que el control está aprendido (≥ 95 % en una porción del entrenamiento apartada para ello). Salieron 8. Con 8 épocas, el movimiento siguió en el azar.
 
@@ -56,7 +56,7 @@ La pérdida de entrenamiento explica por qué. Con los puntos no es que no gener
 Así que lo dejé entrenar hasta 32 épocas y, en cada partición, me quedé con la época que mejor lo hacía en esa porción apartada del entrenamiento, nunca en los clips de test. Es una parada temprana normal, escrita en el pre-registro antes de correrla.
 
 <figure class="sfml-fig">
-<img src="/blog/sport-from-motion-laya-configs-es.png" alt="Acierto en los 400 clips: con 4 épocas, 0,23; con 8 épocas, 0,28 en orden, 0,22 barajado y 0,25 con una sola foto; con hasta 32 épocas y parada temprana, 0,36 en orden frente a 0,27 barajado y 0,27 con una sola foto. MiniRocket está en 0,84." aria-label="Acierto en los 400 clips: con 4 épocas, 0,23; con 8 épocas, 0,28 en orden, 0,22 barajado y 0,25 con una sola foto; con hasta 32 épocas y parada temprana, 0,36 en orden frente a 0,27 barajado y 0,27 con una sola foto. MiniRocket está en 0,84." />
+<img src="/blog/sport-from-motion-laya-configs-es.png" alt="Acierto en los 400 clips: con 4 épocas, 0,23; con 8 épocas, 0,28 en orden, 0,22 barajado y 0,25 con una sola foto; con hasta 32 épocas y parada temprana, 0,36 en orden frente a 0,27 barajado y 0,27 con una sola foto. MiniRocket está en 0,83." aria-label="Acierto en los 400 clips: con 4 épocas, 0,23; con 8 épocas, 0,28 en orden, 0,22 barajado y 0,25 con una sola foto; con hasta 32 épocas y parada temprana, 0,36 en orden frente a 0,27 barajado y 0,27 con una sola foto. MiniRocket está en 0,83." />
 <figcaption>Solo el entrenamiento más largo separa las condiciones: con las fotos en orden Laya llega a 0,36; barajadas o reducidas a una foto, se queda cerca del azar. Tres semillas por barra, salvo la receta oficial.</figcaption>
 </figure>
 
@@ -71,7 +71,22 @@ Con tres semillas, los cuatro contrastes pre-registrados:
 
 La segunda fila es la que buscaba. Barajar las fotos le cuesta a Laya 8 puntos, del mismo orden que los 10 que le costaba a Opus 5.5, el único modelo de frontera que mostró que leía el orden. Un modelo de 322M entrenado con unos 1.100 clips saca de las coordenadas escritas como texto algo que depende del tiempo, no solo de dónde están los jugadores.
 
-El resto lo pone en proporción. Con 0,36, Laya queda a la altura de los modelos de frontera que leyeron el mismo texto (GPT-5.6 Sol y Terra, sin diferencia significativa) y 48 puntos por debajo de MiniRocket, que trabaja directamente con las coordenadas. Reconoce el fútbol americano y el baloncesto la mitad de las veces, el balonmano una de cada tres y el fútbol casi nunca, los mismos deportes que se les atragantaban a los modelos de frontera.
+## Cómo queda frente a los demás
+
+<figure class="sfml-fig">
+<img src="/blog/sport-from-motion-laya-compare-es.png" alt="Izquierda: acierto con las fotos en orden en los mismos 400 clips. MiniRocket 0,83 y DeepSets 0,80; Claude Opus 5.5 0,52 con texto y 0,47 con imagen; el resto de modelos de frontera entre 0,28 y 0,42; Laya afinado 0,36; Jev 0,25; Laya sin entrenar 0,24. Derecha: acierto perdido al barajar las fotos. MiniRocket 0,12, Opus 0,10 y Laya afinado 0,08 pierden claramente; el resto de modelos de frontera y Jev se quedan en torno a cero." aria-label="Izquierda: acierto con las fotos en orden en los mismos 400 clips. MiniRocket 0,83 y DeepSets 0,80; Claude Opus 5.5 0,52 con texto y 0,47 con imagen; el resto de modelos de frontera entre 0,28 y 0,42; Laya afinado 0,36; Jev 0,25; Laya sin entrenar 0,24. Derecha: acierto perdido al barajar las fotos. MiniRocket 0,12, Opus 0,10 y Laya afinado 0,08 pierden claramente; el resto de modelos de frontera y Jev se quedan en torno a cero." />
+<figcaption>Izquierda: en acierto, Laya afinado queda entre los modelos de frontera, por debajo de Opus 5.5 y lejos de los especialistas. Derecha: en lo que hace con el orden, queda con MiniRocket y Opus, los únicos que pierden acierto al barajar las fotos. Las líneas son intervalos del 95 %; los círculos leen las coordenadas como texto y los triángulos como imagen.</figcaption>
+</figure>
+
+Mismos 400 clips, fotos en orden, todos los modelos del artículo anterior al lado de Laya:
+
+- **Frente a los especialistas**, Laya queda 48 puntos por debajo de MiniRocket (0,83) y 45 por debajo de DeepSets (0,80), que trabajan directamente con las coordenadas.
+- **Frente a los modelos de frontera que leyeron el mismo texto**, queda a la altura de GPT-5.6 Sol (0,41), GPT-5.6 Terra (0,36), Claude Sonnet 5 (0,35) y Gemini 3.1 Pro (0,42): ninguna diferencia es significativa. Claude Opus 5.5 lee mejor el texto (0,52, 16 puntos por encima de Laya).
+- **Frente a Jev**, el otro modelo de decisión, que recibió el mismo texto sin entrenar, está 11 puntos por encima (0,25 frente a 0,36), una diferencia que con estos 400 clips no llega a ser significativa.
+
+El panel de la derecha es donde cambia de compañía. En acierto, Laya es uno más de los modelos de frontera. En lo que hace con el orden, queda con MiniRocket y Opus, los tres únicos que pierden acierto al barajar las fotos; los otros cuatro modelos de frontera y Jev se quedan en torno a cero.
+
+Por deportes, Laya reconoce el fútbol americano y el baloncesto la mitad de las veces, el balonmano una de cada tres y el fútbol casi nunca, los mismos deportes que se les atragantaban a los modelos de frontera.
 
 ## Mismos datos, misma receta, otra semilla
 
@@ -92,7 +107,7 @@ Un modelo abierto pequeño puede aprender a leer el orden de las fotos a partir 
 
 Las dos cosas que casi esconden ese resultado me parecen más generales que el resultado en sí:
 
-- **La receta de la ficha de un modelo está ajustada a su propio tamaño de datos.** Con veinte veces menos ejemplos, el notebook oficial da un modelo en el azar. Un control positivo barato (una pista trivial que el modelo solo puede aprender entrenando) distingue «este modelo no aprende esto» de «no se ha entrenado lo suficiente», que si no se ven igual.
+- **La receta de la ficha de un modelo está ajustada a su propio tamaño de datos.** Con cinco veces menos ejemplos, el notebook oficial da un modelo en el azar. Un control positivo barato (una pista trivial que el modelo solo puede aprender entrenando) distingue «este modelo no aprende esto» de «no se ha entrenado lo suficiente», que si no se ven igual.
 - **Un ajuste fino es una muestra, no una medida.** Aquí la misma configuración aprende o no según la semilla. Con tres semillas bastó para verlo; con una habría quedado oculto, en cualquiera de los dos sentidos.
 
 ---
