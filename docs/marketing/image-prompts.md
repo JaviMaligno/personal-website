@@ -1563,3 +1563,103 @@ Crisp bitmap illustration, high contrast, professional AI/developer blog
 aesthetic, balanced teal, amber, graphite and off-white accents on dark, no
 purple gradient blobs, no bokeh.
 ```
+
+---
+
+## that-was-for-another-chat
+
+- Artículo: `src/content/blog/en/that-was-for-another-chat.md`
+- Imagen: `public/blog/that-was-for-another-chat.png` (1020x510)
+- Generada: 2026-09-14
+- **Modelo final: ChatGPT (gpt-image), a mano por Javier.** El intento con
+  `gemini-2.5-flash-image` en Vertex se descartó por cutre: composición plana y
+  texto mutilado que hubo que tapar con Pillow. Se conserva abajo por lo que
+  enseña sobre Vertex, no como referencia de estilo.
+
+**Por qué no Codex.** `codex exec` devolvió `Your workspace is out of credits`.
+Además la CLI cambió: `--full-auto` ya no existe (v0.154.0) y `--sandbox` no se
+puede combinar con `--approve-for-me`. La invocación que funciona hoy es
+`codex exec --approve-for-me "..."`.
+
+**Trampas de Vertex, para la próxima:**
+
+1. **La relación de aspecto hay que pasarla por parámetro**, no en el texto del
+   prompt: pedirla en prosa se ignora y sale cuadrada (1024x1024). Va en
+   `generationConfig.imageConfig.aspectRatio`.
+2. **No acepta `"2:1"`**: devuelve 400 `INVALID_ARGUMENT`. El máximo apaisado es
+   `"16:9"` (1344x768), que se recorta después a 2:1 con
+   `sips -c 672 1344` y se escala con `sips -Z 1020`. El recorte va bien porque
+   el modelo deja bandas muertas arriba y abajo.
+3. **Solo `gemini-2.5-flash-image` está habilitado** en `data-science-364702`.
+   Imagen 3/4 y los `gemini-3-*-image` dan 404 «Publisher model not found»:
+   habría que habilitarlos en Model Garden, con cuestionario y términos.
+4. **Ese modelo escribe mal el texto.** Salió un título de ventana mutilado
+   («Inspat Inspart») y una etiqueta tenue ilegible en el panel derecho. Se
+   taparon con Pillow muestreando el color de la propia barra — una barra de
+   título sin etiqueta es interfaz normal y no se nota. Si hace falta texto
+   legible de verdad en una imagen, este modelo no vale.
+
+Prompt (el de la variante elegida, con `aspectRatio: "16:9"`):
+
+```
+Wide 2:1 landscape technical editorial illustration for a developer blog, dark
+graphite background, crisp bitmap style, high contrast.
+
+Three distinct zones filling the full width, left to right:
+
+LEFT: a chat conversation panel about moving house, three or four short rounded
+message bubbles in teal and off-white. Keep any lettering minimal and simple.
+
+CENTRE: the same chat's input box, and inside it a block of dense monospace code
+lines on a darker panel, outlined in a glowing amber border — visibly foreign to
+the conversation around it. This is the focal point.
+
+RIGHT: a small amber clipboard icon and a faded, dimmed second window of code,
+connected to the centre block by a thin amber arrow, suggesting the block came
+from somewhere else.
+
+Composition: balanced across the full 2:1 frame, no large empty areas, several
+layered panels giving depth. Palette strictly teal, amber, graphite and
+off-white. No purple, no gradient blobs, no bokeh, no logos, no brand names, no
+people, no headline text, no captions, no paragraphs of prose.
+
+
+**Lo que sí funcionó (el prompt que se usó de verdad, en ChatGPT).** La diferencia
+clave frente a la versión de Vertex: como este modelo escribe bien, el prompt
+**pide texto legible** en vez de prohibirlo, y ahí es donde la imagen gana — el
+stack trace real junto a las burbujas domésticas es lo que cuenta la historia.
+
+```
+Create a 1020x510 (2:1 landscape) hero image for a technical blog article
+titled "Sorry, That Was For Another Chat", about what AI models do when you
+accidentally paste content from a completely different conversation into a chat.
+
+Style: refined technical editorial illustration, dark but not monochrome. Crisp,
+high-contrast, professional AI/developer blog aesthetic. Several distinct zones,
+layered panels with depth — density is a feature, avoid large empty areas.
+
+Scene, left to right across the full width:
+
+LEFT — a chat panel, dark rounded window. Three message bubbles in teal and
+off-white with short, clearly legible text: "Moving day is in two weeks",
+"Boxes everywhere", "Where do I even start?".
+
+CENTRE, the focal point — the same chat's message input box, and sitting inside
+it a block of dense monospace code on a darker panel, wrapped in a glowing amber
+border. The code is a Java-style stack trace, legible and plausible, beginning
+with a line like "Exception in thread main" — visibly, jarringly foreign to the
+domestic conversation next to it.
+
+RIGHT — a dimmed, faded second window showing the same stack trace, with a small
+amber clipboard glyph in its corner, connected to the centre block by a thin
+curved amber arrow pointing left. This suggests where the pasted block came from.
+
+Palette: strictly teal, amber, graphite and off-white on a dark graphite
+background.
+
+All text in the image must be correctly spelled English. No headline text, no
+title overlay, no captions. No logos, no brand names, no people, no purple, no
+gradient blobs, no bokeh, no glossy 3D render look.
+```
+
+Salida 1774x887, reescalada a 1020x510 con `sips -Z 1020`.
