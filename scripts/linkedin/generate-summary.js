@@ -1,11 +1,35 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { buildSummaryPrompt } from './prompt.js';
+import { generateWithFallback } from './summary-fallback.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Ultimo recurso, de otra familia: si Gemini entero esta saturado, otro modelo
+// de Gemini no ayuda. Sin OPENROUTER_API_KEY simplemente no se intenta.
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-5.5';
+
+async function callOpenRouter(prompt) {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+      'X-Title': 'personal-website LinkedIn summary',
+    },
+    body: JSON.stringify({
+      model: OPENROUTER_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`[${res.status}] ${(await res.text()).slice(0, 300)}`);
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? '';
+}
+
 /**
- * Generate LinkedIn-optimized summary using Gemini API
- * Strategy: Try Flash 2.0 first, fallback to 2.5 Flash
+ * Generate LinkedIn-optimized summary: Gemini with retries, then OpenRouter.
  *
  * @param {Object} params - Post parameters
  * @param {string} params.title - Blog post title
@@ -32,34 +56,15 @@ export async function generateSummary({ title, description, content, tags }) {
   // segunda edicion, y entonces el experimento mide algo que no se despliega.
   const prompt = buildSummaryPrompt({ title, description, content, tags });
 
-  for (const modelName of models) {
-    try {
-      console.log(`🤖 Attempting summary generation with ${modelName}...`);
-
+  return generateWithFallback({
+    models,
+    callModel: async (modelName) => {
       const model = genAI.getGenerativeModel({ model: modelName });
       const result = await model.generateContent(prompt);
-      const summary = result.response.text().trim();
-
-      if (!summary || summary.length < 50) {
-        throw new Error('Generated summary too short');
-      }
-
-      console.log(`✅ Summary generated with ${modelName}`);
-      console.log(`   Length: ${summary.length} characters`);
-      console.log(`   Words: ~${summary.split(/\s+/).length} words`);
-
-      return summary;
-
-    } catch (error) {
-      console.warn(`⚠️  ${modelName} failed: ${error.message}`);
-
-      // If last model, throw error
-      if (modelName === models[models.length - 1]) {
-        throw new Error(`All Gemini models failed to generate summary. Last error: ${error.message}`);
-      }
-
-      // Otherwise, continue to next model
-      console.log(`Trying fallback model...`);
-    }
-  }
+      return result.response.text();
+    },
+    lastResort: process.env.OPENROUTER_API_KEY?.trim()
+      ? { name: `openrouter:${OPENROUTER_MODEL}`, call: () => callOpenRouter(prompt) }
+      : undefined,
+  });
 }
