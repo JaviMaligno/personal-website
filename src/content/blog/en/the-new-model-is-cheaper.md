@@ -36,7 +36,7 @@ The consequence is an asymmetry worth naming. If you drop the candidate into the
 
 ## A method for testing a swap
 
-The procedure below is the one I wrote for an [industry classification service](/en/projects/compliance-classifier) — an agent that searches for a company, verifies it is the right one, and maps what it does to an industry code. Nothing in it is specific to that service.
+The procedure below is the one I wrote for an [industry classification service](/en/projects/compliance-classifier) — an agent that searches for a company, verifies it is the right one, and maps what it does to an industry code. Nothing in it is specific to that service, or to a model swap. The same procedure governs any change to the harness — a reworded prompt, a new tool, a different parser. A new model is simply the change that touches every part at once.
 
 <figure class="csw-fig">
 <svg viewBox="0 0 600 400" role="img" aria-label="The model-swap procedure as a pipeline: preconditions, a gateway probe with the exact call shapes, harness adaptation, then three measured stages and a release gate against the deployed version. Stages one and two feed back into harness adaptation, so adapting the harness and measuring it are a loop, not a step.">
@@ -61,8 +61,8 @@ The procedure below is the one I wrote for an [industry classification service](
     <path d="M385,59 L406,59" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr)"/>
     <rect x="410" y="150" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="495" y="174" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">1 · Targeted cohort</text>
-    <text x="495" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">safety and hard cases</text>
-    <text x="495" y="210" text-anchor="middle" fill="#94a3b8" font-size="11.5">≥ 4 rounds per case</text>
+    <text x="495" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">affected cases only</text>
+    <text x="495" y="210" text-anchor="middle" fill="#94a3b8" font-size="11.5">per component, ≥ 4 rounds</text>
     <rect x="215" y="150" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="300" y="174" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">2 · Full benchmark</text>
     <text x="300" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">paired, interleaved</text>
@@ -88,11 +88,11 @@ The procedure below is the one I wrote for an [industry classification service](
 <figcaption>Adapting the harness and measuring it are a loop. What reaches the release gate is the candidate model plus its adapted harness, compared with what is actually deployed.</figcaption>
 </figure>
 
-The order of the stages is deliberate: it goes from specific to exhaustive. The first stage runs only the cases a change is meant to affect — safety cases, hard cases, the target case of each safeguard — component by component and with many rounds, so a regression shows up while it is still cheap to find. Only a candidate that survives it gets the full benchmark. Attribution then goes back to the cases where the two arms disagreed, and only those. The expensive runs come last and are aimed by the cheap ones.
+The order of the stages is deliberate: it goes from specific to exhaustive. The first stage isolates twice. It runs only the cases a change is meant to affect — safety cases, hard cases, the target case of each safeguard — and it runs them on the component that changed: the search step alone, the verifier replayed on content already captured, the agent with its search results frozen. Many rounds, few cases, so a regression shows up while it is still cheap to find. Only a candidate that survives it gets the full benchmark. Attribution then goes back to the cases where the two arms disagreed, and only those. The expensive runs come last and are aimed by the cheap ones.
 
 The rules that carry most of the weight:
 
-- **Measure the service, not the model.** A candidate is judged by what the system returns end to end — answer, evidence, confidence, cost, latency — never by a vendor claim or a playground prompt.
+- **Measure the service, not the model.** Components are tested in isolation, but the decision rests on what the system returns end to end — answer, evidence, confidence, cost, latency — never on a vendor claim or a playground prompt.
 - **Pin it, and see it.** The model version is pinned so the provider can't change it under a measurement. Before the service is involved, a short probe through the gateway uses the exact call shapes the service sends. A gateway can drop a parameter it doesn't support and still answer 200, and a parameter honoured on one API surface can be ignored on another. Every response records which model actually served it: a silent fallback serves a different model under the candidate's name.
 - **Paired, interleaved, repeated.** Every case runs every arm in the same session, with the order rotated. The system is not deterministic, so one round per case decides nothing, and two may not either: in this service, among cases whose first two rounds agreed, rounds three and four returned a different code **24% of the time**. Before reading any difference, measure how much the control disagrees with itself on the same cases. An effect smaller than that floor is not an effect.
 - **Separate an outage from an answer.** A call that didn't arrive (timeout, gateway error) is excluded. A call that arrived with something unusable (unparseable, empty, out of range) counts against the candidate: it is part of what's being measured. The trace has to tell the two apart before the run starts.
@@ -108,7 +108,7 @@ The rules that carry most of the weight:
 | Same input, same output? | Yes | Yes, once trained | No: sampling, search results, judges |
 | What you tune | Code | Weights, features, hyperparameters | Prompts, tool descriptions, call shapes — in natural language |
 | A test is | Pass or fail | An aggregate on a held-out set | Paired, repeated, per case, above a noise floor |
-| What decides | The assertion | The metric | The metric, then a human reading every disagreement in the traces |
+| What decides | The assertion | The metric | The metric, then a person or an agent reading every disagreement in the traces |
 
 Self-hosted open-weight models sit closer to traditional ML on one axis: you decide when to change, nobody retires the model from under you, and the evaluation runs on your own GPUs. On the other axis they don't move at all. Unless you fine-tune, you still swap one set of weights for another and adapt prompts and tools to it, exactly as with a hosted provider.
 
@@ -122,11 +122,13 @@ The twelve days of testing around the swap were not all about the swap. About ha
 |---|---:|
 | Model tokens spent on the swap, in the runs that were saved | 47 $ |
 | … scaled up for the 27% of calls that were not saved (smoke tests, interrupted runs) | ≈ 65 $ |
-| Model cost per classification, paired on the same build: model in production → candidate | 0.0098 $ → 0.0053 $ |
+| Model cost per classification, paired on the same build: model in production → candidate | 0.0098 → 0.0053 $ |
 | **Saving per classification** | **≈ 0.0045 $** |
 | Production volume | ≈ 500 / month |
 
 On top of the tokens there is engineering time. The session that carried out the swap logged about **20 active hours of agent work**. Mine, inside it, came to about **four hours**. Valuing my four hours at 50 $/h and leaving aside what the agent's hours cost, the swap comes to roughly **250 to 265 dollars**.
+
+This was the hardest adaptation I have had to make. More typically, one round of testing with two or three iterations of the harness gets there in one or two hours, with correspondingly fewer calls. Even that does not change the conclusion at this volume: before the next model arrives, the saving recovers about six dollars, less than a single hour of engineering.
 
 | Cost of the swap | Classifications to break even | At 500 a month |
 |---|---:|---:|
@@ -191,11 +193,13 @@ On cost alone, a swap pays when
 
 **saving per run × monthly volume × months you'll keep the new model > cost of the swap**
 
-Three things follow from it.
+Four things follow from it.
 
 **You don't have to take every release.** The horizon is how long you will stay on the new model, not how long until the next launch. A team at low volume that skips generations pays the cost of a swap once per forced migration — when the old model is retired — instead of once per release.
 
 **At low volume, cost cannot justify a swap; only quality can.** The rule then becomes *errors avoided per run × cost of an error × volume × months > cost of the swap*. In a compliance classifier, one confident wrong answer can cost more than all the tokens involved. But that cost per error has to be stated, not assumed, or the formula justifies anything.
+
+**The thinner the harness, the cheaper the swap.** Every instruction written to steer one model's behaviour is something the next model may read differently, and something to check again. A harness that holds only what the task needs has less to re-adapt. How thin it can be depends on the task: the more specific and regulated the work, the more has to be spelled out and the less room there is. But stronger models tend to need less explicit guidance, so a new generation is also a chance to remove instructions rather than add them.
 
 **The cost of a swap is not fixed across swaps.** Much of what this method needs is infrastructure built once: selecting the model per request, every response recording what served it, case banks with reviewed references, the register of mechanisms. The first swap pays for it. Later swaps reuse it. Whether that brings the next swap below the line is something the next swap will measure.
 

@@ -36,7 +36,7 @@ La consecuencia es una asimetría que conviene nombrar. Si metes al candidato ta
 
 ## Un método para probar un cambio
 
-El procedimiento que sigue es el que escribí para un [servicio de clasificación sectorial](/es/projects/compliance-classifier): un agente que busca una empresa, comprueba que es la correcta y asigna a lo que hace un código de actividad. Nada en él es específico de ese servicio.
+El procedimiento que sigue es el que escribí para un [servicio de clasificación sectorial](/es/projects/compliance-classifier): un agente que busca una empresa, comprueba que es la correcta y asigna a lo que hace un código de actividad. Nada en él es específico de ese servicio, ni de un cambio de modelo. El mismo procedimiento rige cualquier cambio en el harness: un prompt reescrito, una herramienta nueva, otra forma de leer las respuestas. Un modelo nuevo es solo el cambio que toca todas las piezas a la vez.
 
 <figure class="csw-fig">
 <svg viewBox="0 0 600 400" role="img" aria-label="El procedimiento de cambio de modelo como una cadena: precondiciones, un sondeo del gateway con las llamadas exactas, adaptación del harness, después tres etapas medidas y una puerta de release frente a la versión desplegada. Las etapas uno y dos vuelven a la adaptación del harness, así que adaptar y medir son un ciclo, no un paso.">
@@ -61,8 +61,8 @@ El procedimiento que sigue es el que escribí para un [servicio de clasificació
     <path d="M385,59 L406,59" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr-es)"/>
     <rect x="410" y="150" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="495" y="174" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">1 · Cohorte dirigida</text>
-    <text x="495" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">seguridad y casos difíciles</text>
-    <text x="495" y="210" text-anchor="middle" fill="#94a3b8" font-size="11.5">≥ 4 rondas por caso</text>
+    <text x="495" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">solo casos afectados</text>
+    <text x="495" y="210" text-anchor="middle" fill="#94a3b8" font-size="11.5">por componente, ≥ 4 rondas</text>
     <rect x="215" y="150" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="300" y="174" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">2 · Banco completo</text>
     <text x="300" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">pareado, intercalado</text>
@@ -88,11 +88,11 @@ El procedimiento que sigue es el que escribí para un [servicio de clasificació
 <figcaption>Adaptar el harness y medirlo son un ciclo. Lo que llega a la puerta de release es el modelo candidato con su harness adaptado, comparado con lo que está realmente desplegado.</figcaption>
 </figure>
 
-El orden de las etapas es deliberado: va de lo específico a lo exhaustivo. La primera etapa corre solo los casos que un cambio debería afectar — casos de seguridad, casos difíciles, el caso objetivo de cada salvaguarda —, componente a componente y con muchas rondas, para que una regresión aparezca cuando todavía es barata de encontrar. Solo un candidato que la supera pasa al banco completo. La atribución vuelve después a los casos en los que los dos brazos discreparon, y solo a esos. Las tandas caras van al final y las apuntan las baratas.
+El orden de las etapas es deliberado: va de lo específico a lo exhaustivo. La primera etapa aísla dos veces. Corre solo los casos que un cambio debería afectar — casos de seguridad, casos difíciles, el caso objetivo de cada salvaguarda — y los corre sobre el componente que cambió: la búsqueda sola, el verificador repetido sobre contenido ya capturado, el agente con los resultados de búsqueda congelados. Muchas rondas y pocos casos, para que una regresión aparezca cuando todavía es barata de encontrar. Solo un candidato que la supera pasa al banco completo. La atribución vuelve después a los casos en los que los dos brazos discreparon, y solo a esos. Las tandas caras van al final y las apuntan las baratas.
 
 Las reglas que sostienen casi todo el peso:
 
-- **Medir el servicio, no el modelo.** Un candidato se juzga por lo que el sistema devuelve de punta a punta — respuesta, evidencia, confianza, coste, latencia —, nunca por lo que diga el proveedor ni por un prompt en el playground.
+- **Medir el servicio, no el modelo.** Los componentes se prueban aislados, pero la decisión se toma sobre lo que el sistema devuelve de punta a punta — respuesta, evidencia, confianza, coste, latencia —, nunca sobre lo que diga el proveedor ni sobre un prompt en el playground.
 - **Fijarlo, y verlo.** La versión del modelo se fija para que el proveedor no la cambie en mitad de una medición. Antes de tocar el servicio, un sondeo corto por el gateway usa exactamente las llamadas que envía el servicio. Un gateway puede descartar un parámetro que no admite y responder 200 igualmente, y un parámetro que se respeta en una API puede ignorarse en otra. Cada respuesta registra qué modelo la sirvió de verdad: un fallback silencioso sirve otro modelo con el nombre del candidato.
 - **Pareado, intercalado y repetido.** Cada caso corre todos los brazos en la misma sesión, rotando el orden. El sistema no es determinista, así que una ronda por caso no decide nada, y puede que dos tampoco: en este servicio, entre los casos cuyas dos primeras rondas coincidían, las rondas tres y cuatro devolvieron otro código **en el 24 % de las ocasiones**. Antes de leer cualquier diferencia, se mide cuánto discrepa el control consigo mismo en los mismos casos. Un efecto menor que ese suelo no es un efecto.
 - **Separar una caída de una respuesta.** Una llamada que no llegó (timeout, error del gateway) se excluye. Una que llegó con algo inservible (ilegible, vacío, fuera de escala) cuenta contra el candidato: es parte de lo que se mide. La traza tiene que distinguir las dos antes de empezar.
@@ -108,7 +108,7 @@ Las reglas que sostienen casi todo el peso:
 | ¿Misma entrada, misma salida? | Sí | Sí, una vez entrenado | No: muestreo, resultados de búsqueda, jueces |
 | Qué ajustas | Código | Pesos, features, hiperparámetros | Prompts, descripciones de herramientas, forma de las llamadas — en lenguaje natural |
 | Una prueba es | Pasa o falla | Un agregado sobre un conjunto reservado | Pareada, repetida, por caso, por encima de un suelo de ruido |
-| Qué decide | La aserción | La métrica | La métrica, y después una persona leyendo en las trazas cada discrepancia |
+| Qué decide | La aserción | La métrica | La métrica, y después una persona o un agente leyendo en las trazas cada discrepancia |
 
 Los modelos de pesos abiertos en tu propia infraestructura se acercan al ML tradicional en un eje: tú decides cuándo cambias, nadie te retira el modelo y la evaluación corre en tus GPU. En el otro eje no se mueven. Salvo que hagas fine-tuning, sigues cambiando unos pesos por otros y adaptando prompts y herramientas, exactamente igual que con un proveedor.
 
@@ -122,11 +122,13 @@ Los doce días de pruebas alrededor del cambio no fueron todos del cambio. Más 
 |---|---:|
 | Tokens del modelo gastados en el cambio, en las tandas guardadas | 47 $ |
 | … escalado por el 27 % de llamadas que no se guardaron (pruebas de humo, tandas cortadas) | ≈ 65 $ |
-| Coste de modelo por clasificación, pareado sobre la misma build: modelo en producción → candidato | 0,0098 $ → 0,0053 $ |
+| Coste de modelo por clasificación, pareado sobre la misma build: modelo en producción → candidato | 0,0098 → 0,0053 $ |
 | **Ahorro por clasificación** | **≈ 0,0045 $** |
 | Volumen de producción | ≈ 500 al mes |
 
 A los tokens se suma el tiempo de ingeniería. La sesión que hizo el cambio registró unas **20 horas activas de trabajo del agente**. Las mías, dentro de ella, fueron unas **cuatro horas**. Valorando esas cuatro horas a 50 $/h y dejando aparte lo que cuestan las del agente, el cambio sale por unos **250 a 265 dólares**.
+
+Esta ha sido la adaptación más difícil que he tenido que hacer. Lo habitual es que una ronda de pruebas con dos o tres iteraciones del harness lo resuelva en una o dos horas, con bastantes menos llamadas. Ni siquiera eso cambia la conclusión a este volumen: antes de que llegue el siguiente modelo, el ahorro recupera unos seis dólares, menos que una sola hora de ingeniería.
 
 | Coste del cambio | Clasificaciones para amortizarlo | A 500 al mes |
 |---|---:|---:|
@@ -191,11 +193,13 @@ Solo por coste, un cambio compensa cuando
 
 **ahorro por ejecución × volumen mensual × meses que vas a quedarte con el modelo nuevo > coste del cambio**
 
-De ahí salen tres cosas.
+De ahí salen cuatro cosas.
 
 **No hace falta subirse a cada lanzamiento.** El horizonte es cuánto vas a quedarte con el modelo nuevo, no cuánto falta para el siguiente. Un equipo con poco volumen que se salta generaciones paga el coste de un cambio una vez por cada migración obligada — cuando retiran el modelo anterior —, no una vez por lanzamiento.
 
 **Con poco volumen, el coste no puede justificar un cambio; solo la calidad.** La regla pasa a ser *errores evitados por ejecución × coste de un error × volumen × meses > coste del cambio*. En un clasificador de cumplimiento normativo, una respuesta equivocada con confianza alta puede costar más que todos los tokens juntos. Pero ese coste por error hay que fijarlo, no suponerlo, o la fórmula justifica cualquier cosa.
+
+**Cuanto más fino el harness, más barato el cambio.** Cada instrucción escrita para dirigir el comportamiento de un modelo es algo que el siguiente puede leer de otra manera, y algo que volver a comprobar. Un harness que contiene solo lo que la tarea necesita tiene menos que readaptar. Lo fino que puede ser depende de la tarea: cuanto más específico y regulado es el trabajo, más hay que dejar escrito y menos margen queda. Pero los modelos mejores suelen necesitar menos guía explícita, así que una generación nueva es también una ocasión para quitar instrucciones en lugar de añadirlas.
 
 **El coste de un cambio no es el mismo de un cambio a otro.** Buena parte de lo que necesita este método es infraestructura que se construye una vez: elegir el modelo por petición, que cada respuesta registre qué la sirvió, bancos de casos con referencias revisadas, el registro de mecanismos. El primer cambio la paga. Los siguientes la reutilizan. Si eso deja el próximo cambio por debajo de la línea lo medirá el próximo cambio.
 
