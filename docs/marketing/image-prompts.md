@@ -4,6 +4,32 @@ Exact prompts used to generate blog hero images (via Codex `image_gen`), for rep
 
 ---
 
+## the-new-model-is-cheaper
+
+- **Article:** `src/content/blog/en/the-new-model-is-cheaper.md`
+- **Image:** `public/blog/the-new-model-is-cheaper.png`
+- **Generated:** 2026-10-09 (built-in `image_gen`; resized to 1020×510).
+
+```text
+Create a 1020x510 blog hero image, horizontal 2:1 composition, for a technical article titled "The New Model Is Cheaper. Testing It Isn't." Do not print the article title in the image.
+
+Style: refined technical editorial illustration, a crisp richly detailed bitmap with clean geometric construction, dark but not monochrome, professional AI/developer blog aesthetic. Show a concrete engineering workbench in a shallow overhead three-quarter view, with believable hardware, sockets, cable connectors, a test monitor and paper records. Several distinct zones form one coherent working scene, with clear hierarchy and enough breathing room to remain readable at blog thumbnail size.
+
+Main scene, left and center: an open agent-pipeline chassis with a model cartridge bay. Two rectangular model cartridges sit side by side at the bay: the removed graphite-and-amber cartridge labeled "model A", and the teal candidate labeled "model B", aligned halfway into the socket. Four distinct cables attach to the surrounding harness; small readable off-white cable tags say "prompts", "tools", "parser", "deadlines". Show exposed plugs, matching ports, and a couple of disconnected connectors resting next to their new ports: the harness is visibly being reconfigured, not a magical one-click swap. No hands or people.
+
+Upper right: a compact bench-mounted test monitor labeled "paired A/B". Its results grid has four rows labeled "round 1", "round 2", "round 3", "round 4", and two column headers "A" and "B". Use teal checkmarks and amber crosses in distinct square cells, mostly passes with a few failures that vary between rounds, to suggest repeated paired testing and stochastic disagreement. Cables visibly connect the rig to the chassis.
+
+Lower right: a modest off-white printed cost receipt lying on the bench, not a giant infographic. Render just three short readable lines: "test tokens  $65", "saving/run  $0.0045", "volume  500/month". A long amber tally strip next to the tiny teal saving mark reinforces the large testing cost relative to the small saving. These are article-specific example figures, not universal prices.
+
+Behind the receipt, a small physical desk timeline card shows a short interval from "now" to "next model", annotated "75 days". It is a secondary detail, hinting that another release arrives before testing pays back.
+
+Palette and finish: balanced teal, warm amber, graphite and off-white accents; dark blue-gray work surface, precise light edges, restrained directional workbench lighting, subtle matte material texture, crisp typography and sharp silhouettes. Rich editorial craft rather than a simplistic isometric icon diagram. Keep all essential objects within the frame with generous safe margins. Opaque background.
+
+Avoid logos, brand names, real company or model names, people, robots, brains, floating abstract nodes, text-heavy poster layouts, title banners, purple gradient blobs, bokeh, excessive neon glow, illegible microtext, watermarks.
+```
+
+---
+
 ## make-yourself-replaceable
 
 - **Article:** `src/content/blog/{en,es}/make-yourself-replaceable.md`
