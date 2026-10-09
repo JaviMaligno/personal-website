@@ -49,49 +49,39 @@ The procedure below is the one I wrote for an [industry classification service](
     <text x="105" y="44" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">Preconditions</text>
     <text x="105" y="64" text-anchor="middle" fill="#94a3b8" font-size="11.5">version pinned, priced</text>
     <text x="105" y="80" text-anchor="middle" fill="#94a3b8" font-size="11.5">no silent fallback</text>
-
     <rect x="215" y="20" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="300" y="44" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">Gateway probe</text>
     <text x="300" y="64" text-anchor="middle" fill="#94a3b8" font-size="11.5">exact call shapes</text>
     <text x="300" y="80" text-anchor="middle" fill="#94a3b8" font-size="11.5">every parameter honoured?</text>
-
     <rect x="410" y="20" width="170" height="78" rx="8" fill="#14302c" stroke="#2dd4bf"/>
     <text x="495" y="44" text-anchor="middle" fill="#5eead4" font-size="14" font-weight="600">Adapt the harness</text>
     <text x="495" y="64" text-anchor="middle" fill="#94a3b8" font-size="11.5">prompts, tools, parsing,</text>
     <text x="495" y="80" text-anchor="middle" fill="#94a3b8" font-size="11.5">reasoning, deadlines</text>
-
     <path d="M190,59 L211,59" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr)"/>
     <path d="M385,59 L406,59" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr)"/>
-
     <rect x="410" y="150" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="495" y="174" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">1 · Targeted cohort</text>
     <text x="495" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">safety and hard cases</text>
     <text x="495" y="210" text-anchor="middle" fill="#94a3b8" font-size="11.5">≥ 4 rounds per case</text>
-
     <rect x="215" y="150" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="300" y="174" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">2 · Full benchmark</text>
     <text x="300" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">paired, interleaved</text>
     <text x="300" y="210" text-anchor="middle" fill="#94a3b8" font-size="11.5">≥ 2 rounds, pre-registered</text>
-
     <rect x="20" y="150" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="105" y="174" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">3 · Attribution</text>
     <text x="105" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">discordant cases only</text>
     <text x="105" y="210" text-anchor="middle" fill="#94a3b8" font-size="11.5">read in the traces</text>
-
     <path d="M495,98 L495,146" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr)"/>
     <path d="M410,189 L389,189" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr)"/>
     <path d="M215,189 L194,189" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr)"/>
-
     <path d="M330,150 C330,120 440,128 462,102" stroke="#f59e0b" stroke-width="1.6" fill="none" stroke-dasharray="5 4" marker-end="url(#csw-arr-a)"/>
     <path d="M555,150 C575,130 575,118 560,102" stroke="#f59e0b" stroke-width="1.6" fill="none" stroke-dasharray="5 4" marker-end="url(#csw-arr-a)"/>
     <rect x="352" y="112" width="74" height="16" fill="#1a1a24"/>
     <text x="389" y="124" text-anchor="middle" fill="#fbbf24" font-size="11">re-adapt</text>
-
     <rect x="20" y="290" width="560" height="84" rx="8" fill="#2a2216" stroke="#f59e0b"/>
     <text x="300" y="316" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">Release gate against the version already deployed</text>
     <text x="300" y="338" text-anchor="middle" fill="#94a3b8" font-size="11.5">same time window for both versions · changed cases re-run ≥ 2 rounds each</text>
     <text x="300" y="356" text-anchor="middle" fill="#94a3b8" font-size="11.5">a stored round from another day is not a control</text>
-
     <path d="M105,228 L105,286" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr)"/>
   </g>
 </svg>
@@ -161,27 +151,21 @@ The tokens alone already put a return two years away at this volume. Engineering
     </g>
     <text x="320" y="334" text-anchor="middle" fill="#94a3b8" font-size="12">classifications per month</text>
     <text x="20" y="160" text-anchor="middle" fill="#94a3b8" font-size="12" transform="rotate(-90 20 160)">months to break even</text>
-
     <line x1="70" y1="199.1" x2="570" y2="199.1" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 4"/>
-
     <line x1="186.5" y1="30" x2="186.5" y2="290" stroke="#5eead4" stroke-width="1" stroke-dasharray="3 3"/>
     <rect x="191" y="270" width="66" height="16" fill="#1a1a24"/>
     <text x="194" y="282" fill="#5eead4" font-size="11.5">500 / month</text>
     <rect x="76" y="203" width="182" height="16" fill="#1a1a24"/>
     <text x="80" y="215" fill="#fbbf24" font-size="11.5">next model in that tier: 2.5 months</text>
-
     <line x1="70" y1="44.9" x2="570" y2="240.0" stroke="#e2e8f0" stroke-width="2"/>
     <line x1="70" y1="84.7" x2="570" y2="279.7" stroke="#2dd4bf" stroke-width="2"/>
     <line x1="70" y1="93.6" x2="570" y2="288.6" stroke="#64748b" stroke-width="2"/>
-
     <circle cx="186.5" cy="90.4" r="4" fill="#e2e8f0"/>
     <circle cx="186.5" cy="130.1" r="4" fill="#2dd4bf"/>
     <circle cx="186.5" cy="139.0" r="4" fill="#64748b"/>
-
     <circle cx="465.3" cy="199.1" r="3.5" fill="#f59e0b"/>
     <circle cx="363.5" cy="199.1" r="3.5" fill="#f59e0b"/>
     <circle cx="340.7" cy="199.1" r="3.5" fill="#f59e0b"/>
-
     <rect x="340" y="40" width="224" height="66" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.1)"/>
     <line x1="352" y1="56" x2="372" y2="56" stroke="#e2e8f0" stroke-width="2"/><text x="378" y="60" fill="#e2e8f0" font-size="11.5">tokens + my 4 hours (265 $)</text>
     <line x1="352" y1="74" x2="372" y2="74" stroke="#2dd4bf" stroke-width="2"/><text x="378" y="78" fill="#e2e8f0" font-size="11.5">tokens, scaled (65 $)</text>

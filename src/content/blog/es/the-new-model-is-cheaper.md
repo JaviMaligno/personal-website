@@ -49,49 +49,39 @@ El procedimiento que sigue es el que escribí para un [servicio de clasificació
     <text x="105" y="44" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">Precondiciones</text>
     <text x="105" y="64" text-anchor="middle" fill="#94a3b8" font-size="11.5">versión fijada, con precio</text>
     <text x="105" y="80" text-anchor="middle" fill="#94a3b8" font-size="11.5">sin fallback silencioso</text>
-
     <rect x="215" y="20" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="300" y="44" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">Sondeo del gateway</text>
     <text x="300" y="64" text-anchor="middle" fill="#94a3b8" font-size="11.5">las llamadas exactas</text>
     <text x="300" y="80" text-anchor="middle" fill="#94a3b8" font-size="11.5">¿respeta cada parámetro?</text>
-
     <rect x="410" y="20" width="170" height="78" rx="8" fill="#14302c" stroke="#2dd4bf"/>
     <text x="495" y="44" text-anchor="middle" fill="#5eead4" font-size="14" font-weight="600">Adaptar el harness</text>
     <text x="495" y="64" text-anchor="middle" fill="#94a3b8" font-size="11.5">prompts, herramientas,</text>
     <text x="495" y="80" text-anchor="middle" fill="#94a3b8" font-size="11.5">lectura, razonamiento</text>
-
     <path d="M190,59 L211,59" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr-es)"/>
     <path d="M385,59 L406,59" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr-es)"/>
-
     <rect x="410" y="150" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="495" y="174" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">1 · Cohorte dirigida</text>
     <text x="495" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">seguridad y casos difíciles</text>
     <text x="495" y="210" text-anchor="middle" fill="#94a3b8" font-size="11.5">≥ 4 rondas por caso</text>
-
     <rect x="215" y="150" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="300" y="174" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">2 · Banco completo</text>
     <text x="300" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">pareado, intercalado</text>
     <text x="300" y="210" text-anchor="middle" fill="#94a3b8" font-size="11.5">≥ 2 rondas, prerregistrado</text>
-
     <rect x="20" y="150" width="170" height="78" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.12)"/>
     <text x="105" y="174" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="600">3 · Atribución</text>
     <text x="105" y="194" text-anchor="middle" fill="#94a3b8" font-size="11.5">solo casos discordantes</text>
     <text x="105" y="210" text-anchor="middle" fill="#94a3b8" font-size="11.5">leídos en las trazas</text>
-
     <path d="M495,98 L495,146" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr-es)"/>
     <path d="M410,189 L389,189" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr-es)"/>
     <path d="M215,189 L194,189" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr-es)"/>
-
     <path d="M330,150 C330,120 440,128 462,102" stroke="#f59e0b" stroke-width="1.6" fill="none" stroke-dasharray="5 4" marker-end="url(#csw-arr-a-es)"/>
     <path d="M555,150 C575,130 575,118 560,102" stroke="#f59e0b" stroke-width="1.6" fill="none" stroke-dasharray="5 4" marker-end="url(#csw-arr-a-es)"/>
     <rect x="352" y="112" width="74" height="16" fill="#1a1a24"/>
     <text x="389" y="124" text-anchor="middle" fill="#fbbf24" font-size="11">readaptar</text>
-
     <rect x="20" y="290" width="560" height="84" rx="8" fill="#2a2216" stroke="#f59e0b"/>
     <text x="300" y="316" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">Puerta de release frente a la versión ya desplegada</text>
     <text x="300" y="338" text-anchor="middle" fill="#94a3b8" font-size="11.5">misma ventana para las dos versiones · casos que cambian, ≥ 2 rondas cada una</text>
     <text x="300" y="356" text-anchor="middle" fill="#94a3b8" font-size="11.5">una ronda guardada de otro día no es un control</text>
-
     <path d="M105,228 L105,286" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#csw-arr-es)"/>
   </g>
 </svg>
@@ -161,27 +151,21 @@ Solo con los tokens, a este volumen, recuperar la inversión queda ya a dos año
     </g>
     <text x="320" y="334" text-anchor="middle" fill="#94a3b8" font-size="12">clasificaciones al mes</text>
     <text x="20" y="160" text-anchor="middle" fill="#94a3b8" font-size="12" transform="rotate(-90 20 160)">meses para amortizar</text>
-
     <line x1="70" y1="199.1" x2="570" y2="199.1" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 4"/>
-
     <line x1="186.5" y1="30" x2="186.5" y2="290" stroke="#5eead4" stroke-width="1" stroke-dasharray="3 3"/>
     <rect x="191" y="270" width="62" height="16" fill="#1a1a24"/>
     <text x="194" y="282" fill="#5eead4" font-size="11.5">500 al mes</text>
     <rect x="76" y="203" width="212" height="16" fill="#1a1a24"/>
     <text x="80" y="215" fill="#fbbf24" font-size="11.5">siguiente modelo de esa gama: 2,5 meses</text>
-
     <line x1="70" y1="44.9" x2="570" y2="240.0" stroke="#e2e8f0" stroke-width="2"/>
     <line x1="70" y1="84.7" x2="570" y2="279.7" stroke="#2dd4bf" stroke-width="2"/>
     <line x1="70" y1="93.6" x2="570" y2="288.6" stroke="#64748b" stroke-width="2"/>
-
     <circle cx="186.5" cy="90.4" r="4" fill="#e2e8f0"/>
     <circle cx="186.5" cy="130.1" r="4" fill="#2dd4bf"/>
     <circle cx="186.5" cy="139.0" r="4" fill="#64748b"/>
-
     <circle cx="465.3" cy="199.1" r="3.5" fill="#f59e0b"/>
     <circle cx="363.5" cy="199.1" r="3.5" fill="#f59e0b"/>
     <circle cx="340.7" cy="199.1" r="3.5" fill="#f59e0b"/>
-
     <rect x="340" y="40" width="224" height="66" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.1)"/>
     <line x1="352" y1="56" x2="372" y2="56" stroke="#e2e8f0" stroke-width="2"/><text x="378" y="60" fill="#e2e8f0" font-size="11.5">tokens + mis 4 horas (265 $)</text>
     <line x1="352" y1="74" x2="372" y2="74" stroke="#2dd4bf" stroke-width="2"/><text x="378" y="78" fill="#e2e8f0" font-size="11.5">tokens, escalado (65 $)</text>
