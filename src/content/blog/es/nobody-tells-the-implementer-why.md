@@ -7,6 +7,7 @@ lang: es
 translationKey: nobody-tells-the-implementer-why
 repoUrl: "https://github.com/JaviMaligno/personal-website/tree/main/experiments/agent-telephone"
 heroImage: "/blog/nobody-tells-the-implementer-why.png"
+linkedinImage: "/blog/nobody-tells-the-implementer-why-fig-2.png"
 ---
 
 <style>
