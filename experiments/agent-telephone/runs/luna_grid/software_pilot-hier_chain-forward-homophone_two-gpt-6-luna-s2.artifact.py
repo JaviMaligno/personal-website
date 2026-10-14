@@ -1,0 +1,1 @@
+What is the second reminder’s lead time in hours? The architect requires confirmation before implementation, so I can’t choose a value.
