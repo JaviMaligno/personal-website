@@ -1701,3 +1701,21 @@ Figure 1 is **schematic by design** and says so in its own caption: the margin
 curve is illustrative, the mechanism is not. The real tolerance was 1e-12 and
 would be invisible at any honest scale, so the band is drawn exaggerated. No
 data is being implied.
+
+## Nobody tells the implementer why (`nobody-tells-the-implementer-why`, 2026-10-14)
+
+Article: `src/content/blog/en/nobody-tells-the-implementer-why.md`
+Hero: `public/blog/nobody-tells-the-implementer-why.png`
+Generated with the built-in image_gen tool and resized to 1020x510 with `sips`.
+
+```text
+Create a 1020x510 blog hero image for the technical article "Nobody tells the implementer why".
+
+Style: refined technical editorial illustration, dark but not monochrome, crisp bitmap artwork with precise edges, restrained depth and subtle material shading. Depict the article's core concept as a concrete working system: a client brief feeding a left-to-right chain of exactly four unoccupied agent workstations labelled "lead", "product manager", "architect", and "implementer". The client brief is a small input card, not a fifth workstation. Clean geometric composition, wide 2:1 framing with comfortable margins.
+
+Use six integrated visual motifs: (1) a small waveform/transcript card at the far left labelled "client brief"; (2) four distinct compact monitor-and-keyboard workstations arranged along one continuous graphite desk; (3) off-white message cards travelling between stations, each with a teal section labelled "requirements" and an amber bottom strip labelled "because..."; (4) clear fine teal arrows showing the handoffs from the brief through all four stations; (5) a small pair of scissors at the final architect-to-implementer handoff, visibly severing only the amber explanation strip, with the detached "because..." strip falling below the route while the requirements card continues intact into the implementer's station; (6) the implementer's larger, clearly visible dark code terminal with sparse readable generic lines: "def process(record):", "    validate(record)", "    return result".
+
+Keep the amber explanation strips visibly intact at the lead, product manager and architect. The visual story must read as a sharp selective cut at the final handoff, rather than gradual fading or loss of the whole document. The final received card contains requirements only; its terminal shows code. Give the scissors and detached explanation enough space to be immediately legible at blog thumbnail size. Use short readable labels in refined sans-serif type and terminal lines in monospace. No headline or article title printed in the image.
+
+Balanced teal, amber, graphite and off-white accents, dark charcoal background, high contrast, professional AI/developer blog aesthetic. Layered technical detail without clutter or a text-heavy poster. No logos, no brand names, no people, no humanoid robots, no purple gradient blobs, no bokeh, no watermark.
+```
