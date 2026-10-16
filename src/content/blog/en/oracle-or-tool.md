@@ -6,6 +6,7 @@ tags: ["AI", "Critical Thinking", "ChatGPT", "Productivity"]
 lang: en
 translationKey: oracle-or-tool
 heroImage: "/blog/oracle-or-tool.png"
+linkedinImage: /blog/oracle-or-tool-fig-1.png
 ---
 
 A friend asked me for advice recently. She loves AI and uses it a lot, mostly for drawing and writing. This time she wanted ChatGPT to put together a diet plan. She already had an intuitive idea of what she was after and was torn between two options: paleo or keto.

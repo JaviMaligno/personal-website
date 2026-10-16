@@ -6,6 +6,7 @@ tags: ["IA", "Pensamiento Crítico", "ChatGPT", "Productividad"]
 lang: es
 translationKey: oracle-or-tool
 heroImage: "/blog/oracle-or-tool.png"
+linkedinImage: /blog/oracle-or-tool-fig-1.png
 ---
 
 Hace poco una amiga me pidió consejo. Le gusta mucho la inteligencia artificial y la usa a menudo, sobre todo para dibujar y escribir. Esta vez quería que ChatGPT le hiciera un plan de dieta. Ya tenía una idea intuitiva de lo que buscaba y dudaba entre dos opciones: paleo o cetogénica.
