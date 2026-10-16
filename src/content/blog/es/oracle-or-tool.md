@@ -45,7 +45,11 @@ La IA tiende a mezclar estas categorías. Presenta una correlación observada co
 3. **¿En qué se basa esta respuesta en concreto?** No en general: esta.
 4. **¿Qué alternativas serias hay y en qué se diferencian?**
 
-La nutrición muestra bien por qué importa. Lo que le pasa a tu cuerpo a corto plazo se puede estudiar con ensayos controlados. Lo que pasa con una dieta a lo largo de años sale casi siempre de estudios observacionales, con sus limitaciones. Y elegir entre paleo y cetogénica es, al final, una decisión personal. Ningún oráculo puede contestarla por ti. Lo que la IA sí puede hacer es reunir la evidencia sobre cada opción, decirte de qué tipo es y dónde no hay acuerdo. La decisión la tomas tú, con tus objetivos delante.
+La nutrición muestra bien por qué importa. Es, sobre todo, conocimiento observacional: lo que pasa con una dieta a lo largo de años sale de seguir a poblaciones, no de un laboratorio. Los mecanismos, en cambio, sí se estudian con experimentos: qué hace una hormona, cómo se usa un nutriente. Y cada parte necesita a la otra. Un mecanismo demostrado no te dice cuánto pesa en la vida real hasta que la observación lo corrobora, porque otros mecanismos pueden anularlo. Y una correlación observada sin un mecanismo que la explique puede estar mezclada con otras causas.
+
+Hay además una evidencia histórica que se suele descartar: cómo se ha alimentado el ser humano a lo largo de su historia y cómo ha evolucionado con esa alimentación. No zanja nada por sí sola, pero yo la uso para desempatar cuando no hay consenso: ante la duda, qué comerías en tu estado natural. Sobre cómo evaluar el conocimiento sin esperar al consenso escribí un libro, [Science Catch-Up](/es/publications).
+
+Elegir entre paleo y cetogénica es, al final, una decisión personal. Ningún oráculo puede contestarla por ti. Lo que la IA sí puede hacer es reunir la evidencia sobre cada opción, decirte de qué tipo es y dónde no hay acuerdo. La decisión la tomas tú, con tus objetivos delante.
 
 ## Oráculo o herramienta
 

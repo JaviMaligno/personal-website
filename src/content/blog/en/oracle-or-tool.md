@@ -45,7 +45,11 @@ AI tends to mix these categories up. It presents an observed correlation as if i
 3. **What is this particular answer based on?** Not in general: this one.
 4. **What serious alternatives are there, and how do they differ?**
 
-Nutrition shows well why it matters. What happens in your body in the short term can be studied with controlled trials. What happens on a diet over years comes almost always from observational studies, with their limitations. And choosing between paleo and keto is, in the end, a personal decision. No oracle can answer it for you. What AI can do is gather the evidence on each option, tell you what kind it is and where there's no agreement. You make the decision, with your goals in front of you.
+Nutrition shows well why it matters. It is mostly observational knowledge: what happens on a diet over years comes from following populations, not from a lab. Mechanisms, on the other hand, are studied with experiments: what a hormone does, how a nutrient is used. And each needs the other. A demonstrated mechanism doesn't tell you how much it weighs in real life until observation corroborates it, because other mechanisms can cancel it out. And an observed correlation without a mechanism to explain it may be tangled up with other causes.
+
+There is also historical evidence that tends to be dismissed: how humans have fed themselves throughout history and how they evolved with that food. It settles nothing on its own, but I use it as a tiebreaker when there's no consensus: when in doubt, what would you eat in your natural state? I wrote a book on how to evaluate knowledge without waiting for consensus, [Science Catch-Up](/en/publications).
+
+Choosing between paleo and keto is, in the end, a personal decision. No oracle can answer it for you. What AI can do is gather the evidence on each option, tell you what kind it is and where there's no agreement. You make the decision, with your goals in front of you.
 
 ## Oracle or tool
 
