@@ -156,7 +156,7 @@ Basta pensar en palabras corrientes donde, si no lo dices, el modelo elige por t
 
 - **Materialismo.** Hay varios materialismos filosóficos distintos, además del sentido de andar por casa. El modelo tomará uno por defecto, o el popular.
 - **Cristianismo.** Puede ser una doctrina completa y precisa, o todo lo que popularmente se reconoce como cristiano, que es mucho más amplio.
-- **El método nórdico.** Circulan variantes distintas con el mismo nombre.
+- **El método noruego (o nórdico) de HIIT.** Con ese nombre circulan al menos dos cosas: el protocolo 4×4 de la universidad de Trondheim (cuatro series de cuatro minutos al 85-95 % de la frecuencia cardiaca máxima, con tres de recuperación) y el entrenamiento de doble umbral de los fondistas noruegos, guiado por el lactato, que ni siquiera es HIIT en sentido estricto.
 
 Si no tienes claro cuál es la definición correcta, la IA puede ayudarte a averiguarlo: qué variantes hay, de dónde viene cada una, cuál usan los especialistas. Pero hay que interrogarla, no quedarse con la primera.
 

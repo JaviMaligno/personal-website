@@ -156,7 +156,7 @@ Think of ordinary words where, if you don't say, the model chooses for you:
 
 - **Materialism.** There are several distinct philosophical materialisms, besides the everyday sense. The model will take one by default, or the popular one.
 - **Christianity.** It can be a complete, precise doctrine, or everything popularly recognised as Christian, which is much broader.
-- **The Nordic method.** Different variants circulate under the same name.
+- **The Norwegian (or Nordic) HIIT method.** At least two things go by that name: the 4×4 protocol from the university in Trondheim (four four-minute intervals at 85-95% of maximum heart rate, with three minutes' recovery) and the double-threshold training of Norwegian distance runners, guided by lactate, which isn't even HIIT in the strict sense.
 
 If you're not sure which definition is the right one, AI can help you work it out: which variants exist, where each comes from, which one specialists use. But you have to question it, not settle for the first answer.
 
