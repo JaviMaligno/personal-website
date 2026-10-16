@@ -36,7 +36,7 @@ Ese método tiene nombre: epistemología, la parte de la filosofía que estudia 
 - **Experimental.** Lo que se puede reproducir en condiciones controladas y acotadas. Se apoya en experimentos que otros pueden repetir.
 - **Observacional.** Los sistemas abiertos, que no se pueden aislar ni repetir: una sociedad, una economía, la salud de una población a lo largo de décadas. Se observan, se comparan grupos y se miden correlaciones, pero no se controla todo lo que influye.
 - **Histórico.** Lo que ya ocurrió y no se puede repetir. Se apoya en evidencia de tipo forense: restos, documentos, testimonios y la convergencia de varias huellas independientes.
-- **Personal.** Lo que depende de tus objetivos y tus valores. La evidencia informa, pero decides tú.
+- **Personal.** Lo que depende de ti: tus objetivos, tus valores y tu propia experiencia, es decir, si te funciona y si puedes mantenerlo. La evidencia general informa, pero la tuya también cuenta.
 
 La IA tiende a mezclar estas categorías. Presenta una correlación observada como si fuera un resultado experimental, o descarta un hecho histórico bien documentado porque no se puede reproducir en un laboratorio. Con esto claro, cuatro preguntas cubren casi todo:
 
@@ -49,7 +49,7 @@ La nutrición muestra bien por qué importa. Es, sobre todo, conocimiento observ
 
 Hay además una evidencia histórica que se suele descartar: cómo se ha alimentado el ser humano a lo largo de su historia y cómo ha evolucionado con esa alimentación. No zanja nada por sí sola, pero yo la uso para desempatar cuando no hay consenso: ante la duda, qué comerías en tu estado natural. Sobre cómo evaluar el conocimiento sin esperar al consenso escribí un libro, [Science Catch-Up](/es/publications).
 
-Elegir entre paleo y cetogénica es, al final, una decisión personal. Ningún oráculo puede contestarla por ti. Lo que la IA sí puede hacer es reunir la evidencia sobre cada opción, decirte de qué tipo es y dónde no hay acuerdo. La decisión la tomas tú, con tus objetivos delante.
+Elegir entre paleo y cetogénica es, al final, una decisión personal. Ningún oráculo puede contestarla por ti. Lo que la IA sí puede hacer es reunir la evidencia sobre cada opción, decirte de qué tipo es y dónde no hay acuerdo. La decisión la tomas tú, con tus objetivos delante, y la pone a prueba tu propia experiencia: si te sienta bien y si eres capaz de mantenerla.
 
 ## Oráculo o herramienta
 
@@ -115,6 +115,8 @@ Como herramienta:
 La segunda no exige saber nutrición. Exige saber qué quieres y qué aceptas como prueba.
 
 Si sabes algo o sospechas de algo, díselo: «he leído que la cetogénica empeora el rendimiento en series largas, ¿es cierto? Búscalo». A mí me ha pasado muchas veces saber algo que la IA no me había dicho; en cuanto le pido que lo busque, lo encuentra. Pero aunque no sepas nada, siempre puedes pedirle que justifique lo que dice. Eso ya cambia la conversación.
+
+Tampoco esperes la respuesta ideal a la primera. Usarla como herramienta es iterar: a menudo hay que investigar más, completar alguna parte o incluso replantearte tu propio criterio o tus objetivos para aclararte. El método no te da la respuesta de golpe. Te dice cómo seguir en cada vuelta.
 
 ## Discutir una sola vez
 

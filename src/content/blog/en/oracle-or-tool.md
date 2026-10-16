@@ -36,7 +36,7 @@ That method has a name: epistemology, the branch of philosophy that studies how 
 - **Experimental.** What can be reproduced under controlled, bounded conditions. It rests on experiments others can repeat.
 - **Observational.** Open systems that can't be isolated or repeated: a society, an economy, a population's health over decades. You observe them, compare groups and measure correlations, but you don't control everything that matters.
 - **Historical.** What already happened and can't be repeated. It rests on forensic-style evidence: remains, documents, testimony and the convergence of several independent traces.
-- **Personal.** What depends on your goals and values. Evidence informs it, but you decide.
+- **Personal.** What depends on you: your goals, your values and your own experience, meaning whether it works for you and whether you can keep it up. General evidence informs it, but yours counts too.
 
 AI tends to mix these categories up. It presents an observed correlation as if it were an experimental result, or dismisses a well-documented historical fact because it can't be reproduced in a lab. With that clear, four questions cover almost everything:
 
@@ -49,7 +49,7 @@ Nutrition shows well why it matters. It is mostly observational knowledge: what 
 
 There is also historical evidence that tends to be dismissed: how humans have fed themselves throughout history and how they evolved with that food. It settles nothing on its own, but I use it as a tiebreaker when there's no consensus: when in doubt, what would you eat in your natural state? I wrote a book on how to evaluate knowledge without waiting for consensus, [Science Catch-Up](/en/publications).
 
-Choosing between paleo and keto is, in the end, a personal decision. No oracle can answer it for you. What AI can do is gather the evidence on each option, tell you what kind it is and where there's no agreement. You make the decision, with your goals in front of you.
+Choosing between paleo and keto is, in the end, a personal decision. No oracle can answer it for you. What AI can do is gather the evidence on each option, tell you what kind it is and where there's no agreement. You make the decision, with your goals in front of you, and your own experience puts it to the test: whether it agrees with you and whether you can keep it up.
 
 ## Oracle or tool
 
@@ -115,6 +115,8 @@ As a tool:
 The second one doesn't require knowing nutrition. It requires knowing what you want and what you'll accept as proof.
 
 If you know or suspect something, tell it: "I've read that keto hurts performance in long sets — is that true? Look it up." It has often happened to me that I knew something the AI hadn't mentioned; as soon as I ask it to look, it finds it. But even if you know nothing, you can always ask it to justify what it says. That alone changes the conversation.
+
+Don't expect the ideal answer on the first try, either. Using it as a tool means iterating: you often need to research further, fill in some part, or even rethink your own criterion or goals to get clear. The method doesn't hand you the answer in one go. It tells you how to continue on each round.
 
 ## Argue once
 
