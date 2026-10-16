@@ -20,22 +20,32 @@ A language model tends to give you whatever is repeated most. It learned from wh
 
 There's a detail almost nobody outside the field knows, and it explains much of the problem. The model answers first with what it has closest to hand: what it learned in training, or the document you gave it. It can search the web, read studies and compare sources, but often it only does so if you ask. The first answer is usually the most repeated one, not the best supported.
 
+And it shows more in the free versions. The paid tool is better than the free one, and this is where you see it: generic answers that don't fit what you asked are far more common in the free version, for me and for my friend. In the paid one it happens much less.
+
 ## You don't lack knowledge, you lack a criterion
 
 The first thing my friend told me was that she doesn't know about nutrition. Or biochemistry, or how muscle responds to training. My answer was that she doesn't need to. If you already had to know the answer to use AI, it would be no use to you.
 
 What you do need is a method. By what criterion do you decide whether to accept something? What's enough for you to take it as true? That question comes before any fact.
 
-I have one for essays ([I wrote about it here](/en/blog/writing-an-essay-with-ai-codex-vs-claude-code)) and another for researching the Bible. In both I hit the same thing: the AI mixes kinds of knowledge. It doesn't cleanly separate a historical fact from a theological interpretation, or know which evidence counts for each. I have to tell it that, or argue it out the first time.
+I have one for essays ([I wrote about it here](/en/blog/writing-an-essay-with-ai-codex-vs-claude-code)) and another for researching the Bible and ontology ([it's in a public repository](https://github.com/JaviMaligno/god-ontology)). In both I hit the same thing: the AI mixes kinds of knowledge. It doesn't cleanly separate a historical fact from a theological interpretation, or know which evidence counts for each. I have to tell it that, or argue it out the first time.
 
-The method doesn't need to be sophisticated. Four questions cover almost everything:
+That method has a name: epistemology, the branch of philosophy that studies how we know what we know. You don't need to study it. A few notions are enough, even intuitive ones, and the main one is that not all knowledge rests on the same kind of evidence:
 
-1. **What kind of claim is it?** A fact you can measure (how much protein is in an egg), an expert consensus (what the guidelines recommend), or a decision that depends on you (which diet suits you).
-2. **What evidence counts for that kind?** For a fact, the measurement. For a consensus, who holds it and on what studies. For a decision of yours, your goals and how your body responds.
+- **Formal.** Logic and mathematics. It rests on proof. A valid argument doesn't hand you the truth by itself: it guarantees that if the premises are true, so is the conclusion.
+- **Experimental.** What can be reproduced under controlled, bounded conditions. It rests on experiments others can repeat.
+- **Observational.** Open systems that can't be isolated or repeated: a society, an economy, a population's health over decades. You observe them, compare groups and measure correlations, but you don't control everything that matters.
+- **Historical.** What already happened and can't be repeated. It rests on forensic-style evidence: remains, documents, testimony and the convergence of several independent traces.
+- **Personal.** What depends on your goals and values. Evidence informs it, but you decide.
+
+AI tends to mix these categories up. It presents an observed correlation as if it were an experimental result, or dismisses a well-documented historical fact because it can't be reproduced in a lab. With that clear, four questions cover almost everything:
+
+1. **What kind of claim is this?**
+2. **What evidence counts for that kind, and which is it giving me?**
 3. **What is this particular answer based on?** Not in general: this one.
 4. **What serious alternatives are there, and how do they differ?**
 
-Choosing between paleo and keto is the third kind. No oracle can answer it for you. What AI can do is gather the evidence on each option, tell you what kind it is and where there's no agreement. You make the decision, with your goals in front of you.
+Nutrition shows well why it matters. What happens in your body in the short term can be studied with controlled trials. What happens on a diet over years comes almost always from observational studies, with their limitations. And choosing between paleo and keto is, in the end, a personal decision. No oracle can answer it for you. What AI can do is gather the evidence on each option, tell you what kind it is and where there's no agreement. You make the decision, with your goals in front of you.
 
 ## Oracle or tool
 

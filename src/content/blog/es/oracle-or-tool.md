@@ -20,22 +20,32 @@ Un modelo de lenguaje tiende a darte lo más repetido. Aprendió de lo que se ha
 
 Hay un detalle que casi nadie fuera del sector conoce, y explica buena parte del problema. El modelo responde primero con lo que tiene más a mano: lo que aprendió durante su entrenamiento, o el documento que le hayas pasado. Puede buscar en internet, leer estudios y contrastar fuentes, pero a menudo solo lo hace si se lo pides. La primera respuesta suele ser la más repetida, no la mejor fundada.
 
+Y se nota más en las versiones gratuitas. La herramienta de pago es mejor que la gratuita, y en esto se ve: las respuestas genéricas, que no se ajustan a lo que pides, las veo mucho más en la versión gratuita, y mi amiga también. En la de pago pasa bastante menos.
+
 ## No te falta conocimiento, te falta criterio
 
 Lo primero que me dijo mi amiga fue que ella no sabe de nutrición. Ni de bioquímica, ni de cómo responde el músculo al entrenamiento. Mi respuesta fue que no lo necesita. Si para usar la IA tuvieras que saber ya la respuesta, no te serviría de nada.
 
 Lo que sí necesitas es un método. ¿Con qué criterio decides si aceptas algo? ¿Qué te basta para darlo por cierto? Esa pregunta va antes que cualquier dato.
 
-Yo tengo uno para los ensayos ([escribí sobre ello aquí](/es/blog/writing-an-essay-with-ai-codex-vs-claude-code)) y otro para investigar sobre la Biblia. En los dos casos choco con lo mismo: la IA mezcla tipos de conocimiento. No distingue bien un dato histórico de una interpretación teológica, ni qué evidencia vale para cada uno. Eso se lo tengo que decir yo, o discutirlo con ella la primera vez.
+Yo tengo uno para los ensayos ([escribí sobre ello aquí](/es/blog/writing-an-essay-with-ai-codex-vs-claude-code)) y otro para investigar sobre la Biblia y sobre ontología ([lo tengo en un repositorio público](https://github.com/JaviMaligno/god-ontology)). En los dos casos choco con lo mismo: la IA mezcla tipos de conocimiento. No distingue bien un dato histórico de una interpretación teológica, ni qué evidencia vale para cada uno. Eso se lo tengo que decir yo, o discutirlo con ella la primera vez.
 
-El método no tiene por qué ser sofisticado. Cuatro preguntas cubren casi todo:
+Ese método tiene nombre: epistemología, la parte de la filosofía que estudia cómo sabemos lo que sabemos. No hace falta estudiarla. Basta con unas nociones, aunque sean intuitivas, y la principal es que no todo conocimiento se apoya en la misma clase de evidencia:
 
-1. **¿Qué tipo de afirmación es?** Un hecho que se puede medir (cuánta proteína tiene un huevo), un consenso de expertos (qué recomiendan las guías) o una decisión que depende de ti (qué dieta te encaja).
-2. **¿Qué evidencia vale para ese tipo?** Para un hecho, la medida. Para un consenso, quién lo sostiene y con qué estudios. Para una decisión tuya, tus objetivos y cómo responde tu cuerpo.
+- **Formal.** La lógica y las matemáticas. Se apoya en la demostración. Un argumento válido no te da la verdad por sí solo: te garantiza que, si las premisas son ciertas, la conclusión también lo es.
+- **Experimental.** Lo que se puede reproducir en condiciones controladas y acotadas. Se apoya en experimentos que otros pueden repetir.
+- **Observacional.** Los sistemas abiertos, que no se pueden aislar ni repetir: una sociedad, una economía, la salud de una población a lo largo de décadas. Se observan, se comparan grupos y se miden correlaciones, pero no se controla todo lo que influye.
+- **Histórico.** Lo que ya ocurrió y no se puede repetir. Se apoya en evidencia de tipo forense: restos, documentos, testimonios y la convergencia de varias huellas independientes.
+- **Personal.** Lo que depende de tus objetivos y tus valores. La evidencia informa, pero decides tú.
+
+La IA tiende a mezclar estas categorías. Presenta una correlación observada como si fuera un resultado experimental, o descarta un hecho histórico bien documentado porque no se puede reproducir en un laboratorio. Con esto claro, cuatro preguntas cubren casi todo:
+
+1. **¿De qué tipo es esta afirmación?**
+2. **¿Qué evidencia vale para ese tipo, y cuál me está dando?**
 3. **¿En qué se basa esta respuesta en concreto?** No en general: esta.
 4. **¿Qué alternativas serias hay y en qué se diferencian?**
 
-Elegir entre paleo y cetogénica es del tercer tipo. Ningún oráculo puede contestarlo por ti. Lo que la IA sí puede hacer es reunir la evidencia sobre cada opción, decirte de qué tipo es y dónde no hay acuerdo. La decisión la tomas tú, con tus objetivos delante.
+La nutrición muestra bien por qué importa. Lo que le pasa a tu cuerpo a corto plazo se puede estudiar con ensayos controlados. Lo que pasa con una dieta a lo largo de años sale casi siempre de estudios observacionales, con sus limitaciones. Y elegir entre paleo y cetogénica es, al final, una decisión personal. Ningún oráculo puede contestarla por ti. Lo que la IA sí puede hacer es reunir la evidencia sobre cada opción, decirte de qué tipo es y dónde no hay acuerdo. La decisión la tomas tú, con tus objetivos delante.
 
 ## Oráculo o herramienta
 
