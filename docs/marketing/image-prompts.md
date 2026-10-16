@@ -2,6 +2,31 @@
 
 Exact prompts used to generate blog hero images (via Codex `image_gen`), for reproducibility and iteration. Newest first.
 
+## what-ai-makes-you-learn
+
+- **Article:** `src/content/blog/{en,es}/what-ai-makes-you-learn.md`
+- **Image:** `public/blog/what-ai-makes-you-learn.png`
+- **Generated:** 2026-10-16, built-in `image_gen`. Original 1774x887, resized to 1020x510.
+
+```text
+Use case: stylized-concept.
+Create a 1020x510 pixel, 2:1 landscape blog hero image for an article titled "What AI makes you learn". Do not print the article title.
+
+Scene: a concrete, carefully arranged study desk viewed from an elevated three-quarter angle, with restrained perspective so the text and objects remain readable. A laptop sits at the back center, an open notebook in the front-left zone, a printed study-type card grid in the front-right zone, and a small glossary card and magnifying glass beside them. Several distinct zones, dense but tidy, all on one continuous graphite desk. The scene conveys a careful reader examining an AI answer using evidence, methods and precise definitions.
+
+Laptop screen: two adjacent panes. A simple chat pane shows the short question "Pick a number, 1-10" and the answer "7". Beside it is a compact bar chart headed '"Random" picks', with ten bars labeled 1 through 10. The seventh bar, labeled 7, is amber and dramatically taller than all the other short teal bars. This is an illustrative pattern, not a measured dataset: no percentages, sample sizes or invented statistics.
+
+Physical study tools: the open off-white notebook is titled "Kinds of evidence" and has exactly five short entries, each on its own line: "Formal", "Experimental", "Observational", "Historical", "Personal". Its facing page has sparse ruled notes represented by fine lines. A printed off-white card sheet has a tidy two-by-two grid of equal-sized cells labeled "Survey", "Cohort", "Trial", "Meta-analysis", with a small simple diagram in each cell; these are different tools, not a ranked ladder. A separate small glossary card reads "Definitions" above a few fine placeholder lines. A realistic magnifying glass rests beside the cards without obscuring any required wording.
+
+Style: refined technical editorial bitmap illustration, crisp edges, subtly tactile paper and matte metal, precise drawing, restrained depth, high contrast, professional AI blog aesthetic. Dark but not monochrome: balanced teal, amber, graphite and warm off-white accents. Soft controlled lighting, sharp focus throughout. Readable, correctly spelled generic text integrated into the objects, no large headlines or text-heavy poster.
+
+Composition: use the central 80 percent of the frame for every important object and all text. Leave the outermost 10 percent on both left and right as quiet desk surface so a later centered 16:9 crop loses no essential content. Keep the laptop, notebook, study grid, glossary and magnifying glass fully inside this safe region, separated by clear narrow gaps. Preserve comfortable top and bottom margins.
+
+Avoid: logos, brand names, people, hands, faces, robots, religious symbols, abstract metaphors, floating panels, purple gradient blobs, bokeh, excessive glow, glossy 3D rendering, watermarks.
+```
+
+---
+
 ## dont-just-say-ignore-it
 
 - **Article:** `src/content/blog/{en,es}/dont-just-say-ignore-it.md`
