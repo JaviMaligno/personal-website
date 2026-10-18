@@ -1,6 +1,7 @@
 import { uploadImageToLinkedIn, uploadVideoToLinkedIn, createLinkedInPost, parseMentions, buildMentionAttributes } from './utils.js';
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
-import { resolve, extname, basename } from 'path';
+import { resolve } from 'path';
+import { findMedia } from './media.js';
 
 /**
  * Standalone LinkedIn post publisher — supports text, image(s), video, and @-mentions
@@ -12,7 +13,8 @@ import { resolve, extname, basename } from 'path';
  *   # From a text file:
  *   node scripts/linkedin/post-standalone.js scripts/linkedin/posts/my-post.txt [--dry-run]
  *
- * Media discovery (in priority order):
+ * Media discovery (in priority order, see media.js):
+ *   0. Video in the folder named like the post: scripts/linkedin/posts/my-post/*.mp4
  *   1. Video at repo root: video-linkedin.mov/.mp4/... (single video, excludes images)
  *   2. Folder with the same name as the post: scripts/linkedin/posts/my-post/ → all images inside (natural sort)
  *   3. Numbered images at repo root: image-1.png, image-2.jpg, ... (numeric order)
@@ -25,56 +27,7 @@ import { resolve, extname, basename } from 'path';
  * as a real mention (visible text must match the entity's real name).
  */
 
-const VIDEO_EXTENSIONS = ['.mov', '.mp4', '.avi', '.mkv', '.webm'];
-const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif'];
 const MAX_IMAGES = 20; // LinkedIn multi-image feed post limit
-
-function findImages(basePath, postPath) {
-  // Priority 1: folder with the same name as the post .txt
-  // e.g. scripts/linkedin/posts/my-post.txt → scripts/linkedin/posts/my-post/
-  const postDir = postPath.replace(/\.txt$/, '');
-  if (existsSync(postDir) && statSync(postDir).isDirectory()) {
-    const images = readdirSync(postDir)
-      .filter(f => IMAGE_EXTENSIONS.includes(extname(f).toLowerCase()))
-      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-      .map(f => resolve(postDir, f));
-    if (images.length > 0) return { images, source: `posts/${basename(postDir)}/` };
-  }
-
-  // Priority 2: numbered images at repo root (image-1.png, image-2.jpg, ...)
-  const numbered = [];
-  for (let i = 1; i <= MAX_IMAGES; i++) {
-    for (const ext of IMAGE_EXTENSIONS) {
-      const fullPath = resolve(basePath, `image-${i}${ext}`);
-      if (existsSync(fullPath)) {
-        numbered.push(fullPath);
-        break; // only one extension per index
-      }
-    }
-  }
-  if (numbered.length > 0) return { images: numbered, source: 'repo root (image-N.*)' };
-
-  // Priority 3: single image.png fallback (legacy)
-  for (const ext of IMAGE_EXTENSIONS) {
-    const fullPath = resolve(basePath, `image${ext}`);
-    if (existsSync(fullPath)) return { images: [fullPath], source: 'repo root (image.*)' };
-  }
-
-  return { images: [], source: null };
-}
-
-function findMedia(basePath, postPath) {
-  // Priority 0: video files matching video-linkedin.* pattern (video excludes images)
-  for (const ext of VIDEO_EXTENSIONS) {
-    const fullPath = resolve(basePath, `video-linkedin${ext}`);
-    if (existsSync(fullPath)) return { type: 'video', paths: [fullPath], source: 'repo root' };
-  }
-
-  const { images, source } = findImages(basePath, postPath);
-  if (images.length > 0) return { type: 'image', paths: images, source };
-
-  return null;
-}
 
 async function main() {
   const args = process.argv.slice(2).filter(a => !a.startsWith('--'));
@@ -204,6 +157,8 @@ Available posts:`);
       }
     } catch (error) {
       console.error(`❌ Media upload failed: ${error.message}`);
+      // A video post's text points at the video; without it the post makes no sense.
+      if (media.type === 'video') process.exit(1);
       console.log('⚠️  Continuing with text-only post...\n');
       imageUrns = [];
       videoUrn = null;
