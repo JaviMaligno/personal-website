@@ -1727,3 +1727,29 @@ Figure 1 is **schematic by design** and says so in its own caption: the margin
 curve is illustrative, the mechanism is not. The real tolerance was 1e-12 and
 would be invisible at any honest scale, so the band is drawn exaggerated. No
 data is being implied.
+## It used to be someone else's problem — 2026-09-24
+
+- Articles: `src/content/blog/en/someone-elses-problem.md`, `src/content/blog/es/someone-elses-problem.md`
+- Image: `public/blog/someone-elses-problem.png`
+- Generator: built-in image_gen via Codex; original followed by a refinement removing tool names and desk clutter.
+
+Initial prompt:
+
+```text
+Use case: illustration-story
+Asset type: 1020x510 PNG blog hero image, wide 2:1 composition, for the technical article "It Used to Be Someone Else's Problem".
+Primary request: A refined technical editorial illustration of a single laptop on a desk acting as a small distributed system. Convey the article's central idea: parallel agent sessions make shared-resource contention, resource cleanup, concurrency, safe retries, and permissions the developer's everyday responsibility.
+Scene and subject: One unbranded laptop, its screen clearly visible, with several terminal panes representing parallel agent sessions. Use short generic labels "agent 01", "agent 02", "agent 03" and a few restrained terminal lines. Integrate a system-monitor panel with an amber memory bar filled almost to its limit, labeled "MEMORY 94%". Show stacked worker-process cards connected to the sessions by thin, precise lines, making the shared memory pressure visually clear. A few orphaned process cards, port tags ":5173" and ":5174", and small worktree folders drift off to one side, visibly awaiting cleanup. Beside the laptop, integrate a compact checklist of five concept boxes with the exact labels "worker pool", "cleanup", "race condition", "idempotent", "least privilege"; tick some boxes and leave others empty.
+Style and medium: Crisp bitmap illustration, refined technical editorial art with controlled geometric forms, fine linework, subtle surface texture, and restrained dimensional shading. Professional AI/developer blog aesthetic. Dark but distinctly multicolored, high contrast, balanced teal, amber, graphite, and off-white accents.
+Composition: The laptop is the dominant focal point, with the worker stacks, leftover resources, and checklist forming a coherent supporting arrangement around it. A quiet graphite background and simple desk plane; ample breathing room, clear visual hierarchy, all key elements safely inside the wide frame. Keep short labels readable at final size using clean understated monospace lettering. Text is supporting detail, not a text-heavy poster. Do not render the article title.
+Constraints: Exactly one laptop. No people, no logos, no brand names, no watermarks, no purple gradient blobs, no bokeh. Avoid dense paragraphs, excessive floating windows, and clutter. Final intended dimensions: 1020x510 pixels.
+```
+
+Refinement prompt:
+
+```text
+Use case: precise-object-edit
+Refine this generated blog hero image for "It Used to Be Someone Else's Problem". Keep the single laptop, three parallel agent terminal panes, worker-process stack and connecting lines, near-limit amber MEMORY 94% bars, leftover process cards, ports :5173 and :5174, worktree folders, and the five-item checklist exactly as arranged. Preserve the readable checklist labels "worker pool", "cleanup", "race condition", "idempotent", "least privilege", including the mix of checked and unchecked boxes. Preserve the wide 2:1 composition intended for a 1020x510 PNG, high contrast, dark graphite, teal, amber, and off-white palette.
+Change only these details: Replace the named tools "node", "vite", and "python" on the orphaned-process cards with generic labels "server", "watcher", and "worker". Remove the small emblem icons in the terminal panes. Remove the decorative mug, books, notebook, pens, and plants, restoring a simple uncluttered desk plane and quiet graphite backdrop in their places. Give the remaining scene a crisp refined technical editorial bitmap illustration finish with controlled geometric forms, fine linework, subtle surface texture, and restrained dimensional shading.
+No people, logos, brand names, watermarks, article title, purple gradient blobs, or bokeh. Keep all remaining short text accurate and readable; do not add text or objects.
+```
