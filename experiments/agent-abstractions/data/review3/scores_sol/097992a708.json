@@ -1,0 +1,44 @@
+{
+ "id": "097992a708",
+ "reuse": {
+  "score": 4,
+  "why": "Provider linking and compatible transaction downloads share helpers, but takeover repeats unlinkAccount's local cleanup instead of extracting it."
+ },
+ "duplication": {
+  "score": 4,
+  "why": "The refactor removes substantial provider duplication but introduces one duplicate account-unlinking block."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Linking policy remains in accounts/app.ts, transaction transport in accounts/sync.ts, and provider configuration and types in their established modules."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The changes support the requested linking rules and Fintegra integration, with only necessary client registry updates and release notes."
+ },
+ "maintainability": {
+  "score": 4,
+  "why": "Centralized linking makes future policy changes straightforward, although duplicated unlink cleanup and a mutating workflow driven by an assertion-named helper reduce clarity."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "linkExternalAccount directly repeats the local cleanup owned by unlinkAccount; extracting that cleanup would allow reuse without invoking provider disconnection."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The duplicated unlink cleanup is a direct copy, rather than renamed or reshaped logic."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 1,
+  "where": "Takeover adds replaceExistingLink, a replacement-dependent refusal branch in assertBankAccountNotLinked, and a previous-holder cleanup branch in linkExternalAccount that bypasses unlinkAccount's local cleanup."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 30.6
+ }
+}

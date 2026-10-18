@@ -1,0 +1,115 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index b65f8ca..fb50233 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -216,6 +216,19 @@ function setCarryover(
+ // Month-wide actions skip categories that have saved budget templates
+ const NO_TEMPLATE_SQL = `(c.goal_def IS NULL OR TRIM(c.goal_def) IN ('', '[]', 'null'))`;
+ 
++const FIXED_TAG = /(^|\s)#fixed(?![\w-])/i;
++
++// Month-wide actions also skip categories in groups tagged #fixed in the
++// group's notes
++async function getFixedCategoryIds(): Promise<Set<string>> {
++  const rows = await db.all<{ id: string; note: string | null }>(
++    `SELECT c.id, n.note FROM categories c
++     JOIN notes n ON n.id = c.cat_group
++     WHERE n.note LIKE '%#fixed%'`,
++  );
++  return new Set(rows.filter(r => FIXED_TAG.test(r.note ?? '')).map(r => r.id));
++}
++
+ // Actions
+ 
+ export async function copyPreviousMonth({
+@@ -233,6 +246,7 @@ export async function copyPreviousMonth({
+       )
+     ).map(c => c.id),
+   );
++  const fixedCategories = await getFixedCategoryIds();
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+@@ -242,7 +256,10 @@ export async function copyPreviousMonth({
+       if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
+         return;
+       }
+-      if (templateCategories.has(prevBudget.category)) {
++      if (
++        templateCategories.has(prevBudget.category) ||
++        fixedCategories.has(prevBudget.category)
++      ) {
+         return;
+       }
+       void setBudget({
+@@ -278,9 +295,13 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+      WHERE c.tombstone = 0 AND c.hidden = 0 AND COALESCE(g.hidden, 0) = 0
+      AND ${NO_TEMPLATE_SQL}`,
+   );
++  const fixedCategories = await getFixedCategoryIds();
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
++      if (fixedCategories.has(cat.id)) {
++        return;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+@@ -303,9 +324,13 @@ export async function set3MonthAvg({
+   AND ${NO_TEMPLATE_SQL}
+   `,
+   );
++  const fixedCategories = await getFixedCategoryIds();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedCategories.has(cat.id)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+@@ -339,9 +364,13 @@ export async function set12MonthAvg({
+   AND ${NO_TEMPLATE_SQL}
+   `,
+   );
++  const fixedCategories = await getFixedCategoryIds();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedCategories.has(cat.id)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+@@ -364,9 +393,13 @@ export async function set6MonthAvg({
+   AND ${NO_TEMPLATE_SQL}
+   `,
+   );
++  const fixedCategories = await getFixedCategoryIds();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedCategories.has(cat.id)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+@@ -389,10 +422,14 @@ export async function setLastMonthSpending({
+   AND ${NO_TEMPLATE_SQL}
+   `,
+   );
++  const fixedCategories = await getFixedCategoryIds();
+   const sheetName = monthUtils.sheetForMonth(monthUtils.prevMonth(month));
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedCategories.has(cat.id)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }

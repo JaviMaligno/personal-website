@@ -1,0 +1,107 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index fa7c7de..dcd28e9 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -354,6 +354,26 @@ describe('set budget average', () => {
+   });
+ 
+   it('leaves hidden and template-managed categories unchanged in bulk actions', async () => {
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed costs',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'fixed-cat',
++      name: 'Rent',
++      cat_group: 'fixed-group',
++    });
++    await db.insertCategory({
++      id: 'category-note-cat',
++      name: 'Category note',
++      cat_group: 'group1',
++    });
++    await db.insert('notes', {
++      id: 'fixed-group',
++      note: 'Monthly bills #fixed',
++    });
++    await db.insert('notes', { id: 'category-note-cat', note: '#fixed' });
+     await db.insertCategoryGroup({
+       id: 'hidden-group',
+       name: 'Hidden',
+@@ -382,6 +402,8 @@ describe('set budget average', () => {
+       'hidden-cat',
+       'hidden-group-cat',
+       'templated-cat',
++      'fixed-cat',
++      'category-note-cat',
+     ]) {
+       await setBudget({ category, month: '2024-04', amount: 123 });
+     }
+@@ -394,11 +416,15 @@ describe('set budget average', () => {
+       'hidden-cat',
+       'hidden-group-cat',
+       'templated-cat',
++      'fixed-cat',
+     ]) {
+       expect(await getSheetValue('budget202404', `budget-${category}`)).toBe(
+         123,
+       );
+     }
++    expect(
++      await getSheetValue('budget202404', 'budget-category-note-cat'),
++    ).toBe(0);
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
+   });
+ });
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 518bed6..5796c5a 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -69,6 +69,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  group_fixed: 1 | 0;
+   category: string;
+   amount: number;
+   goal_def?: unknown;
+@@ -83,14 +84,16 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      > &
+-      Pick<db.DbCategory, 'goal_def'>
++      > & { group_fixed: 1 | 0 } & Pick<db.DbCategory, 'goal_def'>
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden, c.goal_def
++    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden,
++      CASE WHEN lower(COALESCE(gn.note, '')) LIKE '%#fixed%' THEN 1 ELSE 0 END AS group_fixed,
++      c.goal_def
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes gn ON gn.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -105,8 +108,10 @@ function getCategoriesForBulkAction(): Promise<
+     SELECT c.*
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes gn ON gn.id = g.id
+     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+       AND c.goal_def IS NULL
++      AND lower(COALESCE(gn.note, '')) NOT LIKE '%#fixed%'
+     `,
+   );
+ }
+@@ -248,6 +253,7 @@ export async function copyPreviousMonth({
+       if (
+         prevBudget.hidden === 1 ||
+         prevBudget.group_hidden === 1 ||
++        prevBudget.group_fixed === 1 ||
+         prevBudget.goal_def !== null
+       ) {
+         return;

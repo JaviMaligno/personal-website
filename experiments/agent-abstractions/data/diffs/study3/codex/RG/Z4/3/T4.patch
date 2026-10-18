@@ -1,0 +1,152 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index ab30877..1ecd39e 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -73,6 +73,21 @@ describe('schedule app', () => {
+         }),
+       ).toEqual(['2024-06-03']);
+     });
++
++    it('skips recurring month and day holidays', () => {
++      expect(
++        getDatesInRange({
++          config: {
++            start: '2024-12-24',
++            frequency: 'daily',
++            skipWeekend: true,
++            holidays: ['12-25', '2024-12-26'],
++          },
++          start: '2024-12-24',
++          end: '2024-12-27',
++        }),
++      ).toEqual(['2024-12-24', '2024-12-27']);
++    });
+   });
+ 
+   describe('utility', () => {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 975bc95..fec26c4 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -29,6 +29,7 @@ import {
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
+   getHasTransactionsQuery,
++  isHoliday,
+   getNextDate,
+   getNextDateAfter,
+   getStatus,
+@@ -512,19 +513,27 @@ async function getUpcomingDates({ config, count }) {
+       config.skipWeekend && config.frequency === 'daily';
+     const holidays = config.holidays ?? [];
+     const isNonBusinessDay = date =>
+-      d.isWeekend(date) || holidays.includes(dayFromDate(date));
++      d.isWeekend(date) || isHoliday(date, holidays);
+ 
+     return schedule
+       .occurrences({
+         start: d.startOfDay(new Date()),
+-        take: isDailyWithSkippedWeekends ? count * (holidays.length + 2) : count,
++        take: isDailyWithSkippedWeekends
++          ? count * (holidays.length + 2)
++          : count,
+       })
+       .toArray()
+-      .filter(({ date }) => !isDailyWithSkippedWeekends || !isNonBusinessDay(date))
++      .filter(
++        ({ date }) => !isDailyWithSkippedWeekends || !isNonBusinessDay(date),
++      )
+       .slice(0, count)
+       .map(date =>
+         config.skipWeekend && !isDailyWithSkippedWeekends
+-          ? getDateWithSkippedWeekend(date.date, config.weekendSolveMode, holidays)
++          ? getDateWithSkippedWeekend(
++              date.date,
++              config.weekendSolveMode,
++              holidays,
++            )
+           : date.date,
+       )
+       .map(date => dayFromDate(date));
+@@ -541,7 +550,7 @@ export function getDatesInRange({ config, start, end }) {
+     config.skipWeekend && config.frequency === 'daily';
+   const holidays = config.holidays ?? [];
+   const isNonBusinessDay = date =>
+-    d.isWeekend(date) || holidays.includes(dayFromDate(date));
++    d.isWeekend(date) || isHoliday(date, holidays);
+   // Weekend adjustment can move an occurrence by at most three days (Sunday
+   // to Friday), so include those source dates when finding occurrences.
+   const occurrenceStart = d.subDays(parseDate(start), 3);
+@@ -555,7 +564,9 @@ export function getDatesInRange({ config, start, end }) {
+   return Array.from(
+     new Set(
+       occurrences
+-        .filter(({ date }) => !isDailyWithSkippedWeekends || !isNonBusinessDay(date))
++        .filter(
++          ({ date }) => !isDailyWithSkippedWeekends || !isNonBusinessDay(date),
++        )
+         .map(({ date }) =>
+           config.skipWeekend && !isDailyWithSkippedWeekends
+             ? getDateWithSkippedWeekend(date, config.weekendSolveMode, holidays)
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5aea5da..aee3123 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -545,6 +545,16 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2020, 11, 5))).toBe('2020-12-08');
+     });
+ 
++    it('matches recurring month and day holidays alongside exact dates', () => {
++      const dateCond = weeklyOnSaturday({
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++        holidays: ['12-07', '2020-12-08'],
++      });
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 5))).toBe('2020-12-09');
++    });
++
+     it('skips daily holidays with weekend days', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index fb8f103..f7d4cd7 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -299,10 +299,10 @@ export function getNextDate(
+       !noSkipWeekend;
+     const holidays = dateCond.value.holidays ?? [];
+     const skipsDailyNonBusinessDay = (date: Date) =>
+-      d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++      d.isWeekend(date) || isHoliday(date, holidays);
+     if (skipsDailyWeekend && skipsDailyNonBusinessDay(start)) {
+       start = d.nextMonday(start);
+-      while (holidays.includes(monthUtils.dayFromDate(start))) {
++      while (isHoliday(start, holidays)) {
+         start = d.addDays(start, 1);
+       }
+     }
+@@ -368,7 +368,7 @@ export function getDateWithSkippedWeekend(
+   solveMode: 'after' | 'before',
+   holidays: string[] = [],
+ ) {
+-  while (d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date))) {
++  while (d.isWeekend(date) || isHoliday(date, holidays)) {
+     if (solveMode === 'after') {
+       date = d.addDays(date, 1);
+     } else if (solveMode === 'before') {
+@@ -380,6 +380,14 @@ export function getDateWithSkippedWeekend(
+   return date;
+ }
+ 
++export function isHoliday(date: Date, holidays: string[] = []): boolean {
++  const dateString = monthUtils.dayFromDate(date);
++  const monthAndDay = dateString.slice(5);
++  return holidays.some(
++    holiday => holiday === dateString || holiday === monthAndDay,
++  );
++}
++
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,

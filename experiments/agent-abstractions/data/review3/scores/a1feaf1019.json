@@ -1,0 +1,11 @@
+{"id": "a1feaf1019",
+ "reuse": {"score": 4, "why": "All month-wide actions, including the new setLastMonthSpending, go through the existing isCategoryFilled, getAverageFillCategories and averageToBudgetAmount helpers."},
+ "duplication": {"score": 3, "why": "The group-notes LEFT JOIN is pasted into three separate queries (getBudgetData, getAverageFillCategories, a new inline query in setZero), and the hidden rule is now decided twice inside isCategoryFilled (generic check plus the 'average' branch ternary)."},
+ "placement": {"score": 4, "why": "The template, #fixed and hidden exclusions sit in the shared isCategoryFilled in budget/actions.ts and the new method is registered in budget/app.ts like its siblings."},
+ "scope": {"score": 3, "why": "Adds an unused includeHiddenCategories parameter to resetIncomeCarryover, which is not a fill action, plus release-notes files."},
+ "maintainability": {"score": 3, "why": "The selection rule is centralised, but isCategoryFilled is growing flag-dependent per-kind branches (dead 'copy' case, includeHidden ternary in default) and setZero rebuilds its own category query."},
+ "bypasses_abstraction": {"value": false, "where": ""},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "isCategoryFilled's default branch re-decides hidden/group_hidden through an includeHiddenCategories ternary after the new generic hidden check already did"},
+ "abstraction_drift": {"value": true, "parameters_added": 2, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "isCategoryFilled and getAverageFillCategories gain includeHiddenCategories; the 'average' branch of isCategoryFilled gains a flag-specific ternary (group_hidden != null) while the 'copy' case collapses to a dead 'return true'"}}

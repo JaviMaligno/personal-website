@@ -1,0 +1,12 @@
+{"id": "fc0b3009d6",
+ "reuse": {"score": 4, "why": "All six provider link handlers, Fintegra included, go through one linkBankSyncAccount and one assertBankAccountNotLinked guard, but the Fintegra downloader copies Akahu's instead of sharing it and the local unlink reset is re-written rather than shared with unlinkAccount."},
+ "duplication": {"score": 3, "why": "The link body duplication is removed, but downloadFintegraTransactions is a ~40-line copy of downloadAkahuTransactions and unlinkReplacedAccounts repeats unlinkAccount's eight-field reset."},
+ "placement": {"score": 4, "why": "Link logic stays in accounts/app.ts and download logic in sync.ts as the tree organises them; the comment describing the link flow sits above the guard function instead of linkBankSyncAccount."},
+ "scope": {"score": 4, "why": "Changes cover the refactor and the four requested behaviours plus release notes, with nothing unrelated."},
+ "maintainability": {"score": 4, "why": "One link definition with explicit variation (newAccountFields, fileId, syncedTables for Akahu) is easy to own; the copied downloader and the guard that both validates and returns ids to replace are minor costs."},
+ "bypasses_abstraction": {"value": false, "where": "Every link handler calls assertBankAccountNotLinked and linkBankSyncAccount; no handler keeps its own link body."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "downloadFintegraTransactions in sync.ts and the reset in unlinkReplacedAccounts are overt copies, not disguised."},
+ "abstraction_drift": {"value": false, "parameters_added": 2, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "assertBankAccountNotLinked gained replaceExistingLink and linkBankSyncAccount gained replacedIds for the takeover; both apply uniformly to all providers, with no provider-specific branches inside the helpers and no handler bypassing them."}
+}

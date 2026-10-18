@@ -1,0 +1,35 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index bb94c28..1f4e1fb 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -176,6 +176,18 @@ async function assertBankAccountNotLinked(
+   providerAccountId: string,
+   upgradingId?: string,
+ ) {
++  if (upgradingId) {
++    const target = await db.first<{ closed: number }>(
++      'SELECT closed FROM accounts WHERE id = ? AND tombstone = 0',
++      [upgradingId],
++    );
++    if (target?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const existing = await db.first<{ id: string }>(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ? LIMIT 1',
+     [syncSource, providerAccountId, upgradingId ?? null],
+diff --git a/upcoming-release-notes/block-linking-closed-accounts.md b/upcoming-release-notes/block-linking-closed-accounts.md
+new file mode 100644
+index 0000000..b8bf390
+--- /dev/null
++++ b/upcoming-release-notes/block-linking-closed-accounts.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Refuse to link a bank account to a closed account; reopen it first

@@ -1,0 +1,12 @@
+{"id":"2d5b6c56b6",
+"reuse":{"score":4,"why":"Introduces one shared predicate (shouldWriteMonthBudget) and sign helper used by every month-wide action and setNMonthAvg, and reuses the tree's extractTagsFromText for the #fixed tag."},
+"duplication":{"score":2,"why":"The category query with the notes join and the has_saved_template SQL expression is repeated in getBudgetData, setZero, setLastMonthSpending, set3MonthAvg, set6MonthAvg and set12MonthAvg instead of one shared selection."},
+"placement":{"score":4,"why":"The rule lives in a dedicated server/budget/month-action.ts beside the actions, though the saved-template part of the rule is decided in each action's SQL rather than in that module."},
+"scope":{"score":5,"why":"All edits serve the refactor and the three follow-up features; no unrelated changes."},
+"maintainability":{"score":3,"why":"Changing the hidden/fixed/income logic is a single edit, but changing what counts as a saved template or how group notes are fetched means editing six SQL copies kept in sync by hand."},
+"bypasses_abstraction":{"value":false,"where":"Every month-wide action routes its decision through shouldWriteMonthBudget; no pre-existing abstraction is bypassed."},
+"duplicated_blocks":4,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The category-selection SQL is reshaped per site (setZero aliases c.id AS category and adds 0 AS amount, getBudgetData selects from the budget table, the average actions select c.*), hiding that it is the same query."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":6,"where":"shouldWriteMonthBudget gained includeHiddenCategories; the saved-template and group-notes inputs it decides on are computed by each of the six call sites' own SQL rather than by a shared selection."}
+}

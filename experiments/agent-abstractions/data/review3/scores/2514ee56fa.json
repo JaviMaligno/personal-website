@@ -1,0 +1,12 @@
+{"id":"2514ee56fa",
+"reuse":{"score":4,"why":"Builds one predicate (isMonthFillTarget) and one selection (getMonthFillCategories) used by all month-wide actions, reuses getBudgetData, getSheetValue 'sum-amount-' cells and setNMonthAvg; the template check parses goal_def itself rather than through goal-template code."},
+"duplication":{"score":4,"why":"Removes the per-action hidden SQL and income guards and the repeated sign flip (spendingToBudgetAmount); the only overlap left is the category/group/notes join written both in getBudgetData and in getMonthFillCategories."},
+"placement":{"score":5,"why":"The selection rule, its flags and the sign helper live in budget/actions.ts next to the actions; app.ts only registers the new method."},
+"scope":{"score":5,"why":"Changes are limited to the month-wide actions, their selection, the new method's registration, tests and a release note."},
+"maintainability":{"score":4,"why":"A single predicate now decides inclusion with the hidden-scope inconsistency named explicitly ('visible' vs 'not-hidden'); two positional parameters on every call and filtering in JS over the full category list are minor costs."},
+"bypasses_abstraction":{"value":false,"where":"Every month-wide action (copyPreviousMonth, setZero, set3/6/12MonthAvg, setLastMonthSpending) decides its categories through isMonthFillTarget."},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"The flag-loading join is restated in getBudgetData and getMonthFillCategories, but openly, not reshaped to hide it; the decision logic itself is shared."},
+"abstraction_drift":{"value":false,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":0,"where":"budget/actions.ts isMonthFillTarget/getMonthFillCategories take scope ('visible'|'not-hidden', an explicit preserved inconsistency) and includeHiddenCategories (the requested option), each with one branch; templates and #fixed went in as general rules and no action bypasses the helper."}
+}

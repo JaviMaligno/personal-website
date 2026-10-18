@@ -1,0 +1,45 @@
+{
+ "id": "368ea718bc",
+ "reuse": {
+  "score": 2,
+  "why": "The change shares its new helper across five consumers but introduces getScheduleAmount alongside getScheduledAmount and repeats getApproxNumberThreshold instead of reusing it."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Consumer arithmetic is consolidated, but the new helper duplicates existing amount dispatch and the exact approximate-tolerance calculation."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Shared schedule amount policy belongs in shared/schedules.ts, with API serialization and forecast normalization remaining in their existing layers."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on expected schedule amounts, their consumers, and targeted helper tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralizing the changed consumers helps, but similarly named amount helpers, an independently maintained tolerance formula, and remaining midpoint calculations fragment ownership of the policy."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "shared/schedules.ts:getScheduleAmount repeats shared/rules.ts:getApproxNumberThreshold and establishes a parallel abstraction beside the existing getScheduledAmount."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "getScheduleAmount reshapes the missing/number/range dispatch already implemented by getScheduledAmount under a nearly identical name, while embedding the existing tolerance helper's formula."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "getScheduleAmount gains the op parameter and an isapprox branch whose inline tolerance calculation bypasses getApproxNumberThreshold; the existing getScheduledAmount and budget/schedule-template.ts midpoint implementation remain separate policy definitions."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 34.4
+ }
+}

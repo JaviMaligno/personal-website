@@ -1,0 +1,118 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 52ef5da..f7904ea 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -94,6 +94,22 @@ describe('schedule app', () => {
+         ),
+       ).toEqual(['2021-05-04']);
+     });
++
++    it('applies recurring month-day holidays alongside one-time holidays', async () => {
++      expect(
++        await getRange(
++          {
++            start: '2020-12-25',
++            frequency: 'daily',
++            skipWeekend: true,
++            weekendSolveMode: 'after',
++            holidays: ['2021-12-27', '12-25'],
++          },
++          '2021-12-24',
++          '2021-12-28',
++        ),
++      ).toEqual(['2021-12-24', '2021-12-28']);
++    });
+   });
+ 
+   describe('utility', () => {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 1a1abeb..e4d6bfd 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -30,6 +30,7 @@ import {
+   extractScheduleConds,
+   getDateWithWeekendRule,
+   getHasTransactionsQuery,
++  isHoliday,
+   getNextDate,
+   getNextDateAfter,
+   getStatus,
+@@ -548,7 +549,7 @@ export async function getDatesInRange({ config, start, end }) {
+           !(
+             isDaily &&
+             config.skipWeekend &&
+-            (d.isWeekend(date) || config.holidays?.includes(dayFromDate(date)))
++            (d.isWeekend(date) || isHoliday(dayFromDate(date), config.holidays))
+           ),
+       )
+       .map(date =>
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 63b7820..f80885f 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -526,6 +526,22 @@ describe('schedules', () => {
+           ['2020-12-07'],
+         ),
+       ).toEqual(new Date(2020, 11, 7));
++      expect(
++        getDateWithWeekendRule(
++          new Date(2020, 11, 25),
++          true,
++          'after',
++          ['12-25'],
++        ),
++      ).toEqual(new Date(2020, 11, 28));
++      expect(
++        getDateWithWeekendRule(
++          new Date(2021, 11, 25),
++          true,
++          'after',
++          ['2020-12-25', '12-25'],
++        ),
++      ).toEqual(new Date(2021, 11, 27));
+     });
+ 
+     it('skips daily holiday occurrences when weekend handling is enabled', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index dade018..b778a9a 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -317,7 +317,7 @@ export function getNextDate(
+         let occurrenceStart = d.addDays(date, 1);
+         for (
+           let attempt = 0;
+-          (d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date))) &&
++          (d.isWeekend(date) || isHoliday(monthUtils.dayFromDate(date), holidays)) &&
+           attempt < 366;
+           attempt++
+         ) {
+@@ -330,7 +330,7 @@ export function getNextDate(
+         }
+         if (
+           d.isWeekend(date) ||
+-          holidays.includes(monthUtils.dayFromDate(date))
++          isHoliday(monthUtils.dayFromDate(date), holidays)
+         ) return null;
+       }
+ 
+@@ -377,7 +377,7 @@ export function getDateWithWeekendRule(
+   if (!skipWeekend) return date;
+ 
+   const isUnavailable = date =>
+-    d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++    d.isWeekend(date) || isHoliday(monthUtils.dayFromDate(date), holidays);
+   if (!isUnavailable(date)) return date;
+ 
+   if (solveMode !== 'after' && solveMode !== 'before') {
+@@ -390,6 +390,11 @@ export function getDateWithWeekendRule(
+   return date;
+ }
+ 
++export function isHoliday(date: string, holidays: string[] = []) {
++  const monthDay = date.slice(5);
++  return holidays.includes(date) || holidays.includes(monthDay);
++}
++
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,

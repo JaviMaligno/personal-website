@@ -1,0 +1,66 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 6521136..ab31c41 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -242,6 +242,29 @@ describe('month-wide budget actions', () => {
+     expect(await getSheetValue('budget202401', 'budget-regular-category')).toBe(0);
+   });
+ 
++  it('setZero leaves categories in fixed groups untouched, based on group notes only', async () => {
++    await db.insertCategoryGroup({ id: 'income', name: 'Income', is_income: 1 });
++    await db.insertCategoryGroup({ id: 'fixed-group', name: 'Fixed', is_income: 0 });
++    await db.insertCategoryGroup({ id: 'regular-group', name: 'Regular', is_income: 0 });
++    await db.insertCategory({ id: 'fixed-category', name: 'Fixed', cat_group: 'fixed-group', is_income: 0 });
++    await db.insertCategory({ id: 'regular-category', name: 'Regular', cat_group: 'regular-group', is_income: 0 });
++    await db.insertCategory({ id: 'category-note', name: 'Category note', cat_group: 'regular-group', is_income: 0 });
++    await db.insert('notes', { id: 'fixed-group', note: 'Rent and subscriptions #fixed' });
++    await db.insert('notes', { id: 'category-note', note: '#fixed' });
++    await sheet.loadSpreadsheet(db);
++    await budget.createBudget(['2024-01']);
++    for (const id of ['fixed-category', 'regular-category', 'category-note']) {
++      await setBudget({ category: id, month: '2024-01', amount: 123 });
++    }
++
++    await setZero({ month: '2024-01' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202401', 'budget-fixed-category')).toBe(123);
++    expect(await getSheetValue('budget202401', 'budget-regular-category')).toBe(0);
++    expect(await getSheetValue('budget202401', 'budget-category-note')).toBe(0);
++  });
++
+   it('sets budgets to last month spending and preserves excluded categories', async () => {
+     await db.insertAccount({ id: 'account1', name: 'Account 1' });
+     await db.insertCategoryGroup({ id: 'income', name: 'Income', is_income: 1 });
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 36ccb32..334fcf8 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -309,16 +309,18 @@ export async function setLastMonthSpending({
+ type MonthActionCategory = Pick<
+   db.DbViewCategoryWithGroupHidden,
+   'id' | 'is_income' | 'hidden' | 'group_hidden'
+-> & { has_saved_templates: 0 | 1 };
++> & { has_saved_templates: 0 | 1; group_notes: string | null };
+ 
+ function getMonthActionCategories(): Promise<MonthActionCategory[]> {
+   return db.all<MonthActionCategory>(`
+     SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden,
++      n.note AS group_notes,
+       CASE WHEN c.goal_def IS NOT NULL
+         AND json_extract(c.template_settings, '$.source') = 'ui'
+         THEN 1 ELSE 0 END AS has_saved_templates
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0
+   `);
+ }
+@@ -327,6 +329,7 @@ function shouldSetMonthBudget(cat: MonthActionCategory): boolean {
+   return (
+     cat.hidden === 0 &&
+     cat.group_hidden === 0 &&
++    !/(^|\s)#fixed(?=$|\s)/i.test(cat.group_notes ?? '') &&
+     cat.has_saved_templates === 0 &&
+     (cat.is_income === 0 || isTrackingBudget())
+   );

@@ -1,0 +1,12 @@
+{"id":"393178e4c9",
+"reuse":{"score":2,"why":"getDateWithSkippedWeekend is extended and reused, but the server's getUpcomingDates and getDatesInRange write their own daily-skip check and weekend-or-holiday test (config.holidays?.includes(dayFromDate(...))) instead of using the shared isWeekendOrHoliday/filterDailyNonHolidays, so they miss the MM-DD rule."},
+"duplication":{"score":2,"why":"The 'daily: skip weekend/holiday, otherwise move' decision is written three times (getNextDate, getUpcomingDates as a flatMap, getDatesInRange as a for-loop), the non-working-day predicate exists in two versions, and schedule-template gets its own skip-weekend ternary helper."},
+"placement":{"score":3,"why":"The core rule sits in shared/schedules.ts where it belongs, but the per-occurrence adjustment used by the new range handler and upcoming dates is re-built in server/schedules/app.ts rather than living next to it."},
+"scope":{"score":4,"why":"All edits serve the four steps; the schedule-template helper extraction and the rule-utils holidays pass-through are related."},
+"maintainability":{"score":2,"why":"Holiday matching already diverges between copies (server copies only match full dates), and the over-fetch heuristics (holidays.length + 7, +2) are repeated ad hoc; each future rule change must be made in several places."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates and getDatesInRange test d.isWeekend(date) || config.holidays?.includes(dayFromDate(date)) themselves instead of the shared isWeekendOrHoliday/filterDailyNonHolidays in shared/schedules.ts."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The same skip-daily/move-others per-occurrence logic is reshaped as a flatMap in getUpcomingDates, a for-loop in getDatesInRange and a filter+guard in getNextDate; the predicate is re-spelled as includes(dayFromDate) vs isWeekendOrHoliday."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":2,"where":"getDateWithSkippedWeekend gains a holidays parameter; getNextDate gains a skipDailyWeekends special case (filter branch and the !skipDailyWeekends guard on the move); getUpcomingDates and getDatesInRange re-implement the daily/holiday decision instead of calling the shared helpers."}
+}

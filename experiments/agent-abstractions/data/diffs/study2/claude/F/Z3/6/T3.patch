@@ -1,0 +1,31 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 3662b7c..9fd3adc 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -173,12 +173,25 @@ async function getAccountProperties({ id }: { id: AccountEntity['id'] }) {
+ }
+ 
+ // A bank account may feed only one local account. Deleted accounts don't hold
+-// a link; closed ones do. Re-linking into the holding account is allowed.
++// a link; closed ones do. Re-linking into the holding account is allowed, but
++// closed accounts can't be linked at all.
+ async function assertNotLinkedElsewhere(
+   syncSource: AccountSyncSource,
+   providerAccountId: string,
+   upgradingId?: string,
+ ) {
++  if (upgradingId) {
++    const target = await db.first<Pick<db.DbAccount, 'closed'>>(
++      'SELECT closed FROM accounts WHERE id = ? AND tombstone = 0',
++      [upgradingId],
++    );
++    if (target?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const existing = await db.first<Pick<db.DbAccount, 'id'>>(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',
+     [syncSource, providerAccountId, upgradingId ?? null],

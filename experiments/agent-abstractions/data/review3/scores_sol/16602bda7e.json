@@ -1,0 +1,44 @@
+{
+ "id": "16602bda7e",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses recurrence conversion and date adjustment helpers, but repeats the daily skipping policy across three consumers instead of sharing it."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Daily nonworking-day selection is implemented separately in getNextDate, getUpcomingDates, and getDatesInRange."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Holiday matching belongs in shared/schedules.ts, but server handlers also own recurrence policy that should live alongside those shared helpers."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits concern the requested schedule rules, range handler, configuration propagation, or accompanying tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate several differently structured implementations of the same scheduling policy, while the new handler leaves its existing RecurConfig contract implicit."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "getUpcomingDates and getDatesInRange rebuild the nonworking-day predicate instead of using isNonWorkingDay; schedule-template.ts bypasses getNextDate adjustment and retains its own adjustment policy."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The same daily skipping decision appears as a while condition in getNextDate, a filter in getUpcomingDates, and an if/continue branch in getDatesInRange."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 3,
+  "bypassing_call_sites": 3,
+  "where": "getDateWithSkippedWeekend gains a holidays parameter; getNextDate gains daily skipping, a holiday-presence conditional, and a non-daily adjustment guard, while getUpcomingDates, getDatesInRange, and schedule-template.ts retain independent policy paths."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 31.8
+ }
+}

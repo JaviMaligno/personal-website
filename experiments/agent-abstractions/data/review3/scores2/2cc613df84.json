@@ -1,0 +1,13 @@
+{
+  "id": "2cc613df84",
+  "reuse": {"score": 3, "why": "Reuses recurConfigToRSchedule, RSchedule and the shared getDateWithWeekendRule for the move, but parses days with new Date(`${day}T00:00:00`) instead of monthUtils.parseDate and re-writes the daily weekend-skip test instead of sharing it."},
+  "duplication": {"score": 3, "why": "The daily-schedule skip condition (frequency === 'daily' && skipWeekend && isWeekend) is a copy of the inline check in shared/schedules.ts getNextDate, so the rule now lives in two places."},
+  "placement": {"score": 4, "why": "The handler sits next to getUpcomingDates in server/schedules/app.ts and is registered the same way, but the daily-skip decision belongs in shared/schedules.ts with the other weekend rule helpers."},
+  "scope": {"score": 5, "why": "Only the new handler, its registration and tests."},
+  "maintainability": {"score": 3, "why": "A future change to the daily-skip rule must be made in both getNextDate and getDatesInRange; the unexplained 3-day padding and the missing captureBreadcrumb error handling of its sibling also diverge."},
+  "bypasses_abstraction": {"value": false, "where": "The weekend move goes through getDateWithWeekendRule; there was no shared daily-skip helper to bypass."},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "server/schedules/app.ts getDatesInRange: the getNextDate daily weekend skip is rewritten as an isDaily flag plus a flatMap early return rather than extracted into a shared function."},
+  "t2_reuse": "copy"
+}

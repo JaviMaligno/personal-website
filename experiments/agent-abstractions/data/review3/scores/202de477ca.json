@@ -1,0 +1,12 @@
+{"id":"202de477ca",
+"reuse":{"score":3,"why":"It threads the flag through the existing getVisibleUntemplatedCategories/setMonthAvg path, but instead of splitting the existing visibleUntemplatedCategory SQL fragment into a hidden part and the other exclusions, it swaps the whole fragment out and re-types the exclusions."},
+"duplication":{"score":2,"why":"The #fixed and saved-template SQL conditions now exist both in the visibleUntemplatedCategory constant and inline in getVisibleUntemplatedCategories (and are applied twice on the default path); copyPreviousMonth keeps its own JS version of the same exclusion rule, and the args shape is written as MonthWideBudgetArgs and again inline for copyPreviousMonth."},
+"placement":{"score":4,"why":"Everything stays in budget/actions.ts where the tree keeps the month-wide selection and actions."},
+"scope":{"score":4,"why":"Focused on the flag; reordering set6MonthAvg/setMonthAvg and switching signatures to an args object is incidental churn."},
+"maintainability":{"score":2,"why":"A future change to the template or #fixed exclusion must now be made in the constant, the inline WHERE and copyPreviousMonth, and the helper's name 'getVisibleUntemplatedCategories' no longer describes what it returns when the flag is set."},
+"bypasses_abstraction":{"value":true,"where":"getVisibleUntemplatedCategories replaces the shared visibleUntemplatedCategory fragment with 'c.tombstone = 0' and its own copy of the other exclusions when includeHiddenCategories is set; copyPreviousMonth applies the flag in its own inline condition."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The #fixed/saved-template conditions from visibleUntemplatedCategory are re-indented and appended inside getVisibleUntemplatedCategories rather than factored out of the constant."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":1,"where":"getVisibleUntemplatedCategories and setMonthAvg each gained an includeHiddenCategories parameter, the helper gained a visibilityFilter ternary that swaps out the shared SQL fragment, and copyPreviousMonth decides the rule (now including the flag) in its own condition."}
+}

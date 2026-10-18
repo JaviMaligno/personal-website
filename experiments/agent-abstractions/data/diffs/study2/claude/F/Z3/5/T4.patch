@@ -1,0 +1,164 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index d3472f3..fe5aabf 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -52,6 +52,7 @@ type LinkAccountBaseParams = {
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
++  replaceExistingLink?: boolean;
+ };
+ 
+ export type AccountHandlers = {
+@@ -261,6 +262,7 @@ async function assertBankAccountNotLinked(
+   syncSource: AccountSyncSource,
+   externalId: string,
+   upgradingId?: string,
++  replaceExistingLink = false,
+ ) {
+   if (upgradingId) {
+     const target = await db.first<Pick<db.DbAccount, 'closed'>>(
+@@ -274,15 +276,33 @@ async function assertBankAccountNotLinked(
+     }
+   }
+ 
+-  const existing = await db.first<Pick<db.DbAccount, 'id'>>(
++  const existing = await db.all<Pick<db.DbAccount, 'id'>>(
+     `SELECT id FROM accounts
+      WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?
+        AND id IS NOT ?`,
+     [syncSource, externalId, upgradingId ?? null],
+   );
+-  if (existing) {
++  if (existing.length === 0) {
++    return;
++  }
++  if (!replaceExistingLink) {
+     throw new Error('This bank account is already linked to another account.');
+   }
++
++  // Local-only unlink: the bank connection stays in use by the new link, so
++  // nothing is sent to the bank provider.
++  for (const { id } of existing) {
++    await db.updateAccount({
++      id,
++      account_id: null,
++      bank: null,
++      balance_current: null,
++      balance_available: null,
++      balance_limit: null,
++      account_sync_source: null,
++      bank_sync_status: null,
++    });
++  }
+ }
+ 
+ async function linkGoCardlessAccount({
+@@ -292,6 +312,7 @@ async function linkGoCardlessAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+@@ -300,6 +321,7 @@ async function linkGoCardlessAccount({
+     'goCardless',
+     account.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+@@ -326,6 +348,7 @@ async function linkSimpleFinAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
+@@ -333,6 +356,7 @@ async function linkSimpleFinAccount({
+     'simpleFin',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -368,6 +392,7 @@ async function linkPluggyAiAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
+@@ -375,6 +400,7 @@ async function linkPluggyAiAccount({
+     'pluggyai',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const fileId = getPrefs()?.cloudFileId;
+@@ -413,6 +439,7 @@ async function linkAkahuAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
+@@ -420,6 +447,7 @@ async function linkAkahuAccount({
+     'akahu',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -453,6 +481,7 @@ async function linkFintegraAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerFintegraAccount;
+ }) {
+@@ -460,6 +489,7 @@ async function linkFintegraAccount({
+     'fintegra',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -489,6 +519,7 @@ async function linkEnableBankingAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
+@@ -496,6 +527,7 @@ async function linkEnableBankingAccount({
+     'enableBanking',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+diff --git a/upcoming-release-notes/link-replace-existing-account.md b/upcoming-release-notes/link-replace-existing-account.md
+new file mode 100644
+index 0000000..d2e0541
+--- /dev/null
++++ b/upcoming-release-notes/link-replace-existing-account.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow linking a bank account that another account holds by unlinking the previous account (`replaceExistingLink`)

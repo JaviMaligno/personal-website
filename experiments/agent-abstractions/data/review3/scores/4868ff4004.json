@@ -1,0 +1,12 @@
+{"id":"4868ff4004",
+"reuse":{"score":2,"why":"Reuses the shared extractTagsFromText tag parser, but reads group notes from a g.notes column instead of the notes table (joined by id) where this tree stores all notes, as statements.ts and the month notes code do."},
+"duplication":{"score":3,"why":"The '#fixed group' check is written twice, once as a JS filter in getBulkBudgetCategories and once inline in copyPreviousMonth, extending the tree's already split rule rather than unifying it."},
+"placement":{"score":2,"why":"The rule lands in both month-wide selection paths of budget/actions.ts, but the notes data access goes around the notes table layer and assumes a category_groups.notes column the schema does not have."},
+"scope":{"score":5,"why":"Only the month-wide selection paths and their row type are touched."},
+"maintainability":{"score":2,"why":"A maintainer must keep two copies of the exclusion rule in sync (SQL filter plus JS filter in one, inline ifs in the other) and the notes source is not the one the rest of the code uses; no tests."},
+"bypasses_abstraction":{"value":true,"where":"getBulkBudgetCategories and getBudgetData select g.notes from category_groups instead of joining the notes table, the tree's storage for group notes"},
+"duplicated_blocks":1,
+"would_merge":"no",
+"disguised_duplication":{"value":false,"where":"The duplicated tag check is an open copy (same extractTagsFromText(...).includes('fixed') expression in two places)."},
+"one_place":{"value":false,"where":"The #fixed rule is added separately in getBulkBudgetCategories (filter after the SQL) and in copyPreviousMonth's inline skip conditions in budget/actions.ts"}
+}

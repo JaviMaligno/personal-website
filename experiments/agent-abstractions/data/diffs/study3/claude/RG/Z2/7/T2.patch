@@ -1,0 +1,89 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+new file mode 100644
+index 0000000..db9fa1c
+--- /dev/null
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -0,0 +1,32 @@
++import type { ScheduleEntity } from '#types/models';
++
++import { scheduleModel } from './api-models';
++
++function toExternal(amount: unknown) {
++  return scheduleModel.toExternal({
++    id: 's1',
++    _amount: amount,
++    _amountOp: 'is',
++  } as ScheduleEntity);
++}
++
++describe('scheduleModel.toExternal expectedAmount', () => {
++  it('keeps amount and gives a single amount as itself', () => {
++    const result = toExternal(-5000);
++    expect(result.amount).toBe(-5000);
++    expect(result.expectedAmount).toBe(-5000);
++  });
++
++  it('gives the end furthest from zero for a range', () => {
++    const range = { num1: -10100, num2: -20000 };
++    const result = toExternal(range);
++    expect(result.amount).toEqual(range);
++    expect(result.expectedAmount).toBe(-20000);
++    expect(toExternal({ num1: 100, num2: -300 }).expectedAmount).toBe(-300);
++  });
++
++  it('gives 0 without an amount', () => {
++    expect(toExternal(undefined).expectedAmount).toBe(0);
++    expect(toExternal(null).expectedAmount).toBe(0);
++  });
++});
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..cf80bdf 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,3 +1,4 @@
++import { getScheduledAmount } from '#shared/schedules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -234,6 +235,7 @@ export type APIScheduleEntity = Pick<
+   account?: ScheduleEntity['_account']; // Optional will default to null
+   amount?: ScheduleEntity['_amount']; // Provide only 1 number except if the Amount
+   amountOp: AmountOPType; // 'is' | 'isapprox' | 'isbetween'
++  expectedAmount?: number; // Read-only: the single amount the schedule is expected to post
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
+ };
+ 
+@@ -250,6 +252,7 @@ export const scheduleModel = {
+       account: schedule._account,
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
++      expectedAmount: getScheduledAmount(schedule._amount),
+       date: schedule._date,
+     };
+   },
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index dd819a0..3d97b03 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -1067,6 +1067,9 @@ handlers['api/schedule-update'] = withMutation(async function ({
+         }
+         break;
+       }
++      case 'expectedAmount':
++        // Read-only, derived from the amount; ignored so fetched schedules can be sent back
++        break;
+       default: {
+         throw APIError(`Unhandled field: ${typedKey}`);
+       }
+diff --git a/upcoming-release-notes/api-schedule-expected-amount.md b/upcoming-release-notes/api-schedule-expected-amount.md
+new file mode 100644
+index 0000000..996c09e
+--- /dev/null
++++ b/upcoming-release-notes/api-schedule-expected-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Add `expectedAmount` to the schedules returned by the API schedule list

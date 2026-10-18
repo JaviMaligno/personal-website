@@ -1,0 +1,11 @@
+{"id":"25da11ebea",
+"reuse":{"score":4,"why":"Extends the existing getDateWithSkippedWeekend and threads the list through every existing caller, adding one exported isNonWorkingDay predicate that both shared and server code use."},
+"duplication":{"score":3,"why":"The non-working-day test is shared, but the scan/shift window growth for holidays is computed with three different ad hoc formulas in getNextDate, getUpcomingDates and getDatesInRange, and the daily skip filter stays copied between getNextDate and applyWeekendHandling."},
+"placement":{"score":4,"why":"The rule lives in shared/schedules.ts where weekend solving already lives; the server only passes the list, though the window-size knowledge leaks into schedules/app.ts."},
+"scope":{"score":5,"why":"Only the holiday field, its propagation to each weekend-handling site, the solver and tests are changed."},
+"maintainability":{"score":3,"why":"The core predicate and solver loop are clear, but three unrelated window-size formulas that must stay in step with the holiday rule are a maintenance trap."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Holiday-driven search-window growth is reshaped differently at each site: MAX_DAILY_OCCURRENCE_SCAN * (holidays + 1) in shared/schedules.ts getNextDate, (count + holidayCount) * 7 in getUpcomingDates and WEEKEND_SHIFT_DAYS + 2 * holidays in getDatesInRange (server/schedules/app.ts)."},
+"one_place":{"value":true,"where":"isNonWorkingDay and getDateWithSkippedWeekend in packages/loot-core/src/shared/schedules.ts decide what counts as a non-working day and where it moves; getNextDate, applyWeekendHandling and schedule-template all call them (only window sizing is repeated)."}}

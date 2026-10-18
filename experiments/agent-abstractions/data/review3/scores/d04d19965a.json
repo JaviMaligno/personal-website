@@ -1,0 +1,13 @@
+{
+  "id": "d04d19965a",
+  "reuse": {"score": 3, "why": "Uses RSchedule, recurConfigToRSchedule and getDateWithSkippedWeekend, but parses days with a hand-built new Date(`${day}T12:00:00`) instead of monthUtils.parseDate and re-derives the daily-skip condition that getNextDate already encodes."},
+  "duplication": {"score": 3, "why": "The 'daily + skipWeekend + weekend day => skip' rule is restated inline, duplicating getNextDate's isDailySkippingWeekends logic rather than sharing one predicate."},
+  "placement": {"score": 4, "why": "The handler sits next to getUpcomingDates in server/schedules/app.ts and is registered like its siblings; the daily-skip rule would better live in shared/schedules.ts."},
+  "scope": {"score": 5, "why": "Only the new handler, its registration and tests."},
+  "maintainability": {"score": 3, "why": "Readable and small, but the daily-skip rule now lives in two places and the ±2-day window is a hard-coded assumption about the adjustment."},
+  "bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getDatesInRange parses days with new Date(`${start}T12:00:00`) instead of monthUtils.parseDate, and re-implements the daily-skip decision instead of sharing it with getNextDate"},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "the daily weekend skip of shared/schedules.ts getNextDate (filter !d.isWeekend under isDailySkippingWeekends) is re-expressed as an isDaily && skipWeekend === true && isWeekend continue in getDatesInRange"},
+  "t2_reuse": "helper"
+}

@@ -1,0 +1,12 @@
+{"id":"1e8f445ad7",
+"reuse":{"score":3,"why":"All sites call the shared getDateWithSkippedWeekend (now taking the enable flag and holidays), but the daily-skip rule and the non-working-day test are re-implemented at each server call site instead of using a shared definition (isNonWorkingDay is kept private and re-spelled as d.isWeekend || isHoliday in app.ts)."},
+"duplication":{"score":2,"why":"The 'daily + skipWeekend + non-working day -> drop, else shift' block is written three times (getNextDate, getUpcomingDates, getDatesInRange), the two app.ts flatMap bodies being near-identical, and schedule-template.ts keeps two identical ternary blocks."},
+"placement":{"score":3,"why":"Date-adjustment logic belongs in shared/schedules.ts, but the daily-skip policy lives in server/schedules/app.ts handlers and getNextDate rather than in the shared helper."},
+"scope":{"score":4,"why":"Edits stay on schedule date logic, the new handler, the type and tests; the occurrence over-fetch in getUpcomingDates is a related necessity."},
+"maintainability":{"score":2,"why":"The weekend/holiday rule is split between a helper and three hand-written daily branches (schedule-template.ts not applying the daily rule at all), so the next rule change must be made in several places that already disagree."},
+"bypasses_abstraction":{"value":true,"where":"getUpcomingDates and getDatesInRange in server/schedules/app.ts and getNextDate in shared/schedules.ts decide daily weekend/holiday skipping themselves around getDateWithSkippedWeekend; app.ts re-spells isNonWorkingDay."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Daily-skip check reshaped as a flatMap filter in getUpcomingDates/getDatesInRange and as a retry loop in getNextDate; isNonWorkingDay re-expressed inline as d.isWeekend(date) || isHoliday(...)."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gained skipWeekend and holidays parameters plus an early-return branch; getNextDate, getUpcomingDates and getDatesInRange each carry their own daily-frequency branch outside the helper."}
+}

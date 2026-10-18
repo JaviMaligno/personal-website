@@ -1,0 +1,69 @@
+diff --git a/packages/loot-core/migrations/1791838388703_add_category_group_notes.sql b/packages/loot-core/migrations/1791838388703_add_category_group_notes.sql
+new file mode 100644
+index 0000000..4711c93
+--- /dev/null
++++ b/packages/loot-core/migrations/1791838388703_add_category_group_notes.sql
+@@ -0,0 +1 @@
++ALTER TABLE category_groups ADD COLUMN notes TEXT;
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 30e41e0..d2581e3 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -246,6 +246,33 @@ describe('set budget average', () => {
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
+   });
+ 
++  it('leaves categories in fixed groups alone and updates other groups', async () => {
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed costs',
++      is_income: 0,
++      notes: 'Monthly bills #fixed',
++    });
++    await db.insertCategory({
++      id: 'fixed-cat',
++      name: 'Rent',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await sheet.loadSpreadsheet(db);
++
++    for (const category of ['fixed-cat', 'cat1']) {
++      await setBudget({ category, month: '2024-04', amount: 700 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-fixed-cat')).toBe(700);
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
++  });
++
+   it('sets a bulk 3 month average from the first activity month', async () => {
+     await setBudget({ category: 'cat1', month: '2023-12', amount: 1000 });
+ 
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 0b63089..10d0f20 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -308,6 +308,7 @@ async function getMonthActionCategories(): Promise<
+     WHERE c.tombstone = 0
+       AND c.hidden = 0
+       AND g.hidden = 0
++      AND NOT COALESCE(REGEXP('(^|[^#])#fixed([\\s#]|$)', g.notes), 0)
+       AND NOT (
+         COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') = 'ui'
+         AND c.goal_def IS NOT NULL
+diff --git a/packages/loot-core/src/server/db/types/index.ts b/packages/loot-core/src/server/db/types/index.ts
+index ee0000a..01d78ce 100644
+--- a/packages/loot-core/src/server/db/types/index.ts
++++ b/packages/loot-core/src/server/db/types/index.ts
+@@ -69,6 +69,7 @@ export type DbCategory = {
+ export type DbCategoryGroup = {
+   id: string;
+   name: string;
++  notes?: string | null;
+   is_income: 1 | 0;
+   sort_order: number;
+   hidden: 1 | 0;

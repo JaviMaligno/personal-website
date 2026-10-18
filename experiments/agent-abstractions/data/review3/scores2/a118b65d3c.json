@@ -1,0 +1,12 @@
+{
+  "id": "a118b65d3c",
+  "reuse": {"score": 3, "why": "It builds on the single linkBankSyncAccount definition, but writes its own copy of unlinkAccount's link-clearing updateAccount rather than extracting a shared local-unlink helper that unlinkAccount also uses."},
+  "duplication": {"score": 3, "why": "The eight-field reset (account_id, bank, balances, sync source, sync status) duplicates the block in unlinkAccount verbatim."},
+  "placement": {"score": 4, "why": "The takeover lives in linkBankSyncAccount, the single link definition, and runs only after the closed-account check, so the guard order is preserved."},
+  "scope": {"score": 5, "why": "Only the flag threading, the takeover in the shared link function and a release note are changed."},
+  "maintainability": {"score": 3, "why": "Clear and well-commented, but the duplicated unlink field list must be kept in sync with unlinkAccount and the flag is threaded by hand through six provider wrappers."},
+  "bypasses_abstraction": {"value": true, "where": "accounts/app.ts linkBankSyncAccount: clears the previous holder with its own db.updateAccount instead of reusing unlinkAccount's local unlink logic (extracted into a helper)"},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "The copied unlink reset is a plain verbatim copy, not disguised"}
+}

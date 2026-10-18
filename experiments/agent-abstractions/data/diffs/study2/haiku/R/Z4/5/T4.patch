@@ -1,0 +1,88 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 7353677..fef3c30 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -254,6 +254,23 @@ describe('schedule app', () => {
+       );
+     });
+ 
++    it('moves an occurrence on an MM-DD holiday in every year', async () => {
++      const config = {
++        ...monthly,
++        start: '2024-06-04',
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++        holidays: ['06-04'],
++      };
++
++      expect(await getDatesInRange(config, '2025-06-04', '2025-06-04')).toEqual(
++        [],
++      );
++      expect(await getDatesInRange(config, '2025-06-05', '2025-06-05')).toEqual(
++        ['2025-06-05'],
++      );
++    });
++
+     it('moves a weekend occurrence past consecutive holidays', async () => {
+       // 2024-06-01 is a Saturday; 2024-06-03 and 2024-06-04 are holidays
+       const config = {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index a7827b8..79bf056 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -535,6 +535,38 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2024, 4, 1))).toBe('2024-06-05');
+     });
+ 
++    it('treats an MM-DD holiday as every year', () => {
++      // 2025-06-04 is a Wednesday
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2024-06-04',
++          frequency: 'yearly',
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['06-04'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2025, 0, 1))).toBe('2025-06-05');
++    });
++
++    it('applies both full-date and MM-DD holidays in the same list', () => {
++      // 2024-06-03 is a Monday, 2024-06-04 is a Tuesday
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2024-06-01',
++          frequency: 'monthly',
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['2024-06-03', '06-04'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2024, 4, 1))).toBe('2024-06-05');
++    });
++
+     it('moves a weekend occurrence past a holiday Monday when moving after', () => {
+       // 2024-06-01 is a Saturday, 2024-06-03 is a Monday
+       const dateCond = {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 751767c..3426e7b 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -295,7 +295,11 @@ export function isWeekendOrHoliday(
+   date: Date,
+   holidays: ReadonlySet<string>,
+ ): boolean {
+-  return d.isWeekend(date) || holidays.has(monthUtils.dayFromDate(date));
++  if (d.isWeekend(date)) {
++    return true;
++  }
++  const day = monthUtils.dayFromDate(date);
++  return holidays.has(day) || holidays.has(day.slice(5));
+ }
+ 
+ export function getNextDate(

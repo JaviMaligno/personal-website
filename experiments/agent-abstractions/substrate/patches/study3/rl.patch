@@ -1,0 +1,317 @@
+diff --git a/package.json b/package.json
+index 86b7dda..f3c151d 100644
+--- a/package.json
++++ b/package.json
+@@ -58,8 +58,8 @@
+     "vrt:docker": "./bin/run-vrt",
+     "rebuild-electron": "./node_modules/.bin/electron-rebuild -m ./packages/desktop-electron -o better-sqlite3,bcrypt,argon2 --build-from-source -f",
+     "rebuild-node": "yarn workspace @actual-app/core rebuild",
+-    "lint": "oxfmt --check . && oxlint --type-aware --quiet",
+-    "lint:fix": "oxfmt . && oxlint --fix --type-aware --quiet",
++    "lint": "oxfmt --check . && oxlint --type-aware --quiet; a=$?; node packages/loot-core/bin/dup-check.mjs; b=$?; [ $a -eq 0 ] && [ $b -eq 0 ]",
++    "lint:fix": "oxfmt . && oxlint --fix --type-aware --quiet; a=$?; node packages/loot-core/bin/dup-check.mjs; b=$?; [ $a -eq 0 ] && [ $b -eq 0 ]",
+     "knip": "knip",
+     "install:server": "yarn workspaces focus @actual-app/sync-server --production",
+     "constraints": "yarn constraints",
+diff --git a/packages/loot-core/bin/dup-check.config.json b/packages/loot-core/bin/dup-check.config.json
+new file mode 100644
+index 0000000..4e860c1
+--- /dev/null
++++ b/packages/loot-core/bin/dup-check.config.json
+@@ -0,0 +1,4 @@
++{
++  "minTokens": 35,
++  "scope": "packages/loot-core/src"
++}
+diff --git a/packages/loot-core/bin/dup-check.mjs b/packages/loot-core/bin/dup-check.mjs
+new file mode 100644
+index 0000000..99100e6
+--- /dev/null
++++ b/packages/loot-core/bin/dup-check.mjs
+@@ -0,0 +1,273 @@
++#!/usr/bin/env node
++// Duplication check for loot-core (run by `yarn lint` in packages/loot-core and by
++// the root `yarn lint` and `yarn lint:fix`).
++//
++// Fails when a block of duplicated code (jscpd, see dup-check.config.json) has a
++// side on a line added or modified since the start of the current task (the
++// repository's root commit). Duplication that was already there before the task
++// is not reported. Test files, mocks and test helpers are not scanned.
++import { execFileSync, spawnSync } from 'node:child_process';
++import fs from 'node:fs';
++import os from 'node:os';
++import path from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++const here = path.dirname(fileURLToPath(import.meta.url));
++const config = JSON.parse(
++  fs.readFileSync(path.join(here, 'dup-check.config.json'), 'utf8'),
++);
++const SCOPE = config.scope;
++const MIN_TOKENS = config.minTokens;
++const TEST_INFRA_DIRS = [`${SCOPE}/mocks/`, `${SCOPE}/server/tests/`];
++const asJson = process.argv.includes('--json');
++
++function fail(message) {
++  process.stderr.write(`dup-check: ${message}\n`);
++  process.exit(2);
++}
++
++function git(args, cwd) {
++  return execFileSync('git', args, {
++    cwd,
++    encoding: 'utf8',
++    maxBuffer: 256 * 1024 * 1024,
++    stdio: ['ignore', 'pipe', 'pipe'],
++  });
++}
++
++function byCodePoint(x, y) {
++  return x < y ? -1 : x > y ? 1 : 0;
++}
++
++function lines(text) {
++  return text.split('\n').filter(Boolean);
++}
++
++function repoRoot() {
++  try {
++    return git(['rev-parse', '--show-toplevel'], here).trim();
++  } catch {
++    return fail('cannot find the start commit: not a git repository');
++  }
++}
++
++// The task's start commit: the root commit of HEAD's history (named "start").
++function startCommit(root) {
++  let roots;
++  try {
++    roots = lines(git(['rev-list', '--max-parents=0', 'HEAD'], root));
++  } catch {
++    return fail('cannot find the start commit: the repository has no commits');
++  }
++  const named = roots.filter(
++    sha => git(['log', '-1', '--format=%s', sha], root).trim() === 'start',
++  );
++  if (named.length === 1) return named[0];
++  if (roots.length === 1) return roots[0];
++  return fail(`cannot find the start commit: ${roots.length} root commits`);
++}
++
++function isSource(p) {
++  const parts = p.split('/');
++  if (['node_modules', '__mocks__', '__tests__'].some(d => parts.includes(d))) {
++    return false;
++  }
++  if (TEST_INFRA_DIRS.some(d => p.startsWith(d))) return false;
++  if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(p) || p.includes('.d.ts')) {
++    return false;
++  }
++  return /\.[cm]?[jt]sx?$/.test(p);
++}
++
++// Number of lines as Python's bytes.splitlines() counts them (the harness's rule).
++function lineCount(text) {
++  if (text === '') return 0;
++  const parts = text.split(/\r\n|\r|\n/);
++  return parts.at(-1) === '' ? parts.length - 1 : parts.length;
++}
++
++function untracked(root) {
++  return lines(
++    git(['ls-files', '-o', '--exclude-standard', '--', SCOPE], root),
++  );
++}
++
++// Post-image lines added or modified since `start` (untracked files whole).
++function changedLines(root, start) {
++  const diff = git(
++    [
++      'diff',
++      '-U0',
++      '--no-renames',
++      '--no-color',
++      '--no-ext-diff',
++      start,
++      '--',
++      SCOPE,
++    ],
++    root,
++  );
++  const out = new Map();
++  let cur = null;
++  for (const ln of diff.split('\n')) {
++    if (ln.startsWith('+++ ')) {
++      const p = ln.slice(4).trim();
++      cur = p === '/dev/null' ? null : p.startsWith('b/') ? p.slice(2) : p;
++      continue;
++    }
++    const m = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/.exec(ln);
++    if (m && cur !== null) {
++      const first = Number(m[1]);
++      const count = m[2] === undefined ? 1 : Number(m[2]);
++      if (!out.has(cur)) out.set(cur, new Set());
++      for (let i = first; i < first + count; i++) out.get(cur).add(i);
++    }
++  }
++  for (const p of untracked(root)) {
++    const f = path.join(root, p);
++    if (!fs.statSync(f, { throwIfNoEntry: false })?.isFile()) continue;
++    const n = lineCount(fs.readFileSync(f).toString('latin1'));
++    if (n) out.set(p, new Set(Array.from({ length: n }, (_, i) => i + 1)));
++  }
++  return out;
++}
++
++function scannedFiles(root) {
++  const all = new Set([
++    ...lines(git(['ls-files', '--', SCOPE], root)),
++    ...untracked(root),
++  ]);
++  return [...all]
++    .filter(p => isSource(p))
++    .filter(p =>
++      fs.statSync(path.join(root, p), { throwIfNoEntry: false })?.isFile(),
++    )
++    .sort(byCodePoint);
++}
++
++function resolveName(name, files, stage) {
++  for (const pre of [`${stage}/`, './']) {
++    if (name.startsWith(pre)) name = name.slice(pre.length);
++  }
++  if (files.includes(name)) return name;
++  const hits = files.filter(f => f.endsWith(`/${name}`));
++  return hits.length === 1 ? hits[0] : null;
++}
++
++// jscpd over exactly the scanned files, copied at their repo paths into a staging
++// directory that holds nothing else (no config files, unambiguous names).
++function jscpdClones(root, files) {
++  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'dup-check-'));
++  try {
++    const stage = path.join(tmp, 'src');
++    const out = path.join(tmp, 'out');
++    for (const f of files) {
++      fs.mkdirSync(path.dirname(path.join(stage, f)), { recursive: true });
++      fs.copyFileSync(path.join(root, f), path.join(stage, f));
++    }
++    fs.mkdirSync(path.join(stage, SCOPE), { recursive: true });
++    const r = spawnSync(
++      'jscpd',
++      [
++        '--min-tokens',
++        String(MIN_TOKENS),
++        '--reporters',
++        'json',
++        '--silent',
++        '--output',
++        out,
++        SCOPE,
++      ],
++      { cwd: stage, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 },
++    );
++    if (r.error) fail(`cannot run jscpd: ${r.error.message}`);
++    if (r.status !== 0) {
++      fail(`jscpd exited with ${r.status}: ${r.stderr || r.stdout}`);
++    }
++    const reportPath = path.join(out, 'jscpd-report.json');
++    const report = fs.existsSync(reportPath)
++      ? JSON.parse(fs.readFileSync(reportPath, 'utf8'))
++      : { duplicates: [] };
++    const clones = [];
++    let unresolved = 0;
++    for (const d of report.duplicates ?? []) {
++      const a = d.firstFile ?? {};
++      const b = d.secondFile ?? {};
++      const na = resolveName(a.name ?? '', files, stage);
++      const nb = resolveName(b.name ?? '', files, stage);
++      const ends = [a.start, a.end, b.start, b.end];
++      if (na === null || nb === null || !ends.every(Number.isInteger)) {
++        unresolved += 1;
++        continue;
++      }
++      clones.push({
++        a: na,
++        a_start: a.start,
++        a_end: a.end,
++        b: nb,
++        b_start: b.start,
++        b_end: b.end,
++        lines: Number(d.lines ?? 0),
++        tokens: Number(d.tokens ?? 0),
++      });
++    }
++    return { clones, unresolved };
++  } finally {
++    fs.rmSync(tmp, { recursive: true, force: true });
++  }
++}
++
++function touches(changed, file, start, end) {
++  const set = changed.get(file);
++  if (!set) return false;
++  for (const ln of set) if (ln >= start && ln <= end) return true;
++  return false;
++}
++
++const root = repoRoot();
++const start = startCommit(root);
++const files = scannedFiles(root);
++const changed = changedLines(root, start);
++const { clones, unresolved } = jscpdClones(root, files);
++const offending = clones
++  .filter(
++    c =>
++      touches(changed, c.a, c.a_start, c.a_end) ||
++      touches(changed, c.b, c.b_start, c.b_end),
++  )
++  .sort(
++    (x, y) =>
++      byCodePoint(x.a, y.a) ||
++      x.a_start - y.a_start ||
++      byCodePoint(x.b, y.b) ||
++      x.b_start - y.b_start,
++  );
++
++if (asJson) {
++  process.stdout.write(
++    `${JSON.stringify({ start, minTokens: MIN_TOKENS, files: files.length, unresolved, clones: offending }, null, 2)}\n`,
++  );
++} else if (offending.length === 0) {
++  process.stdout.write(
++    'dup-check: ok (no duplicated code on lines changed since the start of this task)\n',
++  );
++} else {
++  const rows = offending.map(
++    c =>
++      `  ${c.a}:${c.a_start}-${c.a_end} ~ ${c.b}:${c.b_start}-${c.b_end} (${c.tokens} tokens)`,
++  );
++  process.stdout.write(
++    [
++      'dup-check: duplicated code on lines added or changed in this task:',
++      ...rows,
++      'The check passes when no duplicated block includes a line added or changed in this task.',
++      '',
++    ].join('\n'),
++  );
++}
++if (unresolved) {
++  process.stderr.write(
++    `dup-check: warning: ${unresolved} clone(s) with unresolved file names\n`,
++  );
++}
++process.exit(offending.length === 0 ? 0 : 1);
+diff --git a/packages/loot-core/package.json b/packages/loot-core/package.json
+index c7c84ec..dd1ba67 100644
+--- a/packages/loot-core/package.json
++++ b/packages/loot-core/package.json
+@@ -192,7 +192,7 @@
+     "test:web": "ENV=web vitest --run -c vitest.web.config.ts",
+     "typecheck": "tsgo -b && tsc-strict",
+     "build": "tsgo -b",
+-    "lint": "tsgo -b",
++    "lint": "tsgo -b; a=$?; node bin/dup-check.mjs; b=$?; [ $a -eq 0 ] && [ $b -eq 0 ]",
+     "prepack": "yarn build && node scripts/add-types-conditions.mts",
+     "postpack": "node scripts/restore-package-json.mts"
+   },

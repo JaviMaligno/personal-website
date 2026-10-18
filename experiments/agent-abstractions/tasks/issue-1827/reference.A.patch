@@ -1,0 +1,26 @@
+diff --git a/packages/loot-core/src/server/accounts/sync.ts b/packages/loot-core/src/server/accounts/sync.ts
+index c15278c..e652156 100644
+--- a/packages/loot-core/src/server/accounts/sync.ts
++++ b/packages/loot-core/src/server/accounts/sync.ts
+@@ -694,6 +694,21 @@ export async function reconcileTransactions(
+           existing.raw_synced_data ?? trans.raw_synced_data ?? null,
+       };
+ 
++      // A transaction matched by its imported_id takes the imported amount
++      // when the bank changed it. Split parents and their children keep
++      // their amounts: the import cannot know how to divide a new total
++      // between the parts.
++      if (
++        trans.imported_id &&
++        trans.imported_id === existing.imported_id &&
++        typeof trans.amount === 'number' &&
++        trans.amount !== existing.amount &&
++        !existing.is_parent &&
++        !existing.parent_id
++      ) {
++        updates['amount'] = trans.amount;
++      }
++
+       if (updateDates && trans.date) {
+         updates['date'] = trans.date;
+       }

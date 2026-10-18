@@ -1,0 +1,169 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index fee5fc2..740b70f 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -48,6 +48,7 @@ import * as bankSync from './sync';
+ // Shared base type for link account parameters
+ type LinkAccountBaseParams = {
+   upgradingId?: AccountEntity['id'];
++  replaceExistingLink?: boolean;
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
+@@ -175,13 +176,14 @@ async function assertBankAccountNotLinked(
+   syncSource: string,
+   externalAccountId: string,
+   upgradingId?: string,
++  replaceExistingLink = false,
+ ) {
+-  const existing = await db.first<Pick<db.DbAccount, 'id'>>(
++  const existing = await db.all<Pick<db.DbAccount, 'id'>>(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',
+     [syncSource, externalAccountId, upgradingId ?? null],
+   );
+ 
+-  if (existing) {
++  if (existing.length > 0 && !replaceExistingLink) {
+     throw new Error('This bank account is already linked to another account.');
+   }
+ 
+@@ -191,18 +193,38 @@ async function assertBankAccountNotLinked(
+       [upgradingId],
+     );
+ 
+-    if (target?.closed === 1) {
++    if (!target) {
++      throw new Error(`Account with ID ${upgradingId} not found.`);
++    }
++
++    if (target.closed === 1) {
+       throw new Error(
+         'Closed accounts cannot be linked to a bank account. Reopen the account first.',
+       );
+     }
+   }
++
++  // Release the previous holders locally only; the bank connection stays in
++  // use by the new link, so nothing is sent to the provider.
++  for (const { id } of existing) {
++    await db.updateAccount({
++      id,
++      account_id: null,
++      bank: null,
++      balance_current: null,
++      balance_available: null,
++      balance_limit: null,
++      account_sync_source: null,
++      bank_sync_status: null,
++    });
++  }
+ }
+ 
+ async function linkGoCardlessAccount({
+   requisitionId,
+   account,
+   upgradingId,
++  replaceExistingLink = false,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -214,6 +236,7 @@ async function linkGoCardlessAccount({
+     'goCardless',
+     account.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+   let id;
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+@@ -276,6 +299,7 @@ async function linkGoCardlessAccount({
+ async function linkSimpleFinAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink = false,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -286,6 +310,7 @@ async function linkSimpleFinAccount({
+     'simpleFin',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+   let id;
+ 
+@@ -358,6 +383,7 @@ async function linkSimpleFinAccount({
+ async function linkPluggyAiAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink = false,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -368,6 +394,7 @@ async function linkPluggyAiAccount({
+     'pluggyai',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+   let id;
+   const fileId = getPrefs()?.cloudFileId;
+@@ -442,6 +469,7 @@ async function linkPluggyAiAccount({
+ async function linkAkahuAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink = false,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -452,6 +480,7 @@ async function linkAkahuAccount({
+     'akahu',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+   let id;
+ 
+@@ -521,6 +550,7 @@ async function linkAkahuAccount({
+ async function linkFintegraAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink = false,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -531,6 +561,7 @@ async function linkFintegraAccount({
+     'fintegra',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+   let id;
+ 
+@@ -597,6 +628,7 @@ async function linkFintegraAccount({
+ async function linkEnableBankingAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink = false,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -607,6 +639,7 @@ async function linkEnableBankingAccount({
+     'enableBanking',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+   let id: string | undefined;
+ 
+diff --git a/upcoming-release-notes/replace-existing-bank-link.md b/upcoming-release-notes/replace-existing-bank-link.md
+new file mode 100644
+index 0000000..8101955
+--- /dev/null
++++ b/upcoming-release-notes/replace-existing-bank-link.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow linking a bank account that another local account holds, by unlinking the previous account (`replaceExistingLink`)

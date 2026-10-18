@@ -1,0 +1,125 @@
+diff --git a/packages/loot-core/migrations/1789000000000_add_category_group_notes.sql b/packages/loot-core/migrations/1789000000000_add_category_group_notes.sql
+new file mode 100644
+index 0000000..4711c93
+--- /dev/null
++++ b/packages/loot-core/migrations/1789000000000_add_category_group_notes.sql
+@@ -0,0 +1 @@
++ALTER TABLE category_groups ADD COLUMN notes TEXT;
+diff --git a/packages/loot-core/src/server/aql/schema/index.ts b/packages/loot-core/src/server/aql/schema/index.ts
+index 2ecf4a6..2942081 100644
+--- a/packages/loot-core/src/server/aql/schema/index.ts
++++ b/packages/loot-core/src/server/aql/schema/index.ts
+@@ -101,6 +101,7 @@ export const schema = {
+   category_groups: {
+     id: f('id'),
+     name: f('string'),
++    notes: f('string'),
+     is_income: f('boolean'),
+     hidden: f('boolean'),
+     sort_order: f('float'),
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 594f5b6..1ea06c2 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -93,6 +93,53 @@ describe('month-wide budget actions', () => {
+     expect(await getSheetValue('budget202402', 'budget-templated')).toBe(900);
+     expect(await getSheetValue('budget202402', 'budget-ordinary')).toBe(0);
+   });
++
++  it('leaves categories in groups tagged #fixed untouched', async () => {
++    await db.insertCategoryGroup({
++      id: 'income-group',
++      name: 'Income',
++      is_income: 1,
++    });
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed costs',
++      is_income: 0,
++      notes: 'Rent and bills #fixed',
++    });
++    await db.insertCategoryGroup({
++      id: 'ordinary-group',
++      name: 'Ordinary',
++      is_income: 0,
++      notes: 'ordinary notes',
++    });
++    await db.insertCategoryGroup({
++      id: 'category-note-group',
++      name: 'Category note only',
++      is_income: 0,
++    });
++    await db.insertCategory({ id: 'rent', name: 'Rent', cat_group: 'fixed-group' });
++    await db.insertCategory({ id: 'food', name: 'Food', cat_group: 'ordinary-group' });
++    await db.insertCategory({ id: 'misc', name: 'Misc', cat_group: 'category-note-group' });
++    await sheet.loadSpreadsheet(db);
++    await budget.createBudget(['2024-01', '2024-02']);
++
++    for (const category of ['rent', 'food', 'misc']) {
++      await setBudget({ category, month: '2024-01', amount: 700 });
++      await setBudget({ category, month: '2024-02', amount: 900 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await copyPreviousMonth({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++    expect(await getSheetValue('budget202402', 'budget-rent')).toBe(900);
++    expect(await getSheetValue('budget202402', 'budget-food')).toBe(700);
++    expect(await getSheetValue('budget202402', 'budget-misc')).toBe(700);
++
++    await setZero({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++    expect(await getSheetValue('budget202402', 'budget-rent')).toBe(900);
++    expect(await getSheetValue('budget202402', 'budget-food')).toBe(0);
++  });
+ });
+ 
+ describe('copyUntilYearEnd', () => {
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 94c32a2..94975a4 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -220,6 +220,7 @@ type BulkBudgetCategory = Pick<
+   'id' | 'is_income' | 'hidden' | 'goal_def'
+ > & {
+   group_hidden: db.DbCategoryGroup['hidden'] | null;
++  group_notes: string | null;
+ };
+ 
+ // The categories a bulk budget action (copy last month, set to zero, set to an
+@@ -236,7 +237,8 @@ async function getBulkBudgetCategories({
+ }): Promise<BulkBudgetCategory[]> {
+   const categories = await db.all<BulkBudgetCategory>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++    g.notes AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0
+@@ -248,7 +250,12 @@ async function getBulkBudgetCategories({
+     if (cat.is_income === 1 && !tracking) {
+       return false;
+     }
+-    if (cat.hidden === 1 || cat.group_hidden === 1 || cat.goal_def != null) {
++    if (
++      cat.hidden === 1 ||
++      cat.group_hidden === 1 ||
++      cat.group_notes?.includes('#fixed') ||
++      cat.goal_def != null
++    ) {
+       return false;
+     }
+     return !(skipMissingGroup && cat.group_hidden == null);
+diff --git a/packages/loot-core/src/server/db/types/index.ts b/packages/loot-core/src/server/db/types/index.ts
+index ee0000a..18a3e66 100644
+--- a/packages/loot-core/src/server/db/types/index.ts
++++ b/packages/loot-core/src/server/db/types/index.ts
+@@ -72,6 +72,7 @@ export type DbCategoryGroup = {
+   is_income: 1 | 0;
+   sort_order: number;
+   hidden: 1 | 0;
++  notes?: string | null;
+   tombstone: 1 | 0;
+ };
+ 

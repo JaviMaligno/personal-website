@@ -1,0 +1,12 @@
+{"id":"04c79dc4fc",
+"reuse":{"score":2,"why":"Introduces getBulkBudgetCategories but setZero does not use it and re-inlines the same SQL, copyPreviousMonth re-checks the rule in JS, and the template-source expression already used in budget/statements.ts is pasted again rather than shared."},
+"duplication":{"score":2,"why":"The 'hidden / group hidden / ui template' exclusion is written three times (getBulkBudgetCategories WHERE, setZero's inline WHERE, copyPreviousMonth's JS checks plus a template_source column in getBudgetData)."},
+"placement":{"score":4,"why":"Selection logic stays in server/budget/actions.ts with the month-wide actions, though the template rule is encoded in SQL fragments rather than one predicate."},
+"scope":{"score":3,"why":"Beyond the requested exclusions, it folds set3/6/12MonthAvg into a new setBulkAverage that changes set3MonthAvg's code path (now via setNMonthAvg, awaited inside the batch), an unrequested refactor."},
+"maintainability":{"score":2,"why":"A future change to which categories month-wide actions fill must be edited in three different forms (two SQL strings and JS checks), the exact problem the request highlights."},
+"bypasses_abstraction":{"value":true,"where":"setZero in budget/actions.ts writes its own query instead of calling the new getBulkBudgetCategories; copyPreviousMonth decides the rule itself on getBudgetData rows."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The exclusion rule appears as a SQL WHERE in getBulkBudgetCategories, a reformatted copy of it in setZero, and as JS conditions on a template_source column in copyPreviousMonth."},
+"one_place":{"value":false,"where":"The rule lives in getBulkBudgetCategories (averages), an inline query in setZero, and JS checks in copyPreviousMonth; no single definition is shared by all month-wide actions."}
+}

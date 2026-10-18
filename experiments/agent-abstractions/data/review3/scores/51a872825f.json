@@ -1,0 +1,12 @@
+{"id": "51a872825f",
+"reuse": {"score": 5, "why": "The tolerance comes from the existing getApproxNumberThreshold in shared/rules, and the worst-case logic goes into the existing getScheduledAmount next to getRangedAmountWorstCase."},
+"duplication": {"score": 4, "why": "No logic is copied. The only repetition is the `getScheduledAmount(x, false, op)` call shape, which now appears at about a dozen call sites."},
+"placement": {"score": 5, "why": "The rule lives in shared/schedules.ts, the module that already owns how a scheduled amount resolves."},
+"scope": {"score": 3, "why": "Every caller is threaded with op, including display and search sites (ScheduleAmountCell, the mobile list items, the filter strings). An approximate amount therefore now displays at its worst case as well, not only in planning, which goes beyond the request."},
+"maintainability": {"score": 3, "why": "A defaulted positional op parameter behind a positional boolean means each caller must remember to pass op. A caller that forgets silently falls back to the old behaviour, and `false` boilerplate is spread across many sites."},
+"bypasses_abstraction": {"value": false, "where": "All amount resolution still goes through getScheduledAmount, and the threshold comes from getApproxNumberThreshold."},
+"duplicated_blocks": 0,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "No duplicated logic. getApproxAmountWorstCase builds on the shared threshold helper."},
+"one_place": {"value": true, "where": "The rule is defined once in getScheduledAmount/getApproxAmountWorstCase (shared/schedules.ts). Every planning path (preview transactions, Balance, schedule-template, forecast, api, posting) calls it with op. The callers must pass op, though, because the default 'is' keeps the old rule."}
+}

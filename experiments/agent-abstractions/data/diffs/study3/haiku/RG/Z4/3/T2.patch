@@ -1,0 +1,219 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 84d9707..92df456 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -8,6 +8,7 @@ import * as prefs from '#server/prefs';
+ import { loadRules, updateRule } from '#server/transactions/transaction-rules';
+ import { q } from '#shared/query';
+ import { getNextDate } from '#shared/schedules';
++import type { RecurConfig } from '#types/models';
+ 
+ import {
+   advanceSchedulesService,
+@@ -1142,6 +1143,96 @@ describe('schedule app', () => {
+     });
+   });
+ 
++  describe('schedule/get-dates-in-range', () => {
++    const getDatesInRange = (config: RecurConfig, start: string, end: string) =>
++      schedulesApp.handlers['schedule/get-dates-in-range']({
++        config,
++        start,
++        end,
++      });
++
++    it('lists the occurrences that fall within the period', () => {
++      const config: RecurConfig = {
++        start: '2024-01-15',
++        frequency: 'monthly',
++        interval: 1,
++        patterns: [{ type: 'day', value: 15 }],
++        endMode: 'never',
++      };
++
++      expect(getDatesInRange(config, '2024-01-15', '2024-03-14')).toEqual([
++        '2024-01-15',
++        '2024-02-15',
++      ]);
++    });
++
++    it('stops at the end date of the schedule', () => {
++      const config: RecurConfig = {
++        start: '2024-01-15',
++        frequency: 'monthly',
++        interval: 1,
++        patterns: [{ type: 'day', value: 15 }],
++        endMode: 'on_date',
++        endDate: '2024-02-10',
++      };
++
++      expect(getDatesInRange(config, '2024-01-01', '2024-12-31')).toEqual([
++        '2024-01-15',
++      ]);
++    });
++
++    it('moves a weekend occurrence after the weekend into the period', () => {
++      const config: RecurConfig = {
++        start: '2025-01-01',
++        frequency: 'monthly',
++        interval: 1,
++        patterns: [{ type: 'day', value: 1 }],
++        endMode: 'never',
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++      };
++
++      expect(getDatesInRange(config, '2025-02-02', '2025-02-03')).toEqual([
++        '2025-02-03',
++      ]);
++      expect(getDatesInRange(config, '2025-02-01', '2025-02-01')).toEqual([]);
++    });
++
++    it('moves a weekend occurrence before the weekend into the period', () => {
++      const config: RecurConfig = {
++        start: '2025-01-01',
++        frequency: 'monthly',
++        interval: 1,
++        patterns: [{ type: 'day', value: 1 }],
++        endMode: 'never',
++        skipWeekend: true,
++        weekendSolveMode: 'before',
++      };
++
++      expect(getDatesInRange(config, '2025-01-31', '2025-01-31')).toEqual([
++        '2025-01-31',
++      ]);
++      expect(getDatesInRange(config, '2025-02-01', '2025-02-01')).toEqual([]);
++    });
++
++    it('skips weekend occurrences of a daily schedule', () => {
++      const config: RecurConfig = {
++        start: '2025-01-01',
++        frequency: 'daily',
++        interval: 1,
++        patterns: [],
++        endMode: 'never',
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++      };
++
++      expect(getDatesInRange(config, '2025-01-31', '2025-02-03')).toEqual([
++        '2025-01-31',
++        '2025-02-03',
++      ]);
++    });
++  });
++
+   describe('auto-post service throttling', () => {
+     const dateCondition = {
+       op: 'is',
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index d0c4581..af420c4 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -22,7 +22,7 @@ import {
+ } from '#server/transactions/transaction-rules';
+ import { undoable } from '#server/undo';
+ import { RSchedule } from '#server/util/rschedule';
+-import { currentDay, dayFromDate } from '#shared/months';
++import { currentDay, dayFromDate, parseDate } from '#shared/months';
+ import { q } from '#shared/query';
+ import {
+   DEFAULT_UPCOMING_SCHEDULE_DAYS,
+@@ -35,6 +35,7 @@ import {
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+ import type {
++  RecurConfig,
+   RuleActionEntity,
+   RuleConditionEntity,
+   ScheduleEntity,
+@@ -502,6 +503,12 @@ function discoverSchedules() {
+   return findSchedules();
+ }
+ 
++function applyWeekendRule(config: RecurConfig, date: Date): Date | null {
++  return config.skipWeekend
++    ? getDateWithSkippedWeekend(date, config.weekendSolveMode, config.frequency)
++    : date;
++}
++
+ async function getUpcomingDates({ config, count }) {
+   const rules = recurConfigToRSchedule(config);
+ 
+@@ -511,15 +518,7 @@ async function getUpcomingDates({ config, count }) {
+     return schedule
+       .occurrences({ start: d.startOfDay(new Date()), take: count * 7 })
+       .toArray()
+-      .map(occurrence =>
+-        config.skipWeekend
+-          ? getDateWithSkippedWeekend(
+-              occurrence.date,
+-              config.weekendSolveMode,
+-              config.frequency,
+-            )
+-          : occurrence.date,
+-      )
++      .map(occurrence => applyWeekendRule(config, occurrence.date))
+       .filter(date => date != null)
+       .slice(0, count)
+       .map(date => dayFromDate(date));
+@@ -529,6 +528,42 @@ async function getUpcomingDates({ config, count }) {
+   }
+ }
+ 
++// A weekend move shifts an occurrence by at most two days, so occurrences
++// just outside the period can land inside it.
++const WEEKEND_SHIFT_DAYS = 2;
++
++async function getDatesInRange({
++  config,
++  start,
++  end,
++}: {
++  config: RecurConfig;
++  start: string;
++  end: string;
++}): Promise<string[]> {
++  const schedule = new RSchedule({ rrules: recurConfigToRSchedule(config) });
++
++  const days = new Set<string>();
++  schedule
++    .occurrences({
++      start: d.startOfDay(d.subDays(parseDate(start), WEEKEND_SHIFT_DAYS)),
++      end: d.endOfDay(d.addDays(parseDate(end), WEEKEND_SHIFT_DAYS)),
++    })
++    .toArray()
++    .forEach(occurrence => {
++      const date = applyWeekendRule(config, occurrence.date);
++      if (date == null) {
++        return;
++      }
++      const day = dayFromDate(date);
++      if (day >= start && day <= end) {
++        days.add(day);
++      }
++    });
++
++  return [...days].sort();
++}
++
+ // Services
+ 
+ function onRuleUpdate(rule) {
+@@ -841,6 +876,7 @@ export type SchedulesHandlers = {
+   'schedule/force-run-service': typeof advanceSchedulesService;
+   'schedule/discover': typeof discoverSchedules;
+   'schedule/get-upcoming-dates': typeof getUpcomingDates;
++  'schedule/get-dates-in-range': typeof getDatesInRange;
+ };
+ 
+ // Expose functions to the client
+@@ -861,6 +897,7 @@ app.method(
+ );
+ app.method('schedule/discover', discoverSchedules);
+ app.method('schedule/get-upcoming-dates', getUpcomingDates);
++app.method('schedule/get-dates-in-range', getDatesInRange);
+ 
+ app.service(trackJSONPaths);
+ 

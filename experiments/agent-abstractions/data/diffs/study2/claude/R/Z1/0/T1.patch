@@ -1,0 +1,115 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..7f725d2 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -69,6 +69,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  goal_def?: string | null;
+   category: string;
+   amount: number;
+ };
+@@ -82,10 +83,10 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      >
++      > & { goal_def?: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -106,6 +107,11 @@ function getAllMonths(startMonth: string): string[] {
+   return monthUtils.rangeInclusive(startMonth, latest);
+ }
+ 
++// Saved templates are stored in `goal_def`; an empty list counts as none.
++function hasSavedTemplates(goalDef: string | null | undefined): boolean {
++  return goalDef != null && goalDef !== '' && goalDef.trim() !== '[]';
++}
++
+ // TODO: Valid month format in all the functions below
+ 
+ export function getBudget({
+@@ -232,6 +238,9 @@ export async function copyPreviousMonth({
+       if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
+         return;
+       }
++      if (hasSavedTemplates(prevBudget.goal_def)) {
++        return;
++      }
+       void setBudget({
+         category: prevBudget.category,
+         month,
+@@ -259,8 +268,13 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++    `
++  SELECT c.*
++  FROM categories c
++  LEFT JOIN category_groups g ON c.cat_group = g.id
++  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  `,
+   );
+ 
+   await batchMessages(async () => {
+@@ -268,6 +282,9 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
++      if (hasSavedTemplates(cat.goal_def)) {
++        return;
++      }
+       void setBudget({ category: cat.id, month, amount: 0 });
+     });
+   });
+@@ -292,6 +309,9 @@ export async function set3MonthAvg({
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
++      if (hasSavedTemplates(cat.goal_def)) {
++        continue;
++      }
+ 
+       let avg = await getCategoryAverage({
+         month,
+@@ -327,6 +347,9 @@ export async function set12MonthAvg({
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
++      if (hasSavedTemplates(cat.goal_def)) {
++        continue;
++      }
+       void setNMonthAvg({ month, N: 12, category: cat.id });
+     }
+   });
+@@ -351,6 +374,9 @@ export async function set6MonthAvg({
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
++      if (hasSavedTemplates(cat.goal_def)) {
++        continue;
++      }
+       void setNMonthAvg({ month, N: 6, category: cat.id });
+     }
+   });
+diff --git a/packages/loot-core/src/server/db/types/index.ts b/packages/loot-core/src/server/db/types/index.ts
+index ee0000a..fdb45b8 100644
+--- a/packages/loot-core/src/server/db/types/index.ts
++++ b/packages/loot-core/src/server/db/types/index.ts
+@@ -341,6 +341,7 @@ export type DbViewCategoryWithGroupHidden = {
+   group_hidden: DbCategoryGroup['hidden'];
+   sort_order: DbCategory['sort_order'];
+   tombstone: DbCategory['tombstone'];
++  goal_def?: DbCategory['goal_def'];
+ };
+ 
+ export type DbViewPayee = {

@@ -1,0 +1,11 @@
+{"id":"ddf9426b39",
+"reuse":{"score":3,"why":"Extends getDateWithSkippedWeekend with holidays and adds a shared isHoliday, and the new handler reuses recurConfigToRSchedule, but the daily-skip rule is not put behind any shared function, so each consumer rebuilds it."},
+"duplication":{"score":2,"why":"The 'daily with weekend handling skips non-business days, otherwise adjust' logic (isDailyWithSkippedWeekends / isNonBusinessDay / filter / conditional getDateWithSkippedWeekend) is written three times: getNextDate in shared/schedules.ts, and getUpcomingDates and getDatesInRange in schedules/app.ts."},
+"placement":{"score":3,"why":"Holiday matching and weekend moving are rightly in shared/schedules.ts, but the occurrence-level skip/adjust rule is spread into server handlers instead of living next to it."},
+"scope":{"score":4,"why":"The changes serve the four steps; the RecurConfig type and schedule-template holiday pass-through are in scope."},
+"maintainability":{"score":2,"why":"Three slightly different copies (one lowercases frequency, others do not; ad-hoc take multipliers like count * (holidays.length + 2) and holidays.length + 7) and schedule-template still moves daily weekend dates rather than skipping them, so the rule already diverges."},
+"bypasses_abstraction":{"value":true,"where":"schedule-template.ts calls getDateWithSkippedWeekend directly and never applies the daily-skip rule; getUpcomingDates and getDatesInRange re-implement it instead of sharing getNextDate's logic."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The daily-skip predicate is renamed per copy (skipsDailyWeekend/skipsDailyNonBusinessDay in getNextDate vs isDailyWithSkippedWeekends/isNonBusinessDay in schedules/app.ts) and reshaped (start-jumping loop vs filter over over-fetched occurrences)."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains a holidays parameter; the daily special case is kept outside it as conditional branches in getNextDate, getUpcomingDates and getDatesInRange, and schedule-template.ts bypasses the daily rule entirely (getUpcomingDates, getDatesInRange and schedule-template counted as bypassing/re-implementing)."}}

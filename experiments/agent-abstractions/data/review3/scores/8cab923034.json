@@ -1,0 +1,11 @@
+{"id":"8cab923034",
+"reuse":{"score":4,"why":"Builds on link.findOrCreateBank, db helpers, handleSyncResponse and syncAccount, folds the five near-identical linkers into linkBankSyncAccount, and reuses the unlink field reset via an extracted clearAccountBankLink."},
+"duplication":{"score":4,"why":"Removes the per-provider link and Pluggy/Akahu download copies; the remaining repetition is that each provider's sync source and account-id extractor are stated twice (createBankSyncLinker and refuseIfAlreadyLinked)."},
+"placement":{"score":4,"why":"Holder lookup and closed-account check live in accounts/link.ts and the URL in server-config; the refuseIfAlreadyLinked wrapper is defined in the middle of the app.method registration block rather than with the linkers."},
+"scope":{"score":3,"why":"Beyond the four requests it rewrites every provider linker and merges the Pluggy/Akahu download functions; justified by adding Fintegra but much larger than needed, and the client files get a Fintegra entry the request said was out of scope."},
+"maintainability":{"score":4,"why":"One link path plus one guard wrapper per handler is easy to own; the wrapper's name no longer describes the closed-account and replace-link behaviour it also carries, and provider identity is passed in two places."},
+"bypasses_abstraction":{"value":false,"where":"All link handlers go through refuseIfAlreadyLinked and linkBankSyncAccount; unlink reuses clearAccountBankLink."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"Duplicated linkers and downloaders were actually merged; only the provider/accountId mapping is repeated openly in the registration block."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"replaceExistingLink added to LinkAccountBaseParams; processBankSyncDownload gains an akahu||fintegra condition; no call site bypasses the guard wrapper or linkBankSyncAccount."}}

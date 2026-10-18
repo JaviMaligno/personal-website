@@ -1,0 +1,100 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 676b41e..cf1d013 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -44,21 +44,21 @@ describe('schedules', () => {
+       );
+     });
+ 
+-    it('returns the end of the range furthest from zero for income', () => {
++    it('returns the end of the range closest to zero for income', () => {
+       expect(getRangedAmountWorstCase({ num1: 10100, num2: 20000 })).toBe(
+-        20000,
++        10100,
+       );
+       expect(getRangedAmountWorstCase({ num1: 20000, num2: 10100 })).toBe(
+-        20000,
++        10100,
+       );
+     });
+ 
+-    it('returns the furthest end when the range crosses zero', () => {
++    it('returns the negative end when the range crosses zero', () => {
+       expect(getRangedAmountWorstCase({ num1: -5000, num2: 10000 })).toBe(
+-        10000,
++        -5000,
+       );
+       expect(getRangedAmountWorstCase({ num1: 10000, num2: -5000 })).toBe(
+-        10000,
++        -5000,
+       );
+     });
+   });
+@@ -73,21 +73,34 @@ describe('schedules', () => {
+       expect(getScheduledAmount(null)).toBe(0);
+     });
+ 
+-    it('returns the end of the tolerance furthest from zero for approximate amounts', () => {
++    it('returns the end of the tolerance furthest from zero for expenses', () => {
+       expect(getScheduledAmount(-10000, false, 'isapprox')).toBe(-10750);
+-      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
+       expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
+       expect(getScheduledAmount(-1234, true, 'isapprox')).toBe(1327);
+       expect(getScheduledAmount(0, false, 'isapprox')).toBe(0);
+     });
+ 
+-    it('returns the worst case for ranged amounts', () => {
++    it('returns the end of the tolerance closest to zero for income', () => {
++      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(9250);
++      expect(getScheduledAmount(1234, false, 'isapprox')).toBe(1141);
++    });
++
++    it('returns the worst case for ranged expenses', () => {
+       expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 }, true)).toBe(
+         20000,
+       );
+     });
++
++    it('returns the worst case for ranged income', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    });
++
++    it('returns the negative end for ranges that span zero', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++    });
+   });
+ 
+   describe('getStatus', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 99d380e..478160d 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -361,11 +361,11 @@ export function getRangedAmountWorstCase({
+   num1: number;
+   num2: number;
+ }): number {
+-  return Math.abs(num1) >= Math.abs(num2) ? num1 : num2;
++  return Math.min(num1, num2);
+ }
+ 
+ export function getApproxAmountWorstCase(amount: number): number {
+-  return amount + Math.sign(amount) * getApproxNumberThreshold(amount);
++  return amount - getApproxNumberThreshold(amount);
+ }
+ 
+ export function getScheduledAmount(
+diff --git a/upcoming-release-notes/schedule-worst-case-lowest-amount.md b/upcoming-release-notes/schedule-worst-case-lowest-amount.md
+new file mode 100644
+index 0000000..27355a9
+--- /dev/null
++++ b/upcoming-release-notes/schedule-worst-case-lowest-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Plan schedules with ranged or approximate amounts at the lowest amount they allow, so income schedules are no longer over-estimated

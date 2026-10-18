@@ -1,0 +1,11 @@
+{"id":"b7a808f134",
+"reuse":{"score":4,"why":"All five midpoint sites now call getExpectedScheduleAmount and the tolerance comes from the existing getApproxNumberThreshold, but getScheduledAmount keeps its own null/number dispatch instead of delegating."},
+"duplication":{"score":4,"why":"The repeated midpoint dispatches are removed; the remaining overlap is getScheduledAmount re-deciding the null/number/range dispatch that getExpectedScheduleAmount owns."},
+"placement":{"score":5,"why":"The rule sits in shared/schedules beside getScheduledAmount and is consumed by server, forecast, budget-template and API model layers."},
+"scope":{"score":4,"why":"Focused on the amount rule and the API field, with tests and release notes; several comments and a release note were left describing the superseded 'furthest from zero' rule."},
+"maintainability":{"score":3,"why":"One definition for most paths, but getScheduledAmount (used by the desktop client) ignores the approximate rule and stale comments contradict the final lowest-value rule."},
+"bypasses_abstraction":{"value":true,"where":"getScheduledAmount in shared/schedules.ts keeps its own null/number handling and never calls getExpectedScheduleAmount, so its desktop-client callers skip the approximate-amount rule."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"getScheduledAmount's residual dispatch is an open parallel path, not a disguised copy."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":1,"where":"getExpectedScheduleAmount gained an op parameter and an isapprox branch (both legitimate for the rule); getScheduledAmount bypasses it, re-implementing the null/number dispatch and omitting the approximate case."}}

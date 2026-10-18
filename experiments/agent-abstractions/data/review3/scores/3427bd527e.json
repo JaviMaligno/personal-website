@@ -1,0 +1,11 @@
+{"id":"3427bd527e",
+"reuse":{"score":3,"why":"Keeps getDateWithSkippedWeekend for non-daily schedules, but writes the daily skip as an inline loop in getNextDate rather than in a shared weekend definition that the other weekend paths could use."},
+"duplication":{"score":4,"why":"No copy within the diff, but the frequency === 'daily' plus skipWeekend test is written twice (isDailySkippingWeekend and the guard around the move), and the rule is not shared with other paths."},
+"placement":{"score":3,"why":"The rule is wired into the shared getNextDate, but getUpcomingDates (server/schedules/app.ts) and schedule-template.ts apply the weekend rule themselves through getDateWithSkippedWeekend and are not updated."},
+"scope":{"score":5,"why":"Only getNextDate and its tests change."},
+"maintainability":{"score":3,"why":"The cursor-advancing loop is clear, but the guard re-tests frequency instead of reusing isDailySkippingWeekend, and daily schedules now behave differently depending on which path computes the date."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getNextDate: the daily skip is decided inline and getDateWithSkippedWeekend is bypassed for daily schedules, while other callers of the helper keep moving daily weekend dates"},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"none"},
+"one_place":{"value":false,"where":"only getNextDate in shared/schedules.ts changes; getUpcomingDates in server/schedules/app.ts and both nextDate computations in budget/schedule-template.ts still move daily weekend occurrences through getDateWithSkippedWeekend"}}

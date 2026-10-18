@@ -1,0 +1,242 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index 89d178e..96ef233 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -226,6 +226,68 @@ describe('bank account linking', () => {
+     expect(bankSync.syncAccount).not.toHaveBeenCalled();
+   });
+ 
++  it('replaces another local SimpleFin link without deleting or remotely unlinking its account', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'existing', name: 'Existing', accountId: 'external-1', closed: true },
++    ]);
++    vi.mocked(bankSync.syncAccount).mockResolvedValue({
++      added: [],
++      updated: [],
++      updatedPreview: [],
++    });
++
++    await app.handlers['simplefin-accounts-link']({
++      replaceExistingLink: true,
++      externalAccount: {
++        account_id: 'external-1',
++        name: 'Checking',
++        orgId: 'org-1',
++        balance: 0,
++      },
++    });
++
++    const unlinked = await db.first('SELECT * FROM accounts WHERE id = ?', [
++      'existing',
++    ]);
++    expect(unlinked).toMatchObject({
++      id: 'existing',
++      closed: 1,
++      account_id: null,
++      bank: null,
++      account_sync_source: null,
++      bank_sync_status: null,
++    });
++    expect(unlinked).toMatchObject({ name: 'Existing' });
++    expect(await db.all('SELECT * FROM accounts')).toHaveLength(2);
++    expect(bankSync.syncAccount).toHaveBeenCalledOnce();
++  });
++
++  it('does not replace an existing link when the destination account is closed', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'existing', name: 'Existing', accountId: 'external-1' },
++      { id: 'closed-destination', name: 'Closed', accountId: 'other', closed: true },
++    ]);
++    const originalAccounts = await db.all('SELECT * FROM accounts');
++
++    await expect(
++      app.handlers['simplefin-accounts-link']({
++        upgradingId: 'closed-destination',
++        replaceExistingLink: true,
++        externalAccount: {
++          account_id: 'external-1',
++          name: 'Checking',
++          orgId: 'org-1',
++          balance: 0,
++        },
++      }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(await db.all('SELECT * FROM accounts')).toEqual(originalAccounts);
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
+   it('allows relinking a SimpleFin account into its current local account', async () => {
+     await setupSimpleFinAccounts([
+       { id: 'existing', name: 'Existing', accountId: 'external-1' },
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index e3ef77d..4c2f827 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -48,6 +48,7 @@ import * as bankSync from './sync';
+ // Shared base type for link account parameters
+ type LinkAccountBaseParams = {
+   upgradingId?: AccountEntity['id'];
++  replaceExistingLink?: boolean;
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
+@@ -57,6 +58,7 @@ async function assertBankAccountIsNotLinked(
+   accountSyncSource: NonNullable<AccountEntity['account_sync_source']>,
+   accountId: string,
+   upgradingId?: AccountEntity['id'],
++  replaceExistingLink = false,
+ ) {
+   const existingAccount = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+@@ -69,7 +71,23 @@ async function assertBankAccountIsNotLinked(
+   );
+ 
+   if (existingAccount) {
+-    throw new Error('This bank account is already linked to another account.');
++    if (!replaceExistingLink) {
++      throw new Error('This bank account is already linked to another account.');
++    }
++
++    // Validate the destination before changing the account that currently owns
++    // the link. This is also checked by each link implementation.
++    await assertAccountIsOpenForBankLinking(upgradingId);
++    await db.updateAccount({
++      id: existingAccount.id,
++      account_id: null,
++      bank: null,
++      balance_current: null,
++      balance_available: null,
++      balance_limit: null,
++      account_sync_source: null,
++      bank_sync_status: null,
++    });
+   }
+ }
+ 
+@@ -92,27 +110,69 @@ async function assertAccountIsOpenForBankLinking(accountId?: AccountEntity['id']
+ const assertGoCardlessAccountIsNotLinked = (
+   accountId: string,
+   upgradingId?: AccountEntity['id'],
+-) => assertBankAccountIsNotLinked('goCardless', accountId, upgradingId);
++  replaceExistingLink?: boolean,
++) =>
++  assertBankAccountIsNotLinked(
++    'goCardless',
++    accountId,
++    upgradingId,
++    replaceExistingLink,
++  );
+ const assertSimpleFinAccountIsNotLinked = (
+   accountId: string,
+   upgradingId?: AccountEntity['id'],
+-) => assertBankAccountIsNotLinked('simpleFin', accountId, upgradingId);
++  replaceExistingLink?: boolean,
++) =>
++  assertBankAccountIsNotLinked(
++    'simpleFin',
++    accountId,
++    upgradingId,
++    replaceExistingLink,
++  );
+ const assertPluggyAiAccountIsNotLinked = (
+   accountId: string,
+   upgradingId?: AccountEntity['id'],
+-) => assertBankAccountIsNotLinked('pluggyai', accountId, upgradingId);
++  replaceExistingLink?: boolean,
++) =>
++  assertBankAccountIsNotLinked(
++    'pluggyai',
++    accountId,
++    upgradingId,
++    replaceExistingLink,
++  );
+ const assertAkahuAccountIsNotLinked = (
+   accountId: string,
+   upgradingId?: AccountEntity['id'],
+-) => assertBankAccountIsNotLinked('akahu', accountId, upgradingId);
++  replaceExistingLink?: boolean,
++) =>
++  assertBankAccountIsNotLinked(
++    'akahu',
++    accountId,
++    upgradingId,
++    replaceExistingLink,
++  );
+ const assertEnableBankingAccountIsNotLinked = (
+   accountId: string,
+   upgradingId?: AccountEntity['id'],
+-) => assertBankAccountIsNotLinked('enableBanking', accountId, upgradingId);
++  replaceExistingLink?: boolean,
++) =>
++  assertBankAccountIsNotLinked(
++    'enableBanking',
++    accountId,
++    upgradingId,
++    replaceExistingLink,
++  );
+ const assertFintegraAccountIsNotLinked = (
+   accountId: string,
+   upgradingId?: AccountEntity['id'],
+-) => assertBankAccountIsNotLinked('fintegra', accountId, upgradingId);
++  replaceExistingLink?: boolean,
++) =>
++  assertBankAccountIsNotLinked(
++    'fintegra',
++    accountId,
++    upgradingId,
++    replaceExistingLink,
++  );
+ 
+ export type AccountHandlers = {
+   'account-update': typeof updateAccount;
+@@ -1884,6 +1944,7 @@ app.method('gocardless-accounts-link', async params => {
+   await assertGoCardlessAccountIsNotLinked(
+     params.account.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+   return linkGoCardlessAccount(params);
+ });
+@@ -1891,6 +1952,7 @@ app.method('simplefin-accounts-link', async params => {
+   await assertSimpleFinAccountIsNotLinked(
+     params.externalAccount.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+   return linkSimpleFinAccount(params);
+ });
+@@ -1898,6 +1960,7 @@ app.method('pluggyai-accounts-link', async params => {
+   await assertPluggyAiAccountIsNotLinked(
+     params.externalAccount.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+   return linkPluggyAiAccount(params);
+ });
+@@ -1905,6 +1968,7 @@ app.method('akahu-accounts-link', async params => {
+   await assertAkahuAccountIsNotLinked(
+     params.externalAccount.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+   return linkAkahuAccount(params);
+ });
+@@ -1912,6 +1976,7 @@ app.method('enablebanking-accounts-link', async params => {
+   await assertEnableBankingAccountIsNotLinked(
+     params.externalAccount.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+   return linkEnableBankingAccount(params);
+ });
+@@ -1919,6 +1984,7 @@ app.method('fintegra-accounts-link', async params => {
+   await assertFintegraAccountIsNotLinked(
+     params.externalAccount.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+   return linkFintegraAccount(params);
+ });

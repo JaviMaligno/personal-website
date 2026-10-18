@@ -1,0 +1,12 @@
+{"id":"89a03070bc",
+"reuse":{"score":3,"why":"The new link function reuses findOrCreateBank, syncAccount and handleSyncResponse and all six link handlers share one guard, but the takeover path re-writes the unlink field reset instead of sharing it with unlinkAccount, and the Fintegra link/download are copied from the Akahu ones."},
+"duplication":{"score":2,"why":"linkFintegraAccount is a near-verbatim copy of linkAkahuAccount, downloadFintegraTransactions copies downloadAkahuTransactions, and the detach update repeats unlinkAccount's db.updateAccount field list."},
+"placement":{"score":4,"why":"The guard sits next to the link handlers in accounts/app.ts, the download in sync.ts and the endpoint in server-config.ts, matching where the tree keeps each provider's pieces; a side-effecting unlink inside an 'ensure' guard is a slightly odd home."},
+"scope":{"score":4,"why":"Focused on the four steps; the only incidental edit is widening DbAccount.account_sync_source to all providers, which is related."},
+"maintainability":{"score":3,"why":"One shared guard covering every provider is good, but it has accreted the closed-account check and a mutating takeover behind a name that says 'ensure not linked', and the per-provider copies keep growing."},
+"bypasses_abstraction":{"value":true,"where":"ensureBankAccountIsNotLinked clears the old account with its own db.updateAccount field list instead of going through the unlinkAccount logic (whose provider-removal step it deliberately skips, but without sharing the reset)"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copies (Fintegra link vs Akahu link, Fintegra download vs Akahu download, unlink field reset) are open, near-verbatim copies rather than disguised ones."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":0,"where":"ensureBankAccountIsNotLinked in accounts/app.ts gains the replaceExistingLink parameter, an upgradingId closed-account branch (step 3) and a replace-and-detach branch (step 4); all six provider link handlers call it"}
+}

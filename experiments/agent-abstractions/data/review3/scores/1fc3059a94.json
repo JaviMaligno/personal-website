@@ -1,0 +1,12 @@
+{"id": "1fc3059a94",
+ "reuse": {"score": 5, "why": "Extends the existing getDateWithSkippedWeekend and firstWeekdayOccurrence helpers with an optional holidays argument and every caller keeps using them."},
+ "duplication": {"score": 4, "why": "Weekend-or-holiday is defined once in isNonWorkingDay and the two copied adjustment ternaries in schedule-template are folded into one closure; only the 'extra search budget = holidays.length' padding is repeated in three places."},
+ "placement": {"score": 5, "why": "The day rule lives in shared/schedules.ts beside the existing weekend helpers; server code only forwards the config field."},
+ "scope": {"score": 5, "why": "Touches only the weekend-handling paths, the RecurConfig type, rule parsing of the field, a focused test and a release note."},
+ "maintainability": {"score": 4, "why": "A single predicate plus a generic step loop is easy to extend, though each caller must remember to thread config.holidays and adjust its own search bounds."},
+ "bypasses_abstraction": {"value": false, "where": "All weekend-skip sites (getNextDate, getUpcomingDates, getDatesInRange, schedule-template) go through isNonWorkingDay/getDateWithSkippedWeekend."},
+ "duplicated_blocks": 1,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "Only the small holidays-length padding is repeated, openly, in firstWeekdayOccurrence, getUpcomingDates and getDatesInRange."},
+ "one_place": {"value": true, "where": "isNonWorkingDay in shared/schedules.ts, used by getDateWithSkippedWeekend, firstWeekdayOccurrence and the daily-skip checks in schedules/app.ts."}
+}

@@ -1,0 +1,11 @@
+{"id":"5fb4926a08",
+"reuse":{"score":3,"why":"Routes Fintegra linking through the shared linkBankSyncAccount and findOrCreateBank, but the field reset of the existing unlinkAccount is copied into releaseAccountLinks and the new download function copies downloadAkahuTransactions instead of sharing it."},
+"duplication":{"score":2,"why":"downloadFintegraTransactions is a near-verbatim copy of downloadAkahuTransactions, releaseAccountLinks repeats unlinkAccount's update, the closed-account check is done both in assertBankAccountNotLinked and linkBankSyncAccount, and the same assert call is pasted into all six provider link functions."},
+"placement":{"score":3,"why":"The one-link rule is checked in each provider wrapper rather than in linkBankSyncAccount, the shared layer that already receives syncSource, externalAccountId and upgradingId, and the closed-account rule lives in a function named for the linked-elsewhere check."},
+"scope":{"score":4,"why":"All edits serve the four steps (rule, provider, closed accounts, takeover) with proportionate tests and release notes."},
+"maintainability":{"score":3,"why":"Works within the existing per-provider pattern, but every future provider must remember to call the assert, and unlink semantics now live in two places that can drift."},
+"bypasses_abstraction":{"value":true,"where":"releaseAccountLinks in accounts/app.ts reimplements unlinkAccount's local unlink update; the duplicate-link check is called from each link* wrapper instead of inside linkBankSyncAccount."},
+"duplicated_blocks":4,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"releaseAccountLinks (accounts/app.ts) is unlinkAccount's db.updateAccount reset under a new name; downloadFintegraTransactions (accounts/sync.ts) is downloadAkahuTransactions with names swapped."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":3,"bypassing_call_sites":1,"where":"linkBankSyncAccount gains accountIdsToRelease and a closed-account branch; assertBankAccountNotLinked gains replaceExistingLink with a replace branch and a closed-account branch that duplicates linkBankSyncAccount's; releaseAccountLinks re-implements unlinkAccount."}}

@@ -1,0 +1,76 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+index 0769e65..337cd54 100644
+--- a/packages/loot-core/src/server/api-models.test.ts
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -20,7 +20,7 @@ function makeSchedule(amount: ScheduleEntity['_amount']): ScheduleEntity {
+ }
+ 
+ describe('scheduleModel.toExternal', () => {
+-  it('exposes the furthest-from-zero end of a ranged amount as expectedAmount', () => {
++  it('exposes the lowest end of a ranged amount as expectedAmount', () => {
+     const result = scheduleModel.toExternal(
+       makeSchedule({ num1: -10100, num2: -20000 }),
+     );
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 57d597b..82474a0 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -655,19 +655,19 @@ describe('schedules', () => {
+       expect(getScheduledAmount(undefined)).toBe(0);
+     });
+ 
+-    it('uses the end of a range furthest from zero for expenses', () => {
++    it('uses the end furthest from zero of a range for expenses', () => {
+       expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+     });
+ 
+-    it('uses the end of a range furthest from zero for income', () => {
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    it('uses the end closest to zero of a range for income', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
+     });
+ 
+-    it('uses the end furthest from zero when the range crosses zero', () => {
+-      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(5000);
+-      expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(5000);
++    it('uses the negative end when the range crosses zero', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++      expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+     });
+ 
+     it('inverts the range end when requested', () => {
+@@ -681,8 +681,8 @@ describe('schedules', () => {
+       expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
+     });
+ 
+-    it('uses the end of the tolerance furthest from zero for approximate income', () => {
+-      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
++    it('uses the end of the tolerance closest to zero for approximate income', () => {
++      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(9250);
+     });
+ 
+     it('keeps exact amounts unchanged', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index f7b4b8f..e5a3de2 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -366,14 +366,9 @@ export function getScheduledAmount(
+   let expected: number;
+   if (typeof amount === 'number') {
+     expected =
+-      op === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
+-        : amount;
++      op === 'isapprox' ? amount - getApproxNumberThreshold(amount) : amount;
+   } else {
+-    expected =
+-      Math.abs(amount.num1) >= Math.abs(amount.num2)
+-        ? amount.num1
+-        : amount.num2;
++    expected = Math.min(amount.num1, amount.num2);
+   }
+   return inverse ? -expected : expected;
+ }

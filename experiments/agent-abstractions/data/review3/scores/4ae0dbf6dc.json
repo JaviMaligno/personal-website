@@ -1,0 +1,12 @@
+{"id":"4ae0dbf6dc",
+"reuse":{"score":3,"why":"Reuses findOrCreateBank, syncAccount and handleSyncResponse, and puts the new guards in link.ts, but the takeover re-writes unlinkAccount's field reset instead of sharing it, and Fintegra copies an existing provider's link and download bodies."},
+"duplication":{"score":2,"why":"linkFintegraAccount is a near-verbatim copy of linkSimpleFinAccount, downloadFintegraTransactions copies downloadAkahuTransactions, the unlink column reset is copied from unlinkAccount, and the open/not-linked guard pair is pasted into all six handlers."},
+"placement":{"score":3,"why":"Guards live in accounts/link.ts next to findOrCreateBank, which fits, but an 'assert' function now performs the takeover write (unlinking another account), hiding a mutation inside a validation helper."},
+"scope":{"score":4,"why":"All edits serve the four requests (one-link rule, Fintegra, closed-account refusal, takeover flag) with no unrelated churn."},
+"maintainability":{"score":2,"why":"Every provider handler must remember to call two guards in the right order with an upgradingId check, assertAccountIsNotLinked silently mutates when given a boolean flag, and the unlink reset can drift from unlinkAccount."},
+"bypasses_abstraction":{"value":true,"where":"assertAccountIsNotLinked in link.ts clears account_id/bank/balances/sync source with its own db.updateAccount instead of going through the existing unlinkAccount logic in app.ts"},
+"duplicated_blocks":4,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"downloadFintegraTransactions and linkFintegraAccount are condensed/reformatted copies of downloadAkahuTransactions and linkSimpleFinAccount (merged lines, dropped intermediate variables) rather than shared code"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"assertAccountIsNotLinked (link.ts) gains the replaceExistingLink parameter and a branch that unlinks the holder instead of throwing; all six link handlers call it, each with its own preceding 'if (upgradingId) assertAccountIsOpen' block"}
+}

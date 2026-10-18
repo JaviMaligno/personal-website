@@ -1,0 +1,122 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 84d9707..7abbc54 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -15,6 +15,7 @@ import {
+   createSchedule,
+   deleteSchedule,
+   app as schedulesApp,
++  getDatesInRange,
+   setNextDate,
+   skipNextDate,
+   updateConditions,
+@@ -28,6 +29,47 @@ beforeEach(async () => {
+ });
+ 
+ describe('schedule app', () => {
++  describe('getDatesInRange', () => {
++    const config = (overrides = {}) => ({
++      start: '2024-03-01',
++      frequency: 'weekly',
++      interval: 1,
++      skipWeekend: true,
++      weekendSolveMode: 'after',
++      ...overrides,
++    });
++
++    it('includes occurrences shifted into the range and excludes ones shifted out', () => {
++      expect(
++        getDatesInRange({
++          config: config({ start: '2024-03-02', weekendSolveMode: 'after' }),
++          start: '2024-03-04',
++          end: '2024-03-04',
++        }),
++      ).toEqual(['2024-03-04']);
++      expect(
++        getDatesInRange({
++          config: config({ start: '2024-03-02', weekendSolveMode: 'before' }),
++          start: '2024-03-02',
++          end: '2024-03-02',
++        }),
++      ).toEqual([]);
++    });
++
++    it('skips daily weekend occurrences and returns unique sorted days', () => {
++      expect(
++        getDatesInRange({
++          config: config({
++            start: '2024-03-01',
++            frequency: 'daily',
++          }),
++          start: '2024-03-01',
++          end: '2024-03-04',
++        }),
++      ).toEqual(['2024-03-01', '2024-03-04']);
++    });
++  });
++
+   describe('utility', () => {
+     it('conditions are updated when they exist', () => {
+       const conds = [
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index b82b437..80ed11a 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -523,6 +523,41 @@ async function getUpcomingDates({ config, count }) {
+   }
+ }
+ 
++export function getDatesInRange({ config, start, end }) {
++  const rules = recurConfigToRSchedule(config);
++  const startDate = d.parseISO(start);
++  const endDate = d.parseISO(end);
++  const padding = 3;
++  const isDaily = config.frequency.toUpperCase() === 'DAILY';
++
++  try {
++    const schedule = new RSchedule({ rrules: rules });
++    const dates = schedule
++      .occurrences({
++        start: d.startOfDay(d.subDays(startDate, padding)),
++        end: d.endOfDay(d.addDays(endDate, padding)),
++      })
++      .toArray()
++      .map(({ date }) => {
++        if (!config.skipWeekend) {
++          return date;
++        }
++        if (isDaily && d.isWeekend(date)) {
++          return null;
++        }
++        return getDateWithSkippedWeekend(date, config.weekendSolveMode);
++      })
++      .filter(Boolean)
++      .map(dayFromDate)
++      .filter(date => date >= start && date <= end);
++
++    return [...new Set(dates)].sort();
++  } catch (err) {
++    captureBreadcrumb(config);
++    throw err;
++  }
++}
++
+ // Services
+ 
+ function onRuleUpdate(rule) {
+@@ -835,6 +870,7 @@ export type SchedulesHandlers = {
+   'schedule/force-run-service': typeof advanceSchedulesService;
+   'schedule/discover': typeof discoverSchedules;
+   'schedule/get-upcoming-dates': typeof getUpcomingDates;
++  'schedule/get-dates-in-range': typeof getDatesInRange;
+ };
+ 
+ // Expose functions to the client
+@@ -855,6 +891,7 @@ app.method(
+ );
+ app.method('schedule/discover', discoverSchedules);
+ app.method('schedule/get-upcoming-dates', getUpcomingDates);
++app.method('schedule/get-dates-in-range', getDatesInRange);
+ 
+ app.service(trackJSONPaths);
+ 

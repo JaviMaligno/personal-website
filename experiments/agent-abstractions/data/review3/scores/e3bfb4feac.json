@@ -1,0 +1,11 @@
+{"id":"e3bfb4feac",
+"reuse":{"score":2,"why":"The tree's shared getDateWithSkippedWeekend (which already takes the enable flag and is used by all three weekend paths) is left untouched; the daily rule is coded inline in getNextDate and the helper is simply skipped for daily schedules."},
+"duplication":{"score":3,"why":"The `take: isDailySkippingWeekends ? 7 : 1` + `filter(!d.isWeekend)` pair is written twice inside getNextDate (forward and reverse lookups)."},
+"placement":{"score":3,"why":"In the right module, but in one consumer instead of the shared weekend helper that getUpcomingDates and schedule-template also call."},
+"scope":{"score":4,"why":"Small and focused on getNextDate plus tests, but leaves out the other paths that apply the weekend rule."},
+"maintainability":{"score":2,"why":"The rule now diverges: getNextDate skips daily weekends while server/schedules/app.ts getUpcomingDates and schedule-template.ts still move them; frequency is read from dateCond.value rather than the parsed schedule data."},
+"bypasses_abstraction":{"value":true,"where":"getNextDate in packages/loot-core/src/shared/schedules.ts wraps getDateWithSkippedWeekend in `if (!isDailySkippingWeekends)` and filters weekends itself instead of extending the helper"},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated take/filter for forward and reverse lookups is literal, not disguised."},
+"one_place":{"value":false,"where":"Only getNextDate implements the daily skip; getUpcomingDates (server/schedules/app.ts) and createScheduleList (server/budget/schedule-template.ts) still call getDateWithSkippedWeekend and move daily weekend occurrences."}}

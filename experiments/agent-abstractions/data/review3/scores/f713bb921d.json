@@ -1,0 +1,11 @@
+{"id":"f713bb921d",
+"reuse":{"score":2,"why":"isFixedGroup hand-writes a tag regex (with a comment asking to keep it in step) instead of using shared/tags.ts extractTagsFromText, and no shared category selection is introduced for the month-wide actions."},
+"duplication":{"score":2,"why":"The same LEFT JOIN notes on the group plus an isFixedGroup guard is pasted into six actions (copyPreviousMonth, setZero, setLastMonthSpending, set3/6/12MonthAvg), and the tag-matching rule duplicates the shared tag parser."},
+"placement":{"score":3,"why":"Tag parsing lives in budget/actions.ts rather than shared/tags.ts, and the exclusion rule is applied at each action instead of in one selection layer; the predicate at least sits next to getBudgetData."},
+"scope":{"score":5,"why":"Only the month-wide budget actions and their tests are touched."},
+"maintainability":{"score":2,"why":"Adding another excluded kind of category, or another month-wide action, means editing six SQL queries and six loops again, and the private regex can drift from the shared tag semantics."},
+"bypasses_abstraction":{"value":true,"where":"budget/actions.ts isFixedGroup re-implements tag detection instead of shared/tags.ts extractTagsFromText."},
+"duplicated_blocks":6,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"isFixedGroup's /(?<!#)#fixed(?=[\\s#]|$)/ is the shared tag-parsing rule (extractTagsFromText / renameTagInNotes pattern) reshaped into a one-off regex."},
+"one_place":{"value":false,"where":"The predicate isFixedGroup is shared, but the rule is wired separately into each of the six month-wide actions in budget/actions.ts (own join + own guard), with no single category-selection definition they all use."}}

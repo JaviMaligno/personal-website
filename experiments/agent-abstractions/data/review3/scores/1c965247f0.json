@@ -1,0 +1,12 @@
+{"id":"1c965247f0",
+"reuse":{"score":4,"why":"Reuses getBudgetData, getSheetValue, setBudget, getCategoryAverage and the undoable/mutator registration, and builds one selection function that every month-wide action now uses."},
+"duplication":{"score":4,"why":"The four copied category queries are collapsed into getMonthWideCategories, but the income-in-tracking check stays repeated per action, the goal_def/notes join appears in both getBudgetData and getMonthWideCategories, and setLastMonthSpending re-writes the expense sign flip inline."},
+"placement":{"score":5,"why":"The exclusion predicate and selection live in budget/actions.ts beside the actions that use them, and the new method is registered in budget/app.ts with the other budget methods."},
+"scope":{"score":5,"why":"Edits are limited to the month-wide actions, the new method registration, one test and release notes."},
+"maintainability":{"score":4,"why":"Adding a further exclusion rule now means editing one predicate (as steps 3 and 4 did); the remaining per-action income check and inline sign flip are minor seams."},
+"bypasses_abstraction":{"value":false,"where":"All month-wide actions (copyPreviousMonth via isSkippedByMonthWideAction, the others via getMonthWideCategories) use the shared exclusion rule."},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"The only repeated logic (income check, sign flip) is written openly in the same form as the existing actions, not reshaped."},
+"abstraction_drift":{"value":false,"parameters_added":2,"special_case_branches":0,"bypassing_call_sites":0,"where":"includeHiddenCategories added to isSkippedByMonthWideAction and getMonthWideCategories for the requested variation; the #fixed rule was added as a plain clause of the predicate and no action bypasses it."}
+}

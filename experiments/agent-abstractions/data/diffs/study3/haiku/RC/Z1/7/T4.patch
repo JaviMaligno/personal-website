@@ -1,0 +1,256 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 7e4bec7..33b9ac7 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -167,6 +167,52 @@ describe('month-wide budget actions', () => {
+       expect(getBudget({ category, month: '2024-02' })).toBe(500);
+     }
+   });
++
++  it('setZero includes hidden categories and hidden groups when requested', async () => {
++    await setupDatabase();
++    for (const category of ['visible-cat', ...protectedCategories]) {
++      await setBudget({ category, month: '2024-02', amount: 500 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-02', includeHiddenCategories: true });
++    await sheet.waitOnSpreadsheet();
++
++    expect(getBudget({ category: 'visible-cat', month: '2024-02' })).toBe(0);
++    expect(getBudget({ category: 'hidden-cat', month: '2024-02' })).toBe(0);
++    expect(getBudget({ category: 'hidden-group-cat', month: '2024-02' })).toBe(
++      0,
++    );
++    expect(getBudget({ category: 'template-cat', month: '2024-02' })).toBe(500);
++    expect(getBudget({ category: 'fixed-group-cat', month: '2024-02' })).toBe(
++      500,
++    );
++  });
++
++  it('copyPreviousMonth includes hidden categories and hidden groups when requested', async () => {
++    await setupDatabase();
++    for (const category of ['visible-cat', ...protectedCategories]) {
++      await setBudget({ category, month: '2024-01', amount: 700 });
++      await setBudget({ category, month: '2024-02', amount: 500 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await copyPreviousMonth({
++      month: '2024-02',
++      includeHiddenCategories: true,
++    });
++    await sheet.waitOnSpreadsheet();
++
++    expect(getBudget({ category: 'visible-cat', month: '2024-02' })).toBe(700);
++    expect(getBudget({ category: 'hidden-cat', month: '2024-02' })).toBe(700);
++    expect(getBudget({ category: 'hidden-group-cat', month: '2024-02' })).toBe(
++      700,
++    );
++    expect(getBudget({ category: 'template-cat', month: '2024-02' })).toBe(500);
++    expect(getBudget({ category: 'fixed-group-cat', month: '2024-02' })).toBe(
++      500,
++    );
++  });
+ });
+ 
+ describe('copyUntilYearEnd', () => {
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 966c594..93a9702 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -223,7 +223,7 @@ type MonthAction = 'copy' | 'zero' | 'average';
+ type CategoryFlags = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+-  group_hidden: 1 | 0;
++  group_hidden: 1 | 0 | null;
+   has_template: 1 | 0;
+   group_note: string | null;
+ };
+@@ -238,20 +238,21 @@ function isWrittenByMonthAction(
+   category: CategoryFlags,
+   action: MonthAction,
+   isTracking: boolean,
++  includeHiddenCategories: boolean,
+ ): boolean {
+   if (category.is_income === 1 && !isTracking) {
+     return false;
+   }
+   if (
+-    category.hidden === 1 ||
+-    category.group_hidden === 1 ||
++    (!includeHiddenCategories &&
++      (category.hidden === 1 || category.group_hidden === 1)) ||
+     category.has_template === 1 ||
+     isFixedGroup(category)
+   ) {
+     return false;
+   }
+   if (action === 'average') {
+-    return category.hidden === 0 && category.group_hidden === 0;
++    return category.group_hidden !== null;
+   }
+   return true;
+ }
+@@ -281,8 +282,10 @@ function getCategoriesWithGroupHidden(): Promise<
+ 
+ export async function copyPreviousMonth({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+@@ -291,7 +294,14 @@ export async function copyPreviousMonth({
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+-      if (!isWrittenByMonthAction(prevBudget, 'copy', isTracking)) {
++      if (
++        !isWrittenByMonthAction(
++          prevBudget,
++          'copy',
++          isTracking,
++          includeHiddenCategories,
++        )
++      ) {
+         return;
+       }
+       void setBudget({
+@@ -320,13 +330,26 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
++export async function setZero({
++  month,
++  includeHiddenCategories = false,
++}: {
++  month: string;
++  includeHiddenCategories?: boolean;
++}): Promise<void> {
+   const categories = await getCategoriesWithGroupHidden();
+   const isTracking = isTrackingBudget();
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+-      if (!isWrittenByMonthAction(cat, 'zero', isTracking)) {
++      if (
++        !isWrittenByMonthAction(
++          cat,
++          'zero',
++          isTracking,
++          includeHiddenCategories,
++        )
++      ) {
+         return;
+       }
+       void setBudget({ category: cat.id, month, amount: 0 });
+@@ -336,15 +359,24 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function set3MonthAvg({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getCategoriesWithGroupHidden();
+   const isTracking = isTrackingBudget();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (!isWrittenByMonthAction(cat, 'average', isTracking)) {
++      if (
++        !isWrittenByMonthAction(
++          cat,
++          'average',
++          isTracking,
++          includeHiddenCategories,
++        )
++      ) {
+         continue;
+       }
+ 
+@@ -365,15 +397,24 @@ export async function set3MonthAvg({
+ 
+ export async function set12MonthAvg({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getCategoriesWithGroupHidden();
+   const isTracking = isTrackingBudget();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (!isWrittenByMonthAction(cat, 'average', isTracking)) {
++      if (
++        !isWrittenByMonthAction(
++          cat,
++          'average',
++          isTracking,
++          includeHiddenCategories,
++        )
++      ) {
+         continue;
+       }
+       void setNMonthAvg({ month, N: 12, category: cat.id });
+@@ -383,15 +424,24 @@ export async function set12MonthAvg({
+ 
+ export async function set6MonthAvg({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getCategoriesWithGroupHidden();
+   const isTracking = isTrackingBudget();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (!isWrittenByMonthAction(cat, 'average', isTracking)) {
++      if (
++        !isWrittenByMonthAction(
++          cat,
++          'average',
++          isTracking,
++          includeHiddenCategories,
++        )
++      ) {
+         continue;
+       }
+       void setNMonthAvg({ month, N: 6, category: cat.id });
+@@ -401,8 +451,10 @@ export async function set6MonthAvg({
+ 
+ export async function setLastMonthSpending({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getCategoriesWithGroupHidden();
+   const isTracking = isTrackingBudget();
+@@ -410,7 +462,14 @@ export async function setLastMonthSpending({
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (!isWrittenByMonthAction(cat, 'average', isTracking)) {
++      if (
++        !isWrittenByMonthAction(
++          cat,
++          'average',
++          isTracking,
++          includeHiddenCategories,
++        )
++      ) {
+         continue;
+       }
+ 

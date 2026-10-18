@@ -1,0 +1,11 @@
+{"id":"e6bbcc3824",
+"reuse":{"score":4,"why":"Extends the existing getExpectedAmount and reuses getApproxNumberThreshold for the tolerance, but the server sites keep calling getExpectedAmount behind their own null checks instead of getScheduledAmount, which already handles a missing amount."},
+"duplication":{"score":3,"why":"No new copy of the arithmetic, but schedule-template.ts now repeats the op test (`isbetween || isapprox`) that getExpectedAmount itself makes, and the per-site `== null ? 0 :` dispatch stays repeated."},
+"placement":{"score":5,"why":"The rule is added inside getExpectedAmount in shared/schedules.ts, the existing home of the expected-amount rule."},
+"scope":{"score":5,"why":"Only the expected-amount helper, its call sites, and a test."},
+"maintainability":{"score":3,"why":"The rule is in one helper but depends on an optional op that the desktop-client getScheduledAmount callers never pass, the template site keeps its own op gate, and stale 'rounded midpoint' comments remain."},
+"bypasses_abstraction":{"value":false,"where":"Every server site calls getExpectedAmount; the template's extra op gate pre-filters rather than going around it."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The template op gate in schedule-template.ts createScheduleList is an extended pre-existing check, not reshaped copied logic."},
+"one_place":{"value":false,"where":"The approximate rule is defined once in getExpectedAmount (shared/schedules.ts), but it applies only when op is passed; getScheduledAmount's desktop-client callers (Balance.tsx, SchedulesTable.tsx, SchedulesListItem.tsx, MobileSchedulesPage.tsx, useScheduleEdit.ts) pass no op, and schedule-template.ts decides separately which ops reach the helper."}}

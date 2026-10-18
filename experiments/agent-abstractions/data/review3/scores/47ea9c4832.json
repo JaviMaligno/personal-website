@@ -1,0 +1,11 @@
+{"id":"47ea9c4832",
+"reuse":{"score":2,"why":"Patches the same inline worst-case expression in api-models.ts, computeSchedulePreviewTransactions and forecast-schedules.ts instead of moving the rule into one shared helper (e.g. alongside getScheduledAmount in shared/schedules.ts) that all three call."},
+"duplication":{"score":2,"why":"The new rule (`x - getApproxNumberThreshold(x)` for approximate, `Math.min(num1, num2)` for ranges) is written three times in parallel edits."},
+"placement":{"score":3,"why":"The rule stays scattered across an API model, a shared preview function and the forecast module rather than living in shared/schedules.ts where the amount helper is."},
+"scope":{"score":4,"why":"Edits are limited to the amount rule and its tests, though forecast ranges also switch from midpoint to the new rule as part of the same change."},
+"maintainability":{"score":2,"why":"Three hand-synchronised copies of a nested ternary must all be changed together the next time the rule moves, which is exactly the gap this request exposed."},
+"bypasses_abstraction":{"value":false,"where":"No shared worst-case helper exists in the tree; the sites were already inline and the diff keeps them so rather than going around an abstraction."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The three copies in server/api-models.ts, shared/schedules.ts computeSchedulePreviewTransactions and server/forecast/forecast-schedules.ts normalizeSchedule are near-verbatim and recognisable, not disguised."}
+}

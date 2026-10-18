@@ -1,0 +1,162 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index f5ebeb2..aa0531b 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -265,6 +265,25 @@ describe('month-wide budget actions', () => {
+       JSON.stringify([{ type: 'fixed', amount: 10000 }]),
+       'cat-template',
+     ]);
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed costs',
++      is_income: 0,
++    });
++    await db.insert('notes', { id: 'fixed-group', note: 'Rent #fixed' });
++    await db.insertCategory({
++      id: 'cat-in-fixed-group',
++      name: 'cat-in-fixed-group',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insert('notes', { id: 'cat-own-note', note: '#fixed' });
++    await db.insertCategory({
++      id: 'cat-own-note',
++      name: 'cat-own-note',
++      cat_group: 'group1',
++      is_income: 0,
++    });
+ 
+     await sheet.loadSpreadsheet(db);
+     await budget.createBudget(['2024-01', '2024-02', '2024-03', '2024-04']);
+@@ -274,10 +293,11 @@ describe('month-wide budget actions', () => {
+     'cat-hidden',
+     'cat-in-hidden-group',
+     'cat-template',
++    'cat-in-fixed-group',
+   ];
+ 
+-  it('setZero leaves hidden and template categories untouched', async () => {
+-    for (const category of ['cat1', ...skippedCategories]) {
++  it('setZero leaves hidden, template and #fixed group categories untouched', async () => {
++    for (const category of ['cat1', 'cat-own-note', ...skippedCategories]) {
+       await setBudget({ category, month: '2024-02', amount: 500 });
+     }
+     await sheet.waitOnSpreadsheet();
+@@ -286,6 +306,7 @@ describe('month-wide budget actions', () => {
+     await sheet.waitOnSpreadsheet();
+ 
+     expect(await getSheetValue('budget202402', 'budget-cat1')).toBe(0);
++    expect(await getSheetValue('budget202402', 'budget-cat-own-note')).toBe(0);
+     for (const category of skippedCategories) {
+       expect(await getSheetValue('budget202402', `budget-${category}`)).toBe(
+         500,
+@@ -293,8 +314,8 @@ describe('month-wide budget actions', () => {
+     }
+   });
+ 
+-  it('copyPreviousMonth leaves hidden and template categories untouched', async () => {
+-    for (const category of ['cat1', ...skippedCategories]) {
++  it('copyPreviousMonth leaves hidden, template and #fixed group categories untouched', async () => {
++    for (const category of ['cat1', 'cat-own-note', ...skippedCategories]) {
+       await setBudget({ category, month: '2024-01', amount: 700 });
+       await setBudget({ category, month: '2024-02', amount: 200 });
+     }
+@@ -304,6 +325,9 @@ describe('month-wide budget actions', () => {
+     await sheet.waitOnSpreadsheet();
+ 
+     expect(await getSheetValue('budget202402', 'budget-cat1')).toBe(700);
++    expect(await getSheetValue('budget202402', 'budget-cat-own-note')).toBe(
++      700,
++    );
+     for (const category of skippedCategories) {
+       expect(await getSheetValue('budget202402', `budget-${category}`)).toBe(
+         200,
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 8e69a38..fe1f267 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -70,6 +71,7 @@ type BudgetData = {
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
+   has_template: 1 | 0;
++  group_note: string | null;
+   category: string;
+   amount: number;
+ };
+@@ -84,14 +86,15 @@ function getBudgetData<T extends BudgetTable>(
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+       > &
+-      Pick<BudgetData, 'has_template'>
++      Pick<BudgetData, 'has_template' | 'group_note'>
+   >(
+     `
+     SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden,
+-      c.goal_def IS NOT NULL AS has_template
++      c.goal_def IS NOT NULL AS has_template, gn.note AS group_note
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes gn ON gn.id = c.cat_group
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -100,12 +103,13 @@ function getBudgetData<T extends BudgetTable>(
+ 
+ type MonthFillCategory = Pick<
+   BudgetData,
+-  'is_income' | 'hidden' | 'group_hidden' | 'has_template'
++  'is_income' | 'hidden' | 'group_hidden' | 'has_template' | 'group_note'
+ >;
+ 
+ // Income categories are only filled in tracking budgets. Hidden categories,
+-// categories in hidden groups, and categories with saved templates are left
+-// untouched so month-wide actions don't overwrite them.
++// categories in hidden groups, categories in groups tagged #fixed, and
++// categories with saved templates are left untouched so month-wide actions
++// don't overwrite them.
+ function isMonthFillCategory(
+   category: MonthFillCategory,
+   { isTracking }: { isTracking: boolean },
+@@ -116,7 +120,8 @@ function isMonthFillCategory(
+   return (
+     category.hidden !== 1 &&
+     category.group_hidden !== 1 &&
+-    category.has_template !== 1
++    category.has_template !== 1 &&
++    !extractTagsFromText(category.group_note ?? '').includes('fixed')
+   );
+ }
+ 
+@@ -295,9 +300,10 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+   >(
+     `
+   SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden,
+-    c.goal_def IS NOT NULL AS has_template
++    c.goal_def IS NOT NULL AS has_template, gn.note AS group_note
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes gn ON gn.id = c.cat_group
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -321,9 +327,10 @@ async function getSpendingFillCategories(): Promise<
+   >(
+     `
+   SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden,
+-    c.goal_def IS NOT NULL AS has_template
++    c.goal_def IS NOT NULL AS has_template, gn.note AS group_note
+   FROM categories c
+   INNER JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes gn ON gn.id = c.cat_group
+   WHERE c.tombstone = 0
+   `,
+   );

@@ -1,0 +1,85 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 67d4374..cdc2b2b 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -514,6 +514,36 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2024, 2, 11))).toBe('2024-03-12');
+     });
+ 
++    it('skips a recurring month and day holiday in every year', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2025-03-11',
++          frequency: 'daily',
++          skipWeekend: true,
++          holidays: ['03-11'],
++          weekendSolveMode: 'after',
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2025, 2, 11))).toBe('2025-03-12');
++    });
++
++    it('keeps full date holidays limited to their year in mixed lists', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2025-03-12',
++          frequency: 'daily',
++          skipWeekend: true,
++          holidays: ['2024-03-11', '03-12'],
++          weekendSolveMode: 'after',
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2025, 2, 12))).toBe('2025-03-13');
++    });
++
+     it('moves a weekend occurrence past consecutive holidays', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 9c6f668..e03f462 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -303,7 +303,7 @@ export function getNextDate(
+       dates = dates.filter(
+         ({ date }) =>
+           !d.isWeekend(date) &&
+-          !value.schedule.data.holidays?.includes(monthUtils.dayFromDate(date)),
++          !isHoliday(monthUtils.dayFromDate(date), value.schedule.data.holidays),
+       );
+     }
+ 
+@@ -316,7 +316,7 @@ export function getNextDate(
+         dates = dates.filter(
+           ({ date }) =>
+             !d.isWeekend(date) &&
+-            !value.schedule.data.holidays?.includes(monthUtils.dayFromDate(date)),
++            !isHoliday(monthUtils.dayFromDate(date), value.schedule.data.holidays),
+         );
+       }
+     }
+@@ -381,15 +381,19 @@ export type WeekendRule = {
+   holidays?: string[];
+ };
+ 
++function isHoliday(day: string, holidays: string[] = []): boolean {
++  const monthAndDay = day.slice(5);
++  return holidays.some(holiday => holiday === day || holiday === monthAndDay);
++}
++
+ // With `skipWeekend`, a date on a weekend moves to the following Monday
+ // ('after') or the previous Friday ('before'); otherwise it is unchanged.
+ export function applyWeekendRule(date: Date, rule: WeekendRule): Date {
+   if (!rule.skipWeekend) return date;
+   let adjusted = date;
+-  const holidays = new Set(rule.holidays ?? []);
+   while (
+     d.isWeekend(adjusted) ||
+-    holidays.has(monthUtils.dayFromDate(adjusted))
++    isHoliday(monthUtils.dayFromDate(adjusted), rule.holidays)
+   ) {
+     adjusted = d.addDays(adjusted, rule.solveMode === 'after' ? 1 : -1);
+   }

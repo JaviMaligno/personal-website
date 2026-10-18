@@ -1,0 +1,11 @@
+{"id":"c06ccfab24",
+"reuse":{"score":4,"why":"Extends the existing shared getDateWithSkippedWeekend with a holidays parameter rather than writing a new mover, and reuses dayFromDate/addDays."},
+"duplication":{"score":3,"why":"The 'weekend or holiday' predicate is written three times (isSkippedDay closure in getNextDate, the loop condition in getDateWithSkippedWeekend, and inline in getDatesInRange's daily branch) instead of one shared isSkippedDay helper."},
+"placement":{"score":4,"why":"The moving rule lives in shared/schedules.ts where weekend handling already is, but the daily-skip check is still decided separately in server/schedules/app.ts."},
+"scope":{"score":5,"why":"Only the type, recur-date parsing, the weekend helper and its callers plus tests are touched."},
+"maintainability":{"score":3,"why":"Turning the helper into a generic loop is clean, but holidays must be remembered at every caller and the budget schedule-template callers were missed, so the rule is easy to apply inconsistently."},
+"bypasses_abstraction":{"value":false,"where":"Callers still use getDateWithSkippedWeekend; the daily-skip check in app.ts getDatesInRange was already a local isWeekend check and stays local."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated weekend-or-holiday expression in schedules.ts getNextDate and schedules/app.ts getDatesInRange is openly repeated, not disguised."},
+"one_place":{"value":false,"where":"The move rule lands in getDateWithSkippedWeekend, but holidays is an optional argument each caller must pass: budget/schedule-template.ts's two calls do not pass it, and the daily-skip holiday check is duplicated in shared/schedules.ts getNextDate and server/schedules/app.ts getDatesInRange."}}

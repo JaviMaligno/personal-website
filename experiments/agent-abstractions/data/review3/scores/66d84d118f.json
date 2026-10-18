@@ -1,0 +1,12 @@
+{"id": "66d84d118f",
+"reuse": {"score": 3, "why": "Extends getDateWithSkippedWeekend and getNextDate and adds shared predicates (isSkippedDay, isWeekendSkippedDaily, getWeekdayCycleLength) in shared/schedules.ts, but the new getDatesInRange rebuilds getUpcomingDates' occurrence pipeline instead of sharing it."},
+"duplication": {"score": 2, "why": "The 'daily: filter skipped days, otherwise move with getDateWithSkippedWeekend' dispatch is written out separately in getNextDate, getUpcomingDates, getDatesInRange and twice in schedule-template.ts, and getWeekendShiftDays parallels getWeekdayCycleLength as a second ad-hoc window formula."},
+"placement": {"score": 4, "why": "Day predicates and the solve loop live in shared/schedules.ts, the new handler sits next to getUpcomingDates in schedules/app.ts, and the RecurConfig type gains holidays; the window helper living only in the server module is a minor split."},
+"scope": {"score": 4, "why": "Covers the four requested behaviours; passing frequency through parseRecurDate is needed for the daily rule; no unrelated edits."},
+"maintainability": {"score": 3, "why": "Holiday matching is defined once in isSkippedDay, but how an occurrence becomes a final day (skip vs move, window sizes) is decided at five call sites with growing '&& !isWeekendSkipping' conditions, so the next rule change must again touch them all."},
+"bypasses_abstraction": {"value": false, "where": "Sites use the existing getNextDate/getDateWithSkippedWeekend and the new shared predicates; the problem is repeated dispatch around them rather than going around an existing abstraction."},
+"duplicated_blocks": 3,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "schedules/app.ts getDatesInRange is a reshaped copy of getUpcomingDates' occurrences/filter/map pipeline (range bounds and dedupe added), and getWeekendShiftDays is a second variant of the getWeekdayCycleLength search-window formula."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 4, "where": "getDateWithSkippedWeekend gains holidays; getNextDate gains a daily-skip branch (wider take window, candidate search) and a '!skipsWeekendDays' guard; schedule-template.ts (two blocks), getUpcomingDates and getDatesInRange each re-implement the skip-vs-move decision instead of one shared resolver."}
+}

@@ -1,0 +1,11 @@
+{"id":"452013af9a",
+"reuse":{"score":3,"why":"Keeps using getNextDate and getDateWithSkippedWeekend, but adds no shared definition of the daily-skip rule, so each site re-derives it."},
+"duplication":{"score":2,"why":"The 'skipWeekend && frequency === daily' predicate is written inline three times (getNextDate, getUpcomingDates, schedule-template) and the weekend-skipping occurrence scan is implemented separately in getNextDate and getUpcomingDates with different lookahead limits."},
+"placement":{"score":3,"why":"Part of the rule sits in shared/schedules.getNextDate, but getUpcomingDates carries its own complete daily branch in the server handler and schedule-template decides the daily case itself."},
+"scope":{"score":5,"why":"Only the weekend-rule call sites and the frequency passthrough are touched."},
+"maintainability":{"score":2,"why":"The rule exists as three independently coded variants (including a separate early-return loop with a magic 'count * 7 + 14' bound), so the next change to weekend handling must be repeated and can easily diverge."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Weekend-skip scan reshaped as find() over a take-14 slice in shared/schedules.ts getNextDate and as a manual for-loop with counters in server/schedules/app.ts getUpcomingDates; daily predicate re-spelled in budget/schedule-template.ts."},
+"one_place":{"value":false,"where":"The daily-skip rule is decided separately in shared/schedules.ts getNextDate, server/schedules/app.ts getUpcomingDates and budget/schedule-template.ts createScheduleList; no shared definition."}}

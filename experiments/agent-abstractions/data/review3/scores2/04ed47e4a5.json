@@ -1,0 +1,13 @@
+{
+  "id": "04ed47e4a5",
+  "reuse": {"score": 3, "why": "Renames the existing weekend helper into one getDateWithWeekendRule used by all date sites and reuses RSchedule/recurConfigToRSchedule for the new handler, but the daily-skip rule and the weekend-or-holiday test are re-written at call sites instead of being part of the shared definition."},
+  "duplication": {"score": 2, "why": "The 'isWeekend || isHoliday' unavailable-day test appears in the helper, twice in getNextDate and again in getDatesInRange, and the daily skip is implemented once as a re-query loop in getNextDate and once as a filter in getDatesInRange."},
+  "placement": {"score": 3, "why": "The move-off-unavailable-day rule lives correctly in shared/schedules.ts, but the daily-skip rule is placed in getNextDate and in the server handler rather than in the shared rule, so getUpcomingDates and schedule-template do not apply it."},
+  "scope": {"score": 4, "why": "Edits stay on schedule date logic, the new handler, the RecurConfig type and tests; the extra parseISO import alongside the d namespace is minor noise."},
+  "maintainability": {"score": 2, "why": "The weekend/holiday policy is now split between a helper with a growing positional parameter list and two different inline daily-skip implementations, so a further rule change needs edits in several places and some paths already disagree."},
+  "bypasses_abstraction": {"value": true, "where": "getNextDate in shared/schedules.ts and getDatesInRange in server/schedules/app.ts decide daily weekend/holiday skipping themselves with inline isWeekend/isHoliday checks instead of through getDateWithWeekendRule."},
+  "duplicated_blocks": 3,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "The daily-skip rule is written as an occurrence-walking loop in getNextDate and as a pre-filter in getDatesInRange, and the unavailable-day predicate is re-stated inline in both instead of reusing the helper's isUnavailable."},
+  "abstraction_drift": {"value": true, "parameters_added": 2, "special_case_branches": 0, "bypassing_call_sites": 2, "where": "getDateWithWeekendRule gained skipWeekend (step 0) and holidays (step 3) parameters; the daily-schedule rule (steps 1-3) was added outside it in getNextDate and getDatesInRange, which bypass the helper for that decision while getUpcomingDates and schedule-template.ts do not apply it at all."}
+}

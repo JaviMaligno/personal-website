@@ -1,0 +1,127 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index a13a142..c1725aa 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -339,3 +339,102 @@ describe('bank sync handlers must not nest mutators', () => {
+     expect(result.errors).toEqual([]);
+   });
+ });
++
++describe('simplefin-accounts-link duplicate detection', () => {
++  const linkSimpleFin = app.handlers['simplefin-accounts-link'];
++  const externalAccount = {
++    account_id: 'ext-1',
++    name: 'Checking',
++    balance: 100,
++    institution: 'Bank',
++    orgId: 'org-1',
++  };
++
++  function linkParams(extra = {}) {
++    return { externalAccount, ...extra };
++  }
++
++  beforeEach(() => {
++    vi.mocked(bankSync.syncAccount).mockResolvedValue({
++      added: [],
++      updated: [],
++    } as never);
++  });
++
++  it('refuses to link a bank account already linked to another account', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'existing', name: 'Existing', accountId: 'ext-1' },
++    ]);
++
++    await expect(linkSimpleFin(linkParams())).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++
++    const count = db.runQuery('SELECT id FROM accounts', [], true);
++    expect(count).toHaveLength(1);
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('refuses to link into another existing account when it is linked elsewhere', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'existing', name: 'Existing', accountId: 'ext-1' },
++      { id: 'target', name: 'Target', accountId: null },
++    ]);
++
++    await expect(
++      linkSimpleFin(linkParams({ upgradingId: 'target' })),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++
++    const target = db.runQuery<{ account_id: string | null }>(
++      'SELECT account_id FROM accounts WHERE id = ?',
++      ['target'],
++      true,
++    );
++    expect(target[0].account_id).toBeNull();
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('still refuses when the existing link is on a closed account', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'existing', name: 'Existing', accountId: 'ext-1' },
++    ]);
++    db.runQuery('UPDATE accounts SET closed = 1 WHERE id = ?', ['existing']);
++
++    await expect(linkSimpleFin(linkParams())).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++  });
++
++  it('allows linking when the existing link belongs to a deleted account', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'deleted', name: 'Deleted', accountId: 'ext-1' },
++    ]);
++    db.runQuery('UPDATE accounts SET tombstone = 1 WHERE id = ?', ['deleted']);
++
++    await expect(linkSimpleFin(linkParams())).resolves.toBe('ok');
++  });
++
++  it('allows the same provider account id under a different provider', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'existing', name: 'Existing', accountId: 'ext-1' },
++    ]);
++    db.runQuery(
++      "UPDATE accounts SET account_sync_source = 'goCardless' WHERE id = ?",
++      ['existing'],
++    );
++
++    await expect(linkSimpleFin(linkParams())).resolves.toBe('ok');
++  });
++
++  it('allows re-linking into the account that already holds the bank account', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'existing', name: 'Existing', accountId: 'ext-1' },
++    ]);
++
++    await expect(
++      linkSimpleFin(linkParams({ upgradingId: 'existing' })),
++    ).resolves.toBe('ok');
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index da6c85b..f6234fd 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -195,6 +195,15 @@ async function linkBankSyncAccount({
+   startingBalance,
+   fileId,
+ }: BankSyncLinkParams) {
++  const existingLink = await db.first<Pick<db.DbAccount, 'id'>>(
++    'SELECT id FROM accounts WHERE account_id = ? AND account_sync_source = ? AND tombstone = 0 AND id IS NOT ?',
++    [accountId, source, upgradingId ?? null],
++  );
++
++  if (existingLink) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++
+   const bank = await link.findOrCreateBank(institution, bankId);
+ 
+   let id: AccountEntity['id'];

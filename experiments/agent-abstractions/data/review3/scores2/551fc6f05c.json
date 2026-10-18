@@ -1,0 +1,11 @@
+{"id":"551fc6f05c",
+"reuse":{"score":5,"why":"Every month-wide action, including the new setLastMonthSpending, takes its categories from the existing getMonthBudgetCategories/shouldIncludeMonthBudgetCategory policy and the sign from averageToBudgetAmount."},
+"duplication":{"score":4,"why":"Exclusion rules are added once in shouldIncludeMonthBudgetCategory and the per-action SQL hidden filter is removed; the goal_def column is still selected in two queries (getBudgetData and the policy) as before."},
+"placement":{"score":5,"why":"Selection rules live in month-action-categories.ts, the module the tree designates as the shared category policy; the new action sits with the others in actions.ts and app.ts."},
+"scope":{"score":4,"why":"Changes are limited to the policy, actions and registration, though no change addresses the #fixed group-notes exclusion of step 3."},
+"maintainability":{"score":3,"why":"The policy stays central, but the flag is threaded positionally with an `undefined` filler for previousMonth at every call, the `action` parameter of shouldIncludeMonthBudgetCategory is now unused, and the #fixed rule has no place in the policy."},
+"bypasses_abstraction":{"value":false,"where":"All month-wide actions go through getMonthBudgetCategories or shouldIncludeMonthBudgetCategory (copyPreviousMonth, as before)."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No duplicated logic; setLastMonthSpending composes the shared selection and sign helpers."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":0,"bypassing_call_sites":0,"where":"includeHiddenCategories added as a trailing positional parameter to both getMonthBudgetCategories and shouldIncludeMonthBudgetCategory in month-action-categories.ts, forcing `undefined` for previousMonth at the setZero/set3/6/12MonthAvg/setLastMonthSpending call sites; the zero/average special cases were removed rather than added."}}

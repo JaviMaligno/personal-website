@@ -1,0 +1,45 @@
+{
+ "id": "d73e9fa7bc",
+ "reuse": {
+  "score": 4,
+  "why": "Most consumers share the expected-amount calculation and reuse getApproxNumberThreshold, but preview generation retains its own amount dispatch."
+ },
+ "duplication": {
+  "score": 4,
+  "why": "The change removes several independent calculations but leaves the missing/numeric/range dispatch duplicated in computeSchedulePreviewTransactions."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Schedule amount policy belongs in shared/schedules, tolerance remains in shared/rules, and API serialization stays in api-models."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits concern schedule expected amounts, their API representation, associated tests, or release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralization improves ownership, but the preview's local dispatch and an optional operator omitted by existing consumers leave policy application dependent on caller discipline."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/shared/schedules.ts: computeSchedulePreviewTransactions handles missing and numeric amounts locally instead of passing the raw amount and operator to getExpectedAmount."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "computeSchedulePreviewTransactions replaces only the range arithmetic with getExpectedAmount, retaining a surrounding missing/numeric/range dispatch that duplicates the shared helper's decision."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "getScheduledAmount gains an optional op parameter, getExpectedAmount adds an isapprox branch, and computeSchedulePreviewTransactions bypasses the shared decision for missing and numeric amounts."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 36.2
+ }
+}

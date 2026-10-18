@@ -1,0 +1,12 @@
+{"id":"78071ba5bc",
+"reuse":{"score":4,"why":"Reuses getApproxNumberThreshold and routes every midpoint copy plus the existing getScheduledAmount through one helper, but adds a new getExpectedAmount beside the existing exported getScheduledAmount instead of making that the single entry point."},
+"duplication":{"score":5,"why":"The five inline midpoint copies are removed and replaced by calls to one function; no new logic is repeated."},
+"placement":{"score":5,"why":"The rule lives in shared/schedules.ts next to getScheduledAmount, where amount resolution for schedules already lives, and the API field is computed in api-models' scheduleModel."},
+"scope":{"score":4,"why":"Changes are on point across the four steps; minor noise in release notes for steps 1 and 3 that the step 4 rule now contradicts."},
+"maintainability":{"score":3,"why":"Two public helpers for the same decision, and the operator is an optional parameter, so the desktop-client callers of getScheduledAmount that pass no op silently miss the approximate rule."},
+"bypasses_abstraction":{"value":false,"where":"Server and shared sites now call getExpectedAmount/getScheduledAmount; no site keeps its own amount resolution."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"getScheduledAmount delegates to getExpectedAmount rather than repeating it."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"Optional op parameter added to shared getScheduledAmount and an isapprox branch in the new getExpectedAmount; the desktop-client getScheduledAmount callers (SchedulesTable, Balance, mobile schedules, useScheduleEdit) omit op and so do not apply the approximate rule; forecast-schedules adds an _amountOp ?? conditions op fallback."}
+}

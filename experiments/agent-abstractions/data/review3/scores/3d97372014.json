@@ -1,0 +1,12 @@
+{"id":"3d97372014",
+"reuse":{"score":3,"why":"Reuses getApproxNumberThreshold and getRangeAmount, but adds a second public amount helper (getPlannedAmount) beside the tree's existing getScheduledAmount instead of routing the sites through the existing helper that already decides missing/number/range."},
+"duplication":{"score":3,"why":"The per-site `missing ? 0 : number ? value : helper(range)` dispatches in schedules/app.ts (twice) and computeSchedulePreviewTransactions are kept, and schedule-template gets its own op check, so the number-vs-range-vs-approx dispatch remains spread across sites and in the helper."},
+"placement":{"score":4,"why":"The rule is defined in shared/schedules.ts next to getRangeAmount and getScheduledAmount, the right layer, with a reasonable test."},
+"scope":{"score":5,"why":"Edits are limited to the amount-planning sites, the helper, its test and a release note."},
+"maintainability":{"score":2,"why":"Two overlapping helpers plus local typeof-number short-circuits at several sites mean the approximate branch is silently skipped where sites never pass numbers to the helper, and future amount ops must be threaded through every site's own dispatch and an optional op argument."},
+"bypasses_abstraction":{"value":true,"where":"schedules/app.ts updateActions and postTransactionForSchedule, shared/schedules.ts computeSchedulePreviewTransactions and budget/schedule-template.ts keep their own number/range dispatch instead of calling getScheduledAmount/getPlannedAmount with the raw value and op."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The retained dispatches are the tree's pre-existing copies left in place, not reshaped new copies; getScheduledAmount delegates to the new helper."},
+"one_place":{"value":false,"where":"The rule is defined in getPlannedAmount, but sites in schedules/app.ts and computeSchedulePreviewTransactions only reach it for non-number amounts, schedule-template gates it with its own op test, and display callers of getScheduledAmount (SchedulesTable, mobile list, useScheduleEdit) are not passed the op."}
+}

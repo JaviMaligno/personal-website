@@ -1,0 +1,12 @@
+{"id":"e0c51866b5",
+"reuse":{"score":5,"why":"Every month-wide action, including the new last-month-spending one, goes through isMonthFillCategory and the sign helper, and the #fixed check reuses the tree's extractTagsFromText."},
+"duplication":{"score":4,"why":"The selection rule and sign rule exist once; the only repetition is the category column/join SQL (has_template, group_note) written three times, in getBudgetData, setZero and getSpendingFillCategories."},
+"placement":{"score":5,"why":"The predicate and helpers live in server/budget/actions.ts next to the actions, and the new method is registered in budget/app.ts like its siblings."},
+"scope":{"score":5,"why":"Changes are limited to month-wide actions, the new method and tests."},
+"maintainability":{"score":4,"why":"Adding a new exclusion is a one-line change in isMonthFillCategory; the three similar SQL queries and reusing getAverageBudgetAmount for last-month spending (naming) are small blemishes."},
+"bypasses_abstraction":{"value":false,"where":"No month-wide action decides selection outside isMonthFillCategory; setZero keeps its own query but filters through the same predicate."},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"The repeated SELECT of has_template/group_note in setZero and getSpendingFillCategories is visible near-identical SQL (differing only in the group join type), not a disguised copy of logic."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":0,"where":"isMonthFillCategory gained includeHiddenCategories as an explicit option; template and #fixed rules were added as general conditions, and all six actions keep calling it."}
+}

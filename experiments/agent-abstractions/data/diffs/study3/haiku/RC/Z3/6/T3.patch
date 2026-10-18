@@ -1,0 +1,115 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index 4638ac9..b702557 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -377,6 +377,63 @@ describe('fintegra-accounts-link', () => {
+     expect(account!.account_sync_source).toBe('fintegra');
+     expect(account!.account_id).toBe('fin-1');
+   });
++
++  it('refuses to link into a closed account without changing anything', async () => {
++    await db.insertAccount({ id: 'acct1', name: 'Savings', closed: 1 });
++
++    await expect(
++      fintegraAccountsLinkHandler({ externalAccount, upgradingId: 'acct1' }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    const account = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['acct1'],
++    );
++    expect(account!.account_sync_source).toBeNull();
++    expect(account!.account_id).toBeNull();
++    expect(account!.bank).toBeNull();
++    expect(await db.first('SELECT id FROM banks')).toBeNull();
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('refuses to re-link a closed account that already holds the link', async () => {
++    await fintegraAccountsLinkHandler({ externalAccount });
++    const linked = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE account_sync_source = ? AND account_id = ?',
++      ['fintegra', 'fin-1'],
++    );
++    await db.update('accounts', { id: linked!.id, closed: 1 });
++    vi.mocked(bankSync.syncAccount).mockClear();
++
++    await expect(
++      fintegraAccountsLinkHandler({
++        externalAccount,
++        upgradingId: linked!.id,
++      }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('links a closed account once it has been reopened', async () => {
++    await db.insertAccount({ id: 'acct1', name: 'Savings', closed: 1 });
++    await db.update('accounts', { id: 'acct1', closed: 0 });
++
++    const result = await fintegraAccountsLinkHandler({
++      externalAccount,
++      upgradingId: 'acct1',
++    });
++
++    expect(result).toBe('ok');
++    const account = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['acct1'],
++    );
++    expect(account!.account_sync_source).toBe('fintegra');
++  });
+ });
+ 
+ describe('bank sync handlers must not nest mutators', () => {
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index f2e5346..73c0507 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -198,6 +198,22 @@ async function linkBankSyncAccount({
+   syncFileId,
+   eventTables,
+ }: LinkBankSyncAccountParams) {
++  const upgradingRow = upgradingId
++    ? await db.first<db.DbAccount>('SELECT * FROM accounts WHERE id = ?', [
++        upgradingId,
++      ])
++    : null;
++
++  if (upgradingId && !upgradingRow) {
++    throw new Error(`Account with ID ${upgradingId} not found.`);
++  }
++
++  if (upgradingRow?.closed === 1) {
++    throw new Error(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  }
++
+   await link.assertBankAccountNotLinkedElsewhere({
+     accountSyncSource,
+     providerAccountId: newAccount.account_id,
+@@ -207,17 +223,8 @@ async function linkBankSyncAccount({
+   const bank = await link.findOrCreateBank(institution, bankId);
+ 
+   let id: string;
+-  if (upgradingId) {
+-    const accRow = await db.first<db.DbAccount>(
+-      'SELECT * FROM accounts WHERE id = ?',
+-      [upgradingId],
+-    );
+-
+-    if (!accRow) {
+-      throw new Error(`Account with ID ${upgradingId} not found.`);
+-    }
+-
+-    id = accRow.id;
++  if (upgradingRow) {
++    id = upgradingRow.id;
+     await db.update('accounts', {
+       id,
+       account_id: newAccount.account_id,

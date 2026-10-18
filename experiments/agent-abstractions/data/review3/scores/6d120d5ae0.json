@@ -1,0 +1,12 @@
+{"id":"6d120d5ae0",
+"reuse":{"score":4,"why":"Every weekend/holiday decision goes through the existing getDateWithSkippedWeekend helper (now backed by one isWeekendOrHoliday), and the new range handler reuses recurConfigToRSchedule/RSchedule like getUpcomingDates."},
+"duplication":{"score":3,"why":"The `skipWeekend ? getDateWithSkippedWeekend(date, mode, frequency, holidays) : date` wrapper is repeated in getNextDate, getUpcomingDates, getDatesInRange and a new schedule-template wrapper, and getDatesInRange restates getUpcomingDates' build-schedule/map/try-captureBreadcrumb skeleton."},
+"placement":{"score":4,"why":"Weekend, holiday and window logic sits in shared/schedules.ts and the handler in server/schedules/app.ts alongside get-upcoming-dates, matching the tree's layering."},
+"scope":{"score":4,"why":"Changes stay on the four requests; the RecurConfig and parseRecurDate edits are needed to carry the new fields."},
+"maintainability":{"score":3,"why":"The core rule is central, but whether weekend handling applies is still decided at each caller, and getUpcomingDates encodes the daily-skip rule again in its own over-fetch (count*7), so a maintainer must keep several sites in step."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates computes `config.skipWeekend && config.frequency === 'daily'` itself to size the over-fetch, re-deciding the daily-skip rule outside getDateWithSkippedWeekend."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getDatesInRange is getUpcomingDates reshaped (range instead of take, Set instead of slice), and schedule-template's getWeekendAdjustedDay is the same skipWeekend ternary renamed into a local helper."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":1,"where":"getDateWithSkippedWeekend gained `frequency` and `holidays` parameters and a `frequency === 'daily' -> null` branch; getUpcomingDates separately re-checks the daily rule for its lookahead."}
+}

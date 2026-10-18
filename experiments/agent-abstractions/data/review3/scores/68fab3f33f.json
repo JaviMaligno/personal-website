@@ -1,0 +1,12 @@
+{"id":"68fab3f33f",
+"reuse":{"score":3,"why":"Extends getDateWithSkippedWeekend and adds isNonWorkingDay in shared/schedules.ts, but getDatesInRange re-implements the weekend-or-holiday check inline instead of using that predicate (left unexported)."},
+"duplication":{"score":3,"why":"The `d.isWeekend(date) || holidays.includes(dayFromDate(date))` rule exists both in isNonWorkingDay and inline in getDatesInRange, while the new getScheduleDate helper removes a pre-existing duplicate in schedule-template.ts."},
+"placement":{"score":4,"why":"The holiday rule sits with the weekend helpers in shared/schedules.ts, but the daily-skip decision for holidays is still made separately in getNextDate's loop and in the server handler."},
+"scope":{"score":4,"why":"Mostly focused; the schedule-template getScheduleDate extraction is a small adjacent refactor and getUpcomingDates gets a mis-indented reformat."},
+"maintainability":{"score":3,"why":"The loop-based getDateWithSkippedWeekend is clean, but the non-working-day rule is spread over an unexported helper plus an inline copy, and getUpcomingDates is left misformatted."},
+"bypasses_abstraction":{"value":true,"where":"getDatesInRange in server/schedules/app.ts checks `d.isWeekend(date) || config.holidays?.includes(...)` itself instead of using isNonWorkingDay from shared/schedules.ts."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The inline weekend-or-holiday check in getDatesInRange is a direct, recognisable copy of isNonWorkingDay rather than a disguised one."},
+"one_place":{"value":false,"where":"Holiday-as-non-working-day is defined in isNonWorkingDay (shared/schedules.ts, used by getNextDate and getDateWithSkippedWeekend) and again inline in getDatesInRange (server/schedules/app.ts); the daily-skip decision is made separately in each."}
+}

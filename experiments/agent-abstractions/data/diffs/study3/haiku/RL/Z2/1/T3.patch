@@ -1,0 +1,261 @@
+diff --git a/packages/desktop-client/src/components/accounts/Balance.tsx b/packages/desktop-client/src/components/accounts/Balance.tsx
+index 58b7618..564b097 100644
+--- a/packages/desktop-client/src/components/accounts/Balance.tsx
++++ b/packages/desktop-client/src/components/accounts/Balance.tsx
+@@ -109,9 +109,15 @@ export function SelectedBalance({
+       }
+ 
+       if (!account || account.id === schedule._account) {
+-        scheduleBalance += getScheduledAmount(schedule._amount);
++        scheduleBalance += getScheduledAmount(
++          schedule._amount,
++          schedule._amountOp,
++        );
+       } else {
+-        scheduleBalance -= getScheduledAmount(schedule._amount);
++        scheduleBalance -= getScheduledAmount(
++          schedule._amount,
++          schedule._amountOp,
++        );
+       }
+     }
+   }
+diff --git a/packages/desktop-client/src/components/mobile/schedules/MobileSchedulesPage.tsx b/packages/desktop-client/src/components/mobile/schedules/MobileSchedulesPage.tsx
+index 5347676..2b6d927 100644
+--- a/packages/desktop-client/src/components/mobile/schedules/MobileSchedulesPage.tsx
++++ b/packages/desktop-client/src/components/mobile/schedules/MobileSchedulesPage.tsx
+@@ -57,7 +57,7 @@ export function MobileSchedulesPage() {
+     ? schedules.filter(schedule => {
+         const payee = payees.find(p => schedule._payee === p.id);
+         const account = accounts.find(a => schedule._account === a.id);
+-        const amount = getScheduledAmount(schedule._amount);
++        const amount = getScheduledAmount(schedule._amount, schedule._amountOp);
+         const amountStr =
+           (schedule._amountOp === 'isapprox' ||
+           schedule._amountOp === 'isbetween'
+diff --git a/packages/desktop-client/src/components/mobile/schedules/SchedulesListItem.tsx b/packages/desktop-client/src/components/mobile/schedules/SchedulesListItem.tsx
+index a624e57..aeb4dd2 100644
+--- a/packages/desktop-client/src/components/mobile/schedules/SchedulesListItem.tsx
++++ b/packages/desktop-client/src/components/mobile/schedules/SchedulesListItem.tsx
+@@ -36,7 +36,7 @@ export function SchedulesListItem({
+   const format = useFormat();
+   const dateFormat = useDateFormat() || 'MM/dd/yyyy';
+ 
+-  const amount = getScheduledAmount(schedule._amount);
++  const amount = getScheduledAmount(schedule._amount, schedule._amountOp);
+   const amountStr =
+     (schedule._amountOp === 'isapprox' || schedule._amountOp === 'isbetween'
+       ? '~'
+diff --git a/packages/desktop-client/src/components/schedules/SchedulesTable.tsx b/packages/desktop-client/src/components/schedules/SchedulesTable.tsx
+index a16fc46..f1331a2 100644
+--- a/packages/desktop-client/src/components/schedules/SchedulesTable.tsx
++++ b/packages/desktop-client/src/components/schedules/SchedulesTable.tsx
+@@ -73,7 +73,7 @@ export function ScheduleAmountCell({
+   const { t } = useTranslation();
+   const format = useFormat();
+ 
+-  const num = getScheduledAmount(amount);
++  const num = getScheduledAmount(amount, op);
+   const currencyAmount = format(Math.abs(num || 0), 'financial');
+   const isApprox = op === 'isapprox';
+   const isBetween = op === 'isbetween';
+@@ -325,7 +325,7 @@ export function SchedulesTable({
+     return schedules.filter(schedule => {
+       const payee = payees.find(p => schedule._payee === p.id);
+       const account = accounts.find(a => schedule._account === a.id);
+-      const amount = getScheduledAmount(schedule._amount);
++      const amount = getScheduledAmount(schedule._amount, schedule._amountOp);
+       let amountStr = '';
+       if (schedule._amountOp === 'isbetween') {
+         amountStr = '±';
+diff --git a/packages/desktop-client/src/hooks/useScheduleEdit.ts b/packages/desktop-client/src/hooks/useScheduleEdit.ts
+index 355a6cd..4ec8876 100644
+--- a/packages/desktop-client/src/hooks/useScheduleEdit.ts
++++ b/packages/desktop-client/src/hooks/useScheduleEdit.ts
+@@ -139,7 +139,7 @@ function createScheduleEditReducer(useGetScheduledAmount: boolean = false) {
+           if (action.value === 'isbetween') {
+             // We need a range if switching to `isbetween`
+             if (useGetScheduledAmount) {
+-              const num = getScheduledAmount(state.fields.amount);
++              const num = getScheduledAmount(state.fields.amount, 'is');
+               fields.amount = { num1: num, num2: num };
+             } else {
+               fields.amount =
+@@ -150,7 +150,7 @@ function createScheduleEditReducer(useGetScheduledAmount: boolean = false) {
+           } else if (state.fields.amountOp === 'isbetween') {
+             // We need just a number if switching away from `isbetween`
+             if (useGetScheduledAmount) {
+-              const num = getScheduledAmount(state.fields.amount);
++              const num = getScheduledAmount(state.fields.amount, 'isbetween');
+               fields.amount = num;
+             } else {
+               fields.amount =
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index d609a19..e37f2f5 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -931,7 +931,7 @@ handlers['api/schedules-get'] = async function () {
+   const schedules = data as ScheduleEntity[];
+   return schedules.map(schedule => ({
+     ...scheduleModel.toExternal(schedule),
+-    expectedAmount: getScheduledAmount(schedule._amount),
++    expectedAmount: getScheduledAmount(schedule._amount, schedule._amountOp),
+   }));
+ };
+ 
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 9e8bb7e..a30c8f9 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -60,10 +60,10 @@ async function createScheduleList(
+     const conditions = rule.serialize().conditions;
+     const { date: dateConditions, amount: amountCondition } =
+       extractScheduleConds(conditions);
+-    let scheduleAmount =
+-      amountCondition.op === 'isbetween'
+-        ? getScheduledAmount(amountCondition.value)
+-        : amountCondition.value;
++    let scheduleAmount = getScheduledAmount(
++      amountCondition.value,
++      amountCondition.op,
++    );
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+       switch (template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 0b8754d..4312259 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -150,7 +150,7 @@ function updateActions(
+   }
+ 
+   // Keeps the action in sync with the amount the schedule actually posts.
+-  const amount = getScheduledAmount(amountCond.value);
++  const amount = getScheduledAmount(amountCond.value, amountCond.op);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -583,7 +583,7 @@ async function postTransactionForSchedule({
+     return;
+   }
+ 
+-  const amount = getScheduledAmount(schedule._amount);
++  const amount = getScheduledAmount(schedule._amount, schedule._amountOp);
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 95da43b..4b0c6c2 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -35,31 +35,56 @@ describe('schedules', () => {
+ 
+   describe('getScheduledAmount', () => {
+     it('returns a single amount as is', () => {
+-      expect(getScheduledAmount(-5000)).toBe(-5000);
++      expect(getScheduledAmount(-5000, 'is')).toBe(-5000);
+     });
+ 
+     it('returns 0 when there is no amount', () => {
+-      expect(getScheduledAmount(null)).toBe(0);
+-      expect(getScheduledAmount(undefined)).toBe(0);
++      expect(getScheduledAmount(null, 'is')).toBe(0);
++      expect(getScheduledAmount(undefined, 'isapprox')).toBe(0);
++    });
++
++    it('returns the end of a negative approximate tolerance furthest from zero', () => {
++      expect(getScheduledAmount(-10000, 'isapprox')).toBe(-10750);
++      expect(getScheduledAmount(-1234, 'isapprox')).toBe(-1327);
++    });
++
++    it('returns the end of a positive approximate tolerance furthest from zero', () => {
++      expect(getScheduledAmount(10000, 'isapprox')).toBe(10750);
++    });
++
++    it('returns an approximate amount of zero as zero', () => {
++      expect(getScheduledAmount(0, 'isapprox')).toBe(0);
++    });
++
++    it('inverts the approximate worst case when requested', () => {
++      expect(getScheduledAmount(-10000, 'isapprox', true)).toBe(10750);
+     });
+ 
+     it('returns the end of a negative range furthest from zero', () => {
+-      expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
++      expect(
++        getScheduledAmount({ num1: -10100, num2: -20000 }, 'isbetween'),
++      ).toBe(-20000);
+     });
+ 
+     it('returns the end of a negative range furthest from zero regardless of entry order', () => {
+-      expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
++      expect(
++        getScheduledAmount({ num1: -20000, num2: -10100 }, 'isbetween'),
++      ).toBe(-20000);
+     });
+ 
+     it('returns the end of a positive range furthest from zero', () => {
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++      expect(
++        getScheduledAmount({ num1: 10100, num2: 20000 }, 'isbetween'),
++      ).toBe(20000);
++      expect(
++        getScheduledAmount({ num1: 20000, num2: 10100 }, 'isbetween'),
++      ).toBe(20000);
+     });
+ 
+     it('inverts the range end when requested', () => {
+-      expect(getScheduledAmount({ num1: -10100, num2: -20000 }, true)).toBe(
+-        20000,
+-      );
++      expect(
++        getScheduledAmount({ num1: -10100, num2: -20000 }, 'isbetween', true),
++      ).toBe(20000);
+     });
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 662ef45..956c96a 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -7,6 +7,7 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import { q } from './query';
++import { getApproxNumberThreshold } from './rules';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+@@ -355,6 +356,7 @@ export function getDateWithSkippedWeekend(
+ 
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number } | null | undefined,
++  amountOp: string,
+   inverse: boolean = false,
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+@@ -362,7 +364,13 @@ export function getScheduledAmount(
+   if (amount == null) return 0;
+ 
+   if (typeof amount === 'number') {
+-    return inverse ? -amount : amount;
++    if (amountOp !== 'isapprox') {
++      return inverse ? -amount : amount;
++    }
++    // Plan approximate bills for the worst case: the end of the tolerance furthest from zero
++    const tolerance = getApproxNumberThreshold(amount);
++    const worstCase = amount < 0 ? amount - tolerance : amount + tolerance;
++    return inverse ? -worstCase : worstCase;
+   }
+   // Plan variable bills for the worst case: the end of the range furthest from zero
+   const worstCase =
+@@ -498,7 +506,7 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      const amount = getScheduledAmount(schedule._amount);
++      const amount = getScheduledAmount(schedule._amount, schedule._amountOp);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

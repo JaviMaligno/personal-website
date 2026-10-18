@@ -1,0 +1,11 @@
+{"id":"72c7b5dcc9",
+"reuse":{"score":3,"why":"Routes the flag through the existing assertBankAccountNotLinked check used by every provider, but re-writes unlinkAccount's local field reset instead of extracting and sharing it."},
+"duplication":{"score":3,"why":"The block of nulled sync fields is a verbatim copy of the update inside unlinkAccount, and the flag is threaded by hand through six provider functions that each repeat the same call."},
+"placement":{"score":3,"why":"The unlink write is placed inside a function named and used as an assertion, so a guard now silently mutates another account; it would belong in the link flow or a named unlink-local helper."},
+"scope":{"score":5,"why":"Only the flag, its handling and a test are added; no unrelated edits."},
+"maintainability":{"score":3,"why":"A mutating 'assert' and a second copy of the unlink field list will drift from unlinkAccount and surprise readers; otherwise the change is small and clear."},
+"bypasses_abstraction":{"value":true,"where":"assertBankAccountNotLinked clears account_id/bank/balances/sync source itself instead of going through a shared local part of unlinkAccount (comment explains unlinkAccount would contact providers, but the local reset was not factored out)."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied db.updateAccount field list is an open copy of unlinkAccount's, not renamed or reshaped."}
+}

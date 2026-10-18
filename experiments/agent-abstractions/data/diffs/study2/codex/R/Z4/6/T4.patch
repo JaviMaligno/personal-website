@@ -1,0 +1,71 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 36c3151..2e4f0ea 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -29,6 +29,7 @@ import {
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
+   getHasTransactionsQuery,
++  isHoliday,
+   getNextDate,
+   getNextDateAfter,
+   getStatus,
+@@ -515,7 +516,7 @@ async function getUpcomingDates({ config, count }) {
+         if (
+           config.skipWeekend &&
+           config.frequency === 'daily' &&
+-          (d.isWeekend(date) || config.holidays?.includes(dayFromDate(date)))
++          (d.isWeekend(date) || isHoliday(date, config.holidays))
+         ) {
+           return null;
+         }
+@@ -548,7 +549,7 @@ async function getDatesInRange({ config, start, end }) {
+       if (
+         config.skipWeekend &&
+         config.frequency === 'daily' &&
+-        (d.isWeekend(date) || config.holidays?.includes(dayFromDate(date)))
++        (d.isWeekend(date) || isHoliday(date, config.holidays))
+       ) {
+         return null;
+       }
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index ee06e3c..c26fa25 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -548,6 +548,17 @@ describe('schedules', () => {
+       expect(getNextDateAfter(dateCond, '2020-12-04')).toBe('2020-12-08');
+     });
+ 
++    it('matches recurring and exact-date holidays', () => {
++      const recurring = weeklyOnSaturday({
++        start: '2021-12-25',
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++        holidays: ['12-25', '2021-12-27'],
++      });
++
++      expect(getNextDateAfter(recurring, '2021-12-20')).toBe('2021-12-28');
++    });
++
+     it('moves a holiday occurrence in the configured direction', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index ae1b147..af98bcc 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -370,7 +370,13 @@ export function getDateWithSkippedWeekend(
+ }
+ 
+ function isWeekendOrHoliday(date: Date, holidays: string[] = []) {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  return d.isWeekend(date) || isHoliday(date, holidays);
++}
++
++export function isHoliday(date: Date, holidays: string[] = []) {
++  const day = monthUtils.dayFromDate(date);
++  const monthDay = day.slice(5);
++  return holidays.some(holiday => holiday === day || holiday === monthDay);
+ }
+ 
+ export function getScheduledAmount(

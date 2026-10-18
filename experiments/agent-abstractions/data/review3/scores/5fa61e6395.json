@@ -1,0 +1,12 @@
+{"id": "5fa61e6395",
+ "reuse": {"score": 3, "why": "Holidays are pushed into the existing getDateWithSkippedWeekend (with a new isHoliday helper) and reused by every mover, but the daily-skip rule is re-implemented inline in getNextDate and getDatesInRange instead of being one shared function."},
+ "duplication": {"score": 2, "why": "getNextDate has two near-identical forward/reverse skip loops, getDatesInRange re-writes the daily weekend/holiday predicate, and its RSchedule/try/captureBreadcrumb scaffolding copies getUpcomingDates."},
+ "placement": {"score": 3, "why": "Weekend/holiday moving correctly lives in shared/schedules.ts, but the daily-skip rule is split between that shared util and a server handler, and parseRecurDate is not given the frequency the shared code reads."},
+ "scope": {"score": 4, "why": "Edits stay on schedule date logic, the new handler and tests; the rewrite of getDateWithSkippedWeekend into a loop is needed for holidays."},
+ "maintainability": {"score": 2, "why": "The daily rule exists in several hand-written variants with different shapes (and getUpcomingDates and the budget schedule template do not apply it at all), so future changes to the skip rule must be found and repeated in multiple places."},
+ "bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getDatesInRange decides the daily weekend/holiday skip with its own condition instead of a shared schedule-date function; getUpcomingDates and budget/schedule-template.ts call getDateWithSkippedWeekend directly on daily schedules."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "The weekend-or-holiday skip predicate appears as two while loops in getNextDate (forward and reverse) and as a reordered flatMap condition in getDatesInRange; getDatesInRange's schedule scaffolding mirrors getUpcomingDates."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 2, "where": "getDateWithSkippedWeekend gains a holidays parameter (clean); getNextDate grows a daily-only special case with its own loops; getDatesInRange re-implements the daily skip, and getUpcomingDates/schedule-template keep moving daily dates via getDateWithSkippedWeekend."}
+}

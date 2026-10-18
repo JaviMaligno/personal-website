@@ -1,0 +1,12 @@
+{"id": "4508ab4bc9",
+ "reuse": {"score": 2, "why": "Extends the shared getExpectedScheduleAmount, but re-implements the 7.5% tolerance inline instead of calling the existing getApproxNumberThreshold in shared/rules.ts that rule matching uses."},
+ "duplication": {"score": 3, "why": "Math.round(Math.abs(amount) * 0.075) is a copy of getApproxNumberThreshold, so the tolerance now has two definitions that must stay equal."},
+ "placement": {"score": 4, "why": "The rule change is in shared/schedules.ts getExpectedScheduleAmount, where the expected-amount rule lives."},
+ "scope": {"score": 5, "why": "Only the helper, three call sites and its tests."},
+ "maintainability": {"score": 2, "why": "An optional op parameter that some callers pass and others (api-models expectedAmount, forecast-schedules) silently omit, plus a duplicated tolerance constant, leaves the approximate rule inconsistent and easy to miss."},
+ "bypasses_abstraction": {"value": true, "where": "shared/schedules.ts inlines the tolerance instead of getApproxNumberThreshold; server/api-models.ts and server/forecast/forecast-schedules.ts keep calling getExpectedScheduleAmount without the operator, bypassing the new rule."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The tolerance formula is a verbatim inline copy of getApproxNumberThreshold, not reshaped."},
+ "one_place": {"value": false, "where": "The rule is in getExpectedScheduleAmount, but it only applies where callers pass op: schedules/app.ts (two sites) and computeSchedulePreviewTransactions do, api-models.ts and forecast-schedules.ts do not, and the tolerance itself is defined both there and in getApproxNumberThreshold."}
+}

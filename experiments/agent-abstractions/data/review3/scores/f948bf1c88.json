@@ -1,0 +1,12 @@
+{"id": "f948bf1c88",
+"reuse": {"score": 4, "why": "Extends the existing WeekendRule/applyWeekendRule/getDateWithSkippedWeekend path for holidays and reuses RSchedule, recurConfigToRSchedule and dayFromDate in the new handler, though it does not reuse a common 'next valid occurrence' step across its three skip sites."},
+"duplication": {"score": 3, "why": "The daily-skip filter (skipsDays && isWeekendOrHoliday) is re-applied separately in getNextDate, getUpcomingDates and getDatesInRange, and two different search-window helpers (getSkipSearchDepth and getMaxShiftDays) encode the same holiday-extension arithmetic."},
+"placement": {"score": 4, "why": "Weekend/holiday predicates live in shared/schedules.ts and the handler sits beside get-upcoming-dates in server/schedules/app.ts, but getMaxShiftDays stays private in app.ts next to its shared sibling getSkipSearchDepth."},
+"scope": {"score": 4, "why": "Changes stay on the four requested steps; only a cosmetic import reorder is unrelated."},
+"maintainability": {"score": 3, "why": "Holiday handling is centralised, but the daily-skip rule is spread over three call sites and schedule-template now overloads getNextDate's noSkipWeekend flag with a computed value, which is hard to follow."},
+"bypasses_abstraction": {"value": false, "where": "All weekend moves go through applyWeekendRule/getDateWithSkippedWeekend; the skip rule uses the shared skipsWeekendOccurrences/isWeekendOrHoliday predicates."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "Daily-skip filtering written as .find in getNextDate, .filter/.slice in getUpcomingDates and a for/continue loop in getDatesInRange; getMaxShiftDays (app.ts) restates getSkipSearchDepth's 2-per-holiday window."},
+"abstraction_drift": {"value": true, "parameters_added": 2, "special_case_branches": 1, "bypassing_call_sites": 2, "where": "getDateWithSkippedWeekend gains holidays and WeekendRule gains holidays; getNextDate gains a skipsDays daily branch; getUpcomingDates and getDatesInRange each implement their own skip filtering and search depth instead of a shared occurrence helper."}
+}

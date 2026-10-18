@@ -1,0 +1,11 @@
+{"id":"2e3c6f5883",
+"reuse":{"score":3,"why":"Reuses RSchedule, recurConfigToRSchedule, getDateWithSkippedWeekend and dayFromDate, but the daily-skip-vs-move weekend rule is written again instead of being factored into a function shared with getUpcomingDates/getNextDate."},
+"duplication":{"score":2,"why":"The `skipWeekend && frequency === 'daily'` skip-or-move dispatch is a fresh copy of the one in getUpcomingDates (and shared getNextDate / schedule-template getEffectiveDate), now a fourth copy of the same rule."},
+"placement":{"score":4,"why":"Lives as a handler in server/schedules/app.ts next to getUpcomingDates, which is where the tree puts these date handlers, though the weekend rule itself belongs in shared/schedules.ts."},
+"scope":{"score":5,"why":"Only the handler, its registration, tests and a release note."},
+"maintainability":{"score":3,"why":"Readable and self-contained, but any change to weekend handling must now be repeated in one more place."},
+"bypasses_abstraction":{"value":false,"where":"No shared adjust-occurrence abstraction exists; it does call the existing getDateWithSkippedWeekend for the move case."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"schedules/app.ts getDatesInRange: the daily-skip/else-move dispatch from getUpcomingDates is reshaped into an if/continue/else-if inside the loop rather than shared"},
+"t2_reuse":"copy"}

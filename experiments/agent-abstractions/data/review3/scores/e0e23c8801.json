@@ -1,0 +1,11 @@
+{"id":"e0e23c8801",
+"reuse":{"score":3,"why":"Movement reuses the shared getDateWithSkippedWeekend (extended with holidays), but the new isSkippedDay helper is kept private, so schedules/app.ts re-derives the weekend-or-holiday test itself."},
+"duplication":{"score":2,"why":"The weekend-or-holiday check is written in isSkippedDay and again inline twice in schedules/app.ts (getUpcomingDates filter and getDatesInRange), and the over-fetch lookahead (holidays.length + 7/8) is computed separately in three places."},
+"placement":{"score":3,"why":"Date-moving logic correctly stays in shared/schedules.ts, but the daily-skip rule is spread into the server app functions instead of being exposed from the shared module."},
+"scope":{"score":5,"why":"Only schedule date handling, the type, parseRecurDate and tests are touched."},
+"maintainability":{"score":2,"why":"The holiday rule now lives in three copies with ad-hoc lookahead constants, and the budget schedule-template call sites of getDateWithSkippedWeekend silently ignore holidays because the new parameter defaults to []."},
+"bypasses_abstraction":{"value":true,"where":"schedules/app.ts getUpcomingDates and getDatesInRange test `d.isWeekend(date) || config.holidays?.includes(dayFromDate(date))` inline instead of the shared skipped-day helper; budget/schedule-template.ts calls getDateWithSkippedWeekend without holidays."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The inline checks in schedules/app.ts are reshaped copies of isSkippedDay (optional chaining on config.holidays instead of a defaulted array)."},
+"one_place":{"value":false,"where":"The 'skipped day' rule is in isSkippedDay (shared/schedules.ts, unexported) and duplicated twice in server/schedules/app.ts; budget/schedule-template.ts never passes holidays to getDateWithSkippedWeekend."}}

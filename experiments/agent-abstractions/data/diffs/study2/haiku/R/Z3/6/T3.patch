@@ -1,0 +1,148 @@
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index 4d5667b..f34ba52 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -1,7 +1,7 @@
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ 
+-import { findOrCreateBank } from './link';
++import { assertBankAccountNotLinked, findOrCreateBank } from './link';
+ 
+ beforeEach(async () => {
+   await global.emptyDatabase()();
+@@ -87,3 +87,98 @@ describe('findOrCreateBank', () => {
+     expect(await getBanks()).toHaveLength(1);
+   });
+ });
++
++describe('assertBankAccountNotLinked', () => {
++  async function insertLocalAccount({
++    id,
++    closed,
++    accountId,
++  }: {
++    id: string;
++    closed: 0 | 1;
++    accountId?: string;
++  }) {
++    await db.insertAccount({
++      id,
++      name: id,
++      closed,
++      ...(accountId && {
++        account_id: accountId,
++        account_sync_source: 'simpleFin',
++      }),
++    });
++  }
++
++  it('refuses to link into a closed account', async () => {
++    await insertLocalAccount({ id: 'closed-acct', closed: 1 });
++
++    await expect(
++      assertBankAccountNotLinked({
++        provider: 'simpleFin',
++        accountId: 'ext-1',
++        linkingAccountId: 'closed-acct',
++      }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  });
++
++  it('refuses to re-link a closed account that already holds the link', async () => {
++    await insertLocalAccount({
++      id: 'closed-linked',
++      closed: 1,
++      accountId: 'ext-1',
++    });
++
++    await expect(
++      assertBankAccountNotLinked({
++        provider: 'simpleFin',
++        accountId: 'ext-1',
++        linkingAccountId: 'closed-linked',
++      }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  });
++
++  it('allows linking into an open account', async () => {
++    await insertLocalAccount({ id: 'open-acct', closed: 0 });
++
++    await expect(
++      assertBankAccountNotLinked({
++        provider: 'simpleFin',
++        accountId: 'ext-1',
++        linkingAccountId: 'open-acct',
++      }),
++    ).resolves.toBeUndefined();
++  });
++
++  it('allows linking a new account when no account is being upgraded', async () => {
++    await expect(
++      assertBankAccountNotLinked({
++        provider: 'simpleFin',
++        accountId: 'ext-1',
++        linkingAccountId: undefined,
++      }),
++    ).resolves.toBeUndefined();
++  });
++
++  it('still refuses a bank account already linked to a different account', async () => {
++    await insertLocalAccount({
++      id: 'other-acct',
++      closed: 0,
++      accountId: 'ext-1',
++    });
++    await insertLocalAccount({ id: 'open-acct', closed: 0 });
++
++    await expect(
++      assertBankAccountNotLinked({
++        provider: 'simpleFin',
++        accountId: 'ext-1',
++        linkingAccountId: 'open-acct',
++      }),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index e2cebcc..00955c1 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -21,6 +21,19 @@ export async function assertBankAccountNotLinked({
+   accountId: string;
+   linkingAccountId: string | undefined;
+ }) {
++  if (linkingAccountId) {
++    const linkingAccount = await db.first<{ closed: number }>(
++      'SELECT closed FROM accounts WHERE id = ?',
++      [linkingAccountId],
++    );
++
++    if (linkingAccount?.closed) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const existing = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+      WHERE account_sync_source = ? AND account_id = ? AND id IS NOT ? AND tombstone = 0
+diff --git a/upcoming-release-notes/closed-account-bank-link.md b/upcoming-release-notes/closed-account-bank-link.md
+new file mode 100644
+index 0000000..af061b9
+--- /dev/null
++++ b/upcoming-release-notes/closed-account-bank-link.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: []
++---
++
++Prevent linking a bank account into a closed account, which left the account receiving transactions while hidden

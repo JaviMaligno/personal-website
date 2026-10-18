@@ -1,0 +1,118 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index cea172c..97f45a3 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -12,6 +12,7 @@ import {
+   setBudget,
+   setCategoryCarryover,
+   setNMonthAvg,
++  setZero,
+ } from './actions';
+ import * as budget from './base';
+ 
+@@ -194,6 +195,44 @@ describe('set budget average', () => {
+   });
+ });
+ 
++describe('fixed groups', () => {
++  beforeEach(async () => {
++    await global.emptyDatabase()();
++    global.currentMonth = '2024-02';
++    await setupAverageDatabase();
++    await db.insertCategoryGroup({ id: 'fixed', name: 'Fixed', is_income: 0 });
++    await db.insertCategory({
++      id: 'rent',
++      name: 'rent',
++      cat_group: 'fixed',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'tagged-cat',
++      name: 'tagged-cat',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.insert('notes', { id: 'fixed', note: 'Rent etc #fixed' });
++    await db.insert('notes', { id: 'tagged-cat', note: '#fixed' });
++    await db.insert('notes', { id: 'group1', note: '#fixedish' });
++  });
++
++  afterEach(async () => {
++    await global.emptyDatabase()();
++  });
++
++  it('leaves categories in #fixed groups untouched', async () => {
++    await setBudget({ category: 'rent', month: '2024-04', amount: 5000 });
++    await setBudget({ category: 'tagged-cat', month: '2024-04', amount: 7 });
++    await setZero({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-rent')).toBe(5000);
++    expect(await getSheetValue('budget202404', 'budget-tagged-cat')).toBe(0);
++  });
++});
++
+ describe('coverOverbudgeted', () => {
+   beforeEach(global.emptyDatabase());
+   afterEach(global.emptyDatabase());
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 8b8ce5a..18ecf24 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -214,7 +214,8 @@ function setCarryover(
+ }
+ 
+ // Categories that month-wide actions may write to: not hidden, not in a
+-// hidden group, and without any saved budget template.
++// hidden group, not in a group tagged #fixed, and without any saved budget
++// template.
+ function hasSavedTemplates(goalDef: string | null | undefined): boolean {
+   if (!goalDef) {
+     return false;
+@@ -227,20 +228,31 @@ function hasSavedTemplates(goalDef: string | null | undefined): boolean {
+   }
+ }
+ 
++// Groups tagged `#fixed` in their notes are skipped by month-wide actions.
++function hasFixedTag(notes: string | null | undefined): boolean {
++  return !!notes && /(^|\s)#fixed(?![\w-])/i.test(notes);
++}
++
+ async function getBulkEditableCategories(): Promise<
+   db.DbViewCategoryWithGroupHidden[]
+ > {
+   const categories = await db.all<
+-    db.DbViewCategoryWithGroupHidden & { goal_def?: string | null }
++    db.DbViewCategoryWithGroupHidden & {
++      goal_def?: string | null;
++      group_notes?: string | null;
++    }
+   >(
+     `
+-  SELECT c.*
++  SELECT c.*, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+-  return categories.filter(c => !hasSavedTemplates(c.goal_def));
++  return categories.filter(
++    c => !hasSavedTemplates(c.goal_def) && !hasFixedTag(c.group_notes),
++  );
+ }
+ 
+ // Actions
+diff --git a/upcoming-release-notes/skip-fixed-groups-bulk-budget.md b/upcoming-release-notes/skip-fixed-groups-bulk-budget.md
+new file mode 100644
+index 0000000..95ef86b
+--- /dev/null
++++ b/upcoming-release-notes/skip-fixed-groups-bulk-budget.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Month-wide budget actions now skip categories in groups whose notes contain the `#fixed` tag

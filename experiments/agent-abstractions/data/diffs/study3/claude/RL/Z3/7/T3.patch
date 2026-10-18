@@ -1,0 +1,23 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 046ec1f..7f7ff00 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -184,6 +184,18 @@ async function assertBankAccountNotLinked(
+   if (existing) {
+     throw new Error('This bank account is already linked to another account.');
+   }
++
++  if (upgradingId) {
++    const target = await db.first<{ closed: number }>(
++      'SELECT closed FROM accounts WHERE id = ?',
++      [upgradingId],
++    );
++    if (target?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
+ }
+ 
+ async function saveLinkedAccount(

@@ -1,0 +1,44 @@
+{
+ "id": "c1dbf63665",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses getApproxNumberThreshold and shares range selection, but introduces getExpectedAmount alongside getScheduledAmount without consolidating their overlapping responsibilities."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Most consumer-level arithmetic is removed, but missing-value and numeric-versus-range dispatch remain duplicated between the two amount helpers."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Schedule amount policy belongs in shared/schedules.ts, tolerance remains in shared/rules.ts, and API projection stays in api-models.ts."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are confined to schedule amount policy, its consumers, the requested API field, tests, and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Maintainers must distinguish two similarly named amount helpers, with posting and planning consumers using different definitions of expected amount."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "api-models.ts computes expectedAmount through getScheduledAmount instead of the operator-aware getExpectedAmount used by posting, forecasting, and previews."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "getExpectedAmount reshapes getScheduledAmount's missing/numeric/range dispatch under a new name while sharing only the range-selection leaf."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 0,
+  "bypassing_call_sites": 1,
+  "where": "getExpectedAmount introduces an operator parameter and becomes the shared posting policy, but the newly added API expectedAmount call uses getScheduledAmount; the operator branch represents domain variation rather than a consumer-specific exception."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 32.8
+ }
+}

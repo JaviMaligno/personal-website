@@ -1,0 +1,11 @@
+{"id":"5f32f3fbf5",
+"reuse":{"score":2,"why":"The tree already has getDateWithWeekendRule as the single weekend definition, but the daily rule is written inline in getNextDate rather than extending that definition."},
+"duplication":{"score":3,"why":"The skip/weekend condition (skipWeekend && !noSkipWeekend && isWeekend) is re-expressed inline next to the existing rule, and the inner loop repeats the occurrence/isWeekend check it does just above."},
+"placement":{"score":2,"why":"The weekend rule is a special-case branch inside getNextDate instead of in the shared getDateWithWeekendRule that getUpcomingDates and the schedule template also call."},
+"scope":{"score":5,"why":"Only getNextDate and its tests are touched."},
+"maintainability":{"score":2,"why":"The weekend rule now lives in two places, with getUpcomingDates and the schedule template still moving daily weekend occurrences, and the hard-coded two-iteration loop is opaque."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getNextDate: daily weekend skipping decided inline before and around getDateWithWeekendRule rather than inside it."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getNextDate re-tests skipWeekend && !noSkipWeekend && d.isWeekend inline, the same condition getDateWithWeekendRule already decides, reshaped as a skip loop."},
+"one_place":{"value":false,"where":"Daily rule only in getNextDate (shared/schedules.ts); getUpcomingDates in server/schedules/app.ts and createScheduleList in server/budget/schedule-template.ts still apply getDateWithWeekendRule's move behaviour to daily schedules."}}

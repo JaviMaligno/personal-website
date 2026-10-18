@@ -1,0 +1,77 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 6a67512..e7c5c1a 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -248,6 +248,37 @@ describe('set budget average', () => {
+     }
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
+   });
++
++  it('leaves categories in fixed groups unchanged in bulk actions', async () => {
++    await db.insertCategoryGroup({ id: 'fixed-group', name: 'Fixed', is_income: 0 });
++    await db.insertCategory({
++      id: 'fixed-cat',
++      name: 'Fixed cost',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'category-note-cat',
++      name: 'Regular category',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.insert('notes', { id: 'fixed-group', note: 'Rent #fixed monthly' });
++    await db.insert('notes', { id: 'category-note-cat', note: '#fixed' });
++    await setBudget({ category: 'fixed-cat', month: '2024-04', amount: 123 });
++    await setBudget({ category: 'category-note-cat', month: '2024-04', amount: 123 });
++
++    await setZero({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-fixed-cat')).toBe(123);
++    expect(await getSheetValue('budget202404', 'budget-category-note-cat')).toBe(0);
++
++    await set3MonthAvg({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-fixed-cat')).toBe(123);
++  });
+ });
+ 
+ describe('coverOverbudgeted', () => {
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 55e44dd..9f079bd 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { makeTagAqlRegex } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -76,15 +77,19 @@ type BudgetData = {
+ function getCategoriesForBulkBudgetAction(): Promise<
+   db.DbViewCategoryWithGroupHidden[]
+ > {
+-  return db.all<db.DbViewCategoryWithGroupHidden>(`
+-    SELECT c.*
++  return db.all<db.DbViewCategoryWithGroupHidden & { group_notes: string }>(`
++    SELECT c.*, n.note AS group_notes
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0
+       AND c.hidden = 0
+       AND g.hidden = 0
+       AND c.goal_def IS NULL
+-  `);
++  `).then(categories => {
++    const fixedTag = new RegExp(makeTagAqlRegex('fixed'));
++    return categories.filter(cat => !fixedTag.test(cat.group_notes || ''));
++  });
+ }
+ 
+ function getBudgetData<T extends BudgetTable>(

@@ -1,0 +1,90 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 5b9f191..33e32f7 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -10,6 +10,7 @@ import {
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
+   getNextDate,
++  getScheduledAmount,
+ } from '#shared/schedules';
+ import { amountToInteger } from '#shared/util';
+ import type { CategoryEntity, TransactionEntity } from '#types/models';
+@@ -59,11 +60,7 @@ async function createScheduleList(
+     const conditions = rule.serialize().conditions;
+     const { date: dateConditions, amount: amountCondition } =
+       extractScheduleConds(conditions);
+-    let scheduleAmount =
+-      amountCondition.op === 'isbetween'
+-        ? Math.round(amountCondition.value.num1 + amountCondition.value.num2) /
+-          2
+-        : amountCondition.value;
++    let scheduleAmount = getScheduledAmount(amountCondition.value);
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+       switch (template.adjustmentType) {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..c662dcd 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -8,6 +8,7 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
++  getScheduledAmount,
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+@@ -642,4 +643,36 @@ describe('schedules', () => {
+       expect(isCustomUpcomingLength(undefined)).toBe(false);
+     });
+   });
++
++  describe('getScheduledAmount', () => {
++    it('returns a single amount unchanged', () => {
++      expect(getScheduledAmount(-5000)).toBe(-5000);
++    });
++
++    it('returns 0 when there is no amount', () => {
++      expect(getScheduledAmount(null)).toBe(0);
++      expect(getScheduledAmount(undefined)).toBe(0);
++    });
++
++    it('uses the end of a negative range furthest from zero', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
++      expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
++    });
++
++    it('uses the end of a positive range furthest from zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    });
++
++    it('uses the end furthest from zero when the range crosses zero', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(5000);
++      expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(5000);
++    });
++
++    it('negates the amount when inverse is set', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 }, true)).toBe(
++        20000,
++      );
++    });
++  });
+ });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 07b11a8..9275602 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -364,8 +364,9 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const avg = (amount.num1 + amount.num2) / 2;
+-  return inverse ? -Math.round(avg) : Math.round(avg);
++  const worstCase =
++    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  return inverse ? -Math.round(worstCase) : Math.round(worstCase);
+ }
+ 
+ export function getUpcomingDays(

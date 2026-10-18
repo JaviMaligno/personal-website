@@ -1,0 +1,11 @@
+{"id": "0e6879d1de",
+ "reuse": {"score": 3, "why": "Introduces getMonthWideBudgetCategories and uses the existing extractTagsFromText, but copyPreviousMonth keeps its own getBudgetData-based filtering instead of using the new selection."},
+ "duplication": {"score": 3, "why": "The hidden and goal_def exclusions are written twice (helper SQL and copyPreviousMonth's inline condition), and the income/tracking check stays repeated in every action including the new one."},
+ "placement": {"score": 4, "why": "Selection helper sits in budget/actions.ts with the actions it serves; the #fixed tag test is applied in JS after the SQL, which is acceptable but splits the rule across two layers."},
+ "scope": {"score": 5, "why": "Edits are confined to the month-wide actions, the new handler registration and tests."},
+ "maintainability": {"score": 3, "why": "Most actions share one selection, but copyPreviousMonth silently diverges (no #fixed exclusion), so the next rule change must be made in two places and is easy to miss."},
+ "bypasses_abstraction": {"value": true, "where": "copyPreviousMonth in server/budget/actions.ts filters hidden/goal_def itself from getBudgetData rows instead of using getMonthWideBudgetCategories, and so misses the #fixed group rule."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "copyPreviousMonth re-expresses the helper's SQL exclusions (hidden, group hidden, goal_def, includeHiddenCategories) as a JS condition over getBudgetData rows."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getMonthWideBudgetCategories gained includeHiddenCategories with a '? = 1 OR (hidden...)' branch; copyPreviousMonth bypasses it with its own filter."}}

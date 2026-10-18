@@ -1,0 +1,357 @@
+diff --git a/packages/loot-core/src/server/accounts/sync.ts b/packages/loot-core/src/server/accounts/sync.ts
+index c15278c..3b92def 100644
+--- a/packages/loot-core/src/server/accounts/sync.ts
++++ b/packages/loot-core/src/server/accounts/sync.ts
+@@ -634,6 +634,35 @@ export type ReconcileTransactionsResult = {
+   }>;
+ };
+ 
++// The fields an imported row updates on the transaction it is matched to
++function getImportUpdates(existing, trans, updateDates: boolean) {
++  const updates = {
++    imported_id: trans.imported_id || null,
++    payee: existing.payee || trans.payee || null,
++    category: existing.category || trans.category || null,
++    imported_payee: trans.imported_payee || null,
++    notes: existing.notes || trans.notes || null,
++    cleared: existing.cleared || trans.cleared || false,
++    raw_synced_data: existing.raw_synced_data ?? trans.raw_synced_data ?? null,
++  };
++
++  if (updateDates && trans.date) {
++    updates['date'] = trans.date;
++  }
++
++  return updates;
++}
++
++function fieldsToCompare(existing, trans, updates) {
++  return Object.keys(updates).filter(k => {
++    // do not mark raw_synced_data if it's gone from falsy to falsy
++    if (!existing.raw_synced_data && !trans.raw_synced_data) {
++      return k !== 'raw_synced_data';
++    }
++    return true;
++  });
++}
++
+ export async function reconcileTransactions(
+   acctId,
+   transactions,
+@@ -654,6 +683,73 @@ export async function reconcileTransactions(
+   const updatedPreview = [];
+   const existingPayeeMap = new Map<string, string>();
+ 
++  // Updates are keyed by transaction id so that several imported rows
++  // reconciled against the same transaction produce a single update.
++  const updatedById = new Map<string, Record<string, unknown>>();
++  const addUpdate = (update: { id: string } & Record<string, unknown>) => {
++    const pending = updatedById.get(update.id);
++    if (pending) {
++      Object.assign(pending, update);
++    } else {
++      updatedById.set(update.id, update);
++      updated.push(update);
++    }
++  };
++
++  // A parent's cleared flag and date are carried over to its children
++  const updateChildrenOfParent = async (
++    existing,
++    updates,
++    trans,
++    updateDates: boolean,
++  ) => {
++    const clearedUpdated = existing.cleared !== updates.cleared;
++    const dateUpdated =
++      updateDates && trans.date && existing.date !== trans.date;
++
++    if (existing.is_parent && (clearedUpdated || dateUpdated)) {
++      const children = await db.all<Pick<db.DbViewTransaction, 'id'>>(
++        'SELECT id FROM v_transactions WHERE parent_id = ?',
++        [existing.id],
++      );
++      const childUpdates = {};
++
++      if (clearedUpdated) {
++        childUpdates['cleared'] = updates.cleared;
++      }
++
++      if (dateUpdated) {
++        childUpdates['date'] = trans.date;
++      }
++
++      for (const child of children) {
++        addUpdate({ id: child.id, ...childUpdates });
++      }
++    }
++  };
++
++  const getPayeeName = async (payeeId: string | null) => {
++    if (!payeeId) {
++      return undefined;
++    }
++    if (!existingPayeeMap.has(payeeId)) {
++      const payee = await db.getPayee(payeeId);
++      const newPayee = [...payeesToCreate.values()].find(p => p.id === payeeId);
++      existingPayeeMap.set(payeeId, payee?.name ?? newPayee?.name);
++    }
++    return existingPayeeMap.get(payeeId);
++  };
++
++  // What the first row carrying a given imported_id turned into. Later rows
++  // with the same imported_id are reconciled against it, exactly as if they
++  // had been imported in a separate, subsequent import. A target is one of:
++  // - { kind: 'locked' }: the row matched a reconciled (locked) transaction;
++  // - { kind: 'existing', state }: the row matched an existing transaction,
++  //   and `state` is that transaction once this import's updates apply;
++  // - { kind: 'added', parent, children }: the row is added as a new
++  //   transaction (`children` holds its split children, if any).
++  const importedIdTargets = new Map();
++
+   const {
+     payeesToCreate,
+     transactionsStep1,
+@@ -667,11 +763,84 @@ export async function reconcileTransactions(
+   });
+ 
+   // Finally, generate & commit the changes
+-  for (const { trans, subtransactions, match } of transactionsStep3) {
++  for (const {
++    trans,
++    subtransactions,
++    match,
++    repeatedImportedId,
++  } of transactionsStep3) {
++    if (repeatedImportedId) {
++      const target = importedIdTargets.get(trans.imported_id);
++
++      if (target.kind === 'locked') {
++        updatedPreview.push({ transaction: trans, ignored: true });
++      } else if (target.kind === 'added') {
++        const { parent, children } = target;
++        const updates = getImportUpdates(parent, trans, updateDates);
++
++        const changed = fieldsToCompare(parent, trans, updates).some(
++          k => (parent[k] ?? null) !== (updates[k] ?? null),
++        );
++
++        if (changed) {
++          const previous = { ...parent };
++          Object.assign(parent, updates);
++          for (const child of children) {
++            if (previous.cleared !== parent.cleared) {
++              child.cleared = parent.cleared;
++            }
++            if (previous.date !== parent.date) {
++              child.date = parent.date;
++            }
++          }
++          updatedPreview.push({
++            transaction: trans,
++            existing: {
++              ...previous,
++              payee_name: await getPayeeName(previous.payee),
++              amount: integerToAmount(previous.amount),
++            },
++          });
++        } else {
++          updatedPreview.push({ transaction: trans, ignored: true });
++        }
++      } else {
++        const existing = target.state;
++        const updates = getImportUpdates(existing, trans, updateDates);
++
++        if (
++          hasFieldsChanged(
++            existing,
++            updates,
++            fieldsToCompare(existing, trans, updates),
++          )
++        ) {
++          addUpdate({ id: existing.id, ...updates });
++          updatedPreview.push({
++            transaction: trans,
++            existing: {
++              ...existing,
++              payee_name: await getPayeeName(existing.payee),
++              amount: integerToAmount(existing.amount),
++            },
++          });
++        } else {
++          updatedPreview.push({ transaction: trans, ignored: true });
++        }
++
++        await updateChildrenOfParent(existing, updates, trans, updateDates);
++        target.state = { ...existing, ...updates };
++      }
++      continue;
++    }
++
+     if (match && !trans.forceAddTransaction) {
+       // Skip updating already reconciled (locked) transactions
+       if (match.reconciled) {
+         updatedPreview.push({ transaction: trans, ignored: true });
++        if (trans.imported_id && !importedIdTargets.has(trans.imported_id)) {
++          importedIdTargets.set(trans.imported_id, { kind: 'locked' });
++        }
+         continue;
+       }
+ 
+@@ -683,65 +852,35 @@ export async function reconcileTransactions(
+       };
+ 
+       // Update the transaction
+-      const updates = {
+-        imported_id: trans.imported_id || null,
+-        payee: existing.payee || trans.payee || null,
+-        category: existing.category || trans.category || null,
+-        imported_payee: trans.imported_payee || null,
+-        notes: existing.notes || trans.notes || null,
+-        cleared: existing.cleared || trans.cleared || false,
+-        raw_synced_data:
+-          existing.raw_synced_data ?? trans.raw_synced_data ?? null,
+-      };
+-
+-      if (updateDates && trans.date) {
+-        updates['date'] = trans.date;
+-      }
+-
+-      const fieldsToMarkUpdated = Object.keys(updates).filter(k => {
+-        // do not mark raw_synced_data if it's gone from falsy to falsy
+-        if (!existing.raw_synced_data && !trans.raw_synced_data) {
+-          return k !== 'raw_synced_data';
+-        }
+-
+-        return true;
+-      });
+-
+-      if (hasFieldsChanged(existing, updates, fieldsToMarkUpdated)) {
+-        updated.push({ id: existing.id, ...updates });
+-        if (!existingPayeeMap.has(existing.payee)) {
+-          const payee = await db.getPayee(existing.payee);
+-          existingPayeeMap.set(existing.payee, payee?.name);
+-        }
+-        existing.payee_name = existingPayeeMap.get(existing.payee);
+-        existing.amount = integerToAmount(existing.amount);
+-        updatedPreview.push({ transaction: trans, existing });
++      const updates = getImportUpdates(existing, trans, updateDates);
++
++      if (
++        hasFieldsChanged(
++          existing,
++          updates,
++          fieldsToCompare(existing, trans, updates),
++        )
++      ) {
++        addUpdate({ id: existing.id, ...updates });
++        updatedPreview.push({
++          transaction: trans,
++          existing: {
++            ...existing,
++            payee_name: await getPayeeName(existing.payee),
++            amount: integerToAmount(existing.amount),
++          },
++        });
+       } else {
+         updatedPreview.push({ transaction: trans, ignored: true });
+       }
+ 
+-      const clearedUpdated = existing.cleared !== updates.cleared;
+-      const dateUpdated =
+-        updateDates && trans.date && existing.date !== trans.date;
+-
+-      if (existing.is_parent && (clearedUpdated || dateUpdated)) {
+-        const children = await db.all<Pick<db.DbViewTransaction, 'id'>>(
+-          'SELECT id FROM v_transactions WHERE parent_id = ?',
+-          [existing.id],
+-        );
+-        const childUpdates = {};
+-
+-        if (clearedUpdated) {
+-          childUpdates['cleared'] = updates.cleared;
+-        }
+-
+-        if (dateUpdated) {
+-          childUpdates['date'] = trans.date;
+-        }
++      await updateChildrenOfParent(existing, updates, trans, updateDates);
+ 
+-        for (const child of children) {
+-          updated.push({ id: child.id, ...childUpdates });
+-        }
++      if (trans.imported_id && !importedIdTargets.has(trans.imported_id)) {
++        importedIdTargets.set(trans.imported_id, {
++          kind: 'existing',
++          state: { ...existing, ...updates },
++        });
+       }
+     } else if (trans.tombstone) {
+       if (isPreview) {
+@@ -761,10 +900,22 @@ export async function reconcileTransactions(
+         cleared: trans.cleared ?? defaultCleared,
+       };
+ 
++      let newTransactions = [finalTransaction];
+       if (subtransactions && subtransactions.length > 0) {
+-        added.push(...makeSplitTransaction(finalTransaction, subtransactions));
+-      } else {
+-        added.push(finalTransaction);
++        newTransactions = makeSplitTransaction(
++          finalTransaction,
++          subtransactions,
++        );
++      }
++      added.push(...newTransactions);
++
++      if (trans.imported_id && !importedIdTargets.has(trans.imported_id)) {
++        const [parent, ...children] = newTransactions;
++        importedIdTargets.set(trans.imported_id, {
++          kind: 'added',
++          parent,
++          children,
++        });
+       }
+     }
+   }
+@@ -857,6 +1008,9 @@ export async function matchTransactions(
+   const accounts: db.DbAccount[] = await db.getAccounts();
+   const accountsMap = new Map(accounts.map(account => [account.id, account]));
+ 
++  // imported_ids already carried by an earlier row of this import
++  const importedIdsSeen = new Set<string>();
++
+   const transactionsStep1 = [];
+   for (const {
+     payee_name,
+@@ -866,6 +1020,30 @@ export async function matchTransactions(
+     // Run the rules
+     const trans = await runRules(originalTrans, accountsMap);
+ 
++    // A row repeating the imported_id of an earlier row is not matched here:
++    // it is reconciled against whatever that earlier row turned into, as it
++    // would be if it were imported afterwards in a separate import.
++    if (
++      trans.imported_id &&
++      !trans.tombstone &&
++      !originalTrans.forceAddTransaction &&
++      importedIdsSeen.has(trans.imported_id)
++    ) {
++      transactionsStep1.push({
++        payee_name,
++        trans,
++        subtransactions: trans.subtransactions || subtransactions,
++        match: null,
++        fuzzyDataset: null,
++        repeatedImportedId: true,
++      });
++      continue;
++    }
++
++    if (trans.imported_id && !trans.tombstone) {
++      importedIdsSeen.add(trans.imported_id);
++    }
++
+     let match = null;
+     let fuzzyDataset = null;
+ 

@@ -1,0 +1,11 @@
+{"id":"0706be520e",
+"reuse":{"score":3,"why":"Uses the schedule's own occurrences iterator and d.isWeekend, but adds the daily rule inline in getNextDate instead of in a shared weekend-adjustment helper the other paths could use."},
+"duplication":{"score":4,"why":"The diff itself duplicates little; the inline loop re-queries occurrences one at a time rather than sharing a skip helper."},
+"placement":{"score":3,"why":"The rule sits in shared/schedules.ts, but only inside getNextDate, while getUpcomingDates (schedules/app.ts) and schedule-template.ts apply the weekend rule through getDateWithSkippedWeekend and still move daily occurrences."},
+"scope":{"score":5,"why":"Only getNextDate and one test are touched."},
+"maintainability":{"score":3,"why":"The weekend rule now has two definitions (daily in getNextDate, move-only in getDateWithSkippedWeekend), and the daily check reads the raw dateCond.value.frequency instead of the parsed schedule data used next to it."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":""},
+"one_place":{"value":false,"where":"Daily skip is added only in getNextDate (shared/schedules.ts); getUpcomingDates in server/schedules/app.ts and budget/schedule-template.ts still call getDateWithSkippedWeekend directly and move weekend occurrences of daily schedules."}}

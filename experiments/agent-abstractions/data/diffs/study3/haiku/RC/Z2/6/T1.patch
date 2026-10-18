@@ -1,0 +1,101 @@
+diff --git a/packages/desktop-client/src/components/accounts/Balance.tsx b/packages/desktop-client/src/components/accounts/Balance.tsx
+index 58b7618..765db34 100644
+--- a/packages/desktop-client/src/components/accounts/Balance.tsx
++++ b/packages/desktop-client/src/components/accounts/Balance.tsx
+@@ -103,7 +103,7 @@ export function SelectedBalance({
+     const scheduleId = id.slice(8).split('/')[0];
+     const schedule = schedules.find(s => s.id === scheduleId);
+     if (schedule) {
+-      // If a schedule is `between X and Y` then we calculate the average
++      // If a schedule is `between X and Y` then we use the end furthest from zero
+       if (schedule._amountOp === 'isbetween') {
+         isExactBalance = false;
+       }
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 5b9f191..33e32f7 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -10,6 +10,7 @@ import {
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
+   getNextDate,
++  getScheduledAmount,
+ } from '#shared/schedules';
+ import { amountToInteger } from '#shared/util';
+ import type { CategoryEntity, TransactionEntity } from '#types/models';
+@@ -59,11 +60,7 @@ async function createScheduleList(
+     const conditions = rule.serialize().conditions;
+     const { date: dateConditions, amount: amountCondition } =
+       extractScheduleConds(conditions);
+-    let scheduleAmount =
+-      amountCondition.op === 'isbetween'
+-        ? Math.round(amountCondition.value.num1 + amountCondition.value.num2) /
+-          2
+-        : amountCondition.value;
++    let scheduleAmount = getScheduledAmount(amountCondition.value);
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+       switch (template.adjustmentType) {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..16a3d33 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -8,6 +8,7 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
++  getScheduledAmount,
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+@@ -642,4 +643,34 @@ describe('schedules', () => {
+       expect(isCustomUpcomingLength(undefined)).toBe(false);
+     });
+   });
++
++  describe('getScheduledAmount', () => {
++    it('returns a single amount unchanged', () => {
++      expect(getScheduledAmount(-5000)).toBe(-5000);
++    });
++
++    it('returns the end of a range furthest from zero for expenses', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
++    });
++
++    it('returns the end of a range furthest from zero regardless of order', () => {
++      expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
++    });
++
++    it('returns the end of a range furthest from zero for income', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    });
++
++    it('inverts the worst-case amount when requested', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 }, true)).toBe(
++        20000,
++      );
++      expect(getScheduledAmount(-5000, true)).toBe(5000);
++    });
++
++    it('returns 0 when there is no amount', () => {
++      expect(getScheduledAmount(null as unknown as number)).toBe(0);
++    });
++  });
+ });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index b83cb4b..e7b6ed8 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -364,8 +364,9 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const avg = (amount.num1 + amount.num2) / 2;
+-  return inverse ? -Math.round(avg) : Math.round(avg);
++  const worstCase =
++    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  return inverse ? -worstCase : worstCase;
+ }
+ 
+ export function getUpcomingDays(

@@ -1,0 +1,12 @@
+{"id":"5c751be396",
+"reuse":{"score":3,"why":"linkFintegraAccount reuses linkBankSyncAccount and findOrCreateBank, but the replace path re-writes unlinkAccount's field reset, and downloadFintegraTransactions is a near-copy of downloadAkahuTransactions."},
+"duplication":{"score":2,"why":"The assertAccountIsOpen + assertBankAccountNotLinked pair is pasted into all six provider link functions, the unlink field list is copied from unlinkAccount, and the Fintegra download duplicates the Akahu one."},
+"placement":{"score":2,"why":"The link-wide rules (open account, single link, takeover) belong in the shared linkBankSyncAccount, which every provider already goes through; instead each provider wrapper calls them."},
+"scope":{"score":4,"why":"Changes serve the four requests; widening DbAccount.account_sync_source to the existing providers is a small extra fix."},
+"maintainability":{"score":2,"why":"Every new provider has to remember both guard calls in the right order. assertBankAccountNotLinked is named as an assertion but, with the flag, also unlinks another account. The unlink field list can drift from unlinkAccount."},
+"bypasses_abstraction":{"value":true,"where":"The guards are called in each provider wrapper instead of inside linkBankSyncAccount; the takeover path writes its own copy of unlinkAccount's db.updateAccount reset"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"downloadFintegraTransactions is downloadAkahuTransactions with the 'error' branch and logging dropped; the unlink reset in assertBankAccountNotLinked mirrors unlinkAccount's update"},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":6,"where":"assertBankAccountNotLinked grew upgradingId and replaceExistingLink, with a mutating replace branch inside the assertion; all six provider link functions call the guards around linkBankSyncAccount instead of having it apply them"}
+}

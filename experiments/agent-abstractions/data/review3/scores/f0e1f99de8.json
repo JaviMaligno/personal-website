@@ -1,0 +1,11 @@
+{"id": "f0e1f99de8",
+"reuse": {"score": 3, "why": "Keeps using getDateWithSkippedWeekend and leans on getNextDate in schedule-template, but getUpcomingDates writes its own weekend-skipping loop instead of sharing the filter added to getNextDate."},
+"duplication": {"score": 2, "why": "The `skipWeekend && frequency === 'daily'` decision is written three times (getNextDate, getUpcomingDates, schedule-template) and the skip-weekend-occurrence loop twice in getNextDate plus once in getUpcomingDates."},
+"placement": {"score": 3, "why": "The core rule goes into shared getNextDate, but server/schedules/app.ts and budget/schedule-template.ts each re-derive the daily case locally."},
+"scope": {"score": 5, "why": "Only the weekend-handling sites, the rrule data and a release note change."},
+"maintainability": {"score": 2, "why": "The daily-vs-move decision is spread over three modules with differently named flags (skipsDays, moveWeekend, skipsWeekendDays) and schedule-template now toggles getNextDate's noSkipWeekend argument to steer it, so the next rule change must be made in several places."},
+"bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getUpcomingDates iterates occurrences and filters d.isWeekend itself rather than going through the shared getNextDate/weekend logic."},
+"duplicated_blocks": 3,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "The daily-schedule condition reappears under three names (skipsDays/moveWeekend in schedule-template, skipsWeekendDays in shared/schedules, an inline check in getUpcomingDates), and the keep-filter loop is split into forward and reverse copies."},
+"one_place": {"value": false, "where": "The daily-skip rule is decided separately in shared/schedules.ts getNextDate, server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts createScheduleList."}}

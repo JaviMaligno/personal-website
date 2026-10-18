@@ -1,0 +1,148 @@
+diff --git a/packages/loot-core/src/server/rules/rule-utils.ts b/packages/loot-core/src/server/rules/rule-utils.ts
+index 4a59ed1..4d6a1f9 100644
+--- a/packages/loot-core/src/server/rules/rule-utils.ts
++++ b/packages/loot-core/src/server/rules/rule-utils.ts
+@@ -6,6 +6,7 @@ import { RuleError } from '#server/errors';
+ import { RSchedule } from '#server/util/rschedule';
+ import {
+   recurConfigToExdates,
++  recurConfigToExrules,
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+ import type { RuleConditionEntity } from '#types/models';
+@@ -229,6 +230,7 @@ export function parseRecurDate(desc) {
+       schedule: new RSchedule({
+         rrules: rules,
+         exdates: recurConfigToExdates(desc),
++        exrules: recurConfigToExrules(desc),
+         data: {
+           skipWeekend: desc.skipWeekend,
+           weekendSolve: desc.weekendSolveMode,
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 566536e..d86eca2 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -33,6 +33,7 @@ import {
+   getNextDateAfter,
+   getStatus,
+   recurConfigToExdates,
++  recurConfigToExrules,
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+ import type {
+@@ -511,6 +512,7 @@ async function getUpcomingDates({ config, count }) {
+     const schedule = new RSchedule({
+       rrules: rules,
+       exdates: recurConfigToExdates(config),
++      exrules: recurConfigToExrules(config),
+     });
+ 
+     return schedule
+@@ -545,6 +547,7 @@ async function getDatesInRange({
+     const schedule = new RSchedule({
+       rrules: recurConfigToRSchedule(config),
+       exdates: recurConfigToExdates(config),
++      exrules: recurConfigToExrules(config),
+     });
+ 
+     // A weekend occurrence moves by at most two days, so look slightly
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5307464..0cacba6 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -686,4 +686,25 @@ describe('holidays', () => {
+     ]);
+     expect(before.getDate()).toBe(4);
+   });
++
++  it('skips MM-DD holidays in every year', () => {
++    const config = {
++      frequency: 'daily',
++      start: '2024-01-01',
++      skipWeekend: true,
++      holidays: ['12-25', '2024-03-04'],
++    };
++    const cond = { op: 'is', value: config };
++    expect(getNextDate(cond, new Date(2024, 11, 25))).toBe('2024-12-26');
++    expect(getNextDate(cond, new Date(2026, 11, 25))).toBe('2026-12-28');
++    expect(getNextDate(cond, new Date(2024, 2, 4))).toBe('2024-03-05');
++    expect(getNextDate(cond, new Date(2025, 2, 4))).toBe('2025-03-04');
++  });
++
++  it('moves weekend occurrences past an MM-DD holiday', () => {
++    const result = getDateWithSkippedWeekend(new Date(2024, 0, 6), 'after', [
++      '01-08',
++    ]);
++    expect(result.getDate()).toBe(9);
++  });
+ });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 63b4842..8933566 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -203,13 +203,38 @@ export function recurConfigToExdates(config): Date[] {
+   if (!config.skipWeekend || config.frequency !== 'daily') {
+     return [];
+   }
+-  return (config.holidays ?? []).map(day => {
++  return (config.holidays ?? []).filter(isFullDate).map(day => {
+     const date = monthUtils.parseDate(day);
+     date.setHours(12, 0, 0, 0);
+     return date;
+   });
+ }
+ 
++const YEARLY_HOLIDAY = /^\d{2}-\d{2}$/;
++
++function isFullDate(day: string) {
++  return !YEARLY_HOLIDAY.test(day);
++}
++
++// `MM-DD` holidays recur every year, so they are excluded with a yearly rule
++export function recurConfigToExrules(config): ScheduleRuleOptions[] {
++  if (!config.skipWeekend || config.frequency !== 'daily') {
++    return [];
++  }
++  return (config.holidays ?? [])
++    .filter((day: string) => YEARLY_HOLIDAY.test(day))
++    .map((day: string) => {
++      const [month, dayOfMonth] = day.split('-').map(Number);
++      return {
++        start: monthUtils.parseDate(config.start),
++        frequency: 'YEARLY',
++        byMonthOfYear: [month],
++        byDayOfMonth: [dayOfMonth],
++        byHourOfDay: [12],
++      } as ScheduleRuleOptions;
++    });
++}
++
+ export function recurConfigToRSchedule(config) {
+   const base: ScheduleRuleOptions = {
+     start: monthUtils.parseDate(config.start),
+@@ -364,8 +389,11 @@ export function getDateWithSkippedWeekend(
+   holidays: string[] = [],
+ ) {
+   const holidaySet = new Set(holidays);
+-  const isOff = (day: Date) =>
+-    d.isWeekend(day) || holidaySet.has(monthUtils.dayFromDate(day));
++  const isHoliday = (day: Date) => {
++    const full = monthUtils.dayFromDate(day);
++    return holidaySet.has(full) || holidaySet.has(full.slice(5));
++  };
++  const isOff = (day: Date) => d.isWeekend(day) || isHoliday(day);
+ 
+   if (!isOff(date)) {
+     return date;
+diff --git a/upcoming-release-notes/yearly-holidays.md b/upcoming-release-notes/yearly-holidays.md
+new file mode 100644
+index 0000000..35ba636
+--- /dev/null
++++ b/upcoming-release-notes/yearly-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow schedule holidays to be given as `MM-DD` to repeat every year

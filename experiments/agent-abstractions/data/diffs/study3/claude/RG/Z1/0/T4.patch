@@ -1,0 +1,162 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 05dcf45..aec44bc 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -219,7 +219,8 @@ function setCarryover(
+ 
+ // Month-wide actions leave hidden categories, categories in hidden groups,
+ // categories in groups tagged #fixed, and categories with saved budget
+-// templates untouched.
++// templates untouched. Hidden categories and groups are included when
++// `includeHiddenCategories` is set.
+ function hasFixedTag(groupNotes: string | null | undefined): boolean {
+   return !!groupNotes && /(^|\s)#fixed(?![\w-])/.test(groupNotes);
+ }
+@@ -234,21 +235,23 @@ function hasSavedTemplates(goalDef: string | null | undefined): boolean {
+   }
+ }
+ 
+-function isSkippedByMonthWideAction(cat: {
+-  hidden: number | boolean;
+-  group_hidden?: number | boolean | null;
+-  goal_def?: string | null;
+-  group_notes?: string | null;
+-}): boolean {
++function isSkippedByMonthWideAction(
++  cat: {
++    hidden: number | boolean;
++    group_hidden?: number | boolean | null;
++    goal_def?: string | null;
++    group_notes?: string | null;
++  },
++  includeHiddenCategories = false,
++): boolean {
+   return (
+-    !!cat.hidden ||
+-    !!cat.group_hidden ||
++    (!includeHiddenCategories && (!!cat.hidden || !!cat.group_hidden)) ||
+     hasFixedTag(cat.group_notes) ||
+     hasSavedTemplates(cat.goal_def)
+   );
+ }
+ 
+-async function getMonthWideCategories() {
++async function getMonthWideCategories(includeHiddenCategories = false) {
+   const categories = await db.all<
+     Pick<db.DbViewCategory, 'id' | 'is_income'> & {
+       hidden: number;
+@@ -266,15 +269,19 @@ async function getMonthWideCategories() {
+   WHERE c.tombstone = 0
+   `,
+   );
+-  return categories.filter(cat => !isSkippedByMonthWideAction(cat));
++  return categories.filter(
++    cat => !isSkippedByMonthWideAction(cat, includeHiddenCategories),
++  );
+ }
+ 
+ // Actions
+ 
+ export async function copyPreviousMonth({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+@@ -285,7 +292,7 @@ export async function copyPreviousMonth({
+       if (prevBudget.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+-      if (isSkippedByMonthWideAction(prevBudget)) {
++      if (isSkippedByMonthWideAction(prevBudget, includeHiddenCategories)) {
+         return;
+       }
+       void setBudget({
+@@ -314,8 +321,14 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await getMonthWideCategories();
++export async function setZero({
++  month,
++  includeHiddenCategories,
++}: {
++  month: string;
++  includeHiddenCategories?: boolean;
++}): Promise<void> {
++  const categories = await getMonthWideCategories(includeHiddenCategories);
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+@@ -329,10 +342,12 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function setLastMonthSpending({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  const categories = await getMonthWideCategories();
++  const categories = await getMonthWideCategories(includeHiddenCategories);
+   const sheetName = monthUtils.sheetForMonth(monthUtils.prevMonth(month));
+ 
+   await batchMessages(async () => {
+@@ -351,10 +366,12 @@ export async function setLastMonthSpending({
+ 
+ export async function set3MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  const categories = await getMonthWideCategories();
++  const categories = await getMonthWideCategories(includeHiddenCategories);
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -379,10 +396,12 @@ export async function set3MonthAvg({
+ 
+ export async function set12MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  const categories = await getMonthWideCategories();
++  const categories = await getMonthWideCategories(includeHiddenCategories);
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -396,10 +415,12 @@ export async function set12MonthAvg({
+ 
+ export async function set6MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  const categories = await getMonthWideCategories();
++  const categories = await getMonthWideCategories(includeHiddenCategories);
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+diff --git a/upcoming-release-notes/include-hidden-categories-month-actions.md b/upcoming-release-notes/include-hidden-categories-month-actions.md
+new file mode 100644
+index 0000000..9ad7e00
+--- /dev/null
++++ b/upcoming-release-notes/include-hidden-categories-month-actions.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Month-wide budget actions accept an optional `includeHiddenCategories` flag to also fill hidden categories.

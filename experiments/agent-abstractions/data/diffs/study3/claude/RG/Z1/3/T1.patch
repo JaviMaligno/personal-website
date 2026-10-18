@@ -1,0 +1,74 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..06b74ef 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -73,6 +73,9 @@ type BudgetData = {
+   amount: number;
+ };
+ 
++// Month-wide actions must not touch categories that have saved templates
++const NO_SAVED_TEMPLATES = `(c.goal_def IS NULL OR c.goal_def IN ('', '[]'))`;
++
+ function getBudgetData<T extends BudgetTable>(
+   table: T,
+   month: string,
+@@ -89,7 +92,7 @@ function getBudgetData<T extends BudgetTable>(
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+-    WHERE c.tombstone = 0 AND b.month = ?
++    WHERE c.tombstone = 0 AND b.month = ? AND ${NO_SAVED_TEMPLATES}
+   `,
+     [month],
+   );
+@@ -260,7 +263,13 @@ export async function copySinglePreviousMonth({
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
++    `
++  SELECT c.*
++  FROM categories c
++  LEFT JOIN category_groups g ON c.cat_group = g.id
++  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND ${NO_SAVED_TEMPLATES}
++  `,
+   );
+ 
+   await batchMessages(async () => {
+@@ -284,6 +293,7 @@ export async function set3MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
+ 
+@@ -319,6 +329,7 @@ export async function set12MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
+ 
+@@ -343,6 +354,7 @@ export async function set6MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
+ 
+diff --git a/upcoming-release-notes/skip-hidden-template-categories.md b/upcoming-release-notes/skip-hidden-template-categories.md
+new file mode 100644
+index 0000000..114375e
+--- /dev/null
++++ b/upcoming-release-notes/skip-hidden-template-categories.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Month-wide budget actions no longer overwrite hidden categories, categories in hidden groups, or categories with saved templates

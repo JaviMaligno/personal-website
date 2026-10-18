@@ -1,0 +1,45 @@
+{
+ "id": "b20c571d80",
+ "reuse": {
+  "score": 3,
+  "why": "Fintegra reuses linking, downloading and bank lookup, but the guard duplicates unlink cleanup and bypasses the new assertAccountNotLinked helper."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Provider handlers share the guard, but local unlink cleanup and duplicate-link rejection each have two definitions."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Changes follow the existing accounts, sync and model layers, although shared link policy is split between app.ts and link.ts."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the requested linking rules, replacement option and Fintegra integration."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The shared guard is useful, but provider-specific functions now serve other providers and Fintegra requires a corrective database write after SimpleFin persistence."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "app.ts: withBankAccountGuard independently implements rejection instead of using assertAccountNotLinked and copies unlinkAccount's local cleanup rather than sharing that operation."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The duplicated rejection and unlink cleanup remain directly recognizable; Fintegra calls existing implementations rather than reshaping copies."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 3,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "linkSimpleFinAccount gains a provider parameter and a Fintegra-only corrective-write branch; downloadAkahuTransactions gains server and provider parameters; withBankAccountGuard bypasses assertAccountNotLinked."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 41.6
+ }
+}

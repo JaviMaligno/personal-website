@@ -1,0 +1,45 @@
+{
+ "id": "3bd84c6f4e",
+ "reuse": {
+  "score": 2,
+  "why": "Several consumers adopt getScheduledAmount, but the API introduces a separate resolver and both resolvers reproduce the existing getApproxNumberThreshold calculation."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The API duplicates schedule amount resolution, and the shared schedule helper duplicates the existing approximate-number tolerance calculation."
+ },
+ "placement": {
+  "score": 3,
+  "why": "The shared schedules module is the appropriate home for expected-amount policy, but getExpectedScheduleAmount places another implementation in the API serialization layer."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits concern schedule amount planning, API exposure, or associated tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Independent policy implementations, retained caller-side dispatch, and an optional untyped operator require maintainers to coordinate future rule changes across multiple locations."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "server/api-models.ts implements getExpectedScheduleAmount instead of calling shared/schedules.ts:getScheduledAmount; server/schedules/app.ts:updateActions retains missing/numeric dispatch outside that helper."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "server/api-models.ts:getExpectedScheduleAmount reshapes the shared amount resolver through reordered dispatch and different endpoint arithmetic; approximate tolerance arithmetic also repeats shared/rules.ts:getApproxNumberThreshold."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 2,
+  "where": "getScheduledAmount adds optional op and an isapprox branch; scheduleModel.toExternal uses an independent resolver, while updateActions delegates only ranges and retains the other amount decisions locally."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 37.0
+ }
+}

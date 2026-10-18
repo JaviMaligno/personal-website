@@ -1,0 +1,113 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index ddc6273..1aabca0 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -69,6 +69,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0 | null;
++  goal_def?: unknown;
+   category: string;
+   amount: number;
+ };
+@@ -82,10 +83,11 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      >
++      > &
++      Pick<db.DbCategory, 'goal_def'>
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -220,25 +222,36 @@ type FillCategory = {
+   hidden: 1 | 0;
+   // null when the category's group doesn't exist
+   group_hidden: 1 | 0 | null;
++  goal_def?: unknown;
+ };
+ 
++function hasSavedTemplates(goalDef: unknown): boolean {
++  if (typeof goalDef !== 'string' || !goalDef) {
++    return false;
++  }
++  try {
++    const parsed = JSON.parse(goalDef);
++    return !Array.isArray(parsed) || parsed.length > 0;
++  } catch {
++    return true;
++  }
++}
++
+ function shouldFillCategory(
+   cat: FillCategory,
+-  {
+-    includeHidden,
+-    requireGroup,
+-  }: { includeHidden: boolean; requireGroup: boolean },
++  { requireGroup }: { requireGroup: boolean },
+ ): boolean {
+   // Income categories are only budgeted in tracking budgets
+   if (cat.is_income === 1 && !isTrackingBudget()) {
+     return false;
+   }
+-  if (includeHidden) {
+-    return true;
+-  }
+   if (cat.hidden === 1 || cat.group_hidden === 1) {
+     return false;
+   }
++  // Template-managed categories are left to their templates
++  if (hasSavedTemplates(cat.goal_def)) {
++    return false;
++  }
+   // Averages only cover categories that belong to a visible group
+   return !requireGroup || cat.group_hidden === 0;
+ }
+@@ -254,7 +267,7 @@ function spendingToBudgetAmount(
+ function getFillCategories(): Promise<(FillCategory & { id: string })[]> {
+   return db.all<FillCategory & { id: string }>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden
++  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0
+@@ -265,7 +278,7 @@ function getFillCategories(): Promise<(FillCategory & { id: string })[]> {
+ async function getAverageFillCategories() {
+   const categories = await getFillCategories();
+   return categories.filter(cat =>
+-    shouldFillCategory(cat, { includeHidden: false, requireGroup: true }),
++    shouldFillCategory(cat, { requireGroup: true }),
+   );
+ }
+ 
+@@ -282,12 +295,7 @@ export async function copyPreviousMonth({
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+-      if (
+-        !shouldFillCategory(prevBudget, {
+-          includeHidden: false,
+-          requireGroup: false,
+-        })
+-      ) {
++      if (!shouldFillCategory(prevBudget, { requireGroup: false })) {
+         return;
+       }
+       void setBudget({
+@@ -321,9 +329,7 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+-      if (
+-        !shouldFillCategory(cat, { includeHidden: true, requireGroup: false })
+-      ) {
++      if (!shouldFillCategory(cat, { requireGroup: false })) {
+         return;
+       }
+       void setBudget({ category: cat.id, month, amount: 0 });

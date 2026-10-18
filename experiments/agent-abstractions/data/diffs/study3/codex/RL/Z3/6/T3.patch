@@ -1,0 +1,244 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index 7b4932e..e271034 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -1,5 +1,6 @@
+ // @ts-strict-ignore
+ import * as asyncStorage from '#platform/server/asyncStorage';
++import * as connection from '#platform/server/connection';
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ import { isMutating, runHandler, runMutator } from '#server/mutators';
+@@ -55,6 +56,65 @@ beforeEach(async () => {
+ });
+ 
+ describe('simpleFin account linking', () => {
++  it.each([false, true])(
++    'rejects linking a closed account (already linked: %s) without changing or syncing anything',
++    async alreadyLinked => {
++      await setupSimpleFinAccounts(
++        alreadyLinked
++          ? [{ id: 'acct1', name: 'Checking', accountId: 'external-1' }]
++          : [],
++      );
++      if (!alreadyLinked) {
++        await db.insertAccount({ id: 'acct1', name: 'Checking', closed: 1 });
++      } else {
++        await db.update('accounts', { id: 'acct1', closed: 1 });
++      }
++      const before = await db.first<db.DbAccount>(
++        'SELECT * FROM accounts WHERE id = ?',
++        ['acct1'],
++      );
++      const bankCount = await db.first<{ count: number }>(
++        'SELECT COUNT(*) AS count FROM banks',
++      );
++      const sendSpy = vi.spyOn(connection, 'send');
++      const syncEventCountBefore = sendSpy.mock.calls.filter(
++        ([type]) => type === 'sync-event',
++      ).length;
++
++      await expect(
++        simpleFinAccountsLinkHandler({
++          upgradingId: 'acct1',
++          externalAccount: {
++            account_id: 'external-1',
++            balance: 0,
++            name: 'Checking',
++          },
++        }),
++      ).rejects.toMatchObject({
++        type: 'APIError',
++        message:
++          'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      });
++
++      expect(
++        await db.first<db.DbAccount>('SELECT * FROM accounts WHERE id = ?', [
++          'acct1',
++        ]),
++      ).toEqual(before);
++      expect(
++        await db.first<{ count: number }>(
++          'SELECT COUNT(*) AS count FROM banks',
++        ),
++      ).toEqual(bankCount);
++      expect(await db.all('SELECT id FROM accounts')).toHaveLength(1);
++      expect(await db.all('SELECT id FROM payees')).toHaveLength(0);
++      expect(bankSync.syncAccount).not.toHaveBeenCalled();
++      expect(
++        sendSpy.mock.calls.filter(([type]) => type === 'sync-event'),
++      ).toHaveLength(syncEventCountBefore);
++    },
++  );
++
+   it('rejects an account already linked to another local account before syncing', async () => {
+     await setupSimpleFinAccounts([
+       { id: 'acct1', name: 'Checking', accountId: 'external-1' },
+@@ -136,8 +196,9 @@ describe('Fintegra account linking', () => {
+       account_sync_source: 'fintegra',
+       offbudget: 1,
+     });
+-    expect(await db.first('SELECT * FROM banks WHERE bank_id = ?', ['org-1']))
+-      .toMatchObject({ name: 'Example Bank' });
++    expect(
++      await db.first('SELECT * FROM banks WHERE bank_id = ?', ['org-1']),
++    ).toMatchObject({ name: 'Example Bank' });
+     expect(bankSync.syncAccount).toHaveBeenCalledWith(
+       undefined,
+       undefined,
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index ffcaaa0..c3dada0 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -71,12 +71,56 @@ async function assertBankAccountNotLinked(
+   }
+ }
+ 
++async function finishBankAccountLink(
++  syncRes: Awaited<ReturnType<typeof bankSync.syncAccount>>,
++  id: string,
++) {
++  await handleSyncResponse(syncRes, id);
++  connection.send('sync-event', {
++    type: 'success',
++    tables: ['transactions', 'accounts'],
++  });
++  return 'ok';
++}
++
++async function syncAndFinishBankAccountLink(
++  id: string,
++  accountId: string,
++  bankId: string,
++  startingDate?: string,
++  startingBalance?: number,
++) {
++  const syncRes = await bankSync.syncAccount(
++    undefined,
++    undefined,
++    id,
++    accountId,
++    bankId,
++    startingDate,
++    startingBalance,
++  );
++  return finishBankAccountLink(syncRes, id);
++}
++
+ function guardBankAccountLink<TParams extends LinkAccountBaseParams, TResult>(
+   provider: string,
+   getAccountId: (params: TParams) => string,
+   handler: (params: TParams) => Promise<TResult>,
+ ) {
+   return async (params: TParams) => {
++    if (params.upgradingId) {
++      const account = await db.first<{ closed: number }>(
++        'SELECT closed FROM accounts WHERE id = ?',
++        [params.upgradingId],
++      );
++
++      if (account?.closed === 1) {
++        throw APIError(
++          'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++        );
++      }
++    }
++
+     await assertBankAccountNotLinked(
+       provider,
+       getAccountId(params),
+@@ -263,14 +307,7 @@ async function linkGoCardlessAccount({
+     startingBalance,
+   );
+ 
+-  await handleSyncResponse(syncRes, id);
+-
+-  connection.send('sync-event', {
+-    type: 'success',
+-    tables: ['transactions', 'accounts'],
+-  });
+-
+-  return 'ok';
++  return finishBankAccountLink(syncRes, id);
+ }
+ 
+ async function linkSimpleFinAccount({
+@@ -333,24 +370,13 @@ async function linkSimpleFinAccount({
+     });
+   }
+ 
+-  const syncRes = await bankSync.syncAccount(
+-    undefined,
+-    undefined,
++  return syncAndFinishBankAccountLink(
+     id,
+     externalAccount.account_id,
+     bank.bank_id,
+     startingDate,
+     startingBalance,
+   );
+-
+-  await handleSyncResponse(syncRes, id);
+-
+-  connection.send('sync-event', {
+-    type: 'success',
+-    tables: ['transactions', 'accounts'],
+-  });
+-
+-  return 'ok';
+ }
+ 
+ async function linkPluggyAiAccount({
+@@ -422,14 +448,7 @@ async function linkPluggyAiAccount({
+     fileId,
+   );
+ 
+-  await handleSyncResponse(syncRes, id);
+-
+-  connection.send('sync-event', {
+-    type: 'success',
+-    tables: ['transactions', 'accounts'],
+-  });
+-
+-  return 'ok';
++  return finishBankAccountLink(syncRes, id);
+ }
+ 
+ async function linkAkahuAccount({
+@@ -571,29 +590,20 @@ async function linkEnableBankingAccount({
+     throw new Error('id was not assigned in linkEnableBankingAccount');
+   }
+ 
+-  const syncRes = await bankSync.syncAccount(
+-    undefined,
+-    undefined,
++  return syncAndFinishBankAccountLink(
+     id,
+     externalAccount.account_id,
+     bank.bank_id,
+     startingDate,
+     startingBalance,
+   );
+-
+-  await handleSyncResponse(syncRes, id);
+-
+-  connection.send('sync-event', {
+-    type: 'success',
+-    tables: ['transactions', 'accounts'],
+-  });
+-
+-  return 'ok';
+ }
+ 
+-async function linkFintegraAccount(params: LinkAccountBaseParams & {
+-  externalAccount: SyncServerFintegraAccount;
+-}) {
++async function linkFintegraAccount(
++  params: LinkAccountBaseParams & {
++    externalAccount: SyncServerFintegraAccount;
++  },
++) {
+   return linkSimpleFinAccount({ ...params, provider: 'fintegra' });
+ }
+ 

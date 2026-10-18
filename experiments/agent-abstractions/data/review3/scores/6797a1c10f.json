@@ -1,0 +1,11 @@
+{"id": "6797a1c10f",
+ "reuse": {"score": 3, "why": "Extends the shared getDateWithSkippedWeekend and adds a shared isHoliday, but the daily skip rule is re-written inline in getNextDate, getUpcomingDates and getDatesInRange instead of being one shared predicate/helper."},
+ "duplication": {"score": 2, "why": "The 'daily && skipWeekend' test and the '!isWeekend && !isHoliday' filter are repeated four times (twice in getNextDate, in getUpcomingDates, in getDatesInRange), along with ad hoc occurrence-window padding heuristics."},
+ "placement": {"score": 3, "why": "Holiday matching and the moving loop sit in shared/schedules.ts, but the daily-skip decision is spread across server handlers, and schedule-template still moves daily weekend occurrences via the helper instead of skipping them."},
+ "scope": {"score": 4, "why": "Edits stay within the four requested steps (daily skip, new handler, holidays, MM-DD holidays) plus tests; no unrelated edits."},
+ "maintainability": {"score": 2, "why": "Fragile take/padding heuristics (count*2+holidays.length, 7+holidays.length, holidays.length+2 days) and four copies of the skip rule make the next calendar-rule change error-prone."},
+ "bypasses_abstraction": {"value": true, "where": "getNextDate, getUpcomingDates and getDatesInRange each filter daily non-working days inline with d.isWeekend || isHoliday instead of going through one shared non-working-day/adjustment helper; schedule-template bypasses the daily rule entirely."},
+ "duplicated_blocks": 4,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "The same daily skip filter appears as an Array.filter callback in getNextDate (twice) and getUpcomingDates and as an if/continue in getDatesInRange, reshaped rather than shared."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 4, "where": "getDateWithSkippedWeekend gains a holidays parameter; the daily-skip special case lives outside it at getNextDate, getUpcomingDates and getDatesInRange (each reimplementing the non-working check), and schedule-template's two calls never apply the daily rule."}}

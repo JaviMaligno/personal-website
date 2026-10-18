@@ -1,0 +1,44 @@
+{
+ "id": "8728fa9a49",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses recurrence conversion and holiday adjustment helpers, but duplicates the skip-versus-move policy instead of sharing it across consumers."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Holiday matching is centralized, but daily occurrence handling is duplicated between getNextDate and getAdjustedOccurrence, and budget adjustment remains repeated."
+ },
+ "placement": {
+  "score": 3,
+  "why": "The handler belongs in the schedules server module, but its occurrence-adjustment policy belongs alongside the shared scheduling logic."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the requested scheduling rules, range handler, supporting types, tests, and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Maintainers must coordinate policy changes across shared scheduling, server adjustment, and budget orchestration, while the new handler also leaves config untyped despite RecurConfig existing."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/server/schedules/app.ts: getAdjustedOccurrence independently implements the occurrence policy also implemented by shared/schedules.ts:getNextDate."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "getAdjustedOccurrence expresses the same daily skip/non-daily move decision as getNextDate through early returns rather than filtering and conditional adjustment."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 2,
+  "where": "getDateWithSkippedWeekend gains the holidays parameter; getNextDate gains daily filtering and non-daily adjustment conditions; getUpcomingDates and getDatesInRange use a separate server-local policy implementation."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 41.1
+ }
+}

@@ -1,0 +1,45 @@
+{
+ "id": "f1e2cbd19d",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses tag parsing, budget writes, batching and undo wrappers, but introduces parallel group-note storage instead of using the existing notes subsystem."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Five actions repeat the category-selection query and eligibility guards, while copyPreviousMonth expresses the same exclusions separately in JavaScript."
+ },
+ "placement": {
+  "score": 2,
+  "why": "Budget operations and method registration follow existing layering, but adding category_groups.notes duplicates responsibility already assigned to the notes table and notes API."
+ },
+ "scope": {
+  "score": 4,
+  "why": "The edits address the requested budget actions, apart from unrelated whitespace changes in init.sql."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate eligibility changes across six actions and reconcile two representations of group notes."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "The new category_groups.notes column and g.notes queries bypass the existing notes subsystem used by CategoryGroupMenuModal through useNotes(group.id) and notes-get."
+ },
+ "duplicated_blocks": 5,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "copyPreviousMonth expresses hidden-category and saved-template exclusions as JavaScript predicates, duplicating the SQL predicates repeated in setZero, setLastMonthSpending and the three average actions."
+ },
+ "abstraction_drift": {
+  "value": false,
+  "parameters_added": 0,
+  "special_case_branches": 0,
+  "bypassing_call_sites": 0,
+  "where": "The shared isFixedGroup helper remains narrow and all six actions call it; eligibility logic is duplicated outside it rather than accumulated as helper parameters or special cases."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 51.8
+ }
+}

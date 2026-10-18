@@ -1,0 +1,199 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index cea172c..49b840a 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -5,16 +5,135 @@ import * as db from '#server/db';
+ import * as sheet from '#server/sheet';
+ 
+ import {
++  copyPreviousMonth,
+   copyUntilYearEnd,
+   coverOverbudgeted,
++  getBudget,
+   getSheetValue,
+   set3MonthAvg,
+   setBudget,
+   setCategoryCarryover,
+   setNMonthAvg,
++  setZero,
+ } from './actions';
+ import * as budget from './base';
+ 
++describe('month-wide budget actions', () => {
++  beforeEach(global.emptyDatabase());
++  afterEach(global.emptyDatabase());
++
++  async function setupDatabase() {
++    await db.insertCategoryGroup({
++      id: 'income-group',
++      name: 'Income',
++      is_income: 1,
++    });
++    await db.insertCategory({
++      id: 'income-cat',
++      name: 'Income',
++      cat_group: 'income-group',
++      is_income: 1,
++    });
++    await db.insertCategoryGroup({
++      id: 'group1',
++      name: 'group1',
++      is_income: 0,
++    });
++    await db.insertCategoryGroup({
++      id: 'hidden-group',
++      name: 'Hidden group',
++      is_income: 0,
++      hidden: 1,
++    });
++    await db.insertCategory({
++      id: 'visible-cat',
++      name: 'visible',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'hidden-cat',
++      name: 'hidden',
++      cat_group: 'group1',
++      is_income: 0,
++      hidden: 1,
++    });
++    await db.insertCategory({
++      id: 'hidden-group-cat',
++      name: 'in hidden group',
++      cat_group: 'hidden-group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'template-cat',
++      name: 'templated',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.update('categories', {
++      id: 'template-cat',
++      goal_def: JSON.stringify([{ type: 'fixed', amount: 100 }]),
++    });
++    await sheet.loadSpreadsheet(db);
++    await budget.createBudget(['2024-01', '2024-02']);
++  }
++
++  const protectedCategories = [
++    'hidden-cat',
++    'hidden-group-cat',
++    'template-cat',
++  ];
++
++  it('setZero clears only categories that are not hidden or template-managed', async () => {
++    await setupDatabase();
++    for (const category of ['visible-cat', ...protectedCategories]) {
++      await setBudget({ category, month: '2024-02', amount: 500 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(getBudget({ category: 'visible-cat', month: '2024-02' })).toBe(0);
++    for (const category of protectedCategories) {
++      expect(getBudget({ category, month: '2024-02' })).toBe(500);
++    }
++  });
++
++  it('copyPreviousMonth skips hidden and template-managed categories', async () => {
++    await setupDatabase();
++    for (const category of ['visible-cat', ...protectedCategories]) {
++      await setBudget({ category, month: '2024-01', amount: 700 });
++      await setBudget({ category, month: '2024-02', amount: 500 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await copyPreviousMonth({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(getBudget({ category: 'visible-cat', month: '2024-02' })).toBe(700);
++    for (const category of protectedCategories) {
++      expect(getBudget({ category, month: '2024-02' })).toBe(500);
++    }
++  });
++
++  it('set3MonthAvg skips hidden and template-managed categories', async () => {
++    await setupDatabase();
++    for (const category of ['visible-cat', ...protectedCategories]) {
++      await setBudget({ category, month: '2024-02', amount: 500 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await set3MonthAvg({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(getBudget({ category: 'visible-cat', month: '2024-02' })).toBe(0);
++    for (const category of protectedCategories) {
++      expect(getBudget({ category, month: '2024-02' })).toBe(500);
++    }
++  });
++});
++
+ describe('copyUntilYearEnd', () => {
+   beforeEach(global.emptyDatabase());
+   afterEach(global.emptyDatabase());
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index d796abf..c332914 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -69,6 +69,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  has_template: 1 | 0;
+   category: string;
+   amount: number;
+ };
+@@ -82,10 +83,11 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      >
++      > & { has_template: 1 | 0 }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden,
++      c.goal_def IS NOT NULL AS has_template
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -219,6 +221,7 @@ type CategoryFlags = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  has_template: 1 | 0;
+ };
+ 
+ // The single definition of which categories a month-wide action writes.
+@@ -231,8 +234,12 @@ function isWrittenByMonthAction(
+   if (category.is_income === 1 && !isTracking) {
+     return false;
+   }
+-  if (action === 'copy') {
+-    return category.hidden !== 1 && category.group_hidden !== 1;
++  if (
++    category.hidden === 1 ||
++    category.group_hidden === 1 ||
++    category.has_template === 1
++  ) {
++    return false;
+   }
+   if (action === 'average') {
+     return category.hidden === 0 && category.group_hidden === 0;
+@@ -252,7 +259,8 @@ function getCategoriesWithGroupHidden(): Promise<
+   (CategoryFlags & { id: string })[]
+ > {
+   return db.all<CategoryFlags & { id: string }>(`
+-    SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden,
++      c.goal_def IS NOT NULL AS has_template
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+     WHERE c.tombstone = 0

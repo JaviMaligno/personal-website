@@ -1,0 +1,115 @@
+{
+  "zone": "Z2",
+  "date": "2026-10-11",
+  "patch": "tasks3/Z2/T0/reference.R.patch",
+  "image": "sha256:f9bfc01f0ad96f39c88606d725576e204fa9988ad12dc3fa3029b32fc6d79d3a",
+  "untouched_R": {
+    "finished": true,
+    "typecheck_rc": 0,
+    "typecheck_full_rc": 0,
+    "lint_root_rc": 0,
+    "lint_rc": 0,
+    "related_rc": 1,
+    "related": {
+      "files_in": [
+        "src/server/accounts/app.ts",
+        "src/server/budget/actions.ts",
+        "src/server/budget/goal-template.ts",
+        "src/server/budget/month-fill.ts",
+        "src/server/budget/schedule-template.ts",
+        "src/server/forecast/forecast-schedules.ts",
+        "src/server/schedules/app.ts",
+        "src/shared/schedules.ts"
+      ],
+      "passed": 848,
+      "failed": [
+        "src/server/aql/schema/executors.test.ts::transaction executors aggregate queries work with `splits: grouped`",
+        "src/server/aql/schema/executors.test.ts::transaction executors queries the correct transactions with a filter",
+        "src/server/aql/schema/executors.test.ts::transaction executors queries the correct transactions without filters"
+      ],
+      "skipped": 2
+    }
+  },
+  "probe_reference_ok": true,
+  "probe_cases": {
+    "db": 277,
+    "template": 276
+  },
+  "leaks": {
+    "files": [
+      "packages/loot-core/src/server/budget/schedule-template.ts",
+      "packages/loot-core/src/server/forecast/forecast-schedules.ts",
+      "packages/loot-core/src/server/schedules/app.ts",
+      "packages/loot-core/src/shared/schedules.ts"
+    ],
+    "hidden_or_test_files": [],
+    "test_names": [],
+    "literals": [],
+    "lines": [],
+    "clean": true
+  },
+  "typecheck_rc": 0,
+  "typecheck_full_rc": 0,
+  "typecheck_ok": true,
+  "lint_root_rc": 0,
+  "lint_rc": 0,
+  "lint_ok": true,
+  "tests": {
+    "Z2 T0 a ranged amount keeps its current rounding a template with a percent adjustment halves the rounded sum, posting rounds the midpoint": "passed"
+  },
+  "tests_pass": true,
+  "related": {
+    "rc": 0,
+    "files": [
+      "src/server/account-groups/app.test.ts",
+      "src/server/accounts/app-bank-sync.test.ts",
+      "src/server/accounts/split-formula-import.test.ts",
+      "src/server/accounts/sync.test.ts",
+      "src/server/api.test.ts",
+      "src/server/budget/category-template-context.test.ts",
+      "src/server/budget/goal-template.test.ts",
+      "src/server/budget/schedule-template.test.ts",
+      "src/server/budget/template-notes.test.ts",
+      "src/server/forecast/app.test.ts",
+      "src/server/forecast/forecast-filters.test.ts",
+      "src/server/forecast/forecast-projection.test.ts",
+      "src/server/formulas/bootstrap.test.ts",
+      "src/server/importers/ynab5.test.ts",
+      "src/server/main.test.ts",
+      "src/server/payees/app.test.ts",
+      "src/server/reports/formula-card-integration.test.ts",
+      "src/server/rules/formula-action-integration.test.ts",
+      "src/server/rules/formula-action.test.ts",
+      "src/server/rules/index.test.ts",
+      "src/server/rules/rule-utils.test.ts",
+      "src/server/rules/split-parent-context.test.ts",
+      "src/server/schedules/app.test.ts",
+      "src/server/transactions/import/parse-file.test.ts",
+      "src/server/transactions/index.test.ts",
+      "src/server/transactions/merge.test.ts",
+      "src/server/transactions/transaction-rules.test.ts",
+      "src/server/transactions/transfer.test.ts",
+      "src/shared/schedules.test.ts"
+    ],
+    "passed": 655,
+    "failed": [],
+    "skipped": 0,
+    "base_failed": [],
+    "new_failures": [],
+    "missing": [],
+    "ok": true
+  },
+  "related_ok": true,
+  "probe_raw": [],
+  "probe_minus_exclusions": [],
+  "probe_same": true,
+  "ok": true,
+  "stat": " packages/loot-core/package.json                    |   3 +\n .../src/server/budget/schedule-template.ts         |   4 +-\n .../src/server/forecast/forecast-schedules.ts      |   6 +-\n packages/loot-core/src/server/schedules/app.ts     |  15 +-\n packages/loot-core/src/shared/schedules.ts         |  30 +-\n yarn.lock                                          | 354 ++++++++++++++++++++-\n 6 files changed, 383 insertions(+), 29 deletions(-)\n",
+  "related_files_in": [
+    "src/server/budget/schedule-template.ts",
+    "src/server/forecast/forecast-schedules.ts",
+    "src/server/schedules/app.ts",
+    "src/shared/schedules.ts"
+  ],
+  "commands": "set -u\ncd /work/actual\ngit apply --whitespace=nowarn /seed/seed.patch > /out/apply.log 2>&1 || { echo 1 > /out/apply_error; echo done > /out/done; exit 0; }\ngit diff --stat > /out/stat.txt\n( cd packages/loot-core && timeout 1200 yarn tsgo -b > /out/typecheck.log 2>&1; echo $? > /out/typecheck_rc )\n( cd packages/loot-core && timeout 1800 yarn typecheck > /out/typecheck_full.log 2>&1; echo $? > /out/typecheck_full_rc )\n( timeout 1800 yarn lint > /out/lint_root.log 2>&1; echo $? > /out/lint_root_rc )\n( cd packages/loot-core && timeout 1200 yarn lint > /out/lint.log 2>&1; echo $? > /out/lint_rc )\n( cd packages/loot-core && cp /checker/seed.setup.ts src/mocks/aa-seed.setup.ts && cp /checker/vitest.aa-seed.config.ts vitest.aa-seed.config.ts && ENV=node timeout 2400 yarn vitest related --run --config vitest.aa-seed.config.ts --reporter=json --outputFile=/out/related.json src/server/budget/schedule-template.ts src/server/forecast/forecast-schedules.ts src/server/schedules/app.ts src/shared/schedules.ts > /out/related.log 2>&1; echo $? > /out/related_rc; rm -f src/mocks/aa-seed.setup.ts vitest.aa-seed.config.ts )\nif [ -s /out/related_rc ] && [ \"$(cat /out/related_rc)\" != 0 ] && [ -s /out/related.json ]; then ( cd packages/loot-core && node -e 'const fs=require('\"'\"'fs'\"'\"'),p=require('\"'\"'path'\"'\"');const r=JSON.parse(fs.readFileSync('\"'\"'/out/related.json'\"'\"','\"'\"'utf8'\"'\"'));for(const f of r.testResults||[])if(f.status!=='\"'\"'passed'\"'\"')console.log(p.relative(process.cwd(),f.name))' > /out/related_failed_files 2>/dev/null; mapfile -t RF < /out/related_failed_files; if [ ${#RF[@]} -gt 0 ]; then cp /checker/seed.setup.ts src/mocks/aa-seed.setup.ts && cp /checker/vitest.aa-seed.config.ts vitest.aa-seed.config.ts && ENV=node timeout 1200 yarn vitest --run --config vitest.aa-seed.config.ts --reporter=json --outputFile=/out/related_retry.json \"${RF[@]}\" > /out/related_retry.log 2>&1; echo $? > /out/related_retry_rc; rm -f src/mocks/aa-seed.setup.ts vitest.aa-seed.config.ts; fi ); fi\nfor t in packages/loot-core/src/server/study3-z2/z2-inconsistencies.test.ts; do mkdir -p \"$(dirname \"$t\")\" && cp /out/hidden_src/\"$t\" \"$t\" || exit 3; done\ncd packages/loot-core\ncp /checker/seed.setup.ts src/mocks/aa-seed.setup.ts && cp /checker/vitest.aa-seed.config.ts vitest.aa-seed.config.ts || exit 3\nENV=node timeout 1200 yarn vitest --run --config vitest.aa-seed.config.ts --reporter=json --outputFile=/out/tests.json src/server/study3-z2/z2-inconsistencies.test.ts > /out/tests.log 2>&1; echo $? > /out/tests_rc\nrm -f src/server/study3-z2/z2-inconsistencies.test.ts\nmkdir -p /out/probe\ncp /probe/aa-study2-probe-db.test.ts src/server/aa-study2-probe-db.test.ts\ncp /probe/aa-study2-probe-template.test.ts src/server/budget/aa-study2-probe-template.test.ts\nENV=node AA_PROBE_OUT=/out/probe timeout 1800 yarn vitest --run --config vitest.aa-seed.config.ts --reporter=json --outputFile=/out/probe/report.json src/server/aa-study2-probe-db.test.ts src/server/budget/aa-study2-probe-template.test.ts > /out/probe/vitest.log 2>&1; echo $? > /out/probe/rc\necho done > /out/done\n"
+}

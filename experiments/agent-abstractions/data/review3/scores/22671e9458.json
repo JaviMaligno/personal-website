@@ -1,0 +1,12 @@
+{"id": "22671e9458",
+"reuse": {"score": 4, "why": "Fintegra linking goes through the existing linkBankSyncAccount and findOrCreateBank and follows the providers' download pattern, but the takeover copies unlinkAccount's field reset instead of sharing it."},
+"duplication": {"score": 3, "why": "The eight-field unlink reset repeats unlinkAccount, downloadFintegraTransactions copies the Akahu download body, the same ensure call is pasted into six provider wrappers, and index.ts exports './fintegra' twice."},
+"placement": {"score": 3, "why": "The link rules sit in a helper in accounts/app.ts, but it is called from each provider wrapper instead of from linkBankSyncAccount, the one path every link already shares."},
+"scope": {"score": 4, "why": "All edits serve the four steps (provider, rules, flag, types), with a duplicated export line and a stray blank-line removal in a test as noise."},
+"maintainability": {"score": 3, "why": "A future provider must remember to call ensureBankAccountIsNotLinked itself, and a helper named 'ensure not linked' that also checks closed accounts and unlinks others is surprising."},
+"bypasses_abstraction": {"value": false, "where": "Every provider link calls ensureBankAccountIsNotLinked and linkBankSyncAccount; the unlink reset is copied rather than bypassing a shared local-unlink helper (none exists)."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "The copied unlink reset and Fintegra download are literal copies, not reshaped."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 0, "where": "ensureBankAccountIsNotLinked gained a replaceExistingLink flag plus a closed-account branch and a mutate-on-replace branch; the shared linkBankSyncAccount was left untouched while six wrappers each call the check."}
+}

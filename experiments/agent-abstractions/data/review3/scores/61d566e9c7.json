@@ -1,0 +1,12 @@
+{"id":"61d566e9c7",
+"reuse":{"score":5,"why":"The range handler reuses the same schedule construction and getDateWithSkippedWeekend as getUpcomingDates/getNextDate, and a new createRecurSchedule factory replaces the duplicated RSchedule construction in rule-utils and app.ts."},
+"duplication":{"score":4,"why":"The daily-skip rule is encoded once in the recurrence (byDayOfWeek + holiday exrules) so no call site re-decides it; the only repetition is MM-DD/full-date holiday matching expressed both as exrules and in getDateWithSkippedWeekend's isHoliday."},
+"placement":{"score":5,"why":"Recurrence building and weekend/holiday resolution live in shared/schedules.ts; the server handler only filters the window and registers the method."},
+"scope":{"score":5,"why":"All edits serve the four steps, with tests and a release note; no unrelated changes."},
+"maintainability":{"score":4,"why":"One factory and one resolver own the rule, so callers stay simple; the window margin heuristic (2 + 3 per holiday) and the dual holiday representation are slightly subtle."},
+"bypasses_abstraction":{"value":false,"where":"All weekend-aware schedule construction goes through createRecurSchedule; find-schedules.ts still builds RSchedule directly but has no weekend handling."},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":true,"where":"Holiday matching (full date vs MM-DD) is implemented twice in different shapes: as RSchedule exrules in getHolidayExrules and as the isHoliday closure in getDateWithSkippedWeekend."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"getDateWithSkippedWeekend gains a holidays parameter; recurConfigToRSchedule gains a daily+skipWeekend weekday branch; all callers use the shared factory/resolver."}
+}

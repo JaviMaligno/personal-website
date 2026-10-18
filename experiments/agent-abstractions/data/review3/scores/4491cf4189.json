@@ -1,0 +1,11 @@
+{"id": "4491cf4189",
+ "reuse": {"score": 3, "why": "Threads the flag through the existing shared ensureBankAccountIsNotLinked guard used by all six link handlers, but writes its own unlink update instead of extracting/reusing the field reset in unlinkAccount."},
+ "duplication": {"score": 3, "why": "The db.updateAccount block that nulls account_id, bank, balances, sync source and status is a verbatim copy of unlinkAccount's."},
+ "placement": {"score": 3, "why": "The takeover lives in the shared link guard in accounts/app.ts, which is the right layer, but it makes a function named ensure…NotLinked perform the unlink mutation."},
+ "scope": {"score": 4, "why": "Only the flag, its threading and a test; the goCardless call is left as an unformatted long line."},
+ "maintainability": {"score": 3, "why": "If the unlink action later clears more fields, this copy will silently diverge, and the guard's name no longer describes what it does."},
+ "bypasses_abstraction": {"value": true, "where": "ensureBankAccountIsNotLinked in accounts/app.ts re-does unlinkAccount's db.updateAccount field reset instead of sharing it"},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The unlink field reset is copied verbatim, not disguised"}
+}

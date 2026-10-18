@@ -1,0 +1,13 @@
+{
+  "id": "3bd84c6f4e",
+  "reuse": {"score": 3, "why": "Routes the server midpoint copies (forecast, schedule-template, postTransaction, preview, updateActions) through the existing getScheduledAmount, but the API model writes its own getExpectedScheduleAmount instead of calling it."},
+  "duplication": {"score": 2, "why": "getExpectedScheduleAmount in api-models.ts duplicates the ranged/approximate amount rule (with a different, furthest-from-zero version), and updateActions keeps its own null/number dispatch around the helper."},
+  "placement": {"score": 3, "why": "The rule correctly lives in shared/schedules.ts, but a second definition sits in server/api-models.ts and comments at call sites describe a different rule than the helper implements."},
+  "scope": {"score": 4, "why": "Changes target the amount rule, the API field and tests; nothing unrelated."},
+  "maintainability": {"score": 2, "why": "Two divergent definitions of the worst-case amount (min vs furthest-from-zero, minus vs plus tolerance), an optional op that UI callers omit, and stale 'furthest from zero' comments make the rule hard to trust."},
+  "bypasses_abstraction": {"value": true, "where": "server/api-models.ts getExpectedScheduleAmount reimplements getScheduledAmount; server/schedules/app.ts updateActions keeps its own amountValue == null / typeof number dispatch around it"},
+  "duplicated_blocks": 2,
+  "would_merge": "no",
+  "disguised_duplication": {"value": true, "where": "server/api-models.ts getExpectedScheduleAmount re-expresses the shared ranged/approx amount rule under a new name with a different shape (abs comparison, added tolerance)"},
+  "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 2, "where": "getScheduledAmount gains an optional op parameter and an isapprox branch; api-models.ts reimplements it and updateActions in server/schedules/app.ts keeps its own dispatch; desktop-client callers call it without op"}
+}

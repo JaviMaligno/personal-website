@@ -1,0 +1,11 @@
+{"id":"d3095907ff",
+"reuse":{"score":3,"why":"Puts the rule in the existing shouldWriteMonthBudget predicate, but detects the tag with a lowercase substring match instead of the shared extractTagsFromText in #shared/tags."},
+"duplication":{"score":2,"why":"The same LEFT JOIN notes and group_notes column are pasted into six separate category queries (getBudgetData, setZero, setLastMonthSpending and the three averages) instead of one shared category query."},
+"placement":{"score":4,"why":"The tag rule sits in the shared write predicate in budget/actions.ts, where the hidden and template rules already are; only the data plumbing is spread across the actions."},
+"scope":{"score":3,"why":"Besides the #fixed rule, it adds g.hidden AS group_hidden to the three average queries, which changes how they treat hidden groups and was not asked for."},
+"maintainability":{"score":3,"why":"Adding another exclusion means editing six queries again, and the substring match ('#fixed' inside '#fixedcosts', in any case) disagrees with how the app parses tags elsewhere."},
+"bypasses_abstraction":{"value":true,"where":"budget/actions.ts shouldWriteMonthBudget: group_notes.toLowerCase().includes('#fixed') instead of extractTagsFromText from #shared/tags"},
+"duplicated_blocks":5,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"the repeated join is a plain copy in each query, not disguised"},
+"one_place":{"value":true,"where":"budget/actions.ts shouldWriteMonthBudget is the single predicate every month-wide action uses; each action's query still has to supply group_notes on its own"}}

@@ -1,0 +1,142 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 2506ad1..c209ee1 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -229,6 +229,14 @@ describe('set budget average', () => {
+   });
+ 
+   it('leaves hidden categories and categories with saved templates untouched in bulk actions', async () => {
++    await db.update('category_groups', { id: 'group1', name: 'group1' });
++    await db.insert('notes', { id: 'group1', note: 'Monthly expenses #fixed' });
++    await db.insert('notes', { id: 'cat1', note: 'category note #fixed' });
++    await db.insertCategoryGroup({ id: 'regular-group', name: 'Regular' });
++    await db.insertCategory({
++      id: 'regular-cat', name: 'Regular category', cat_group: 'regular-group',
++    });
++    await db.insert('notes', { id: 'regular-cat', note: 'Category only #fixed' });
+     await db.insertCategoryGroup({ id: 'hidden-group', name: 'Hidden', hidden: 1 });
+     await db.insertCategory({
+       id: 'hidden-cat', name: 'Hidden category', cat_group: 'hidden-group',
+@@ -246,7 +254,7 @@ describe('set budget average', () => {
+     await sheet.loadSpreadsheet(db);
+     await budget.createBudget(['2024-04']);
+ 
+-    for (const category of ['hidden-cat', 'hidden-category', 'template-cat', 'cat1']) {
++    for (const category of ['hidden-cat', 'hidden-category', 'template-cat', 'cat1', 'regular-cat']) {
+       await setBudget({ category, month: '2024-04', amount: 500 });
+     }
+     await sheet.waitOnSpreadsheet();
+@@ -257,7 +265,8 @@ describe('set budget average', () => {
+     for (const category of ['hidden-cat', 'hidden-category', 'template-cat']) {
+       expect(await getSheetValue('budget202404', `budget-${category}`)).toBe(500);
+     }
+-    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(500);
++    expect(await getSheetValue('budget202404', 'budget-regular-cat')).toBe(0);
+   });
+ });
+ 
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 4644522..b90d70f 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { makeTagAqlRegex } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -88,9 +89,11 @@ function getBudgetData<T extends BudgetTable>(
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
++      AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+   `,
+-    [month],
++    [month, makeTagAqlRegex('fixed')],
+   );
+ }
+ 
+@@ -265,11 +268,14 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await db.all<db.DbViewCategory>(
+     `SELECT c.* FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
++     LEFT JOIN notes n ON n.id = g.id
+      WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++       AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+        AND NOT EXISTS (
+          SELECT 1 FROM json_each(COALESCE(c.goal_def, '[]'))
+          WHERE json_extract(value, '$.directive') = 'template'
+-       )`,
++      )`,
++    [makeTagAqlRegex('fixed')],
+   );
+ 
+   await batchMessages(async () => {
+@@ -290,11 +296,14 @@ export async function setLastMonthSpending({
+   const categories = await db.all<db.DbViewCategory>(
+     `SELECT c.* FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
++     LEFT JOIN notes n ON n.id = g.id
+      WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++       AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+        AND NOT EXISTS (
+          SELECT 1 FROM json_each(COALESCE(c.goal_def, '[]'))
+          WHERE json_extract(value, '$.directive') = 'template'
+        )`,
++    [makeTagAqlRegex('fixed')],
+   );
+   const previousMonth = monthUtils.prevMonth(month);
+   const previousSheet = monthUtils.sheetForMonth(previousMonth);
+@@ -327,12 +336,15 @@ export async function set3MonthAvg({
+   SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+     AND NOT EXISTS (
+       SELECT 1 FROM json_each(COALESCE(c.goal_def, '[]'))
+       WHERE json_extract(value, '$.directive') = 'template'
+     )
+   `,
++    [makeTagAqlRegex('fixed')],
+   );
+ 
+   await batchMessages(async () => {
+@@ -366,12 +378,15 @@ export async function set12MonthAvg({
+   SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+     AND NOT EXISTS (
+       SELECT 1 FROM json_each(COALESCE(c.goal_def, '[]'))
+       WHERE json_extract(value, '$.directive') = 'template'
+     )
+   `,
++    [makeTagAqlRegex('fixed')],
+   );
+ 
+   await batchMessages(async () => {
+@@ -394,12 +409,15 @@ export async function set6MonthAvg({
+   SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+     AND NOT EXISTS (
+       SELECT 1 FROM json_each(COALESCE(c.goal_def, '[]'))
+       WHERE json_extract(value, '$.directive') = 'template'
+     )
+   `,
++    [makeTagAqlRegex('fixed')],
+   );
+ 
+   await batchMessages(async () => {

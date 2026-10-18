@@ -1,0 +1,12 @@
+{"id": "bad02b416c",
+"reuse": {"score": 3, "why": "The shared getScheduleAmount now serves the template, forecast, preview, post and action-sync paths (schedule-template's own midpoint copy was routed through it), but the API's expectedAmount re-implements the rule inline and the approximate tolerance re-implements getApproxNumberThreshold from shared/rules."},
+"duplication": {"score": 2, "why": "scheduleModel.toExternal keeps its own range rule (furthest from zero) beside getScheduleAmount, and getScheduleAmount repeats the Math.round(Math.abs(x) * 0.075) tolerance that getApproxNumberThreshold already defines."},
+"placement": {"score": 4, "why": "The rule lives in shared/schedules.ts where the tree keeps schedule-amount logic, but the API model layer computes its own amount instead of delegating."},
+"scope": {"score": 4, "why": "Focused on the amount rule, the API field and the needed type tweaks, though several comments edited along the way are left wrong."},
+"maintainability": {"score": 2, "why": "After step 4 the API's expectedAmount silently disagrees with the helper (furthest from zero, ignores isapprox), and comments still say 'furthest from zero', so a maintainer has two rules to keep in sync."},
+"bypasses_abstraction": {"value": true, "where": "scheduleModel.toExternal in packages/loot-core/src/server/api-models.ts computes expectedAmount itself instead of calling getScheduleAmount(schedule._amount, schedule._amountOp); getScheduleAmount's isapprox branch bypasses getApproxNumberThreshold (shared/rules.ts)."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "api-models.ts expresses the range rule as an abs-comparison ternary rather than Math.min/getScheduleAmount, and the tolerance in getScheduleAmount is an inline formula rather than a call to getApproxNumberThreshold."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getScheduleAmount (shared/schedules.ts) gains an op parameter and an isapprox branch; scheduleModel.toExternal (server/api-models.ts) re-implements the amount instead of calling it."}
+}

@@ -1,0 +1,13 @@
+{
+  "id": "f6d3b882fa",
+  "reuse": {"score": 4, "why": "Reuses setNMonthAvg for the averaging actions, getSheetValue/sum-amount cells for last-month spending, and the shared extractTagsFromText for the #fixed tag, instead of re-implementing them."},
+  "duplication": {"score": 3, "why": "setZero/avg/last-month actions share one category selection, but copyPreviousMonth re-states the same hidden/template/#fixed exclusion rules inline on getBudgetData rows, so the rule set lives in two places."},
+  "placement": {"score": 4, "why": "Selection helper, tag predicate and new action sit in budget/actions.ts with the handler registered in budget/app.ts, following the tree's layering; getBudgetData is widened only to serve copyPreviousMonth's local checks."},
+  "scope": {"score": 5, "why": "All edits serve the four steps (exclusions, new action, #fixed, include-hidden flag) plus tests and a release note."},
+  "maintainability": {"score": 4, "why": "One selection function with a single flag is easy to own; the parallel row-level rule checks in copyPreviousMonth are a drift risk when the next exclusion is added."},
+  "bypasses_abstraction": {"value": true, "where": "copyPreviousMonth does not use getMonthWideCategories/getMonthWideBudgetCategories and re-checks hidden, group_hidden, has_template and #fixed on getBudgetData rows."},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "The exclusion rules are expressed once as SQL WHERE clauses in getMonthWideCategories and again as per-row if-returns (plus extra has_template/group_note columns in getBudgetData) in copyPreviousMonth."},
+  "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getMonthWideCategories gains the includeHiddenCategories parameter with a `? = 1 OR (...)` branch in its SQL; copyPreviousMonth bypasses it with its own inline checks."}
+}

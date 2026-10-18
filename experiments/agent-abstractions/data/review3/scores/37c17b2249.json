@@ -1,0 +1,12 @@
+{"id":"37c17b2249",
+"reuse":{"score":2,"why":"Extends the shared visibleUntemplatedCategory SQL fragment, but ignores the existing notes table (notes keyed by group id, already joined elsewhere in actions.ts/statements.ts) and invents a new category_groups.notes column instead."},
+"duplication":{"score":2,"why":"The #fixed rule is written twice in different languages (SQL LIKE in the shared fragment and a JS includes() in copyPreviousMonth), and group notes storage is duplicated with a new column parallel to the notes table."},
+"placement":{"score":2,"why":"Exclusion sits in budget/actions.ts next to the hidden rule, which is right, but adding a schema column, DB types and API model fields puts notes data in a layer where the tree does not keep notes."},
+"scope":{"score":2,"why":"Adds a migration, DbCategoryGroup/CategoryGroupEntity fields and an API model change that the request does not need, since group notes already exist in the notes table."},
+"maintainability":{"score":2,"why":"Two sources of truth for group notes (the UI-edited notes table vs an unused new column) and a rule split between SQL and JS would confuse a maintainer and likely never match what users type."},
+"bypasses_abstraction":{"value":true,"where":"packages/loot-core/migrations/1791800000000_add_category_group_notes.sql and actions.ts: reads g.notes from a new column instead of the existing notes table (notes n WHERE n.id = group id)."},
+"duplicated_blocks":1,
+"would_merge":"no",
+"disguised_duplication":{"value":true,"where":"actions.ts copyPreviousMonth re-expresses the SQL `COALESCE(g.notes,'') NOT LIKE '%#fixed%'` from visibleUntemplatedCategory as `(prevBudget.group_notes ?? '').includes('#fixed')`, alongside the already duplicated hidden checks."},
+"one_place":{"value":false,"where":"Rule lives in visibleUntemplatedCategory SQL (setZero/average actions) and separately as a JS check in copyPreviousMonth on getBudgetData rows."}
+}

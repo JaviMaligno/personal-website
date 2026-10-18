@@ -1,0 +1,103 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+index c93c2d2..4857a03 100644
+--- a/packages/loot-core/src/server/api-models.test.ts
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -1,7 +1,7 @@
+ import { scheduleModel } from './api-models';
+ 
+ describe('scheduleModel', () => {
+-  it('returns the range endpoint furthest from zero as expectedAmount', () => {
++  it('returns the lowest range endpoint as expectedAmount', () => {
+     const schedule = {
+       id: 'schedule-id',
+       name: 'Rent',
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index e80f309..d6a1ac1 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -94,7 +94,7 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // Ranged amounts use the endpoint furthest from zero to cover the worst case.
++  // Ranged amounts use their lowest value to cover the worst case.
+   const amount = getScheduledAmount(amountValue, false, conditions.amount?.op);
+ 
+   return {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 198f66b..01d5ac9 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -583,7 +583,7 @@ async function postTransactionForSchedule({
+     return;
+   }
+ 
+-  // A missing amount posts 0; ranged and approximate amounts post the worst case.
++  // A missing amount posts 0; ranged and approximate amounts post their lowest value.
+   const amountCondition = extractScheduleConds(schedule._conditions).amount;
+   const amount = getScheduledAmount(
+     schedule._amount,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index de755da..899b2db 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -23,10 +23,12 @@ import type { ScheduleStatuses } from './schedules';
+ 
+ describe('schedules', () => {
+   describe('getScheduledAmount', () => {
+-    it('uses the range endpoint furthest from zero in either order', () => {
++    it('uses the lowest range endpoint in either order', () => {
+       expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
+     });
+ 
+     it('preserves single and missing amounts', () => {
+@@ -34,11 +36,11 @@ describe('schedules', () => {
+       expect(getScheduledAmount(null)).toBe(0);
+     });
+ 
+-    it('uses the approximate endpoint furthest from zero', () => {
++    it('uses the lowest approximate amount', () => {
+       expect(getScheduledAmount(-10000, false, 'isapprox')).toBe(-10750);
+-      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
++      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(9250);
+       expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
+-      expect(getScheduledAmount(1234, false, 'isapprox')).toBe(1327);
++      expect(getScheduledAmount(1234, false, 'isapprox')).toBe(1141);
+     });
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 75e8719..af688ec 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -365,13 +365,12 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     if (op === 'isapprox') {
+       const tolerance = Math.round(Math.abs(amount) * 0.075);
+-      const expected = amount < 0 ? amount - tolerance : amount + tolerance;
++      const expected = amount - tolerance;
+       return inverse ? -expected : expected;
+     }
+     return inverse ? -amount : amount;
+   }
+-  const expected =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  const expected = Math.min(amount.num1, amount.num2);
+   return inverse ? -expected : expected;
+ }
+ 
+@@ -503,8 +502,7 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // A missing amount previews as 0; ranged amounts use the endpoint
+-      // furthest from zero so the plan covers the worst case.
++      // A missing amount previews as 0; ranged amounts use their lowest value.
+       const amount = getScheduledAmount(
+         schedule._amount,
+         false,

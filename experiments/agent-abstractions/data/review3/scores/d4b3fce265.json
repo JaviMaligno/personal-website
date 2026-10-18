@@ -1,0 +1,12 @@
+{"id":"d4b3fce265",
+"reuse":{"score":3,"why":"Reuses link.findOrCreateBank, bankSync.syncAccount, handleSyncResponse and the shared balance branch for Fintegra, and routes all six providers through one precondition helper, but re-writes unlinkAccount's field clearing and copies the Akahu link/download bodies rather than sharing them."},
+"duplication":{"score":2,"why":"linkFintegraAccount is a near-verbatim copy of linkAkahuAccount, downloadFintegraTransactions a verbatim copy of downloadAkahuTransactions, and the local-unlink db.updateAccount block copies unlinkAccount's update."},
+"placement":{"score":4,"why":"Link rules sit in one pre-link helper in accounts/app.ts, the download in sync.ts and the URL in server-config.ts, matching where the tree puts each kind of logic."},
+"scope":{"score":4,"why":"Everything maps to one of the four steps; tests cover only the closed-account rule, and the Fintegra link also widens the success event's tables, a small unrequested divergence from its template."},
+"maintainability":{"score":3,"why":"The precondition helper is a single point for the link rules, but it is still named assertBankAccountNotLinked while it now unlinks other accounts when a flag is set, and the per-provider copies multiply the code a maintainer must keep in step."},
+"bypasses_abstraction":{"value":true,"where":"assertBankAccountNotLinked in accounts/app.ts clears the holder with its own db.updateAccount instead of sharing the local part of unlinkAccount."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The Fintegra link/download functions and the clearing block are literal copies (provider names swapped), not reshaped."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"assertBankAccountNotLinked (created in step 1) gains a replaceExistingLink parameter and a branch that mutates other accounts, turning an assertion into a side-effecting claim without a rename; all six provider link functions still call it."}
+}

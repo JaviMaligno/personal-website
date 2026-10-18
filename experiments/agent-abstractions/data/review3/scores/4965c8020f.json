@@ -1,0 +1,11 @@
+{"id": "4965c8020f",
+"reuse": {"score": 4, "why": "Threads the flag through the existing getFillableCategories and setAllCategoriesNMonthAvg helpers and reuses getCategoriesWithTemplates/getCategoriesInFixedGroups; copyPreviousMonth keeps its own pre-existing copy of the selection rule."},
+"duplication": {"score": 3, "why": "The new 'include hidden' rule is written twice: as a conditional SQL clause in getFillableCategories and as a boolean guard in copyPreviousMonth's own exclusion check."},
+"placement": {"score": 5, "why": "The flag is handled in the month-wide selection helper in budget/actions.ts, where the other exclusions already live."},
+"scope": {"score": 5, "why": "Only the month-wide actions' signatures and the selection helper change, plus a shared MonthWideArgs type."},
+"maintainability": {"score": 3, "why": "Small and readable, but the hidden rule now has two homes and the actions mix three styles for the same argument (destructured default, args.includeHiddenCategories, positional boolean)."},
+"bypasses_abstraction": {"value": true, "where": "copyPreviousMonth in budget/actions.ts applies includeHiddenCategories in its own inline exclusion check instead of going through getFillableCategories (the bypass predates the change; the change extends it)."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "The include-hidden rule appears as an interpolated SQL fragment in getFillableCategories and as a reshaped boolean expression in copyPreviousMonth."}
+}

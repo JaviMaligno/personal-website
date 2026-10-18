@@ -1,0 +1,273 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index cea172c..77d3189 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -5,6 +5,7 @@ import * as db from '#server/db';
+ import * as sheet from '#server/sheet';
+ 
+ import {
++  copyPreviousMonth,
+   copyUntilYearEnd,
+   coverOverbudgeted,
+   getSheetValue,
+@@ -12,6 +13,7 @@ import {
+   setBudget,
+   setCategoryCarryover,
+   setNMonthAvg,
++  setZero,
+ } from './actions';
+ import * as budget from './base';
+ 
+@@ -194,6 +196,151 @@ describe('set budget average', () => {
+   });
+ });
+ 
++describe('month-wide budget actions', () => {
++  let originalCurrentMonth: string | null;
++
++  beforeEach(async () => {
++    await global.emptyDatabase()();
++    originalCurrentMonth = global.currentMonth;
++    global.currentMonth = '2024-05';
++  });
++
++  afterEach(async () => {
++    global.currentMonth = originalCurrentMonth;
++    await global.emptyDatabase()();
++  });
++
++  async function setupDatabase() {
++    await db.insertAccount({ id: 'account1', name: 'Account 1' });
++    await db.insertCategoryGroup({
++      id: 'income-group',
++      name: 'Income',
++      is_income: 1,
++    });
++    await db.insertCategory({
++      id: 'income-cat',
++      name: 'Income',
++      cat_group: 'income-group',
++      is_income: 1,
++    });
++    await db.insertCategoryGroup({
++      id: 'group1',
++      name: 'group1',
++      is_income: 0,
++    });
++    await db.insertCategoryGroup({
++      id: 'hidden-group',
++      name: 'hidden-group',
++      is_income: 0,
++      hidden: 1,
++    });
++    await db.insertCategory({
++      id: 'cat1',
++      name: 'cat1',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'cat-hidden',
++      name: 'cat-hidden',
++      cat_group: 'group1',
++      is_income: 0,
++      hidden: 1,
++    });
++    await db.insertCategory({
++      id: 'cat-in-hidden-group',
++      name: 'cat-in-hidden-group',
++      cat_group: 'hidden-group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'cat-template',
++      name: 'cat-template',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.updateWithSchema('categories', {
++      id: 'cat-template',
++      goal_def: JSON.stringify([{ type: 'fixed', amount: 100 }]),
++    });
++    await sheet.loadSpreadsheet(db);
++    await budget.createBudget(['2024-03', '2024-04']);
++
++    for (const category of [
++      'cat1',
++      'cat-hidden',
++      'cat-in-hidden-group',
++      'cat-template',
++    ]) {
++      await setBudget({ category, month: '2024-03', amount: 700 });
++      await setBudget({ category, month: '2024-04', amount: 500 });
++    }
++    await sheet.waitOnSpreadsheet();
++  }
++
++  it('setZero skips hidden categories, categories in hidden groups, and templated categories', async () => {
++    await setupDatabase();
++
++    await setZero({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
++    expect(await getSheetValue('budget202404', 'budget-cat-hidden')).toBe(500);
++    expect(
++      await getSheetValue('budget202404', 'budget-cat-in-hidden-group'),
++    ).toBe(500);
++    expect(await getSheetValue('budget202404', 'budget-cat-template')).toBe(
++      500,
++    );
++  });
++
++  it('copyPreviousMonth skips hidden categories, categories in hidden groups, and templated categories', async () => {
++    await setupDatabase();
++
++    await copyPreviousMonth({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(700);
++    expect(await getSheetValue('budget202404', 'budget-cat-hidden')).toBe(500);
++    expect(
++      await getSheetValue('budget202404', 'budget-cat-in-hidden-group'),
++    ).toBe(500);
++    expect(await getSheetValue('budget202404', 'budget-cat-template')).toBe(
++      500,
++    );
++  });
++
++  it('set3MonthAvg skips hidden categories, categories in hidden groups, and templated categories', async () => {
++    await setupDatabase();
++    for (const category of [
++      'cat1',
++      'cat-hidden',
++      'cat-in-hidden-group',
++      'cat-template',
++    ]) {
++      await db.insertTransaction({
++        date: '2024-03-15',
++        amount: -300,
++        account: 'account1',
++        category,
++      });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await set3MonthAvg({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(300);
++    expect(await getSheetValue('budget202404', 'budget-cat-hidden')).toBe(500);
++    expect(
++      await getSheetValue('budget202404', 'budget-cat-in-hidden-group'),
++    ).toBe(500);
++    expect(await getSheetValue('budget202404', 'budget-cat-template')).toBe(
++      500,
++    );
++  });
++});
++
+ describe('coverOverbudgeted', () => {
+   beforeEach(global.emptyDatabase());
+   afterEach(global.emptyDatabase());
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..eed830a 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -95,6 +95,19 @@ function getBudgetData<T extends BudgetTable>(
+   );
+ }
+ 
++// Categories that month-wide actions may write to. Hidden categories, categories
++// in hidden groups, and categories managed by a saved template are left alone.
++function getMonthActionCategories(): Promise<
++  db.DbViewCategoryWithGroupHidden[]
++> {
++  return db.all<db.DbViewCategoryWithGroupHidden>(`
++    SELECT c.*
++    FROM categories c
++    LEFT JOIN category_groups g ON c.cat_group = g.id
++    WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL
++  `);
++}
++
+ function getAllMonths(startMonth: string): string[] {
+   const { createdMonths } = sheet.get().meta();
+   let latest = null;
+@@ -223,13 +236,16 @@ export async function copyPreviousMonth({
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
++  const eligibleCategoryIds = new Set(
++    (await getMonthActionCategories()).map(cat => cat.id),
++  );
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+       if (prevBudget.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+-      if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
++      if (!eligibleCategoryIds.has(prevBudget.category)) {
+         return;
+       }
+       void setBudget({
+@@ -259,9 +275,7 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
+-  );
++  const categories = await getMonthActionCategories();
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+@@ -278,14 +292,7 @@ export async function set3MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getMonthActionCategories();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -313,14 +320,7 @@ export async function set12MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getMonthActionCategories();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -337,14 +337,7 @@ export async function set6MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getMonthActionCategories();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {

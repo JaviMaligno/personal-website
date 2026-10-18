@@ -1,0 +1,178 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 5b9f191..566cb82 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -10,6 +10,7 @@ import {
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
+   getNextDate,
++  getRangedAmount,
+ } from '#shared/schedules';
+ import { amountToInteger } from '#shared/util';
+ import type { CategoryEntity, TransactionEntity } from '#types/models';
+@@ -61,8 +62,7 @@ async function createScheduleList(
+       extractScheduleConds(conditions);
+     let scheduleAmount =
+       amountCondition.op === 'isbetween'
+-        ? Math.round(amountCondition.value.num1 + amountCondition.value.num2) /
+-          2
++        ? getRangedAmount(amountCondition.value)
+         : amountCondition.value;
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 6657f87..2fcbfba 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -10,6 +10,7 @@ import {
+   getNextDate,
+   indexPostedScheduleTransactions,
+   isScheduleOccurrencePosted,
++  getRangedAmount,
+ } from '#shared/schedules';
+ import type { RuleConditionEntity, TransactionEntity } from '#types/models';
+ import type { RecurConfig } from '#types/models/schedule';
+@@ -93,11 +94,11 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged ("is between") amount is scheduled at its rounded midpoint.
++  // A ranged ("is between") amount is scheduled at its end furthest from zero.
+   const amount =
+     typeof amountValue === 'number'
+       ? amountValue
+-      : Math.round((amountValue.num1 + amountValue.num2) / 2);
++      : getRangedAmount(amountValue);
+ 
+   return {
+     id: schedule.id,
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index b82b437..f34cdf4 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -33,6 +33,7 @@ import {
+   getNextDateAfter,
+   getStatus,
+   recurConfigToRSchedule,
++  getRangedAmount,
+ } from '#shared/schedules';
+ import type {
+   RuleActionEntity,
+@@ -151,14 +152,14 @@ function updateActions(
+   // Mirrors how `_amount` resolves: a deleted/empty amount condition value
+   // yields 0, so the action is synced to 0 too, keeping it consistent with
+   // the amount the schedule actually posts. A ranged ("is between") amount
+-  // is scheduled at its rounded midpoint.
++  // is scheduled at its end furthest from zero.
+   const amountValue = amountCond.value;
+   const amount =
+     amountValue == null
+       ? 0
+       : typeof amountValue === 'number'
+         ? amountValue
+-        : Math.round((amountValue.num1 + amountValue.num2) / 2);
++        : getRangedAmount(amountValue);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -592,13 +593,13 @@ async function postTransactionForSchedule({
+   }
+ 
+   // A missing amount (deleted condition) posts 0; a ranged ("is between")
+-  // amount posts its rounded midpoint.
++  // amount posts its end furthest from zero.
+   const amount =
+     schedule._amount == null
+       ? 0
+       : typeof schedule._amount === 'number'
+         ? schedule._amount
+-        : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++        : getRangedAmount(schedule._amount);
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..f91d93d 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -8,6 +8,7 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
++  getRangedAmount,
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+@@ -643,3 +644,11 @@ describe('schedules', () => {
+     });
+   });
+ });
++
++describe('getRangedAmount', () => {
++  it('picks the end furthest from zero regardless of order', () => {
++    expect(getRangedAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
++    expect(getRangedAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
++    expect(getRangedAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++  });
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..c0a879c 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -353,6 +353,17 @@ export function getDateWithSkippedWeekend(
+   return date;
+ }
+ 
++// A ranged ("is between") amount is planned for the worst case: the end of
++// the range furthest from zero, regardless of the order it was entered in.
++export function getRangedAmount(amount: {
++  num1: number;
++  num2: number;
++}): number {
++  return Math.abs(amount.num1) >= Math.abs(amount.num2)
++    ? amount.num1
++    : amount.num2;
++}
++
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -364,8 +375,8 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const avg = (amount.num1 + amount.num2) / 2;
+-  return inverse ? -Math.round(avg) : Math.round(avg);
++  const worst = getRangedAmount(amount);
++  return inverse ? -worst : worst;
+ }
+ 
+ export function getUpcomingDays(
+@@ -497,13 +508,13 @@ export function computeSchedulePreviewTransactions(
+       }
+ 
+       // A missing amount previews as 0; a ranged ("is between") amount as its
+-      // rounded midpoint.
++      // end furthest from zero.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amount
+-            : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++            : getRangedAmount(schedule._amount);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,
+diff --git a/upcoming-release-notes/schedule-ranged-amount-worst-case.md b/upcoming-release-notes/schedule-ranged-amount-worst-case.md
+new file mode 100644
+index 0000000..e9f3995
+--- /dev/null
++++ b/upcoming-release-notes/schedule-ranged-amount-worst-case.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Plan variable-amount schedules at the end of the range furthest from zero instead of the midpoint

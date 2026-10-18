@@ -1,0 +1,12 @@
+{"id":"084b14f77e",
+"reuse":{"score":5,"why":"Routes every expected-amount site through the existing exported getScheduledAmount and builds the approximate case on the existing getApproxNumberThreshold instead of recomputing the 7.5% tolerance."},
+"duplication":{"score":5,"why":"Removes five hand-written midpoint/missing-amount ternaries (forecast, updateActions, postTransactionForSchedule, preview, schedule-template) in favour of the one helper, and adds no new copies."},
+"placement":{"score":5,"why":"The rule lives in shared/schedules.ts next to the other schedule amount/date helpers, the API only decorates its list output, and server and client callers just pass their raw amount and operator."},
+"scope":{"score":4,"why":"All edits serve the four steps; the only noise is release notes that are stale or placeholder (step 1's note says 'largest expected amount' and has author 'YourGitHubUsername')."},
+"maintainability":{"score":5,"why":"A future change to the planning rule is a one-function edit with tests; the operator is now an explicit parameter and the missing/number/range/approx dispatch is in one place."},
+"bypasses_abstraction":{"value":false,"where":"No site keeps its own computation; all former inline copies now call getScheduledAmount"},
+"duplicated_blocks":0,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"Former copies were deleted, not reshaped"},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"getScheduledAmount gains an `amountOp` parameter (inverse moved to third position, no caller used it) and one `isapprox` branch that is the requested rule itself; no call site bypasses it after the change (useScheduleEdit's operator-switch conversion is a separate UI concern)"}
+}

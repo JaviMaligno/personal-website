@@ -1,0 +1,44 @@
+{
+ "id": "bf0a3afd17",
+ "reuse": {
+  "score": 3,
+  "why": "Reuses recurrence conversion and weekend adjustment helpers, but shares only predicates for daily skipping while each consumer implements the filtering."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Daily weekend and holiday exclusion is independently orchestrated in getNextDate, getUpcomingDates, getDatesInRange, and budget schedule counting."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Holiday classification belongs in shared/schedules.ts, but occurrence exclusion and adjustment-window knowledge remain spread across server consumers."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the requested recurrence rules, range handler, supporting data, tests, and release note."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Maintainers must coordinate multiple exclusion loops, optional frequency plumbing, and a holiday-dependent range margin instead of owning one occurrence-resolution abstraction."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "getNextDate, getUpcomingDates, getDatesInRange, and createScheduleList decide daily occurrence exclusion outside applyWeekendRule, which cannot represent a dropped occurrence."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The same daily nonworking-day exclusion appears as findFirst filtering, an upcoming-date collection loop, a range-loop continue, and an isDropped callback guarding budget accumulation."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 3,
+  "special_case_branches": 3,
+  "bypassing_call_sites": 4,
+  "where": "WeekendRule gains frequency and holidays, getDateWithSkippedWeekend gains holidays, and daily-specific branching enters getNextDate, applyWeekendRule, and applyWeekendRuleToDay while four consumers retain exclusion logic."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 36.3
+ }
+}

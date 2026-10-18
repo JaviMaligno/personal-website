@@ -1,0 +1,119 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 84d9707..245d8aa 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -15,6 +15,7 @@ import {
+   createSchedule,
+   deleteSchedule,
+   app as schedulesApp,
++  getDatesInRange,
+   setNextDate,
+   skipNextDate,
+   updateConditions,
+@@ -28,6 +29,46 @@ beforeEach(async () => {
+ });
+ 
+ describe('schedule app', () => {
++  describe('getDatesInRange', () => {
++    it('includes adjusted occurrences based on their final day', async () => {
++      const config = {
++        start: '2024-06-01', // Saturday
++        frequency: 'weekly',
++        interval: 1,
++        skipWeekend: true,
++        weekendSolveMode: 'before',
++      };
++
++      expect(await getDatesInRange({ config, start: '2024-05-31', end: '2024-06-03' })).toEqual([
++        '2024-05-31',
++      ]);
++      expect(await getDatesInRange({ config, start: '2024-06-01', end: '2024-06-03' })).toEqual([]);
++
++      const sundayConfig = {
++        ...config,
++        start: '2024-06-02',
++        weekendSolveMode: 'after',
++      };
++      expect(await getDatesInRange({ config: sundayConfig, start: '2024-06-03', end: '2024-06-03' })).toEqual([
++        '2024-06-03',
++      ]);
++    });
++
++    it('skips weekend occurrences for daily schedules', async () => {
++      const config = {
++        start: '2024-06-07',
++        frequency: 'daily',
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++      };
++
++      expect(await getDatesInRange({ config, start: '2024-06-07', end: '2024-06-10' })).toEqual([
++        '2024-06-07',
++        '2024-06-10',
++      ]);
++    });
++  });
++
+   describe('utility', () => {
+     it('conditions are updated when they exist', () => {
+       const conds = [
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 3bf9b10..ea8da8e 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -525,6 +525,39 @@ async function getUpcomingDates({ config, count }) {
+   }
+ }
+ 
++export async function getDatesInRange({ config, start, end }) {
++  if (start > end) return [];
++
++  const rules = recurConfigToRSchedule(config);
++  try {
++    const schedule = new RSchedule({ rrules: rules });
++    // Weekend adjustments can move an occurrence by at most three days.
++    const occurrenceStart = d.subDays(new Date(`${start}T00:00:00`), 3);
++    const occurrenceEnd = d.addDays(new Date(`${end}T00:00:00`), 3);
++    const count = d.differenceInCalendarDays(occurrenceEnd, occurrenceStart) + 1;
++    const dates = schedule
++      .occurrences({ start: d.startOfDay(occurrenceStart), take: count })
++      .toArray()
++      .map(({ date }) => {
++        if (config.frequency === 'daily' && config.skipWeekend && d.isWeekend(date)) {
++          return null;
++        }
++        return dayFromDate(
++          getDateWithWeekendRule(
++            date,
++            config.skipWeekend,
++            config.weekendSolveMode,
++          ),
++        );
++      });
++
++    return [...new Set(dates.filter(date => date != null && date >= start && date <= end))].sort();
++  } catch (err) {
++    captureBreadcrumb(config);
++    throw err;
++  }
++}
++
+ // Services
+ 
+ function onRuleUpdate(rule) {
+@@ -837,6 +870,7 @@ export type SchedulesHandlers = {
+   'schedule/force-run-service': typeof advanceSchedulesService;
+   'schedule/discover': typeof discoverSchedules;
+   'schedule/get-upcoming-dates': typeof getUpcomingDates;
++  'schedule/get-dates-in-range': typeof getDatesInRange;
+ };
+ 
+ // Expose functions to the client
+@@ -857,6 +891,7 @@ app.method(
+ );
+ app.method('schedule/discover', discoverSchedules);
+ app.method('schedule/get-upcoming-dates', getUpcomingDates);
++app.method('schedule/get-dates-in-range', getDatesInRange);
+ 
+ app.service(trackJSONPaths);
+ 

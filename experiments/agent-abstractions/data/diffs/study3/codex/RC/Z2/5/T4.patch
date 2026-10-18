@@ -1,0 +1,58 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 9b17cf8..cfe1338 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -23,17 +23,21 @@ import type { ScheduleStatuses } from './schedules';
+ 
+ describe('schedules', () => {
+   describe('getScheduleAmount', () => {
+-    it('returns fixed, approximate worst-case, or range worst-case amounts', () => {
++    it('returns fixed amounts or the lowest approximate or range amount', () => {
+       expect(getScheduleAmount(10)).toBe(10);
+       expect(getScheduleAmount(-10000, 'isapprox')).toBe(-10750);
+-      expect(getScheduleAmount(10000, 'isapprox')).toBe(10750);
++      expect(getScheduleAmount(10000, 'isapprox')).toBe(9250);
+       expect(getScheduleAmount(-1234, 'isapprox')).toBe(-1327);
++      expect(getScheduleAmount(1234, 'isapprox')).toBe(1141);
+       expect(getScheduleAmount(-10000, 'is')).toBe(-10000);
+-      expect(getScheduleAmount({ num1: 10, num2: 15 })).toBe(15);
+-      expect(getScheduleAmount({ num1: 15, num2: 10 })).toBe(15);
++      expect(getScheduleAmount(10000, 'is')).toBe(10000);
++      expect(getScheduleAmount({ num1: 10, num2: 15 })).toBe(10);
++      expect(getScheduleAmount({ num1: 15, num2: 10 })).toBe(10);
+       expect(getScheduleAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+       expect(getScheduleAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-      expect(getScheduleAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++      expect(getScheduleAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduleAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++      expect(getScheduleAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
+     });
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 1787791..6822977 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -10,19 +10,17 @@ import { q } from './query';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+-/** Returns the amount represented by a schedule amount, using the endpoint furthest from zero for ranges. */
++/** Returns the lowest amount represented by a schedule amount. */
+ export function getScheduleAmount(
+   amount: number | { num1: number; num2: number },
+   op?: string,
+ ): number {
+   if (typeof amount !== 'number') {
+-    return Math.abs(amount.num1) >= Math.abs(amount.num2)
+-      ? amount.num1
+-      : amount.num2;
++    return Math.min(amount.num1, amount.num2);
+   }
+   if (op === 'isapprox') {
+     const tolerance = Math.round(Math.abs(amount) * 0.075);
+-    return amount + Math.sign(amount) * tolerance;
++    return amount - tolerance;
+   }
+   return amount;
+ }

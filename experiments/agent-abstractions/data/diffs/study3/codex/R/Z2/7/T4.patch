@@ -1,0 +1,39 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 0309646..3a50911 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -37,11 +37,12 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+-      [{ num1: 10100, num2: 20000 }, 20000],
+-      [{ num1: 20000, num2: 10100 }, 20000],
++      [{ num1: 10100, num2: 20000 }, 10100],
++      [{ num1: 20000, num2: 10100 }, 10100],
++      [{ num1: -3000, num2: 5000 }, -3000],
+       [-10100, -10100],
+       [-10000, -10750, 'isapprox'],
+-      [10000, 10750, 'isapprox'],
++      [10000, 9250, 'isapprox'],
+       [-1234, -1327, 'isapprox'],
+       [10000, 10000, 'is'],
+       [null, 0],
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 2cca92c..467caa1 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -19,12 +19,10 @@ export function getExpectedScheduleAmount(
+   if (amount == null) return 0;
+   if (typeof amount === 'number') {
+     return op === 'isapprox'
+-      ? amount + Math.sign(amount || 1) * getApproxNumberThreshold(amount)
++      ? amount - getApproxNumberThreshold(amount)
+       : amount;
+   }
+-  return Math.abs(amount.num1) >= Math.abs(amount.num2)
+-    ? amount.num1
+-    : amount.num2;
++  return Math.min(amount.num1, amount.num2);
+ }
+ 
+ // Preset token values used by UI selects. Keep labels in the UI (i18n) but

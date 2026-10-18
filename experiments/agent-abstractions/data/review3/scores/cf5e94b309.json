@@ -1,0 +1,11 @@
+{"id":"cf5e94b309",
+"reuse":{"score":2,"why":"Ignores the existing recurrence builder recurConfigToRSchedule (where a daily rule could drop weekend days) and adds an ad-hoc loop in getNextDate keyed on schedule.data.frequency, a field rule-utils never puts in the RSchedule data."},
+"duplication":{"score":2,"why":"The forward and reverse 'advance past weekend occurrences' while loops are near copies of each other, and the skip/move decision is now made separately from the other getDateWithSkippedWeekend callers."},
+"placement":{"score":3,"why":"Lives in shared/schedules.ts, the right module, but in getNextDate only rather than in the shared recurrence or weekend-rule definition used by every schedule path."},
+"scope":{"score":5,"why":"Only getNextDate and one test."},
+"maintainability":{"score":2,"why":"Daily weekend handling now differs by code path (getNextDate skips, schedules/app getUpcomingDates and budget/schedule-template still move), the loops are duplicated, and the rule depends on data the schedule object does not carry."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts still call getDateWithSkippedWeekend directly for daily schedules, so they never see the new skip rule placed in getNextDate."},
+"duplicated_blocks":1,
+"would_merge":"no",
+"disguised_duplication":{"value":false,"where":"The reverse loop in getNextDate is a visible mirror of the forward loop rather than a hidden copy."},
+"one_place":{"value":false,"where":"The skip rule is only in getNextDate (shared/schedules.ts); getUpcomingDates in server/schedules/app.ts and createScheduleList in server/budget/schedule-template.ts keep moving daily weekend occurrences via getDateWithSkippedWeekend."}}

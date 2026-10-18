@@ -1,0 +1,44 @@
+{
+ "id": "816173e357",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses recurrence conversion and weekend adjustment, but implements daily skipping separately in three consumers and duplicates holiday matching."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Daily skip policy is repeated in getNextDate, getUpcomingDates, and getDatesInRange, while server-side holiday matching repeats the shared predicate's logic."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Handler registration and configuration plumbing fit their layers, but scheduling policy belongs in shared/schedules.ts rather than being repeated inside server handlers."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on the requested daily skipping, range handler, holiday configuration, and corresponding tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate three policy implementations and separate occurrence lookahead formulas instead of owning one shared occurrence-processing abstraction."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "server/schedules/app.ts implements blocked-day checks in getUpcomingDates and getDatesInRange instead of sharing the isSkippedDay predicate introduced in shared/schedules.ts."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The same daily exclusion policy appears as array filtering in getNextDate and getUpcomingDates but as null-producing mapping in getDatesInRange; isHoliday splits out matching already embedded in isSkippedDay."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 3,
+  "bypassing_call_sites": 2,
+  "where": "getDateWithSkippedWeekend gains a holidays parameter; getNextDate gains a daily-specific take ternary and two daily-specific filtering branches, while getUpcomingDates and getDatesInRange independently implement daily exclusion and blocked-day detection."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 37.3
+ }
+}

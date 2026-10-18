@@ -1,0 +1,23 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 0abc951..d3472f3 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -262,6 +262,18 @@ async function assertBankAccountNotLinked(
+   externalId: string,
+   upgradingId?: string,
+ ) {
++  if (upgradingId) {
++    const target = await db.first<Pick<db.DbAccount, 'closed'>>(
++      'SELECT closed FROM accounts WHERE id = ?',
++      [upgradingId],
++    );
++    if (target?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const existing = await db.first<Pick<db.DbAccount, 'id'>>(
+     `SELECT id FROM accounts
+      WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?

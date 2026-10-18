@@ -1,0 +1,44 @@
+{
+ "id": "0ec705aecb",
+ "reuse": {
+  "score": 3,
+  "why": "Reuses recurrence construction and weekend adjustment helpers, but the handlers independently implement the daily skip-versus-move policy."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Daily occurrence filtering is repeated across shared and handler code, and budget calculation retains two parallel adjustment blocks."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Holiday recognition belongs in shared schedules, but occurrence policy remains spread across shared utilities, server handlers, and budget calculation."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits consistently address the four requested schedule changes and their tests, types, and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The small holiday helpers are understandable, but duplicated occurrence policy and independently chosen scan bounds make future changes harder to coordinate."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "getUpcomingDates and getDatesInRange independently filter daily occurrences rather than sharing the filtering introduced in firstWeekdayOccurrence; createScheduleList continues to bypass getNextDate adjustment and apply it locally."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "firstWeekdayOccurrence returns an accepted occurrence, getUpcomingDates conditionally pushes it, and getDatesInRange continues past rejected occurrences, reshaping the same daily weekend/holiday filtering decision."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 4,
+  "where": "getDateWithSkippedWeekend gains holidays; getNextDate gains daily-specific forward and reverse selection branches; two handler loops and two budget adjustment sites independently orchestrate occurrence policy."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 37.2
+ }
+}

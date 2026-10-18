@@ -1,0 +1,12 @@
+{"id":"7af7070ca0",
+"reuse":{"score":3,"why":"Still calls applyWeekendRule for moved occurrences, but the new daily-skip rule sits next to it rather than inside the shared weekend definition."},
+"duplication":{"score":2,"why":"'skipWeekend && frequency === daily' plus an isWeekend check, and a guard that disables applyWeekendRule for daily schedules, are written separately in getNextDate, getUpcomingDates and createScheduleList."},
+"placement":{"score":3,"why":"The rule belongs in shared/schedules.ts next to applyWeekendRule, but two of the three copies sit in server/schedules/app.ts and budget/schedule-template.ts."},
+"scope":{"score":4,"why":"Focused on the weekend rule; threading frequency through parseRecurDate is a needed supporting change, and getUpcomingDates is restructured from a map chain into a loop."},
+"maintainability":{"score":2,"why":"Weekend handling is now split between applyWeekendRule (move) and three ad-hoc skip branches, each with its own way of looking ahead (take 14, count*7+14, per-month loop); a future change has to update all of them."},
+"bypasses_abstraction":{"value":true,"where":"getNextDate, getUpcomingDates and createScheduleList each decide 'daily + skipWeekend means skip' themselves and turn applyWeekendRule off for it, instead of extending applyWeekendRule or a shared occurrence helper"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The same daily-skip predicate is written as skipsDailyWeekends/isSkippedOccurrence (schedule-template), skipDaily (schedules/app) and skipWeekend && isDaily (shared/schedules), each with a different loop shape"},
+"one_place":{"value":false,"where":"The daily-skip rule is decided separately in shared/schedules.ts getNextDate, server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts createScheduleList"}
+}

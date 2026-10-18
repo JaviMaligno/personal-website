@@ -1,0 +1,10 @@
+{"id":"296198bfd4",
+"reuse":{"score":5,"why":"Reuses the existing assertBankAccountNotLinked guard that every provider already calls, and extracts unlinkAccount's field-clearing update into clearAccountLink so the takeover leaves the old account exactly as unlinking does."},
+"duplication":{"score":5,"why":"The unlink field set is now defined once and shared by unlinkAccount and the takeover; no logic is copied."},
+"placement":{"score":3,"why":"The takeover's write (clearing the other account's link) is hidden inside a function named and used as an assertion, so a check now mutates the database before the link itself runs, instead of the replace step living in the link flow (e.g. linkAccountAndSync)."},
+"scope":{"score":5,"why":"Only the flag, its threading through the six providers, the shared clear helper and one test are changed."},
+"maintainability":{"score":3,"why":"Behaviour is centralised, but an 'assert' with side effects is surprising, and the flag must be threaded by hand through six provider functions and positional arguments."},
+"bypasses_abstraction":{"value":false,"where":"All providers go through assertBankAccountNotLinked and unlinkAccount uses the new clearAccountLink."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The unlink update was extracted and shared, not copied."}}

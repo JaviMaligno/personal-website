@@ -1,0 +1,11 @@
+{"id":"e9a355bcf5",
+"reuse":{"score":5,"why":"The new expectedScheduleAmount builds on the existing worstCaseAmount and the matcher's getApproxNumberThreshold, so the tolerance comes from the same definition transaction matching uses."},
+"duplication":{"score":4,"why":"Replaces five inline 'number ? value : worstCaseAmount(...)' dispatches with one shared function; only the pre-existing missing-amount (== null ? 0) checks are still repeated at api-models and the two schedules/app.ts sites."},
+"placement":{"score":5,"why":"The expected-amount rule sits in shared/rules.ts next to worstCaseAmount and getApproxNumberThreshold, imported by the server consumers."},
+"scope":{"score":5,"why":"Only the expected-amount computation, its callers, an optional _amountOp field on the forecast raw type and tests are touched."},
+"maintainability":{"score":4,"why":"One function now owns the op-dependent expected amount; the untyped op string and the null case left outside the helper are small rough edges."},
+"bypasses_abstraction":{"value":false,"where":"Every server site that computed the expected amount now calls expectedScheduleAmount."},
+"duplicated_blocks":0,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"None; the per-site dispatches are removed rather than reshaped."},
+"one_place":{"value":true,"where":"expectedScheduleAmount in packages/loot-core/src/shared/rules.ts, called by api-models getExpectedAmount, budget schedule-template, forecast normalizeSchedule and schedules/app.ts updateActions and postTransactionForSchedule (the client display helper getScheduledAmount was already separate and is untouched)."}}

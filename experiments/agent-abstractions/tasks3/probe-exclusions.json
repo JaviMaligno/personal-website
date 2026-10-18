@@ -1,0 +1,41 @@
+{
+  "spec": "docs/specs/2026-10-10-agent-as-designer-design.md section 3 (excluded as unfair or unobservable: un-awaited 6/12-month calls, the missing-group NULL case, the insert key set)",
+  "probe": "substrate/study2/probe (aa probe2): db.json 277 cases + template.json 276 cases on untouched R",
+  "case_ids": "as aa.probe2.diff_probe reports them: db:<key> or template:<key>",
+  "semantics": "aa.probe2.apply_exclusions, applied to both sides before the T0 comparison with untouched R: without rows_where the whole case is dropped; with rows_where only the matching rows of the case's ok list (a case that threw keeps its error).",
+  "written": "2026-10-10, before any T0 run",
+  "exclusions": [
+    {
+      "id": "z1-unawaited-6-12-month",
+      "reason": "set6MonthAvg and set12MonthAvg fire setNMonthAvg per category without awaiting it (each with its own batch and is_income query); set3MonthAvg awaits its averages in one batch. Awaiting them is the natural result of a consolidation and changes no stored value; penalising it would be unfair.",
+      "cases": [],
+      "evidence": "No probe case observes it: every Z1 case settles the spreadsheet before reading budget rows. Checked with the seed tasks3/Z1/T0/sanity/z1-excluded-await-6-12.patch (sanity.json: probe_raw empty)."
+    },
+    {
+      "id": "z1-missing-group-null",
+      "reason": "A category whose group row does not exist (group_hidden NULL; reachable only because the category-create handler does not check the group) is skipped by the average actions (SQL g.hidden = 0 is not true for NULL) and written by copy and set-zero. An artefact of SQL vs JS NULL handling that no user can reach through the UI; unfair to require a consolidation to preserve it.",
+      "cases": [
+        "db:Z1/envelope/copyPreviousMonth",
+        "db:Z1/envelope/setZero",
+        "db:Z1/envelope/set3MonthAvg",
+        "db:Z1/envelope/set6MonthAvg",
+        "db:Z1/envelope/set12MonthAvg",
+        "db:Z1/tracking/copyPreviousMonth",
+        "db:Z1/tracking/setZero",
+        "db:Z1/tracking/set3MonthAvg",
+        "db:Z1/tracking/set6MonthAvg",
+        "db:Z1/tracking/set12MonthAvg"
+      ],
+      "rows_where": {
+        "category": "c-orphan"
+      },
+      "evidence": "The probe's Z1 setup has one such category, c-orphan, in every bulk case; only its rows are dropped, so the other categories of the same cases stay compared. Checked with the seed tasks3/Z1/T0/sanity/z1-excluded-missing-group.patch (sanity.json: probe_raw non-empty, probe_minus_exclusions empty)."
+    },
+    {
+      "id": "z3-insert-key-set",
+      "reason": "The keys each provider passes when inserting a new account (GoCardless mask and official_name, the others no mask key) decide the sync messages emitted per key, not any stored value; sync messages are not stored with syncing disabled in tests.",
+      "cases": [],
+      "evidence": "Not observable by the probe: the messages field is [] in every Z3 case on untouched R. Checked with the seed tasks3/Z3/T0/sanity/z3-excluded-insert-key-set.patch (sanity.json: probe_raw empty)."
+    }
+  ]
+}

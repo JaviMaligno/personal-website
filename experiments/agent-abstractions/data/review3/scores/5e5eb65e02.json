@@ -1,0 +1,12 @@
+{"id":"5e5eb65e02",
+"reuse":{"score":4,"why":"Extends the existing getDateWithWeekendRule with a holidays parameter and threads it through all its callers rather than adding a parallel mover."},
+"duplication":{"score":3,"why":"The 'weekend or holiday' predicate is a local closure inside getDateWithWeekendRule and is re-typed inline twice in getNextDate and once in getDatesInRange's daily filter."},
+"placement":{"score":4,"why":"Date moving stays in shared/schedules.ts and the type change in RecurConfig, matching the tree's layering; the daily-skip rule stays split between getNextDate and getDatesInRange as before."},
+"scope":{"score":5,"why":"Only schedule date code, its type and tests are touched."},
+"maintainability":{"score":3,"why":"The mover is clean, but the unavailable-day test lives in four places and getDatesInRange widens its window by holidays.length, a heuristic a maintainer must understand."},
+"bypasses_abstraction":{"value":false,"where":"All moves go through getDateWithWeekendRule; the inline predicate copies are a missing export rather than a bypass of an existing abstraction."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated predicate is copied verbatim (d.isWeekend(date) || holidays.includes(dayFromDate(date))), not reshaped."},
+"one_place":{"value":false,"where":"Moving a date honours holidays in one definition (getDateWithWeekendRule), but what counts as an unavailable day is written separately in getDateWithWeekendRule, getNextDate (loop condition and final check) and schedules/app.ts getDatesInRange's daily filter."}
+}

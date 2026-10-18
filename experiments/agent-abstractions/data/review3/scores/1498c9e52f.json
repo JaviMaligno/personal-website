@@ -1,0 +1,12 @@
+{"id": "1498c9e52f",
+ "reuse": {"score": 4, "why": "Builds on the existing recurConfigToRSchedule (daily weekend skip via byDayOfWeek) and getDateWithSkippedWeekend (holiday-aware move), and RSchedule's own exdates/exrules for daily holiday skips, instead of post-filtering at each consumer."},
+ "duplication": {"score": 4, "why": "Holiday matching and the move rule live once in shared/schedules.ts; the only repetition is the rrules + getHolidayExdates + getHolidayExrules construction, repeated in parseRecurDate, getUpcomingDates and getDatesInRange rather than wrapped in one schedule-building helper."},
+ "placement": {"score": 5, "why": "Recurrence and weekend/holiday rules sit in shared/schedules.ts beside recurConfigToRSchedule and getDateWithSkippedWeekend; the new handler is in server/schedules/app.ts next to getUpcomingDates."},
+ "scope": {"score": 5, "why": "Changes are limited to schedule recurrence, the new handler, the type field, tests and release notes."},
+ "maintainability": {"score": 4, "why": "Skipping is expressed in the recurrence itself so every consumer gets it, and moving is one helper; the triple exdate/exrule wiring and the extra frequency !== 'daily' guard only in getDatesInRange are small hazards."},
+ "bypasses_abstraction": {"value": false, "where": "All consumers go through recurConfigToRSchedule and getDateWithSkippedWeekend; schedule-template.ts is updated to pass holidays."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The repeated RSchedule construction is a verbatim repeat of three helper calls, not a reshaped copy of logic."},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "getDateWithSkippedWeekend gains a holidays parameter and recurConfigToRSchedule a daily + skipWeekend branch, both the genuine variations the steps ask for; getDatesInRange adds a redundant frequency !== 'daily' guard around the shared move but still calls it."}
+}

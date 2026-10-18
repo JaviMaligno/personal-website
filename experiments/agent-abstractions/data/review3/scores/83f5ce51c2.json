@@ -1,0 +1,12 @@
+{"id": "83f5ce51c2",
+ "reuse": {"score": 4, "why": "Extends the existing shouldFillCategory/getFillCategories/getBudgetData path used by every month-wide action; the small goal_def parsing helper is local rather than shared with goal-template.ts, but no existing helper answers 'has saved templates' on a row."},
+ "duplication": {"score": 5, "why": "The template rule is added once inside the shared predicate and the now-dead includeHidden flag is removed rather than duplicated."},
+ "placement": {"score": 5, "why": "The rule sits in the shared fill predicate in budget/actions.ts, exactly where the tree decides which categories month-wide actions write."},
+ "scope": {"score": 5, "why": "Only the fill predicate, its two queries and call-site arguments change."},
+ "maintainability": {"score": 4, "why": "Clean single-point change; minor nits are the loose `goal_def?: unknown` typing instead of the DbCategory type and the defensive JSON.parse that treats malformed JSON as 'has templates'."},
+ "bypasses_abstraction": {"value": false, "where": "All month-wide actions (copyPreviousMonth, setZero, averages via getAverageFillCategories) keep going through shouldFillCategory."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "No logic is copied; the hidden rule stays in one branch and the template rule is new."},
+ "one_place": {"value": true, "where": "shouldFillCategory in packages/loot-core/src/server/budget/actions.ts (hidden + group hidden + hasSavedTemplates), used by copyPreviousMonth, setZero and getAverageFillCategories."}
+}

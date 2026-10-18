@@ -1,0 +1,12 @@
+{"id": "dba801a34c",
+"reuse": {"score": 3, "why": "Extends the shared getDateWithSkippedWeekend and adds isWeekendOrHoliday in shared/schedules.ts, but keeps that predicate private so server/schedules/app.ts re-implements it inline."},
+"duplication": {"score": 2, "why": "The weekend-or-holiday test `d.isWeekend(date) || (config.holidays ?? []).includes(dayFromDate(date))` is written three more times in app.ts, and getDatesInRange gains a redundant second holiday branch that repeats the call above it."},
+"placement": {"score": 3, "why": "The rule correctly lives in shared/schedules.ts, but the server layer re-decides it locally instead of calling the shared predicate."},
+"scope": {"score": 4, "why": "Focused on the holiday feature, though getUpcomingDates is restructured (daily filtering moved) beyond what was strictly needed."},
+"maintainability": {"score": 2, "why": "The 'non-working day' rule now exists in four places, one branch is dead code, and schedule-template.ts still calls getDateWithSkippedWeekend without holidays, so the rule is applied inconsistently."},
+"bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getUpcomingDates and getDatesInRange inline the weekend/holiday predicate instead of using the shared isWeekendOrHoliday (unexported); server/budget/schedule-template.ts not routed holidays."},
+"duplicated_blocks": 3,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "The inline predicate copies in app.ts are open, near-verbatim duplicates of isWeekendOrHoliday rather than disguised."},
+"one_place": {"value": false, "where": "isWeekendOrHoliday in shared/schedules.ts is used by getNextDate/getDateWithSkippedWeekend, but app.ts getUpcomingDates/getDatesInRange re-express the rule inline and schedule-template.ts omits holidays."}
+}

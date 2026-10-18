@@ -1,0 +1,11 @@
+{"id":"c90d4ea86e",
+"reuse":{"score":4,"why":"Builds on the tree's existing linkBankSyncAccount for Fintegra and puts the new rules into shared guards, but the takeover path re-implements unlinkAccount's field reset and the Fintegra download copies the other providers' download functions."},
+"duplication":{"score":2,"why":"Both guards are called inside linkBankSyncAccount and again at the top of every one of the six provider functions, the unlink reset is a copy of unlinkAccount's update, and downloadFintegraTransactions repeats the Akahu/Enable Banking download."},
+"placement":{"score":3,"why":"Guards sit next to linkBankSyncAccount in accounts/app.ts, but the rule is enforced at two layers at once (provider wrappers and the shared link flow), and the Fintegra account type is put in bank-sync.ts instead of its own model file like the other providers."},
+"scope":{"score":4,"why":"On task overall, with an unrelated import reorder in server/schedules/app.ts."},
+"maintainability":{"score":2,"why":"A maintainer has to know the checks run twice (once before findOrCreateBank, once inside the shared flow) and keep the six duplicated guard calls, the copied reset and the copied download in step."},
+"bypasses_abstraction":{"value":true,"where":"ensureBankAccountIsNotLinked clears the old holder with its own db.updateAccount instead of unlinkAccount; provider functions run the guards themselves around linkBankSyncAccount, which already runs them."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"sync.ts downloadFintegraTransactions is the Akahu/Enable Banking download reshaped; the guard pair is repeated in linkBankSyncAccount and each link*Account wrapper."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":6,"where":"linkBankSyncAccount gains replaceExistingLink and the two guards, yet linkGoCardlessAccount, linkSimpleFinAccount, linkPluggyAiAccount, linkAkahuAccount, linkEnableBankingAccount and linkFintegraAccount each call ensureAccountIsOpenForBankLink and ensureBankAccountIsNotLinked themselves before delegating."}}

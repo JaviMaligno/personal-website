@@ -1,0 +1,45 @@
+{
+ "id": "76e1afebf5",
+ "reuse": {
+  "score": 4,
+  "why": "Fintegra uses the existing linkBankSyncAccount and bank-selection helpers, and local unlinking is extracted for reuse, although transaction downloading repeats existing logic."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "downloadFintegraTransactions duplicates Akahu's authentication, request, error handling and response normalization instead of sharing that workflow."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Link policies, transaction downloading, endpoint configuration and provider types remain in their established modules."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits directly support the requested linking rules, replacement option and Fintegra integration."
+ },
+ "maintainability": {
+  "score": 4,
+  "why": "Centralized linking policies and shared unlink cleanup are straightforward to maintain, but another copied downloader increases the cost of future transport changes."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "All provider link handlers use linkBankSyncAccount, and both unlinking paths use clearAccountBankLink."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "In accounts/sync.ts, downloadFintegraTransactions repeats downloadAkahuTransactions with provider names changed and the response variable initialization slightly reshaped."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 3,
+  "bypassing_call_sites": 0,
+  "where": "linkBankSyncAccount gains replaceExistingLink and branches for closed targets, duplicate-link refusal and clearing the previous holder; all provider callers continue through the helper."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 39.0
+ }
+}

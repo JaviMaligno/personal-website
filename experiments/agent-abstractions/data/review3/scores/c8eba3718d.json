@@ -1,0 +1,11 @@
+{"id":"c8eba3718d",
+"reuse":{"score":3,"why":"Folds the averaging actions onto the existing setNMonthAvg and one fillCategories loop, but isFixedGroup hand-rolls a #tag regex instead of using the existing shared/tags helpers (extractTagsFromText)."},
+"duplication":{"score":3,"why":"setZero/set*MonthAvg/setLastMonthSpending share one selection, but copyPreviousMonth re-applies the hidden, saved-template and #fixed exclusions inline on getBudgetData rows, and the notes join is written twice in SQL."},
+"placement":{"score":4,"why":"Selection and fill helpers live in budget/actions.ts next to the actions and the new method is registered in budget/app.ts like its siblings; tag parsing would belong with shared/tags."},
+"scope":{"score":4,"why":"Changes stay on month-wide actions, though set3MonthAvg is also swapped from getCategoryAverage to setNMonthAvg as an incidental rewrite."},
+"maintainability":{"score":3,"why":"getFillableCategories/fillCategories is a good single entry point, but the exclusion rule lives in two places (it plus copyPreviousMonth), so the next exclusion has to be added twice."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth in server/budget/actions.ts applies the exclusions itself instead of using getFillableCategories; isFixedGroup bypasses shared/tags tag parsing"},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"copyPreviousMonth re-expresses the getFillableCategories rule (hidden/group_hidden, hasSavedTemplates, isFixedGroup) as separate early returns over getBudgetData rows, with the notes join duplicated into getBudgetData's SQL"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":1,"where":"getFillableCategories/fillCategories gain includeHiddenCategories; copyPreviousMonth re-implements the selection rule rather than calling getFillableCategories"}}

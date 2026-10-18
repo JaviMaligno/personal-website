@@ -1,0 +1,12 @@
+{"id":"3e4f88b025",
+"reuse":{"score":4,"why":"Builds on the existing recurConfigToRSchedule and getDateWithSkippedWeekend, adds one shared recurConfigToExcludedRules for the daily-skip and holiday exclusions, and reuses monthUtils/dayFromDate, rather than re-implementing date logic per site."},
+"duplication":{"score":3,"why":"The RSchedule({rrules, exrules}) construction is now spelled out in rule-utils, getUpcomingDates and getDatesInRange, and getDatesInRange repeats getUpcomingDates' occurrences -> skipWeekend ? getDateWithSkippedWeekend(...) : date pipeline instead of sharing it."},
+"placement":{"score":5,"why":"Date rules live in shared/schedules.ts, the handler in server/schedules/app.ts next to schedule/get-upcoming-dates, and the config type in types/models/schedule.ts."},
+"scope":{"score":5,"why":"Changes are confined to the four requested behaviours, their tests and release notes."},
+"maintainability":{"score":3,"why":"The core rules are centralised, but every caller still has to remember to add exrules and to thread holidays through its own skipWeekend ternary, and getDateWithSkippedWeekend gained a convoluted invalid-mode branch."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":""},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":2,"where":"getDateWithSkippedWeekend gained a holidays parameter (threaded by hand through getNextDate, getUpcomingDates, getDatesInRange and both schedule-template calls) and a special branch for unknown solve modes that checks holidays; getDatesInRange re-implements the occurrence/adjust pipeline of getUpcomingDates, and RSchedule+exrules construction is repeated at each site instead of one builder."}
+}

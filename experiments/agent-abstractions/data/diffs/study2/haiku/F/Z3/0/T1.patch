@@ -1,0 +1,243 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 5a12ca5..96dd994 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -266,6 +266,12 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
++  await link.assertBankAccountNotLinked({
++    syncSource: 'goCardless',
++    accountId: account.account_id,
++    upgradingId,
++  });
++
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+   return linkBankSyncAccount({
+@@ -293,6 +299,12 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
++  await link.assertBankAccountNotLinked({
++    syncSource: 'simpleFin',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+@@ -329,6 +341,12 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
++  await link.assertBankAccountNotLinked({
++    syncSource: 'pluggyai',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const fileId = getPrefs()?.cloudFileId;
+ 
+   const institution = {
+@@ -368,6 +386,12 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
++  await link.assertBankAccountNotLinked({
++    syncSource: 'akahu',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const institution = {
+     name: externalAccount.institution ?? null,
+   };
+@@ -402,6 +426,12 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
++  await link.assertBankAccountNotLinked({
++    syncSource: 'enableBanking',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index 4d5667b..0cc8528 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -1,13 +1,104 @@
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ 
+-import { findOrCreateBank } from './link';
++import { assertBankAccountNotLinked, findOrCreateBank } from './link';
+ 
+ beforeEach(async () => {
+   await global.emptyDatabase()();
+   await loadMappings();
+ });
+ 
++describe('assertBankAccountNotLinked', () => {
++  const linkedMessage =
++    'This bank account is already linked to another account.';
++
++  async function insertLinkedAccount(
++    overrides: Partial<db.DbAccount> = {},
++  ): Promise<string> {
++    return db.insertAccount({
++      name: 'Checking',
++      offbudget: 0,
++      closed: 0,
++      account_id: 'ext-1',
++      account_sync_source: 'simpleFin',
++      ...overrides,
++    });
++  }
++
++  it('refuses a bank account that is already linked to another account', async () => {
++    await insertLinkedAccount();
++
++    await expect(
++      assertBankAccountNotLinked({
++        syncSource: 'simpleFin',
++        accountId: 'ext-1',
++      }),
++    ).rejects.toThrow(linkedMessage);
++  });
++
++  it('refuses when the existing link belongs to a closed account', async () => {
++    await insertLinkedAccount({ closed: 1 });
++
++    await expect(
++      assertBankAccountNotLinked({
++        syncSource: 'simpleFin',
++        accountId: 'ext-1',
++      }),
++    ).rejects.toThrow(linkedMessage);
++  });
++
++  it('allows a bank account whose previous link was deleted', async () => {
++    await insertLinkedAccount({ tombstone: 1 });
++
++    await expect(
++      assertBankAccountNotLinked({
++        syncSource: 'simpleFin',
++        accountId: 'ext-1',
++      }),
++    ).resolves.toBeUndefined();
++  });
++
++  it('allows the same provider account id under a different provider', async () => {
++    await insertLinkedAccount();
++
++    await expect(
++      assertBankAccountNotLinked({
++        syncSource: 'akahu',
++        accountId: 'ext-1',
++      }),
++    ).resolves.toBeUndefined();
++  });
++
++  it('allows re-linking the account that already holds the bank account', async () => {
++    const id = await insertLinkedAccount();
++
++    await expect(
++      assertBankAccountNotLinked({
++        syncSource: 'simpleFin',
++        accountId: 'ext-1',
++        upgradingId: id,
++      }),
++    ).resolves.toBeUndefined();
++  });
++
++  it('refuses linking into a different account while another holds the bank account', async () => {
++    await insertLinkedAccount();
++    const other = await db.insertAccount({
++      name: 'Savings',
++      offbudget: 0,
++      closed: 0,
++    });
++
++    await expect(
++      assertBankAccountNotLinked({
++        syncSource: 'simpleFin',
++        accountId: 'ext-1',
++        upgradingId: other,
++      }),
++    ).rejects.toThrow(linkedMessage);
++  });
++});
++
+ async function getBanks() {
+   return await db.all<db.DbBank>(
+     'SELECT id, bank_id, name FROM banks ORDER BY name',
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 19f9163..607788a 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -2,6 +2,7 @@
+ import { v4 as uuidv4 } from 'uuid';
+ 
+ import * as db from '#server/db';
++import type { AccountEntity, AccountSyncSource } from '#types/models';
+ 
+ type Institution = string | { name?: string | null };
+ 
+@@ -12,6 +13,25 @@ function getInstitutionName(institution: Institution | null | undefined) {
+   return institution?.name ?? null;
+ }
+ 
++export async function assertBankAccountNotLinked({
++  syncSource,
++  accountId,
++  upgradingId,
++}: {
++  syncSource: AccountSyncSource;
++  accountId: string;
++  upgradingId?: AccountEntity['id'];
++}) {
++  const linked = await db.first<Pick<db.DbAccount, 'id'>>(
++    'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',
++    [syncSource, accountId, upgradingId ?? null],
++  );
++
++  if (linked) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ /**
+  * Finds the bank record for a bank-sync connection, creating one if needed.
+  *
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 876c021..faf138a 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -25,8 +25,8 @@ import { RSchedule } from '#server/util/rschedule';
+ import { currentDay, dayFromDate } from '#shared/months';
+ import { q } from '#shared/query';
+ import {
+-  DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   applyWeekendRule,
++  DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   extractScheduleConds,
+   getHasTransactionsQuery,
+   getNextDate,
+diff --git a/upcoming-release-notes/prevent-duplicate-bank-account-links.md b/upcoming-release-notes/prevent-duplicate-bank-account-links.md
+new file mode 100644
+index 0000000..7dc622b
+--- /dev/null
++++ b/upcoming-release-notes/prevent-duplicate-bank-account-links.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Refuse to link a bank account that is already linked to another local account, preventing duplicate imports

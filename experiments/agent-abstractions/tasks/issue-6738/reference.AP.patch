@@ -1,0 +1,52 @@
+diff --git a/packages/loot-core/src/server/accounts/sync.ts b/packages/loot-core/src/server/accounts/sync.ts
+index 5c0f65f..8315927 100644
+--- a/packages/loot-core/src/server/accounts/sync.ts
++++ b/packages/loot-core/src/server/accounts/sync.ts
+@@ -20,6 +20,7 @@ import { getServer } from '#server/server-config';
+ import { batchMessages } from '#server/sync';
+ import { batchUpdateTransactions } from '#server/transactions';
+ import { runRules } from '#server/transactions/transaction-rules';
++import * as transfer from '#server/transactions/transfer';
+ import {
+   defaultMappings,
+   mappingsFromString,
+@@ -1042,6 +1043,10 @@ export async function addTransactions(
+   { runTransfers = true, learnCategories = false } = {},
+ ) {
+   const added = [];
++  // Transactions whose payee was set by a rule. If that payee is a transfer
++  // payee, the transfer must be created even when the caller did not ask to
++  // run transfers, otherwise only one side of the transfer would exist.
++  const rulePayeeIds = new Set<string>();
+ 
+   const { normalized, payeesToCreate } = await normalizeTransactions(
+     transactions,
+@@ -1072,6 +1077,9 @@ export async function addTransactions(
+       );
+     } else {
+       added.push(finalTransaction);
++      if (trans.payee && trans.payee !== originalTrans.payee) {
++        rulePayeeIds.add(finalTransaction.id);
++      }
+     }
+   }
+ 
+@@ -1100,6 +1108,18 @@ export async function addTransactions(
+       );
+     });
+   }
++
++  if (!runTransfers && rulePayeeIds.size > 0) {
++    await batchMessages(async () => {
++      for (const id of rulePayeeIds) {
++        const inserted = await db.getTransaction(id);
++        if (inserted && !inserted.transfer_id) {
++          await transfer.onInsert(inserted);
++        }
++      }
++    });
++  }
++
+   return newTransactions;
+ }
+ 

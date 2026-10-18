@@ -1,0 +1,75 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 73b47f4..71eefdf 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -598,6 +598,50 @@ describe('schedules', () => {
+         ).toBe('2020-12-14');
+       });
+ 
++      it('skips a daily occurrence on a recurring MM-DD holiday', () => {
++        expect(
++          getNextDate(
++            dailyCond({ holidays: ['12-07'] }),
++            new Date(2020, 11, 7),
++          ),
++        ).toBe('2020-12-08');
++      });
++
++      it('skips a recurring MM-DD holiday in any year', () => {
++        expect(
++          getNextDate(
++            dailyCond({ holidays: ['12-07'] }),
++            new Date(2021, 11, 7),
++          ),
++        ).toBe('2021-12-08');
++      });
++
++      it('mixes recurring and single-date holidays', () => {
++        const holidays = ['12-07', '2020-12-08'];
++
++        expect(
++          getNextDate(dailyCond({ holidays }), new Date(2020, 11, 7)),
++        ).toBe('2020-12-09');
++      });
++
++      it('moves a weekday occurrence on a recurring holiday later, past the weekend', () => {
++        const dateCond = {
++          op: 'isapprox',
++          value: {
++            start: '2020-12-11',
++            frequency: 'weekly',
++            patterns: [],
++            skipWeekend: true,
++            weekendSolveMode: 'after',
++            holidays: ['12-11'],
++          },
++        };
++
++        expect(getNextDate(dateCond, new Date(2020, 11, 11))).toBe(
++          '2020-12-14',
++        );
++      });
++
+       it('moves a weekday occurrence on a holiday later, past the weekend', () => {
+         const dateCond = {
+           op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index d9f6c06..3d6d6e7 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -284,8 +284,14 @@ export function extractScheduleConds(conditions) {
+ // holiday can remove one weekday from that cycle, so the scan grows with them.
+ const MAX_DAILY_OCCURRENCE_SCAN = 7;
+ 
++// Holidays are either a full YYYY-MM-DD date or a recurring MM-DD day.
+ export function isNonWorkingDay(date: Date, holidays: string[]): boolean {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  const day = monthUtils.dayFromDate(date);
++  return (
++    d.isWeekend(date) ||
++    holidays.includes(day) ||
++    holidays.includes(day.slice(5))
++  );
+ }
+ 
+ export function getNextDate(

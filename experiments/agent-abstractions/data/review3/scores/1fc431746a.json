@@ -1,0 +1,11 @@
+{"id":"1fc431746a",
+"reuse":{"score":4,"why":"setZero, setLastMonthSpending and the N-month averages get the flag through the existing getBulkBudgetCategories/setBulkNMonthAvg helpers, but copyPreviousMonth keeps its own inline filter instead of sharing the selection."},
+"duplication":{"score":3,"why":"The 'include hidden' override is written twice, once in getBulkBudgetCategories' SQL and once in copyPreviousMonth's inline check, and the same inline argument type is repeated across six signatures."},
+"placement":{"score":4,"why":"Changes stay in budget/actions.ts at the existing selection points, though the hidden rule remains split between SQL and a per-action check."},
+"scope":{"score":5,"why":"Only the month-wide actions, their selection helper and one focused test are touched."},
+"maintainability":{"score":3,"why":"The rule now carries a flag in two separately maintained places, and the repeated one-line inline types are hard to read; a shared options type and a single selection predicate would be easier to own."},
+"bypasses_abstraction":{"value":false,"where":"The actions that already used getBulkBudgetCategories keep using it; copyPreviousMonth's separate filter predates the change."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The same hidden-category override appears as a SQL clause '(? = 1 OR (c.hidden = 0 AND g.hidden = 0))' in getBulkBudgetCategories and as a JS condition in copyPreviousMonth, i.e. one rule reshaped into two forms."}
+}

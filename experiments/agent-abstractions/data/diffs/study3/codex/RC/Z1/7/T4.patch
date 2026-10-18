@@ -1,0 +1,167 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 7f8b1e0..b052c14 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -292,6 +292,18 @@ describe('setZero', () => {
+     expect(
+       await getSheetValue('budget202401', 'budget-category-note-only'),
+     ).toBe(0);
++
++    await setZero({ month: '2024-01', includeHiddenCategories: true });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202401', 'budget-hidden')).toBe(0);
++    expect(await getSheetValue('budget202401', 'budget-in-hidden-group')).toBe(
++      0,
++    );
++    expect(await getSheetValue('budget202401', 'budget-templated')).toBe(500);
++    expect(await getSheetValue('budget202401', 'budget-fixed-category')).toBe(
++      500,
++    );
+   });
+ });
+ 
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index e784687..c2e5317 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -252,14 +252,19 @@ function setCarryover(
+ 
+ export async function copyPreviousMonth({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = getBudgetActionCategories(
+     await getBudgetData(table, prevMonth.toString()),
+-    { includeHiddenCategories: false, includeHiddenGroups: false },
++    {
++      includeHiddenCategories,
++      includeHiddenGroups: includeHiddenCategories,
++    },
+   );
+ 
+   await batchMessages(async () => {
+@@ -290,7 +295,13 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
++export async function setZero({
++  month,
++  includeHiddenCategories = false,
++}: {
++  month: string;
++  includeHiddenCategories?: boolean;
++}): Promise<void> {
+   const categories = getBudgetActionCategories(
+     await db.all<BudgetActionEligibility & { id: string }>(`
+       SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden,
+@@ -301,7 +312,10 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+       LEFT JOIN notes n ON n.id = g.id
+       WHERE c.tombstone = 0
+     `),
+-    { includeHiddenCategories: false, includeHiddenGroups: false },
++    {
++      includeHiddenCategories,
++      includeHiddenGroups: includeHiddenCategories,
++    },
+   );
+ 
+   await batchMessages(async () => {
+@@ -313,8 +327,10 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function setLastMonthSpending({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = getBudgetActionCategories(
+     await db.all<BudgetActionEligibility & { id: string }>(`
+@@ -326,7 +342,10 @@ export async function setLastMonthSpending({
+       LEFT JOIN notes n ON n.id = g.id
+       WHERE c.tombstone = 0
+     `),
+-    { includeHiddenCategories: false, includeHiddenGroups: false },
++    {
++      includeHiddenCategories,
++      includeHiddenGroups: includeHiddenCategories,
++    },
+   );
+   const previousMonth = monthUtils.prevMonth(month);
+   const previousSheet = monthUtils.sheetForMonth(previousMonth);
+@@ -345,8 +364,10 @@ export async function setLastMonthSpending({
+ 
+ export async function set3MonthAvg({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = getBudgetActionCategories(
+     await db.all<BudgetActionEligibility & { id: string }>(`
+@@ -358,7 +379,10 @@ export async function set3MonthAvg({
+       LEFT JOIN notes n ON n.id = g.id
+       WHERE c.tombstone = 0
+     `),
+-    { includeHiddenCategories: false, includeHiddenGroups: false },
++    {
++      includeHiddenCategories,
++      includeHiddenGroups: includeHiddenCategories,
++    },
+   );
+ 
+   await batchMessages(async () => {
+@@ -378,8 +402,10 @@ export async function set3MonthAvg({
+ 
+ export async function set12MonthAvg({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = getBudgetActionCategories(
+     await db.all<BudgetActionEligibility & { id: string }>(`
+@@ -391,7 +417,10 @@ export async function set12MonthAvg({
+       LEFT JOIN notes n ON n.id = g.id
+       WHERE c.tombstone = 0
+     `),
+-    { includeHiddenCategories: false, includeHiddenGroups: false },
++    {
++      includeHiddenCategories,
++      includeHiddenGroups: includeHiddenCategories,
++    },
+   );
+ 
+   await batchMessages(async () => {
+@@ -403,8 +432,10 @@ export async function set12MonthAvg({
+ 
+ export async function set6MonthAvg({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = getBudgetActionCategories(
+     await db.all<BudgetActionEligibility & { id: string }>(`
+@@ -416,7 +447,10 @@ export async function set6MonthAvg({
+       LEFT JOIN notes n ON n.id = g.id
+       WHERE c.tombstone = 0
+     `),
+-    { includeHiddenCategories: false, includeHiddenGroups: false },
++    {
++      includeHiddenCategories,
++      includeHiddenGroups: includeHiddenCategories,
++    },
+   );
+ 
+   await batchMessages(async () => {

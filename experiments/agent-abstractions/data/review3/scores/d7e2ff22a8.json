@@ -1,0 +1,12 @@
+{"id":"d7e2ff22a8",
+"reuse":{"score":3,"why":"Reuses recurConfigToRSchedule, RSchedule and getDateWithSkippedWeekend, but writes its own daily-skip versus move decision instead of extracting the one getUpcomingDates and getNextDate already apply."},
+"duplication":{"score":2,"why":"The per-occurrence weekend resolution (skipWeekend && daily -> drop weekend, else move) is a third copy of logic already in getUpcomingDates and getNextDate."},
+"placement":{"score":4,"why":"A handler in server/schedules/app.ts next to getUpcomingDates is where the tree registers such handlers; the occurrence-resolution logic would belong in shared/schedules.ts."},
+"scope":{"score":5,"why":"Only the new handler, its registration and tests are added."},
+"maintainability":{"score":3,"why":"The handler is readable, but the weekend rule now lives in three hand-written places that must be changed together when it changes again."},
+"bypasses_abstraction":{"value":false,"where":"No shared occurrence-resolution helper exists in the tree to go around; getDateWithSkippedWeekend is used."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getDatesInRange in server/schedules/app.ts restates getUpcomingDates' isDaily/skipWeekend branch reshaped as an early 'continue' plus reassignment, rather than sharing it."},
+"t2_reuse":"copy"
+}

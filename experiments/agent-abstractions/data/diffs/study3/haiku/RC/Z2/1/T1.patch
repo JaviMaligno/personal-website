@@ -1,0 +1,141 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 13de3b5..33e32f7 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -10,7 +10,7 @@ import {
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
+   getNextDate,
+-  getRangedAmountMidpoint,
++  getScheduledAmount,
+ } from '#shared/schedules';
+ import { amountToInteger } from '#shared/util';
+ import type { CategoryEntity, TransactionEntity } from '#types/models';
+@@ -60,10 +60,7 @@ async function createScheduleList(
+     const conditions = rule.serialize().conditions;
+     const { date: dateConditions, amount: amountCondition } =
+       extractScheduleConds(conditions);
+-    let scheduleAmount =
+-      amountCondition.op === 'isbetween'
+-        ? getRangedAmountMidpoint(amountCondition.value)
+-        : amountCondition.value;
++    let scheduleAmount = getScheduledAmount(amountCondition.value);
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+       switch (template.adjustmentType) {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..f16f9ff 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -8,6 +8,8 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
++  getRangedAmountWorstCase,
++  getScheduledAmount,
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+@@ -32,6 +34,54 @@ describe('schedules', () => {
+     MockDate.reset();
+   });
+ 
++  describe('getRangedAmountWorstCase', () => {
++    it('returns the end of the range furthest from zero for expenses', () => {
++      expect(getRangedAmountWorstCase({ num1: -10100, num2: -20000 })).toBe(
++        -20000,
++      );
++      expect(getRangedAmountWorstCase({ num1: -20000, num2: -10100 })).toBe(
++        -20000,
++      );
++    });
++
++    it('returns the end of the range furthest from zero for income', () => {
++      expect(getRangedAmountWorstCase({ num1: 10100, num2: 20000 })).toBe(
++        20000,
++      );
++      expect(getRangedAmountWorstCase({ num1: 20000, num2: 10100 })).toBe(
++        20000,
++      );
++    });
++
++    it('returns the furthest end when the range crosses zero', () => {
++      expect(getRangedAmountWorstCase({ num1: -5000, num2: 10000 })).toBe(
++        10000,
++      );
++      expect(getRangedAmountWorstCase({ num1: 10000, num2: -5000 })).toBe(
++        10000,
++      );
++    });
++  });
++
++  describe('getScheduledAmount', () => {
++    it('returns single amounts unchanged', () => {
++      expect(getScheduledAmount(-5000)).toBe(-5000);
++      expect(getScheduledAmount(-5000, true)).toBe(5000);
++    });
++
++    it('returns 0 without an amount', () => {
++      expect(getScheduledAmount(null)).toBe(0);
++    });
++
++    it('returns the worst case for ranged amounts', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
++      expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
++      expect(getScheduledAmount({ num1: -20000, num2: -10100 }, true)).toBe(
++        20000,
++      );
++    });
++  });
++
+   describe('getStatus', () => {
+     it('returns completed if completed', () => {
+       expect(getStatus(todayString, true, false, '7')).toBe('completed');
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 4854585..cdb89aa 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -353,14 +353,14 @@ export function getDateWithSkippedWeekend(
+   return date;
+ }
+ 
+-export function getRangedAmountMidpoint({
++export function getRangedAmountWorstCase({
+   num1,
+   num2,
+ }: {
+   num1: number;
+   num2: number;
+ }): number {
+-  return (num1 + num2) / 2;
++  return Math.abs(num1) >= Math.abs(num2) ? num1 : num2;
+ }
+ 
+ export function getScheduledAmount(
+@@ -371,11 +371,9 @@ export function getScheduledAmount(
+   // allows the amount condition to be deleted which causes a crash
+   if (amount == null) return 0;
+ 
+-  if (typeof amount === 'number') {
+-    return inverse ? -amount : amount;
+-  }
+-  const midpoint = Math.round(getRangedAmountMidpoint(amount));
+-  return inverse ? -midpoint : midpoint;
++  const scheduled =
++    typeof amount === 'number' ? amount : getRangedAmountWorstCase(amount);
++  return inverse ? -scheduled : scheduled;
+ }
+ 
+ export function getUpcomingDays(
+diff --git a/upcoming-release-notes/plan-variable-schedules-worst-case.md b/upcoming-release-notes/plan-variable-schedules-worst-case.md
+new file mode 100644
+index 0000000..29b69d3
+--- /dev/null
++++ b/upcoming-release-notes/plan-variable-schedules-worst-case.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Budget variable schedules at the end of their amount range furthest from zero, so planning covers the worst case.

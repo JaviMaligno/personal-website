@@ -1,0 +1,12 @@
+{"id": "081f28b9ba",
+"reuse": {"score": 3, "why": "Preview, posting, action sync, forecast and the budget template now call the existing getScheduledAmount, and the API reuses getApproxNumberThreshold, but the API's expectedAmount is a separate getExpectedScheduleAmount that re-derives the range rule with its own Math.min instead of calling getScheduledAmount."},
+"duplication": {"score": 3, "why": "Five inline midpoint copies are removed, but api-models.ts restates the missing/number/range dispatch and the lowest-value range rule that getScheduledAmount already holds, so the rule has two definitions again."},
+"placement": {"score": 2, "why": "The approximate-amount worst-case rule (steps 3-4) is placed only in the API model mapper in api-models.ts rather than in shared/schedules.ts where the expected-amount rule lives, so the planning code paths never see it."},
+"scope": {"score": 4, "why": "Edits stay on the expected-amount rule and its consumers, though the template's round flag adds an unrequested knob."},
+"maintainability": {"score": 2, "why": "A maintainer has to keep getScheduledAmount and getExpectedScheduleAmount in step, and the template call passes a cryptic positional round flag (op !== 'isbetween') that no longer has any effect on a min of integers."},
+"bypasses_abstraction": {"value": true, "where": "getExpectedScheduleAmount in server/api-models.ts computes the expected amount itself (null->0, number, Math.min of the range, plus the approx tolerance) instead of going through getScheduledAmount in shared/schedules.ts."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "getExpectedScheduleAmount in api-models.ts reshapes getScheduledAmount's null/number/range dispatch under a new name with Math.min and an extra isapprox branch, rather than calling or extending the shared helper."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getScheduledAmount gains a positional round flag with a round ? Math.round(x) : x branch used only by schedule-template.ts; scheduleModel.toExternal bypasses the helper through its own getExpectedScheduleAmount, which also carries the approx rule the helper lacks."}
+}

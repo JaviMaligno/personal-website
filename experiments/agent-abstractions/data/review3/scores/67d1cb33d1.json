@@ -1,0 +1,11 @@
+{"id":"67d1cb33d1",
+"reuse":{"score":4,"why":"Puts the rule in the existing getScheduleAmount and reuses the matcher's getApproxNumberThreshold for the cent-rounded tolerance instead of recomputing 7.5%."},
+"duplication":{"score":5,"why":"No logic is duplicated; the tolerance comes from the shared rules helper."},
+"placement":{"score":3,"why":"The resolution sits in the right shared function, but it relies on a new { value, op } input shape that none of the five callers (forecast, schedule preview, post, action sync, api-models) builds, since they pass the bare _amount / condition value and the op lives separately in _amountOp."},
+"scope":{"score":5,"why":"A single branch in getScheduleAmount plus table test rows."},
+"maintainability":{"score":2,"why":"The new branch is reachable only through an input shape no caller produces, so a maintainer would wrongly think approximate amounts are handled; the op is also typed as a free string and never checked."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":""},
+"one_place":{"value":false,"where":"the rule is written once in shared/schedules.ts getScheduleAmount, but the callers in forecast-schedules.ts, schedules/app.ts (two sites), shared/schedules.ts preview and api-models.ts still pass the bare amount without the condition op, so no code path actually applies it"}}

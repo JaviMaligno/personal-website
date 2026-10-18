@@ -1,0 +1,12 @@
+{"id": "dce504056a",
+ "reuse": {"score": 4, "why": "Extends the existing getDateWithSkippedWeekend, getNextDate and RSchedule/recurConfigToRSchedule helpers and adds shared predicates (isDailyWeekendSkip, isWeekendOrHoliday) in shared/schedules."},
+ "duplication": {"score": 2, "why": "The occurrence pipeline (drop daily weekend/holiday days, then shift with getDateWithSkippedWeekend) is written separately in getNextDate, getUpcomingDates and getDatesInRange, and schedule-template keeps two copies of its own skipWeekend ternary, now also threading holidays."},
+ "placement": {"score": 3, "why": "Core rules sit in shared/schedules, but the range search-window heuristic getMaxWeekendShiftDays lives in server/schedules/app.ts beside a sibling heuristic getDailySearchLimit in shared, and the date pipelines live in handlers rather than one shared function."},
+ "scope": {"score": 4, "why": "Changes stay within schedule date logic, its consumers and tests; the parseRecurDate data addition is needed for the new rules."},
+ "maintainability": {"score": 3, "why": "Helpers are well named, but four call paths each assemble the skip/drop/shift sequence and two different take/window heuristics must be kept consistent, and schedule-template's inverted noSkipWeekend argument is hard to read."},
+ "bypasses_abstraction": {"value": true, "where": "getUpcomingDates and getDatesInRange (server/schedules/app.ts) and schedule-template.ts re-assemble the filter-and-shift logic instead of going through getNextDate or a single shared occurrence function."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "getDatesInRange repeats getUpcomingDates' occurrences -> filter -> getDateWithSkippedWeekend -> dayFromDate chain with different bounds and a dedupe step, and getNextDate expresses the same filter as a .find."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 3, "where": "getDateWithSkippedWeekend gains a holidays parameter; getNextDate gains a daily-drop branch with its own take window; getUpcomingDates, getDatesInRange and schedule-template each re-implement the daily-drop/shift handling."}
+}

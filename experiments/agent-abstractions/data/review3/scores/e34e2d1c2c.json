@@ -1,0 +1,12 @@
+{"id": "e34e2d1c2c",
+ "reuse": {"score": 3, "why": "Uses existing d.isWeekend/addDays and the schedule data, but does not extend the shared getDateWithSkippedWeekend helper that every weekend path already goes through."},
+ "duplication": {"score": 3, "why": "The daily+skipWeekend condition is computed once as skipDailyWeekend and then re-expressed as a separate frequency !== 'DAILY' check a few lines later, and the occurrences query is repeated inside the loop."},
+ "placement": {"score": 3, "why": "Lands in shared/schedules.ts which is the right module, but inside getNextDate only rather than in the weekend-rule helper used by the server preview and budget template paths."},
+ "scope": {"score": 5, "why": "Only touches getNextDate and adds focused tests."},
+ "maintainability": {"score": 2, "why": "The rule now lives in two disjoint places, getUpcomingDates and schedule-template still move daily weekend occurrences, and the nested if is mis-indented."},
+ "bypasses_abstraction": {"value": true, "where": "packages/loot-core/src/shared/schedules.ts getNextDate: special-cases DAILY outside getDateWithSkippedWeekend, which server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts keep calling unchanged"},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "schedules.ts getNextDate: the 'skipWeekend && !noSkipWeekend && DAILY' predicate is stated twice, once as skipDailyWeekend and again split as the outer skipWeekend check plus inner frequency !== 'DAILY'"},
+ "one_place": {"value": false, "where": "Rule only in shared/schedules.ts getNextDate; server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts still apply getDateWithSkippedWeekend to daily schedules"}
+}

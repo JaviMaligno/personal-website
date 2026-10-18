@@ -1,0 +1,11 @@
+{"id": "bc73df2656",
+"reuse": {"score": 3, "why": "Reuses the existing linked-account query (renamed to return ids) and db.updateAccount, but copies the local-unlink field reset from unlinkAccount instead of extracting it into a helper both could call."},
+"duplication": {"score": 2, "why": "The eight-field reset (account_id, bank, balances, sync source, sync status set to null) is a verbatim copy of the block in unlinkAccount, so the definition of an unlinked account now lives in two places."},
+"placement": {"score": 4, "why": "The flag and the takeover live in linkBankAccount in accounts/app.ts, the shared path every provider link goes through, which is the right layer."},
+"scope": {"score": 5, "why": "Only the link query, linkBankAccount and a release note change; no unrelated edits."},
+"maintainability": {"score": 3, "why": "Small and readable, but a future change to what 'unlinked' means must be made in both unlinkAccount and the takeover loop."},
+"bypasses_abstraction": {"value": false, "where": "unlinkAccount cannot be called as-is because it may contact GoCardless; the diff copies its local reset rather than going around a shared local-unlink helper (none exists)."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "The copied db.updateAccount reset in linkBankAccount is a literal copy of unlinkAccount's, not reshaped."}
+}

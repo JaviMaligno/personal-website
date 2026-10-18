@@ -1,0 +1,8 @@
+{"id":"eaba6ae15e",
+"completeness":{"per_site":{"copy-previous-month":"partial","set-zero":"partial","set-3month-avg":"partial","set-6month-avg":"partial","set-12month-avg":"partial","set-n-month-avg-sign":"full"},
+"left_out":{},
+"sites_full":1,"sites_partial":5,"sites_total":6,"value":0.583,
+"why":"The sign rule is fully shared through toAverageFillAmount (setNMonthAvg and set3MonthAvg). The category selection is split: getMonthFillCategories applies the hidden rule in SQL, while every bulk action still computes isTrackingBudget() itself and applies its own 'if (!isMonthFillCategory(cat, isTracking)) continue' filter, so no site takes its category set from one selection function. copyPreviousMonth also composes two predicates (income and isHiddenForMonthCopy), and the hidden rule exists in two shared forms (SQL filter and JS predicate). Each of these sites sits between full and partial, so it is scored partial."},
+"interface":{"score":3,"why":"includeHidden names the setZero inconsistency explicitly and isHiddenForMonthCopy documents the missing-group case, with no speculative options; but isTracking is a caller-computed argument the definition could read itself, and selection is spread across a query, a predicate and a copy-only predicate instead of one function with a variation parameter."},
+"disguised_duplication":{"value":false,"where":""}
+}

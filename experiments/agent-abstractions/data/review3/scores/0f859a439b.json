@@ -1,0 +1,11 @@
+{"id":"0f859a439b",
+"reuse":{"score":3,"why":"Moves forecast, updateActions, postTransactionForSchedule and the API field onto the existing getScheduledAmount, but recomputes the approximate tolerance inline instead of calling shared/rules getApproxNumberThreshold, and leaves the preview and template sites on their own midpoint code."},
+"duplication":{"score":3,"why":"The 7.5% tolerance (Math.round(Math.abs(amount) * 0.075)) is reimplemented inside getScheduledAmount, inline amount copies remain in computeSchedulePreviewTransactions and schedule-template.ts, and two converted sites keep a redundant '== null ? 0' guard the helper already handles."},
+"placement":{"score":4,"why":"The rule is put in the shared getScheduledAmount in shared/schedules.ts and the API field in api-models.ts, the right layers."},
+"scope":{"score":5,"why":"Only schedule amount computation, the API field and tests are touched."},
+"maintainability":{"score":2,"why":"The rule now lives in the helper while computeSchedulePreviewTransactions (whose comment was edited to say 'lowest allowed amount' over unchanged midpoint code) and schedule-template.ts still compute the midpoint, and the tolerance can drift from the matching rule's threshold helper."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getScheduledAmount recomputes the approx tolerance instead of using shared/rules.ts getApproxNumberThreshold; computeSchedulePreviewTransactions and schedule-template.ts keep computing amounts without getScheduledAmount"},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getScheduledAmount's 'Math.sign(amount) * Math.round(Math.abs(amount) * 0.075)' is a reshaped copy of getApproxNumberThreshold in shared/rules.ts"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":2,"where":"getScheduledAmount gains a trailing amountOp parameter; computeSchedulePreviewTransactions (shared/schedules.ts) and createScheduleList (schedule-template.ts) still compute the amount themselves"}}

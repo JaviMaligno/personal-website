@@ -1,0 +1,12 @@
+{"id":"6d6e89e897",
+"reuse":{"score":4,"why":"Extends the existing shared getDateWithSkippedWeekend and the RSchedule exdates option rather than writing new move logic; every existing move call site just passes the new list."},
+"duplication":{"score":4,"why":"The off-day test lives once inside getDateWithSkippedWeekend and the exdate conversion once in getHolidayExdates; only the repeated `exdates: getHolidayExdates(config)` wiring at three RSchedule constructions repeats."},
+"placement":{"score":4,"why":"Both the move rule and the new exdate helper sit in shared/schedules.ts next to recurConfigToRSchedule, where the tree keeps recurrence rules; call sites only pass data."},
+"scope":{"score":4,"why":"Focused on the feature (type, shared helper, call sites, tests, release note); the getDatesInRange margin change is a related consequence."},
+"maintainability":{"score":3,"why":"The daily-skip rule is now split between recurConfigToRSchedule (weekends via byDayOfWeek) and a separate getHolidayExdates that every RSchedule constructor must remember to pass (find-schedules' takeDates does not), so a future caller can silently miss holidays."},
+"bypasses_abstraction":{"value":false,"where":"All move sites go through getDateWithSkippedWeekend; RSchedule is built through recurConfigToRSchedule as before."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No duplicated logic; the per-site exdates wiring is repeated call plumbing, not copied logic."},
+"one_place":{"value":false,"where":"Weekend/holiday moves are decided in one place (getDateWithSkippedWeekend in shared/schedules.ts), but daily skipping is split: weekends in recurConfigToRSchedule, holidays in getHolidayExdates which each RSchedule construction (rule-utils.ts parseRecurDate, schedules/app.ts getUpcomingDates and getDatesInRange) must add itself and find-schedules.ts takeDates does not."}
+}

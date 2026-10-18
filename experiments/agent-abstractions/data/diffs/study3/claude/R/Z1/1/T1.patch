@@ -1,0 +1,72 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..c3130e2 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -215,6 +215,9 @@ function setCarryover(
+ 
+ // Actions
+ 
++// Month-wide actions must not touch categories managed by saved templates
++const NO_SAVED_TEMPLATES = `(c.goal_def IS NULL OR TRIM(c.goal_def) IN ('', '[]'))`;
++
+ export async function copyPreviousMonth({
+   month,
+ }: {
+@@ -224,8 +227,16 @@ export async function copyPreviousMonth({
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
+ 
++  const templated = await db.all<{ id: string }>(
++    `SELECT c.id FROM categories c WHERE NOT ${NO_SAVED_TEMPLATES}`,
++  );
++  const templatedIds = new Set(templated.map(c => c.id));
++
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
++      if (templatedIds.has(prevBudget.category)) {
++        return;
++      }
+       if (prevBudget.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+@@ -259,8 +270,14 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++    `
++  SELECT c.*
++  FROM categories c
++  LEFT JOIN category_groups g ON c.cat_group = g.id
++  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND ${NO_SAVED_TEMPLATES}
++  `,
+   );
+ 
+   await batchMessages(async () => {
+@@ -284,6 +301,7 @@ export async function set3MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
+ 
+@@ -319,6 +337,7 @@ export async function set12MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
+ 
+@@ -343,6 +362,7 @@ export async function set6MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
+ 

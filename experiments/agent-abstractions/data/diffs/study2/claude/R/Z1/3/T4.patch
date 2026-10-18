@@ -1,0 +1,166 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 6d6cb9f..2ad26f9 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -256,12 +256,30 @@ async function getSkippedCategoryIds(): Promise<Set<string>> {
+   return new Set([...templated, ...fixed]);
+ }
+ 
++async function getBudgetableCategories(
++  includeHiddenCategories?: boolean,
++): Promise<db.DbViewCategoryWithGroupHidden[]> {
++  const hiddenFilter = includeHiddenCategories
++    ? ''
++    : 'AND c.hidden = 0 AND g.hidden = 0';
++  return db.all<db.DbViewCategoryWithGroupHidden>(
++    `
++  SELECT c.*
++  FROM categories c
++  LEFT JOIN category_groups g ON c.cat_group = g.id
++  WHERE c.tombstone = 0 ${hiddenFilter}
++  `,
++  );
++}
++
+ // Actions
+ 
+ export async function copyPreviousMonth({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+@@ -274,8 +292,8 @@ export async function copyPreviousMonth({
+         return;
+       }
+       if (
+-        prevBudget.hidden === 1 ||
+-        prevBudget.group_hidden === 1 ||
++        (!includeHiddenCategories &&
++          (prevBudget.hidden === 1 || prevBudget.group_hidden === 1)) ||
+         templated.has(prevBudget.category)
+       ) {
+         return;
+@@ -306,15 +324,14 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++export async function setZero({
++  month,
++  includeHiddenCategories,
++}: {
++  month: string;
++  includeHiddenCategories?: boolean;
++}): Promise<void> {
++  const categories = await getBudgetableCategories(includeHiddenCategories);
+   const templated = await getSkippedCategoryIds();
+ 
+   await batchMessages(async () => {
+@@ -332,17 +349,12 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function setLastMonthSpending({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getBudgetableCategories(includeHiddenCategories);
+   const templated = await getSkippedCategoryIds();
+   const sheetName = monthUtils.sheetForMonth(monthUtils.prevMonth(month));
+ 
+@@ -368,17 +380,12 @@ export async function setLastMonthSpending({
+ 
+ export async function set3MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getBudgetableCategories(includeHiddenCategories);
+   const templated = await getSkippedCategoryIds();
+ 
+   await batchMessages(async () => {
+@@ -407,17 +414,12 @@ export async function set3MonthAvg({
+ 
+ export async function set12MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getBudgetableCategories(includeHiddenCategories);
+   const templated = await getSkippedCategoryIds();
+ 
+   await batchMessages(async () => {
+@@ -435,17 +437,12 @@ export async function set12MonthAvg({
+ 
+ export async function set6MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getBudgetableCategories(includeHiddenCategories);
+   const templated = await getSkippedCategoryIds();
+ 
+   await batchMessages(async () => {
+diff --git a/upcoming-release-notes/include-hidden-categories-in-month-actions.md b/upcoming-release-notes/include-hidden-categories-in-month-actions.md
+new file mode 100644
+index 0000000..b56e156
+--- /dev/null
++++ b/upcoming-release-notes/include-hidden-categories-in-month-actions.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow month-wide budget actions to include hidden categories via an optional `includeHiddenCategories` flag

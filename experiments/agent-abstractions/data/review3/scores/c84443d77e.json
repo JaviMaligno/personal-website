@@ -1,0 +1,13 @@
+{
+  "id": "c84443d77e",
+  "reuse": {"score": 5, "why": "All three rule changes land in the existing shared getScheduledAmount, the approximate tolerance reuses getApproxNumberThreshold from shared/rules, and the API field calls the same helper."},
+  "duplication": {"score": 5, "why": "No logic is copied; the expected-amount rule exists once and the API, forecast, posting, preview, action sync and template paths call it."},
+  "placement": {"score": 5, "why": "The rule stays in shared/schedules.ts, the API field is computed in the scheduleModel mapper, and call sites only pass their operator."},
+  "scope": {"score": 4, "why": "Focused, but carries an unrelated import reorder in schedules/app.ts and keeps a step-1 release note whose 'furthest from zero' wording the final step contradicts."},
+  "maintainability": {"score": 4, "why": "One definition with an operator parameter is easy to own, but op is an optional loose string, so callers that omit it (the desktop-client balance and schedule list sites) silently skip the approximate rule."},
+  "bypasses_abstraction": {"value": false, "where": "Every touched path calls getScheduledAmount; none re-implements the range or tolerance arithmetic."},
+  "duplicated_blocks": 0,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "None; the tolerance comes from getApproxNumberThreshold rather than a re-derived 7.5% computation."},
+  "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "getScheduledAmount swaps its rangeRounding option for an op parameter and gains one isapprox branch; the template-only rounding variant disappears with the midpoint rule. Client call sites (Balance.tsx, SchedulesTable.tsx, mobile schedules, useScheduleEdit) still call it without op, so they get the range rule but not the approximate one."}
+}

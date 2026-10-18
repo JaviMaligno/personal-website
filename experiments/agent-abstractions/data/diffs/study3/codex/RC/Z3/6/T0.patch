@@ -1,0 +1,479 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 1ca2951..210f95f 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -52,6 +52,79 @@ type LinkAccountBaseParams = {
+   startingBalance?: number;
+ };
+ 
++type BankSyncAccountFields = Pick<
++  db.DbAccount,
++  'account_id'
++> &
++  Partial<Pick<db.DbAccount, 'mask' | 'name' | 'official_name'>> & {
++    account_sync_source: AccountEntity['account_sync_source'];
++  };
++
++async function linkBankSyncAccount({
++  bank,
++  fields,
++  upgradingId,
++  offBudget,
++  startingDate,
++  startingBalance,
++  fileId,
++  tables,
++}: {
++  bank: { id: string; bank_id: string };
++  fields: BankSyncAccountFields;
++  upgradingId?: AccountEntity['id'];
++  offBudget: boolean;
++  startingDate?: string;
++  startingBalance?: number;
++  fileId?: string | null;
++  tables: Array<'transactions' | 'accounts'>;
++}) {
++  let id: AccountEntity['id'];
++
++  if (upgradingId) {
++    const accRow = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      [upgradingId],
++    );
++
++    if (!accRow) {
++      throw new Error(`Account with ID ${upgradingId} not found.`);
++    }
++
++    id = accRow.id;
++    await db.update('accounts', {
++      id,
++      account_id: fields.account_id,
++      bank: bank.id,
++      account_sync_source: fields.account_sync_source,
++    });
++  } else {
++    id = uuidv4();
++    await db.insertWithUUID('accounts', {
++      id,
++      ...fields,
++      bank: bank.id,
++      offbudget: offBudget ? 1 : 0,
++    });
++    await db.insertPayee({ name: '', transfer_acct: id });
++  }
++
++  const syncRes = await bankSync.syncAccount(
++    undefined,
++    undefined,
++    id,
++    fields.account_id,
++    bank.bank_id,
++    startingDate,
++    startingBalance,
++    fileId,
++  );
++
++  await handleSyncResponse(syncRes, id);
++  connection.send('sync-event', { type: 'success', tables });
++  return 'ok';
++}
++
+ export type AccountHandlers = {
+   'account-update': typeof updateAccount;
+   'accounts-get': typeof getAccounts;
+@@ -180,62 +253,22 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
+-  let id;
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+-
+-  if (upgradingId) {
+-    const accRow = await db.first<db.DbAccount>(
+-      'SELECT * FROM accounts WHERE id = ?',
+-      [upgradingId],
+-    );
+-
+-    if (!accRow) {
+-      throw new Error(`Account with ID ${upgradingId} not found.`);
+-    }
+-
+-    id = accRow.id;
+-    await db.update('accounts', {
+-      id,
+-      account_id: account.account_id,
+-      bank: bank.id,
+-      account_sync_source: 'goCardless',
+-    });
+-  } else {
+-    id = uuidv4();
+-    await db.insertWithUUID('accounts', {
+-      id,
++  return linkBankSyncAccount({
++    bank,
++    fields: {
+       account_id: account.account_id,
+       mask: account.mask,
+       name: account.name,
+       official_name: account.official_name,
+-      bank: bank.id,
+-      offbudget: offBudget ? 1 : 0,
+       account_sync_source: 'goCardless',
+-    });
+-    await db.insertPayee({
+-      name: '',
+-      transfer_acct: id,
+-    });
+-  }
+-
+-  const syncRes = await bankSync.syncAccount(
+-    undefined,
+-    undefined,
+-    id,
+-    account.account_id,
+-    bank.bank_id,
++    },
++    upgradingId,
++    offBudget,
+     startingDate,
+     startingBalance,
+-  );
+-
+-  await handleSyncResponse(syncRes, id);
+-
+-  connection.send('sync-event', {
+-    type: 'success',
+     tables: ['transactions', 'accounts'],
+   });
+-
+-  return 'ok';
+ }
+ 
+ async function linkSimpleFinAccount({
+@@ -247,72 +280,30 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
+-  let id;
+-
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+     // English string into shared bank data.
+     name: externalAccount.institution ?? null,
+   };
+-
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+   );
+-
+-  if (upgradingId) {
+-    const accRow = await db.first<db.DbAccount>(
+-      'SELECT * FROM accounts WHERE id = ?',
+-      [upgradingId],
+-    );
+-
+-    if (!accRow) {
+-      throw new Error(`Account with ID ${upgradingId} not found.`);
+-    }
+-
+-    id = accRow.id;
+-    await db.update('accounts', {
+-      id,
+-      account_id: externalAccount.account_id,
+-      bank: bank.id,
+-      account_sync_source: 'simpleFin',
+-    });
+-  } else {
+-    id = uuidv4();
+-    await db.insertWithUUID('accounts', {
+-      id,
++  return linkBankSyncAccount({
++    bank,
++    fields: {
+       account_id: externalAccount.account_id,
+       name: externalAccount.name,
+       official_name: externalAccount.name,
+-      bank: bank.id,
+-      offbudget: offBudget ? 1 : 0,
+       account_sync_source: 'simpleFin',
+-    });
+-    await db.insertPayee({
+-      name: '',
+-      transfer_acct: id,
+-    });
+-  }
+-
+-  const syncRes = await bankSync.syncAccount(
+-    undefined,
+-    undefined,
+-    id,
+-    externalAccount.account_id,
+-    bank.bank_id,
++    },
++    upgradingId,
++    offBudget,
+     startingDate,
+     startingBalance,
+-  );
+-
+-  await handleSyncResponse(syncRes, id);
+-
+-  connection.send('sync-event', {
+-    type: 'success',
+     tables: ['transactions', 'accounts'],
+   });
+-
+-  return 'ok';
+ }
+ 
+ async function linkPluggyAiAccount({
+@@ -324,74 +315,32 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
+-  let id;
+   const fileId = getPrefs()?.cloudFileId;
+-
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+     // English string into shared bank data.
+     name: externalAccount.institution ?? null,
+   };
+-
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+   );
+-
+-  if (upgradingId) {
+-    const accRow = await db.first<db.DbAccount>(
+-      'SELECT * FROM accounts WHERE id = ?',
+-      [upgradingId],
+-    );
+-
+-    if (!accRow) {
+-      throw new Error(`Account with ID ${upgradingId} not found.`);
+-    }
+-
+-    id = accRow.id;
+-    await db.update('accounts', {
+-      id,
+-      account_id: externalAccount.account_id,
+-      bank: bank.id,
+-      account_sync_source: 'pluggyai',
+-    });
+-  } else {
+-    id = uuidv4();
+-    await db.insertWithUUID('accounts', {
+-      id,
++  return linkBankSyncAccount({
++    bank,
++    fields: {
+       account_id: externalAccount.account_id,
+       name: externalAccount.name,
+       official_name: externalAccount.name,
+-      bank: bank.id,
+-      offbudget: offBudget ? 1 : 0,
+       account_sync_source: 'pluggyai',
+-    });
+-    await db.insertPayee({
+-      name: '',
+-      transfer_acct: id,
+-    });
+-  }
+-
+-  const syncRes = await bankSync.syncAccount(
+-    undefined,
+-    undefined,
+-    id,
+-    externalAccount.account_id,
+-    bank.bank_id,
++    },
++    upgradingId,
++    offBudget,
+     startingDate,
+     startingBalance,
+     fileId,
+-  );
+-
+-  await handleSyncResponse(syncRes, id);
+-
+-  connection.send('sync-event', {
+-    type: 'success',
+     tables: ['transactions', 'accounts'],
+   });
+-
+-  return 'ok';
+ }
+ 
+ async function linkAkahuAccount({
+@@ -403,69 +352,25 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
+-  let id;
+-
+-  const institution = {
+-    name: externalAccount.institution ?? null,
+-  };
+-
++  const institution = { name: externalAccount.institution ?? null };
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+   );
+-
+-  if (upgradingId) {
+-    const accRow = await db.first<db.DbAccount>(
+-      'SELECT * FROM accounts WHERE id = ?',
+-      [upgradingId],
+-    );
+-
+-    if (!accRow) {
+-      throw new Error(`Account with ID ${upgradingId} not found.`);
+-    }
+-
+-    id = accRow.id;
+-    await db.update('accounts', {
+-      id,
+-      account_id: externalAccount.account_id,
+-      bank: bank.id,
+-      account_sync_source: 'akahu',
+-    });
+-  } else {
+-    id = uuidv4();
+-    await db.insertWithUUID('accounts', {
+-      id,
++  return linkBankSyncAccount({
++    bank,
++    fields: {
+       account_id: externalAccount.account_id,
+       name: externalAccount.name,
+       official_name: externalAccount.name,
+-      bank: bank.id,
+-      offbudget: offBudget ? 1 : 0,
+       account_sync_source: 'akahu',
+-    });
+-    await db.insertPayee({
+-      name: '',
+-      transfer_acct: id,
+-    });
+-  }
+-
+-  const syncRes = await bankSync.syncAccount(
+-    undefined,
+-    undefined,
+-    id,
+-    externalAccount.account_id,
+-    bank.bank_id,
++    },
++    upgradingId,
++    offBudget,
+     startingDate,
+     startingBalance,
+-  );
+-
+-  await handleSyncResponse(syncRes, id);
+-
+-  connection.send('sync-event', {
+-    type: 'success',
+     tables: ['transactions'],
+   });
+-
+-  return 'ok';
+ }
+ 
+ async function linkEnableBankingAccount({
+@@ -477,80 +382,27 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
+-  let id: string | undefined;
+-
+-  const institution = {
+-    // Persist a null name when the provider doesn't report an institution, so
+-    // the desktop-client can render a localized fallback instead of baking an
+-    // English string into shared bank data.
+-    name: externalAccount.institution ?? null,
+-  };
+-
++  const institution = { name: externalAccount.institution ?? null };
+   // Enable Banking uses a session-per-account model, so we use the
+-  // account-level identifier (account_id) rather than institution-level
+-  // IDs. This creates one bank entry per Enable Banking account, unlike
+-  // GoCardless (requisitionId) or SimpleFin/PluggyAi (orgDomain/orgId).
++  // account-level identifier (account_id) rather than institution-level IDs.
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.account_id,
+   );
+-
+-  if (upgradingId) {
+-    const accRow = await db.first<db.DbAccount>(
+-      'SELECT * FROM accounts WHERE id = ?',
+-      [upgradingId],
+-    );
+-
+-    if (!accRow) {
+-      throw new Error(`Account with ID ${upgradingId} not found.`);
+-    }
+-
+-    id = accRow.id;
+-    await db.update('accounts', {
+-      id,
+-      account_id: externalAccount.account_id,
+-      bank: bank.id,
+-      account_sync_source: 'enableBanking',
+-    });
+-  } else {
+-    id = uuidv4();
+-    await db.insertWithUUID('accounts', {
+-      id,
++  return linkBankSyncAccount({
++    bank,
++    fields: {
+       account_id: externalAccount.account_id,
+       name: externalAccount.name,
+       official_name: externalAccount.name,
+-      bank: bank.id,
+-      offbudget: offBudget ? 1 : 0,
+       account_sync_source: 'enableBanking',
+-    });
+-    await db.insertPayee({
+-      name: '',
+-      transfer_acct: id,
+-    });
+-  }
+-
+-  if (id == null) {
+-    throw new Error('id was not assigned in linkEnableBankingAccount');
+-  }
+-
+-  const syncRes = await bankSync.syncAccount(
+-    undefined,
+-    undefined,
+-    id,
+-    externalAccount.account_id,
+-    bank.bank_id,
++    },
++    upgradingId,
++    offBudget,
+     startingDate,
+     startingBalance,
+-  );
+-
+-  await handleSyncResponse(syncRes, id);
+-
+-  connection.send('sync-event', {
+-    type: 'success',
+     tables: ['transactions', 'accounts'],
+   });
+-
+-  return 'ok';
+ }
+ 
+ async function createAccount({

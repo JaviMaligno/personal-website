@@ -1,0 +1,45 @@
+{
+ "id": "350bc4e01a",
+ "reuse": {
+  "score": 3,
+  "why": "Fintegra reuses bank selection and linking, and all providers share link validation, but local unlink cleanup and transaction-download logic are copied."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "The diff duplicates local unlink cleanup, the existing transaction-download pattern, and guard-then-link orchestration across six registrations."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Changes follow existing account, sync, configuration and model layers, although provider-neutral linking is awkwardly housed in the SimpleFin handler."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits support the requested linking rules, takeover option or Fintegra integration."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized rules help maintenance, but a validation-named helper now mutates accounts and a provider-specific request handler exposes internal reuse parameters."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "Existing bank-selection and sync abstractions are used; unlinkAccount includes remote cleanup, so it cannot directly serve local-only takeover."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "downloadFintegraTransactions reshapes existing download logic with compact arguments and renamed response variables while retaining token lookup, POST, error handling and response mapping."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 3,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 0,
+  "where": "linkSimpleFinAccount gains syncSource and bankId overrides; ensureAccountNotLinked gains replaceExistingLink and accumulates closed-target rejection and replacement branches, including mutation under a validation-oriented name."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 44.4
+ }
+}

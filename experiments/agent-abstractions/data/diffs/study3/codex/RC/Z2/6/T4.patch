@@ -1,0 +1,139 @@
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index dfb4aac..f8e1b2a 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,3 +1,4 @@
++import { getScheduledAmount } from '#shared/schedules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -13,7 +14,6 @@ import type {
+ 
+ import type { RemoteFile } from './cloud-storage';
+ import * as models from './models';
+-import { getScheduledAmount } from '#shared/schedules';
+ 
+ export type APIAccountEntity = Pick<AccountEntity, 'id' | 'name'> & {
+   offbudget?: boolean;
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index cc457fb..6d71422 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -94,7 +94,7 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // Ranged amounts use the endpoint furthest from zero for worst-case planning.
++  // Schedule amounts use the lowest allowed value for worst-case planning.
+   const amount = getScheduledAmount(amountValue, false, conditions.amount?.op);
+ 
+   return {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index f2243c9..27e695d 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -586,9 +586,13 @@ async function postTransactionForSchedule({
+     return;
+   }
+ 
+-  // A missing amount (deleted condition) posts 0; ranged amounts use the
+-  // endpoint furthest from zero.
+-  const amount = getScheduledAmount(schedule._amount, false, schedule._amountOp);
++  // A missing amount (deleted condition) posts 0; ranged amounts use their
++  // lowest value.
++  const amount = getScheduledAmount(
++    schedule._amount,
++    false,
++    schedule._amountOp,
++  );
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 0032487..826c5c7 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -8,8 +8,8 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
+-  getScheduleOccurrenceMatchStartDate,
+   getScheduledAmount,
++  getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+@@ -37,19 +37,23 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+-      [{ num1: 10100, num2: 20000 }, 20000],
+-      [{ num1: 20000, num2: 10100 }, 20000],
+-    ])('uses the range endpoint furthest from zero', (range, expected) => {
++      [{ num1: 10100, num2: 20000 }, 10100],
++      [{ num1: 20000, num2: 10100 }, 10100],
++      [{ num1: -3000, num2: 5000 }, -3000],
++    ])('uses the lowest value allowed by the range', (range, expected) => {
+       expect(getScheduledAmount(range)).toBe(expected);
+     });
+ 
+     it.each([
+       [-10000, -10750],
+-      [10000, 10750],
++      [10000, 9250],
+       [-1234, -1327],
+-    ])('uses the approximate tolerance furthest from zero', (amount, expected) => {
+-      expect(getScheduledAmount(amount, false, 'isapprox')).toBe(expected);
+-    });
++    ])(
++      'uses the lowest value allowed by the approximate amount',
++      (amount, expected) => {
++        expect(getScheduledAmount(amount, false, 'isapprox')).toBe(expected);
++      },
++    );
+ 
+     it('keeps single and missing amounts unchanged', () => {
+       expect(getScheduledAmount(123)).toBe(123);
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 9e227e4..f59ca20 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -3,11 +3,11 @@ import type { IRuleOptions } from '@rschedule/core';
+ import * as d from 'date-fns';
+ 
+ import { Condition } from '#server/rules';
+-import { getApproxNumberThreshold } from './rules';
+ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import { q } from './query';
++import { getApproxNumberThreshold } from './rules';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+@@ -365,13 +365,10 @@ export function getScheduledAmount(
+ 
+   if (typeof amount === 'number') {
+     const expected =
+-      op === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
+-        : amount;
++      op === 'isapprox' ? amount - getApproxNumberThreshold(amount) : amount;
+     return inverse ? -expected : expected;
+   }
+-  const expected =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  const expected = Math.min(amount.num1, amount.num2);
+   return inverse ? -expected : expected;
+ }
+ 
+@@ -503,8 +500,7 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // A missing amount previews as 0; ranged amounts use the endpoint
+-      // furthest from zero.
++      // A missing amount previews as 0; ranged amounts use their lowest value.
+       const amount = getScheduledAmount(
+         schedule._amount,
+         false,

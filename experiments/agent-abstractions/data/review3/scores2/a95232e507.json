@@ -1,0 +1,12 @@
+{"id": "a95232e507",
+ "reuse": {"score": 4, "why": "Routes the forecast, schedule-template, action-sync, posting and preview sites through the existing getScheduledAmount and reuses getApproxNumberThreshold for the tolerance, but the API mapper gets its own expected-amount function."},
+ "duplication": {"score": 3, "why": "Removes five copied midpoint expressions, yet api-models.ts expectedScheduleAmount is a new private copy of the amount rule."},
+ "placement": {"score": 4, "why": "The rule lives in shared/schedules.ts where the amount helper already was; only the API's copy sits in the wrong layer."},
+ "scope": {"score": 5, "why": "Touches only the amount rule, its call sites, the API field and tests."},
+ "maintainability": {"score": 3, "why": "One helper now owns the rule, but the API copy was written for step 2 and not updated by step 4, so expectedAmount already disagrees with what Actual posts (it still picks the end furthest from zero)."},
+ "bypasses_abstraction": {"value": true, "where": "server/api-models.ts expectedScheduleAmount re-implements the expected-amount rule instead of calling getScheduledAmount(schedule._amount, false, schedule._amountOp)."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "api-models.ts expectedScheduleAmount restates getScheduledAmount's null/number/range dispatch under a different name with its own range comparison."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getScheduledAmount gained an `op` parameter and an isapprox branch (step 3); scheduleModel.toExternal in api-models.ts bypasses it with its own expectedScheduleAmount."}
+}

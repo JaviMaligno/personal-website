@@ -1,0 +1,8 @@
+{"id": "7f2f290086",
+ "completeness": {"per_site": {"forecast": "full", "rule-action-sync": "partial", "post-transaction": "partial", "preview": "partial", "budget-template": "none"},
+  "left_out": {"budget-template": "preserve_inconsistency"},
+  "sites_full": 1, "sites_partial": 3, "sites_total": 5, "value": 0.5,
+  "why": "The new getExpectedAmount decides number vs range (and getScheduledAmount delegates to it), so normalizeSchedule, whose null case was already excluded upstream, is full; updateActions, postTransactionForSchedule and computeSchedulePreviewTransactions keep their own `== null ? 0 :` dispatch although the existing getScheduledAmount decides all three cases, so they are partial; the budget template's halving copy is not touched, presumably to keep its different rounding, instead of carrying that as an explicit variation, so it is none."},
+ "interface": {"score": 3, "why": "getExpectedAmount takes just the amount, with no speculative options, but it introduces a second public helper next to the existing getScheduledAmount instead of using it, leaves the missing-amount case outside the definition, and does not make the template's halve-the-rounded-sum inconsistency explicit as a parameter."},
+ "disguised_duplication": {"value": false, "where": "The midpoint formula now exists once (getScheduledAmount delegates to getExpectedAmount); the remaining repetition is the undisguised `== null ? 0 :` guard at three sites and the untouched template copy in server/budget/schedule-template.ts."}
+}

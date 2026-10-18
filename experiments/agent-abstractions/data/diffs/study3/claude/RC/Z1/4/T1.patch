@@ -1,0 +1,90 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index cb185b3..053c220 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -71,6 +71,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  goal_def?: string | null;
+   category: string;
+   amount: number;
+ };
+@@ -87,7 +88,7 @@ function getBudgetData<T extends BudgetTable>(
+       >
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -263,15 +264,22 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { group_hidden: 1 | 0 | null }
++  >(
++    `
++  SELECT c.*, g.hidden AS group_hidden
++  FROM categories c
++  LEFT JOIN category_groups g ON c.cat_group = g.id
++  WHERE c.tombstone = 0
++  `,
+   );
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+       if (
+         !shouldFillCategory(cat, {
+-          hidden: 'include',
++          hidden: 'skip-hidden',
+           isTracking: isTrackingBudget(),
+         })
+       ) {
+diff --git a/packages/loot-core/src/server/budget/fill-categories.ts b/packages/loot-core/src/server/budget/fill-categories.ts
+index 47c7465..70d14d5 100644
+--- a/packages/loot-core/src/server/budget/fill-categories.ts
++++ b/packages/loot-core/src/server/budget/fill-categories.ts
+@@ -6,6 +6,7 @@ export type FillCandidate = {
+   is_income: 1 | 0;
+   hidden?: 1 | 0;
+   group_hidden?: 1 | 0 | null;
++  goal_def?: string | null;
+ };
+ 
+ // How an action treats hidden categories and categories in hidden groups:
+@@ -15,6 +16,18 @@ export type FillCandidate = {
+ //   group is skipped as well (the group must exist and be visible)
+ export type HiddenPolicy = 'include' | 'skip-hidden' | 'require-visible-group';
+ 
++function hasSavedTemplates({ goal_def }: Pick<FillCandidate, 'goal_def'>) {
++  if (goal_def == null || goal_def === '') {
++    return false;
++  }
++  try {
++    const parsed = JSON.parse(goal_def);
++    return !Array.isArray(parsed) || parsed.length > 0;
++  } catch {
++    return true;
++  }
++}
++
+ export function shouldFillCategory(
+   category: FillCandidate,
+   { hidden, isTracking }: { hidden: HiddenPolicy; isTracking: boolean },
+@@ -24,6 +37,11 @@ export function shouldFillCategory(
+     return false;
+   }
+ 
++  // Categories managed by saved budget templates are left to the templates
++  if (hasSavedTemplates(category)) {
++    return false;
++  }
++
+   if (hidden === 'include') {
+     return true;
+   }

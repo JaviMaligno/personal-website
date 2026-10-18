@@ -1,0 +1,11 @@
+{"id":"ec1ece62fc",
+"reuse":{"score":4,"why":"It changes the rule inside the existing getScheduleAmount and moves the forecast normaliser's inline midpoint onto it. The edited approximate branch still computes the 7.5% inline rather than calling the existing getApproxNumberThreshold."},
+"duplication":{"score":3,"why":"The diff adds no copy, but it leaves the schedule-template inline midpoint and the parallel getScheduledAmount (midpoint, still used by the client totals) in place, so the expected-amount rule keeps several divergent definitions."},
+"placement":{"score":5,"why":"The rule change is in shared/schedules.ts, and the forecast layer only calls it."},
+"scope":{"score":5,"why":"The change is the rule, one consumer moved onto it, and updated tests."},
+"maintainability":{"score":3,"why":"The single helper is now simple (Math.min / amount - tolerance), but with getScheduleAmount and getScheduledAmount side by side under near-identical names and different rules, the next change is easy to apply to the wrong one. Forecast reads the operator only from the conditions even when the amount came from `_amount`."},
+"bypasses_abstraction":{"value":false,"where":"The diff's own code uses getScheduleAmount. The untouched schedule-template.ts midpoint and the client's getScheduledAmount callers remain outside it."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"None introduced. The leftover parallel definitions (getScheduledAmount in shared/schedules.ts, the inline midpoint in server/budget/schedule-template.ts) predate the diff."}
+}

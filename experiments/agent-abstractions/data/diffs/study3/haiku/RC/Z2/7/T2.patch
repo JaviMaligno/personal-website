@@ -1,0 +1,137 @@
+diff --git a/packages/api/methods.test.ts b/packages/api/methods.test.ts
+index 3aa5929..d0cf6b4 100644
+--- a/packages/api/methods.test.ts
++++ b/packages/api/methods.test.ts
+@@ -1158,6 +1158,15 @@ test('Schedules: successfully complete schedules operations', async () => {
+         amount: 4000,
+         amountOp: 'is',
+         date: '2025-06-13',
++        expectedAmount: 4000,
++      }),
++    ]),
++  );
++  expect(schedules).toEqual(
++    expect.arrayContaining([
++      expect.objectContaining({
++        name: 'test-schedule 1',
++        expectedAmount: 0,
+       }),
+     ]),
+   );
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+new file mode 100644
+index 0000000..21c5011
+--- /dev/null
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -0,0 +1,47 @@
++import type { ScheduleEntity } from '#types/models';
++
++import { scheduleModel } from './api-models';
++
++function makeSchedule(
++  overrides: Pick<ScheduleEntity, '_amount' | '_amountOp'>,
++): ScheduleEntity {
++  return {
++    id: 'schedule-1',
++    name: 'Rent',
++    rule: 'rule-1',
++    next_date: '2026-11-01',
++    completed: false,
++    posts_transaction: true,
++    tombstone: false,
++    _payee: 'payee-1',
++    _account: 'account-1',
++    _date: '2026-11-01',
++    _conditions: [],
++    _actions: [],
++    ...overrides,
++  };
++}
++
++describe('scheduleModel.toExternal', () => {
++  it('keeps a single amount as the expected amount', () => {
++    const result = scheduleModel.toExternal(
++      makeSchedule({ _amount: -5000, _amountOp: 'is' }),
++    );
++
++    expect(result.amount).toBe(-5000);
++    expect(result.amountOp).toBe('is');
++    expect(result.expectedAmount).toBe(-5000);
++  });
++
++  it('uses the end of a ranged amount furthest from zero', () => {
++    const result = scheduleModel.toExternal(
++      makeSchedule({
++        _amount: { num1: -10100, num2: -20000 },
++        _amountOp: 'isbetween',
++      }),
++    );
++
++    expect(result.amount).toEqual({ num1: -10100, num2: -20000 });
++    expect(result.expectedAmount).toBe(-20000);
++  });
++});
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..63bd690 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,3 +1,4 @@
++import { getScheduledAmount } from '#shared/schedules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -237,8 +238,12 @@ export type APIScheduleEntity = Pick<
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
+ };
+ 
++export type APIScheduleListItem = APIScheduleEntity & {
++  expectedAmount: number; // The single amount the schedule is expected to post
++};
++
+ export const scheduleModel = {
+-  toExternal(schedule: ScheduleEntity): APIScheduleEntity {
++  toExternal(schedule: ScheduleEntity): APIScheduleListItem {
+     return {
+       id: schedule.id,
+       name: schedule.name,
+@@ -251,6 +256,7 @@ export const scheduleModel = {
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
++      expectedAmount: getScheduledAmount(schedule._amount),
+     };
+   },
+   //just an update
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 679a8c9..44814f8 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -10,6 +10,7 @@ import type {
+   APIPayeeEntity,
+   APIRuleEntity,
+   APIScheduleEntity,
++  APIScheduleListItem,
+   APITagEntity,
+ } from '#server/api-models';
+ import type { BudgetFileHandlers } from '#server/budgetfiles/app';
+@@ -303,7 +304,7 @@ export type ApiHandlers = {
+ 
+   'api/schedule-delete': (id: string) => Promise<void>;
+ 
+-  'api/schedules-get': () => Promise<APIScheduleEntity[]>;
++  'api/schedules-get': () => Promise<APIScheduleListItem[]>;
+   'api/get-id-by-name': (arg: {
+     type: string;
+     name: string;
+diff --git a/upcoming-release-notes/api-schedule-expected-amount.md b/upcoming-release-notes/api-schedule-expected-amount.md
+new file mode 100644
+index 0000000..c9202bf
+--- /dev/null
++++ b/upcoming-release-notes/api-schedule-expected-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Add `expectedAmount` to schedules returned by the API, giving the single amount a schedule is expected to post

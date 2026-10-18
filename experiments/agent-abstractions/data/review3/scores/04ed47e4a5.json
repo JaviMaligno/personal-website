@@ -1,0 +1,12 @@
+{"id": "04ed47e4a5",
+ "reuse": {"score": 3, "why": "All date sites route the move through the shared getDateWithWeekendRule and getDatesInRange reuses recurConfigToRSchedule/RSchedule like getUpcomingDates, but the daily-skip rule and the weekend-or-holiday test are rewritten inline instead of being part of the shared helper."},
+ "duplication": {"score": 2, "why": "The 'weekend or holiday' predicate is written three times (isUnavailable in the helper, twice in getNextDate's loop, once in getDatesInRange's filter) and the daily-skip rule is implemented twice in different shapes (a 366-attempt occurrence loop vs an array filter)."},
+ "placement": {"score": 4, "why": "Shared date rules sit in shared/schedules.ts and the new handler sits next to getUpcomingDates in server/schedules/app.ts; the daily-skip policy, however, lives at the call sites rather than with the rule."},
+ "scope": {"score": 4, "why": "Focused on the four steps; a redundant parseISO import beside the d namespace and a heuristic 2+holidays.length look-around window are small extras."},
+ "maintainability": {"score": 2, "why": "The weekend rule is split between a helper that moves dates and per-caller daily-skip code, so a change to what counts as unavailable or to the daily behaviour must be made in several places, and getUpcomingDates/schedule-template do not apply the daily skip at all."},
+ "bypasses_abstraction": {"value": true, "where": "getNextDate in packages/loot-core/src/shared/schedules.ts and getDatesInRange in packages/loot-core/src/server/schedules/app.ts each test d.isWeekend(date) || isHoliday(...) and apply the daily skip themselves instead of asking getDateWithWeekendRule"},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "The daily-skip rule appears as an occurrence-advancing loop in getNextDate and as a filter in getDatesInRange, and the unavailable-day predicate is re-expressed inline at each place rather than shared with isUnavailable inside getDateWithWeekendRule."},
+ "abstraction_drift": {"value": true, "parameters_added": 2, "special_case_branches": 1, "bypassing_call_sites": 2, "where": "getDateWithWeekendRule (renamed from getDateWithSkippedWeekend) gains skipWeekend and holidays parameters and an early !skipWeekend return; getNextDate and getDatesInRange re-implement the daily-schedule skip and the weekend/holiday test outside it."}
+}

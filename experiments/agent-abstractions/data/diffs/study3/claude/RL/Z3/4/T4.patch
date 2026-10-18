@@ -1,0 +1,78 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index f995c90..1c952d6 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -51,6 +51,7 @@ type LinkAccountBaseParams = {
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
++  replaceExistingLink?: boolean;
+ };
+ 
+ export type AccountHandlers = {
+@@ -171,7 +172,7 @@ async function getAccountProperties({ id }: { id: AccountEntity['id'] }) {
+   };
+ }
+ 
+-async function assertBankAccountNotLinked(
++async function findBankAccountHolder(
+   syncSource: string,
+   providerAccountId: string,
+   upgradingId?: AccountEntity['id'],
+@@ -180,9 +181,7 @@ async function assertBankAccountNotLinked(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',
+     [syncSource, providerAccountId, upgradingId ?? null],
+   );
+-  if (existing) {
+-    throw new Error('This bank account is already linked to another account.');
+-  }
++  return existing?.id ?? null;
+ }
+ 
+ async function linkGoCardlessAccount({
+@@ -217,6 +216,7 @@ async function linkProviderAccount({
+   fileId,
+   institution: institutionOverride,
+   newAccountFields,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   syncSource: string;
+   externalAccount: {
+@@ -241,11 +241,14 @@ async function linkProviderAccount({
+     }
+   }
+ 
+-  await assertBankAccountNotLinked(
++  const holderId = await findBankAccountHolder(
+     syncSource,
+     externalAccount.account_id,
+     upgradingId,
+   );
++  if (holderId && replaceExistingLink !== true) {
++    throw new Error('This bank account is already linked to another account.');
++  }
+   let id;
+ 
+   const institution = institutionOverride ?? {
+@@ -257,6 +260,21 @@ async function linkProviderAccount({
+ 
+   const bank = await link.findOrCreateBank(institution, bankKey ?? undefined);
+ 
++  if (holderId) {
++    // Only clear the local link; the bank connection stays in use by the new
++    // link, so nothing is sent to the bank provider.
++    await db.updateAccount({
++      id: holderId,
++      account_id: null,
++      bank: null,
++      balance_current: null,
++      balance_available: null,
++      balance_limit: null,
++      account_sync_source: null,
++      bank_sync_status: null,
++    });
++  }
++
+   if (upgradingId) {
+     const accRow = await db.first<db.DbAccount>(
+       'SELECT * FROM accounts WHERE id = ?',

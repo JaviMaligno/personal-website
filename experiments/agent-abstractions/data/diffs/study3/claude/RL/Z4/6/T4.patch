@@ -1,0 +1,89 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 9ae4c03..9107df5 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -32,6 +32,7 @@ import {
+   getNextDate,
+   getNextDateAfter,
+   getStatus,
++  isHoliday,
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+ import type {
+@@ -504,7 +505,7 @@ function discoverSchedules() {
+ }
+ 
+ function isOffDay(date: Date, holidays: string[] = []) {
+-  return d.isWeekend(date) || holidays.includes(dayFromDate(date));
++  return d.isWeekend(date) || isHoliday(date, holidays);
+ }
+ 
+ async function getDatesInRange({
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index c011d92..eb5b78b 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -672,3 +672,15 @@ describe('daily schedules with weekend handling', () => {
+     },
+   );
+ });
++
++describe('isHoliday', () => {
++  it('matches full dates once and MM-DD entries every year', async () => {
++    const { isHoliday } = await import('./schedules');
++    const holidays = ['2025-01-02', '12-25'];
++    expect(isHoliday(new Date(2025, 0, 2), holidays)).toBe(true);
++    expect(isHoliday(new Date(2026, 0, 2), holidays)).toBe(false);
++    expect(isHoliday(new Date(2024, 11, 25), holidays)).toBe(true);
++    expect(isHoliday(new Date(2031, 11, 25), holidays)).toBe(true);
++    expect(isHoliday(new Date(2031, 11, 26), holidays)).toBe(false);
++  });
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 53589da..f3025e3 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -304,8 +304,7 @@ export function getNextDate(
+     const holidays: string[] = value.schedule.data.holidays || [];
+     const take = skipsWeekendDays ? 7 + holidays.length : 1;
+     const notWeekend = ({ date }) =>
+-      !skipsWeekendDays ||
+-      !(d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date)));
++      !skipsWeekendDays || !(d.isWeekend(date) || isHoliday(date, holidays));
+ 
+     let dates = value.schedule
+       .occurrences({ start, take })
+@@ -362,13 +361,19 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+   return null;
+ }
+ 
++// A holiday is either a full `YYYY-MM-DD` date (that day only) or `MM-DD`
++// (that day every year).
++export function isHoliday(date: Date, holidays: string[] = []) {
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
++}
++
+ export function getDateWithSkippedWeekend(
+   date: Date,
+   solveMode: 'after' | 'before',
+   holidays: string[] = [],
+ ) {
+-  const isOff = (day: Date) =>
+-    d.isWeekend(day) || holidays.includes(monthUtils.dayFromDate(day));
++  const isOff = (day: Date) => d.isWeekend(day) || isHoliday(day, holidays);
+ 
+   if (isOff(date)) {
+     if (solveMode !== 'after' && solveMode !== 'before') {
+diff --git a/upcoming-release-notes/yearly-recurring-holidays.md b/upcoming-release-notes/yearly-recurring-holidays.md
+new file mode 100644
+index 0000000..3c7de67
+--- /dev/null
++++ b/upcoming-release-notes/yearly-recurring-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow schedule holidays to be given as `MM-DD` to recur every year

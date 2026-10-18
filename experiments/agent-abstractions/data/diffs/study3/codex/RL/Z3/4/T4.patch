@@ -1,0 +1,76 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 5ca383c..4381349 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -48,6 +48,7 @@ import * as bankSync from './sync';
+ // Shared base type for link account parameters
+ type LinkAccountBaseParams = {
+   upgradingId?: AccountEntity['id'];
++  replaceExistingLink?: boolean;
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
+@@ -60,11 +61,28 @@ function withBankAccountGuard<Params extends LinkAccountBaseParams, Result>(
+ ) {
+   return async (params: Params) => {
+     await link.assertAccountNotClosed(params.upgradingId);
+-    await link.assertAccountNotLinked(
++    const linkedAccountId = await link.findLinkedAccount(
+       provider,
+       getAccountId(params),
+       params.upgradingId,
+     );
++    if (linkedAccountId && !params.replaceExistingLink) {
++      throw new Error('This bank account is already linked to another account.');
++    }
++    if (linkedAccountId) {
++      // Clear the local association without calling account-unlink, which can
++      // revoke the provider connection still needed by the replacement link.
++      await db.updateAccount({
++        id: linkedAccountId,
++        account_id: null,
++        bank: null,
++        balance_current: null,
++        balance_available: null,
++        balance_limit: null,
++        account_sync_source: null,
++        bank_sync_status: null,
++      });
++    }
+     return handler(params);
+   };
+ }
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index a122f64..047b187 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -57,6 +57,17 @@ export async function assertAccountNotLinked(
+   accountId: db.DbAccount['account_id'],
+   upgradingId?: db.DbAccount['id'],
+ ): Promise<void> {
++  if (await findLinkedAccount(provider, accountId, upgradingId)) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
++/** Return another live local account holding this provider account, if any. */
++export async function findLinkedAccount(
++  provider: string,
++  accountId: db.DbAccount['account_id'],
++  upgradingId?: db.DbAccount['id'],
++): Promise<string | undefined> {
+   const linkedAccount = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+      WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0
+@@ -64,10 +75,7 @@ export async function assertAccountNotLinked(
+      LIMIT 1`,
+     [provider, accountId, upgradingId ?? null, upgradingId ?? null],
+   );
+-
+-  if (linkedAccount) {
+-    throw new Error('This bank account is already linked to another account.');
+-  }
++  return linkedAccount?.id;
+ }
+ 
+ /** Refuse to attach bank data to an account that is hidden from normal views. */

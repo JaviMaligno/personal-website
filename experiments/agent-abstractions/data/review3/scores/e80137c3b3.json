@@ -1,0 +1,12 @@
+{"id": "e80137c3b3",
+ "reuse": {"score": 4, "why": "Extends the existing shared applyWeekendRule/getDateWithSkippedWeekend and adds a shared isNonWorkingDay that every daily-skip check now calls, rather than adding holiday checks inline."},
+ "duplication": {"score": 3, "why": "The day definition is shared, but the pre-existing per-site 'daily + skipWeekend -> skip' dispatch is edited in four places and the look-ahead window is widened by holidays.length with three different ad hoc formulas."},
+ "placement": {"score": 4, "why": "Holiday/working-day logic lives in shared/schedules.ts next to the weekend rule; server sites only pass config.holidays."},
+ "scope": {"score": 5, "why": "All edits serve the holidays feature (type, parseRecurDate, rule, call sites, test)."},
+ "maintainability": {"score": 3, "why": "One working-day predicate and one shift loop are easy to own, but the skip-vs-move decision and the search-window sizing remain scattered across four sites with inconsistent margins."},
+ "bypasses_abstraction": {"value": false, "where": "All sites route through applyWeekendRule and the new isNonWorkingDay."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The repeated window-widening (`14 + len`, `count*7+14+len`, `3+len`) is open, not disguised; the predicate itself is shared."},
+ "one_place": {"value": true, "where": "shared/schedules.ts isNonWorkingDay (used by getDateWithSkippedWeekend and all four daily-skip checks in getNextDate, getUpcomingDates, getDatesInRange, schedule-template), though the daily skip dispatch itself is still repeated per site."}
+}

@@ -1,0 +1,45 @@
+{
+ "id": "d4b3fce265",
+ "reuse": {
+  "score": 3,
+  "why": "Reuses bank lookup, sync and response helpers and shares link validation, but copies provider workflows and the existing local unlink operation."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Adds three duplicated blocks: the Fintegra linking workflow, the transaction downloader and the account fields cleared by unlinkAccount."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider integration follows the existing module boundaries, but account takeover mutations sit inside a helper named as a validation assertion."
+ },
+ "scope": {
+  "score": 5,
+  "why": "Changes are focused on the requested linking policies and Fintegra integration, with corresponding types, tests and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized policy checks help maintenance, but copied workflows and destructive side effects hidden behind an assertion name make future changes harder to own."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "assertBankAccountNotLinked duplicates unlinkAccount's local field reset; extract a shared local unlink operation so takeover can reuse it without provider cleanup."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The duplicated linking, downloading and unlinking blocks are direct copies rather than logic concealed through restructuring."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 0,
+  "where": "assertBankAccountNotLinked gains the replaceExistingLink parameter, closed-target rejection and replacement-unlink branches, evolving from validation into mutation; all six link handlers call it."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 53.7
+ }
+}

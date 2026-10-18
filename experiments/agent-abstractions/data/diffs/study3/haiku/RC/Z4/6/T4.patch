@@ -1,0 +1,64 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index d76ebeb..11e713f 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -623,6 +623,38 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-09');
+     });
+ 
++    it('treats a MM-DD holiday as that day in every year', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-01',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-08'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-09');
++    });
++
++    it('matches MM-DD and YYYY-MM-DD holidays in the same list', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-05',
++          frequency: 'weekly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-07', '2020-12-08'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 5))).toBe('2020-12-09');
++    });
++
+     it('ignores holidays when weekend handling is off', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index d85460b..3ee5abb 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -353,8 +353,14 @@ export type WeekendRule = {
+ // skipped rather than moved, so it doesn't pile up on the neighbouring day.
+ export function applyWeekendRule(date: Date, rule: WeekendRule): Date | null {
+   const holidays = new Set(rule.holidays);
+-  const isOffDay = (day: Date) =>
+-    d.isWeekend(day) || holidays.has(monthUtils.dayFromDate(day));
++  const isOffDay = (day: Date) => {
++    const dayString = monthUtils.dayFromDate(day);
++    return (
++      d.isWeekend(day) ||
++      holidays.has(dayString) ||
++      holidays.has(dayString.slice(5))
++    );
++  };
+ 
+   if (!rule.skipWeekend || !isOffDay(date)) {
+     return date;

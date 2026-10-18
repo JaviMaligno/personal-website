@@ -1,0 +1,12 @@
+{"id":"0e315f5a99",
+"reuse":{"score":3,"why":"New guards live in accounts/link.ts beside findOrCreateBank and every provider calls prepareBankAccountLink, but the new linkBankSyncAccount is used only by GoCardless and Fintegra, and replaceExistingAccountLink re-writes the unlink update that unlinkAccount already performs."},
+"duplication":{"score":2,"why":"The step-0 refactor is left incomplete: SimpleFin, PluggyAi, Akahu and EnableBanking keep their own upgrade-or-create, payee, syncAccount and sync-event blocks; replaceExistingAccountLink repeats ensureAccountIsNotLinked's lookup query and unlinkAccount's column-nulling update; downloadFintegraTransactions is a near copy of downloadAkahuTransactions."},
+"placement":{"score":4,"why":"Link validation helpers go in accounts/link.ts, the orchestration in accounts/app.ts, the download in accounts/sync.ts and the server URL in server-config, which matches the tree's layering."},
+"scope":{"score":4,"why":"Changes follow the five steps; widening DbAccount['account_sync_source'] to all providers is a small adjacent fix needed by the shared helper's typing."},
+"maintainability":{"score":2,"why":"Two of six providers go through the shared link definition and four still carry their own copies, so a future change to linking (the stated goal of step 0) still has to be made in five places, and the unlink and lookup logic now exist twice each."},
+"bypasses_abstraction":{"value":true,"where":"linkSimpleFinAccount, linkPluggyAiAccount, linkAkahuAccount and linkEnableBankingAccount in accounts/app.ts do not use linkBankSyncAccount; replaceExistingAccountLink in link.ts re-implements the unlink update instead of sharing it with unlinkAccount."},
+"duplicated_blocks":4,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"replaceExistingAccountLink reformats ensureAccountIsNotLinked's SELECT on one line and copies unlinkAccount's null-out update; downloadFintegraTransactions trims downloadAkahuTransactions rather than sharing a generic download."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":4,"where":"prepareBankAccountLink takes a replaceExistingLink flag with an if/else between replaceExistingAccountLink and ensureAccountIsNotLinked (and LinkAccountBaseParams gained the flag); linkBankSyncAccount carries fileId and eventTables options, while four provider link functions bypass it."}
+}

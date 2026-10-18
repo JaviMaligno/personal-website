@@ -1,0 +1,180 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index d27ed2d..eee2086 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -11,6 +11,7 @@ import {
+   set3MonthAvg,
+   setBudget,
+   setCategoryCarryover,
++  setLastMonthSpending,
+   setNMonthAvg,
+   setZero,
+ } from './actions';
+@@ -195,6 +196,110 @@ describe('set budget average', () => {
+   });
+ });
+ 
++describe('setLastMonthSpending', () => {
++  beforeEach(global.emptyDatabase());
++  afterEach(global.emptyDatabase());
++
++  async function setupDatabase() {
++    await db.insertAccount({ id: 'account1', name: 'Account 1' });
++    await db.insertCategoryGroup({
++      id: 'income-group',
++      name: 'Income',
++      is_income: 1,
++    });
++    await db.insertCategory({
++      id: 'income-cat',
++      name: 'Income',
++      cat_group: 'income-group',
++      is_income: 1,
++    });
++    await db.insertCategoryGroup({ id: 'group1', name: 'group1' });
++    await db.insertCategoryGroup({
++      id: 'hidden-group',
++      name: 'hidden-group',
++      hidden: 1,
++    });
++    await db.insertCategory({ id: 'cat1', name: 'cat1', cat_group: 'group1' });
++    await db.insertCategory({ id: 'cat2', name: 'cat2', cat_group: 'group1' });
++    await db.insertCategory({
++      id: 'refund-cat',
++      name: 'refund-cat',
++      cat_group: 'group1',
++    });
++    await db.insertCategory({
++      id: 'hidden-cat',
++      name: 'hidden-cat',
++      cat_group: 'group1',
++      hidden: 1,
++    });
++    await db.insertCategory({
++      id: 'hidden-group-cat',
++      name: 'hidden-group-cat',
++      cat_group: 'hidden-group',
++    });
++    await db.insertCategory({
++      id: 'template-cat',
++      name: 'template-cat',
++      cat_group: 'group1',
++      goal_def: JSON.stringify([{ type: 'periodic', amount: 100 }]),
++    });
++    await sheet.loadSpreadsheet(db);
++    await budget.createBudget(['2024-01', '2024-02']);
++
++    const transactions = [
++      { amount: -3000, category: 'cat1' },
++      { amount: 5000, category: 'income-cat' },
++      { amount: 200, category: 'refund-cat' },
++      { amount: -700, category: 'hidden-cat' },
++      { amount: -800, category: 'hidden-group-cat' },
++      { amount: -400, category: 'template-cat' },
++    ];
++    for (const transaction of transactions) {
++      await db.insertTransaction({
++        ...transaction,
++        date: '2024-01-15',
++        account: 'account1',
++      });
++    }
++    for (const category of ['hidden-cat', 'hidden-group-cat', 'template-cat']) {
++      await setBudget({ category, month: '2024-02', amount: 111 });
++    }
++    await sheet.waitOnSpreadsheet();
++  }
++
++  it('budgets each expense category its previous month spending and leaves excluded categories untouched', async () => {
++    await setupDatabase();
++
++    await setLastMonthSpending({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202402', 'budget-cat1')).toBe(3000);
++    expect(await getSheetValue('budget202402', 'budget-cat2')).toBe(0);
++    expect(await getSheetValue('budget202402', 'budget-refund-cat')).toBe(0);
++    expect(await getSheetValue('budget202402', 'budget-income-cat')).toBe(0);
++    expect(await getSheetValue('budget202402', 'budget-hidden-cat')).toBe(111);
++    expect(await getSheetValue('budget202402', 'budget-hidden-group-cat')).toBe(
++      111,
++    );
++    expect(await getSheetValue('budget202402', 'budget-template-cat')).toBe(
++      111,
++    );
++  });
++
++  it('budgets income categories the amount received in tracking budget mode', async () => {
++    await setupDatabase();
++    db.runQuery(
++      `INSERT INTO preferences (id, value) VALUES ('budgetType', 'tracking')`,
++    );
++
++    await setLastMonthSpending({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202402', 'budget-income-cat')).toBe(5000);
++    expect(await getSheetValue('budget202402', 'budget-cat1')).toBe(3000);
++  });
++});
++
+ describe('setZero', () => {
+   beforeEach(global.emptyDatabase());
+   afterEach(global.emptyDatabase());
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 0f81ff4..556523f 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -322,6 +322,29 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+   });
+ }
+ 
++export async function setLastMonthSpending({
++  month,
++}: {
++  month: string;
++}): Promise<void> {
++  const prevMonthSheet = monthUtils.sheetForMonth(monthUtils.prevMonth(month));
++  const categories = await getBulkBudgetCategories({
++    skipMissingGroup: true,
++  });
++
++  await batchMessages(async () => {
++    for (const cat of categories) {
++      const net = await getSheetValue(prevMonthSheet, 'sum-amount-' + cat.id);
++
++      void setBudget({
++        category: cat.id,
++        month,
++        amount: cat.is_income === 1 ? net : Math.max(-net, 0),
++      });
++    }
++  });
++}
++
+ export async function set3MonthAvg({
+   month,
+ }: {
+diff --git a/packages/loot-core/src/server/budget/app.ts b/packages/loot-core/src/server/budget/app.ts
+index b61f24c..4bf1674 100644
+--- a/packages/loot-core/src/server/budget/app.ts
++++ b/packages/loot-core/src/server/budget/app.ts
+@@ -26,6 +26,7 @@ export type BudgetHandlers = {
+   'budget/copy-previous-month': typeof actions.copyPreviousMonth;
+   'budget/copy-single-month': typeof actions.copySinglePreviousMonth;
+   'budget/set-zero': typeof actions.setZero;
++  'budget/set-last-month-spending': typeof actions.setLastMonthSpending;
+   'budget/set-3month-avg': typeof actions.set3MonthAvg;
+   'budget/set-6month-avg': typeof actions.set6MonthAvg;
+   'budget/set-12month-avg': typeof actions.set12MonthAvg;
+@@ -81,6 +82,10 @@ app.method(
+   mutator(undoable(actions.copySinglePreviousMonth)),
+ );
+ app.method('budget/set-zero', mutator(undoable(actions.setZero)));
++app.method(
++  'budget/set-last-month-spending',
++  mutator(undoable(actions.setLastMonthSpending)),
++);
+ app.method('budget/set-3month-avg', mutator(undoable(actions.set3MonthAvg)));
+ app.method('budget/set-6month-avg', mutator(undoable(actions.set6MonthAvg)));
+ app.method('budget/set-12month-avg', mutator(undoable(actions.set12MonthAvg)));

@@ -1,0 +1,118 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 60066a1..9e8bb7e 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -62,7 +62,7 @@ async function createScheduleList(
+       extractScheduleConds(conditions);
+     let scheduleAmount =
+       amountCondition.op === 'isbetween'
+-        ? getScheduledAmount(amountCondition.value, false, true)
++        ? getScheduledAmount(amountCondition.value)
+         : amountCondition.value;
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 3c15b63..25ac799 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -94,7 +94,7 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged ("is between") amount is scheduled at its rounded midpoint.
++  // A ranged ("is between") amount uses the endpoint furthest from zero.
+   const amount = getScheduledAmount(amountValue);
+ 
+   return {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 756d1f5..72fc254 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -152,7 +152,7 @@ function updateActions(
+   // Mirrors how `_amount` resolves: a deleted/empty amount condition value
+   // yields 0, so the action is synced to 0 too, keeping it consistent with
+   // the amount the schedule actually posts. A ranged ("is between") amount
+-  // is scheduled at its rounded midpoint.
++  // uses the endpoint furthest from zero.
+   const amount = getScheduledAmount(amountCond.value);
+ 
+   let changed = false;
+@@ -587,7 +587,7 @@ async function postTransactionForSchedule({
+   }
+ 
+   // A missing amount (deleted condition) posts 0; a ranged ("is between")
+-  // amount posts its rounded midpoint.
++  // amount posts the endpoint furthest from zero.
+   const amount = getScheduledAmount(schedule._amount);
+ 
+   const transaction = {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..198404a 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -9,6 +9,7 @@ import {
+   getNextDate,
+   getNextDateAfter,
+   getScheduleOccurrenceMatchStartDate,
++  getScheduledAmount,
+   getStatus,
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+@@ -21,6 +22,22 @@ import {
+ import type { ScheduleStatuses } from './schedules';
+ 
+ describe('schedules', () => {
++  describe('getScheduledAmount', () => {
++    it.each([
++      [{ num1: -10100, num2: -20000 }, -20000],
++      [{ num1: -20000, num2: -10100 }, -20000],
++      [{ num1: 10100, num2: 20000 }, 20000],
++      [{ num1: 20000, num2: 10100 }, 20000],
++    ])('uses the endpoint furthest from zero', (range, expected) => {
++      expect(getScheduledAmount(range)).toBe(expected);
++    });
++
++    it('preserves single and missing amounts', () => {
++      expect(getScheduledAmount(-10100)).toBe(-10100);
++      expect(getScheduledAmount(null)).toBe(0);
++    });
++  });
++
+   const today = new Date(2017, 0, 1); // Global date when testing is set to 2017-01-01 per monthUtils.currentDay()
+   const dateFormat = 'yyyy-MM-dd';
+   const todayString = monthUtils.format(today, dateFormat);
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index abc7545..d7fb965 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -354,9 +354,8 @@ export function getDateWithSkippedWeekend(
+ }
+ 
+ export function getScheduledAmount(
+-  amount: number | { num1: number; num2: number },
++  amount: number | { num1: number; num2: number } | null,
+   inverse: boolean = false,
+-  roundSumBeforeDividing: boolean = false,
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+@@ -365,13 +364,12 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  if (roundSumBeforeDividing) {
+-    const midpoint = Math.round(amount.num1 + amount.num2) / 2;
+-    return inverse ? -midpoint : midpoint;
+-  }
+-  const sum = amount.num1 + amount.num2;
+-  const avg = sum / 2;
+-  return inverse ? -Math.round(avg) : Math.round(avg);
++  // Use the more conservative endpoint for variable bills and income.
++  const scheduledAmount =
++    Math.abs(amount.num1) >= Math.abs(amount.num2)
++      ? amount.num1
++      : amount.num2;
++  return inverse ? -scheduledAmount : scheduledAmount;
+ }
+ 
+ export function getUpcomingDays(

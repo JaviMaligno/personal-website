@@ -1,0 +1,12 @@
+{"id":"d070cbe2ee",
+"reuse":{"score":3,"why":"The transaction download generalises Akahu's downloader into a shared function and reuses assertBankAccountNotLinked, findOrCreateBank and handleSyncResponse, but the link flow is a fresh copy of linkAkahuAccount rather than a shared link routine."},
+"duplication":{"score":2,"why":"linkFintegraAccount is a ~70-line near-verbatim copy of linkAkahuAccount (upgrade/insert branches, payee creation, initial sync, sync-event), adding one more copy of the per-provider link block."},
+"placement":{"score":5,"why":"Handler in accounts/app.ts, download and balance handling in accounts/sync.ts, base path in server-config.ts and type under types/models, matching where each existing provider lives."},
+"scope":{"score":5,"why":"Only the files needed for the server-side provider plus targeted tests are touched."},
+"maintainability":{"score":3,"why":"The download side is well factored, but the copied link function means any future change to linking must be made in yet another place."},
+"bypasses_abstraction":{"value":false,"where":"Uses the existing shared helpers (assertBankAccountNotLinked, link.findOrCreateBank, bankSync.syncAccount, handleSyncResponse); there is no shared link abstraction in the tree to bypass."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The linkFintegraAccount copy of linkAkahuAccount in accounts/app.ts is an open copy (only the provider string, orgId and tables list differ), not disguised."},
+"t2_reuse":"copy"
+}

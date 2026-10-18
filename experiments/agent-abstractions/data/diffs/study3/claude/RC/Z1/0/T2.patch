@@ -1,0 +1,101 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index cea172c..6e162d1 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -11,6 +11,7 @@ import {
+   set3MonthAvg,
+   setBudget,
+   setCategoryCarryover,
++  setLastMonthSpending,
+   setNMonthAvg,
+ } from './actions';
+ import * as budget from './base';
+@@ -177,6 +178,21 @@ describe('set budget average', () => {
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(633);
+   });
+ 
++  it('budgets the previous calendar month spending (1200 existing + 3000 new)', async () => {
++    await db.insertTransaction({
++      date: '2024-03-10',
++      amount: -3000,
++      account: 'account1',
++      category: 'cat1',
++    });
++    await sheet.waitOnSpreadsheet();
++
++    await setLastMonthSpending({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(4200);
++  });
++
+   it('sets a bulk 3 month average from complete months', async () => {
+     await set3MonthAvg({ month: '2024-04' });
+     await sheet.waitOnSpreadsheet();
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 1aabca0..3517752 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -361,6 +361,27 @@ export async function set3MonthAvg({
+   });
+ }
+ 
++export async function setLastMonthSpending({
++  month,
++}: {
++  month: string;
++}): Promise<void> {
++  const categories = await getAverageFillCategories();
++  const sheetName = monthUtils.sheetForMonth(monthUtils.prevMonth(month));
++
++  await batchMessages(async () => {
++    for (const cat of categories) {
++      const spent = await getSheetValue(sheetName, 'sum-amount-' + cat.id);
++
++      void setBudget({
++        category: cat.id,
++        month,
++        amount: spendingToBudgetAmount(cat, spent),
++      });
++    }
++  });
++}
++
+ export async function set12MonthAvg({
+   month,
+ }: {
+diff --git a/packages/loot-core/src/server/budget/app.ts b/packages/loot-core/src/server/budget/app.ts
+index b61f24c..ea45d2c 100644
+--- a/packages/loot-core/src/server/budget/app.ts
++++ b/packages/loot-core/src/server/budget/app.ts
+@@ -27,6 +27,7 @@ export type BudgetHandlers = {
+   'budget/copy-single-month': typeof actions.copySinglePreviousMonth;
+   'budget/set-zero': typeof actions.setZero;
+   'budget/set-3month-avg': typeof actions.set3MonthAvg;
++  'budget/set-last-month-spending': typeof actions.setLastMonthSpending;
+   'budget/set-6month-avg': typeof actions.set6MonthAvg;
+   'budget/set-12month-avg': typeof actions.set12MonthAvg;
+   'budget/set-n-month-avg': typeof actions.setNMonthAvg;
+@@ -82,6 +83,10 @@ app.method(
+ );
+ app.method('budget/set-zero', mutator(undoable(actions.setZero)));
+ app.method('budget/set-3month-avg', mutator(undoable(actions.set3MonthAvg)));
++app.method(
++  'budget/set-last-month-spending',
++  mutator(undoable(actions.setLastMonthSpending)),
++);
+ app.method('budget/set-6month-avg', mutator(undoable(actions.set6MonthAvg)));
+ app.method('budget/set-12month-avg', mutator(undoable(actions.set12MonthAvg)));
+ app.method('budget/set-n-month-avg', mutator(undoable(actions.setNMonthAvg)));
+diff --git a/upcoming-release-notes/budget-last-month-spending.md b/upcoming-release-notes/budget-last-month-spending.md
+new file mode 100644
+index 0000000..fc0a8a9
+--- /dev/null
++++ b/upcoming-release-notes/budget-last-month-spending.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Add a budget action that sets each category's budget to the previous month's spending

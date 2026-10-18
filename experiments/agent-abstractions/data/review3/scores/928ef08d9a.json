@@ -1,0 +1,11 @@
+{"id":"928ef08d9a",
+"reuse":{"score":3,"why":"Keeps using getDateWithSkippedWeekend and RSchedule occurrences, but does not put the new daily rule into that shared weekend helper or a new shared one; each caller computes it itself."},
+"duplication":{"score":2,"why":"The 'skipWeekend && frequency === daily' test and the skip-weekend-occurrences logic are written twice, differently, in getNextDate (while loop) and getUpcomingDates (over-fetch and filter)."},
+"placement":{"score":3,"why":"The rule is a schedule-date rule that belongs in shared/schedules.ts next to getDateWithSkippedWeekend; instead it is embedded inline in a server handler and in getNextDate."},
+"scope":{"score":5,"why":"Only the weekend rule paths and tests are touched."},
+"maintainability":{"score":2,"why":"Two divergent implementations plus a magic 'count + 2' over-fetch and an early return nested inside getNextDate make the rule hard to follow, and schedule-template.ts still applies the old move rule on its own."},
+"bypasses_abstraction":{"value":true,"where":"server/budget/schedule-template.ts keeps calling getDateWithSkippedWeekend directly on skipWeekend, so the daily rule does not reach it; getUpcomingDates builds its own variant rather than going through getNextDate's rule."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Daily-weekend skipping is implemented as a re-query loop in shared/schedules.ts getNextDate and as an over-fetch plus filter in server/schedules/app.ts getUpcomingDates: same rule, reshaped."},
+"one_place":{"value":false,"where":"Rule lives inline in shared/schedules.ts getNextDate and separately in server/schedules/app.ts getUpcomingDates; server/budget/schedule-template.ts still moves weekend dates via getDateWithSkippedWeekend without the daily exception."}}

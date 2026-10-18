@@ -1,0 +1,130 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 3f3c86f..9ba7eba 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -183,6 +183,7 @@ async function linkGoCardlessAccount({
+   account: SyncServerGoCardlessAccount;
+ }) {
+   let id;
++  await link.ensureAccountIsOpen(upgradingId);
+   await link.ensureAccountNotLinked(
+     'goCardless',
+     account.account_id,
+@@ -256,6 +257,8 @@ async function linkSimpleFinAccount({
+ }) {
+   let id;
+ 
++  await link.ensureAccountIsOpen(upgradingId);
++
+   await link.ensureAccountNotLinked(
+     'simpleFin',
+     externalAccount.account_id,
+@@ -340,6 +343,8 @@ async function linkPluggyAiAccount({
+   let id;
+   const fileId = getPrefs()?.cloudFileId;
+ 
++  await link.ensureAccountIsOpen(upgradingId);
++
+   await link.ensureAccountNotLinked(
+     'pluggyai',
+     externalAccount.account_id,
+@@ -424,6 +429,8 @@ async function linkAkahuAccount({
+ }) {
+   let id;
+ 
++  await link.ensureAccountIsOpen(upgradingId);
++
+   await link.ensureAccountNotLinked(
+     'akahu',
+     externalAccount.account_id,
+@@ -504,6 +511,8 @@ async function linkEnableBankingAccount({
+ }) {
+   let id: string | undefined;
+ 
++  await link.ensureAccountIsOpen(upgradingId);
++
+   await link.ensureAccountNotLinked(
+     'enableBanking',
+     externalAccount.account_id,
+@@ -591,6 +600,8 @@ async function linkFintegraAccount({
+   startingDate,
+   startingBalance,
+ }: LinkAccountBaseParams & { externalAccount: SyncServerFintegraAccount }) {
++  await link.ensureAccountIsOpen(upgradingId);
++
+   await link.ensureAccountNotLinked(
+     'fintegra',
+     externalAccount.account_id,
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index 2489d6d..362a1c7 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -1,7 +1,11 @@
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ 
+-import { ensureAccountNotLinked, findOrCreateBank } from './link';
++import {
++  ensureAccountIsOpen,
++  ensureAccountNotLinked,
++  findOrCreateBank,
++} from './link';
+ 
+ beforeEach(async () => {
+   await global.emptyDatabase()();
+@@ -137,3 +141,27 @@ describe('ensureAccountNotLinked', () => {
+     ).resolves.toBeUndefined();
+   });
+ });
++
++describe('ensureAccountIsOpen', () => {
++  it('rejects a closed account, including one that already holds the link', async () => {
++    db.runQuery(
++      `INSERT INTO accounts (id, name, offbudget, closed, tombstone, sort_order)
++       VALUES ('closed', '', 0, 1, 0, 0)`,
++    );
++
++    await expect(ensureAccountIsOpen('closed')).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++    await expect(ensureAccountIsOpen('missing')).resolves.toBeUndefined();
++    await expect(ensureAccountIsOpen()).resolves.toBeUndefined();
++  });
++
++  it('allows an open account', async () => {
++    db.runQuery(
++      `INSERT INTO accounts (id, name, offbudget, closed, tombstone, sort_order)
++       VALUES ('open', '', 0, 0, 0, 0)`,
++    );
++
++    await expect(ensureAccountIsOpen('open')).resolves.toBeUndefined();
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 08a3a73..c19dab6 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -3,6 +3,23 @@ import { v4 as uuidv4 } from 'uuid';
+ 
+ import * as db from '#server/db';
+ 
++export async function ensureAccountIsOpen(accountId?: string) {
++  if (!accountId) {
++    return;
++  }
++
++  const account = await db.first<{ closed: number }>(
++    'SELECT closed FROM accounts WHERE id = ?',
++    [accountId],
++  );
++
++  if (account?.closed) {
++    throw new Error(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  }
++}
++
+ export async function ensureAccountNotLinked(
+   provider: string,
+   accountId: string,

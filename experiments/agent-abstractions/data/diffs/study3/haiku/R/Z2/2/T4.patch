@@ -1,0 +1,66 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 7d1633a..b31f0eb 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -633,19 +633,22 @@ describe('schedules', () => {
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+     });
+ 
+-    it('returns the end of a positive range furthest from zero', () => {
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    it('returns the end of a positive range closest to zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
+     });
+ 
+-    it('returns the end furthest from zero when the range crosses zero', () => {
+-      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(5000);
+-      expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(5000);
++    it('returns the negative end when the range crosses zero', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++      expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+     });
+ 
+-    it('returns the end of the tolerance furthest from zero for an approximate amount', () => {
++    it('returns the end of the tolerance closest to zero for an approximate positive amount', () => {
++      expect(getScheduledAmount(10000, 'isapprox')).toBe(9250);
++    });
++
++    it('returns the end of the tolerance furthest from zero for an approximate negative amount', () => {
+       expect(getScheduledAmount(-10000, 'isapprox')).toBe(-10750);
+-      expect(getScheduledAmount(10000, 'isapprox')).toBe(10750);
+       expect(getScheduledAmount(-1234, 'isapprox')).toBe(-1327);
+       expect(getScheduledAmount(0, 'isapprox')).toBe(0);
+     });
+@@ -654,7 +657,7 @@ describe('schedules', () => {
+       expect(getScheduledAmount(-10000, 'is')).toBe(-10000);
+     });
+ 
+-    it('negates the worst case when inverse is set', () => {
++    it('negates the expected amount when inverse is set', () => {
+       expect(
+         getScheduledAmount({ num1: -10100, num2: -20000 }, null, true),
+       ).toBe(20000);
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index dd3f5f5..64f0150 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -365,14 +365,11 @@ export function getScheduledAmount(
+ 
+   if (typeof amount === 'number') {
+     const expected =
+-      op === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
+-        : amount;
++      op === 'isapprox' ? amount - getApproxNumberThreshold(amount) : amount;
+     return inverse ? -expected : expected;
+   }
+-  const worstCase =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
+-  return inverse ? -worstCase : worstCase;
++  const lowest = Math.min(amount.num1, amount.num2);
++  return inverse ? -lowest : lowest;
+ }
+ 
+ export function getUpcomingDays(

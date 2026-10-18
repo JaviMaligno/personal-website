@@ -1,0 +1,45 @@
+{
+ "id": "6751564d2c",
+ "reuse": {
+  "score": 4,
+  "why": "All providers share the new link checks, and Fintegra reuses findOrCreateBank, syncAccount and handleSyncResponse, although unlink-state clearing remains copied."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Fintegra duplicates the existing linking workflow, transaction-download protocol and Akahu balance calculation, while replacement duplicates unlinkAccount's local field reset."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider types, configuration, handlers and downloading follow existing layers, but an ensure-named validation helper now also mutates link ownership."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the requested linking rules, replacement option and server-side Fintegra integration."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared checks make rule updates manageable, but another copied provider workflow and a validation helper with destructive side effects increase maintenance burden."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "Existing bank-selection and sync abstractions are used; unlinkAccount includes provider-side cleanup, so it is not directly suitable for transferring a link."
+ },
+ "duplicated_blocks": 4,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "linkFintegraAccount compresses the existing account creation/update and sync workflow, and downloadFintegraTransactions reshapes the existing authenticated request and response-mapping logic without sharing it."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 0,
+  "where": "ensureBankAccountIsNotLinked gains replaceExistingLink and a replacement branch that clears another account's link, changing a validation helper into a mutating operation; all six linking handlers still call it."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 54.7
+ }
+}

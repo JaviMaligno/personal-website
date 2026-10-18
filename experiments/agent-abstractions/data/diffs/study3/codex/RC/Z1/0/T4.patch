@@ -1,0 +1,155 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 81da8df..57610ca 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -223,8 +223,10 @@ function setCarryover(
+ 
+ export async function copyPreviousMonth({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+@@ -237,6 +239,7 @@ export async function copyPreviousMonth({
+           'copy-previous',
+           prevBudget,
+           isTrackingBudget(),
++          includeHiddenCategories,
+         )
+       ) {
+         return;
+@@ -267,8 +270,19 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await getMonthBudgetCategories('zero', isTrackingBudget());
++export async function setZero({
++  month,
++  includeHiddenCategories,
++}: {
++  month: string;
++  includeHiddenCategories?: boolean;
++}): Promise<void> {
++  const categories = await getMonthBudgetCategories(
++    'zero',
++    isTrackingBudget(),
++    undefined,
++    includeHiddenCategories,
++  );
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+@@ -279,13 +293,17 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function setLastMonthSpending({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const previousMonth = monthUtils.prevMonth(month);
+   const categories = await getMonthBudgetCategories(
+     'average',
+     isTrackingBudget(),
++    undefined,
++    includeHiddenCategories,
+   );
+ 
+   await batchMessages(async () => {
+@@ -302,12 +320,16 @@ export async function setLastMonthSpending({
+ 
+ export async function set3MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getMonthBudgetCategories(
+     'average',
+     isTrackingBudget(),
++    undefined,
++    includeHiddenCategories,
+   );
+ 
+   await batchMessages(async () => {
+@@ -327,12 +349,16 @@ export async function set3MonthAvg({
+ 
+ export async function set12MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getMonthBudgetCategories(
+     'average',
+     isTrackingBudget(),
++    undefined,
++    includeHiddenCategories,
+   );
+ 
+   await batchMessages(async () => {
+@@ -344,12 +370,16 @@ export async function set12MonthAvg({
+ 
+ export async function set6MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getMonthBudgetCategories(
+     'average',
+     isTrackingBudget(),
++    undefined,
++    includeHiddenCategories,
+   );
+ 
+   await batchMessages(async () => {
+diff --git a/packages/loot-core/src/server/budget/month-action-categories.ts b/packages/loot-core/src/server/budget/month-action-categories.ts
+index cfb753f..1d2b62b 100644
+--- a/packages/loot-core/src/server/budget/month-action-categories.ts
++++ b/packages/loot-core/src/server/budget/month-action-categories.ts
+@@ -14,11 +14,12 @@ export function shouldIncludeMonthBudgetCategory(
+     'is_income' | 'hidden' | 'group_hidden' | 'goal_def'
+   >,
+   isTrackingBudget: boolean,
++  includeHiddenCategories = false,
+ ): boolean {
+   return (
+     (isTrackingBudget || category.is_income === 0) &&
+-    category.hidden === 0 &&
+-    category.group_hidden === 0 &&
++    (includeHiddenCategories ||
++      (category.hidden === 0 && category.group_hidden === 0)) &&
+     (!category.goal_def || category.goal_def === '[]')
+   );
+ }
+@@ -28,6 +29,7 @@ export async function getMonthBudgetCategories(
+   action: MonthBudgetAction,
+   isTrackingBudget: boolean,
+   previousMonth?: string,
++  includeHiddenCategories = false,
+ ): Promise<MonthBudgetCategory[]> {
+   let categories: MonthBudgetCategory[];
+ 
+@@ -54,7 +56,12 @@ export async function getMonthBudgetCategories(
+   }
+ 
+   return categories.filter(category =>
+-    shouldIncludeMonthBudgetCategory(action, category, isTrackingBudget),
++    shouldIncludeMonthBudgetCategory(
++      action,
++      category,
++      isTrackingBudget,
++      includeHiddenCategories,
++    ),
+   );
+ }
+ 

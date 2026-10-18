@@ -1,0 +1,96 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+index 446e40d..3582345 100644
+--- a/packages/loot-core/src/server/api-models.test.ts
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -15,11 +15,11 @@ describe('scheduleModel.toExternal expectedAmount', () => {
+     expect(toExternal(-5000).expectedAmount).toBe(-5000);
+   });
+ 
+-  it('uses the end of a range furthest from zero', () => {
++  it('uses the lowest end of a range', () => {
+     expect(toExternal({ num1: -10100, num2: -20000 }).expectedAmount).toBe(
+       -20000,
+     );
+-    expect(toExternal({ num1: 300, num2: -100 }).expectedAmount).toBe(300);
++    expect(toExternal({ num1: 300, num2: -100 }).expectedAmount).toBe(-100);
+   });
+ 
+   it('is 0 without an amount', () => {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 031e802..e87eee3 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -646,10 +646,12 @@ describe('schedules', () => {
+ });
+ 
+ describe('getScheduledAmount', () => {
+-  it('uses the end of a range furthest from zero', () => {
++  it('uses the lowest end of a range', () => {
+     expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+     expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-    expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++    expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++    expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
+   });
+ 
+   it('keeps single and missing amounts as before', () => {
+@@ -660,9 +662,9 @@ describe('getScheduledAmount', () => {
+ });
+ 
+ describe('getScheduledAmount approximate', () => {
+-  it('plans at the far end of the tolerance', () => {
++  it('plans at the lowest end of the tolerance', () => {
+     expect(getScheduledAmount(-10000, false, 'isapprox')).toBe(-10750);
+-    expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
++    expect(getScheduledAmount(10000, false, 'isapprox')).toBe(9250);
+     expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
+     expect(getScheduledAmount(-500, false, 'is')).toBe(-500);
+   });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 0408361..670892a 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -379,9 +379,9 @@ export function applyWeekendRuleToDay(
+ }
+ 
+ // The amount a schedule is expected to post. A ranged ("is between") amount is
+-// planned for the worst case: the end of the range furthest from zero. An
+-// approximate ("isapprox") amount is planned at the end of its tolerance
+-// furthest from zero.
++// planned for the worst case: the lowest value the range allows. An
++// approximate ("isapprox") amount is planned at the lowest end of its
++// tolerance.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -393,14 +393,11 @@ export function getScheduledAmount(
+ 
+   if (typeof amount === 'number') {
+     const planned =
+-      op === 'isapprox'
+-        ? amount + (amount < 0 ? -1 : 1) * getApproxNumberThreshold(amount)
+-        : amount;
++      op === 'isapprox' ? amount - getApproxNumberThreshold(amount) : amount;
+     return inverse ? -planned : planned;
+   }
+-  const furthest =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
+-  return inverse ? -furthest : furthest;
++  const lowest = Math.min(amount.num1, amount.num2);
++  return inverse ? -lowest : lowest;
+ }
+ 
+ export function getUpcomingDays(
+diff --git a/upcoming-release-notes/schedule-lowest-amount.md b/upcoming-release-notes/schedule-lowest-amount.md
+new file mode 100644
+index 0000000..0188b37
+--- /dev/null
++++ b/upcoming-release-notes/schedule-lowest-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Plan ranged and approximate schedule amounts at the lowest value they allow

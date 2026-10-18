@@ -1,0 +1,11 @@
+{"id":"3df30508e4",
+"reuse":{"score":4,"why":"Routes every month-wide action through the existing shouldWriteMonthBudget predicate, but writes the saved-template test as a fresh SQL expression rather than sharing it (no helper existed for the positive form; statements.ts has only the negated inline variant)."},
+"duplication":{"score":2,"why":"The has_saved_template SQL expression (goal_def IS NOT NULL AND COALESCE(JSON_EXTRACT(template_settings,'$.source'),'notes')='ui') is pasted into five separate queries, and the three near-identical average queries stay copies."},
+"placement":{"score":4,"why":"The skip decision correctly lives in month-action.ts, but the definition of 'has a saved template' is spread through the SQL of each action in actions.ts instead of one query/helper."},
+"scope":{"score":5,"why":"Changes are limited to the month-wide actions, the predicate and a focused test."},
+"maintainability":{"score":3,"why":"The predicate simplification is good, but five copies of the template SQL, a has_saved_template typed boolean|0|1 with double comparison, and untyped extra columns in getBudgetData make the rule easy to drift."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":4,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied SQL fragment is verbatim (lightly reformatted), not disguised."},
+"one_place":{"value":false,"where":"Hidden/group-hidden/template skip lands in shouldWriteMonthBudget (month-action.ts), but what counts as a saved template is defined five times in the SELECTs of getBudgetData, setZero, set3MonthAvg, set6MonthAvg and set12MonthAvg in actions.ts."}}

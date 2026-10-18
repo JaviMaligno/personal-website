@@ -1,0 +1,12 @@
+{"id": "f6087ad7c2",
+ "reuse": {"score": 4, "why": "Extends the existing getDateWithSkippedWeekend helper with a holidays parameter and threads it through getNextDate and app.ts, though app.ts's daily branch re-checks holidays inline instead of using the new predicate."},
+ "duplication": {"score": 3, "why": "The weekend-or-holiday predicate is defined privately as isNonBusinessDay in shared/schedules.ts and then re-written inline in app.ts's daily branch."},
+ "placement": {"score": 4, "why": "The rule lives in the shared schedules module where weekend handling already lives, but the predicate is not exported, so the server layer reimplements it."},
+ "scope": {"score": 5, "why": "Only the schedule date logic, the RecurConfig type and focused tests are touched."},
+ "maintainability": {"score": 3, "why": "The direction-based loop generalises the helper cleanly, but the budget schedule-template callers do not pass holidays and the daily rule is duplicated, so holiday behaviour diverges between paths."},
+ "bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getDatesInRange daily branch inlines `d.isWeekend(date) || config.holidays?.includes(...)` instead of the shared isNonBusinessDay predicate"},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The inline daily check in app.ts is an openly repeated copy of isNonBusinessDay, not a reshaped one."},
+ "one_place": {"value": false, "where": "Holiday handling is added to getDateWithSkippedWeekend, but the two callers in server/budget/schedule-template.ts are not given holidays, and the daily-skip rule is written separately in shared/schedules.ts (isNonBusinessDay) and server/schedules/app.ts (inline)."}
+}

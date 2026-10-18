@@ -1,0 +1,12 @@
+{"id":"f25b0516a7",
+"reuse":{"score":3,"why":"Reuses ensureBankAccountIsNotLinked (registered the same way as the other providers), findOrCreateBank, syncAccount, handleSyncResponse and the provider registries, but writes the create-or-upgrade-and-sync body again instead of sharing it with the other link functions."},
+"duplication":{"score":2,"why":"linkFintegraAccount copies the SimpleFin/Akahu link body nearly line for line and downloadFintegraTransactions copies downloadEnableBankingTransactions, two more copies of per-provider logic."},
+"placement":{"score":5,"why":"Link handler and its wrapped registration in accounts/app.ts, download and dispatch in accounts/sync.ts, URL in server-config.ts and types in types/models, matching where the tree puts each provider's pieces."},
+"scope":{"score":5,"why":"Only the server pieces needed for the new provider plus one test."},
+"maintainability":{"score":3,"why":"Consistent with the existing per-provider pattern and easy to read, but adds to the copies that every provider-wide change must touch."},
+"bypasses_abstraction":{"value":false,"where":"The link guard is applied through the same app.method wrapper as the other providers; no shared link-finishing helper exists to bypass."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"downloadFintegraTransactions in accounts/sync.ts is downloadEnableBankingTransactions with the body compacted onto fewer lines, and linkFintegraAccount in accounts/app.ts repeats the SimpleFin link body with a compressed payee insert."},
+"t2_reuse":"copy"
+}

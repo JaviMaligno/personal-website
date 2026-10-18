@@ -1,0 +1,11 @@
+{"id":"1d54ea5b86",
+"reuse":{"score":3,"why":"The tree already had getScheduledAmount deciding missing/number/range; the diff adds a parallel getPlannedAmount for server sites and bolts a positional op argument onto getScheduledAmount for UI sites, instead of evolving the one existing helper."},
+"duplication":{"score":3,"why":"Most midpoint copies are replaced by a shared call, but computeSchedulePreviewTransactions keeps its own missing/number/range dispatch (now calling getRangeAmount), duplicating getPlannedAmount's dispatch."},
+"placement":{"score":4,"why":"The amount rule lives in shared/schedules.ts, reusing the approx threshold from shared/rules; the API model calls it in the mapper layer."},
+"scope":{"score":4,"why":"Focused on the four steps, though the step-1 release note still describes the superseded 'furthest from zero' rule."},
+"maintainability":{"score":3,"why":"Two entry points (getScheduledAmount(amount, false, op) and getPlannedAmount(amount, op)) for the same decision plus one site with its own dispatch that ignores approximate amounts invite divergence."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts computeSchedulePreviewTransactions keeps an inline null/number/range ternary and calls only getRangeAmount, bypassing getPlannedAmount/getScheduledAmount (so approximate amounts are not planned there)."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"computeSchedulePreviewTransactions' inline dispatch reshapes getPlannedAmount's missing/number/range logic around getRangeAmount instead of calling the shared function."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":1,"where":"getScheduledAmount gains a positional op parameter after the inverse boolean (callers pass false, op); getPlannedAmount adds an isapprox branch; computeSchedulePreviewTransactions bypasses both with its own dispatch."}}

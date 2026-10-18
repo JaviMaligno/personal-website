@@ -1,0 +1,11 @@
+{"id":"a95232e507",
+"reuse":{"score":4,"why":"Routes all five planning sites through the existing getScheduledAmount and uses getApproxNumberThreshold for the tolerance, but the API model writes its own expectedScheduleAmount instead of calling the helper."},
+"duplication":{"score":3,"why":"api-models.ts expectedScheduleAmount duplicates the null/number/range resolution already in getScheduledAmount."},
+"placement":{"score":4,"why":"The rule lives in shared/schedules.ts where the tree keeps it; the API-only copy sits in api-models.ts outside that layer."},
+"scope":{"score":5,"why":"Changes are limited to amount resolution, its callers, the API field and tests."},
+"maintainability":{"score":3,"why":"The shared helper is clean, but the API copy was not updated by the later steps, so the API reports furthest-from-zero and ignores approx while the rest of the app uses the lowest value."},
+"bypasses_abstraction":{"value":true,"where":"server/api-models.ts scheduleModel.toExternal uses a private expectedScheduleAmount instead of getScheduledAmount(schedule._amount, false, schedule._amountOp)."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"expectedScheduleAmount in api-models.ts restates getScheduledAmount's dispatch under another name with an abs-comparison endpoint choice."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":1,"where":"getScheduledAmount gains an op parameter and an isapprox branch (both reasonable); api-models.ts toExternal bypasses it with its own copy, which drifts from the step 4 rule."}}

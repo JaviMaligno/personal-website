@@ -1,0 +1,95 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 45bfad7..546fc79 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -624,6 +624,70 @@ describe('schedules', () => {
+ 
+       expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-09');
+     });
++
++    it('treats a recurring MM-DD holiday as a holiday in every year', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-25',
++          frequency: 'monthly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'before',
++          holidays: ['12-25'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 25))).toBe('2020-12-24');
++    });
++
++    it('applies a recurring MM-DD holiday in a later year', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2021-12-25',
++          frequency: 'monthly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-25'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2021, 11, 25))).toBe('2021-12-27');
++    });
++
++    it('mixes MM-DD and YYYY-MM-DD holidays in one list', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-05',
++          frequency: 'weekly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-07', '2020-12-08'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 5))).toBe('2020-12-09');
++    });
++
++    it('does not treat a full date holiday as applying in other years', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2021-12-09',
++          frequency: 'weekly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'before',
++          holidays: ['2020-12-09'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2021, 11, 9))).toBe('2021-12-09');
++    });
+   });
+ 
+   describe('getNextDateAfter', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 8002321..de466df 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -339,8 +339,14 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+   return null;
+ }
+ 
++// A holiday is either a 'YYYY-MM-DD' day or a recurring 'MM-DD' day.
++function isHoliday(date: Date, holidays: readonly string[]) {
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
++}
++
+ function isNonWorkingDay(date: Date, holidays: readonly string[] = []) {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  return d.isWeekend(date) || isHoliday(date, holidays);
+ }
+ 
+ // A date on a weekend or holiday moves day by day to the nearest other day in

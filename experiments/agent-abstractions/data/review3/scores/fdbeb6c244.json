@@ -1,0 +1,11 @@
+{"id": "fdbeb6c244",
+ "reuse": {"score": 3, "why": "Five actions pass the flag to the existing shouldSetMonthBudget predicate, but copyPreviousMonth keeps its own inline checks and gets its own copy of the include-hidden logic and #fixed regex instead of using that predicate."},
+ "duplication": {"score": 3, "why": "The #fixed regex and the hidden/group-hidden exclusion now exist both in shouldSetMonthBudget and inline in copyPreviousMonth, and getBudgetData gains a second notes join mirroring getMonthActionCategories."},
+ "placement": {"score": 4, "why": "The flag is handled in the shared predicate in budget/actions.ts for most actions; only copyPreviousMonth decides it locally."},
+ "scope": {"score": 4, "why": "Focused on the flag, but also adds the #fixed exclusion to copyPreviousMonth, a behaviour change when the flag is absent that the request did not ask for."},
+ "maintainability": {"score": 3, "why": "Any future change to the month-wide exclusion rules has to be mirrored in copyPreviousMonth's hand-written condition, which already differs in form (=== 1 vs === 0 checks)."},
+ "bypasses_abstraction": {"value": true, "where": "copyPreviousMonth in packages/loot-core/src/server/budget/actions.ts re-implements the hidden/#fixed/template exclusions inline instead of calling shouldSetMonthBudget."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "copyPreviousMonth's condition restates shouldSetMonthBudget in negated, reordered form (`(!includeHiddenCategories && (hidden === 1 || group_hidden === 1)) || /#fixed/.test(...) || has_saved_templates === 1`) rather than calling it."}
+}

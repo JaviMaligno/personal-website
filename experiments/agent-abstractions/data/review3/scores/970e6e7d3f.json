@@ -1,0 +1,12 @@
+{"id": "970e6e7d3f",
+ "reuse": {"score": 4, "why": "Replaces five inline midpoint copies with a shared getExpectedAmount and reuses getApproxNumberThreshold from shared/rules for the tolerance, but builds it beside the existing getScheduledAmount instead of extending that helper."},
+ "duplication": {"score": 3, "why": "getExpectedAmount repeats getScheduledAmount's missing/number/range dispatch, so two shared helpers now encode the expected-amount rule (only one knows about approximate amounts)."},
+ "placement": {"score": 5, "why": "The rule lives in shared/schedules.ts next to getScheduledAmount and is consumed by the server layers (schedules app, forecast, budget template, API model) that previously inlined it."},
+ "scope": {"score": 4, "why": "Focused on the expected-amount rule and the API field; three release notes for one packet are slightly noisy but related."},
+ "maintainability": {"score": 3, "why": "Server paths use getExpectedAmount while desktop-client displays and balances still use getScheduledAmount, which ignores the approximate rule, so the two will disagree and a maintainer must know which to call."},
+ "bypasses_abstraction": {"value": true, "where": "getExpectedAmount in shared/schedules.ts is written alongside rather than through getScheduledAmount, and client callers (SchedulesTable, Balance, MobileSchedulesPage, SchedulesListItem) keep using getScheduledAmount without the operator."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "getExpectedAmount's 'amount == null -> 0; typeof !== number -> range' sequence restates getScheduledAmount's body with the inverse dropped and an isapprox branch added."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 5, "where": "getExpectedAmount gained the op parameter and an isapprox branch (step 3), while getScheduledAmount stays a parallel helper; desktop-client call sites SchedulesTable.tsx:328, Balance.tsx:112/114, MobileSchedulesPage.tsx:60 and SchedulesListItem.tsx:39 compute a schedule's amount through getScheduledAmount and bypass the operator-aware rule."}
+}

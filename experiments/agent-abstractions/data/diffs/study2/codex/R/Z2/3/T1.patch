@@ -1,0 +1,147 @@
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 6657f87..38d94b8 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -8,6 +8,7 @@ import { q } from '#shared/query';
+ import {
+   extractScheduleConds,
+   getNextDate,
++  getWorstCaseScheduleAmount,
+   indexPostedScheduleTransactions,
+   isScheduleOccurrencePosted,
+ } from '#shared/schedules';
+@@ -93,11 +94,11 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged ("is between") amount is scheduled at its rounded midpoint.
++  // A ranged amount is scheduled at the end furthest from zero.
+   const amount =
+     typeof amountValue === 'number'
+       ? amountValue
+-      : Math.round((amountValue.num1 + amountValue.num2) / 2);
++      : getWorstCaseScheduleAmount(amountValue.num1, amountValue.num2);
+ 
+   return {
+     id: schedule.id,
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index b82b437..6445712 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -32,6 +32,7 @@ import {
+   getNextDate,
+   getNextDateAfter,
+   getStatus,
++  getWorstCaseScheduleAmount,
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+ import type {
+@@ -151,14 +152,14 @@ function updateActions(
+   // Mirrors how `_amount` resolves: a deleted/empty amount condition value
+   // yields 0, so the action is synced to 0 too, keeping it consistent with
+   // the amount the schedule actually posts. A ranged ("is between") amount
+-  // is scheduled at its rounded midpoint.
++  // is scheduled at the end furthest from zero.
+   const amountValue = amountCond.value;
+   const amount =
+     amountValue == null
+       ? 0
+       : typeof amountValue === 'number'
+         ? amountValue
+-        : Math.round((amountValue.num1 + amountValue.num2) / 2);
++        : getWorstCaseScheduleAmount(amountValue.num1, amountValue.num2);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -592,13 +593,16 @@ async function postTransactionForSchedule({
+   }
+ 
+   // A missing amount (deleted condition) posts 0; a ranged ("is between")
+-  // amount posts its rounded midpoint.
++  // amount posts the end furthest from zero.
+   const amount =
+     schedule._amount == null
+       ? 0
+       : typeof schedule._amount === 'number'
+         ? schedule._amount
+-        : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++        : getWorstCaseScheduleAmount(
++            schedule._amount.num1,
++            schedule._amount.num2,
++          );
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..6b57fca 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -11,6 +11,7 @@ import {
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
++  getWorstCaseScheduleAmount,
+   indexPostedScheduleTransactions,
+   isCustomUpcomingLength,
+   isScheduleOccurrencePosted,
+@@ -32,6 +33,21 @@ describe('schedules', () => {
+     MockDate.reset();
+   });
+ 
++  describe('getWorstCaseScheduleAmount', () => {
++    it.each([
++      [-10100, -20000, -20000],
++      [-20000, -10100, -20000],
++      [10100, 20000, 20000],
++      [20000, 10100, 20000],
++      [-10000, 10000, 10000],
++    ])(
++      'returns the furthest endpoint for %i and %i',
++      (num1, num2, expected) => {
++        expect(getWorstCaseScheduleAmount(num1, num2)).toBe(expected);
++      },
++    );
++  });
++
+   describe('getStatus', () => {
+     it('returns completed if completed', () => {
+       expect(getStatus(todayString, true, false, '7')).toBe('completed');
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..acf73dd 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -10,6 +10,13 @@ import { q } from './query';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
++/** Return the ranged schedule amount with the greatest magnitude. */
++export function getWorstCaseScheduleAmount(num1: number, num2: number) {
++  const abs1 = Math.abs(num1);
++  const abs2 = Math.abs(num2);
++  return abs1 === abs2 ? Math.max(num1, num2) : abs1 > abs2 ? num1 : num2;
++}
++
+ // Preset token values used by UI selects. Keep labels in the UI (i18n) but
+ // centralize the canonical preset tokens so all components share the same set.
+ export const UPCOMING_LENGTH_PRESET_VALUES = [
+@@ -496,14 +503,17 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // A missing amount previews as 0; a ranged ("is between") amount as its
+-      // rounded midpoint.
++      // A missing amount previews as 0; a ranged amount uses the end furthest
++      // from zero.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amount
+-            : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++            : getWorstCaseScheduleAmount(
++                schedule._amount.num1,
++                schedule._amount.num2,
++              );
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

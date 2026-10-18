@@ -1,0 +1,237 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index cea172c..a80b079 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -5,6 +5,7 @@ import * as db from '#server/db';
+ import * as sheet from '#server/sheet';
+ 
+ import {
++  copyPreviousMonth,
+   copyUntilYearEnd,
+   coverOverbudgeted,
+   getSheetValue,
+@@ -12,6 +13,7 @@ import {
+   setBudget,
+   setCategoryCarryover,
+   setNMonthAvg,
++  setZero,
+ } from './actions';
+ import * as budget from './base';
+ 
+@@ -131,6 +133,114 @@ describe('copyUntilYearEnd', () => {
+   });
+ });
+ 
++describe('month-wide budget actions skip hidden and template categories', () => {
++  beforeEach(global.emptyDatabase());
++  afterEach(global.emptyDatabase());
++
++  async function setupDatabase() {
++    await db.insertCategoryGroup({
++      id: 'income-group',
++      name: 'Income',
++      is_income: 1,
++    });
++    await db.insertCategory({
++      id: 'income-cat',
++      name: 'Income',
++      cat_group: 'income-group',
++      is_income: 1,
++    });
++    await db.insertCategoryGroup({
++      id: 'group1',
++      name: 'group1',
++      is_income: 0,
++    });
++    await db.insertCategoryGroup({
++      id: 'hidden-group',
++      name: 'hidden-group',
++      is_income: 0,
++      hidden: 1,
++    });
++    await db.insertCategory({
++      id: 'normal',
++      name: 'normal',
++      cat_group: 'group1',
++    });
++    await db.insertCategory({
++      id: 'hidden-cat',
++      name: 'hidden-cat',
++      cat_group: 'group1',
++      hidden: 1,
++    });
++    await db.insertCategory({
++      id: 'in-hidden-group',
++      name: 'in-hidden-group',
++      cat_group: 'hidden-group',
++    });
++    await db.insertCategory({
++      id: 'templated',
++      name: 'templated',
++      cat_group: 'group1',
++      goal_def: JSON.stringify([{ type: 'fixed', amount: 100, priority: 1 }]),
++    });
++    await sheet.loadSpreadsheet(db);
++    await budget.createBudget(['2024-01', '2024-02']);
++  }
++
++  it('setZero leaves hidden, hidden group and templated categories unchanged', async () => {
++    await setupDatabase();
++    for (const category of [
++      'normal',
++      'hidden-cat',
++      'in-hidden-group',
++      'templated',
++    ]) {
++      await setBudget({ category, month: '2024-02', amount: 5000 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202402', 'budget-normal')).toBe(0);
++    expect(await getSheetValue('budget202402', 'budget-hidden-cat')).toBe(5000);
++    expect(await getSheetValue('budget202402', 'budget-in-hidden-group')).toBe(
++      5000,
++    );
++    expect(await getSheetValue('budget202402', 'budget-templated')).toBe(5000);
++  });
++
++  it('copyPreviousMonth leaves hidden, hidden group and templated categories unchanged', async () => {
++    await setupDatabase();
++    for (const category of [
++      'normal',
++      'hidden-cat',
++      'in-hidden-group',
++      'templated',
++    ]) {
++      await setBudget({ category, month: '2024-01', amount: 300 });
++    }
++    for (const category of [
++      'normal',
++      'hidden-cat',
++      'in-hidden-group',
++      'templated',
++    ]) {
++      await setBudget({ category, month: '2024-02', amount: 900 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await copyPreviousMonth({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202402', 'budget-normal')).toBe(300);
++    expect(await getSheetValue('budget202402', 'budget-hidden-cat')).toBe(900);
++    expect(await getSheetValue('budget202402', 'budget-in-hidden-group')).toBe(
++      900,
++    );
++    expect(await getSheetValue('budget202402', 'budget-templated')).toBe(900);
++  });
++});
++
+ describe('set budget average', () => {
+   let originalCurrentMonth: string | null;
+ 
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index f33e2f1..cf83f6c 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -217,24 +217,24 @@ function setCarryover(
+ 
+ type BulkBudgetCategory = Pick<db.DbCategory, 'id' | 'is_income' | 'hidden'> & {
+   group_hidden: db.DbCategoryGroup['hidden'] | null;
++  has_template: 0 | 1;
+ };
+ 
+ // The categories a bulk budget action (copy last month, set to zero, set to an
+ // N-month average) writes. Income categories take part only in tracking
+-// budgets. Hidden categories and categories in hidden groups are
+-// skipped unless `includeHidden` (set to zero writes every category).
+-// `skipMissingGroup` also skips a category whose group row does not exist: the
+-// average actions have always done so, copy last month has not.
++// budgets. Hidden categories, categories in hidden groups and categories with
++// saved budget templates are skipped. `skipMissingGroup` also skips a category
++// whose group row does not exist: the average actions have always done so,
++// copy last month and set to zero have not.
+ async function getBulkBudgetCategories({
+-  includeHidden,
+   skipMissingGroup,
+ }: {
+-  includeHidden: boolean;
+   skipMissingGroup: boolean;
+ }): Promise<BulkBudgetCategory[]> {
+   const categories = await db.all<BulkBudgetCategory>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden
++  SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden,
++    (c.goal_def IS NOT NULL) AS has_template
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0
+@@ -246,10 +246,7 @@ async function getBulkBudgetCategories({
+     if (cat.is_income === 1 && !tracking) {
+       return false;
+     }
+-    if (includeHidden) {
+-      return true;
+-    }
+-    if (cat.hidden === 1 || cat.group_hidden === 1) {
++    if (cat.hidden === 1 || cat.group_hidden === 1 || cat.has_template === 1) {
+       return false;
+     }
+     return !(skipMissingGroup && cat.group_hidden == null);
+@@ -278,7 +275,6 @@ export async function copyPreviousMonth({
+   const targets = new Set(
+     (
+       await getBulkBudgetCategories({
+-        includeHidden: false,
+         skipMissingGroup: false,
+       })
+     ).map(cat => cat.id),
+@@ -317,7 +313,6 @@ export async function copySinglePreviousMonth({
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+-    includeHidden: true,
+     skipMissingGroup: false,
+   });
+ 
+@@ -334,7 +329,6 @@ export async function set3MonthAvg({
+   month: string;
+ }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+-    includeHidden: false,
+     skipMissingGroup: true,
+   });
+ 
+@@ -361,7 +355,6 @@ export async function set12MonthAvg({
+   month: string;
+ }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+-    includeHidden: false,
+     skipMissingGroup: true,
+   });
+ 
+@@ -378,7 +371,6 @@ export async function set6MonthAvg({
+   month: string;
+ }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+-    includeHidden: false,
+     skipMissingGroup: true,
+   });
+ 
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 876c021..faf138a 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -25,8 +25,8 @@ import { RSchedule } from '#server/util/rschedule';
+ import { currentDay, dayFromDate } from '#shared/months';
+ import { q } from '#shared/query';
+ import {
+-  DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   applyWeekendRule,
++  DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   extractScheduleConds,
+   getHasTransactionsQuery,
+   getNextDate,

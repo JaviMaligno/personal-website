@@ -1,0 +1,12 @@
+{"id": "0cb7f1b945",
+ "reuse": {"score": 3, "why": "Introduces one shared pre-link guard used by every provider, but the Fintegra link and download functions are copies of the Akahu ones, and the takeover unlink re-implements unlinkAccount's field reset instead of extracting it."},
+ "duplication": {"score": 2, "why": "linkFintegraAccount duplicates the whole upgrade-or-create/sync/notify body of the other link functions, downloadFintegraTransactions is a near-verbatim copy of downloadAkahuTransactions, and the unlink column reset is copied from unlinkAccount."},
+ "placement": {"score": 3, "why": "Provider wiring sits where the other providers' does, but the guard named assertBankAccountNotLinked now also checks closed accounts and performs writes (unlinking other accounts), mixing validation and mutation under an assert name."},
+ "scope": {"score": 4, "why": "Changes match the four requests; the two desktop-client enum additions are needed for the provider type, and a release note is added."},
+ "maintainability": {"score": 2, "why": "A seventh hand-copied link function and download function deepen the per-provider copy pattern, and an assert that silently unlinks accounts is surprising to future readers."},
+ "bypasses_abstraction": {"value": true, "where": "The takeover branch in assertBankAccountNotLinked re-implements the unlink column reset of unlinkAccount (server/accounts/app.ts) instead of sharing it."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The copies (linkFintegraAccount from linkAkahuAccount, downloadFintegraTransactions from downloadAkahuTransactions, unlink reset from unlinkAccount) are plain, not disguised."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 1, "where": "assertBankAccountNotLinked gained the replaceExistingLink parameter, a closed-account/not-found branch on upgradingId and a takeover branch that unlinks the holders; the unlink reset bypasses unlinkAccount."}
+}

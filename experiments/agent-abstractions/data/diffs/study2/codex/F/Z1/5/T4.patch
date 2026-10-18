@@ -1,0 +1,147 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 32233e3..8c3ff1d 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -268,6 +268,18 @@ describe('bulk budget category exclusions', () => {
+         1234,
+       );
+     }
++
++    await setZero({ month: '2024-02', includeHiddenCategories: true });
++    await sheet.waitOnSpreadsheet();
++
++    for (const category of ['hidden-cat', 'hidden-group-cat']) {
++      expect(await getSheetValue('budget202402', `budget-${category}`)).toBe(0);
++    }
++    for (const category of ['template-cat', 'fixed-cat']) {
++      expect(await getSheetValue('budget202402', `budget-${category}`)).toBe(
++        1234,
++      );
++    }
+   });
+ });
+ 
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 56e9cb3..02e52ec 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -231,8 +231,10 @@ type BulkBudgetCategory = Pick<
+ // average actions have always done so, copy last month has not.
+ async function getBulkBudgetCategories({
+   skipMissingGroup,
++  includeHiddenCategories = false,
+ }: {
+   skipMissingGroup: boolean;
++  includeHiddenCategories?: boolean;
+ }): Promise<BulkBudgetCategory[]> {
+   const categories = await db.all<BulkBudgetCategory>(
+     `
+@@ -250,7 +252,10 @@ async function getBulkBudgetCategories({
+     if (cat.is_income === 1 && !tracking) {
+       return false;
+     }
+-    if (cat.hidden === 1 || cat.group_hidden === 1) {
++    if (
++      !includeHiddenCategories &&
++      (cat.hidden === 1 || cat.group_hidden === 1)
++    ) {
+       return false;
+     }
+     if (/(^|\s)#fixed(?![\w-])/.test(cat.group_notes ?? '')) {
+@@ -285,8 +290,10 @@ function averageToBudget(
+ 
+ export async function copyPreviousMonth({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+@@ -295,6 +302,7 @@ export async function copyPreviousMonth({
+     (
+       await getBulkBudgetCategories({
+         skipMissingGroup: false,
++        includeHiddenCategories,
+       })
+     ).map(cat => cat.id),
+   );
+@@ -330,9 +338,16 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
++export async function setZero({
++  month,
++  includeHiddenCategories,
++}: {
++  month: string;
++  includeHiddenCategories?: boolean;
++}): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+     skipMissingGroup: false,
++    includeHiddenCategories,
+   });
+ 
+   await batchMessages(async () => {
+@@ -344,11 +359,14 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function setLastMonthSpending({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+     skipMissingGroup: false,
++    includeHiddenCategories,
+   });
+   const previousMonth = monthUtils.prevMonth(month);
+ 
+@@ -369,11 +387,14 @@ export async function setLastMonthSpending({
+ 
+ export async function set3MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+     skipMissingGroup: true,
++    includeHiddenCategories,
+   });
+ 
+   await batchMessages(async () => {
+@@ -395,11 +416,14 @@ export async function set3MonthAvg({
+ 
+ export async function set12MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+     skipMissingGroup: true,
++    includeHiddenCategories,
+   });
+ 
+   await batchMessages(async () => {
+@@ -411,11 +435,14 @@ export async function set12MonthAvg({
+ 
+ export async function set6MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+     skipMissingGroup: true,
++    includeHiddenCategories,
+   });
+ 
+   await batchMessages(async () => {

@@ -1,0 +1,11 @@
+{"id":"767487fbf8",
+"reuse":{"score":3,"why":"Introduces a shared selection and predicate used by four actions, but copyPreviousMonth keeps its own condition instead of calling shouldSetMonthBudget even though its rows carry the same fields."},
+"duplication":{"score":2,"why":"The saved-template SQL CASE expression is written twice (getBudgetData and getMonthActionCategories), and the hidden/group-hidden/template exclusion is expressed both in shouldSetMonthBudget and inline in copyPreviousMonth."},
+"placement":{"score":4,"why":"The selection and predicate sit in budget/actions.ts beside the actions that use them, which is where the tree keeps this logic."},
+"scope":{"score":5,"why":"Only the month-wide actions, their category query and one test change."},
+"maintainability":{"score":3,"why":"Consolidating four of the actions is an improvement, but a change to the exclusion rule still has to be made in two SQL expressions and two TypeScript conditions."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth in server/budget/actions.ts tests hidden/group_hidden/has_saved_templates itself instead of using the new shouldSetMonthBudget predicate."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The exclusion rule appears as shouldSetMonthBudget (=== 0 conjunction) and as copyPreviousMonth's (=== 1 disjunction) early return, the same rule reshaped; the has_saved_templates CASE is repeated across two queries."},
+"one_place":{"value":false,"where":"The rule is split between shouldSetMonthBudget/getMonthActionCategories (setZero, set3/6/12MonthAvg) and copyPreviousMonth's inline check fed by getBudgetData's separate CASE expression."}}

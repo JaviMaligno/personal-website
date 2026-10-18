@@ -1,0 +1,58 @@
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 096e29c..aa8b84d 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -97,7 +97,11 @@ export function normalizeSchedule(
+   // A ranged amount is scheduled at the endpoint furthest from zero.
+   const amount =
+     typeof amountValue === 'number'
+-      ? amountValue
++      ? getScheduledAmount(
++          amountValue,
++          false,
++          conditions.amount?.op === 'isapprox',
++        )
+       : getScheduledAmount(amountValue);
+ 
+   return {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 0f61fe9..b4e7abc 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -36,6 +36,13 @@ describe('schedules', () => {
+       expect(getScheduledAmount(123)).toBe(123);
+       expect(getScheduledAmount({ num1: -101, num2: -200 }, true)).toBe(200);
+     });
++
++    it('uses the approximate tolerance endpoint furthest from zero', () => {
++      expect(getScheduledAmount(-10000, false, true)).toBe(-10750);
++      expect(getScheduledAmount(10000, false, true)).toBe(10750);
++      expect(getScheduledAmount(-1234, false, true)).toBe(-1327);
++      expect(getScheduledAmount(10000)).toBe(10000);
++    });
+   });
+ 
+   const today = new Date(2017, 0, 1); // Global date when testing is set to 2017-01-01 per monthUtils.currentDay()
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index df4c6cc..3e5a731 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -356,13 +356,17 @@ export function getDateWithSkippedWeekend(
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
++  approximate: boolean = false,
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+   if (amount == null) return 0;
+ 
+   if (typeof amount === 'number') {
+-    return inverse ? -amount : amount;
++    const expected = approximate
++      ? amount + Math.sign(amount) * Math.round(Math.abs(amount) * 0.075)
++      : amount;
++    return inverse ? -expected : expected;
+   }
+   const worstCase =
+     Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;

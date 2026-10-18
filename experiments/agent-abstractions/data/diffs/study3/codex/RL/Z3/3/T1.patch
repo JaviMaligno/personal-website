@@ -1,0 +1,152 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 1ca2951..a27b4c3 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -1786,11 +1786,46 @@ app.method('account-update', mutator(undoable(updateAccount)));
+ app.method('accounts-get', getAccounts);
+ app.method('account-balance', getAccountBalance);
+ app.method('account-properties', getAccountProperties);
+-app.method('gocardless-accounts-link', linkGoCardlessAccount);
+-app.method('simplefin-accounts-link', linkSimpleFinAccount);
+-app.method('pluggyai-accounts-link', linkPluggyAiAccount);
+-app.method('akahu-accounts-link', linkAkahuAccount);
+-app.method('enablebanking-accounts-link', linkEnableBankingAccount);
++app.method('gocardless-accounts-link', async params => {
++  await link.ensureAccountNotLinked(
++    'goCardless',
++    params.account.account_id,
++    params.upgradingId,
++  );
++  return linkGoCardlessAccount(params);
++});
++app.method('simplefin-accounts-link', async params => {
++  await link.ensureAccountNotLinked(
++    'simpleFin',
++    params.externalAccount.account_id,
++    params.upgradingId,
++  );
++  return linkSimpleFinAccount(params);
++});
++app.method('pluggyai-accounts-link', async params => {
++  await link.ensureAccountNotLinked(
++    'pluggyai',
++    params.externalAccount.account_id,
++    params.upgradingId,
++  );
++  return linkPluggyAiAccount(params);
++});
++app.method('akahu-accounts-link', async params => {
++  await link.ensureAccountNotLinked(
++    'akahu',
++    params.externalAccount.account_id,
++    params.upgradingId,
++  );
++  return linkAkahuAccount(params);
++});
++app.method('enablebanking-accounts-link', async params => {
++  await link.ensureAccountNotLinked(
++    'enableBanking',
++    params.externalAccount.account_id,
++    params.upgradingId,
++  );
++  return linkEnableBankingAccount(params);
++});
+ app.method('account-create', mutator(undoable(createAccount)));
+ app.method('account-close', mutator(closeAccount));
+ app.method('account-reopen', mutator(undoable(reopenAccount)));
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index 4d5667b..abb7c11 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -1,7 +1,7 @@
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ 
+-import { findOrCreateBank } from './link';
++import { ensureAccountNotLinked, findOrCreateBank } from './link';
+ 
+ beforeEach(async () => {
+   await global.emptyDatabase()();
+@@ -87,3 +87,53 @@ describe('findOrCreateBank', () => {
+     expect(await getBanks()).toHaveLength(1);
+   });
+ });
++
++describe('ensureAccountNotLinked', () => {
++  it('rejects a second link through the same provider', async () => {
++    await db.insertAccount({
++      id: 'existing',
++      name: 'Checking',
++      account_id: 'provider-account',
++      account_sync_source: 'simpleFin',
++    });
++
++    await expect(
++      ensureAccountNotLinked('simpleFin', 'provider-account'),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++  });
++
++  it('allows the existing account to be linked again', async () => {
++    await db.insertAccount({
++      id: 'existing',
++      name: 'Checking',
++      account_id: 'provider-account',
++      account_sync_source: 'simpleFin',
++    });
++
++    await expect(
++      ensureAccountNotLinked('simpleFin', 'provider-account', 'existing'),
++    ).resolves.toBeUndefined();
++  });
++
++  it('ignores deleted accounts and links from other providers', async () => {
++    await db.insertAccount({
++      id: 'deleted',
++      name: 'Deleted',
++      account_id: 'provider-account',
++      account_sync_source: 'simpleFin',
++    });
++    await db.update('accounts', { id: 'deleted', tombstone: 1 });
++    await db.insertAccount({
++      id: 'other-provider',
++      name: 'Other provider',
++      account_id: 'provider-account',
++      account_sync_source: 'goCardless',
++    });
++
++    await expect(
++      ensureAccountNotLinked('simpleFin', 'provider-account'),
++    ).resolves.toBeUndefined();
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 19f9163..4cf21a4 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -5,6 +5,24 @@ import * as db from '#server/db';
+ 
+ type Institution = string | { name?: string | null };
+ 
++export async function ensureAccountNotLinked(
++  provider: string,
++  providerAccountId: string,
++  upgradingId?: string,
++): Promise<void> {
++  const existingAccount = await db.first<{ id: string }>(
++    `SELECT id FROM accounts
++     WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0
++       AND (? IS NULL OR id != ?)
++     LIMIT 1`,
++    [provider, providerAccountId, upgradingId ?? null, upgradingId ?? null],
++  );
++
++  if (existingAccount) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ function getInstitutionName(institution: Institution | null | undefined) {
+   if (typeof institution === 'string') {
+     return institution;

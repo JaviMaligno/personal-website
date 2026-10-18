@@ -1,0 +1,12 @@
+{"id":"e73c16b8a7",
+"reuse":{"score":4,"why":"Replaces the scattered getDateWithSkippedWeekend ternaries with shared applyWeekendRule/applyWeekendRuleToDay, isNonWorkingDay and skipsWeekendOccurrences, and every consumer (getNextDate, getUpcomingDates, getDatesInRange, schedule-template) uses them."},
+"duplication":{"score":2,"why":"The daily-skip dispatch (skipsWeekendOccurrences, then filter by isNonWorkingDay, else applyWeekendRule) is rewritten at four call sites, and the `7 + holidays.length` look-ahead heuristic appears in both getNextDate and getUpcomingDates."},
+"placement":{"score":4,"why":"Rule helpers live in shared/schedules.ts where the tree keeps schedule date logic; the new handler sits beside getUpcomingDates."},
+"scope":{"score":4,"why":"Changes follow the five steps; rule-utils gains frequency/holidays in the schedule data, which the shared predicate needs."},
+"maintainability":{"score":3,"why":"Helpers are clear, but the shared definition covers only the move, so a change to the daily-skip rule or the look-ahead still has to be made at four sites with differently shaped code."},
+"bypasses_abstraction":{"value":true,"where":"schedule-template.ts createScheduleList (own `skipsWeekendDays ? baseDate : applyWeekendRuleToDay(...)` plus its own isNonWorkingDay check) and getNextDate (`!noSkipWeekend && !skipsWeekendDays` guard around applyWeekendRule) decide part of the rule locally."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The same skip-or-move dispatch is reshaped per site: pickDate in getNextDate, a .filter in getUpcomingDates and getDatesInRange, and resolveDate plus a guarded accumulation in schedule-template.ts."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":4,"where":"applyWeekendRule/applyWeekendRuleToDay/getDateWithSkippedWeekend gain a holidays parameter; the daily-schedule exception is never put inside the shared rule, so getNextDate, getUpcomingDates, getDatesInRange and createScheduleList each re-implement it around the helper."}
+}

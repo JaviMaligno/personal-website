@@ -1,0 +1,115 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 63fd79c..8b189c8 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -60,13 +60,7 @@ async function createScheduleList(
+     const conditions = rule.serialize().conditions;
+     const { date: dateConditions, amount: amountCondition } =
+       extractScheduleConds(conditions);
+-    // Templates round the range's sum before halving; the half unit this can
+-    // leave is rounded after the adjustment below.
+-    let scheduleAmount = getScheduledAmount(
+-      amountCondition.value,
+-      false,
+-      'halfOfRoundedSum',
+-    );
++    let scheduleAmount = getScheduledAmount(amountCondition.value);
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+       switch (template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 876c021..faf138a 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -25,8 +25,8 @@ import { RSchedule } from '#server/util/rschedule';
+ import { currentDay, dayFromDate } from '#shared/months';
+ import { q } from '#shared/query';
+ import {
+-  DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   applyWeekendRule,
++  DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   extractScheduleConds,
+   getHasTransactionsQuery,
+   getNextDate,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..77ab1c9 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -8,6 +8,7 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
++  getScheduledAmount,
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+@@ -642,4 +643,35 @@ describe('schedules', () => {
+       expect(isCustomUpcomingLength(undefined)).toBe(false);
+     });
+   });
++
++  describe('getScheduledAmount', () => {
++    it('returns a single amount unchanged', () => {
++      expect(getScheduledAmount(-10000)).toBe(-10000);
++    });
++
++    it('expects a negative range at the end furthest from zero', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
++    });
++
++    it('expects a negative range at the furthest end regardless of entry order', () => {
++      expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
++    });
++
++    it('expects a positive range at the end furthest from zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    });
++
++    it('expects a range spanning zero at the end with the larger magnitude', () => {
++      expect(getScheduledAmount({ num1: -5000, num2: 12000 })).toBe(12000);
++      expect(getScheduledAmount({ num1: 12000, num2: -5000 })).toBe(12000);
++    });
++
++    it('inverts the expected amount when requested', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 }, true)).toBe(
++        20000,
++      );
++      expect(getScheduledAmount(-10000, true)).toBe(10000);
++    });
++  });
+ });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 67871e6..1ca7e5b 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -378,12 +378,11 @@ export function applyWeekendRuleToDay(
+ }
+ 
+ // The amount a schedule is expected to post. A ranged ("is between") amount is
+-// scheduled at its midpoint: rounded ('roundedMidpoint'), or half of the rounded
+-// sum ('halfOfRoundedSum', budget templates), which can leave a half unit.
++// expected at the end of the range furthest from zero, so variable bills are
++// planned for their worst case.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+-  rangeRounding: 'roundedMidpoint' | 'halfOfRoundedSum' = 'roundedMidpoint',
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+@@ -392,11 +391,9 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const midpoint =
+-    rangeRounding === 'halfOfRoundedSum'
+-      ? Math.round(amount.num1 + amount.num2) / 2
+-      : Math.round((amount.num1 + amount.num2) / 2);
+-  return inverse ? -midpoint : midpoint;
++  const furthestFromZero =
++    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  return inverse ? -furthestFromZero : furthestFromZero;
+ }
+ 
+ export function getUpcomingDays(

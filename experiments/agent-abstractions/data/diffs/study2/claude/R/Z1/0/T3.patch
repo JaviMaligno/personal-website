@@ -1,0 +1,172 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 07e3e3f..97ded8a 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -68,6 +68,7 @@ function monthFromDbMonth(month: number): string {
+ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
++  cat_group?: string | null;
+   group_hidden: 1 | 0;
+   goal_def?: string | null;
+   category: string;
+@@ -83,10 +84,10 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      > & { goal_def?: string | null }
++      > & { goal_def?: string | null; cat_group?: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, c.cat_group, g.hidden AS group_hidden
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -112,6 +113,21 @@ function hasSavedTemplates(goalDef: string | null | undefined): boolean {
+   return goalDef != null && goalDef !== '' && goalDef.trim() !== '[]';
+ }
+ 
++// Groups tagged `#fixed` in their notes are skipped by month-wide actions.
++async function getFixedGroupIds(): Promise<Set<string>> {
++  const rows = await db.all<{ id: string; note: string | null }>(
++    `SELECT g.id, n.note
++     FROM category_groups g
++     JOIN notes n ON n.id = g.id
++     WHERE g.tombstone = 0 AND n.note LIKE '%#fixed%'`,
++  );
++  return new Set(
++    rows
++      .filter(r => /(^|\s)#fixed(?![\w-])/i.test(r.note ?? ''))
++      .map(r => r.id),
++  );
++}
++
+ // TODO: Valid month format in all the functions below
+ 
+ export function getBudget({
+@@ -230,8 +246,13 @@ export async function copyPreviousMonth({
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
+ 
++  const fixedGroups = await getFixedGroupIds();
++
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
++      if (prevBudget.cat_group && fixedGroups.has(prevBudget.cat_group)) {
++        return;
++      }
+       if (prevBudget.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+@@ -270,15 +291,20 @@ export async function copySinglePreviousMonth({
+ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+-  SELECT c.*
++  SELECT c.*, c.cat_group AS "group"
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+ 
++  const fixedGroups = await getFixedGroupIds();
++
+   await batchMessages(async () => {
+     categories.forEach(cat => {
++      if (fixedGroups.has(cat.group)) {
++        return;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+@@ -297,7 +323,7 @@ export async function setLastMonthSpending({
+ }): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+-  SELECT c.*
++  SELECT c.*, c.cat_group AS "group"
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+@@ -317,8 +343,13 @@ export async function setLastMonthSpending({
+   );
+   const sums = new Map(rows.map(row => [row.category, row.amount || 0]));
+ 
++  const fixedGroups = await getFixedGroupIds();
++
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedGroups.has(cat.group)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+@@ -343,15 +374,20 @@ export async function set3MonthAvg({
+ }): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+-  SELECT c.*
++  SELECT c.*, c.cat_group AS "group"
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+ 
++  const fixedGroups = await getFixedGroupIds();
++
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedGroups.has(cat.group)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+@@ -381,15 +417,20 @@ export async function set12MonthAvg({
+ }): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+-  SELECT c.*
++  SELECT c.*, c.cat_group AS "group"
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+ 
++  const fixedGroups = await getFixedGroupIds();
++
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedGroups.has(cat.group)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+@@ -408,15 +449,20 @@ export async function set6MonthAvg({
+ }): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+-  SELECT c.*
++  SELECT c.*, c.cat_group AS "group"
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+ 
++  const fixedGroups = await getFixedGroupIds();
++
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedGroups.has(cat.group)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }

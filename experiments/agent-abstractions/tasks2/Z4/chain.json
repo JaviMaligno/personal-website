@@ -1,0 +1,78 @@
+{
+  "zone": "Z4",
+  "logic": "Weekend adjustment of schedule dates: whether a schedule occurrence is moved off a weekend, in which direction, and (from T1 on) whether it is dropped instead.",
+  "zone_files": {
+    "R": [
+      "shared/schedules.ts",
+      "server/schedules/app.ts",
+      "server/budget/schedule-template.ts"
+    ],
+    "F": [
+      "shared/schedules.ts",
+      "server/schedules/app.ts",
+      "server/budget/schedule-template.ts"
+    ]
+  },
+  "f_comment_fact": {
+    "fact": "F's WeekendRule comment: the recurrence config calls the weekend mode weekendSolveMode, the parsed schedule weekendSolve (two types / call sites in R, no prose); reading the wrong one gives undefined, which getDateWithSkippedWeekend rejects on a weekend day.",
+    "basis": "true when the step's new behaviour includes a date moved off a weekend or holiday in the configured direction, asserted by the step's hidden tests, so code the agent writes for the step has to read the mode from the right field. T1: false, the new behaviour drops weekend days of daily schedules 'whichever direction the schedule is set to'; the mode appears only in regression assertions (weekly schedules keep moving), which untouched code already passes. T2: true, the new dates-in-range handler is written from scratch and its tests assert moves in both directions ('after' and 'before'). T3: true, holidays are moved 'like weekend days' and the tests assert 'after' and 'before' moves (next date, upcoming dates, dates in range). T4: true, month-and-day holidays are moved and the tests assert 'after' and 'before' moves (next date, upcoming dates).",
+    "rule": "Per step, depends_on_f_comment_fact is true when the step's hidden tests depend on a fact stated only in F's doc comments (docs/study2-refactor-review-independent.md, 'Do F's doc comments give F an unfair advantage?'); decided by reading the hidden tests, before any pilot run (spec amendment 2026-10-08, item 10).",
+    "decided": "2026-10-08"
+  },
+  "steps": [
+    {
+      "id": "T1",
+      "kind": "rule",
+      "depends_on_f_comment_fact": false,
+      "title": "Daily schedules skip weekend occurrences instead of moving them",
+      "consumers": ["next-date", "upcoming-dates"]
+    },
+    {
+      "id": "T2",
+      "kind": "consumer",
+      "depends_on_f_comment_fact": true,
+      "title": "New handler: the days a schedule falls on within a period",
+      "consumers": ["dates-in-range"]
+    },
+    {
+      "id": "T3",
+      "kind": "rule",
+      "depends_on_f_comment_fact": true,
+      "title": "Holidays listed in the recurring configuration are treated like weekend days",
+      "consumers": ["next-date", "upcoming-dates", "dates-in-range"]
+    },
+    {
+      "id": "T4",
+      "kind": "build",
+      "depends_on_f_comment_fact": true,
+      "title": "Holidays may be given as MM-DD, meaning that day every year",
+      "consumers": ["next-date", "upcoming-dates", "dates-in-range"]
+    }
+  ],
+  "consumer_sites": {
+    "next-date": {
+      "observed_through": "schedule/create handler, then the schedule's next_date; and budget/dry-run-category-template on a schedule template (merged consumer, see note)",
+      "R": "shared/schedules.ts getNextDate; server/budget/schedule-template.ts createScheduleList (two copies: first occurrence, following occurrences), which calls getNextDate(..., true)",
+      "F": "shared/schedules.ts getNextDate -> applyWeekendRule; server/budget/schedule-template.ts createScheduleList -> applyWeekendRuleToDay (two calls), which calls getNextDate(..., true)",
+      "merged": ["next-date", "budget-template"],
+      "note": "Spec amendment 2026-10-08, item 8 (before any pilot run): the budget-template consumer is merged into next-date at T1, T3 and T4 (its test maps to next-date in consumers.json), so Z4 has 2 pre-existing consumers (next-date, upcoming-dates). The merged consumer is updated only when both its next-date test and its template test pass. Why: the template is not independent of the next-date site. It walks occurrences with getNextDate(..., true), so a change inside getNextDate can make the template test pass with the template's own copies untouched; the blind R reference of T1 does exactly that (it touches only rule-utils.ts, schedules/app.ts and shared/schedules.ts; tasks2/Z4/mutant_check.json). The earlier note here ('this consumer does not depend on the next-date site') held for the first reference, which updated the template's copies, but not for the blind one, so a separate budget-template consumer would count a tree as covering the template through the next-date edit alone. The template test still has to pass for next-date to count as updated, so a tree whose template is wrong is not credited. The family stays in the statement leak check (aa.chains.CONSUMER_TERMS), as a statement naming templates still points at that code."
+    },
+    "upcoming-dates": {
+      "observed_through": "schedule/get-upcoming-dates handler",
+      "R": "server/schedules/app.ts getUpcomingDates",
+      "F": "server/schedules/app.ts getUpcomingDates -> applyWeekendRule"
+    },
+    "dates-in-range": {
+      "observed_through": "schedule/get-dates-in-range handler (added by the agent at T2)",
+      "R": "written by the agent at T2",
+      "F": "written by the agent at T2"
+    }
+  },
+  "t2_reuse": {
+    "helpers": {
+      "F": ["applyWeekendRule", "applyWeekendRuleToDay"],
+      "R": ["getDateWithSkippedWeekend", "getNextDate", "getNextDateAfter", "getUpcomingDates"]
+    },
+    "markers": ["skipWeekend", "weekendSolve", "isWeekend", "nextMonday", "previousFriday", "getDay\\(\\)"]
+  }
+}

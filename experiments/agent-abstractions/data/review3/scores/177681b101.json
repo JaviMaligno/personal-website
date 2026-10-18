@@ -1,0 +1,12 @@
+{"id": "177681b101",
+ "reuse": {"score": 4, "why": "The new last-month action reuses getAverageFillCategories, shouldFillCategory, averageToBudgetAmount, getSheetValue and the mutator/undoable registration, but setZero re-writes the category query instead of reusing the shared loader."},
+ "duplication": {"score": 3, "why": "setZero inlines the same categories/category_groups/notes SQL as getAverageFillCategories, and the notes join is also repeated in getBudgetData, so the data feeding the rule is assembled in three places."},
+ "placement": {"score": 4, "why": "The selection rule, template and #fixed checks live in budget/actions.ts beside the actions that use them, and the new method is registered in budget/app.ts like its siblings."},
+ "scope": {"score": 4, "why": "Changes stay on month-wide actions, their data queries, the DB view type and release notes."},
+ "maintainability": {"score": 3, "why": "One shouldFillCategory owns the rule with a clear comment, but helpers named for averages (getAverageFillCategories, averageToBudgetAmount) now serve setLastMonthSpending too, and the triplicated query means a future rule input must be added in several SQL strings."},
+ "bypasses_abstraction": {"value": true, "where": "server/budget/actions.ts setZero runs its own copy of the getAverageFillCategories SQL rather than calling the loader (with includeHidden passed through)."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The setZero query is an open copy of the loader's SQL, not renamed or reshaped."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 1, "where": "shouldFillCategory and getAverageFillCategories gained the includeHiddenCategories parameter (threaded through every action); the template and #fixed checks apply to all callers rather than special cases; setZero bypasses the shared loader with its own query, and the average-named helpers are stretched to the last-month action."}
+}

@@ -1,0 +1,145 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+index cfc1bcd..b7a6366 100644
+--- a/packages/loot-core/src/server/api-models.test.ts
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -28,15 +28,19 @@ describe('scheduleModel.toExternal expectedAmount', () => {
+     );
+   });
+ 
+-  it('gives the end of a range furthest from zero', () => {
++  it('gives the lowest allowed value of a range', () => {
+     expect(
+       scheduleModel.toExternal(makeSchedule({ num1: -10100, num2: -20000 }))
+         .expectedAmount,
+     ).toBe(-20000);
++    expect(
++      scheduleModel.toExternal(makeSchedule({ num1: 3000, num2: 1000 }))
++        .expectedAmount,
++    ).toBe(1000);
+     expect(
+       scheduleModel.toExternal(makeSchedule({ num1: 3000, num2: -1000 }))
+         .expectedAmount,
+-    ).toBe(3000);
++    ).toBe(-1000);
+   });
+ 
+   it('gives 0 when the schedule has no amount', () => {
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index bb34207..b7465c1 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,3 +1,4 @@
++import { getScheduledAmount } from '#shared/schedules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -241,20 +242,6 @@ export type APIScheduleListEntity = APIScheduleEntity & {
+   expectedAmount: number;
+ };
+ 
+-function getExpectedScheduleAmount(
+-  amount: ScheduleEntity['_amount'] | null | undefined,
+-): number {
+-  if (amount == null) {
+-    return 0;
+-  }
+-  if (typeof amount === 'number') {
+-    return amount;
+-  }
+-  return Math.abs(amount.num1) >= Math.abs(amount.num2)
+-    ? amount.num1
+-    : amount.num2;
+-}
+-
+ export const scheduleModel = {
+   toExternal(schedule: ScheduleEntity): APIScheduleListEntity {
+     return {
+@@ -269,7 +256,7 @@ export const scheduleModel = {
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+-      expectedAmount: getExpectedScheduleAmount(schedule._amount),
++      expectedAmount: getScheduledAmount(schedule._amount, schedule._amountOp),
+     };
+   },
+   //just an update
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 2fc1b96..8b6961a 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -625,23 +625,31 @@ describe('schedules', () => {
+       expect(getScheduledAmount(null as unknown as number)).toBe(0);
+     });
+ 
+-    it('expects a ranged amount at the end furthest from zero', () => {
++    it('expects money going out at the end of a range furthest from zero', () => {
+       expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
+     });
+ 
+-    it('inverts the furthest end of a ranged amount', () => {
++    it('expects money coming in at the end of a range closest to zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    });
++
++    it('expects a range spanning zero at its negative end', () => {
++      expect(getScheduledAmount({ num1: -30000, num2: 50000 })).toBe(-30000);
++      expect(getScheduledAmount({ num1: 50000, num2: -30000 })).toBe(-30000);
++    });
++
++    it('inverts the expected end of a ranged amount', () => {
+       expect(
+         getScheduledAmount({ num1: -10100, num2: -20000 }, null, true),
+       ).toBe(20000);
+     });
+ 
+-    it('expects an approximate amount at the end of its tolerance furthest from zero', () => {
++    it('expects an approximate amount at the low end of its tolerance', () => {
+       expect(getScheduledAmount(-10000, 'isapprox')).toBe(-10750);
+-      expect(getScheduledAmount(10000, 'isapprox')).toBe(10750);
+       expect(getScheduledAmount(-1234, 'isapprox')).toBe(-1327);
++      expect(getScheduledAmount(10000, 'isapprox')).toBe(9250);
+       expect(getScheduledAmount(-10000, 'isapprox', true)).toBe(10750);
+     });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 53f9092..bbf4234 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -378,10 +378,11 @@ export function applyWeekendRuleToDay(
+     : day;
+ }
+ 
+-// The amount a schedule is expected to post. A ranged ("is between") amount is
+-// expected at the end of the range furthest from zero, and an approximate
+-// ("is approximately") amount at the end of its tolerance furthest from zero,
+-// so planning covers the worst case regardless of how the amount was entered.
++// The amount a schedule is expected to post, always its lowest allowed value:
++// a ranged ("is between") amount is expected at the lower end of its range, and
++// an approximate ("is approximately") amount at the lower end of its tolerance.
++// For money going out that is the end furthest from zero; for money coming in
++// it is the end closest to zero.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   op: string | null = null,
+@@ -393,14 +394,11 @@ export function getScheduledAmount(
+ 
+   if (typeof amount === 'number') {
+     const expected =
+-      op === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
+-        : amount;
++      op === 'isapprox' ? amount - getApproxNumberThreshold(amount) : amount;
+     return inverse ? -expected : expected;
+   }
+-  const worstCase =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
+-  return inverse ? -worstCase : worstCase;
++  const lowest = Math.min(amount.num1, amount.num2);
++  return inverse ? -lowest : lowest;
+ }
+ 
+ export function getUpcomingDays(

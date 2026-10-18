@@ -1,0 +1,11 @@
+{"id":"8597167ab1",
+"reuse":{"score":3,"why":"Introduces getDateWithWeekendRule and isWeekendOrHoliday and routes the move rule through them, but the daily-skip rule is not part of the shared definition, so each consumer re-implements it."},
+"duplication":{"score":2,"why":"The 'daily + skipWeekend => drop weekend/holiday occurrences' rule is written separately in getNextDate, getUpcomingDates, getDatesInRange and schedule-template, and the holidays Set is rebuilt in four places."},
+"placement":{"score":3,"why":"Weekend/holiday primitives live in shared/schedules.ts, but the frequency-dependent part of the rule is decided at the server call sites (app.ts handlers, budget template)."},
+"scope":{"score":4,"why":"Changes stay within schedule date logic, the new handler, types and tests; the rule-utils data additions are needed to carry frequency and holidays."},
+"maintainability":{"score":2,"why":"A future change to how daily schedules or holidays are treated has to be repeated in four differently shaped branches, and schedule-template passes skipWeekend into a helper while also guarding on it outside."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates and getDatesInRange (own daily-skip loops with isWeekendOrHoliday), server/budget/schedule-template.ts createScheduleList (own skipWeekend && !isDaily ternary around getDateWithWeekendRule)"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"the daily-skip rule appears as a findWeekdayOccurrence closure in getNextDate, a push loop in getUpcomingDates, a continue branch in getDatesInRange and a noSkipWeekend toggle in schedule-template"},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":3,"where":"holidays added to getDateWithSkippedWeekend and getDateWithWeekendRule; a daily special-case branch added inside shared getNextDate; getUpcomingDates, getDatesInRange and schedule-template decide the daily rule themselves"}}

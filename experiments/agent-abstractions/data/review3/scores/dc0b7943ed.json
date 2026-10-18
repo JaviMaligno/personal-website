@@ -1,0 +1,12 @@
+{"id":"dc0b7943ed",
+"reuse":{"score":3,"why":"Takes its categories from the shared getMonthActionCategories and registers through the usual mutator(undoable(...)) path, but computes last month's spending with its own transactions SQL instead of reading the per-month sum-amount-<category> sheet cell the averages already use."},
+"duplication":{"score":3,"why":"It repeats the per-site income check and the expense sign flip that the other month-wide actions write inline, and its SQL re-derives a per-category monthly total the budget sheet already maintains."},
+"placement":{"score":4,"why":"The action sits in budget/actions.ts and is registered in budget/app.ts next to its siblings; a raw transactions aggregation in the actions layer is out of keeping with how the other actions read sheet values."},
+"scope":{"score":5,"why":"Only the new action, its handler registration and tests are added."},
+"maintainability":{"score":3,"why":"Category selection stays shared, but a second definition of a category's monthly spending (own offbudget and alive-transaction filtering) can drift from the sheet's sum-amount."},
+"bypasses_abstraction":{"value":true,"where":"setLastMonthSpending queries v_transactions_internal_alive directly instead of using the sheet's sum-amount-<category> value (via getSheetValue) that getCategoryAverage reads."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The monthly spending total that the sheet's sum-amount cell provides is re-derived as a GROUP BY SQL query in setLastMonthSpending."},
+"t2_reuse":"helper"
+}

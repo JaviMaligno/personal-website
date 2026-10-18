@@ -1,0 +1,98 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..ba7471d 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -465,6 +465,39 @@ describe('schedules', () => {
+   });
+ 
+   describe('getNextDate', () => {
++    it.each(['before', 'after'] as const)(
++      'skips daily weekend occurrences when solving %s',
++      weekendSolveMode => {
++        const dateCond = {
++          op: 'isapprox',
++          value: {
++            start: '2021-05-15', // Saturday
++            frequency: 'daily',
++            skipWeekend: true,
++            weekendSolveMode,
++          },
++        };
++
++        expect(getNextDate(dateCond, new Date(2021, 4, 15))).toBe(
++          '2021-05-17',
++        );
++      },
++    );
++
++    it('skips daily weekend occurrences without returning a date before start', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2021-05-16', // Sunday
++          frequency: 'daily',
++          skipWeekend: true,
++          weekendSolveMode: 'before',
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2021, 4, 16))).toBe('2021-05-17');
++    });
++
+     it('returns last occurrence for a recurring schedule with an end date in the past', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..39152c6 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -293,21 +293,42 @@ export function getNextDate(
+   if (value.type === 'date') {
+     return value.date;
+   } else if (value.type === 'recur') {
+-    let dates = value.schedule.occurrences({ start, take: 1 }).toArray();
++    const skipDailyWeekend =
++      dateCond.value?.frequency === 'daily' &&
++      value.schedule.data.skipWeekend &&
++      !noSkipWeekend;
++    // rschedule may include the day before `start` for all-day schedules.
++    // Allow for that boundary occurrence plus both weekend days.
++    const take = skipDailyWeekend ? 4 : 1;
++    let dates = value.schedule.occurrences({ start, take }).toArray();
+ 
+     if (dates.length === 0) {
+       // Could be a schedule with limited occurrences, so we try to
+       // find the last occurrence
+-      dates = value.schedule.occurrences({ reverse: true, take: 1 }).toArray();
++      dates = value.schedule
++        .occurrences({ reverse: true, take })
++        .toArray();
+     }
+ 
+     if (dates.length > 0) {
+-      let date = dates[0].date;
++      let date = skipDailyWeekend
++        ? dates.find(
++            occurrence =>
++              monthUtils.dayFromDate(occurrence.date) >=
++                dateCond.value.start &&
++              !d.isWeekend(occurrence.date),
++          )?.date
++        : dates[0].date;
++      if (date == null) {
++        return null;
++      }
+       if (value.schedule.data.skipWeekend && !noSkipWeekend) {
+-        date = getDateWithSkippedWeekend(
+-          date,
+-          value.schedule.data.weekendSolve,
+-        );
++        if (!skipDailyWeekend) {
++          date = getDateWithSkippedWeekend(
++            date,
++            value.schedule.data.weekendSolve,
++          );
++        }
+       }
+       return monthUtils.dayFromDate(date);
+     }

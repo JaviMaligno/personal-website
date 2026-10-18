@@ -1,0 +1,66 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..34453c2 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -14,6 +14,7 @@ import {
+   indexPostedScheduleTransactions,
+   isCustomUpcomingLength,
+   isScheduleOccurrencePosted,
++  isWeekendOrHoliday,
+   UPCOMING_LENGTH_PRESET_LABELS,
+   UPCOMING_LENGTH_PRESET_OPTIONS,
+   UPCOMING_LENGTH_PRESET_VALUES,
+@@ -643,3 +644,17 @@ describe('schedules', () => {
+     });
+   });
+ });
++
++describe('isWeekendOrHoliday recurring holidays', () => {
++  it('treats MM-DD entries as holidays every year, and YYYY-MM-DD for one day', () => {
++    // 2025-12-25 is a Thursday, 2026-12-25 a Friday, 2026-03-10 a Tuesday
++    expect(isWeekendOrHoliday(new Date(2025, 11, 25), ['12-25'])).toBe(true);
++    expect(isWeekendOrHoliday(new Date(2026, 11, 25), ['12-25'])).toBe(true);
++    expect(isWeekendOrHoliday(new Date(2026, 2, 10), ['2025-03-10'])).toBe(
++      false,
++    );
++    expect(isWeekendOrHoliday(new Date(2026, 2, 10), ['2026-03-10'])).toBe(
++      true,
++    );
++  });
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 6331231..ff58a25 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -361,12 +361,16 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+   return null;
+ }
+ 
++// Holidays are either `YYYY-MM-DD` (that day only) or `MM-DD` (every year).
++function isHoliday(date: Date, holidays: string[]) {
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
++}
++
+ export function isWeekendOrHoliday(date: Date, holidays?: string[]) {
+   return (
+     d.isWeekend(date) ||
+-    (holidays != null &&
+-      holidays.length > 0 &&
+-      holidays.includes(monthUtils.dayFromDate(date)))
++    (holidays != null && holidays.length > 0 && isHoliday(date, holidays))
+   );
+ }
+ 
+diff --git a/upcoming-release-notes/recurring-holidays.md b/upcoming-release-notes/recurring-holidays.md
+new file mode 100644
+index 0000000..f70901b
+--- /dev/null
++++ b/upcoming-release-notes/recurring-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow schedule holidays to be entered as `MM-DD` to repeat every year

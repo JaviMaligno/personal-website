@@ -1,0 +1,12 @@
+{"id": "bd61dd5136",
+ "reuse": {"score": 5, "why": "Every server, shared and client site, plus the new API field, calls the existing getScheduledAmount, and the approximate tolerance reuses getApproxNumberThreshold from shared/rules."},
+ "duplication": {"score": 5, "why": "The five inlined midpoint ternaries and the template's hand copy are all removed; the rule exists only in getScheduledAmount."},
+ "placement": {"score": 4, "why": "The rule sits in shared/schedules.ts and the API field is computed in the schedules-get handler with a dedicated list type; computing it there rather than in scheduleModel is acceptable but slightly ad hoc."},
+ "scope": {"score": 4, "why": "Changes are confined to amount call sites, the helper, the API handler/type and tests; passing op at UI display sites is a necessary consequence of the rule, though useScheduleEdit's second call at line 153 is left without op."},
+ "maintainability": {"score": 4, "why": "One function owns the whole rule with a clear comment and thorough tests; inserting op before the inverse boolean changes the positional signature, which is safe here only because no caller passed inverse."},
+ "bypasses_abstraction": {"value": false, "where": "No site keeps its own amount dispatch; all go through getScheduledAmount."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "Copies were removed rather than reshaped."},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "getScheduledAmount gained one op parameter carrying the real variation (approximate vs exact); the isapprox branch is the rule itself, not a caller-specific special case, and no call site re-implements the logic."}
+}

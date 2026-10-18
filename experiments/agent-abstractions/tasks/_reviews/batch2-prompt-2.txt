@@ -1,0 +1,1653 @@
+You are reviewing task statements for a coding benchmark. For each task below you get
+(1) the STATEMENT an agent will receive (it will NOT see the diff or the tests), and
+(2) the original commit DIFF (source + the hidden tests that will grade the agent).
+
+For each task answer, strictly:
+TASK <id>
+SOLVABLE: yes|no — could a competent engineer, given the repo before the commit and the statement alone, write code that passes the hidden tests? List every hidden-test expectation the statement does not make derivable (names, signatures, exact numbers, call arguments, edge cases).
+LEAK: yes|no — does the statement reveal the implementation (how to code it: specific internal functions/queries/APIs to call, code structure, file locations) beyond the behaviour and the public interface the tests require? Quote the leaking phrases.
+FIX: concrete minimal edits to the statement (or "none").
+
+
+================ TASK 35e04473aa
+---- STATEMENT
+# Schedules moved "before" the weekend occasionally get stuck
+
+A recurring schedule can avoid weekends: with "skip weekend" on and the solve mode
+`before`, an occurrence that falls on a Saturday or Sunday is moved to the preceding
+Friday (with `after`, to the following Monday). The *resolved* date of an occurrence
+is its date after this adjustment.
+
+Advancing such a schedule to its next date is broken in some cases. Advancing
+works by looking for the next occurrence starting from the day after the current
+next date, and then applying the weekend adjustment; with `before`, the adjustment
+can move the found occurrence back onto (or before) the current next date, so the
+next date does not move and the schedule gets stuck. Two features advance a
+schedule this way:
+
+- **Skip next date** on a schedule.
+- The **auto-posting service**, which, for a schedule that posts transactions,
+  posts every missed occurrence and advances the schedule's next date past each
+  one while catching up.
+
+The existing special-case workaround for skipping (`before` mode, when the next
+date is a Friday or on a weekend) does not cover all cases and should be replaced
+by one shared rule.
+
+## Required behaviour
+
+1. Add to the shared schedules module (the one that exports `getNextDate`) an
+   exported function
+
+   ```ts
+   getNextDateAfter(dateCond, afterDate: string): string | null
+   ```
+
+   where `dateCond` is a schedule's date condition (as accepted by `getNextDate`)
+   and `afterDate` a `YYYY-MM-DD` date. It returns the **first resolved occurrence
+   date strictly later than `afterDate`**, honouring the weekend settings, or
+   `null` when the schedule has no further occurrence (e.g. it ends after N
+   occurrences). It must walk past every occurrence whose resolved date is on or
+   before `afterDate`, including several in a row (e.g. a daily schedule with
+   `before` mode, where Friday, Saturday and Sunday all resolve to the Friday),
+   but it does not need to search indefinitely: a handful of occurrences (up to a
+   week's worth) is enough.
+
+   Examples (December 2020: the 4th, 11th and 18th are Fridays; the 5th is a
+   Saturday; the 7th and 14th are Mondays):
+   - weekly from Sat 2020-12-05, no weekend skipping: after `2020-12-05` →
+     `2020-12-12`;
+   - same, skip weekend `after`: after `2020-12-07` → `2020-12-14`; after
+     `2020-12-13` → `2020-12-14`;
+   - weekly from Sun 2020-12-06, skip weekend `after`: after `2020-12-07` →
+     `2020-12-14`;
+   - weekly from Sat 2020-12-05, skip weekend `before`: after `2020-12-04` →
+     `2020-12-11`;
+   - daily from Fri 2020-12-04, skip weekend `before`: after `2020-12-04` →
+     `2020-12-07`;
+   - daily from Mon 2026-08-24, skip weekend `before`: after `2026-08-28` (a
+     Friday) → `2026-08-31`;
+   - weekly from Sat 2020-12-05 ending after 2 occurrences: after `2020-12-05` →
+     `2020-12-12`; after `2020-12-12` → `null`.
+
+2. **Skip next date** sets the schedule's next date to `getNextDateAfter` of its
+   current next date (e.g. the daily `before` schedule above, next date
+   2020-12-04, becomes 2020-12-07).
+
+3. The **auto-posting service**, when it advances a schedule past an occurrence it
+   handled, uses the same rule, so it never gets stuck. Example: a weekly schedule
+   from Sat 2016-12-24 with skip weekend `before` that posts transactions, whose
+   occurrence of 2016-12-23 already has its transaction; when the service runs on
+   2016-12-31 it posts the missed 2016-12-30 occurrence (once) and the schedule's
+   next date becomes 2017-01-06.
+
+Recomputing a schedule's next date from today (when it is created or its rule
+changes) is unchanged.
+
+---- DIFF (source + hidden tests: packages/loot-core/src/server/schedules/app.test.ts, packages/loot-core/src/shared/schedules.test.ts)
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 01bb3c0ad..e83524ba8 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -595,10 +595,50 @@ describe('schedule app', () => {
+       row = res.data[0];
+ 
+       expect(row.next_date).toBe('2020-12-11');
+     });
+ 
++    it('skipNextDate keeps the next occurrence when moving `before` weekend', async () => {
++      /* Dec 2020 calendar for reference:
++        | Su | Mo | Tu | We | Th | Fr | Sa |
++        |    |    | 01 | 02 | 03 | 04 | 05 |
++        | 06 | 07 | 08 | 09 | 10 | 11 | 12 |
++        | 13 | 14 | 15 | 16 | 17 | 18 | 19 |
++        | 20 | 21 | 22 | 23 | 24 | 25 | 26 |
++        | 27 | 28 | 29 | 30 | 31 |
++        */
++      const id = await createSchedule({
++        conditions: [
++          {
++            op: 'is',
++            field: 'date',
++            value: {
++              start: '2020-12-04',
++              frequency: 'daily',
++              patterns: [],
++              skipWeekend: true,
++              weekendSolveMode: 'before',
++            },
++          },
++        ],
++      });
++
++      let res = await aqlQuery(
++        q('schedules').filter({ id }).select(['next_date']),
++      );
++      let row = res.data[0];
++
++      expect(row.next_date).toBe('2020-12-04');
++
++      await skipNextDate({ id });
++
++      res = await aqlQuery(q('schedules').filter({ id }).select(['next_date']));
++      row = res.data[0];
++
++      expect(row.next_date).toBe('2020-12-07');
++    });
++
+     it('auto-posts every missed recurring occurrence while catching up', async () => {
+       MockDate.set(new Date(2016, 11, 31, 12));
+       schedulesApp.startServices();
+ 
+       try {
+@@ -751,10 +791,99 @@ describe('schedule app', () => {
+         MockDate.reset();
+         await schedulesApp.stopServices();
+       }
+     });
+ 
++    it('catches up an auto-post schedule moved `before` a weekend occurrence', async () => {
++      /* Dec 2016 / Jan 2017 calendar for reference:
++        | Su | Mo | Tu | We | Th | Fr | Sa |
++        | 18 | 19 | 20 | 21 | 22 | 23 | 24 |
++        | 25 | 26 | 27 | 28 | 29 | 30 | 31 |
++        | 01 | 02 | 03 | 04 | 05 | 06 | 07 |
++        */
++      MockDate.set(new Date(2016, 11, 31, 12));
++      schedulesApp.startServices();
++
++      try {
++        const accountId = await db.insertAccount({
++          name: 'Checking',
++          offbudget: 0,
++          closed: 0,
++        });
++
++        const id = await createSchedule({
++          schedule: { posts_transaction: true },
++          conditions: [
++            {
++              op: 'is',
++              field: 'account',
++              value: accountId,
++            },
++            {
++              op: 'is',
++              field: 'amount',
++              value: -10000,
++            },
++            {
++              op: 'is',
++              field: 'date',
++              value: {
++                start: '2016-12-24',
++                frequency: 'weekly',
++                interval: 1,
++                patterns: [],
++                skipWeekend: true,
++                weekendSolveMode: 'before',
++              },
++            },
++          ],
++        });
++        const nextDateRow = await db.first<{
++          id: string;
++        }>('SELECT id FROM schedules_next_date WHERE schedule_id = ?', [id]);
++
++        await db.update('schedules_next_date', {
++          id: nextDateRow.id,
++          local_next_date: 20161223,
++          local_next_date_ts: Date.now(),
++          base_next_date: 20161223,
++          base_next_date_ts: Date.now(),
++        });
++        await db.insertTransaction({
++          account: accountId,
++          amount: -10000,
++          date: '2016-12-23',
++          schedule: id,
++        });
++
++        await advanceSchedulesService(true);
++
++        const { data: transactions } = await aqlQuery(
++          q('transactions')
++            .filter({ schedule: id })
++            .select(['date', 'amount'])
++            .orderBy({ date: 'asc' }),
++        );
++
++        expect(
++          transactions.map(({ date, amount }) => ({ date, amount })),
++        ).toEqual([
++          { date: '2016-12-23', amount: -10000 },
++          { date: '2016-12-30', amount: -10000 },
++        ]);
++
++        const {
++          data: [schedule],
++        } = await aqlQuery(q('schedules').filter({ id }).select(['next_date']));
++
++        expect(schedule.next_date).toBe('2017-01-06');
++      } finally {
++        MockDate.reset();
++        await schedulesApp.stopServices();
++      }
++    });
++
+     it('completes one-time auto-post schedules that are already paid', async () => {
+       MockDate.set(new Date(2016, 11, 31, 12));
+       schedulesApp.startServices();
+ 
+       try {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index e27ecd19e..4b3137818 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -20,18 +20,19 @@ import {
+   ruleModel,
+   updateRule,
+ } from '#server/transactions/transaction-rules';
+ import { undoable } from '#server/undo';
+ import { RSchedule } from '#server/util/rschedule';
+-import { currentDay, dayFromDate, parseDate } from '#shared/months';
++import { currentDay, dayFromDate } from '#shared/months';
+ import { q } from '#shared/query';
+ import {
+   DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
+   getHasTransactionsQuery,
+   getNextDate,
++  getNextDateAfter,
+   getScheduledAmount,
+   getStatus,
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+ import type {
+@@ -208,20 +209,18 @@ async function fixRuleForSchedule(id) {
+   return getRules().find(rule => rule.id === newId);
+ }
+ 
+ export async function setNextDate({
+   id,
+-  start,
+   conditions,
+   reset,
+-  skipRequested,
++  advance,
+ }: {
+   id: string;
+-  start?;
+   conditions?;
+   reset?: boolean;
+-  skipRequested?: boolean;
++  advance?: boolean;
+ }) {
+   if (conditions == null) {
+     const rule = await getRuleForSchedule(id);
+     if (rule == null) {
+       throw new Error('No rule found for schedule');
+@@ -229,36 +228,19 @@ export async function setNextDate({
+     conditions = rule.serialize().conditions;
+   }
+ 
+   const { date: dateCond } = extractScheduleConds(conditions);
+ 
+-  let { data: nextDate } = await aqlQuery(
++  const { data: nextDate } = await aqlQuery(
+     q('schedules').filter({ id }).calculate('next_date'),
+   );
+ 
+-  if (skipRequested === true) {
+-    const skipWeekend: boolean = dateCond.value?.skipWeekend;
+-    const weekendSolveMode: string = dateCond.value?.weekendSolveMode;
+-
+-    if (weekendSolveMode === 'before' && skipWeekend === true) {
+-      const parsedNextDate = parseDate(nextDate);
+-      if (d.isFriday(parsedNextDate) || d.isWeekend(parsedNextDate)) {
+-        // nextDate is on weekend or friday, moving to monday
+-        // so getNextDate and getDateWithSkippedWeekend
+-        // don't push the date back to Friday, thus causing
+-        // `(newNextDate !== nextDate) ` to be false and not updating the next date
+-        nextDate = dayFromDate(d.nextMonday(parsedNextDate));
+-      }
+-    }
+-  }
+-
+   // Only do this if a date condition exists
+   if (dateCond) {
+-    const newNextDate = getNextDate(
+-      dateCond,
+-      start ? start(nextDate) : new Date(),
+-    );
++    const newNextDate = advance
++      ? getNextDateAfter(dateCond, nextDate)
++      : getNextDate(dateCond, new Date());
+ 
+     if (newNextDate != null && newNextDate !== nextDate) {
+       // Our `update` functon requires the id of the item and we don't
+       // have it, so we need to query it
+       const nd = await db.first<
+@@ -480,17 +462,11 @@ export async function deleteSchedule({ id }) {
+     await db.delete_('schedules', id);
+   });
+ }
+ 
+ export async function skipNextDate({ id }) {
+-  return setNextDate({
+-    id,
+-    start: nextDate => {
+-      return d.addDays(parseDate(nextDate), 1);
+-    },
+-    skipRequested: true,
+-  });
++  return setNextDate({ id, advance: true });
+ }
+ 
+ function discoverSchedules() {
+   return findSchedules();
+ }
+@@ -640,14 +616,11 @@ async function advanceRecurringScheduleFromNextDate(
+   }
+ 
+   const previousNextDate = schedule.next_date;
+ 
+   try {
+-    await setNextDate({
+-      id: schedule.id,
+-      start: nextDate => d.addDays(parseDate(nextDate), 1),
+-    });
++    await setNextDate({ id: schedule.id, advance: true });
+   } catch {
+     // This might error if the rule is corrupted and it can't find the rule.
+     return null;
+   }
+ 
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 2e4c13f46..5bd000a19 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -5,10 +5,11 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ import * as monthUtils from './months';
+ import {
+   computeSchedulePreviewTransactions,
+   getHasTransactionsQuery,
+   getNextDate,
++  getNextDateAfter,
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+   isCustomUpcomingLength,
+@@ -496,10 +497,125 @@ describe('schedules', () => {
+       const result = getNextDate(dateCond, new Date(2017, 0, 1));
+       expect(result).toBeNull();
+     });
+   });
+ 
++  describe('getNextDateAfter', () => {
++    /* Dec 2020 calendar for reference:
++      | Su | Mo | Tu | We | Th | Fr | Sa |
++      |    |    | 01 | 02 | 03 | 04 | 05 |
++      | 06 | 07 | 08 | 09 | 10 | 11 | 12 |
++      | 13 | 14 | 15 | 16 | 17 | 18 | 19 |
++      | 20 | 21 | 22 | 23 | 24 | 25 | 26 |
++      | 27 | 28 | 29 | 30 | 31 |
++      */
++    function weeklyOnSaturday(extra = {}) {
++      return {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-05',
++          frequency: 'weekly',
++          patterns: [],
++          ...extra,
++        },
++      };
++    }
++
++    it('returns the next occurrence after the given date', () => {
++      expect(getNextDateAfter(weeklyOnSaturday(), '2020-12-05')).toBe(
++        '2020-12-12',
++      );
++    });
++
++    it('returns the next occurrence when moving `after` the weekend', () => {
++      const dateCond = weeklyOnSaturday({
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++      });
++
++      expect(getNextDateAfter(dateCond, '2020-12-07')).toBe('2020-12-14');
++    });
++
++    it('includes a weekend occurrence moved `after` the given date', () => {
++      const dateCond = weeklyOnSaturday({
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++      });
++
++      expect(getNextDateAfter(dateCond, '2020-12-13')).toBe('2020-12-14');
++    });
++
++    it('does not return the same occurrence when moving `after` the weekend', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-06',
++          frequency: 'weekly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++        },
++      };
++
++      expect(getNextDateAfter(dateCond, '2020-12-07')).toBe('2020-12-14');
++    });
++
++    it('does not return the same occurrence when moving `before` the weekend', () => {
++      const dateCond = weeklyOnSaturday({
++        skipWeekend: true,
++        weekendSolveMode: 'before',
++      });
++
++      expect(getNextDateAfter(dateCond, '2020-12-04')).toBe('2020-12-11');
++    });
++
++    it('keeps a Monday occurrence that follows a `before` weekend adjustment', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-04',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'before',
++        },
++      };
++
++      expect(getNextDateAfter(dateCond, '2020-12-04')).toBe('2020-12-07');
++    });
++
++    it('walks past every occurrence that resolves on or before the given date', () => {
++      /* Aug 2026 calendar for reference:
++        | Su | Mo | Tu | We | Th | Fr | Sa |
++        | 23 | 24 | 25 | 26 | 27 | 28 | 29 |
++        | 30 | 31 |
++        */
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2026-08-24',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'before',
++        },
++      };
++
++      expect(getNextDateAfter(dateCond, '2026-08-28')).toBe('2026-08-31');
++    });
++
++    it('returns null when the schedule has no further occurrences', () => {
++      const dateCond = weeklyOnSaturday({
++        endMode: 'after_n_occurrences',
++        endOccurrences: 2,
++      });
++
++      expect(getNextDateAfter(dateCond, '2020-12-05')).toBe('2020-12-12');
++      expect(getNextDateAfter(dateCond, '2020-12-12')).toBeNull();
++    });
++  });
++
+   describe('shared presets', () => {
+     it('preset values and options align', () => {
+       const valuesFromOptions = UPCOMING_LENGTH_PRESET_OPTIONS.map(
+         o => o.value,
+       );
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 9f9a2d4ad..b83cb4b95 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -313,10 +313,32 @@ export function getNextDate(
+     }
+   }
+   return null;
+ }
+ 
++const MAX_ADVANCE_ATTEMPTS = 7;
++
++export function getNextDateAfter(dateCond, afterDate: string): string | null {
++  let start = d.subDays(monthUtils.parseDate(afterDate), 1);
++
++  for (let attempt = 0; attempt < MAX_ADVANCE_ATTEMPTS; attempt++) {
++    const occurrence = getNextDate(dateCond, start, true);
++    if (occurrence == null || occurrence < monthUtils.dayFromDate(start)) {
++      return null;
++    }
++
++    const nextDate = getNextDate(dateCond, start);
++    if (nextDate != null && nextDate > afterDate) {
++      return nextDate;
++    }
++
++    start = d.addDays(monthUtils.parseDate(occurrence), 1);
++  }
++
++  return null;
++}
++
+ export function getDateWithSkippedWeekend(
+   date: Date,
+   solveMode: 'after' | 'before',
+ ) {
+   if (d.isWeekend(date)) {
+
+
+================ TASK 93508bc6a3
+---- STATEMENT
+# Split rule formulas cannot read the parent transaction's text fields
+
+Rules can split a transaction, and a split's amount can be computed with a
+spreadsheet-style formula (`set-split-amount` with `method: 'formula'`). Inside such
+a formula the parent transaction's amount is available as the named value
+`parent_amount` (in integer minor units, e.g. `=INTEGER_TO_AMOUNT(parent_amount) / 2`),
+but nothing else about the parent is. A common need is to compute a split from the
+bank's description, e.g. notes `Payment in USD: ITEM: 25.50USD FEE: 4.50USD` where the
+first split should be the ITEM amount and the second the remainder. Using `notes`
+inside the formula does not work reliably, because split actions also set the
+child's own fields (a child can get its own notes).
+
+## Required behaviour
+
+1. In split-amount formulas, in addition to `parent_amount`, the following named
+   values hold the **parent** transaction's fields, independent of anything the
+   split actions set on the child:
+   - `parent_notes` (the parent's notes),
+   - `parent_imported_payee`,
+   - `parent_payee` (the parent's payee id),
+   - `parent_account` (the parent's account id).
+
+   A missing value is the empty string (`parent_notes = ""` when the transaction
+   has no notes).
+
+2. These text values are always treated as **literal text** in the formula, even
+   when they look like a formula, a number, a date or start with an apostrophe:
+   with notes `=1+1`, `00123`, `2024-01-15` or `'quoted`,
+   `=IF(parent_notes="<the notes>", -1, -2)` evaluates to -1.
+
+3. Example: with the notes above,
+   `=-VALUE(MID(parent_notes, SEARCH("ITEM: ", parent_notes)+6, SEARCH("USD", parent_notes, SEARCH("ITEM: ", parent_notes))-SEARCH("ITEM: ", parent_notes)-6))`
+   on split 1 and `remainder` on split 2 of a -30.00 transaction give splits of
+   -25.50 and -4.50.
+
+4. These helper values (and `parent_amount`) never end up on the resulting
+   transactions: once rules have been applied and the transaction is finalised
+   for saving, neither the parent nor the children carry any `parent_*` field
+   other than the children's normal `parent_id`.
+
+5. End to end: importing a bank transaction into an account where such a rule
+   applies (with other split actions setting payee, e.g. a transfer payee, and
+   category on each split) produces exactly one parent that keeps its imported id,
+   notes, imported payee, amount, cleared state and any matching schedule, two
+   children whose amounts sum to the parent's, and a single transfer transaction
+   for the transfer split. Importing the same bank transaction again changes
+   nothing (same transactions, no second transfer).
+
+---- DIFF (source + hidden tests: packages/loot-core/src/server/accounts/split-formula-import.test.ts, packages/loot-core/src/server/rules/split-parent-context.test.ts)
+diff --git a/packages/desktop-client/src/components/formula/formulaBadgeRanges.ts b/packages/desktop-client/src/components/formula/formulaBadgeRanges.ts
+index 75cdb52ca..4172b4ee8 100644
+--- a/packages/desktop-client/src/components/formula/formulaBadgeRanges.ts
++++ b/packages/desktop-client/src/components/formula/formulaBadgeRanges.ts
+@@ -91,10 +91,14 @@ const transactionNamedExpressionBadges: Record<string, string> = {
+   category_name: 'category_name',
+   cleared: 'cleared',
+   reconciled: 'reconciled',
+   balance: 'balance',
+   parent_amount: 'parent_amount',
++  parent_notes: 'parent_notes',
++  parent_imported_payee: 'parent_imported_payee',
++  parent_payee: 'parent_payee',
++  parent_account: 'parent_account',
+ };
+ 
+ const queryNameFunctions = new Set([
+   'QUERY',
+   'QUERY_COUNT',
+diff --git a/packages/desktop-client/src/components/formula/formulaCatalog.ts b/packages/desktop-client/src/components/formula/formulaCatalog.ts
+index 8680076f1..32484cbfa 100644
+--- a/packages/desktop-client/src/components/formula/formulaCatalog.ts
++++ b/packages/desktop-client/src/components/formula/formulaCatalog.ts
+@@ -1454,10 +1454,46 @@ export function getRuleFieldCompletions(): Completion[] {
+       boost: 5,
+       info: t(
+         'The amount of the parent transaction in cents in split transactions.\n\nExample: =(parent_amount / 100) * .05',
+       ),
+     },
++    {
++      label: 'parent_notes',
++      type: 'variable',
++      section: ruleFieldSection,
++      boost: 5,
++      info: t(
++        'Notes of the parent transaction in split rules. Empty when absent.',
++      ),
++    },
++    {
++      label: 'parent_imported_payee',
++      type: 'variable',
++      section: ruleFieldSection,
++      boost: 5,
++      info: t(
++        'Imported payee text of the parent transaction in split rules. Empty when absent.',
++      ),
++    },
++    {
++      label: 'parent_payee',
++      type: 'variable',
++      section: ruleFieldSection,
++      boost: 5,
++      info: t(
++        'Payee ID of the parent transaction in split rules. Empty when absent.',
++      ),
++    },
++    {
++      label: 'parent_account',
++      type: 'variable',
++      section: ruleFieldSection,
++      boost: 5,
++      info: t(
++        'Account ID of the parent transaction in split rules. Empty when absent.',
++      ),
++    },
+   ];
+ }
+ 
+ export function getDynamicReportQueryCompletions(
+   queries?: Record<string, unknown>,
+diff --git a/packages/loot-core/src/server/accounts/split-formula-import.test.ts b/packages/loot-core/src/server/accounts/split-formula-import.test.ts
+new file mode 100644
+index 000000000..cca9c1990
+--- /dev/null
++++ b/packages/loot-core/src/server/accounts/split-formula-import.test.ts
+@@ -0,0 +1,168 @@
++import * as db from '#server/db';
++import { loadMappings } from '#server/db/mappings';
++import { createSchedule } from '#server/schedules/app';
++import { insertRule, loadRules } from '#server/transactions/transaction-rules';
++
++import { reconcileTransactions } from './sync';
++
++beforeEach(async () => {
++  await global.emptyDatabase()();
++  await loadMappings();
++  await loadRules();
++});
++
++test('import keeps one parent, matches its schedule and transfers only the formula split', async () => {
++  await db.insertAccount({ id: 'source', name: 'Source', offbudget: 0 });
++  await db.insertAccount({
++    id: 'destination',
++    name: 'Destination',
++    offbudget: 1,
++  });
++  await db.insertPayee({
++    id: 'transfer-source',
++    name: '',
++    transfer_acct: 'source',
++  });
++  await db.insertPayee({
++    id: 'transfer-destination',
++    name: '',
++    transfer_acct: 'destination',
++  });
++  await db.insertPayee({ id: 'bank', name: 'Bank' });
++  await db.insertCategoryGroup({ id: 'group', name: 'Expenses', is_income: 0 });
++  await db.insertCategory({
++    id: 'category',
++    name: 'Payment',
++    cat_group: 'group',
++    is_income: 0,
++  });
++
++  const schedule = await createSchedule({
++    schedule: { name: 'Payment', posts_transaction: false },
++    conditions: [
++      { field: 'account', op: 'is', value: 'source' },
++      { field: 'amount', op: 'isapprox', value: -3000 },
++      {
++        field: 'date',
++        op: 'isapprox',
++        value: { start: '2024-01-15', frequency: 'monthly', patterns: [] },
++      },
++      { field: 'notes', op: 'contains', value: 'ITEM:' },
++    ],
++  });
++  await insertRule({
++    stage: 'pre',
++    conditionsOp: 'and',
++    conditions: [
++      { field: 'account', op: 'is', value: 'source' },
++      { field: 'notes', op: 'contains', value: 'ITEM:' },
++    ],
++    actions: [
++      {
++        op: 'set-split-amount',
++        value: null,
++        options: {
++          splitIndex: 1,
++          method: 'formula',
++          formula:
++            '=-VALUE(MID(parent_notes, SEARCH("ITEM: ", parent_notes)+6, SEARCH("USD", parent_notes, SEARCH("ITEM: ", parent_notes))-SEARCH("ITEM: ", parent_notes)-6))',
++        },
++      },
++      {
++        op: 'set',
++        field: 'payee',
++        value: 'transfer-destination',
++        options: { splitIndex: 1 },
++      },
++      {
++        op: 'set',
++        field: 'category',
++        value: 'category',
++        options: { splitIndex: 1 },
++      },
++      {
++        op: 'set-split-amount',
++        value: null,
++        options: { splitIndex: 2, method: 'remainder' },
++      },
++      { op: 'set', field: 'payee', value: 'bank', options: { splitIndex: 2 } },
++      {
++        op: 'set',
++        field: 'category',
++        value: 'category',
++        options: { splitIndex: 2 },
++      },
++    ],
++  });
++
++  const imported = {
++    date: '2024-01-15',
++    amount: -3000,
++    imported_id: 'bank-import-id',
++    notes: 'Payment in USD: ITEM: 25.50USD FEE: 4.50USD',
++    imported_payee: 'Imported bank',
++    cleared: true,
++  };
++  await reconcileTransactions('source', [imported]);
++  const read = () =>
++    db.all<db.DbViewTransactionInternal>(
++      'SELECT * FROM v_transactions_internal',
++    );
++  const rows = await read();
++  const parent = rows.find(row => row.is_parent);
++  if (!parent) throw new Error('Missing split parent');
++  expect(parent).toMatchObject({
++    account: 'source',
++    imported_id: imported.imported_id,
++    notes: imported.notes,
++    imported_payee: imported.imported_payee,
++    amount: -3000,
++    cleared: 1,
++    schedule,
++  });
++  const children = rows.filter(row => row.parent_id === parent.id);
++  expect(children).toHaveLength(2);
++  expect(children).toEqual(
++    expect.arrayContaining([
++      expect.objectContaining({
++        amount: -2550,
++        payee: 'transfer-destination',
++        category: 'category',
++        cleared: 1,
++      }),
++      expect.objectContaining({
++        amount: -450,
++        payee: 'bank',
++        category: 'category',
++        cleared: 1,
++      }),
++    ]),
++  );
++  expect(children.reduce((sum, row) => sum + row.amount, 0)).toBe(
++    parent.amount,
++  );
++  const destination = rows.filter(row => row.account === 'destination');
++  expect(destination).toHaveLength(1);
++  expect(destination[0]).toMatchObject({
++    amount: 2550,
++    transfer_id: children.find(row => row.amount === -2550)?.id,
++  });
++  expect(rows).toHaveLength(4);
++
++  // A repeated bank import must preserve identity and not create another transfer.
++  await reconcileTransactions('source', [imported]);
++  const reimported = await read();
++  expect(reimported.map(row => row.id).sort()).toEqual(
++    rows.map(row => row.id).sort(),
++  );
++  expect(reimported.find(row => row.id === parent.id)).toMatchObject({
++    imported_id: imported.imported_id,
++    notes: imported.notes,
++    schedule,
++  });
++  expect(
++    reimported
++      .filter(row => row.account === 'destination')
++      .reduce((sum, row) => sum + row.amount, 0),
++  ).toBe(2550);
++});
+diff --git a/packages/loot-core/src/server/rules/action.ts b/packages/loot-core/src/server/rules/action.ts
+index 1fa741939..4882abf97 100644
+--- a/packages/loot-core/src/server/rules/action.ts
++++ b/packages/loot-core/src/server/rules/action.ts
+@@ -341,10 +341,15 @@ export class Action {
+         ) {
+           cellValue = '';
+         } else {
+           cellValue = fieldValues[key];
+         }
++        // Parent text is data, even when it looks like a spreadsheet formula,
++        // date or number. The apostrophe is HyperFormula's literal-text escape.
++        if (key.startsWith('parent_') && typeof cellValue === 'string') {
++          cellValue = `'${cellValue}`;
++        }
+         hfInstance.addNamedExpression(key, cellValue);
+       }
+       hfInstance.setCellContents({ sheet: sheetId, col: 0, row: 0 }, [
+         [formula],
+       ]);
+diff --git a/packages/loot-core/src/server/rules/rule.ts b/packages/loot-core/src/server/rules/rule.ts
+index 465170f3d..9d5deebed 100644
+--- a/packages/loot-core/src/server/rules/rule.ts
++++ b/packages/loot-core/src/server/rules/rule.ts
+@@ -41,11 +41,20 @@ function execSplitActions(actions: Action[], transaction) {
+     const splitTransactionIndex = (action.options?.splitIndex ?? 0) + 1;
+     if (splitTransactionIndex >= newTransactions.length) {
+       const { data } = addSplitTransaction(newTransactions, transaction.id);
+       newTransactions = data;
+     }
++    // Keep parent data separate from the child fields changed by split actions.
+     newTransactions[splitTransactionIndex].parent_amount = transaction.amount;
++    newTransactions[splitTransactionIndex].parent_notes =
++      transaction.notes ?? '';
++    newTransactions[splitTransactionIndex].parent_imported_payee =
++      transaction.imported_payee ?? '';
++    newTransactions[splitTransactionIndex].parent_payee =
++      transaction.payee ?? '';
++    newTransactions[splitTransactionIndex].parent_account =
++      transaction.account ?? '';
+     newTransactions[splitTransactionIndex].balance = transaction.balance;
+     newTransactions[splitTransactionIndex]._balanceOfPrefetched =
+       transaction._balanceOfPrefetched;
+     action.exec(newTransactions[splitTransactionIndex]);
+   });
+diff --git a/packages/loot-core/src/server/rules/split-parent-context.test.ts b/packages/loot-core/src/server/rules/split-parent-context.test.ts
+new file mode 100644
+index 000000000..1a65f3893
+--- /dev/null
++++ b/packages/loot-core/src/server/rules/split-parent-context.test.ts
+@@ -0,0 +1,121 @@
++import { finalizeTransactionForRules } from '#server/transactions/transaction-rules';
++
++import { Rule } from './rule';
++
++function splitRule(formula: string) {
++  return new Rule({
++    conditionsOp: 'and',
++    conditions: [{ field: 'amount', op: 'lt', value: 0 }],
++    actions: [
++      {
++        op: 'set',
++        field: 'notes',
++        value: 'child notes',
++        options: { splitIndex: 1 },
++      },
++      {
++        op: 'set-split-amount',
++        field: 'amount',
++        value: 0,
++        options: { splitIndex: 1, method: 'formula', formula },
++      },
++      {
++        op: 'set-split-amount',
++        field: 'amount',
++        value: 0,
++        options: { splitIndex: 2, method: 'remainder' },
++      },
++    ],
++  });
++}
++
++const parent = {
++  id: 'parent',
++  account: 'source-account',
++  payee: 'source-payee',
++  amount: -3000,
++  notes: 'ITEM: 25.50USD FEE: 4.50USD',
++  imported_payee: 'Imported bank',
++  imported_id: 'bank-id',
++  cleared: true,
++  schedule: 'schedule-id',
++  date: '2024-01-15',
++};
++
++describe('split parent formula context', () => {
++  test('keeps parent_amount in cents', () => {
++    expect(
++      splitRule('=INTEGER_TO_AMOUNT(parent_amount) / 2').exec(parent),
++    ).toMatchObject({
++      subtransactions: [{ amount: -1500 }, { amount: -1500 }],
++    });
++  });
++
++  test('reads parent notes independently of child notes', () => {
++    expect(
++      splitRule('=IF(parent_notes="' + parent.notes + '", -1, -2)').exec(
++        parent,
++      ),
++    ).toMatchObject({
++      subtransactions: [
++        { amount: -100, notes: 'child notes' },
++        { amount: -2900 },
++      ],
++    });
++  });
++
++  test('parses a decimal amount from parent notes using native functions', async () => {
++    const result = splitRule(
++      '=-VALUE(MID(parent_notes, SEARCH("ITEM: ", parent_notes)+6, SEARCH("USD", parent_notes, SEARCH("ITEM: ", parent_notes))-SEARCH("ITEM: ", parent_notes)-6))',
++    ).apply(parent);
++    expect(result).toMatchObject({
++      ...parent,
++      payee: null,
++      is_parent: true,
++      subtransactions: [{ amount: -2550 }, { amount: -450 }],
++    });
++    const finalized = await finalizeTransactionForRules(result);
++    for (const transaction of [finalized, ...finalized.subtransactions]) {
++      expect(
++        Object.keys(transaction).filter(key => key.startsWith('parent_')),
++      ).toEqual(transaction.is_child ? ['parent_id'] : []);
++    }
++  });
++
++  test.each([
++    'parent_imported_payee',
++    'parent_payee',
++    'parent_account',
++  ] as const)('exposes %s without overwriting child fields', field => {
++    const original = {
++      parent_imported_payee: parent.imported_payee,
++      parent_payee: parent.payee,
++      parent_account: parent.account,
++    };
++    expect(
++      splitRule(`=IF(${field}="${original[field]}", -1, -2)`).exec(parent),
++    ).toMatchObject({
++      subtransactions: [{ amount: -100 }, { amount: -2900 }],
++    });
++  });
++
++  test.each(['=1+1', '00123', '2024-01-15', "'quoted"])(
++    'treats parent text %s literally',
++    notes => {
++      expect(
++        splitRule(`=IF(parent_notes="${notes}", -1, -2)`).exec({
++          ...parent,
++          notes,
++        }),
++      ).toMatchObject({
++        subtransactions: [{ amount: -100 }, { amount: -2900 }],
++      });
++    },
++  );
++
++  test('absent parent text is empty', () => {
++    expect(
++      splitRule('=IF(parent_notes="", -1, -2)').exec({ amount: -300 }),
++    ).toMatchObject({ subtransactions: [{ amount: -100 }, { amount: -200 }] });
++  });
++});
+diff --git a/packages/loot-core/src/server/transactions/transaction-rules.ts b/packages/loot-core/src/server/transactions/transaction-rules.ts
+index 843a986a4..f4efc50a6 100644
+--- a/packages/loot-core/src/server/transactions/transaction-rules.ts
++++ b/packages/loot-core/src/server/transactions/transaction-rules.ts
+@@ -1003,10 +1003,14 @@ export type TransactionForRules = TransactionEntity & {
+   _category_name?: string;
+   _account_name?: string;
+   /** The transaction's category's group id; see prepareTransactionForRules */
+   category_group?: string;
+   parent_amount?: number;
++  parent_notes?: string;
++  parent_imported_payee?: string;
++  parent_payee?: string;
++  parent_account?: string;
+   /** Prefetched cent balances for BALANCE_OF("…") in rule formulas; cleared in finalize */
+   _balanceOfPrefetched?: Map<string, number>;
+ };
+ 
+ /**
+@@ -1195,12 +1199,20 @@ export async function finalizeTransactionForRules(
+ 
+   if ('_balanceOfPrefetched' in trans) {
+     delete trans._balanceOfPrefetched;
+   }
+ 
+-  if ('parent_amount' in trans) {
+-    delete trans.parent_amount;
++  for (const field of [
++    'parent_amount',
++    'parent_notes',
++    'parent_imported_payee',
++    'parent_payee',
++    'parent_account',
++  ] as const) {
++    if (field in trans) {
++      delete trans[field];
++    }
+   }
+ 
+   if (trans.subtransactions?.length) {
+     trans.subtransactions.forEach(stx => {
+       if ('balance' in stx) {
+@@ -1209,12 +1221,20 @@ export async function finalizeTransactionForRules(
+ 
+       if ('_balanceOfPrefetched' in stx) {
+         delete stx._balanceOfPrefetched;
+       }
+ 
+-      if ('parent_amount' in stx) {
+-        delete stx.parent_amount;
++      for (const field of [
++        'parent_amount',
++        'parent_notes',
++        'parent_imported_payee',
++        'parent_payee',
++        'parent_account',
++      ] as const) {
++        if (field in stx) {
++          delete stx[field];
++        }
+       }
+     });
+   }
+ 
+   return trans;
+
+
+================ TASK f78a6fa041
+---- STATEMENT
+# Let importers keep payee names as given (no forced title case)
+
+When transactions are imported through the `transactions-import` handler (used by
+the API's `importTransactions`), each `payee_name` is trimmed and then title-cased.
+Title casing lowercases the whole string before capitalising each word, so acronyms
+do not survive it: `Nintendo Store New York NY` becomes `Nintendo Store New York Ny`
+(both as the created payee's name and as the transaction's `imported_payee`).
+Custom importers that already supply final payee names have no way to opt out.
+
+## Required behaviour
+
+1. **New import option.** The `opts` of `transactions-import` (the
+   `ImportTransactionsOpts` type, alongside `defaultCleared`, `dryRun`,
+   `reimportDeleted`) accept `payeeNameNormalization?: 'original' | 'title-case'`.
+   - Omitted (or `'title-case'`): behaviour unchanged, names are trimmed and
+     title-cased.
+   - `'original'`: names are only trimmed (`'  Nintendo Store New York NY  '` →
+     `Nintendo Store New York NY`, for both the new payee and `imported_payee`).
+   - Any other value is rejected: the handler throws an API error whose message
+     mentions `payeeNameNormalization` and lists the allowed values, before
+     anything is imported (no payee is created).
+   - Document the option in the API reference of `importTransactions`.
+
+2. **Reconcile options object.** The server-side bank/import reconciliation
+   function `reconcileTransactions(acctId, transactions, ...)` (in the accounts
+   sync module) and its matching step `matchTransactions` currently take a long
+   list of trailing positional flags. Replace those trailing flags with a single
+   optional options object, so callers write e.g.
+   `reconcileTransactions(id, transactions, { reimportDeleted: false })` or
+   `reconcileTransactions(id, transactions, { strictIdChecking: false })`:
+
+   - `reconcileTransactions(acctId, transactions, options = {})` with
+     `{ isBankSyncAccount?, strictIdChecking?, isPreview?, defaultCleared?,
+     updateDates?, reimportDeleted?, payeeNameNormalization? }`, defaults as today
+     (`isBankSyncAccount` false, `strictIdChecking` true, `isPreview` false,
+     `defaultCleared` true, `updateDates` false, `reimportDeleted` unset,
+     `payeeNameNormalization` title-case);
+   - `matchTransactions(acctId, transactions, options = {})` with
+     `{ isBankSyncAccount?, strictIdChecking?, reimportDeleted?,
+     payeeNameNormalization? }`.
+
+   Update every caller. `reconcileTransactions(id, transactions)` with no options
+   still title-cases payee names. Bank sync and the manual "add transactions" path
+   behave exactly as before.
+
+---- DIFF (source + hidden tests: packages/loot-core/src/server/accounts/sync.test.ts)
+diff --git a/packages/docs/docs/api/reference.md b/packages/docs/docs/api/reference.md
+index 14b9269f6..c4a47167f 100644
+--- a/packages/docs/docs/api/reference.md
++++ b/packages/docs/docs/api/reference.md
+@@ -277,10 +277,11 @@ It will also create transfers if a transfer payee is specified. See [transfers](
+ This method has the following optional flags (passed as the `opts` object):
+ 
+ - `defaultCleared`: whether imported transactions should be marked as cleared (defaults to `true`)
+ - `dryRun`: if `true`, returns what would be added/updated without actually modifying the database (defaults to `false`)
+ - `reimportDeleted`: if `true`, transactions that were previously imported and then deleted will be reimported; if `false`, they will be skipped (defaults to `true` for backward compatibility — note that the [file import UI](../transactions/importing.md#avoiding-duplicate-transactions) defaults to `false`)
++- `payeeNameNormalization`: how `payee_name` is processed when creating a payee — `'title-case'` re-capitalizes each word, `'original'` keeps the name as given, apart from trimming surrounding whitespace (defaults to `'title-case'`)
+ 
+ Example using opts:
+ 
+ ```js
+ await api.importTransactions(accountId, transactions, {
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 03ec882ef..c8922134c 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -1644,20 +1644,29 @@ async function importTransactions({
+ }): Promise<ImportTransactionsResult> {
+   if (typeof accountId !== 'string') {
+     throw APIError('transactions-import: accountId must be an id');
+   }
+ 
++  const payeeNameNormalization = opts?.payeeNameNormalization ?? 'title-case';
++  if (!bankSync.PAYEE_NAME_NORMALIZATIONS.includes(payeeNameNormalization)) {
++    throw APIError(
++      `transactions-import: payeeNameNormalization must be one of ${bankSync.PAYEE_NAME_NORMALIZATIONS.join(
++        ', ',
++      )}, got '${String(payeeNameNormalization)}'`,
++    );
++  }
++
+   try {
+     const reconciled = await bankSync.reconcileTransactions(
+       accountId,
+       transactions,
+-      false,
+-      true,
+-      isPreview,
+-      opts?.defaultCleared,
+-      false,
+-      opts?.reimportDeleted,
++      {
++        isPreview,
++        defaultCleared: opts?.defaultCleared,
++        reimportDeleted: opts?.reimportDeleted,
++        payeeNameNormalization,
++      },
+     );
+     return {
+       errors: [],
+       added: reconciled.added,
+       updated: reconciled.updated,
+diff --git a/packages/loot-core/src/server/accounts/sync.test.ts b/packages/loot-core/src/server/accounts/sync.test.ts
+index 8f2c20a07..6db27f7d0 100644
+--- a/packages/loot-core/src/server/accounts/sync.test.ts
++++ b/packages/loot-core/src/server/accounts/sync.test.ts
+@@ -6,10 +6,11 @@ import { post } from '#server/post';
+ import { getServer } from '#server/server-config';
+ import { setSyncingMode } from '#server/sync';
+ import { handlers } from '#server/tests/mockSyncServer';
+ import { insertRule, loadRules } from '#server/transactions/transaction-rules';
+ import * as monthUtils from '#shared/months';
++import type { ImportTransactionsOpts } from '#types/api-handlers';
+ import type { SyncedPrefs } from '#types/prefs';
+ 
+ import { app as accountsApp } from './app';
+ import {
+   addTransactions,
+@@ -101,10 +102,127 @@ describe('Account sync', () => {
+     expect(transactions.find(t => t.amount === 5000).payee).toBe(
+       payees.find(p => p.name === 'Kroger').id,
+     );
+   });
+ 
++  test('reconcile title-cases the payee name by default', async () => {
++    const { id } = await prepareDatabase();
++
++    await reconcileTransactions(id, [
++      {
++        date: '2020-01-02',
++        payee_name: 'Nintendo Store New York NY',
++        amount: 4133,
++      },
++    ]);
++
++    const payees = await getAllPayees();
++    expect(payees.length).toBe(1);
++    expect(payees[0].name).toBe('Nintendo Store New York Ny');
++
++    const transactions = await getAllTransactions();
++    expect(transactions[0].imported_payee).toBe('Nintendo Store New York Ny');
++  });
++
++  test('transactions-import title-cases the payee name by default', async () => {
++    const { id } = await prepareDatabase();
++
++    await accountsApp.handlers['transactions-import']({
++      accountId: id,
++      transactions: [
++        {
++          account: id,
++          date: '2020-01-02',
++          payee_name: 'Nintendo Store New York NY',
++          amount: 4133,
++        },
++      ],
++      isPreview: false,
++    });
++
++    const payees = await getAllPayees();
++    expect(payees.length).toBe(1);
++    expect(payees[0].name).toBe('Nintendo Store New York Ny');
++
++    const transactions = await getAllTransactions();
++    expect(transactions[0].imported_payee).toBe('Nintendo Store New York Ny');
++  });
++
++  test("transactions-import keeps the payee name with payeeNameNormalization 'original'", async () => {
++    const { id } = await prepareDatabase();
++
++    await accountsApp.handlers['transactions-import']({
++      accountId: id,
++      transactions: [
++        {
++          account: id,
++          date: '2020-01-02',
++          payee_name: 'Nintendo Store New York NY',
++          amount: 4133,
++        },
++      ],
++      isPreview: false,
++      opts: { payeeNameNormalization: 'original' },
++    });
++
++    const payees = await getAllPayees();
++    expect(payees.length).toBe(1);
++    expect(payees[0].name).toBe('Nintendo Store New York NY');
++
++    const transactions = await getAllTransactions();
++    expect(transactions[0].imported_payee).toBe('Nintendo Store New York NY');
++  });
++
++  test("transactions-import trims the payee name with payeeNameNormalization 'original'", async () => {
++    const { id } = await prepareDatabase();
++
++    await accountsApp.handlers['transactions-import']({
++      accountId: id,
++      transactions: [
++        {
++          account: id,
++          date: '2020-01-02',
++          payee_name: '  Nintendo Store New York NY  ',
++          amount: 4133,
++        },
++      ],
++      isPreview: false,
++      opts: { payeeNameNormalization: 'original' },
++    });
++
++    const payees = await getAllPayees();
++    expect(payees.length).toBe(1);
++    expect(payees[0].name).toBe('Nintendo Store New York NY');
++
++    const transactions = await getAllTransactions();
++    expect(transactions[0].imported_payee).toBe('Nintendo Store New York NY');
++  });
++
++  test('transactions-import rejects an unknown payeeNameNormalization', async () => {
++    const { id } = await prepareDatabase();
++
++    await expect(
++      accountsApp.handlers['transactions-import']({
++        accountId: id,
++        transactions: [
++          {
++            account: id,
++            date: '2020-01-02',
++            payee_name: 'Nintendo Store New York NY',
++            amount: 4133,
++          },
++        ],
++        isPreview: false,
++        opts: {
++          payeeNameNormalization: 'titlecase',
++        } as unknown as ImportTransactionsOpts,
++      }),
++    ).rejects.toThrow(/payeeNameNormalization/);
++
++    expect(await getAllPayees()).toEqual([]);
++  });
++
+   test('reconcile handles transactions with undefined fields', async () => {
+     const { id: acctId } = await prepareDatabase();
+ 
+     await db.insertTransaction({
+       id: 'one',
+@@ -188,16 +306,11 @@ describe('Account sync', () => {
+     await db.deleteTransaction(transactions1[0]);
+ 
+     await reconcileTransactions(
+       acctId,
+       [{ date: '2020-01-01', imported_id: 'finid-override' }],
+-      false,
+-      true,
+-      false,
+-      true,
+-      false,
+-      false,
++      { reimportDeleted: false },
+     );
+     const transactions2 = await getAllTransactions();
+     expect(transactions2.length).toBe(1);
+   });
+ 
+@@ -214,16 +327,11 @@ describe('Account sync', () => {
+     await db.deleteTransaction(transactions1[0]);
+ 
+     await reconcileTransactions(
+       acctId,
+       [{ date: '2020-01-01', imported_id: 'finid-override2' }],
+-      false,
+-      true,
+-      false,
+-      true,
+-      false,
+-      true,
++      { reimportDeleted: true },
+     );
+     const transactions2 = await getAllTransactions();
+     expect(transactions2.length).toBe(2);
+   });
+ 
+@@ -244,16 +352,11 @@ describe('Account sync', () => {
+     await db.deleteTransaction(transactions1[0]);
+ 
+     await reconcileTransactions(
+       acctId,
+       [{ date: '2020-01-01', imported_id: 'finid-precedence' }],
+-      false,
+-      true,
+-      false,
+-      true,
+-      false,
+-      false,
++      { reimportDeleted: false },
+     );
+     const transactions2 = await getAllTransactions();
+     expect(transactions2.length).toBe(1);
+   });
+ 
+@@ -620,12 +723,11 @@ describe('Account sync', () => {
+             ...existingTx,
+             date: '2024-04-06',
+             imported_id: 'something-else-entirely',
+           },
+         ],
+-        false,
+-        false,
++        { strictIdChecking: false },
+       );
+ 
+       payees = await getAllPayees();
+       expect(payees.length).toBe(1);
+ 
+diff --git a/packages/loot-core/src/server/accounts/sync.ts b/packages/loot-core/src/server/accounts/sync.ts
+index 93aca4a9d..efcf65e14 100644
+--- a/packages/loot-core/src/server/accounts/sync.ts
++++ b/packages/loot-core/src/server/accounts/sync.ts
+@@ -411,14 +411,38 @@ async function resolvePayee(trans, payeeName, payeesToCreate) {
+   }
+ 
+   return trans.payee;
+ }
+ 
++export const PAYEE_NAME_NORMALIZATIONS = ['original', 'title-case'] as const;
++export type PayeeNameNormalization = (typeof PAYEE_NAME_NORMALIZATIONS)[number];
++
++function normalizePayeeName(
++  payeeName: string,
++  normalization: PayeeNameNormalization,
++): string {
++  switch (normalization) {
++    case 'original':
++      return payeeName;
++    case 'title-case':
++      return title(payeeName);
++    default:
++      normalization satisfies never;
++      throw new Error(
++        `Unknown payee name normalization: ${String(normalization)}`,
++      );
++  }
++}
++
+ async function normalizeTransactions(
+   transactions,
+   acctId,
+-  { rawPayeeName = false } = {},
++  {
++    payeeNameNormalization = 'title-case',
++  }: {
++    payeeNameNormalization?: PayeeNameNormalization;
++  } = {},
+ ) {
+   const payeesToCreate = new Map();
+ 
+   const normalized = [];
+   for (let trans of transactions) {
+@@ -452,11 +476,11 @@ async function normalizeTransactions(
+     if (payee_name) {
+       const trimmed = payee_name.trim();
+       if (trimmed === '') {
+         payee_name = null;
+       } else {
+-        payee_name = rawPayeeName ? trimmed : title(trimmed);
++        payee_name = normalizePayeeName(trimmed, payeeNameNormalization);
+       }
+     }
+ 
+     trans.imported_payee = trans.imported_payee || payee_name;
+     if (trans.imported_payee) {
+@@ -582,10 +606,23 @@ async function createNewPayees(payeesToCreate, addsAndUpdates) {
+       }
+     }
+   });
+ }
+ 
++export type MatchTransactionsOptions = {
++  isBankSyncAccount?: boolean;
++  strictIdChecking?: boolean;
++  reimportDeleted?: boolean;
++  payeeNameNormalization?: PayeeNameNormalization;
++};
++
++export type ReconcileTransactionsOptions = MatchTransactionsOptions & {
++  isPreview?: boolean;
++  defaultCleared?: boolean;
++  updateDates?: boolean;
++};
++
+ export type ReconcileTransactionsResult = {
+   added: string[];
+   updated: string[];
+   updatedPreview: Array<{
+     transaction: TransactionEntity;
+@@ -596,16 +633,19 @@ export type ReconcileTransactionsResult = {
+ };
+ 
+ export async function reconcileTransactions(
+   acctId,
+   transactions,
+-  isBankSyncAccount = false,
+-  strictIdChecking = true,
+-  isPreview = false,
+-  defaultCleared = true,
+-  updateDates = false,
+-  reimportDeleted?: boolean,
++  {
++    isBankSyncAccount = false,
++    strictIdChecking = true,
++    isPreview = false,
++    defaultCleared = true,
++    updateDates = false,
++    reimportDeleted,
++    payeeNameNormalization,
++  }: ReconcileTransactionsOptions = {},
+ ): Promise<ReconcileTransactionsResult> {
+   logger.log('Performing transaction reconciliation');
+ 
+   const updated = [];
+   const added = [];
+@@ -615,17 +655,16 @@ export async function reconcileTransactions(
+   const {
+     payeesToCreate,
+     transactionsStep1,
+     transactionsStep2,
+     transactionsStep3,
+-  } = await matchTransactions(
+-    acctId,
+-    transactions,
++  } = await matchTransactions(acctId, transactions, {
+     isBankSyncAccount,
+     strictIdChecking,
+     reimportDeleted,
+-  );
++    payeeNameNormalization,
++  });
+ 
+   // Finally, generate & commit the changes
+   for (const { trans, subtransactions, match } of transactionsStep3) {
+     if (match && !trans.forceAddTransaction) {
+       // Skip updating already reconciled (locked) transactions
+@@ -756,13 +795,16 @@ export async function reconcileTransactions(
+ }
+ 
+ export async function matchTransactions(
+   acctId,
+   transactions,
+-  isBankSyncAccount = false,
+-  strictIdChecking = true,
+-  reimportDeletedOverride?: boolean,
++  {
++    isBankSyncAccount = false,
++    strictIdChecking = true,
++    reimportDeleted: reimportDeletedOverride,
++    payeeNameNormalization,
++  }: MatchTransactionsOptions = {},
+ ) {
+   logger.log('Performing transaction reconciliation matching');
+ 
+   const reimportDeleted =
+     reimportDeletedOverride !== undefined
+@@ -773,18 +815,15 @@ export async function matchTransactions(
+             .select('value'),
+         ).then(data => String(data?.data?.[0]?.value ?? 'true') === 'true');
+ 
+   const hasMatched = new Set();
+ 
+-  const transactionNormalization = isBankSyncAccount
+-    ? normalizeBankSyncTransactions
+-    : normalizeTransactions;
+-
+-  const { normalized, payeesToCreate } = await transactionNormalization(
+-    transactions,
+-    acctId,
+-  );
++  const { normalized, payeesToCreate } = isBankSyncAccount
++    ? await normalizeBankSyncTransactions(transactions, acctId)
++    : await normalizeTransactions(transactions, acctId, {
++        payeeNameNormalization,
++      });
+ 
+   // The first pass runs the rules, and preps data for fuzzy matching
+   const accounts: db.DbAccount[] = await db.getAccounts();
+   const accountsMap = new Map(accounts.map(account => [account.id, account]));
+ 
+@@ -966,11 +1005,11 @@ export async function addTransactions(
+   const added = [];
+ 
+   const { normalized, payeesToCreate } = await normalizeTransactions(
+     transactions,
+     acctId,
+-    { rawPayeeName: true },
++    { payeeNameNormalization: 'original' },
+   );
+ 
+   const accounts: db.DbAccount[] = await db.getAccounts();
+   const accountsMap = new Map(accounts.map(account => [account.id, account]));
+ 
+@@ -1123,19 +1162,15 @@ async function processBankSyncDownload(
+         date: startingBalanceDate,
+         cleared: true,
+         starting_balance_flag: true,
+       });
+ 
+-      const result = await reconcileTransactions(
+-        id,
+-        transactions,
+-        true,
+-        useStrictIdChecking,
+-        false,
+-        true,
++      const result = await reconcileTransactions(id, transactions, {
++        isBankSyncAccount: true,
++        strictIdChecking: useStrictIdChecking,
+         updateDates,
+-      );
++      });
+       return {
+         ...result,
+         added: [initialId, ...result.added],
+       };
+     });
+@@ -1148,15 +1183,15 @@ async function processBankSyncDownload(
+ 
+   return runMutator(async () => {
+     const result = await reconcileTransactions(
+       id,
+       importTransactions ? transactions : [],
+-      true,
+-      useStrictIdChecking,
+-      false,
+-      true,
+-      updateDates,
++      {
++        isBankSyncAccount: true,
++        strictIdChecking: useStrictIdChecking,
++        updateDates,
++      },
+     );
+ 
+     if (currentBalance != null) {
+       await updateAccountBalance(id, currentBalance);
+     }
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 383e17880..2b89b3e29 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -1,7 +1,8 @@
+ // @ts-strict-ignore
+ import type { ImportTransactionsResult } from '#server/accounts/app';
++import type { PayeeNameNormalization } from '#server/accounts/sync';
+ import type {
+   APIAccountEntity,
+   APIAccountGroupEntity,
+   APICategoryEntity,
+   APICategoryGroupEntity,
+@@ -30,10 +31,11 @@ import type {
+ 
+ export type ImportTransactionsOpts = {
+   defaultCleared?: boolean;
+   dryRun?: boolean;
+   reimportDeleted?: boolean;
++  payeeNameNormalization?: PayeeNameNormalization;
+ };
+ 
+ export type ApiHandlers = {
+   'api/batch-budget-start': () => Promise<void>;
+ 
+

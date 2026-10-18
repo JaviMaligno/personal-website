@@ -1,0 +1,11 @@
+{"id": "096da27ca9",
+"reuse": {"score": 3, "why": "Routes the range rule through getRangeAmount inside the existing getScheduledAmount and reuses getApproxNumberThreshold, but adds a second resolver getPlannedAmount for the op-aware rule instead of extending the existing helper, leaving the API (and SchedulesTable) on the older one."},
+"duplication": {"score": 3, "why": "Removes the four inline midpoint ternaries, but getPlannedAmount and getScheduledAmount now both carry the null/number/range dispatch, so the amount rule exists in two parallel functions."},
+"placement": {"score": 4, "why": "The rule lives in #shared/schedules next to the other schedule helpers and the API field is computed in scheduleModel.toExternal, though forecast assembles the op with its own fallback expression."},
+"scope": {"score": 4, "why": "Changes are on-topic, but several comments now describe the superseded 'furthest from zero' rule and one comment is split mid-sentence."},
+"maintainability": {"score": 2, "why": "Two near-identical helpers with different rules (only one handles approximate amounts) means expectedAmount in the API silently diverges from what schedules post, and a future rule change must find both."},
+"bypasses_abstraction": {"value": true, "where": "api-models.ts scheduleModel.toExternal uses getScheduledAmount instead of the op-aware getPlannedAmount used by forecast, posting, preview, rule-action sync and the budget template."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "shared/schedules.ts getPlannedAmount re-implements getScheduledAmount's null/number/range dispatch under a new name rather than extending the one helper."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "A parallel getPlannedAmount(amount, op) with an isapprox special case was added beside getScheduledAmount; api-models.ts toExternal keeps calling the op-unaware getScheduledAmount."}}

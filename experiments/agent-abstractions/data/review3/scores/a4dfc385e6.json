@@ -1,0 +1,12 @@
+{"id":"a4dfc385e6",
+"reuse":{"score":5,"why":"The rule change goes into the existing isMonthFillCategory and getMonthFillCategories, which all month-wide actions already use."},
+"duplication":{"score":4,"why":"The only repeat is the 'c.goal_def IS NOT NULL AS has_template' column, which has to appear in both the budget-data and the category queries that feed the shared predicate."},
+"placement":{"score":5,"why":"The exclusion is decided in the shared month-fill predicate in actions.ts, and the queries only supply the data it needs."},
+"scope":{"score":5,"why":"The change covers the predicate, the two feeding queries, setZero's scope, tests and a release note, all part of the request."},
+"maintainability":{"score":4,"why":"The predicate stays small and documented, and dropping the obsolete 'all' scope simplifies it. The remaining 'copyable' vs 'visible' difference (missing group row) is named in the comment."},
+"bypasses_abstraction":{"value":false,"where":"copyPreviousMonth, setZero and the averages all go through isMonthFillCategory/getMonthFillCategories."},
+"duplicated_blocks":0,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"Nothing is duplicated in disguise; the has_template column appears in two queries only because each data source needs it."},
+"one_place":{"value":true,"where":"isMonthFillCategory in server/budget/actions.ts holds the hidden / hidden-group / has_template rule, and every month-wide action goes through it."}
+}

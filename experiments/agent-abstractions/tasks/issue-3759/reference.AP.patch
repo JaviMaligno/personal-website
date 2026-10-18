@@ -1,0 +1,39 @@
+diff --git a/packages/loot-core/src/server/transactions/transaction-rules.ts b/packages/loot-core/src/server/transactions/transaction-rules.ts
+index 24c1bf1..c2bac4f 100644
+--- a/packages/loot-core/src/server/transactions/transaction-rules.ts
++++ b/packages/loot-core/src/server/transactions/transaction-rules.ts
+@@ -876,6 +876,21 @@ function* getOneOfSetterRules(
+   return null;
+ }
+ 
++function hasOneOfCategoryRule(payeeId: string, category: string) {
++  // Any stage: a "payee one of" rule setting the same category makes a
++  // learned "payee is" rule redundant regardless of when it runs.
++  for (const stage of [null, 'pre', 'post']) {
++    const rule = getOneOfSetterRules(stage, 'payee', 'category', {
++      condValue: payeeId,
++      actionValue: category,
++    }).next().value;
++    if (rule) {
++      return true;
++    }
++  }
++  return false;
++}
++
+ export async function updatePayeeRenameRule(fromNames: string[], to: string) {
+   const renameRule = getOneOfSetterRules('pre', 'imported_payee', 'payee', {
+     actionValue: to,
+@@ -1009,6 +1024,12 @@ export async function updateCategoryRules(transactions) {
+             });
+           }
+         }
++      } else if (hasOneOfCategoryRule(payeeId, category)) {
++        // The user already has a rule whose only condition is "payee is
++        // one of [...]" (including this payee) and whose only action sets
++        // this same category. A learned rule would be redundant, and the
++        // user's rule is never edited by learning.
++        continue;
+       } else {
+         // No existing rules, so create one
+         const newRule = new Rule({

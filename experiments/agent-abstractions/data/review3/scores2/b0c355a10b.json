@@ -1,0 +1,11 @@
+{"id":"b0c355a10b",
+"reuse":{"score":5,"why":"The API field and the approximate-amount rule reuse the existing getScheduledAmount and the matcher's getApproxNumberThreshold, and the stray getRangedAmountMidpoint branch in schedule-template is folded into getScheduledAmount."},
+"duplication":{"score":5,"why":"The worst-case rule exists once (getRangedAmountWorstCase / getApproxAmountWorstCase inside getScheduledAmount) and the 7.5% tolerance is not re-derived."},
+"placement":{"score":5,"why":"Amount resolution stays in shared/schedules.ts, the API only maps it into the list response, and the API type is declared in api-models next to APIScheduleEntity."},
+"scope":{"score":4,"why":"Changes are on-task, but the release notes contradict each other (step 1's 'furthest from zero' note is kept after step 4 changes the rule) and the APIScheduleListEntity comment still says 'the far end of a range'."},
+"maintainability":{"score":4,"why":"One function owns the rule, but its new operator parameter is positional after a boolean and defaults to 'is', so every caller must remember `getScheduledAmount(x, false, op)` or silently lose the approximate case."},
+"bypasses_abstraction":{"value":false,"where":"All server, shared and client amount sites, plus the new API field, call getScheduledAmount with the operator."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No duplicated logic; the template's own isbetween dispatch was removed."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"getScheduledAmount gained the op parameter and an isapprox branch (step 3); the range rule changed inside getRangedAmountWorstCase without new flags, and no caller re-implements it (useScheduleEdit's form conversion intentionally omits op)."}}

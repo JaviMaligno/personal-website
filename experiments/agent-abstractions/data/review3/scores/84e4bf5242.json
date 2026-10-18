@@ -1,0 +1,11 @@
+{"id":"84e4bf5242",
+"reuse":{"score":3,"why":"Extends the shared getDateWithSkippedWeekend and threads holidays to all its callers, but the new isNonWorkingDay predicate is not exported, so server/schedules/app.ts re-writes the weekend-or-holiday test inline."},
+"duplication":{"score":2,"why":"The weekend-or-holiday check appears inline twice in schedules/app.ts besides isNonWorkingDay, and getUpcomingDates gains a copy of getDatesInRange's daily-skip flatMap."},
+"placement":{"score":3,"why":"The moving rule rightly lives in shared/schedules.ts, but the daily-skip decision stays spread across getNextDate and two server functions instead of one shared definition."},
+"scope":{"score":3,"why":"getUpcomingDates is restructured beyond the holiday rule (daily schedules no longer pass through getDateWithSkippedWeekend, an over-fetch of count + holidays + 14 and slicing)."},
+"maintainability":{"score":2,"why":"The same 'non-working day' rule now has three spellings and the daily-skip loop two copies, with a magic over-fetch, so the next change to what counts as a non-working day must be made in several places."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates and getDatesInRange test d.isWeekend(date) || config.holidays?.includes(dayFromDate(date)) instead of a shared isNonWorkingDay."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The daily-skip flatMap copied into getUpcomingDates is reshaped from getDatesInRange's, and the inline holiday checks restate the private isNonWorkingDay with optional chaining."},
+"one_place":{"value":false,"where":"Date moving is in getDateWithSkippedWeekend (shared), but the daily-skip 'non-working day' rule is decided in isNonWorkingDay (getNextDate) and separately inline in getUpcomingDates and getDatesInRange."}}

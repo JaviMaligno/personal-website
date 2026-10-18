@@ -1,0 +1,67 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+new file mode 100644
+index 0000000..19bac60
+--- /dev/null
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -0,0 +1,36 @@
++import { scheduleModel } from './api-models';
++
++describe('scheduleModel', () => {
++  const schedule = {
++    id: 'schedule-1',
++    name: 'Test schedule',
++    rule: 'rule-1',
++    next_date: '2026-01-01',
++    completed: false,
++    posts_transaction: true,
++    tombstone: false,
++    _payee: 'payee-1',
++    _account: 'account-1',
++    _amountOp: 'isbetween',
++    _date: '2026-01-01',
++    _conditions: [],
++    _actions: [],
++  };
++
++  it.each([
++    [1200, 1200],
++    [{ num1: 10100, num2: 20000 }, 20000],
++    [{ num1: -10100, num2: -20000 }, -20000],
++    [{ num1: -20000, num2: 10100 }, -20000],
++  ])('exposes expectedAmount for amount %j', (amount, expectedAmount) => {
++    expect(
++      scheduleModel.toExternal({ ...schedule, _amount: amount }),
++    ).toMatchObject({ amount, expectedAmount });
++  });
++
++  it('uses zero when the schedule has no amount', () => {
++    expect(
++      scheduleModel.toExternal({ ...schedule, _amount: null }),
++    ).toMatchObject({ amount: null, expectedAmount: 0 });
++  });
++});
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..374b7c5 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,3 +1,4 @@
++import { getScheduledAmount } from '#shared/schedules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -233,6 +234,7 @@ export type APIScheduleEntity = Pick<
+   payee?: ScheduleEntity['_payee']; // Optional will default to null
+   account?: ScheduleEntity['_account']; // Optional will default to null
+   amount?: ScheduleEntity['_amount']; // Provide only 1 number except if the Amount
++  expectedAmount?: number;
+   amountOp: AmountOPType; // 'is' | 'isapprox' | 'isbetween'
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
+ };
+@@ -249,6 +251,7 @@ export const scheduleModel = {
+       payee: schedule._payee,
+       account: schedule._account,
+       amount: schedule._amount,
++      expectedAmount: getScheduledAmount(schedule._amount),
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+     };

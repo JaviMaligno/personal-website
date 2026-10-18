@@ -1,0 +1,12 @@
+{"id": "125b5c46b4",
+"reuse": {"score": 2, "why": "The new helper wraps getScheduledAmount, but it recomputes the 7.5% tolerance inline instead of calling the existing getApproxNumberThreshold in shared/rules.ts that matching already uses."},
+"duplication": {"score": 2, "why": "The tolerance formula Math.round(Math.abs(amount) * 0.075) is copied from getApproxNumberThreshold, and the preview and posting sites keep their own null/number dispatch around the new helper."},
+"placement": {"score": 4, "why": "The rule sits in shared/schedules.ts next to getScheduledAmount, where the tree keeps the expected-amount rule, though the tolerance belongs to shared/rules.ts."},
+"scope": {"score": 4, "why": "Mostly focused; the ynab5 importer edit only satisfies the required expectedAmount type, and some call sites are reformatted with odd indentation."},
+"maintainability": {"score": 2, "why": "Preview still short-circuits numbers before the helper, so approximate schedules preview at the exact value while posting uses the worst case; schedule-template still uses its own midpoint; and the tolerance now lives in two places."},
+"bypasses_abstraction": {"value": true, "where": "shared/schedules.ts getExpectedScheduleAmount reimplements getApproxNumberThreshold; computeSchedulePreviewTransactions keeps `typeof _amount === 'number' ? _amount` before the helper, so approximate amounts bypass it; budget/schedule-template.ts keeps its own amount calculation."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "getExpectedScheduleAmount inlines getApproxNumberThreshold's formula as a local `tolerance` with an explanatory comment instead of calling it."},
+"one_place": {"value": false, "where": "The rule is in getExpectedScheduleAmount, but the preview path in computeSchedulePreviewTransactions returns numeric amounts before reaching it, schedule-template.ts computes its own amount, and UI callers still use getScheduledAmount without the op."}
+}

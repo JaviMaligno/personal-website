@@ -1,0 +1,12 @@
+{"id": "7804b1a2d5",
+ "reuse": {"score": 3, "why": "Introduces a shared getMonthWideCategories that four actions use and reuses setNMonthAvg, but parses #fixed with its own regex instead of the shared tags helpers (extractTagsFromText) and reads goal_def itself instead of the template loader."},
+ "duplication": {"score": 3, "why": "Collapses the three copied category queries and the avg actions into one selection and setAllCategoriesAvg, but copyPreviousMonth re-implements the whole selection (income, hidden, templated, fixed) inline."},
+ "placement": {"score": 3, "why": "The selection rule sits in budget/actions.ts next to the actions, but the #fixed filter is also pushed into goal-template.ts's template run, which is not a month-wide action."},
+ "scope": {"score": 3, "why": "Mostly on-request, but it changes which categories budget templates are applied to (goal-template.ts) and switches the averaging actions from void to awaited calls, neither of which was asked."},
+ "maintainability": {"score": 3, "why": "One selection function is an improvement, yet the rule now lives in two places (getMonthWideCategories and copyPreviousMonth's loop), so the next exclusion has to be added twice."},
+ "bypasses_abstraction": {"value": true, "where": "actions.ts copyPreviousMonth applies the hidden/templated/#fixed/income exclusions itself instead of using getMonthWideCategories; getFixedGroupCategoryIds hand-rolls tag matching instead of shared/tags.ts."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "copyPreviousMonth's per-row checks restate getMonthWideCategories' filter in a different shape (row fields hidden/group_hidden plus templated/fixed sets) rather than sharing it."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 1, "where": "getMonthWideCategories gained includeHiddenCategories (step 4, interpolated into its SQL); copyPreviousMonth bypasses it and re-implements every exclusion step by step."}
+}

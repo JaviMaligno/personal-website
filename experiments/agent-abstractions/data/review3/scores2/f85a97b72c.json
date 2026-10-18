@@ -1,0 +1,11 @@
+{"id":"f85a97b72c",
+"reuse":{"score":4,"why":"Builds on the existing isMonthFillCategory/getMonthFillCategories selection and drops the 'all' scope so setZero uses it too; the template exclusion uses an extra query rather than going into the existing predicate."},
+"duplication":{"score":3,"why":"The template exclusion (fetch templated ids, test membership) is applied twice, once in getMonthFillCategories and again in copyPreviousMonth, next to the shared predicate."},
+"placement":{"score":3,"why":"The hidden rule lives in the shared predicate, but the template rule sits beside it in two callers instead of inside isMonthFillCategory, with goal_def added to the queries that feed it."},
+"scope":{"score":5,"why":"Only the month-wide selection, setZero's scope and tests are changed."},
+"maintainability":{"score":3,"why":"A maintainer has to know that 'which categories a month-wide action fills' is split between isMonthFillCategory and a separate templatedIds set that each caller must remember to apply."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth in budget/actions.ts applies its own templatedIds check after isMonthFillCategory, and getMonthFillCategories does the same, rather than the predicate deciding the template rule."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated template check is an open, near-identical copy in two places rather than a reshaped one."},
+"one_place":{"value":false,"where":"Hidden category/group exclusion is decided once in isMonthFillCategory, but the saved-template exclusion is decided separately in getMonthFillCategories and in copyPreviousMonth via getTemplatedCategoryIds."}}

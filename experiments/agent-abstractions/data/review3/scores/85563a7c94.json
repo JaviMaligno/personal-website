@@ -1,0 +1,11 @@
+{"id":"85563a7c94",
+"reuse":{"score":4,"why":"Hooks the rule into the existing shared assertBankAccountNotLinked and linkBankSyncAccount functions that every provider already calls, with no per-provider edits."},
+"duplication":{"score":3,"why":"The closed-account check is written twice, once as a separate query in assertBankAccountNotLinked and again on accRow in linkBankSyncAccount; the shared error constant hides that it is the same rule."},
+"placement":{"score":3,"why":"The shared link path is the right layer, but the check is put in a function named for the already-linked rule, so its name no longer says what it checks, and it is repeated in the upgrade branch."},
+"scope":{"score":5,"why":"Only the link guard, the shared link function and a release note change."},
+"maintainability":{"score":3,"why":"Two checks of the same rule in consecutive steps, one inside a misnamed function, will confuse a maintainer about which check counts."},
+"bypasses_abstraction":{"value":false,"where":"All provider link functions keep going through assertBankAccountNotLinked and linkBankSyncAccount."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The closed check appears as a separate SELECT closed query in assertBankAccountNotLinked and again as accRow.closed === 1 in linkBankSyncAccount, the same rule written as two different checks."},
+"one_place":{"value":false,"where":"The closed rule is decided both in assertBankAccountNotLinked and in the upgrade branch of linkBankSyncAccount (packages/loot-core/src/server/accounts/app.ts); every path runs both."}}

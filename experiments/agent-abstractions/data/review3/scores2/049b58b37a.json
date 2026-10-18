@@ -1,0 +1,12 @@
+{"id": "049b58b37a",
+ "reuse": {"score": 2, "why": "Introduces one shared link guard used by all providers, but the Fintegra link and download functions are wholesale copies of the SimpleFin/Akahu ones and the takeover path re-writes unlinkAccount's field reset instead of sharing it."},
+ "duplication": {"score": 2, "why": "linkFintegraAccount is a ~90-line copy of linkSimpleFinAccount, downloadFintegraTransactions copies downloadAkahuTransactions verbatim, and the unlink column reset duplicates unlinkAccount."},
+ "placement": {"score": 4, "why": "Guard, handler, download function and server path live in the same modules where the tree puts the other providers' equivalents."},
+ "scope": {"score": 4, "why": "Focused on the four steps; the desktop-client edits are the minimum forced by the provider union, plus release notes and a test."},
+ "maintainability": {"score": 2, "why": "A helper named assertBankAccountNotLinked now also rejects closed accounts and silently unlinks other accounts, and a sixth near-identical link function and download function grow the per-provider copy pattern."},
+ "bypasses_abstraction": {"value": true, "where": "app.ts assertBankAccountNotLinked: the replaceExistingLink branch re-implements the column reset of unlinkAccount instead of sharing it (e.g. extracting the local-detach part)."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The duplicated blocks (linkFintegraAccount vs linkSimpleFinAccount, downloadFintegraTransactions vs downloadAkahuTransactions, unlink reset) are verbatim copies, not reshaped."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 1, "where": "assertBankAccountNotLinked (app.ts): created in step 1, then given a closed-account check (step 3) and a replaceExistingLink parameter with a mutating unlink branch (step 4), so an assert now performs writes; the unlink branch bypasses unlinkAccount."}
+}

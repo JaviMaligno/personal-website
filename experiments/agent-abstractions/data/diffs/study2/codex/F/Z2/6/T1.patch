@@ -1,0 +1,70 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..3797121 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -9,6 +9,7 @@ import {
+   getNextDate,
+   getNextDateAfter,
+   getScheduleOccurrenceMatchStartDate,
++  getScheduledAmount,
+   getStatus,
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+@@ -25,6 +26,23 @@ describe('schedules', () => {
+   const dateFormat = 'yyyy-MM-dd';
+   const todayString = monthUtils.format(today, dateFormat);
+ 
++  describe('getScheduledAmount', () => {
++    it.each([
++      [{ num1: -10100, num2: -20000 }, -20000],
++      [{ num1: -20000, num2: -10100 }, -20000],
++      [{ num1: 10100, num2: 20000 }, 20000],
++      [{ num1: 20000, num2: 10100 }, 20000],
++      [{ num1: -10000, num2: 12000 }, 12000],
++    ])('uses the range endpoint furthest from zero: %j', (range, expected) => {
++      expect(getScheduledAmount(range)).toBe(expected);
++    });
++
++    it('keeps single and missing amounts unchanged', () => {
++      expect(getScheduledAmount(-123)).toBe(-123);
++      expect(getScheduledAmount(null)).toBe(0);
++    });
++  });
++
+   beforeEach(() => {
+     MockDate.set(new Date(2021, 4, 14));
+   });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 67871e6..3f43013 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -377,9 +377,8 @@ export function applyWeekendRuleToDay(
+     : day;
+ }
+ 
+-// The amount a schedule is expected to post. A ranged ("is between") amount is
+-// scheduled at its midpoint: rounded ('roundedMidpoint'), or half of the rounded
+-// sum ('halfOfRoundedSum', budget templates), which can leave a half unit.
++// The amount a schedule is expected to post. For a ranged ("is between") amount,
++// use the endpoint furthest from zero so planning covers the worst case.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -392,11 +391,12 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const midpoint =
+-    rangeRounding === 'halfOfRoundedSum'
+-      ? Math.round(amount.num1 + amount.num2) / 2
+-      : Math.round((amount.num1 + amount.num2) / 2);
+-  return inverse ? -midpoint : midpoint;
++  // Keep the optional argument for compatibility with callers that used to
++  // choose midpoint rounding; range schedules now always use the worst case.
++  void rangeRounding;
++  const worstCase =
++    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  return inverse ? -worstCase : worstCase;
+ }
+ 
+ export function getUpcomingDays(

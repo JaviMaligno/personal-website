@@ -1,0 +1,13 @@
+{
+  "id": "7cfd4889b2",
+  "reuse": {"score": 3, "why": "Adds getBulkBudgetCategories and a shared setBulkAverage for the three average actions and the new action, but setZero gets its own copy of the same SQL and copyPreviousMonth computes the flags in getBudgetData and decides in JS."},
+  "duplication": {"score": 2, "why": "The full eligibility rule (hidden unless included, #fixed group note, UI template source) is spelled out three times: getBulkBudgetCategories, a verbatim SQL copy in setZero, and derived columns plus row conditions in copyPreviousMonth."},
+  "placement": {"score": 3, "why": "Selection logic stays in budget/actions.ts, but part of it moves into getBudgetData's SELECT (group_fixed, template_source) so the generic budget-row loader now carries one action's eligibility columns."},
+  "scope": {"score": 3, "why": "Also rewrites set3/6/12MonthAvg into a new setBulkAverage (routing set3MonthAvg through setNMonthAvg and turning void calls into await), a refactor beyond what the steps ask for."},
+  "maintainability": {"score": 2, "why": "A future exclusion must be added in three differently shaped places (two SQL strings and a JS row filter), which is exactly how this tree's original copies drifted."},
+  "bypasses_abstraction": {"value": true, "where": "setZero in budget/actions.ts inlines a copy of getBulkBudgetCategories' query, and copyPreviousMonth decides eligibility from new getBudgetData columns instead of the shared selection."},
+  "duplicated_blocks": 2,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "copyPreviousMonth restates the #fixed and UI-template exclusions as computed columns (group_fixed, template_source) in getBudgetData plus separate if-returns, a reshaped form of getBulkBudgetCategories' WHERE clause; setZero's copy is verbatim."},
+  "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 2, "where": "getBulkBudgetCategories takes includeHiddenCategories with a conditional SQL fragment; setZero and copyPreviousMonth bypass it with their own versions of the rule."}
+}

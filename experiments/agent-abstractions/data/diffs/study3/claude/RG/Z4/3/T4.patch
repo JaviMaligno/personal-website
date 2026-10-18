@@ -1,0 +1,115 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 490ce8b..72d9364 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -715,6 +715,43 @@ describe('holidays', () => {
+     ).toBe('2025-04-01');
+   });
+ 
++  it('treats MM-DD holidays as recurring every year', () => {
++    const cond = (extra: Record<string, unknown>, start: string) => ({
++      op: 'is',
++      field: 'date',
++      value: { ...base, start, weekendSolveMode: 'after', ...extra },
++    });
++    // 2026-12-25 is Friday and a yearly holiday
++    expect(
++      getNextDate(
++        cond({ holidays: ['12-25'] }, '2026-12-25'),
++        new Date(2026, 11, 25),
++      ),
++    ).toBe('2026-12-28');
++    // full dates stay one-off
++    expect(
++      getNextDate(
++        cond({ holidays: ['2025-12-25'] }, '2026-12-25'),
++        new Date(2026, 11, 25),
++      ),
++    ).toBe('2026-12-25');
++
++    const config = {
++      frequency: 'daily',
++      start: '2025-12-24',
++      skipWeekend: true,
++      holidays: ['12-25'],
++    };
++    const days = new RSchedule({
++      rrules: recurConfigToRSchedule(config) as IRuleOptions[],
++      exdates: recurConfigToExdates(config),
++    })
++      .occurrences({ start: new Date(2026, 11, 24), take: 2 })
++      .toArray()
++      .map(o => o.date.getDate());
++    expect(days).toEqual([24, 28]);
++  });
++
+   it('skips holidays for daily schedules', () => {
+     const config = {
+       frequency: 'daily',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 012de14..d702f41 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -263,9 +263,37 @@ export function recurConfigToExdates(config): Date[] {
+   if (config.frequency !== 'daily' || !config.skipWeekend) {
+     return [];
+   }
+-  return (config.holidays ?? []).map((h: string) =>
+-    d.setHours(monthUtils.parseDate(h), 12),
+-  );
++  const holidays: string[] = config.holidays ?? [];
++  const exdates = holidays
++    .filter(h => !isYearlyHoliday(h))
++    .map(h => d.setHours(monthUtils.parseDate(h), 12));
++
++  // Yearly holidays (MM-DD) are expanded over a wide span of years
++  const yearly = holidays.filter(isYearlyHoliday);
++  if (yearly.length > 0) {
++    const startYear = config.start
++      ? monthUtils.parseDate(config.start).getFullYear()
++      : new Date().getFullYear();
++    for (let year = startYear - 1; year <= startYear + 200; year++) {
++      for (const h of yearly) {
++        const date = `${year}-${h}`;
++        // Skips invalid dates such as 02-29 in non-leap years
++        if (monthUtils.dayFromDate(monthUtils.parseDate(date)) === date) {
++          exdates.push(d.setHours(monthUtils.parseDate(date), 12));
++        }
++      }
++    }
++  }
++  return exdates;
++}
++
++function isYearlyHoliday(holiday: string): boolean {
++  return /^\d{2}-\d{2}$/.test(holiday);
++}
++
++function isHoliday(day: Date, holidays: string[]): boolean {
++  const date = monthUtils.dayFromDate(day);
++  return holidays.includes(date) || holidays.includes(date.slice(5));
+ }
+ 
+ export function extractScheduleConds(conditions) {
+@@ -359,8 +387,7 @@ export function getDateWithSkippedWeekend(
+   solveMode: 'after' | 'before',
+   holidays: string[] = [],
+ ) {
+-  const isOffDay = (day: Date) =>
+-    d.isWeekend(day) || holidays.includes(monthUtils.dayFromDate(day));
++  const isOffDay = (day: Date) => d.isWeekend(day) || isHoliday(day, holidays);
+ 
+   if (!isOffDay(date)) {
+     return date;
+diff --git a/upcoming-release-notes/recurring-yearly-holidays.md b/upcoming-release-notes/recurring-yearly-holidays.md
+new file mode 100644
+index 0000000..f580d5b
+--- /dev/null
++++ b/upcoming-release-notes/recurring-yearly-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow schedule holidays to be entered as MM-DD to recur every year

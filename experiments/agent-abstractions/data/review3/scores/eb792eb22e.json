@@ -1,0 +1,11 @@
+{"id":"eb792eb22e",
+"reuse":{"score":5,"why":"Folds the five per-provider link functions into one linkBankSyncAccount and three download functions into downloadBankSyncTransactions, reuses link.findOrCreateBank and syncAccount, and extracts clearAccountBankLink so the takeover reuses the unlink logic."},
+"duplication":{"score":4,"why":"Removes large copy-paste; what remains is the provider name stated twice per route (in guardBankAccountLink and in the per-provider wrapper) and six near-identical account-id extractor lambdas."},
+"placement":{"score":4,"why":"Link rules (closed check, holder lookup, refusal) live in accounts/link.ts and the download in sync.ts; the guard composing them is a wrapper defined inline among the app.method registrations in app.ts, which is acceptable but a little ad hoc."},
+"scope":{"score":3,"why":"Beyond the four requests it rewrites all provider link and download functions, which incidentally changes Akahu's sync-event tables and GoCardless's official_name fallback."},
+"maintainability":{"score":4,"why":"Adding a provider is now a few lines and the link rules are in one guard, though the guard-plus-wrapper double registration and unannounced behaviour drift need review."},
+"bypasses_abstraction":{"value":false,"where":"All link routes go through guardBankAccountLink and linkBankSyncAccount; unlink reuses clearAccountBankLink."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"Duplicated provider code is removed and shared rather than reshaped."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":0,"where":"linkBankSyncAccount gains a fileId parameter for Pluggy's real variation; downloadBankSyncTransactions takes extraBody/extraHeaders for Enable Banking/Pluggy; no special-case branches inside the shared helpers and every link route uses the guard."}}

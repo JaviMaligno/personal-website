@@ -1,0 +1,12 @@
+{"id": "f97f24924c",
+ "reuse": {"score": 5, "why": "Extends the existing getDateWithSkippedWeekend with a holidays parameter and adds one isNonWorkingDay predicate that every weekend site (getNextDate, getUpcomingDates, getDatesInRange, schedule templates) now uses."},
+ "duplication": {"score": 4, "why": "The holiday rule itself is defined once, but the three pre-existing daily-skip sites each repeat `config.holidays ?? []` and their own look-ahead padding (`+ holidays.length`) adjustment."},
+ "placement": {"score": 5, "why": "The rule sits in shared/schedules.ts next to the weekend helper; the type change is on RecurConfig and parseRecurDate carries the field through like weekendSolve."},
+ "scope": {"score": 5, "why": "Only the holidays plumbing, the shared helpers, tests and a release note."},
+ "maintainability": {"score": 4, "why": "A clear isNonWorkingDay plus a loop-based mover is easy to own; the scattered holidays defaults and per-site occurrence-window padding are the weak spot."},
+ "bypasses_abstraction": {"value": false, "where": "No site keeps a bare d.isWeekend check or its own move logic; all go through isNonWorkingDay/getDateWithSkippedWeekend."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "The previous weekend checks are replaced by calls to the new predicate, not reshaped copies."},
+ "one_place": {"value": true, "where": "isNonWorkingDay and getDateWithSkippedWeekend in packages/loot-core/src/shared/schedules.ts decide what counts as a non-working day and how to move off it for every schedule date path."}
+}

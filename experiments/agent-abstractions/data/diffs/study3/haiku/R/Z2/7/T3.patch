@@ -1,0 +1,172 @@
+diff --git a/packages/desktop-client/src/components/accounts/Balance.tsx b/packages/desktop-client/src/components/accounts/Balance.tsx
+index 58b7618..564b097 100644
+--- a/packages/desktop-client/src/components/accounts/Balance.tsx
++++ b/packages/desktop-client/src/components/accounts/Balance.tsx
+@@ -109,9 +109,15 @@ export function SelectedBalance({
+       }
+ 
+       if (!account || account.id === schedule._account) {
+-        scheduleBalance += getScheduledAmount(schedule._amount);
++        scheduleBalance += getScheduledAmount(
++          schedule._amount,
++          schedule._amountOp,
++        );
+       } else {
+-        scheduleBalance -= getScheduledAmount(schedule._amount);
++        scheduleBalance -= getScheduledAmount(
++          schedule._amount,
++          schedule._amountOp,
++        );
+       }
+     }
+   }
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index c5e1274..adc1c8e 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -256,7 +256,7 @@ export const scheduleModel = {
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+-      expectedAmount: getScheduledAmount(schedule._amount),
++      expectedAmount: getScheduledAmount(schedule._amount, schedule._amountOp),
+     };
+   },
+   //just an update
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 9e8bb7e..a30c8f9 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -60,10 +60,10 @@ async function createScheduleList(
+     const conditions = rule.serialize().conditions;
+     const { date: dateConditions, amount: amountCondition } =
+       extractScheduleConds(conditions);
+-    let scheduleAmount =
+-      amountCondition.op === 'isbetween'
+-        ? getScheduledAmount(amountCondition.value)
+-        : amountCondition.value;
++    let scheduleAmount = getScheduledAmount(
++      amountCondition.value,
++      amountCondition.op,
++    );
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+       switch (template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 0ecd7da..d8e26cf 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -103,7 +103,7 @@ export function normalizeSchedule(
+     _conditions: schedule._conditions ?? [],
+     _payee: schedule._payee ?? conditions.payee?.value ?? null,
+     _account: accountId,
+-    _amount: getScheduledAmount(amountValue),
++    _amount: getScheduledAmount(amountValue, conditions.amount?.op),
+     _date: dateValue,
+   };
+ }
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 02dc4ac..d2909ce 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -150,7 +150,7 @@ function updateActions(
+   }
+ 
+   // Keeps the action consistent with the amount the schedule actually posts.
+-  const amount = getScheduledAmount(amountCond.value);
++  const amount = getScheduledAmount(amountCond.value, amountCond.op);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -583,7 +583,7 @@ async function postTransactionForSchedule({
+     return;
+   }
+ 
+-  const amount = getScheduledAmount(schedule._amount);
++  const amount = getScheduledAmount(schedule._amount, schedule._amountOp);
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index d71ec4e..5c06f5c 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -106,10 +106,21 @@ describe('schedules', () => {
+       expect(getScheduledAmount({ num1: 5000, num2: -12000 })).toBe(-12000);
+     });
+ 
++    it('plans an approximate bill at the end of its tolerance furthest from zero', () => {
++      expect(getScheduledAmount(-10000, 'isapprox')).toBe(-10750);
++      expect(getScheduledAmount(10000, 'isapprox')).toBe(10750);
++      expect(getScheduledAmount(-1234, 'isapprox')).toBe(-1327);
++    });
++
++    it('keeps a single amount unchanged when it is not approximate', () => {
++      expect(getScheduledAmount(-10000, 'is')).toBe(-10000);
++    });
++
+     it('inverts the planned amount when requested', () => {
+-      expect(getScheduledAmount({ num1: -10100, num2: -20000 }, true)).toBe(
+-        20000,
+-      );
++      expect(
++        getScheduledAmount({ num1: -10100, num2: -20000 }, undefined, true),
++      ).toBe(20000);
++      expect(getScheduledAmount(-10000, 'isapprox', true)).toBe(10750);
+     });
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index dfd0afb..de68d5a 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -7,6 +7,7 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import { q } from './query';
++import { getApproxNumberThreshold } from './rules';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+@@ -355,6 +356,7 @@ export function getDateWithSkippedWeekend(
+ 
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number } | null | undefined,
++  op?: string,
+   inverse: boolean = false,
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+@@ -362,7 +364,11 @@ export function getScheduledAmount(
+   if (amount == null) return 0;
+ 
+   if (typeof amount === 'number') {
+-    return inverse ? -amount : amount;
++    const planned =
++      op === 'isapprox'
++        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
++        : amount;
++    return inverse ? -planned : planned;
+   }
+   // Plan for the worst case: the end of the range furthest from zero.
+   const worst =
+@@ -498,7 +504,7 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      const amount = getScheduledAmount(schedule._amount);
++      const amount = getScheduledAmount(schedule._amount, schedule._amountOp);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,
+diff --git a/upcoming-release-notes/plan-approximate-schedules-worst-case.md b/upcoming-release-notes/plan-approximate-schedules-worst-case.md
+new file mode 100644
+index 0000000..1e09db1
+--- /dev/null
++++ b/upcoming-release-notes/plan-approximate-schedules-worst-case.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Plan approximate schedule amounts at the end of their tolerance furthest from zero, so forecasts and upcoming balances account for the worst case

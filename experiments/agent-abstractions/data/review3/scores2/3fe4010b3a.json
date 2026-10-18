@@ -1,0 +1,12 @@
+{"id":"3fe4010b3a",
+"reuse":{"score":3,"why":"Reuses getApproxNumberThreshold for the tolerance and routes getScheduledAmount and the API field through the new rule, but the server call sites do not use the existing getScheduledAmount; they get two new parallel exports (getWorstCaseAmount, getRangedAmount) instead."},
+"duplication":{"score":2,"why":"The null/number/range dispatch stays at forecast, updateActions, postTransactionForSchedule and the preview, each choosing getWorstCaseAmount vs getRangedAmount itself although getWorstCaseAmount already dispatches on type, and the budget template keeps its own op-based dispatch."},
+"placement":{"score":4,"why":"The rule lives in shared/schedules.ts and the API field in api-models.ts, which fit the tree's layering, but the dispatch remains spread across server modules."},
+"scope":{"score":4,"why":"Focused on the four requests; the extra case in api/schedule-update for the read-only field is justified, though comment edits at each site add noise."},
+"maintainability":{"score":2,"why":"Three overlapping exported functions (getScheduledAmount, getWorstCaseAmount, getRangedAmount) with op inserted after an inverse boolean, plus five sites that each assemble the rule from them, make the next rule change easy to miss in one place."},
+"bypasses_abstraction":{"value":true,"where":"forecast-schedules.ts normalizeSchedule, schedules/app.ts updateActions and postTransactionForSchedule, shared/schedules.ts computeSchedulePreviewTransactions and budget/schedule-template.ts call getWorstCaseAmount/getRangedAmount with their own dispatch instead of getScheduledAmount."},
+"duplicated_blocks":4,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Each site's `typeof amount === 'number' ? getWorstCaseAmount(...) : getRangedAmount(...)` re-expresses the type dispatch already inside getWorstCaseAmount, and schedule-template.ts re-expresses it by op ('isbetween' || 'isapprox')."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":5,"where":"getScheduledAmount gained an op parameter after inverse; forecast normalizeSchedule, updateActions, postTransactionForSchedule, computeSchedulePreviewTransactions and the budget template bypass it and re-implement the missing/number/range (or op) dispatch around the lower-level helpers."}
+}

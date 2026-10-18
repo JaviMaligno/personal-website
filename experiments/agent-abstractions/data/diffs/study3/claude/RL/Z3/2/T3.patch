@@ -1,0 +1,183 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index a13a142..255755b 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -339,3 +339,45 @@ describe('bank sync handlers must not nest mutators', () => {
+     expect(result.errors).toEqual([]);
+   });
+ });
++
++describe('simplefin-accounts-link', () => {
++  const linkHandler = app.handlers['simplefin-accounts-link'];
++  const externalAccount = {
++    account_id: 'ext-1',
++    name: 'Checking',
++    institution: 'Bank',
++    orgDomain: 'bank.example',
++    balance: 0,
++    orgId: 'org',
++  };
++
++  it('refuses to link a closed account and changes nothing', async () => {
++    await db.insertAccount({ id: 'closed1', name: 'Old', closed: 1 });
++
++    await expect(
++      linkHandler({ upgradingId: 'closed1', externalAccount } as never),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    const row = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['closed1'],
++    );
++    expect(row.account_id).toBeNull();
++    expect(row.closed).toBe(1);
++  });
++
++  it('refuses to re-link a closed account that already holds the link', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'closed2', name: 'Old', accountId: 'ext-1' },
++    ]);
++    await db.updateAccount({ id: 'closed2', closed: 1 });
++
++    await expect(
++      linkHandler({ upgradingId: 'closed2', externalAccount } as never),
++    ).rejects.toThrow('Closed accounts cannot be linked');
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index f872d78..d52fd24 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -33,8 +33,8 @@ import type {
+   GoCardlessToken,
+   ImportTransactionEntity,
+   SyncServerAkahuAccount,
+-  SyncServerFintegraAccount,
+   SyncServerEnableBankingAccount,
++  SyncServerFintegraAccount,
+   SyncServerGoCardlessAccount,
+   SyncServerPluggyAiAccount,
+   SyncServerSimpleFinAccount,
+@@ -173,7 +173,7 @@ async function getAccountProperties({ id }: { id: AccountEntity['id'] }) {
+ 
+ // Refuses to link a bank account that another (non-deleted) local account
+ // already holds through the same provider. Re-linking into the account that
+-// already holds it is allowed.
++// already holds it is allowed. Closed target accounts are always refused.
+ function refuseIfAlreadyLinked<
+   P extends { upgradingId?: AccountEntity['id'] },
+   R,
+@@ -183,6 +183,17 @@ function refuseIfAlreadyLinked<
+   handler: (params: P) => Promise<R>,
+ ) {
+   return async (params: P) => {
++    if (params.upgradingId) {
++      const target = await db.first<{ closed: number }>(
++        'SELECT closed FROM accounts WHERE id = ? AND tombstone = 0',
++        [params.upgradingId],
++      );
++      if (target?.closed === 1) {
++        throw new Error(
++          'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++        );
++      }
++    }
+     const existing = await db.first<{ id: string }>(
+       'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',
+       [syncSource, getProviderAccountId(params), params.upgradingId ?? null],
+@@ -299,55 +310,17 @@ async function linkGoCardlessAccount({
+ 
+ async function linkSimpleFinAccount({
+   externalAccount,
+-  upgradingId,
+-  offBudget = false,
+-  startingDate,
+-  startingBalance,
++  ...params
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
+-  let id;
+-
+-  const institution = {
+-    // Persist a null name when the provider doesn't report an institution, so
+-    // the desktop-client can render a localized fallback instead of baking an
+-    // English string into shared bank data.
+-    name: externalAccount.institution ?? null,
+-  };
+-
+-  const bank = await link.findOrCreateBank(
+-    institution,
+-    externalAccount.orgDomain ?? externalAccount.orgId,
+-  );
+-
+-  id = await saveLinkedAccount({
+-    upgradingId,
+-    offBudget,
+-    bankId: bank.id,
+-    accountId: externalAccount.account_id,
++  return linkProviderAccount({
++    ...params,
+     source: 'simpleFin',
+-    name: externalAccount.name,
+-    officialName: externalAccount.name,
+-  });
+-
+-  const syncRes = await bankSync.syncAccount(
+-    undefined,
+-    undefined,
+-    id,
+-    externalAccount.account_id,
+-    bank.bank_id,
+-    startingDate,
+-    startingBalance,
+-  );
+-
+-  await handleSyncResponse(syncRes, id);
+-
+-  connection.send('sync-event', {
+-    type: 'success',
+-    tables: ['transactions', 'accounts'],
++    bankId: externalAccount.orgDomain ?? externalAccount.orgId,
++    externalAccount,
++    syncTables: ['transactions', 'accounts'],
+   });
+-
+-  return 'ok';
+ }
+ 
+ async function linkProviderAccount({
+@@ -361,7 +334,7 @@ async function linkProviderAccount({
+   fileId,
+   syncTables,
+ }: LinkAccountBaseParams & {
+-  source: 'pluggyai' | 'akahu' | 'fintegra';
++  source: 'simpleFin' | 'pluggyai' | 'akahu' | 'fintegra';
+   bankId: string | undefined;
+   externalAccount: {
+     account_id: string;
+@@ -387,7 +360,7 @@ async function linkProviderAccount({
+     offBudget,
+     bankId: bank.id,
+     accountId: externalAccount.account_id,
+-    source: source,
++    source,
+     name: externalAccount.name,
+     officialName: externalAccount.name,
+   });
+diff --git a/upcoming-release-notes/refuse-linking-closed-accounts.md b/upcoming-release-notes/refuse-linking-closed-accounts.md
+new file mode 100644
+index 0000000..23c92bc
+--- /dev/null
++++ b/upcoming-release-notes/refuse-linking-closed-accounts.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Refuse linking a bank account to a closed account

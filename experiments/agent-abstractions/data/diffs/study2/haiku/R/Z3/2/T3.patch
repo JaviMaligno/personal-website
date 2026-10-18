@@ -1,0 +1,119 @@
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index 4d5667b..7c1a8f2 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -1,13 +1,89 @@
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ 
+-import { findOrCreateBank } from './link';
++import { assertBankAccountNotLinked, findOrCreateBank } from './link';
+ 
+ beforeEach(async () => {
+   await global.emptyDatabase()();
+   await loadMappings();
+ });
+ 
++async function insertAccount(
++  overrides: Partial<db.DbAccount> & { id: string },
++) {
++  await db.insertWithUUID('accounts', {
++    name: 'Checking',
++    offbudget: 0,
++    closed: 0,
++    ...overrides,
++  });
++}
++
++describe('assertBankAccountNotLinked', () => {
++  it('refuses to link into a closed account', async () => {
++    await insertAccount({ id: 'closed-acct', closed: 1 });
++
++    await expect(
++      assertBankAccountNotLinked('goCardless', 'bank-1', 'closed-acct'),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  });
++
++  it('refuses to re-link a closed account that already holds the link', async () => {
++    await insertAccount({
++      id: 'closed-acct',
++      closed: 1,
++      account_sync_source: 'goCardless',
++      account_id: 'bank-1',
++    });
++
++    await expect(
++      assertBankAccountNotLinked('goCardless', 'bank-1', 'closed-acct'),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  });
++
++  it('allows linking into an open account', async () => {
++    await insertAccount({ id: 'open-acct', closed: 0 });
++
++    await expect(
++      assertBankAccountNotLinked('goCardless', 'bank-1', 'open-acct'),
++    ).resolves.toBeUndefined();
++  });
++
++  it('allows linking into a reopened account', async () => {
++    await insertAccount({ id: 'reopened-acct', closed: 1 });
++    await db.update('accounts', { id: 'reopened-acct', closed: 0 });
++
++    await expect(
++      assertBankAccountNotLinked('goCardless', 'bank-1', 'reopened-acct'),
++    ).resolves.toBeUndefined();
++  });
++
++  it('does not restrict creating a new account', async () => {
++    await expect(
++      assertBankAccountNotLinked('goCardless', 'bank-1', undefined),
++    ).resolves.toBeUndefined();
++  });
++
++  it('still refuses a bank account already linked to another account', async () => {
++    await insertAccount({
++      id: 'other-acct',
++      account_sync_source: 'goCardless',
++      account_id: 'bank-1',
++    });
++    await insertAccount({ id: 'open-acct' });
++
++    await expect(
++      assertBankAccountNotLinked('goCardless', 'bank-1', 'open-acct'),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++  });
++});
++
+ async function getBanks() {
+   return await db.all<db.DbBank>(
+     'SELECT id, bank_id, name FROM banks ORDER BY name',
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 00abaea..924d9c2 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -17,6 +17,19 @@ export async function assertBankAccountNotLinked(
+   providerAccountId: string,
+   upgradingId: string | undefined,
+ ) {
++  if (upgradingId) {
++    const upgrading = await db.first<Pick<db.DbAccount, 'closed'>>(
++      'SELECT closed FROM accounts WHERE id = ?',
++      [upgradingId],
++    );
++
++    if (upgrading?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   // `IS NOT` so a missing upgradingId excludes nothing rather than everything.
+   const linked = await db.first<Pick<db.DbAccount, 'id'>>(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',

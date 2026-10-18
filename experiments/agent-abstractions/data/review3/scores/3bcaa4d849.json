@@ -1,0 +1,12 @@
+{"id":"3bcaa4d849",
+"reuse":{"score":4,"why":"Adds shared predicates in shared/schedules.ts and keeps using getDateWithSkippedWeekend, and removes a duplicated ternary in schedule-template via a local closure."},
+"duplication":{"score":3,"why":"The combined 'skipWeekend && !skipsWeekendOccurrences ? move : keep' plus 'drop if isDroppedWeekendOccurrence' decision is re-assembled separately in getNextDate, getUpcomingDates and createScheduleList."},
+"placement":{"score":4,"why":"The daily-skip predicate lives in shared/schedules.ts beside getDateWithSkippedWeekend; the per-site composition stays in the consumers, which is where the tree already had it."},
+"scope":{"score":5,"why":"Only the weekend-rule sites, the frequency field needed in parseRecurDate, and tests."},
+"maintainability":{"score":3,"why":"The full weekend rule (skip for daily, move otherwise) has no single owner; a future change must touch three call sites that each mix predicates and the move helper slightly differently."},
+"bypasses_abstraction":{"value":false,"where":"All sites use the new predicates and getDateWithSkippedWeekend."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The skip-or-move decision is reshaped at each site: moveWeekendOccurrence closure plus filter in schedule-template.ts, filter/map chain in schedules/app.ts getUpcomingDates, and skipsWeekends/find logic in shared getNextDate."},
+"one_place":{"value":false,"where":"Predicates are shared (skipsWeekendOccurrences, isDroppedWeekendOccurrence) but whether to drop or move a date is decided at three sites rather than in one function."}
+}

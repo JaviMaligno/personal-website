@@ -1,0 +1,143 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..348040e 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -10,6 +10,10 @@ import * as monthUtils from '#shared/months';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
++import {
++  averageToBudgetAmount,
++  shouldWriteMonthBudget,
++} from './month-action';
+ 
+ export async function getSheetValue(
+   sheetName: string,
+@@ -226,10 +230,7 @@ export async function copyPreviousMonth({
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+-      if (prevBudget.is_income === 1 && !isTrackingBudget()) {
+-        return;
+-      }
+-      if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
++      if (!shouldWriteMonthBudget(prevBudget, 'copy-previous', isTrackingBudget())) {
+         return;
+       }
+       void setBudget({
+@@ -259,16 +260,19 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
++  const categories = await db.all<BudgetData>(
++    `SELECT c.id AS category, c.is_income, c.hidden, g.hidden AS group_hidden, 0 AS amount
++     FROM categories c
++     LEFT JOIN category_groups g ON c.cat_group = g.id
++     WHERE c.tombstone = 0`,
+   );
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
++      if (!shouldWriteMonthBudget(cat, 'zero', isTrackingBudget())) {
+         return;
+       }
+-      void setBudget({ category: cat.id, month, amount: 0 });
++      void setBudget({ category: cat.category, month, amount: 0 });
+     });
+   });
+ }
+@@ -289,7 +293,7 @@ export async function set3MonthAvg({
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
++      if (!shouldWriteMonthBudget(cat, 'average', isTrackingBudget())) {
+         continue;
+       }
+ 
+@@ -299,9 +303,7 @@ export async function set3MonthAvg({
+         categoryId: cat.id,
+       });
+ 
+-      if (cat.is_income === 0) {
+-        avg *= -1;
+-      }
++      avg = averageToBudgetAmount(avg, cat.is_income);
+ 
+       void setBudget({ category: cat.id, month, amount: avg });
+     }
+@@ -324,7 +326,7 @@ export async function set12MonthAvg({
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
++      if (!shouldWriteMonthBudget(cat, 'average', isTrackingBudget())) {
+         continue;
+       }
+       void setNMonthAvg({ month, N: 12, category: cat.id });
+@@ -348,7 +350,7 @@ export async function set6MonthAvg({
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
++      if (!shouldWriteMonthBudget(cat, 'average', isTrackingBudget())) {
+         continue;
+       }
+       void setNMonthAvg({ month, N: 6, category: cat.id });
+@@ -377,9 +379,7 @@ export async function setNMonthAvg({
+   });
+ 
+   await batchMessages(async () => {
+-    if (categoryFromDb.is_income === 0) {
+-      avg *= -1;
+-    }
++    avg = averageToBudgetAmount(avg, categoryFromDb.is_income);
+ 
+     void setBudget({ category, month, amount: avg });
+   });
+diff --git a/packages/loot-core/src/server/budget/month-action.ts b/packages/loot-core/src/server/budget/month-action.ts
+new file mode 100644
+index 0000000..ebe33d2
+--- /dev/null
++++ b/packages/loot-core/src/server/budget/month-action.ts
+@@ -0,0 +1,37 @@
++/** Category rules for actions that write budgets across a whole month. */
++export type MonthActionCategory = {
++  is_income: 1 | 0;
++  hidden: 1 | 0;
++  group_hidden: 1 | 0;
++};
++
++export type MonthBudgetAction = 'copy-previous' | 'zero' | 'average';
++
++/**
++ * Preserve the category selection used by each month-wide budget action.
++ * Zeroing has historically included hidden categories; copy and averages
++ * only operate on visible categories and groups.
++ */
++export function shouldWriteMonthBudget(
++  category: MonthActionCategory,
++  action: MonthBudgetAction,
++  isTrackingBudget: boolean,
++): boolean {
++  if (category.is_income === 1 && !isTrackingBudget) {
++    return false;
++  }
++
++  if (action !== 'zero' && (category.hidden === 1 || category.group_hidden === 1)) {
++    return false;
++  }
++
++  return true;
++}
++
++/** Averages use sheet activity (expenses negative, income positive). */
++export function averageToBudgetAmount(
++  amount: number,
++  isIncome: 1 | 0,
++): number {
++  return isIncome === 0 ? amount * -1 : amount;
++}

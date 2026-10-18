@@ -1,0 +1,12 @@
+{"id":"c5bbbdafdf",
+"reuse":{"score":4,"why":"Introduces applyWeekendRule/applyWeekendRuleToDay as the single weekend-rule entry point and routes getNextDate, getUpcomingDates, getDatesInRange and schedule-template through them; daily skipping is pushed into the existing recurConfigToRSchedule recurrence builder."},
+"duplication":{"score":3,"why":"The holiday entry format (YYYY-MM-DD vs MM-DD) is interpreted twice, in getDateWithSkippedWeekend's isOff and in getHolidayExdates, and the exdates wiring is repeated at every RSchedule construction instead of living in one schedule factory."},
+"placement":{"score":4,"why":"Weekend/holiday rules and the daily recurrence change live in shared/schedules.ts and the range handler in server/schedules/app.ts; holiday exclusion as exdates is a separate shared function each constructor must remember to call."},
+"scope":{"score":4,"why":"Everything serves the five steps; the 100-year MM-DD exdate expansion is heavier than needed but on topic."},
+"maintainability":{"score":3,"why":"Mostly centralised, but a new RSchedule site must remember getHolidayExdates, getDatesInRange carries its own redundant daily special case, and schedule-template reads holidays from a different path (value.schedule.data) than the other sites."},
+"bypasses_abstraction":{"value":true,"where":"getDatesInRange (server/schedules/app.ts) decides moveWeekend = frequency !== 'daily' itself instead of relying on the shared weekend rule and recurrence."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Holiday matching is reshaped as an includes(day)/includes(day.slice(5)) predicate in getDateWithSkippedWeekend and as a year-by-year exdate expansion in getHolidayExdates (shared/schedules.ts)."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":1,"where":"applyWeekendRule/applyWeekendRuleToDay gain a holidays parameter; recurConfigToRSchedule gains a daily+skipWeekend branch; getDatesInRange bypasses the rule with its own daily check, and every RSchedule constructor (rule-utils, getUpcomingDates, getDatesInRange, find-schedules takeDates) must add getHolidayExdates by hand."}
+}

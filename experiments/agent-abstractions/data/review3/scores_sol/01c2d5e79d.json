@@ -1,0 +1,45 @@
+{
+ "id": "01c2d5e79d",
+ "reuse": {
+  "score": 3,
+  "why": "Most consumers reuse getScheduledAmount, but the API independently resolves amounts and the shared helper reimplements getApproxNumberThreshold."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "The change removes several local calculations but retains a separate API amount resolver and duplicates the existing tolerance calculation."
+ },
+ "placement": {
+  "score": 4,
+  "why": "The shared schedules module appropriately owns expected-amount policy, but the API serializer also embeds that policy instead of delegating."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on expected schedule amounts, their consumers, API types, and associated tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralizing most consumers improves maintenance, but independent API policy and duplicated tolerance arithmetic leave multiple definitions to update."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/server/api-models.ts: scheduleModel.toExternal bypasses getScheduledAmount; packages/loot-core/src/shared/schedules.ts: getScheduledAmount bypasses getApproxNumberThreshold."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "scheduleModel.toExternal reshapes the shared amount resolver into nested ternaries with reordered numeric, missing, and range dispatch."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "getScheduledAmount gains the optional op parameter and an isapprox branch, while scheduleModel.toExternal maintains an independent amount-resolution path."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 37.9
+ }
+}

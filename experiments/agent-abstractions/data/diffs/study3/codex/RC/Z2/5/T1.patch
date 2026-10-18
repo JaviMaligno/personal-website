@@ -1,0 +1,101 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 5b9f191..d2d08dc 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -10,6 +10,7 @@ import {
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
+   getNextDate,
++  getScheduleAmount,
+ } from '#shared/schedules';
+ import { amountToInteger } from '#shared/util';
+ import type { CategoryEntity, TransactionEntity } from '#types/models';
+@@ -59,11 +60,7 @@ async function createScheduleList(
+     const conditions = rule.serialize().conditions;
+     const { date: dateConditions, amount: amountCondition } =
+       extractScheduleConds(conditions);
+-    let scheduleAmount =
+-      amountCondition.op === 'isbetween'
+-        ? Math.round(amountCondition.value.num1 + amountCondition.value.num2) /
+-          2
+-        : amountCondition.value;
++    let scheduleAmount = getScheduleAmount(amountCondition.value);
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+       switch (template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 412fba0..a1c2766 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -152,7 +152,7 @@ function updateActions(
+   // Mirrors how `_amount` resolves: a deleted/empty amount condition value
+   // yields 0, so the action is synced to 0 too, keeping it consistent with
+   // the amount the schedule actually posts. A ranged ("is between") amount
+-  // is scheduled at its rounded midpoint.
++  // uses the endpoint furthest from zero.
+   const amountValue = amountCond.value;
+   const amount = amountValue == null ? 0 : getScheduleAmount(amountValue);
+ 
+@@ -588,7 +588,7 @@ async function postTransactionForSchedule({
+   }
+ 
+   // A missing amount (deleted condition) posts 0; a ranged ("is between")
+-  // amount posts its rounded midpoint.
++  // amount posts the endpoint furthest from zero.
+   const amount =
+     schedule._amount == null ? 0 : getScheduleAmount(schedule._amount);
+ 
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 4de0832..9e29ceb 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -23,10 +23,13 @@ import type { ScheduleStatuses } from './schedules';
+ 
+ describe('schedules', () => {
+   describe('getScheduleAmount', () => {
+-    it('returns a fixed amount or the rounded midpoint of a range', () => {
++    it('returns a fixed amount or the endpoint furthest from zero for a range', () => {
+       expect(getScheduleAmount(10)).toBe(10);
+-      expect(getScheduleAmount({ num1: 10, num2: 15 })).toBe(13);
+-      expect(getScheduleAmount({ num1: -15, num2: -10 })).toBe(-12);
++      expect(getScheduleAmount({ num1: 10, num2: 15 })).toBe(15);
++      expect(getScheduleAmount({ num1: 15, num2: 10 })).toBe(15);
++      expect(getScheduleAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
++      expect(getScheduleAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
++      expect(getScheduleAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+     });
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 2597f6f..b48efd4 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -10,13 +10,15 @@ import { q } from './query';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+-/** Returns the amount represented by a schedule amount, using the rounded midpoint for ranges. */
++/** Returns the amount represented by a schedule amount, using the endpoint furthest from zero for ranges. */
+ export function getScheduleAmount(
+   amount: number | { num1: number; num2: number },
+ ): number {
+   return typeof amount === 'number'
+     ? amount
+-    : Math.round((amount.num1 + amount.num2) / 2);
++    : Math.abs(amount.num1) >= Math.abs(amount.num2)
++      ? amount.num1
++      : amount.num2;
+ }
+ 
+ // Preset token values used by UI selects. Keep labels in the UI (i18n) but
+@@ -505,8 +507,8 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // A missing amount previews as 0; a ranged ("is between") amount as its
+-      // rounded midpoint.
++      // A missing amount previews as 0; a ranged amount uses the endpoint
++      // furthest from zero.
+       const amount =
+         schedule._amount == null
+           ? 0

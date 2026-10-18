@@ -1,0 +1,62 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index fcd0533..c00578e 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -30,10 +30,10 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+-      [{ num1: 10100, num2: 20000 }, 20000],
+-      [{ num1: 20000, num2: 10100 }, 20000],
+-      [{ num1: -10000, num2: 12000 }, 12000],
+-    ])('uses the range endpoint furthest from zero: %j', (range, expected) => {
++      [{ num1: 10100, num2: 20000 }, 10100],
++      [{ num1: 20000, num2: 10100 }, 10100],
++      [{ num1: -10000, num2: 12000 }, -10000],
++    ])('uses the lowest range endpoint: %j', (range, expected) => {
+       expect(getScheduledAmount(range)).toBe(expected);
+     });
+ 
+@@ -44,7 +44,7 @@ describe('schedules', () => {
+ 
+     it.each([
+       [-10000, -10750],
+-      [10000, 10750],
++      [10000, 9250],
+       [-1234, -1327],
+     ])('uses the approximate tolerance furthest from zero for %i', (amount, expected) => {
+       expect(getScheduledAmount(amount, false, 'roundedMidpoint', 'isapprox')).toBe(
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index f151e55..3356f20 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -377,8 +377,8 @@ export function applyWeekendRuleToDay(
+     : day;
+ }
+ 
+-// The amount a schedule is expected to post. For a ranged ("is between") amount,
+-// use the endpoint furthest from zero so planning covers the worst case.
++// The amount a schedule is expected to post. For ranged and approximate amounts,
++// use the lowest allowed value so planning uses the least favorable outcome.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -392,7 +392,7 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     if (amountOp === 'isapprox') {
+       const tolerance = Math.round(Math.abs(amount) * 0.075);
+-      const worstCase = amount + Math.sign(amount) * tolerance;
++      const worstCase = amount - tolerance;
+       return inverse ? -worstCase : worstCase;
+     }
+     return inverse ? -amount : amount;
+@@ -400,8 +400,7 @@ export function getScheduledAmount(
+   // Keep the optional argument for compatibility with callers that used to
+   // choose midpoint rounding; range schedules now always use the worst case.
+   void rangeRounding;
+-  const worstCase =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  const worstCase = Math.min(amount.num1, amount.num2);
+   return inverse ? -worstCase : worstCase;
+ }
+ 

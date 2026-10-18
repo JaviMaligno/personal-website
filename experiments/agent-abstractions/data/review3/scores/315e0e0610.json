@@ -1,0 +1,12 @@
+{"id":"315e0e0610",
+"reuse":{"score":4,"why":"Puts the daily-skip rule into the existing getDateWithSkippedWeekend and threads frequency through parseRecurDate, so every site reuses the shared helper; the template site adds a small local wrapper rather than a shared one."},
+"duplication":{"score":3,"why":"Each site re-solves 'look further ahead because occurrences may be skipped' its own way (WEEKEND_LOOKAHEAD in getNextDate, count*7 plus filter/slice in getUpcomingDates, null-aware loop in templates), and getUpcomingDates re-encodes the 'daily' predicate to size its lookahead."},
+"placement":{"score":4,"why":"The weekend rule stays in shared/schedules.ts and frequency is carried on the parsed schedule data where weekend settings already live; the lookahead handling is necessarily at call sites."},
+"scope":{"score":5,"why":"All edits serve the daily-skip rule, with focused tests."},
+"maintainability":{"score":3,"why":"Changing the helper's return to Date | null is a reasonable contract, but the per-site lookahead heuristics and the duplicated 'daily' check in getUpcomingDates would need to move together if the rule changed."},
+"bypasses_abstraction":{"value":false,"where":"All three date sites still go through getDateWithSkippedWeekend; getUpcomingDates' isSkippingDaily only sizes the lookahead."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The skip-aware lookahead is re-implemented in three shapes (constant take of 7 in getNextDate, count*7 + filter + slice in getUpcomingDates, null-guarded counting loop in createScheduleList), and getUpcomingDates repeats the frequency === 'daily' predicate the helper owns."},
+"one_place":{"value":true,"where":"getDateWithSkippedWeekend in packages/loot-core/src/shared/schedules.ts decides daily-skip vs move for getNextDate, getUpcomingDates and createScheduleList (caveat: getUpcomingDates also checks frequency === 'daily' to size its lookahead)."}
+}

@@ -1,0 +1,12 @@
+{"id":"1e102b60bd",
+"reuse":{"score":4,"why":"Builds on the existing WeekendRule/applyWeekendRule abstraction (adding isSkippedByWeekendRule and a shared isOffDay holiday check) and every call site, including the new range handler and the budget template, goes through it."},
+"duplication":{"score":3,"why":"The 'walk occurrences, drop the ones isSkippedByWeekendRule rejects, look ahead by a heuristic margin' logic is written separately in getNextDate, getUpcomingDates and getDatesInRange, and the WeekendRule object literal is rebuilt from config at each site."},
+"placement":{"score":4,"why":"Rule logic lives in shared/schedules.ts and handlers stay in server/schedules/app.ts, but the daily-skip occurrence iteration that belongs with the rule is left to each server/shared caller."},
+"scope":{"score":4,"why":"Focused on the four steps; minor noise from an import reorder and two release notes."},
+"maintainability":{"score":3,"why":"Callers must remember to combine isSkippedByWeekendRule with applyWeekendRule and pick their own look-ahead bounds (14+n, count*7+14+n, 3+n), and applyWeekendRule gained an odd fallback branch for invalid modes, so the rule is split across helper and call sites."},
+"bypasses_abstraction":{"value":false,"where":"All weekend/holiday decisions go through applyWeekendRule, applyWeekendRuleToDay or isSkippedByWeekendRule; none re-tests weekends or holidays inline."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The skip-and-look-ahead iteration appears as filter+slice with a reverse fallback in getNextDate, a counted for-of loop in getUpcomingDates, and a margin window with a Set in getDatesInRange."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":0,"where":"WeekendRule gains frequency and holidays fields; applyWeekendRule gains a dropsWeekends early return and a separate invalid-solveMode fallback branch, and a second predicate isSkippedByWeekendRule that every caller must compose with it (getNextDate, getUpcomingDates, getDatesInRange, schedule-template.ts)."}
+}

@@ -1,0 +1,11 @@
+{"id":"e9d5da2e36",
+"reuse":{"score":2,"why":"Adds a new getScheduleAmount next to the existing exported getScheduledAmount in shared/schedules.ts instead of changing that helper, and recomputes the 7.5% tolerance instead of calling getApproxNumberThreshold from shared/rules."},
+"duplication":{"score":3,"why":"It does collapse four inline midpoint copies into one function, but that function near-copies getScheduledAmount and the tolerance formula, and schedule-template.ts keeps its own midpoint."},
+"placement":{"score":4,"why":"The amount rule sits in shared/schedules.ts and the API field is in the api-models toExternal mapping, both the right layers."},
+"scope":{"score":5,"why":"Only the amount sites, the API model field and their tests change."},
+"maintainability":{"score":2,"why":"Two helpers with almost the same name (getScheduleAmount vs getScheduledAmount) now encode different rules (lowest value vs midpoint), so UI totals and budget templates disagree with posting and forecasting."},
+"bypasses_abstraction":{"value":true,"where":"getScheduleAmount in shared/schedules.ts bypasses the existing getScheduledAmount and reimplements getApproxNumberThreshold (shared/rules.ts) as Math.round(Math.abs(amount) * 0.075)."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getScheduleAmount is a renamed, reshaped copy of getScheduledAmount (same null/number/range dispatch), and its tolerance line repeats getApproxNumberThreshold inline."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":2,"where":"getScheduleAmount gained an amountOp parameter and an 'isapprox' branch across the steps; budget/schedule-template.ts keeps its own inline midpoint, and the parallel getScheduledAmount (used by SchedulesTable, Balance, mobile schedule views and useScheduleEdit) still applies the midpoint."}}

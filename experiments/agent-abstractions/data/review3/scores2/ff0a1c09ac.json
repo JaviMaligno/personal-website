@@ -1,0 +1,11 @@
+{"id":"ff0a1c09ac",
+"reuse":{"score":2,"why":"The existing getScheduledAmount already decides missing/number/range, yet the sites keep their own dispatch and call a new range-only getRangeAmount instead of that helper."},
+"duplication":{"score":2,"why":"The missing ? 0 : number ? value : range dispatch stays copied at four sites (updateActions, postTransactionForSchedule, forecast normalizeSchedule, preview) plus the template's op check, duplicating getScheduledAmount."},
+"placement":{"score":5,"why":"The new range rule lives in shared/schedules.ts beside getScheduledAmount, which delegates to it."},
+"scope":{"score":5,"why":"Only the ranged-amount sites, the helper, a test and a release note."},
+"maintainability":{"score":3,"why":"The rule itself is in one function, but the surrounding dispatch is still repeated at each site, so how a schedule amount resolves remains spread out."},
+"bypasses_abstraction":{"value":true,"where":"schedules/app.ts updateActions and postTransactionForSchedule, forecast-schedules.ts normalizeSchedule and computeSchedulePreviewTransactions keep inline dispatch around getRangeAmount instead of calling getScheduledAmount."},
+"duplicated_blocks":4,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The remaining dispatch ternaries are the pre-existing copies left in place, not reshaped."},
+"one_place":{"value":true,"where":"getRangeAmount in shared/schedules.ts; every path that resolves a ranged amount (the four server sites, schedule-template and getScheduledAmount for client callers) now calls it."}}

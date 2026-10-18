@@ -1,0 +1,82 @@
+diff --git a/packages/loot-core/src/server/transactions/transfer.ts b/packages/loot-core/src/server/transactions/transfer.ts
+index 3e10a87..a4921f9 100644
+--- a/packages/loot-core/src/server/transactions/transfer.ts
++++ b/packages/loot-core/src/server/transactions/transfer.ts
+@@ -1,6 +1,7 @@
+ // @ts-strict-ignore
+ import * as db from '#server/db';
+ import { cents, transactions } from '#server/domain';
++import { toDateRepr } from '#server/models';
+ 
+ import { runRules } from './transaction-rules';
+ 
+@@ -97,6 +98,58 @@ export async function addTransfer(transaction, transferredAccount) {
+   };
+ }
+ 
++// An existing transaction in the transferred account that is the other side
++// of this one: same date, opposite amount, and not part of a transfer yet.
++async function findCounterpart(transaction, transferredAccount) {
++  if (!transaction.date || transaction.amount == null) {
++    return null;
++  }
++
++  return db.first<Pick<db.DbViewTransactionInternal, 'id'>>(
++    `SELECT id FROM v_transactions_internal
++     WHERE account = ? AND date = ? AND amount = ? AND id != ?
++       AND transfer_id IS NULL AND is_parent = 0 AND tombstone = 0
++     ORDER BY sort_order DESC, id
++     LIMIT 1`,
++    [
++      transferredAccount,
++      toDateRepr(transaction.date),
++      cents.neg(cents.fromInteger(transaction.amount)),
++      transaction.id,
++    ],
++  );
++}
++
++// Link two existing transactions as the two sides of one transfer instead of
++// creating a new leg in the transferred account.
++async function linkTransfer(transaction, counterpartId, transferredAccount) {
++  const { id: fromPayee } = await db.first<Pick<db.DbPayee, 'id'>>(
++    'SELECT id FROM payees WHERE transfer_acct = ?',
++    [transaction.account],
++  );
++
++  await transactions.updateTransaction({
++    id: counterpartId,
++    payee: fromPayee,
++    transfer_id: transaction.id,
++  });
++  await transactions.updateTransaction({
++    id: transaction.id,
++    transfer_id: counterpartId,
++  });
++
++  const categoryCleared = await clearCategory(
++    { ...transaction, transfer_id: counterpartId },
++    transferredAccount,
++  );
++
++  return {
++    id: transaction.id,
++    transfer_id: counterpartId,
++    ...(categoryCleared ? { category: null } : {}),
++  };
++}
++
+ export async function removeTransfer(transaction) {
+   const transferTrans = await db.getTransaction(transaction.transfer_id);
+ 
+@@ -167,6 +220,10 @@ export async function onUpdate(transaction) {
+   }
+ 
+   if (transferredAccount && !transaction.transfer_id) {
++    const counterpart = await findCounterpart(transaction, transferredAccount);
++    if (counterpart) {
++      return linkTransfer(transaction, counterpart.id, transferredAccount);
++    }
+     return addTransfer(transaction, transferredAccount);
+   }
+ 

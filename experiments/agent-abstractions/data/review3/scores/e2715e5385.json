@@ -1,0 +1,10 @@
+{"id":"e2715e5385",
+"reuse":{"score":4,"why":"Builds on the existing assertBankAccountNotLinked guard, saveLinkedAccount and linkExternalAccount, so every provider gets the flag; the new clearAccountLink repeats unlinkAccount's reset instead of being shared with it."},
+"duplication":{"score":3,"why":"clearAccountLink copies the db.updateAccount field reset from unlinkAccount without making unlinkAccount use it, and the replaced-ids loop is written twice inside saveLinkedAccount (upgrade branch and new-account branch)."},
+"placement":{"score":4,"why":"Detection lives in the shared guard and the takeover in the shared save step in accounts/app.ts, where the linking logic already is; the guard named assert...NotLinked now also returns the accounts to take over from."},
+"scope":{"score":5,"why":"Only threads the flag through the existing link helpers and adds the release note."},
+"maintainability":{"score":4,"why":"One guard and one save path keep the behaviour consistent across providers, but the misleading guard name and the second copy of the reset fields will need care."},
+"bypasses_abstraction":{"value":true,"where":"accounts/app.ts clearAccountLink re-implements the local reset inside unlinkAccount instead of extracting it and having unlinkAccount use it"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"accounts/app.ts clearAccountLink: unlinkAccount's db.updateAccount reset moved into a new, differently named function while the original stays inline in unlinkAccount"}}

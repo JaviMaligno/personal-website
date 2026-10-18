@@ -1,0 +1,12 @@
+{"id": "c5bbbdafdf",
+ "reuse": {"score": 4, "why": "Replaces the inline skipWeekend ternaries with one applyWeekendRule/applyWeekendRuleToDay and reuses recurConfigToRSchedule and RSchedule exdates for daily skipping; schedule-template reads holidays from a schedule.data path instead of the config field the other callers use."},
+ "duplication": {"score": 3, "why": "The weekend rule itself is defined once, but every RSchedule construction (parseRecurDate, getUpcomingDates, getDatesInRange, takeDates) must separately attach getHolidayExdates, and the 'daily' special case is restated in recurConfigToRSchedule, getHolidayExdates and getDatesInRange."},
+ "placement": {"score": 4, "why": "Rule helpers live in shared/schedules.ts and the new handler sits beside get-upcoming-dates in server/schedules/app.ts, following the tree's layering."},
+ "scope": {"score": 4, "why": "Edits follow the five steps plus release notes; no unrelated changes."},
+ "maintainability": {"score": 3, "why": "Skipping by recurrence (byDayOfWeek + exdates) is a neat single mechanism, but the holiday rule is split between exdates wiring at each schedule construction and the move loop, with a century of generated exdates and a redundant daily branch in getDatesInRange."},
+ "bypasses_abstraction": {"value": true, "where": "getDatesInRange in server/schedules/app.ts decides moveWeekend = frequency !== 'daily' itself instead of relying on the recurrence/applyWeekendRule; RSchedule callers each wire getHolidayExdates rather than recurConfigToRSchedule owning it."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The repeated pieces (exdates wiring, daily checks) are small and visible, not reshaped copies of a larger block."},
+ "abstraction_drift": {"value": true, "parameters_added": 3, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "holidays parameter added to applyWeekendRule, applyWeekendRuleToDay and getDateWithSkippedWeekend; daily skipWeekend branch inside recurConfigToRSchedule; getDatesInRange re-decides the daily case outside the rule."}
+}

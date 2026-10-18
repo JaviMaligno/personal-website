@@ -1,0 +1,45 @@
+{
+ "id": "3d2cedc830",
+ "reuse": {
+  "score": 4,
+  "why": "The change shares range selection and reuses getApproxNumberThreshold, but several consumers retain dispatch already handled by the shared helpers."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Three consumers retain missing-amount normalization already provided by getScheduledAmount, while schedule-template also retains operator dispatch."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Schedule amount policy belongs in shared/schedules, with tolerance calculation appropriately delegated to shared/rules."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on schedule amount policy, its consumers, API exposure, tests, and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Overlapping amount helpers, distributed missing-value handling, optional operator context without consistent caller migration, and stale policy descriptions make the final design harder to maintain."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "schedule-template.ts decides which operators use getExpectedAmount and handles the remaining path locally, although getExpectedAmount already handles exact amounts."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The remaining duplication is explicit null handling and operator dispatch, rather than renamed or reshaped copies of the amount arithmetic."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "getScheduledAmount gains an optional op parameter, getExpectedAmount introduces an isapprox branch, and schedule-template retains local operator dispatch around the shared definition."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 36.8
+ }
+}

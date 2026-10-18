@@ -1,0 +1,11 @@
+{"id":"103097d6dc",
+"reuse":{"score":4,"why":"Collapses the five provider link bodies into one linkBankSyncAccount and puts the new Fintegra link on it, but releaseAccountLinks re-writes the unlinkAccount field reset and downloadFintegraTransactions copies downloadAkahuTransactions instead of sharing it."},
+"duplication":{"score":3,"why":"Upgrade/create/sync duplication is removed, but the closed-account check runs both in assertBankAccountNotLinked and inside linkBankSyncAccount, releaseAccountLinks duplicates unlinkAccount's update block, and the Fintegra downloader is an Akahu copy."},
+"placement":{"score":4,"why":"Link rules and the shared link flow sit in accounts/app.ts and provider sync in sync.ts as the tree does; the closed-account rule is placed in a function named for the duplicate-link check."},
+"scope":{"score":5,"why":"All edits serve the five requested steps (refactor, duplicate guard, Fintegra, closed guard, takeover flag) plus tests and release notes."},
+"maintainability":{"score":4,"why":"One link flow is much easier to own; the redundant closed check, the overloaded assert helper (validates, then returns ids to release) and the copied unlink/download code are small liabilities."},
+"bypasses_abstraction":{"value":true,"where":"releaseAccountLinks re-implements the account reset of unlinkAccount instead of sharing it"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"releaseAccountLinks is a renamed copy of unlinkAccount's db.updateAccount reset; the closed-account rule is repeated in assertBankAccountNotLinked and linkBankSyncAccount"},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":0,"where":"linkBankSyncAccount gains accountIdsToRelease and a closed-account branch; assertBankAccountNotLinked gains replaceExistingLink and a closed-target check; all six providers call both helpers"}}

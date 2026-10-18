@@ -1,0 +1,50 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 4b31378182cf0ef4ef709eb340fc99596eb1a30e..de582a9cf08d463bff712d2883204b30fff04058 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -301,6 +301,23 @@ async function moveSchedule({
+   return {};
+ }
+ 
++// The auto-posting service is throttled to one run per day through the
++// `lastScheduleRun` pref (see the `sync` event listener at the bottom of this
++// file). A schedule that posts transactions can be created or edited after
++// that run has already happened and still be due today, in which case it
++// would not be posted until the next day. Clearing the marker lets the
++// service run again for the current day; it only posts occurrences that do
++// not have a transaction yet, so an extra run is harmless.
++async function allowAutoPostingToRunAgainToday(postsTransaction: boolean) {
++  if (!postsTransaction) {
++    return;
++  }
++
++  if (prefs.getPrefs()?.lastScheduleRun) {
++    await prefs.savePrefs({ lastScheduleRun: undefined });
++  }
++}
++
+ export async function createSchedule({
+   schedule = null,
+   conditions = [],
+@@ -355,6 +372,8 @@ export async function createSchedule({
+     rule: ruleId,
+   });
+ 
++  await allowAutoPostingToRunAgainToday(scheduleFields?.posts_transaction);
++
+   return scheduleId;
+ }
+ 
+@@ -449,6 +468,12 @@ export async function updateSchedule({
+     await db.updateWithSchema('schedules', scheduleFields);
+   });
+ 
++  const postsTransaction =
++    scheduleFields.posts_transaction ??
++    (await getSchedule(scheduleFields.id))?.posts_transaction;
++
++  await allowAutoPostingToRunAgainToday(postsTransaction);
++
+   return scheduleFields.id;
+ }
+ 

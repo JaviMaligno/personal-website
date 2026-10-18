@@ -1,0 +1,141 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+index 4e83019..4a2ae7e 100644
+--- a/packages/loot-core/src/server/api-models.test.ts
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -25,7 +25,7 @@ function makeSchedule(
+ }
+ 
+ describe('scheduleModel', () => {
+-  it('returns the range endpoint furthest from zero as expectedAmount', () => {
++  it('returns the lowest range value as expectedAmount', () => {
+     expect(
+       scheduleModel.toExternal(makeSchedule({ num1: -10100, num2: -20000 }))
+         .expectedAmount,
+@@ -34,6 +34,14 @@ describe('scheduleModel', () => {
+       scheduleModel.toExternal(makeSchedule({ num1: 10000, num2: -20000 }))
+         .expectedAmount,
+     ).toBe(-20000);
++    expect(
++      scheduleModel.toExternal(makeSchedule({ num1: 10100, num2: 20000 }))
++        .expectedAmount,
++    ).toBe(10100);
++    expect(
++      scheduleModel.toExternal(makeSchedule({ num1: -3000, num2: 5000 }))
++        .expectedAmount,
++    ).toBe(-3000);
+   });
+ 
+   it('returns a single amount or zero as expectedAmount', () => {
+@@ -42,11 +50,11 @@ describe('scheduleModel', () => {
+     );
+   });
+ 
+-  it('returns the approximate amount furthest from zero as expectedAmount', () => {
++  it('returns the lowest approximate amount as expectedAmount', () => {
+     expect(scheduleModel.toExternal(makeSchedule(-10000, 'isapprox')).expectedAmount)
+       .toBe(-10750);
+     expect(scheduleModel.toExternal(makeSchedule(10000, 'isapprox')).expectedAmount)
+-      .toBe(10750);
++      .toBe(9250);
+     expect(scheduleModel.toExternal(makeSchedule(-1234, 'isapprox')).expectedAmount)
+       .toBe(-1327);
+   });
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 2c70942..e6d2c3f 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -249,14 +249,12 @@ function getExpectedScheduleAmount(
+   if (typeof amount === 'number') {
+     if (amountOp === 'isapprox') {
+       const threshold = getApproxNumberThreshold(amount);
+-      return amount + Math.sign(amount) * threshold;
++      return amount - threshold;
+     }
+     return amount;
+   }
+ 
+-  return Math.abs(amount.num1) > Math.abs(amount.num2)
+-    ? amount.num1
+-    : amount.num2;
++  return Math.min(amount.num1, amount.num2);
+ }
+ 
+ export const scheduleModel = {
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index f091363..4e5e711 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -94,7 +94,7 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged amount uses its endpoint furthest from zero.
++  // A ranged amount uses its lowest allowed value.
+   const amount = getScheduledAmount(amountValue);
+ 
+   return {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 36a5686..1e38ee1 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -152,7 +152,7 @@ function updateActions(
+   // Mirrors how `_amount` resolves: a deleted/empty amount condition value
+   // yields 0, so the action is synced to 0 too, keeping it consistent with
+   // the amount the schedule actually posts. A ranged amount uses its endpoint
+-  // furthest from zero.
++  // lowest allowed value.
+   const amount = getScheduledAmount(amountCond.value);
+ 
+   let changed = false;
+@@ -587,7 +587,7 @@ async function postTransactionForSchedule({
+   }
+ 
+   // A missing amount (deleted condition) posts 0; a ranged amount uses its
+-  // endpoint furthest from zero.
++  // lowest allowed value.
+   const amount = getScheduledAmount(schedule._amount);
+ 
+   const transaction = {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 3d9648c..4ff1cfb 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -37,9 +37,10 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+-      [{ num1: 10100, num2: 20000 }, 20000],
+-      [{ num1: 20000, num2: 10100 }, 20000],
+-    ])('uses the range endpoint furthest from zero', (range, expected) => {
++      [{ num1: 10100, num2: 20000 }, 10100],
++      [{ num1: 20000, num2: 10100 }, 10100],
++      [{ num1: -3000, num2: 5000 }, -3000],
++    ])('uses the lowest range value', (range, expected) => {
+       expect(getScheduledAmount(range)).toBe(expected);
+     });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index f28df1b..da12591 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -365,9 +365,8 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const furthestFromZero =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
+-  const scheduledAmount = round ? Math.round(furthestFromZero) : furthestFromZero;
++  const lowestAmount = Math.min(amount.num1, amount.num2);
++  const scheduledAmount = round ? Math.round(lowestAmount) : lowestAmount;
+   return inverse ? -scheduledAmount : scheduledAmount;
+ }
+ 
+@@ -500,7 +499,7 @@ export function computeSchedulePreviewTransactions(
+       }
+ 
+       // A missing amount previews as 0; a ranged amount uses its endpoint
+-      // furthest from zero.
++      // lowest allowed value.
+       const amount = getScheduledAmount(schedule._amount);
+ 
+       return dates.map(date => ({

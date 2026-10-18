@@ -1,0 +1,11 @@
+{"id":"4b297a3c48",
+"reuse":{"score":4,"why":"Adds Fintegra through a generalised linkExternalAccount and a parameterised download (downloadFileScopedTransactions) instead of copying, and all six handlers share the guard and saveLinkedAccount; only unlinkAccount is not moved onto the new clearAccountLink."},
+"duplication":{"score":4,"why":"Removes the repeated create-or-upgrade blocks across providers; the one remaining copy is clearAccountLink, which duplicates the field list still inlined in unlinkAccount."},
+"placement":{"score":4,"why":"Link rules and helpers live in server/accounts/app.ts and the download in sync.ts as the tree does, though clearing replaced holders inside saveLinkedAccount and the closed check inside assertBankAccountNotLinked blur responsibilities."},
+"scope":{"score":3,"why":"Delivers the four steps but also folds three providers into a new generic link function, renames the Pluggy download and widens DbAccount's sync-source type, a sizeable refactor beyond what was asked."},
+"maintainability":{"score":4,"why":"Far less per-provider code to keep in sync; minor smells are a misleadingly named assert that also checks closed accounts and returns ids to clear, and option flags (sendFileId, tables) for preserved provider differences."},
+"bypasses_abstraction":{"value":false,"where":"Link handlers go through assertBankAccountNotLinked and saveLinkedAccount; only unlinkAccount keeps its own inline copy of the clearing update"},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"clearAccountLink is a plain copy of unlinkAccount's update, not disguised"},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":1,"where":"assertBankAccountNotLinked gains replaceExistingLink and a folded-in closed-account branch; saveLinkedAccount gains replacedIds; unlinkAccount bypasses clearAccountLink"}}

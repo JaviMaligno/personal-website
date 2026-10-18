@@ -1,0 +1,12 @@
+{"id": "d6fcc5e63f",
+ "reuse": {"score": 5, "why": "Extends the existing getDateWithSkippedWeekend and findNonWeekend in shared/schedules.ts and has the server's daily-skip checks call the new shared predicate instead of d.isWeekend."},
+ "duplication": {"score": 4, "why": "The off-day test is defined once (isOffDay) and the template's two identical adjustment ternaries are folded into one local closure; only the holidays argument is threaded through each caller."},
+ "placement": {"score": 5, "why": "The holiday rule sits with the weekend rule in shared/schedules.ts, the field is added to RecurConfig and to parseRecurDate's schedule data, and callers only pass it along."},
+ "scope": {"score": 4, "why": "Focused on the feature; the small restructuring of createScheduleList into an `adjust` closure and the widened scan margin in getDatesInRange are related but go a bit beyond the minimum."},
+ "maintainability": {"score": 4, "why": "A single predicate and a stepping loop are easy to own, though exporting it under an alias (`export { isOffDay as isWeekendOrHoliday }`) and a margin of `3 + holidays.length` are slightly ad hoc."},
+ "bypasses_abstraction": {"value": false, "where": "Every weekend check (getUpcomingDates, getDatesInRange, getNextDate/findNonWeekend, getDateWithSkippedWeekend, createScheduleList) now goes through isOffDay/getDateWithSkippedWeekend."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "No duplicated logic; the template's previously duplicated ternaries are merged rather than reshaped."},
+ "one_place": {"value": true, "where": "isOffDay in packages/loot-core/src/shared/schedules.ts (exported as isWeekendOrHoliday), used by getDateWithSkippedWeekend, findNonWeekend and the daily-skip branches in server/schedules/app.ts."}
+}

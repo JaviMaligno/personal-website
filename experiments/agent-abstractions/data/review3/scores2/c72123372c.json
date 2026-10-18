@@ -1,0 +1,12 @@
+{"id": "c72123372c",
+ "reuse": {"score": 2, "why": "Creates a new getExpectedScheduleAmount next to the existing exported getScheduledAmount (same missing/number/range dispatch, still midpoint) instead of building on it, writes the 7.5% tolerance inline rather than calling getApproxNumberThreshold, and the API model does not call the new helper at all."},
+ "duplication": {"score": 2, "why": "Collapses the four copied midpoint ternaries into one helper, but adds a fresh inline copy of the dispatch in scheduleModel.toExternal, duplicates getApproxNumberThreshold's formula, and leaves getScheduledAmount as a parallel resolver."},
+ "placement": {"score": 4, "why": "The rule sits in shared/schedules.ts where schedule-amount helpers live; the API rule is placed in the api-models mapper instead of delegating to it."},
+ "scope": {"score": 5, "why": "Edits are limited to amount resolution sites, the API field and tests."},
+ "maintainability": {"score": 2, "why": "The rule now has three homes that already disagree: the API's expectedAmount still uses step 2's furthest-from-zero rule, the forecast calls the helper without the operator (so ignores approximate amounts), and getScheduledAmount still uses the midpoint."},
+ "bypasses_abstraction": {"value": true, "where": "server/api-models.ts scheduleModel.toExternal computes expectedAmount itself instead of calling getExpectedScheduleAmount; shared/schedules.ts re-derives the approximate tolerance instead of using getApproxNumberThreshold in shared/rules.ts."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "api-models.ts reimplements the amount dispatch with an abs-comparison instead of Math.min, and getExpectedScheduleAmount is a renamed sibling of the existing getScheduledAmount with the same null/number/range shape."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 2, "where": "getExpectedScheduleAmount gains an optional amountOp with an `isapprox` branch; server/api-models.ts scheduleModel bypasses it with its own (now stale) rule, and server/forecast/forecast-schedules.ts normalizeSchedule calls it without the op."}
+}

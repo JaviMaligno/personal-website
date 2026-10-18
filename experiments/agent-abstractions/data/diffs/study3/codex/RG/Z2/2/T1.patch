@@ -1,0 +1,65 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..8df9892 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -107,6 +107,36 @@ describe('schedules', () => {
+   });
+ 
+   describe('computeSchedulePreviewTransactions', () => {
++    it.each([
++      ['negative range in ascending order', { num1: -10100, num2: -20000 }, -20000],
++      ['negative range in descending order', { num1: -20000, num2: -10100 }, -20000],
++      ['positive range', { num1: 10100, num2: 20000 }, 20000],
++    ])('uses the endpoint furthest from zero for a %s', (_label, range, expected) => {
++      const schedule: ScheduleEntity = {
++        id: 'sched-range',
++        rule: 'rule-1',
++        completed: false,
++        posts_transaction: false,
++        tombstone: false,
++        _payee: 'payee-1',
++        _account: 'acct-1',
++        _amount: range,
++        _amountOp: 'between',
++        _date: '2017-01-03',
++        next_date: '2017-01-03',
++        _conditions: [{ field: 'date', op: 'is', value: '2017-01-03' }],
++        _actions: [],
++      };
++
++      const result = computeSchedulePreviewTransactions(
++        [schedule],
++        new Map([['sched-range', 'upcoming']]),
++        '7',
++      );
++
++      expect(result[0].amount).toBe(expected);
++    });
++
+     describe('forceUpcoming flag', () => {
+       function makeSchedule(
+         overrides: Partial<ScheduleEntity> &
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..6335092 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -496,14 +496,16 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // A missing amount previews as 0; a ranged ("is between") amount as its
+-      // rounded midpoint.
++      // A missing amount previews as 0; a ranged ("is between") amount uses
++      // the endpoint furthest from zero to plan for the worst case.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amount
+-            : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++            : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
++              ? schedule._amount.num1
++              : schedule._amount.num2;
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

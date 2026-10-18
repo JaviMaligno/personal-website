@@ -1,0 +1,57 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 64f31c0..2f640b1 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -23,10 +23,12 @@ import type { ScheduleStatuses } from './schedules';
+ 
+ describe('schedules', () => {
+   describe('getScheduledAmount', () => {
+-    it('uses the range endpoint furthest from zero regardless of order', () => {
++    it('uses the lowest range endpoint regardless of order', () => {
+       expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
+     });
+ 
+     it('keeps fixed and missing amounts unchanged', () => {
+@@ -34,11 +36,11 @@ describe('schedules', () => {
+       expect(getScheduledAmount(null)).toBe(0);
+     });
+ 
+-    it('uses the approximate endpoint furthest from zero', () => {
++    it('uses the lowest approximate amount', () => {
+       expect(getScheduledAmount(-10000, false, 'isapprox')).toBe(-10750);
+-      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
++      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(9250);
+       expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
+-      expect(getScheduledAmount(1234, false, 'isapprox')).toBe(1327);
++      expect(getScheduledAmount(1234, false, 'isapprox')).toBe(1141);
+       expect(getScheduledAmount(1234, false, 'is')).toBe(1234);
+     });
+   });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 2facc04..b04957b 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -366,13 +366,15 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     if (op === 'isapprox') {
+       const threshold = getApproxNumberThreshold(amount);
+-      const expectedAmount = amount + Math.sign(amount) * threshold;
++      const expectedAmount = amount - threshold;
+       return inverse ? -expectedAmount : expectedAmount;
+     }
+     return inverse ? -amount : amount;
+   }
+-  const expectedAmount =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  // Choose the lowest value in the range: the most negative endpoint for
++  // expenses and ranges spanning zero, and the smaller positive endpoint for
++  // income.
++  const expectedAmount = Math.min(amount.num1, amount.num2);
+   return inverse ? -expectedAmount : expectedAmount;
+ }
+ 

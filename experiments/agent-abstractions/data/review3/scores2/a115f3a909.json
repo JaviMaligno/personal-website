@@ -1,0 +1,12 @@
+{"id":"a115f3a909",
+"reuse":{"score":3,"why":"Reuses getWorstCaseAmount and the matcher's getApproxNumberThreshold, but adds a new getExpectedAmount beside the existing getScheduledAmount (which already does the null/number/range expected-amount dispatch) instead of extending it."},
+"duplication":{"score":3,"why":"It removes five inline null/number/range ternaries, but getExpectedAmount re-implements the same dispatch that getScheduledAmount already contains, leaving two parallel expected-amount functions."},
+"placement":{"score":4,"why":"The rule is placed in shared/schedules.ts next to the other amount helpers and server sites call it, which fits the layering."},
+"scope":{"score":5,"why":"Only the amount rule and its call sites are touched."},
+"maintainability":{"score":3,"why":"Server paths now share one definition, but the existing getScheduledAmount used by the API's expectedAmount and by the desktop-client balance/schedule views still lacks the approximate rule, so two functions answer the same question differently."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts adds getExpectedAmount instead of changing getScheduledAmount, which api-models.ts toExternal and desktop-client SchedulesTable/Balance/MobileSchedulesPage/SchedulesListItem/useScheduleEdit keep using."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"shared/schedules.ts getExpectedAmount is getScheduledAmount's null->0 / number / getWorstCaseAmount dispatch under a new name with an op parameter, rather than one function."},
+"one_place":{"value":false,"where":"The approximate rule lives in getExpectedAmount (used by schedules/app.ts, forecast-schedules.ts, schedule-template.ts, computeSchedulePreviewTransactions) but not in getScheduledAmount, used by api-models.ts expectedAmount and the desktop-client schedule/balance views."}
+}

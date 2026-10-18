@@ -1,0 +1,12 @@
+{"id": "a08c4fd4ac",
+ "reuse": {"score": 5, "why": "Routes every amount site (forecast, rule-action sync, posting, preview, budget template, API, desktop-client views) through the existing getScheduledAmount and builds the approximate tolerance on the existing getApproxNumberThreshold."},
+ "duplication": {"score": 5, "why": "Removes the four inline midpoint ternaries and the template's hand copy instead of adding new ones; the worst-case rule exists only in getScheduledAmount."},
+ "placement": {"score": 4, "why": "The rule sits in shared/schedules.ts where the helper lives; expectedAmount is added in the api.ts handler by spreading toExternal rather than in scheduleModel.toExternal, which leaves the new APIScheduleListEntity type declared next to a model that does not produce it."},
+ "scope": {"score": 4, "why": "All edits serve the four steps, though the desktop-client display sites now switch to the planned amount as a side effect of threading op through every caller."},
+ "maintainability": {"score": 4, "why": "One definition with one real variation (op) is easy to own; the positional null op in useScheduleEdit and the inverse flag after op make some call sites slightly opaque."},
+ "bypasses_abstraction": {"value": false, "where": "No site keeps or adds its own amount computation; all call getScheduledAmount."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "Former copies are deleted, not reshaped."},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "getScheduledAmount gains the op parameter and one op === 'isapprox' branch, both the genuine variation the steps introduce; useScheduleEdit passes null to opt out of the tolerance rather than bypassing the helper."}
+}

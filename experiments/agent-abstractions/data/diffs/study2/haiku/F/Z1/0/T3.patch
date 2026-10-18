@@ -1,0 +1,130 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index d47af42..0ba3e07 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -62,6 +62,23 @@ describe('bulk budget actions skip hidden and templated categories', () => {
+       cat_group: 'group1',
+       goal_def: JSON.stringify([{ type: 'fixed', amount: 100 }]),
+     });
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insert('notes', { id: 'fixed-group', note: 'Rent #fixed' });
++    await db.insertCategory({
++      id: 'in-fixed-group',
++      name: 'in-fixed-group',
++      cat_group: 'fixed-group',
++    });
++    await db.insertCategory({
++      id: 'tagged-cat',
++      name: 'tagged-cat',
++      cat_group: 'group1',
++    });
++    await db.insert('notes', { id: 'tagged-cat', note: '#fixed' });
+     await db.insertCategory({
+       id: 'income',
+       name: 'income',
+@@ -77,6 +94,8 @@ describe('bulk budget actions skip hidden and templated categories', () => {
+       'hidden-cat',
+       'in-hidden-group',
+       'templated',
++      'in-fixed-group',
++      'tagged-cat',
+     ]) {
+       await setBudget({ category, month: '2024-01', amount: 500 });
+       await setBudget({ category, month: '2024-02', amount: 42 });
+@@ -84,7 +103,7 @@ describe('bulk budget actions skip hidden and templated categories', () => {
+     await sheet.waitOnSpreadsheet();
+   }
+ 
+-  it('copyPreviousMonth only overwrites categories that are not hidden or templated', async () => {
++  it('copyPreviousMonth only overwrites categories that are not hidden, templated or in a #fixed group', async () => {
+     await setupDatabase();
+ 
+     await copyPreviousMonth({ month: '2024-02' });
+@@ -96,9 +115,13 @@ describe('bulk budget actions skip hidden and templated categories', () => {
+       42,
+     );
+     expect(await getSheetValue('budget202402', 'budget-templated')).toBe(42);
++    expect(await getSheetValue('budget202402', 'budget-in-fixed-group')).toBe(
++      42,
++    );
++    expect(await getSheetValue('budget202402', 'budget-tagged-cat')).toBe(500);
+   });
+ 
+-  it('setZero only zeroes categories that are not hidden or templated', async () => {
++  it('setZero only zeroes categories that are not hidden, templated or in a #fixed group', async () => {
+     await setupDatabase();
+ 
+     await setZero({ month: '2024-02' });
+@@ -110,6 +133,10 @@ describe('bulk budget actions skip hidden and templated categories', () => {
+       42,
+     );
+     expect(await getSheetValue('budget202402', 'budget-templated')).toBe(42);
++    expect(await getSheetValue('budget202402', 'budget-in-fixed-group')).toBe(
++      42,
++    );
++    expect(await getSheetValue('budget202402', 'budget-tagged-cat')).toBe(0);
+   });
+ });
+ 
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index bf918f9..3681786 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -220,14 +221,18 @@ type BulkBudgetCategory = Pick<
+   'id' | 'is_income' | 'hidden' | 'goal_def'
+ > & {
+   group_hidden: db.DbCategoryGroup['hidden'] | null;
++  group_note: string | null;
+ };
+ 
++const FIXED_GROUP_TAG = 'fixed';
++
+ // The categories a bulk budget action (copy last month, set to zero, set to an
+ // N-month average) writes. Income categories take part only in tracking
+-// budgets. Hidden categories, categories in hidden groups and categories with
+-// saved budget templates are skipped. `skipMissingGroup` also skips a category
+-// whose group row does not exist: the average actions have always done so,
+-// copy last month and set to zero have not.
++// budgets. Hidden categories, categories in hidden groups, categories in groups
++// tagged #fixed in their notes and categories with saved budget templates are
++// skipped. `skipMissingGroup` also skips a category whose group row does not
++// exist: the average actions have always done so, copy last month and set to
++// zero have not.
+ async function getBulkBudgetCategories({
+   skipMissingGroup,
+ }: {
+@@ -235,9 +240,11 @@ async function getBulkBudgetCategories({
+ }): Promise<BulkBudgetCategory[]> {
+   const categories = await db.all<BulkBudgetCategory>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++    n.note AS group_note
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -250,6 +257,9 @@ async function getBulkBudgetCategories({
+     if (cat.hidden === 1 || cat.group_hidden === 1) {
+       return false;
+     }
++    if (extractTagsFromText(cat.group_note ?? '').includes(FIXED_GROUP_TAG)) {
++      return false;
++    }
+     if (cat.goal_def != null) {
+       return false;
+     }

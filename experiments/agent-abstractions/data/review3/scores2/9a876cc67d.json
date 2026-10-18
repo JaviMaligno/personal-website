@@ -1,0 +1,12 @@
+{"id": "9a876cc67d",
+ "reuse": {"score": 3, "why": "Keeps every expected-amount decision in the existing getExpectedScheduleAmount and exposes it through the API model, but writes the 7.5% tolerance inline instead of calling the existing getApproxNumberThreshold from shared/rules."},
+ "duplication": {"score": 3, "why": "`Math.round(Math.abs(amount) * 0.075)` duplicates getApproxNumberThreshold, the tolerance used by rule matching, so the two can drift apart."},
+ "placement": {"score": 5, "why": "The rule stays in shared/schedules.ts and the API field is computed in the existing scheduleModel mapper in api-models.ts."},
+ "scope": {"score": 5, "why": "Only the amount rule, its callers, the API field, comments and tests change."},
+ "maintainability": {"score": 3, "why": "The optional `op` parameter lets callers silently skip the approximate rule: the forecast (forecast-schedules.ts) and the new API expectedAmount call without it, so approximate schedules resolve differently there than in posting, previews and action syncing."},
+ "bypasses_abstraction": {"value": true, "where": "shared/schedules.ts getExpectedScheduleAmount computes the approximate tolerance itself rather than using getApproxNumberThreshold in shared/rules.ts."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The tolerance formula is copied verbatim inline, not disguised."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 2, "where": "getExpectedScheduleAmount gains an optional `op` and an `isapprox` branch; server/forecast/forecast-schedules.ts and server/api-models.ts scheduleModel call it without the op, so they do not apply the approximate rule."}
+}

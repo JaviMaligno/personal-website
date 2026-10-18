@@ -1,0 +1,79 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..f5f22f0 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -497,6 +497,38 @@ describe('schedules', () => {
+       const result = getNextDate(dateCond, new Date(2017, 0, 1));
+       expect(result).toBeNull();
+     });
++
++    it('skips weekend days for a daily schedule instead of moving them', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-05',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'before',
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 5))).toBe('2020-12-07');
++    });
++
++    it('skips a weekend occurrence of an every-few-days schedule', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-04',
++          frequency: 'daily',
++          interval: 3,
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-10');
++      expect(getNextDate(dateCond, new Date(2020, 11, 11))).toBe('2020-12-16');
++    });
+   });
+ 
+   describe('getNextDateAfter', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..944cfa1 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -10,6 +10,8 @@ import { q } from './query';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
++const WEEKDAYS = ['MO', 'TU', 'WE', 'TH', 'FR'];
++
+ // Preset token values used by UI selects. Keep labels in the UI (i18n) but
+ // centralize the canonical preset tokens so all components share the same set.
+ export const UPCOMING_LENGTH_PRESET_VALUES = [
+@@ -224,7 +226,9 @@ export function recurConfigToRSchedule(config) {
+ 
+   switch (config.frequency) {
+     case 'daily':
+-      // Nothing to do
++      if (config.skipWeekend) {
++        return [{ ...base, byDayOfWeek: WEEKDAYS }];
++      }
+       return [base];
+     case 'weekly':
+       // Nothing to do
+diff --git a/upcoming-release-notes/skip-weekend-daily-schedules.md b/upcoming-release-notes/skip-weekend-daily-schedules.md
+new file mode 100644
+index 0000000..0b14b28
+--- /dev/null
++++ b/upcoming-release-notes/skip-weekend-daily-schedules.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Skip weekend occurrences of daily schedules instead of moving them to Friday or Monday, so they no longer land on the same day twice

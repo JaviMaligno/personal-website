@@ -1,0 +1,48 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index fa1e9c8..57b29ea 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -754,6 +754,24 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2020, 11, 1))).toBe('2020-12-10');
+     });
+ 
++    it('treats a `MM-DD` holiday as that day in every year', () => {
++      const dateCond = recur({ holidays: ['12-07'] });
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 4))).toBe('2020-12-08');
++    });
++
++    it('applies `MM-DD` and `YYYY-MM-DD` holidays in the same list', () => {
++      const dateCond = recur({ holidays: ['12-07', '2020-12-08'] });
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 4))).toBe('2020-12-09');
++    });
++
++    it('applies a `MM-DD` holiday in later years', () => {
++      const dateCond = recur({ holidays: ['12-06'] });
++
++      expect(getNextDate(dateCond, new Date(2021, 11, 4))).toBe('2021-12-07');
++    });
++
+     it('ignores holidays when weekend skipping is off', () => {
+       const dateCond = recur({
+         skipWeekend: false,
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 945955e..1f6943b 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -390,7 +390,13 @@ export function getDateWithSkippedWeekend(
+ }
+ 
+ function isNonWorkingDay(date: Date, holidays: readonly string[]): boolean {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  return d.isWeekend(date) || isHoliday(date, holidays);
++}
++
++// Holidays are either a full `YYYY-MM-DD` date or a `MM-DD` that recurs every year.
++function isHoliday(date: Date, holidays: readonly string[]): boolean {
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
+ }
+ 
+ export function getScheduledAmount(

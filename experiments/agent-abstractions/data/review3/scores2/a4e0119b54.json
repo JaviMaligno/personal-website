@@ -1,0 +1,11 @@
+{"id":"a4e0119b54",
+"reuse":{"score":3,"why":"Extends the existing getDateWithSkippedWeekend with a holidays parameter, but app.ts re-writes the new isSkippedDay predicate inline instead of reusing it, and schedule-template.ts keeps calling the helper without holidays."},
+"duplication":{"score":2,"why":"The 'weekend or holiday' test is written three times (private isSkippedDay in shared/schedules.ts plus two inline `d.isWeekend(...) || config.holidays?.includes(dayFromDate(...))` copies in app.ts), and the daily-skip-vs-move dispatch is now copied into getUpcomingDates as a nested ternary alongside getDatesInRange and getNextDate."},
+"placement":{"score":3,"why":"The core rule rightly lives in shared/schedules.ts, but the day-skipping decision is also made in the server handlers rather than in one shared weekend-rule function."},
+"scope":{"score":4,"why":"Edits are confined to the weekend rule and its callers plus the type and tests; raising the attempt cap from 7 to 366 and adding daily skipping to getUpcomingDates are related but slightly widen the change."},
+"maintainability":{"score":2,"why":"A future change to which days are skipped must be made in three predicates and three dispatches, and the budget template path silently ignores holidays; the nested ternary in getUpcomingDates is hard to read."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates and getDatesInRange inline the weekend-or-holiday predicate instead of using the shared isSkippedDay (kept private); server/budget/schedule-template.ts calls getDateWithSkippedWeekend without holidays."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copies of the weekend-or-holiday predicate are written plainly inline, not renamed or reshaped."},
+"one_place":{"value":false,"where":"Holiday handling is split across shared/schedules.ts (isSkippedDay, getDateWithSkippedWeekend, getNextDate daily loop) and two inline predicates in server/schedules/app.ts; server/budget/schedule-template.ts weekend moves do not receive holidays at all."}}

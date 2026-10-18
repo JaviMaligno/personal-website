@@ -1,0 +1,11 @@
+{"id":"022c13abb1",
+"reuse":{"score":3,"why":"Extends the existing getDateWithSkippedWeekend and adds isHoliday, but each consumer writes its own 'daily and skipWeekend and (weekend or holiday)' skip instead of a shared occurrence-adjustment function, and schedule-template.ts is not given holidays."},
+"duplication":{"score":2,"why":"The daily skip predicate appears four times (two find closures in getNextDate, a filter in getUpcomingDates, a map-to-null in getDatesInRange), and the 'skipWeekend ? getDateWithSkippedWeekend(...) : date' adjustment is repeated in every consumer."},
+"placement":{"score":3,"why":"The weekend/holiday move lives in shared/schedules.ts, but the daily-skip rule is spread between shared/schedules.ts and server/schedules/app.ts instead of one shared definition."},
+"scope":{"score":4,"why":"The edits serve the four requests, with a type field and tests; no unrelated changes."},
+"maintainability":{"score":2,"why":"Weekend/holiday semantics now differ by call site (holidays read from dateCond.value in one place, schedule.data in another; template path ignores holidays), so a future rule change has to find five places."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates and getDatesInRange re-implement the daily skip around getDateWithSkippedWeekend; server/budget/schedule-template.ts still calls getDateWithSkippedWeekend without holidays or the daily skip"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"the daily weekend/holiday skip is written as a find predicate twice in getNextDate, a .filter in getUpcomingDates and a map-to-null in getDatesInRange"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains a holidays parameter; getNextDate gains skipDailyWeekends branches (forward lookup and reverse fallback) and excludes the shared weekend move for daily; getUpcomingDates and getDatesInRange re-implement the daily skip; schedule-template.ts calls the helper without holidays"}}

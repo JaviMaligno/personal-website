@@ -1,0 +1,11 @@
+{"id":"ffcbab1db1",
+"reuse":{"score":3,"why":"Reuses linkBankSyncAccount, findOrCreateBank, post/BankSyncError and the getServer config pattern, but the take-over path re-writes unlinkAccount's field clearing instead of extracting a shared local-unlink helper, and the guard is not put into the shared linkBankSyncAccount path."},
+"duplication":{"score":3,"why":"The account-detach update is a verbatim copy of unlinkAccount's db.updateAccount block, downloadFintegraTransactions is a condensed copy of downloadEnableBankingTransactions, and the same guard call is repeated in six provider link functions."},
+"placement":{"score":3,"why":"Provider pieces sit where the tree puts them (app.ts link handlers, sync.ts downloader, server-config, types), but the link rules live in a helper each provider must remember to call instead of in linkBankSyncAccount, and the closed-account rule is hidden inside a helper named ensureBankAccountIsNotLinked."},
+"scope":{"score":4,"why":"Changes stay on linking, the new provider and their tests; nothing unrelated."},
+"maintainability":{"score":3,"why":"Workable, but the guard's name no longer describes what it does (closed check, duplicate check, unlink on replace), a new provider can skip it silently, and unlink semantics now live in two places."},
+"bypasses_abstraction":{"value":true,"where":"app.ts ensureBankAccountIsNotLinked: detaches the previous account with its own db.updateAccount copy instead of going through the unlinkAccount logic; link rules are applied per provider rather than in linkBankSyncAccount"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"sync.ts downloadFintegraTransactions: downloadEnableBankingTransactions reshaped (inlined body/headers, compacted destructuring) rather than shared"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":0,"where":"app.ts ensureBankAccountIsNotLinked: gains the replaceExistingLink flag and two special branches (closed-account refusal for upgradingId, detach-on-replace) beyond the duplicate-link check its name describes; all six link handlers call it"}}

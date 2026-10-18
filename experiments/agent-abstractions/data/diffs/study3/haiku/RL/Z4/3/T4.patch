@@ -1,0 +1,83 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 172db41..598cfad 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -1254,6 +1254,30 @@ describe('schedule app', () => {
+         }),
+       ).toEqual(['2026-10-07']);
+     });
++
++    it('applies a recurring MM-DD holiday in every year', async () => {
++      const config: RecurConfig = {
++        ...monthlyOnFourth,
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++        holidays: ['10-04'],
++      };
++
++      expect(
++        await getDatesInRange({
++          config,
++          start: '2027-10-04',
++          end: '2027-10-04',
++        }),
++      ).toEqual([]);
++      expect(
++        await getDatesInRange({
++          config,
++          start: '2027-10-05',
++          end: '2027-10-05',
++        }),
++      ).toEqual(['2027-10-05']);
++    });
+   });
+ 
+   describe('auto-post service throttling', () => {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 62a20d3..461336b 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -553,6 +553,25 @@ describe('schedules', () => {
+         expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-09');
+       });
+ 
++      it('skips a holiday that recurs every year on the same month and day', () => {
++        const dateCond = daily({
++          start: '2020-12-04',
++          holidays: ['12-08'],
++        });
++
++        expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-09');
++        expect(getNextDate(dateCond, new Date(2021, 11, 8))).toBe('2021-12-09');
++      });
++
++      it('mixes recurring and single-date holidays in one list', () => {
++        const dateCond = daily({
++          start: '2020-12-04',
++          holidays: ['12-08', '2020-12-09'],
++        });
++
++        expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-10');
++      });
++
+       it('skips past a longer run of holidays to the next working day', () => {
+         const dateCond = daily({
+           start: '2020-12-07',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 9429edc..0ed6668 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -297,7 +297,12 @@ export function skipsWeekendOccurrences(recur: {
+ }
+ 
+ export function isNonWorkingDay(date: Date, holidays: string[] = []): boolean {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  const day = monthUtils.dayFromDate(date);
++  return (
++    d.isWeekend(date) ||
++    holidays.includes(day) ||
++    holidays.includes(day.slice(5))
++  );
+ }
+ 
+ function findWeekdayOccurrence(

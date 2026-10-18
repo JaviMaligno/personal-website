@@ -1,0 +1,12 @@
+{"id": "b9b0b03b69",
+"reuse": {"score": 4, "why": "The rule changes go into the existing getScheduledAmount, which reuses getApproxNumberThreshold, and the API field calls the same helper."},
+"duplication": {"score": 4, "why": "No rule logic is copied. The inverse/return pattern is repeated in two branches inside the helper, a trivial repetition."},
+"placement": {"score": 3, "why": "The rule sits in shared/schedules.ts and the field in scheduleModel.toExternal, but an output-only expectedAmount is added as a required field to APIScheduleEntity, which also serves as the create/update input type. That forces Omit<…, 'expectedAmount'> patches across the input signatures."},
+"scope": {"score": 4, "why": "Focused on the amount rule and the API field. The input-type Omit edits are collateral of the type choice."},
+"maintainability": {"score": 3, "why": "One helper owns the rule, but op is optional and the server posting/action-sync callers (schedules/app.ts updateActions, postTransactionForSchedule) were not given it. Approximate schedules are therefore planned one way and posted another. The API entity now mixes input and output fields, and packages/api's createSchedule signature was left out."},
+"bypasses_abstraction": {"value": false, "where": "All amount resolution goes through getScheduledAmount."},
+"duplicated_blocks": 0,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "None."},
+"abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "getScheduledAmount's rangeRounding parameter is replaced by an optional amountOp, and one isapprox branch is added. The schedules/app.ts callers still call the helper but without op, so the approximate rule is not applied there."}
+}

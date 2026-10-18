@@ -1,0 +1,44 @@
+{
+ "id": "0cb7f1b945",
+ "reuse": {
+  "score": 3,
+  "why": "All providers share the new link guard and reuse findOrCreateBank, but Fintegra copies existing linking and download workflows, while replacement copies unlinkAccount's local cleanup."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The change adds three duplicated logical blocks: account linking, transaction downloading, and clearing local bank-link fields."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider integration follows existing module boundaries, although destructive link replacement is unexpectedly embedded in an assertion helper."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the requested linking rules and Fintegra integration, including the small client mappings required by the expanded provider type."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized validation helps maintenance, but copied provider workflows and a mutating assertion helper create additional places and responsibilities to maintain."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "accounts/app.ts: assertBankAccountNotLinked duplicates unlinkAccount's local field cleanup instead of extracting a shared local-unlink operation that both paths can use without provider notification."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The Fintegra linking and download workflows and replacement cleanup are direct copies with provider substitutions, rather than structurally disguised duplication."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 3,
+  "bypassing_call_sites": 0,
+  "where": "assertBankAccountNotLinked gains replaceExistingLink and branches for closed targets, missing replacement targets, and conflict refusal versus takeover; all six linking handlers call it, but it now performs destructive updates despite its assertion interface."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 32.6
+ }
+}

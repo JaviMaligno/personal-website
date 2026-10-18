@@ -1,0 +1,12 @@
+{"id":"5b52e2f9b2",
+"reuse":{"score":3,"why":"Extends the existing getDateWithSkippedWeekend with holidays and adds a shared isHoliday, but each caller still decides skipWeekend/daily on its own and getDatesInRange re-tests d.isWeekend||isHoliday instead of a shared non-working-day check."},
+"duplication":{"score":3,"why":"The template's two copies are folded into a local getScheduleDate, but the `skipWeekend ? move : date` decision is still repeated in getUpcomingDates, getDatesInRange, getNextDate and the template, and daily skipping is written twice (getNextDate loop, getDatesInRange branch)."},
+"placement":{"score":3,"why":"Weekend/holiday primitives sit in shared/schedules.ts, but the daily skip-or-move dispatch lives partly in shared getNextDate and partly inline in the server handler, and getScheduleDate is a template-local helper rather than shared."},
+"scope":{"score":4,"why":"Edits all serve the four steps; there is a stray mis-indentation change in getUpcomingDates."},
+"maintainability":{"score":2,"why":"The weekend policy is applied differently per caller (getUpcomingDates and the template move daily weekend occurrences instead of skipping them), so a future rule change has to be traced through four places."},
+"bypasses_abstraction":{"value":true,"where":"getUpcomingDates (server/schedules/app.ts) and getScheduleDate (budget/schedule-template.ts) call getDateWithSkippedWeekend for daily schedules, bypassing the daily-skip rule; getDatesInRange re-implements the daily skip inline"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"daily skip is a while-loop over isNonWorkingDay in getNextDate and a reshaped `daily ? (isWeekend||isHoliday ? null : day)` branch in getDatesInRange; the skipWeekend ternary reappears as getScheduleDate in schedule-template.ts"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains holidays; getNextDate gains a daily skip loop and a frequency !== 'daily' guard; getDatesInRange reimplements the rule while getUpcomingDates and schedule-template.ts bypass it"}
+}

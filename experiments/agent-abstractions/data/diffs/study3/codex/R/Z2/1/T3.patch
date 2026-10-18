@@ -1,0 +1,107 @@
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index b22eb8e..aaf8592 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -251,7 +251,11 @@ export const scheduleModel = {
+       payee: schedule._payee,
+       account: schedule._account,
+       amount: schedule._amount,
+-      expectedAmount: getScheduledAmount(schedule._amount),
++      expectedAmount: getScheduledAmount(
++        schedule._amount,
++        false,
++        schedule._amountOp,
++      ),
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+     };
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index daddc36..173d10c 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -94,10 +94,10 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged amount uses the endpoint furthest from zero.
++  // Plan for the amount furthest from zero, including approximate amounts.
+   const amount =
+     typeof amountValue === 'number'
+-      ? amountValue
++      ? getScheduledAmount(amountValue, false, conditions.amount?.op)
+       : getScheduledAmount(amountValue);
+ 
+   return {
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 8b5fd85..642adcc 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -159,7 +159,7 @@ function updateActions(
+       ? 0
+       : typeof amountValue === 'number'
+         ? amountValue
+-        : getScheduledAmount(amountValue);
++        : getScheduledAmount(amountValue, false, amountCond.op);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -599,7 +599,7 @@ async function postTransactionForSchedule({
+       ? 0
+       : typeof schedule._amount === 'number'
+         ? schedule._amount
+-        : getScheduledAmount(schedule._amount);
++        : getScheduledAmount(schedule._amount, false, schedule._amountOp);
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 865223d..624b766 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -43,6 +43,14 @@ describe('schedules', () => {
+     ])('returns the expected amount for %j', (amount, expected) => {
+       expect(getScheduledAmount(amount)).toBe(expected);
+     });
++
++    it.each([
++      [-10000, -10750],
++      [10000, 10750],
++      [-1234, -1327],
++    ])('plans the approximate amount %i as %i', (amount, expected) => {
++      expect(getScheduledAmount(amount, false, 'isapprox')).toBe(expected);
++    });
+   });
+ 
+   describe('getStatus', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 2e53e36..2c1fcfc 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -356,12 +356,18 @@ export function getDateWithSkippedWeekend(
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
++  op?: string,
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+   if (amount == null) return 0;
+ 
+   if (typeof amount === 'number') {
++    if (op === 'isapprox') {
++      const tolerance = Math.round(Math.abs(amount) * 0.075);
++      const expected = amount + Math.sign(amount) * tolerance;
++      return inverse ? -expected : expected;
++    }
+     return inverse ? -amount : amount;
+   }
+   const endpoint =
+@@ -504,7 +510,7 @@ export function computeSchedulePreviewTransactions(
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amount
+-            : getScheduledAmount(schedule._amount);
++            : getScheduledAmount(schedule._amount, false, schedule._amountOp);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

@@ -1,0 +1,12 @@
+{"id":"00b984cd9d",
+"reuse":{"score":3,"why":"Reuses setNMonthAvg, getSheetValue and batchMessages and shares the #fixed lookup, but builds two separate category-selection helpers instead of one that all month-wide actions use."},
+"duplication":{"score":2,"why":"The exclusion rule (hidden/hidden group unless requested, goal_def, #fixed group) is written twice: as an 'excluded ids' query for setZero/copyPreviousMonth and as an inverse 'included categories' query for the averages and last-month action, each with its own hiddenClause."},
+"placement":{"score":4,"why":"All selection helpers and the new action sit in budget/actions.ts and the handler is registered in budget/app.ts, as the tree does."},
+"scope":{"score":4,"why":"Collapsing set3/6/12MonthAvg into setMonthWideNMonthAvg goes a little beyond the requests (set3MonthAvg now routes through setNMonthAvg), otherwise focused."},
+"maintainability":{"score":3,"why":"The forEachMonthWideCategory iterator and MonthWideActionArgs are pleasant, but a maintainer must keep two complementary SQL predicates in sync and the helper named 'ForMonthWideAverage' also drives setLastMonthSpending."},
+"bypasses_abstraction":{"value":true,"where":"setZero and copyPreviousMonth in packages/loot-core/src/server/budget/actions.ts bypass forEachMonthWideCategory/getCategoriesForMonthWideAverage and use getCategoryIdsExcludedFromMonthWideActions instead."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getCategoryIdsExcludedFromMonthWideActions (hidden=1 OR goal_def IS NOT NULL OR group IN fixed) is the negated reshaping of getCategoriesForMonthWideAverage (hidden=0 AND goal_def IS NULL AND group NOT IN fixed)."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":2,"where":"includeHiddenCategories added to both getCategoryIdsExcludedFromMonthWideActions and getCategoriesForMonthWideAverage, each with its own hiddenClause conditional; setZero and copyPreviousMonth bypass the forEachMonthWideCategory path."}
+}

@@ -1,0 +1,12 @@
+{"id":"be7441929c",
+"reuse":{"score":4,"why":"Routes all adjustments through the existing applyWeekendRule/getDateWithSkippedWeekend and recurConfigToRSchedule, and the new range handler reuses the same RSchedule/applyWeekendRule pipeline as getUpcomingDates."},
+"duplication":{"score":3,"why":"getDatesInRange re-creates the getUpcomingDates schedule construction and adjust-map pipeline instead of sharing it, and the MM-DD holiday match is implemented twice (isYearlyHoliday/dayMatchesMonthDay for exdates vs str.slice(5) in isOff)."},
+"placement":{"score":4,"why":"Rule logic sits in shared/schedules.ts and the handler in schedules/app.ts as the tree does, though the daily 'skip' rule is split between rrule byDayOfWeek, a separate exdates builder and the shift helper."},
+"scope":{"score":5,"why":"Changes stay on the schedule date rule, the new handler, types, tests and release notes."},
+"maintainability":{"score":3,"why":"Every RSchedule construction must remember to pair recurConfigToRSchedule with recurConfigToExdates (find-schedules does not), exdates are expanded for 100 years, and the 14-day padding is an unexplained bound that holidays can exceed."},
+"bypasses_abstraction":{"value":false,"where":"All date adjustments call applyWeekendRule; the daily skip is expressed through new shared helpers rather than around them."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"shared/schedules.ts: yearly-holiday matching written once as isYearlyHoliday+dayMatchesMonthDay and again as holidaySet.has(str.slice(5)) inside getDateWithSkippedWeekend; schedules/app.ts getDatesInRange reshapes the getUpcomingDates pipeline."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":0,"where":"holidays parameter added to applyWeekendRule and getDateWithSkippedWeekend; daily byDayOfWeek branch in recurConfigToRSchedule and the MM-DD special case inside isOff; holiday skipping for daily schedules lives in a separate recurConfigToExdates that each RSchedule site must call."}
+}

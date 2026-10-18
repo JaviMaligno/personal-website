@@ -1,0 +1,12 @@
+{"id": "12607a5dae",
+"reuse": {"score": 3, "why": "Reuses the schedule's occurrences() and getDateWithSkippedWeekend, but the daily-skip rule is coded inline inside getNextDate instead of extending the shared weekend helper that the other weekend call sites use."},
+"duplication": {"score": 3, "why": "The inline loop re-queries occurrences one at a time, repeating the occurrence lookup just above it, and the rule will have to be copied to getUpcomingDates and schedule-template to take effect there."},
+"placement": {"score": 3, "why": "Lives in shared/schedules.ts, but inside getNextDate rather than in the weekend helper (getDateWithSkippedWeekend) that represents the weekend decision for all callers."},
+"scope": {"score": 5, "why": "Only getNextDate and a test change."},
+"maintainability": {"score": 2, "why": "A special-case branch with a hard-coded 7-attempt loop and early returns sits in getNextDate, while get-upcoming-dates and the schedule template, which apply getDateWithSkippedWeekend themselves, still move daily weekend occurrences, so the rule is inconsistent across paths."},
+"bypasses_abstraction": {"value": true, "where": "getNextDate decides the daily weekend case itself instead of routing it through getDateWithSkippedWeekend, the helper the other weekend sites (schedules/app.ts getUpcomingDates, budget/schedule-template.ts) call."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "The repeated occurrences lookup is a plain inline loop, not a disguised copy of existing logic."},
+"one_place": {"value": false, "where": "Only shared/schedules.ts getNextDate applies the daily skip; server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts call getDateWithSkippedWeekend directly and keep moving daily weekend occurrences."}
+}

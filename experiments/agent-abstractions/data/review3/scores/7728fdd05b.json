@@ -1,0 +1,12 @@
+{"id": "7728fdd05b",
+"reuse": {"score": 4, "why": "Uses the existing db.first query helper, AccountSyncSource type and LinkAccountBaseParams' upgradingId; there was no existing link-guard to reuse, and it does not consolidate the five parallel link functions."},
+"duplication": {"score": 4, "why": "The uniqueness rule is written once in assertBankAccountNotLinkedElsewhere; only a five-line call is repeated in each of the five provider link functions, mirroring their existing parallel structure."},
+"placement": {"score": 4, "why": "The guard sits in server/accounts/app.ts beside the link handlers it protects; the accounts link.ts module would also have been a reasonable home, but this matches where the link logic already lives."},
+"scope": {"score": 5, "why": "Only the guard, its five call sites and tests."},
+"maintainability": {"score": 4, "why": "Clear single-purpose guard placed before any side effect; a future sixth provider must remember to call it since the link functions remain separate copies."},
+"bypasses_abstraction": {"value": false, "where": "All five link handlers call the new guard; no existing abstraction is bypassed."},
+"duplicated_blocks": 0,
+"would_merge": "yes",
+"disguised_duplication": {"value": false, "where": "The rule is defined once; per-provider differences are only the provider literal and the account id field."},
+"one_place": {"value": true, "where": "assertBankAccountNotLinkedElsewhere in server/accounts/app.ts holds the whole 'already linked' rule (provider, account id, not deleted, not the upgrading account) and every link handler calls it."}
+}

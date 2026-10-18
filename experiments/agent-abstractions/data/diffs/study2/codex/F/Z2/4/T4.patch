@@ -1,0 +1,84 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index d7c79a9..ef2f959 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -8,8 +8,8 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
+-  getScheduleOccurrenceMatchStartDate,
+   getScheduledAmount,
++  getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+@@ -37,8 +37,10 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+-      [{ num1: 10100, num2: 20000 }, 20000],
+-    ])('uses the ranged endpoint furthest from zero', (range, expected) => {
++      [{ num1: 10100, num2: 20000 }, 10100],
++      [{ num1: 20000, num2: 10100 }, 10100],
++      [{ num1: -3000, num2: 5000 }, -3000],
++    ])('uses the lowest ranged endpoint', (range, expected) => {
+       expect(getScheduledAmount(range)).toBe(expected);
+     });
+ 
+@@ -55,13 +57,16 @@ describe('schedules', () => {
+ 
+     it.each([
+       [-10000, -10750],
+-      [10000, 10750],
++      [10000, 9250],
+       [-1234, -1327],
+-    ])('uses the tolerance endpoint for approximate amount %i', (amount, expected) => {
+-      expect(
+-        getScheduledAmount(amount, false, 'roundedMidpoint', 'isapprox'),
+-      ).toBe(expected);
+-    });
++    ])(
++      'uses the tolerance endpoint for approximate amount %i',
++      (amount, expected) => {
++        expect(
++          getScheduledAmount(amount, false, 'roundedMidpoint', 'isapprox'),
++        ).toBe(expected);
++      },
++    );
+   });
+ 
+   describe('getStatus', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index eaf61f4..653f254 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -377,9 +377,9 @@ export function applyWeekendRuleToDay(
+     : day;
+ }
+ 
+-// The amount a schedule is expected to post. A ranged ("is between") amount is
+-// scheduled at the endpoint furthest from zero. Budget templates use
+-// 'halfOfRoundedSum' to preserve their existing midpoint rounding behavior.
++// The amount a schedule is expected to post. Ranged and approximate amounts
++// use the lowest value they allow. Budget templates use 'halfOfRoundedSum' to
++// preserve their existing midpoint rounding behavior.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -393,14 +393,14 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     const scheduledAmount =
+       amountOp === 'isapprox'
+-        ? amount + Math.sign(amount) * Math.round(Math.abs(amount) * 0.075)
++        ? amount - Math.round(Math.abs(amount) * 0.075)
+         : amount;
+     return inverse ? -scheduledAmount : scheduledAmount;
+   }
+   const scheduledAmount =
+     rangeRounding === 'halfOfRoundedSum'
+       ? Math.round(amount.num1 + amount.num2) / 2
+-      : Math.abs(amount.num1) >= Math.abs(amount.num2)
++      : amount.num1 <= amount.num2
+         ? amount.num1
+         : amount.num2;
+   return inverse ? -scheduledAmount : scheduledAmount;

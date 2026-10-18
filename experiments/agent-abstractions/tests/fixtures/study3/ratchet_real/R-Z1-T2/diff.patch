@@ -1,0 +1,49 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 12b06a7..dbda321 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -345,0 +346,33 @@ export async function set3MonthAvg({
++export async function setLastMonthSpending({
++  month,
++}: {
++  month: string;
++}): Promise<void> {
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++    `
++  SELECT c.*
++  FROM categories c
++  LEFT JOIN category_groups g ON c.cat_group = g.id
++  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  `,
++  );
++  const templateIds = await getTemplateCategoryIds();
++  const prevSheet = monthUtils.sheetForMonth(monthUtils.prevMonth(month));
++
++  await batchMessages(async () => {
++    for (const cat of categories) {
++      if (templateIds.has(cat.id)) {
++        continue;
++      }
++      if (cat.is_income === 1 && !isTrackingBudget()) {
++        continue;
++      }
++
++      const activity = await getSheetValue(prevSheet, 'sum-amount-' + cat.id);
++      const amount = cat.is_income === 1 ? activity : -activity;
++
++      void setBudget({ category: cat.id, month, amount: amount || 0 });
++    }
++  });
++}
++
+diff --git a/packages/loot-core/src/server/budget/app.ts b/packages/loot-core/src/server/budget/app.ts
+index b61f24c..4bf1674 100644
+--- a/packages/loot-core/src/server/budget/app.ts
++++ b/packages/loot-core/src/server/budget/app.ts
+@@ -28,0 +29 @@ export type BudgetHandlers = {
++  'budget/set-last-month-spending': typeof actions.setLastMonthSpending;
+@@ -83,0 +85,4 @@ app.method('budget/set-zero', mutator(undoable(actions.setZero)));
++app.method(
++  'budget/set-last-month-spending',
++  mutator(undoable(actions.setLastMonthSpending)),
++);

@@ -1,0 +1,12 @@
+{"id": "db989e82d6",
+ "reuse": {"score": 4, "why": "All providers, including the new Fintegra link, go through one assertBankAccountNotLinked guard and the existing linkBankSyncAccount / link.findOrCreateBank helpers; the takeover path, however, rewrites the unlink field-clearing instead of reusing it."},
+ "duplication": {"score": 3, "why": "The sync-field reset in the takeover branch copies the db.updateAccount block of unlinkAccount, and downloadFintegraTransactions is a near-copy of downloadAkahuTransactions."},
+ "placement": {"score": 3, "why": "Guards are called at the start of each link function, which fits, but a function named assert...NotLinked now also checks the closed-account rule and performs a write (clearing another account's link), mixing validation and mutation."},
+ "scope": {"score": 4, "why": "Everything serves the four steps (one-link rule, Fintegra sync, closed accounts, takeover); no unrelated edits."},
+ "maintainability": {"score": 3, "why": "Single entry point per provider is good, but the guard has grown a mode flag and a mutating branch, and the copied reset and download code will drift from their originals."},
+ "bypasses_abstraction": {"value": true, "where": "The replaceExistingLink branch in assertBankAccountNotLinked clears the old account's sync fields with its own db.updateAccount instead of going through unlinkAccount (deliberately, to skip GoCardless provider cleanup)."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The copied blocks (unlink field reset, Fintegra download) are near-verbatim, not reshaped."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 0, "where": "assertBankAccountNotLinked gains a replaceExistingLink parameter, a takeover branch that mutates the existing account, and a closed-account check unrelated to its name; every link function calls it, so no call site bypasses it."}
+}

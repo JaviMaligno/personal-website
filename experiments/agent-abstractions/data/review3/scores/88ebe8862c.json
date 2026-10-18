@@ -1,0 +1,12 @@
+{"id": "88ebe8862c",
+ "reuse": {"score": 4, "why": "Routes Fintegra and all new link rules through the existing linkBankSyncAccount and the unlink field reset, but downloadFintegraTransactions is a copy of downloadAkahuTransactions instead of sharing it with a server URL parameter."},
+ "duplication": {"score": 3, "why": "downloadFintegraTransactions duplicates downloadAkahuTransactions line for line, and the holder query is written twice (assertBankAccountNotLinkedElsewhere and unlinkOtherAccountsHoldingBankAccount)."},
+ "placement": {"score": 5, "why": "Link rules live in the shared linkBankSyncAccount in server/accounts/app.ts, the download in sync.ts beside the other providers, the URL in server-config."},
+ "scope": {"score": 4, "why": "Follows the four steps; an unrelated import reorder in server/schedules/app.ts slipped in, while the desktop-client entries are required by the provider-keyed types."},
+ "maintainability": {"score": 4, "why": "All link guards sit in one helper in a clear order before any write; the copied download function and the repeated holder query are the main upkeep cost."},
+ "bypasses_abstraction": {"value": false, "where": "Every provider, including Fintegra, links through linkBankSyncAccount, and unlinkAccount uses clearAccountBankLink."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The copied download function only renames the provider/server constant; the holder query is an open copy. Neither is reshaped to hide it."},
+ "abstraction_drift": {"value": false, "parameters_added": 3, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "linkBankSyncAccount gains institution and bankId (replacing bank, so it owns findOrCreateBank after the guards) and replaceExistingLink, which selects unlink-vs-refuse; these are real variations and no call site bypasses it."}
+}

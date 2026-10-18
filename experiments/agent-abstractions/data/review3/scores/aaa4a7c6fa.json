@@ -1,0 +1,12 @@
+{"id": "aaa4a7c6fa",
+"reuse": {"score": 3, "why": "Generalises getDateWithSkippedWeekend and adds isScheduleExcludedDay, but getDatesInRange inlines its own weekend-or-holiday expression right next to an imported isScheduleExcludedDay, and the schedule-template callers of getDateWithSkippedWeekend are not given holidays."},
+"duplication": {"score": 2, "why": "The holiday predicate is restated inline in getDatesInRange, and the daily-skip-versus-shift decision is now written separately in getNextDate, getUpcomingDates and getDatesInRange."},
+"placement": {"score": 4, "why": "The predicate and shift loop live in shared/schedules.ts, but server/schedules/app.ts makes its own daily/holiday decisions instead of delegating them."},
+"scope": {"score": 4, "why": "Focused on schedules, though getUpcomingDates is restructured (over-fetch multiplier, dedup) beyond what the change needs, and long lines are left unformatted."},
+"maintainability": {"score": 2, "why": "The rule is spread over three hand-written branches with magic look-ahead multipliers, and one consumer (budget schedule templates) silently ignores holidays."},
+"bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getDatesInRange uses `d.isWeekend(date) || config.holidays?.includes(dayFromDate(date))` instead of isScheduleExcludedDay; budget/schedule-template.ts still calls getDateWithSkippedWeekend without holidays."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "getDatesInRange re-expresses isScheduleExcludedDay inline, and getUpcomingDates rebuilds the daily-skip/shift branch as a flatMap rather than sharing one resolver with getDatesInRange and getNextDate."},
+"one_place": {"value": false, "where": "The predicate lives in isScheduleExcludedDay (shared/schedules.ts), but getDatesInRange restates it inline and budget/schedule-template.ts never passes holidays, so not every path that applies the rule uses the shared definition."}
+}

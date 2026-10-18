@@ -1,0 +1,11 @@
+{"id": "ec85f3a04c",
+ "reuse": {"score": 4, "why": "Adds one shared claimBankAccount guard in link.ts that every provider's link function calls and reuses findOrCreateBank, handleSyncResponse and the existing sync dispatch, but the link-clearing step re-writes unlinkAccount's field reset instead of sharing it."},
+ "duplication": {"score": 2, "why": "Fintegra's link handler, account-list fetch and transaction download are near-verbatim copies of the Akahu ones, and claimBankAccount copies unlinkAccount's account-reset updateAccount block."},
+ "placement": {"score": 4, "why": "The one-link/closed/takeover rule sits in the accounts link module beside findOrCreateBank, and Fintegra plumbing follows the tree's per-provider layout in app.ts, sync.ts, server-config and models."},
+ "scope": {"score": 4, "why": "Everything maps to the four requested steps; no unrelated edits."},
+ "maintainability": {"score": 3, "why": "The single guard is easy to own, but each new provider adds another ~130 copied lines and the reset of a linked account now lives in two places that can drift."},
+ "bypasses_abstraction": {"value": false, "where": ""},
+ "duplicated_blocks": 4,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The copies (linkFintegraAccount vs linkAkahuAccount, downloadFintegraTransactions vs downloadAkahuTransactions, fintegraAccounts vs akahuAccounts, claimBankAccount's reset vs unlinkAccount) are plain copies, not disguised."},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "claimBankAccount (created in this packet) gains replaceExistingLink for the takeover step and a closed-account check that applies uniformly; all six provider link functions call it, none bypass it."}}

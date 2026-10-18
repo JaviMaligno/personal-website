@@ -1,0 +1,11 @@
+{"id":"6243310362",
+"reuse":{"score":2,"why":"Creates getExpectedScheduleAmount next to the existing exported getScheduledAmount (used by the client) instead of extending it, and hard-codes the 7.5% tolerance instead of using getApproxNumberThreshold from shared/rules."},
+"duplication":{"score":2,"why":"Removes four inline midpoint copies but leaves two parallel definitions of the expected amount (getScheduledAmount and getExpectedScheduleAmount), a re-derived approximate tolerance, and the schedule-template copy untouched."},
+"placement":{"score":4,"why":"The new helper lives in shared/schedules.ts and the API field in the scheduleModel mapper, where the tree puts them."},
+"scope":{"score":4,"why":"Changes stay on the expected-amount rule and the API field; comments are updated alongside."},
+"maintainability":{"score":2,"why":"The rule now lives in two shared functions with different results, the op parameter is optional so api-models and forecast silently skip the approximate rule, and schedule-template still has its own formula, so the next rule change will again need several edits."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts: getExpectedScheduleAmount bypasses the existing getScheduledAmount helper (client callers in SchedulesTable, Balance, mobile schedules, useScheduleEdit stay on the old midpoint); the 0.075 tolerance bypasses getApproxNumberThreshold in shared/rules.ts."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getExpectedScheduleAmount is a renamed, reshaped parallel of getScheduledAmount, and its isapprox branch re-derives getApproxNumberThreshold inline."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":2,"where":"getExpectedScheduleAmount gains an optional op parameter with an isapprox special case; budget/schedule-template.ts keeps its own midpoint formula and getScheduledAmount (with its client call sites) remains a separate definition; api-models scheduleModel and forecast normalizeSchedule call the helper without op, so they skip the approximate rule."}}

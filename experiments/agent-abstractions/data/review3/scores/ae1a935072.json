@@ -1,0 +1,11 @@
+{"id":"ae1a935072",
+"reuse":{"score":5,"why":"Tag detection uses the shared extractTagsFromText, and every action except copyPreviousMonth gets the exclusion through the existing getMonthWideCategories selection."},
+"duplication":{"score":3,"why":"The predicate is defined once, but the group-notes join and the exclusion check are added to both getBudgetData/copyPreviousMonth and getMonthWideCategories, extending the pre-existing parallel filter in copyPreviousMonth rather than routing it through the shared selection."},
+"placement":{"score":4,"why":"The rule sits beside the month-wide selection helper in budget/actions.ts; adding group_note to the generic getBudgetData query leaks a month-wide concern into a general data loader."},
+"scope":{"score":5,"why":"Only the exclusion, its data plumbing, a test and a release note."},
+"maintainability":{"score":4,"why":"Named predicate and constant make the rule clear; a maintainer still has to keep copyPreviousMonth's own inline filter list in step with getMonthWideCategories."},
+"bypasses_abstraction":{"value":false,"where":"Uses extractTagsFromText; copyPreviousMonth's separate filtering predates the change and calls the same predicate."},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"The second join/check in getBudgetData and copyPreviousMonth is a visible parallel of the getMonthWideCategories one, not disguised."},
+"one_place":{"value":true,"where":"actions.ts isFixedCostGroupNote is the single definition, used by getMonthWideCategories (setZero, averages, last-month spending) and by copyPreviousMonth's own filter; the group-note join is repeated in getBudgetData."}}

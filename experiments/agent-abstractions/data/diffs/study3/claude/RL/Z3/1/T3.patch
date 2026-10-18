@@ -1,0 +1,41 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 8c5c608..5657c68 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -258,20 +258,28 @@ async function linkExternalAccount({
+ }) {
+   let id;
+ 
+-  await assertBankAccountNotLinked(provider, accountId, upgradingId);
+-
+-  const bank = await link.findOrCreateBank(institution, bankKey);
++  const accRow = upgradingId
++    ? await db.first<db.DbAccount>('SELECT * FROM accounts WHERE id = ?', [
++        upgradingId,
++      ])
++    : null;
+ 
+   if (upgradingId) {
+-    const accRow = await db.first<db.DbAccount>(
+-      'SELECT * FROM accounts WHERE id = ?',
+-      [upgradingId],
+-    );
+-
+     if (!accRow) {
+       throw new Error(`Account with ID ${upgradingId} not found.`);
+     }
++    if (accRow.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
++  await assertBankAccountNotLinked(provider, accountId, upgradingId);
++
++  const bank = await link.findOrCreateBank(institution, bankKey);
+ 
++  if (accRow) {
+     id = accRow.id;
+     await db.update('accounts', {
+       id,

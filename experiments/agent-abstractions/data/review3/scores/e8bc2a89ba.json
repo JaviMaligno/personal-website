@@ -1,0 +1,12 @@
+{"id": "e8bc2a89ba",
+ "reuse": {"score": 2, "why": "Adds getExpectedScheduleAmount beside the existing getScheduledAmount in the same module instead of changing it, so the client paths that use getScheduledAmount keep the old midpoint rule."},
+ "duplication": {"score": 2, "why": "The new helper repeats getScheduledAmount's null/number/range dispatch under another name, and the midpoint copies in forecast-schedules.ts and schedule-template.ts are left in place."},
+ "placement": {"score": 5, "why": "The helper sits in shared/schedules.ts and the API field is computed in scheduleModel.toExternal in api-models.ts, the layers where that logic belongs."},
+ "scope": {"score": 5, "why": "Only the amount rule, the API field and tests."},
+ "maintainability": {"score": 2, "why": "Two competing definitions of a schedule's expected amount now disagree (getScheduledAmount and the untouched forecast/template sites still average), so a future rule change has several places to find."},
+ "bypasses_abstraction": {"value": true, "where": "getExpectedScheduleAmount in shared/schedules.ts goes around the existing getScheduledAmount; forecast-schedules.ts normalizeSchedule and budget/schedule-template.ts createScheduleList keep their own midpoint expressions."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "getExpectedScheduleAmount re-expresses getScheduledAmount's missing/number/range dispatch under a new name with an op parameter instead of extending the existing helper."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 3, "where": "The new shared helper gained an op parameter for approximate amounts; getScheduledAmount (used by the desktop client), forecast-schedules.ts normalizeSchedule and budget/schedule-template.ts still compute the amount themselves with the old midpoint rule."}
+}

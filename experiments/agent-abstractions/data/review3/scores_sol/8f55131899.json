@@ -1,0 +1,45 @@
+{
+ "id": "8f55131899",
+ "reuse": {
+  "score": 4,
+  "why": "The new action reuses shouldFillCategory, averageToBudgetAmount, and the existing mutation infrastructure, although SQL still independently applies hidden-category rules."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Category queries and hidden-policy dispatch are repeated across actions, with four queries also duplicating visibility decisions made by shouldFillCategory."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Eligibility rules remain in fill-rules.ts, database and spreadsheet orchestration remain in actions.ts, and handler registration follows app.ts conventions."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits directly support the requested exclusions, new action, optional hidden-category inclusion, tests, or release documentation."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized template and fixed-group exclusions help maintenance, but repeated queries and visibility decisions require coordinated edits across multiple actions."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "actions.ts: set3MonthAvg, set6MonthAvg, set12MonthAvg, and setLastMonthSpending filter hidden categories in SQL before calling shouldFillCategory."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "actions.ts: conditional SQL predicates on c.hidden and g.hidden express the same visibility decision as fill-rules.ts shouldFillCategory in a different form."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 0,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 4,
+  "where": "shouldFillCategory gains template and fixed-group exclusion branches without new configuration parameters, while four action queries independently retain and extend its hidden-category decision."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 32.1
+ }
+}

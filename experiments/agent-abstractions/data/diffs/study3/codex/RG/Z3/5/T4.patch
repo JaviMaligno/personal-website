@@ -1,0 +1,197 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index 34597a7..cbbbfd6 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -281,6 +281,53 @@ describe('bank account linking', () => {
+     ).resolves.toBe('ok');
+     expect(vi.mocked(bankSync.syncAccount)).toHaveBeenCalledOnce();
+   });
++
++  it('replaces another account link without unlinking the provider connection', async () => {
++    insertBank({ id: 'bank1', bank_id: 'institution-1', name: 'Bank' });
++    await db.insertAccount({
++      id: 'old-account',
++      name: 'Old Checking',
++      account_id: 'external-1',
++      account_sync_source: 'goCardless',
++      bank: 'bank1',
++    });
++    vi.mocked(bankSync.syncAccount).mockResolvedValue({
++      added: [],
++      updated: [],
++      updatedPreview: [],
++    });
++
++    await expect(
++      goCardlessLinkHandler({
++        requisitionId: 'institution-1',
++        replaceExistingLink: true,
++        account: {
++          account_id: 'external-1',
++          institution: { name: 'Bank' },
++          balance: 0,
++          mask: '',
++          name: 'Checking',
++          official_name: 'Checking',
++        },
++      }),
++    ).resolves.toBe('ok');
++
++    expect(await db.first('SELECT * FROM accounts WHERE id = ?', ['old-account']))
++      .toMatchObject({
++        id: 'old-account',
++        account_id: null,
++        account_sync_source: null,
++        bank: null,
++        balance_current: null,
++        balance_available: null,
++        balance_limit: null,
++      });
++    expect(await db.all('SELECT id, account_id FROM accounts')).toEqual([
++      expect.objectContaining({ id: 'old-account', account_id: null }),
++      expect.objectContaining({ account_id: 'external-1' }),
++    ]);
++    expect(vi.mocked(bankSync.syncAccount)).toHaveBeenCalledOnce();
++  });
+ });
+ 
+ async function getBanksForTest() {
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 6562550..2b9c3ab 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -48,6 +48,7 @@ import * as bankSync from './sync';
+ // Shared base type for link account parameters
+ type LinkAccountBaseParams = {
+   upgradingId?: AccountEntity['id'];
++  replaceExistingLink?: boolean;
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
+@@ -57,6 +58,7 @@ async function assertBankAccountNotLinked(
+   provider: string,
+   providerAccountId: string,
+   upgradingId?: string,
++  replaceExistingLink = false,
+ ) {
+   const linkedAccount = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+@@ -67,7 +69,21 @@ async function assertBankAccountNotLinked(
+   );
+ 
+   if (linkedAccount) {
+-    throw new Error('This bank account is already linked to another account.');
++    if (!replaceExistingLink) {
++      throw new Error('This bank account is already linked to another account.');
++    }
++    // Keep the provider connection alive for the new account. In particular,
++    // don't use unlinkAccount here: that may ask the provider to remove it.
++    await db.updateAccount({
++      id: linkedAccount.id,
++      account_id: null,
++      bank: null,
++      balance_current: null,
++      balance_available: null,
++      balance_limit: null,
++      account_sync_source: null,
++      bank_sync_status: null,
++    });
+   }
+ }
+ 
+@@ -208,6 +224,7 @@ async function linkGoCardlessAccount({
+   requisitionId,
+   account,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -221,6 +238,7 @@ async function linkGoCardlessAccount({
+     'goCardless',
+     account.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+@@ -282,6 +300,7 @@ async function linkGoCardlessAccount({
+ async function linkSimpleFinAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -295,6 +314,7 @@ async function linkSimpleFinAccount({
+     'simpleFin',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -366,6 +386,7 @@ async function linkSimpleFinAccount({
+ async function linkPluggyAiAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -378,6 +399,7 @@ async function linkPluggyAiAccount({
+     'pluggyai',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+   const fileId = getPrefs()?.cloudFileId;
+ 
+@@ -451,6 +473,7 @@ async function linkPluggyAiAccount({
+ async function linkAkahuAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -463,6 +486,7 @@ async function linkAkahuAccount({
+     'akahu',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -531,6 +555,7 @@ async function linkAkahuAccount({
+ async function linkEnableBankingAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -544,6 +569,7 @@ async function linkEnableBankingAccount({
+     'enableBanking',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -623,6 +649,7 @@ async function linkEnableBankingAccount({
+ async function linkFintegraAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -632,6 +659,7 @@ async function linkFintegraAccount({
+     'fintegra',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const bank = await link.findOrCreateBank(

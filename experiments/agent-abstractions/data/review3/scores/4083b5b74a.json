@@ -1,0 +1,12 @@
+{"id": "4083b5b74a",
+ "reuse": {"score": 3, "why": "Routes the template, forecast, posting, preview and API sites through the existing getScheduledAmount helper, but re-implements the 7.5% tolerance inline instead of calling getApproxNumberThreshold from shared/rules.ts, which the matcher already uses."},
+ "duplication": {"score": 3, "why": "Five midpoint copies are collapsed into getScheduledAmount, yet the approximate-amount tolerance formula is duplicated from getApproxNumberThreshold and updateActions keeps its own null/number dispatch around the helper."},
+ "placement": {"score": 4, "why": "The rule lives in shared/schedules.ts getScheduledAmount where amount semantics already sit; the only misplaced piece is the tolerance, which belongs to shared/rules.ts."},
+ "scope": {"score": 4, "why": "Edits are limited to amount computation, the API field, tests and comments, though some comments are left stale (forecast and updateActions still say 'furthest from zero' after step 4)."},
+ "maintainability": {"score": 3, "why": "One helper now owns most of the rule, but the boolean-then-optional-op positional signature, a site that ignores op, a copied tolerance constant and stale comments would trip up the next change."},
+ "bypasses_abstraction": {"value": true, "where": "updateActions in server/schedules/app.ts keeps its own `amountValue == null ? 0 : typeof === 'number' ? amountValue : getScheduledAmount(amountValue)` dispatch and passes no op, so approximate amounts skip the rule there; getScheduledAmount itself bypasses getApproxNumberThreshold."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "getScheduledAmount's isapprox branch in shared/schedules.ts rewrites getApproxNumberThreshold's `Math.round(Math.abs(n) * 0.075)` as a local `tolerance` variable rather than calling the shared function."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getScheduledAmount gains an optional op parameter and an isapprox special-case branch; updateActions (server/schedules/app.ts) still dispatches number/range itself and does not pass op."}
+}

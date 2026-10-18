@@ -1,0 +1,116 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 066224f..f6dacdd 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -253,6 +253,34 @@ describe('month-wide budget actions', () => {
+       cat_group: 'hidden-group',
+       is_income: 0,
+     });
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed group',
++      is_income: 0,
++    });
++    await db.update('notes', { id: 'fixed-group', note: 'Rent #fixed' });
++    await db.insertCategory({
++      id: 'fixed-group-cat',
++      name: 'fixed-group-cat',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insertCategoryGroup({
++      id: 'lookalike-group',
++      name: 'Lookalike group',
++      is_income: 0,
++    });
++    await db.update('notes', {
++      id: 'lookalike-group',
++      note: 'Not #fixedcosts',
++    });
++    await db.insertCategory({
++      id: 'lookalike-group-cat',
++      name: 'lookalike-group-cat',
++      cat_group: 'lookalike-group',
++      is_income: 0,
++    });
++    await db.update('notes', { id: 'lookalike-group-cat', note: '#fixed' });
+     await sheet.loadSpreadsheet(db);
+     await budget.createBudget(['2024-01', '2024-02']);
+   }
+@@ -261,6 +289,7 @@ describe('month-wide budget actions', () => {
+     'hidden-cat',
+     'templated-cat',
+     'hidden-group-cat',
++    'fixed-group-cat',
+   ];
+ 
+   it('setZero only zeroes categories that are not hidden or template-managed', async () => {
+@@ -282,6 +311,23 @@ describe('month-wide budget actions', () => {
+     }
+   });
+ 
++  it('setZero only skips groups whose notes contain the #fixed tag', async () => {
++    await setupDatabase();
++
++    for (const category of ['cat1', 'lookalike-group-cat']) {
++      await setBudget({ category, month: '2024-02', amount: 500 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202402', 'budget-cat1')).toBe(0);
++    expect(
++      await getSheetValue('budget202402', 'budget-lookalike-group-cat'),
++    ).toBe(0);
++  });
++
+   it('setLastMonthSpending budgets the previous month spending of expense categories', async () => {
+     await setupDatabase();
+ 
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 78662ef..e081092 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,10 +7,13 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+ 
++const FIXED_COST_TAG = 'fixed';
++
+ export async function getSheetValue(
+   sheetName: string,
+   cell: string,
+@@ -214,16 +217,23 @@ function setCarryover(
+ }
+ 
+ // Categories that month-wide actions may write to: hidden categories, categories
+-// in hidden groups and categories with saved templates are managed elsewhere.
++// in hidden groups, categories in fixed-cost groups and categories with saved
++// templates are managed elsewhere.
+ async function getMonthWideCategories(): Promise<
+   Pick<db.DbViewCategory, 'id' | 'is_income'>[]
+ > {
+-  return db.all<Pick<db.DbViewCategory, 'id' | 'is_income'>>(`
+-    SELECT c.id, c.is_income
++  const categories = await db.all<
++    Pick<db.DbViewCategory, 'id' | 'is_income'> & { groupNote: string | null }
++  >(`
++    SELECT c.id, c.is_income, n.note AS groupNote
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL
+   `);
++  return categories.filter(
++    cat => !extractTagsFromText(cat.groupNote ?? '').includes(FIXED_COST_TAG),
++  );
+ }
+ 
+ // Actions

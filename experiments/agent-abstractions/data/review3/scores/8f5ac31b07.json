@@ -1,0 +1,12 @@
+{"id": "8f5ac31b07",
+ "reuse": {"score": 3, "why": "Uses linkBankSyncAccount, findOrCreateBank and the existing sync dispatch, but re-implements unlinkAccount's field reset inline and copies downloadAkahuTransactions for Fintegra instead of sharing it."},
+ "duplication": {"score": 2, "why": "downloadFintegraTransactions is a verbatim copy of the Akahu downloader, the unlink field set is copied from unlinkAccount, the 'other holder' SQL is written twice, and every provider wrapper repeats the same assertBankAccountNotLinked call."},
+ "placement": {"score": 3, "why": "The link rules live in a new assert helper invoked separately by each provider wrapper rather than inside linkBankSyncAccount, which already receives the sync source, external id and target, so the rules are split across two layers."},
+ "scope": {"score": 4, "why": "Changes stay within linking, Fintegra plumbing and the types they require; the desktop-client edits are only what the new provider key forces."},
+ "maintainability": {"score": 3, "why": "Works but spreads the link policy across six wrappers plus linkBankSyncAccount and leaves several near-identical blocks that will drift."},
+ "bypasses_abstraction": {"value": true, "where": "linkBankSyncAccount's replaceExistingLink branch re-implements unlinkAccount's db.updateAccount reset instead of calling it; downloadFintegraTransactions copies downloadAkahuTransactions"},
+ "duplicated_blocks": 4,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "the duplicated blocks (Akahu downloader, unlink reset, holder query) are verbatim copies, not reshaped"},
+ "abstraction_drift": {"value": true, "parameters_added": 2, "special_case_branches": 2, "bypassing_call_sites": 1, "where": "linkBankSyncAccount gains replaceExistingLink and an inline 'release holders' branch; assertBankAccountNotLinked gains replaceExistingLink and an `existing && !replaceExistingLink` branch; the release branch bypasses unlinkAccount; the six provider wrappers each call the assert outside linkBankSyncAccount"}
+}

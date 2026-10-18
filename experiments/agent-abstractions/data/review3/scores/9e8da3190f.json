@@ -1,0 +1,12 @@
+{"id":"9e8da3190f",
+"reuse":{"score":3,"why":"The shared getNextDate gains the daily-skip rule and schedule-template keeps using it, but getUpcomingDates in schedules/app.ts writes its own skip loop instead of going through a shared weekend-policy function."},
+"duplication":{"score":2,"why":"The 'daily + skipWeekend -> drop weekend occurrences with a bounded retry' logic appears twice (getNextDate with MAX_WEEKEND_SKIPS, app.ts with a literal 14), and the 'is this a daily skip schedule' condition is restated a third time in schedule-template."},
+"placement":{"score":3,"why":"The core rule sits correctly in shared/schedules.ts, but server/schedules/app.ts and server/budget/schedule-template.ts each re-decide the policy locally rather than delegating to the shared layer."},
+"scope":{"score":4,"why":"Edits are confined to the weekend rule, the frequency plumbing in rule-utils and a focused test; nothing unrelated."},
+"maintainability":{"score":2,"why":"The rule now lives in three forms (a loop in getNextDate, a different loop in app.ts with a magic 14, and a convoluted 'movesWeekend || !skipWeekend' noSkipWeekend argument in schedule-template), so a future rule change must be found and kept consistent in all three."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates iterates RSchedule occurrences and applies its own isWeekend skip instead of using the shared getNextDate/getDateWithSkippedWeekend weekend handling; schedule-template computes its own movesWeekend flag."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"app.ts getUpcomingDates reshapes getNextDate's bounded weekday-search loop (skipped counter > 14 vs MAX_WEEKEND_SKIPS attempts) into a streaming loop rather than sharing it."},
+"one_place":{"value":false,"where":"The daily-skip decision is made separately in shared/schedules.ts getNextDate, server/schedules/app.ts getUpcomingDates (config.skipWeekend && isDaily) and server/budget/schedule-template.ts (movesWeekend = skipWeekend && frequency !== 'daily')."}
+}

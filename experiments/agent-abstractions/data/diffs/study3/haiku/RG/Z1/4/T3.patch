@@ -1,0 +1,114 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index d751e8e..c9a3e31 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -250,6 +250,23 @@ describe('month-wide budget actions', () => {
+       id: 'templated-cat',
+       goal_def: JSON.stringify([{ name: 'monthly', amount: 100 }]),
+     });
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insert('notes', { id: 'fixed-group', note: 'Rent #fixed' });
++    await db.insertCategory({
++      id: 'fixed-group-cat',
++      name: 'fixed-group-cat',
++      cat_group: 'fixed-group',
++    });
++    await db.insertCategory({
++      id: 'fixed-note-cat',
++      name: 'fixed-note-cat',
++      cat_group: 'group1',
++    });
++    await db.insert('notes', { id: 'fixed-note-cat', note: '#fixed' });
+ 
+     await sheet.loadSpreadsheet(db);
+     await budget.createBudget(['2024-03', '2024-04', '2024-05']);
+@@ -259,6 +276,8 @@ describe('month-wide budget actions', () => {
+       'hidden-cat',
+       'hidden-group-cat',
+       'templated-cat',
++      'fixed-group-cat',
++      'fixed-note-cat',
+     ]) {
+       await setBudget({ category, month: '2024-03', amount: 500 });
+       await setBudget({ category, month: '2024-04', amount: 1000 });
+@@ -282,9 +301,13 @@ describe('month-wide budget actions', () => {
+     expect(getBudget({ category: 'templated-cat', month: '2024-04' })).toBe(
+       1000,
+     );
++    expect(getBudget({ category: 'fixed-group-cat', month: '2024-04' })).toBe(
++      1000,
++    );
++    expect(getBudget({ category: 'fixed-note-cat', month: '2024-04' })).toBe(0);
+   });
+ 
+-  it('copyPreviousMonth skips hidden, hidden-group and templated categories', async () => {
++  it('copyPreviousMonth skips hidden, hidden-group, templated and #fixed group categories', async () => {
+     await copyPreviousMonth({ month: '2024-04' });
+ 
+     expect(getBudget({ category: 'cat1', month: '2024-04' })).toBe(500);
+@@ -295,6 +318,12 @@ describe('month-wide budget actions', () => {
+     expect(getBudget({ category: 'templated-cat', month: '2024-04' })).toBe(
+       1000,
+     );
++    expect(getBudget({ category: 'fixed-group-cat', month: '2024-04' })).toBe(
++      1000,
++    );
++    expect(getBudget({ category: 'fixed-note-cat', month: '2024-04' })).toBe(
++      500,
++    );
+   });
+ 
+   it('set3MonthAvg skips templated categories', async () => {
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index f3801be..20fd763 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -40,6 +41,8 @@ function calcBufferedAmount(
+   return buffered + amount;
+ }
+ 
++const FIXED_COST_TAG = 'fixed';
++
+ type BudgetTable = 'reflect_budgets' | 'zero_budgets';
+ 
+ function getBudgetTable(): BudgetTable {
+@@ -90,16 +93,23 @@ function getBudgetData<T extends BudgetTable>(
+ }
+ 
+ // Categories that month-wide actions may write to. Hidden categories, categories
+-// in hidden groups and categories with saved budget templates are left alone.
+-function getMonthWideActionCategories(): Promise<
++// in hidden groups, categories in groups tagged #fixed and categories with saved
++// budget templates are left alone.
++async function getMonthWideActionCategories(): Promise<
+   db.DbViewCategoryWithGroupHidden[]
+ > {
+-  return db.all<db.DbViewCategoryWithGroupHidden>(`
+-    SELECT c.*
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & Pick<db.DbNote, 'note'>
++  >(`
++    SELECT c.*, n.note
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL
+   `);
++  return categories.filter(
++    cat => !extractTagsFromText(cat.note ?? '').includes(FIXED_COST_TAG),
++  );
+ }
+ 
+ function getAllMonths(startMonth: string): string[] {

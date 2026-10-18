@@ -1,0 +1,11 @@
+{"id":"0ec705aecb",
+"reuse":{"score":3,"why":"Extends the shared getDateWithSkippedWeekend and adds the shared predicates isDailyWeekendSkipping/isWeekendOrHoliday, but every caller still assembles the 'skip for daily, move otherwise, keep if off' decision itself instead of calling one shared rule."},
+"duplication":{"score":2,"why":"The skip-or-move dispatch is written out in getNextDate, getUpcomingDates, the new getDatesInRange and twice in schedule-template, and occurrence-scan caps are defined separately (MAX_WEEKEND_SCAN vs count * 7 + 1000)."},
+"placement":{"score":3,"why":"The predicates and day-stepping sit correctly in shared/schedules.ts, but the weekend-rule dispatch is spread over server handlers and the budget template instead of living next to them."},
+"scope":{"score":5,"why":"Each step touches only the date code, the new handler, the type and parseRecurDate."},
+"maintainability":{"score":3,"why":"Correct building blocks, but a future rule change (as step 3 and step 4 show) has to be applied at four call sites that already differ in shape."},
+"bypasses_abstraction":{"value":false,"where":"Callers use the existing getDateWithSkippedWeekend and the new shared predicates; what is missing is a shared dispatch, not a bypassed one."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The same skip/move/keep dispatch appears as if/else-push in getUpcomingDates, continue/let in getDatesInRange, firstWeekdayOccurrence plus a guard in getNextDate, and '&& !skipsWeekendDays' ternaries in schedule-template."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains a holidays parameter (its body is generalised, not special-cased); schedules/app.ts getUpcomingDates, getDatesInRange and budget/schedule-template.ts createScheduleList each rebuild the daily-skip versus move decision around it."}}

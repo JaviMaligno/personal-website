@@ -1,0 +1,11 @@
+{"id":"6a08a495af",
+"reuse":{"score":4,"why":"Replaces getDateWithSkippedWeekend with one shared WeekendRule definition in shared/schedules (applyWeekendRule, isSkippedWeekendOccurrence, applyWeekendRuleToDay) used by getNextDate, getUpcomingDates, the budget schedule template and the new range handler."},
+"duplication":{"score":3,"why":"getUpcomingDates re-writes the private `skipWeekend && frequency === 'daily'` test, and each caller computes its own over-fetch heuristic (lookahead constant, `count * 2 + 7 + holidays`, `3 * (1 + holidays)` padding) for the same skipped/moved-occurrence concern."},
+"placement":{"score":5,"why":"The weekend/holiday rule lives in shared/schedules.ts beside getNextDate and recurConfigToRSchedule, the handler in schedules/app.ts, and parseRecurDate carries the new fields into schedule data."},
+"scope":{"score":4,"why":"Changes all serve the five steps; adding frequency/holidays to parseRecurDate's data and the RecurConfig type are needed plumbing."},
+"maintainability":{"score":3,"why":"The rule is central, but callers must combine a skip filter with a move call in the right order and each sizes its own occurrence window, so future rule changes still touch several sites."},
+"bypasses_abstraction":{"value":true,"where":"schedules/app.ts getUpcomingDates computes `config.skipWeekend && config.frequency === 'daily'` itself instead of using the shared isWeekendOccurrenceSkipped, which is private to shared/schedules.ts."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The 'fetch extra occurrences because some are skipped or moved' logic appears in three reshaped forms: DAILY_WEEKEND_LOOKAHEAD in getNextDate, the take formula in getUpcomingDates, and padDays in getDatesInRange."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":1,"where":"WeekendRule grows frequency and holidays; applyWeekendRule gains a daily-frequency early return and the holiday-aware non-business-day loop; getUpcomingDates re-derives the daily-skip condition outside the helper, and getNextDate keeps its own noSkipWeekend ternary around applyWeekendRule."}}

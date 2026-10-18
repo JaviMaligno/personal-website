@@ -1,0 +1,12 @@
+{"id":"8c764f4b88",
+"reuse":{"score":3,"why":"Adds a shared predicate skipsWeekendOccurrences in shared/schedules.ts and uses date-fns isWeekend, but does not extend the tree's single weekend-rule definition (applyWeekendRule/applyWeekendRuleToDay); each caller wraps it instead."},
+"duplication":{"score":2,"why":"The 'drop weekend occurrences instead of moving them' logic is written three times with different shapes: the take-7 filter in getNextDate, the take count*7 filter+slice in getUpcomingDates, and the resolveDate wrapper plus isWeekend guard in schedule-template."},
+"placement":{"score":3,"why":"The predicate sits in shared/schedules.ts next to the weekend rule, but the skipping behaviour is implemented in the server app and the budget template rather than in the shared rule; rule-utils is edited to carry frequency into schedule data."},
+"scope":{"score":4,"why":"Edits are all about the daily weekend rule, plus a release note and a focused test."},
+"maintainability":{"score":2,"why":"Three ad hoc look-ahead/filter implementations (with magic take counts) must be kept consistent, and each site decides both whether to skip and whether to apply the move rule."},
+"bypasses_abstraction":{"value":true,"where":"getNextDate, getUpcomingDates (server/schedules/app.ts) and createScheduleList (server/budget/schedule-template.ts) branch around applyWeekendRule/applyWeekendRuleToDay instead of the rule deciding skip vs move."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The weekend-skip filtering is reshaped per site: pickDate with take 7 in shared getNextDate, filter+slice with count*7 in getUpcomingDates, and a conditional resolveDate plus an isWeekend guard on the accumulator in schedule-template."},
+"one_place":{"value":false,"where":"Only the predicate skipsWeekendOccurrences is shared; the skip behaviour itself is implemented separately in shared/schedules.ts getNextDate, server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts createScheduleList."}
+}

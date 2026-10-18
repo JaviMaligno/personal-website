@@ -1,0 +1,12 @@
+{"id": "b1d058c520",
+"reuse": {"score": 3, "why": "Extends getDateWithSkippedWeekend with holidays and adds a shared isWeekendOrHoliday, but getDatesInRange copies getUpcomingDates' schedule setup and adjustment instead of sharing one occurrence-adjustment function."},
+"duplication": {"score": 2, "why": "The daily skip-vs-move rule and the 7*(holidays+1) lookahead heuristic appear in getNextDate, getUpcomingDates and getDatesInRange, and schedule-template recomputes the daily/move flag itself."},
+"placement": {"score": 3, "why": "Holiday detection and moving live in shared/schedules, but the daily-skip filtering for listings is inlined in the server handlers and the budget template."},
+"scope": {"score": 4, "why": "Focused on schedule date logic, types, tests and release notes; the rule-utils pass-through of frequency/holidays is required."},
+"maintainability": {"score": 2, "why": "Each further rule change has to be repeated in three listing paths plus a caller-computed noSkipWeekend flag, and the lookahead magic numbers are copied rather than named once."},
+"bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getUpcomingDates/getDatesInRange and budget/schedule-template.ts decide the daily-skip rule themselves rather than through getNextDate or one shared adjustment helper"},
+"duplicated_blocks": 3,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "getDatesInRange re-expresses getUpcomingDates' filter+map (as forEach with early return and range filter); getNextDate's daily branch repeats the same filter with its own take heuristic"},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 3, "where": "getDateWithSkippedWeekend gains holidays; getNextDate gains a daily-frequency special branch; getUpcomingDates, getDatesInRange and schedule-template createScheduleList re-implement the daily rule around the helpers"}
+}

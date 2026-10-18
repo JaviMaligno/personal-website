@@ -1,0 +1,11 @@
+{"id":"85f71dd124",
+"reuse":{"score":4,"why":"The new Fintegra link goes through the existing linkBankSyncAccount and link.findOrCreateBank, and the new guards live in link.ts beside findOrCreateBank; but the takeover reimplements unlinkAccount's field reset and the download function copies the Enable Banking one."},
+"duplication":{"score":3,"why":"The ensureAccountIsOpen + ensureBankAccountIsNotLinked pair is repeated in all six provider wrappers instead of once in a shared pre-link step, the unlink field reset is copied from unlinkAccount, and downloadFintegraTransactions copies downloadEnableBankingTransactions."},
+"placement":{"score":4,"why":"Guards sit in accounts/link.ts, the type in its own types/models/fintegra.ts, server path and provider list where the others are; the unlink side effect hidden inside an 'ensure...' validator is the one misplaced piece."},
+"scope":{"score":5,"why":"All edits serve the four requests: the guards, the replace flag, the Fintegra provider and their tests."},
+"maintainability":{"score":3,"why":"Rules are centralized in two small functions, but a validator named ensureBankAccountIsNotLinked that silently unlinks another account under a boolean flag is surprising, the unlink reset can drift from unlinkAccount, and each provider must remember to call both guards."},
+"bypasses_abstraction":{"value":true,"where":"ensureBankAccountIsNotLinked (accounts/link.ts) clears account_id/bank/balances/sync source itself instead of going through the existing unlinkAccount in accounts/app.ts."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The duplicated pieces (guard calls per provider, unlink field reset, download function) are plain copies, not reshaped."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":1,"where":"replaceExistingLink added to LinkAccountBaseParams and to ensureBankAccountIsNotLinked, which gains a replace branch performing an unlink; that branch re-implements unlinkAccount rather than calling it."}}

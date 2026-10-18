@@ -1,0 +1,12 @@
+{"id": "7788f9ce2d",
+ "reuse": {"score": 3, "why": "The new action reuses getBulkBudgetCategories, averageToBudget and getSheetValue, but the #fixed check is a new FIXED_TAG regex instead of the existing extractTagsFromText from #shared/tags."},
+ "duplication": {"score": 4, "why": "All exclusions sit once in the shared selector; the only overlap is the hand-written tag regex and setLastMonthSpending's loop that mirrors the average actions' structure."},
+ "placement": {"score": 5, "why": "The template, #fixed and hidden exclusions all go into the shared getBulkBudgetCategories in server/budget/actions.ts, and the handler is registered in budget/app.ts next to the others."},
+ "scope": {"score": 4, "why": "Focused on the four steps, though c.goal_def is added to getBudgetData's SELECT without being used."},
+ "maintainability": {"score": 4, "why": "One selection function owns every exclusion with a single flag; small smells are the regex tag parser that can diverge from the app's tag parsing and the unused getBudgetData column."},
+ "bypasses_abstraction": {"value": true, "where": "server/budget/actions.ts FIXED_TAG regex re-parses group notes instead of using extractTagsFromText from #shared/tags"},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "FIXED_TAG = /(^|\\s)#fixed(?![\\w-])/i is a reshaped copy of the tag extraction done by extractTagsFromText in shared/tags.ts"},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "getBulkBudgetCategories swaps includeHidden for includeHiddenCategories and gains the template and #fixed exclusions as rules for all callers; every month-wide action, including the new setLastMonthSpending, goes through it"}
+}

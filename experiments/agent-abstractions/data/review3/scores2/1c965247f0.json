@@ -1,0 +1,12 @@
+{"id":"1c965247f0",
+"reuse":{"score":3,"why":"Builds a proper shared category selection, but detects the #fixed tag with its own regex instead of the existing tag parsing in shared/tags.ts (extractTagsFromText), with different delimiter/escape semantics, and parses goal_def by hand."},
+"duplication":{"score":4,"why":"All month-wide actions share isSkippedByMonthWideAction/getMonthWideCategories, but the category+group+notes join is written twice (getBudgetData and getMonthWideCategories) and the income/tracking check is still repeated in each action including the new one."},
+"placement":{"score":5,"why":"The selection rule and the new action live in server/budget/actions.ts next to the other month-wide actions, and the method is registered in budget/app.ts like its siblings."},
+"scope":{"score":5,"why":"Changes are limited to the month-wide actions, the new method, a test and release notes."},
+"maintainability":{"score":4,"why":"One predicate with a named parameter for the hidden rule is easy to own; the hand-rolled tag regex and duplicated SQL join are the weak spots."},
+"bypasses_abstraction":{"value":true,"where":"actions.ts hasFixedTag uses its own /(^|\\s)#fixed(?![\\w-])/ regex instead of the tag parser in shared/tags.ts."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":""},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":0,"where":"isSkippedByMonthWideAction/getMonthWideCategories gained the includeHiddenCategories parameter (the requested variation); every month-wide action, including copyPreviousMonth via getBudgetData rows and the new setLastMonthSpending, goes through the predicate."}
+}

@@ -1,0 +1,142 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index a452e65..3a3279f 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -51,6 +51,7 @@ type LinkAccountBaseParams = {
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
++  replaceExistingLink?: boolean;
+ };
+ 
+ export type AccountHandlers = {
+@@ -175,23 +176,50 @@ async function assertNotLinkedElsewhere(
+   syncSource: string,
+   providerAccountId: string,
+   upgradingId?: AccountEntity['id'],
++  replaceExistingLink = false,
+ ) {
+   const existing = await db.all<{ id: string }>(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?',
+     [syncSource, providerAccountId],
+   );
+-  if (existing.some(row => row.id !== upgradingId)) {
++  const others = existing.filter(row => row.id !== upgradingId);
++  if (others.length > 0 && !replaceExistingLink) {
+     throw new Error('This bank account is already linked to another account.');
+   }
++  return others.map(row => row.id);
++}
++
++async function clearAccountLink(id: AccountEntity['id']) {
++  await db.updateAccount({
++    id,
++    account_id: null,
++    bank: null,
++    balance_current: null,
++    balance_available: null,
++    balance_limit: null,
++    account_sync_source: null,
++    bank_sync_status: null,
++  });
++}
++
++// Unlinks local accounts without telling the bank provider, since the bank
++// connection stays in use by the new link.
++async function releaseLinks(ids: AccountEntity['id'][]) {
++  for (const id of ids) {
++    await clearAccountLink(id);
++  }
+ }
+ 
+ async function assertNotClosed(upgradingId?: AccountEntity['id']) {
+   if (!upgradingId) return;
+   const row = await db.first<{ closed: number }>(
+-    'SELECT closed FROM accounts WHERE id = ? AND tombstone = 0',
++    'SELECT closed FROM accounts WHERE id = ?',
+     [upgradingId],
+   );
+-  if (row?.closed) {
++  if (!row) {
++    throw new Error(`Account with ID ${upgradingId} not found.`);
++  }
++  if (row.closed) {
+     throw new Error(
+       'Closed accounts cannot be linked to a bank account. Reopen the account first.',
+     );
+@@ -205,13 +233,20 @@ async function linkGoCardlessAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
+   let id;
+-  await assertNotLinkedElsewhere('goCardless', account.account_id, upgradingId);
++  const toRelease = await assertNotLinkedElsewhere(
++    'goCardless',
++    account.account_id,
++    upgradingId,
++    replaceExistingLink,
++  );
+   await assertNotClosed(upgradingId);
++  await releaseLinks(toRelease);
+ 
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+@@ -301,6 +336,7 @@ async function linkSyncServerAccount(
+     offBudget = false,
+     startingDate,
+     startingBalance,
++    replaceExistingLink = false,
+   }: LinkAccountBaseParams & {
+     externalAccount:
+       | SyncServerSimpleFinAccount
+@@ -317,12 +353,14 @@ async function linkSyncServerAccount(
+ ) {
+   let id;
+ 
+-  await assertNotLinkedElsewhere(
++  const toRelease = await assertNotLinkedElsewhere(
+     syncSource,
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+   await assertNotClosed(upgradingId);
++  await releaseLinks(toRelease);
+ 
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+@@ -1594,16 +1632,7 @@ async function unlinkAccount({ id }: { id: AccountEntity['id'] }) {
+ 
+   const isGoCardless = accRow.account_sync_source === 'goCardless';
+ 
+-  await db.updateAccount({
+-    id,
+-    account_id: null,
+-    bank: null,
+-    balance_current: null,
+-    balance_available: null,
+-    balance_limit: null,
+-    account_sync_source: null,
+-    bank_sync_status: null,
+-  });
++  await clearAccountLink(id);
+ 
+   if (isGoCardless === false) {
+     return;
+diff --git a/upcoming-release-notes/replace-existing-bank-link.md b/upcoming-release-notes/replace-existing-bank-link.md
+new file mode 100644
+index 0000000..6d7daaf
+--- /dev/null
++++ b/upcoming-release-notes/replace-existing-bank-link.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow linking a bank account that another local account already holds, unlinking the previous account.

@@ -1,0 +1,194 @@
+diff --git a/packages/loot-core/src/server/rules/rule-utils.ts b/packages/loot-core/src/server/rules/rule-utils.ts
+index 8531f3b..8d2f99b 100644
+--- a/packages/loot-core/src/server/rules/rule-utils.ts
++++ b/packages/loot-core/src/server/rules/rule-utils.ts
+@@ -226,6 +226,7 @@ export function parseRecurDate(desc) {
+       schedule: new RSchedule({
+         rrules: rules,
+         data: {
++          frequency: desc.frequency,
+           skipWeekend: desc.skipWeekend,
+           weekendSolve: desc.weekendSolveMode,
+         },
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index b82b437..1b092ea 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -27,12 +27,12 @@ import { q } from '#shared/query';
+ import {
+   DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   extractScheduleConds,
+-  getDateWithSkippedWeekend,
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
+   getStatus,
+   recurConfigToRSchedule,
++  takeResolvedOccurrences,
+ } from '#shared/schedules';
+ import type {
+   RuleActionEntity,
+@@ -508,15 +508,13 @@ async function getUpcomingDates({ config, count }) {
+   try {
+     const schedule = new RSchedule({ rrules: rules });
+ 
+-    return schedule
+-      .occurrences({ start: d.startOfDay(new Date()), take: count })
+-      .toArray()
+-      .map(date =>
+-        config.skipWeekend
+-          ? getDateWithSkippedWeekend(date.date, config.weekendSolveMode)
+-          : date.date,
+-      )
+-      .map(date => dayFromDate(date));
++    // Dropped occurrences (weekend days of a daily schedule) do not count
++    // towards `count`.
++    return takeResolvedOccurrences(
++      schedule.occurrences({ start: d.startOfDay(new Date()) }),
++      config,
++      count,
++    ).map(date => dayFromDate(date));
+   } catch (err) {
+     captureBreadcrumb(config);
+     throw err;
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..7c1b15a 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -293,21 +293,31 @@ export function getNextDate(
+   if (value.type === 'date') {
+     return value.date;
+   } else if (value.type === 'recur') {
+-    let dates = value.schedule.occurrences({ start, take: 1 }).toArray();
++    const rule: OccurrenceRule = {
++      frequency: value.schedule.data.frequency,
++      skipWeekend: value.schedule.data.skipWeekend,
++      weekendSolveMode: value.schedule.data.weekendSolve,
++    };
++
++    // Occurrences that the rule drops (weekend days of a daily schedule) are
++    // never returned, even with `noSkipWeekend`: they are not occurrences.
++    let date = firstKeptOccurrence(
++      value.schedule.occurrences({ start }),
++      rule,
++    );
+ 
+-    if (dates.length === 0) {
++    if (date === undefined) {
+       // Could be a schedule with limited occurrences, so we try to
+       // find the last occurrence
+-      dates = value.schedule.occurrences({ reverse: true, take: 1 }).toArray();
++      date = firstKeptOccurrence(
++        value.schedule.occurrences({ reverse: true }),
++        rule,
++      );
+     }
+ 
+-    if (dates.length > 0) {
+-      let date = dates[0].date;
+-      if (value.schedule.data.skipWeekend && !noSkipWeekend) {
+-        date = getDateWithSkippedWeekend(
+-          date,
+-          value.schedule.data.weekendSolve,
+-        );
++    if (date) {
++      if (!noSkipWeekend) {
++        date = resolveOccurrenceDate(date, rule);
+       }
+       return monthUtils.dayFromDate(date);
+     }
+@@ -353,6 +363,94 @@ export function getDateWithSkippedWeekend(
+   return date;
+ }
+ 
++// The settings of a recurring date config that decide on which day an
++// occurrence finally falls.
++export type OccurrenceRule = {
++  frequency?: string;
++  skipWeekend?: boolean;
++  weekendSolveMode?: 'before' | 'after';
++};
++
++// With weekend handling on, daily schedules drop their weekend occurrences
++// instead of moving them (moving would stack several occurrences on the same
++// Friday or Monday).
++export function dropsWeekendOccurrences(rule: OccurrenceRule): boolean {
++  return !!rule.skipWeekend && rule.frequency === 'daily';
++}
++
++// The day an occurrence finally falls on, or null when the occurrence is
++// dropped altogether.
++export function resolveOccurrenceDate(
++  date: Date,
++  rule: OccurrenceRule,
++): Date | null {
++  if (!rule.skipWeekend) {
++    return date;
++  }
++  if (dropsWeekendOccurrences(rule)) {
++    return d.isWeekend(date) ? null : date;
++  }
++  return getDateWithSkippedWeekend(date, rule.weekendSolveMode);
++}
++
++// How many dropped occurrences in a row we look through before deciding that
++// a schedule has no kept occurrence at all (e.g. every 7 days from a
++// Saturday).
++function maxConsecutiveDroppedOccurrences(_rule: OccurrenceRule): number {
++  return 7;
++}
++
++// Iterates `occurrences` lazily and returns the first one that the rule keeps
++// (not moved). Returns undefined when the iterator runs out, and null when it
++// gives up after too many dropped occurrences in a row.
++export function firstKeptOccurrence(
++  occurrences: Iterable<{ date: Date }>,
++  rule: OccurrenceRule,
++): Date | null | undefined {
++  const drops = dropsWeekendOccurrences(rule);
++  const limit = maxConsecutiveDroppedOccurrences(rule);
++  let dropped = 0;
++  for (const occurrence of occurrences) {
++    if (!drops || resolveOccurrenceDate(occurrence.date, rule) !== null) {
++      return occurrence.date;
++    }
++    if (++dropped >= limit) {
++      return null;
++    }
++  }
++  return undefined;
++}
++
++// The final days of the first `count` kept occurrences of `occurrences`, in
++// iteration order.
++export function takeResolvedOccurrences(
++  occurrences: Iterable<{ date: Date }>,
++  rule: OccurrenceRule,
++  count: number,
++): Date[] {
++  const result: Date[] = [];
++  const limit = maxConsecutiveDroppedOccurrences(rule);
++  let dropped = 0;
++  if (count <= 0) {
++    return result;
++  }
++  for (const occurrence of occurrences) {
++    const date = resolveOccurrenceDate(occurrence.date, rule);
++    if (date === null) {
++      if (++dropped >= limit) {
++        break;
++      }
++      continue;
++    }
++    dropped = 0;
++    result.push(date);
++    if (result.length >= count) {
++      break;
++    }
++  }
++  return result;
++}
++
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,

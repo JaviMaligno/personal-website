@@ -1,0 +1,77 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index a13a142..174c7f7 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -339,3 +339,37 @@ describe('bank sync handlers must not nest mutators', () => {
+     expect(result.errors).toEqual([]);
+   });
+ });
++
++describe('linking to a closed account', () => {
++  const linkHandler = app.handlers['simplefin-accounts-link'];
++  const externalAccount = {
++    account_id: 'ext-new',
++    name: 'Bank Checking',
++    institution: 'Bank',
++    orgDomain: 'bank.example',
++    orgId: 'org',
++    balance: 0,
++  };
++
++  it.each([
++    ['unlinked', {}],
++    [
++      'already linked to this bank account',
++      { account_id: 'ext-new', account_sync_source: 'simpleFin' },
++    ],
++  ])('refuses a closed %s account', async (_, extra) => {
++    await db.insertAccount({ id: 'acct1', name: 'Old', closed: 1, ...extra });
++
++    await expect(
++      linkHandler({ externalAccount, upgradingId: 'acct1' } as never),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    const accounts = await db.all<db.DbAccount>('SELECT * FROM accounts');
++    expect(accounts).toHaveLength(1);
++    expect(accounts[0].closed).toBe(1);
++    expect(accounts[0].bank).toBeNull();
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index bbd56b5..ba92b2a 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -183,6 +183,18 @@ async function assertBankAccountNotLinked(
+   if (existing) {
+     throw new Error('This bank account is already linked to another account.');
+   }
++
++  if (upgradingId) {
++    const target = await db.first<{ closed: number }>(
++      'SELECT closed FROM accounts WHERE id = ?',
++      [upgradingId],
++    );
++    if (target?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
+ }
+ 
+ async function linkGoCardlessAccount({
+diff --git a/upcoming-release-notes/refuse-link-closed-account.md b/upcoming-release-notes/refuse-link-closed-account.md
+new file mode 100644
+index 0000000..bc9a2ee
+--- /dev/null
++++ b/upcoming-release-notes/refuse-link-closed-account.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Refuse to link a bank account to a closed account

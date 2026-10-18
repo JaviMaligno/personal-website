@@ -1,0 +1,45 @@
+{
+ "id": "920bb9169d",
+ "reuse": {
+  "score": 3,
+  "why": "Most month-wide actions share the new category selector and existing budget helpers, but copyPreviousMonth independently implements the same eligibility policy."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Repeated category queries are consolidated, but exclusions remain duplicated between SQL selection and copyPreviousMonth, and the new action repeats the income eligibility guard."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Selection and budget mutation remain in budget/actions.ts, with method registration and undo wrapping in budget/app.ts."
+ },
+ "scope": {
+  "score": 4,
+  "why": "The changes focus on the requested budget actions, apart from removing an income-category fixture from an existing copyUntilYearEnd test."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The shared selector improves ownership, but maintaining equivalent exclusion rules in SQL and JavaScript invites drift, and its name no longer describes its full policy."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/server/budget/actions.ts: copyPreviousMonth bypasses getVisibleCategoriesWithoutTemplates and applies equivalent exclusions using getBudgetData flags."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "packages/loot-core/src/server/budget/actions.ts: the selector's WHERE predicates are reshaped into has_template/is_fixed SQL projections and a JavaScript exclusion condition for copyPreviousMonth."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "packages/loot-core/src/server/budget/actions.ts: the shared selector gains includeHiddenCategories and its conditional hidden-filter bypass, while copyPreviousMonth maintains a separate implementation of the evolving eligibility policy."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 33.5
+ }
+}

@@ -1,0 +1,11 @@
+{"id":"5b0489db6a",
+"reuse":{"score":4,"why":"Replaces getDateWithSkippedWeekend with one getWeekendAdjustedDay that takes the enable flag, direction and holidays, used by getNextDate, getUpcomingDates, the new getDatesInRange and schedule-template; the new range handler reuses recurConfigToRSchedule, RSchedule and the month helpers."},
+"duplication":{"score":2,"why":"The daily-skip rule (`frequency === 'daily' && skipWeekend`, enlarged lookahead, filter out weekend/holiday occurrences, then call the adjuster with `skipWeekend && !skipsDailyWeekend`) is hand-written in getNextDate, getUpcomingDates and getDatesInRange."},
+"placement":{"score":4,"why":"Weekend/holiday predicates and bounds live in shared/schedules.ts and the handler in schedules/app.ts as the tree does, but the daily-vs-move decision is left to each server caller instead of the shared module."},
+"scope":{"score":4,"why":"Changes follow the five steps; parseRecurDate is extended to carry frequency/holidays as needed, and nothing unrelated is touched."},
+"maintainability":{"score":3,"why":"The move-direction rule is now defined once, but the newer daily-skip rule is spread over three call sites plus a `!isDaily` toggle in schedule-template, so the next change to it must be made in several places."},
+"bypasses_abstraction":{"value":true,"where":"getUpcomingDates and getDatesInRange in server/schedules/app.ts and getNextDate in shared/schedules.ts decide the daily-skip case themselves and switch the shared adjuster off with `skipWeekend && !skipsDailyWeekend`; schedule-template.ts passes `!isDaily` as getNextDate's noSkipWeekend."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The daily weekend/holiday skip appears as a `.filter` after a lookahead take in getNextDate, a `.filter(...).slice(0, count)` in getUpcomingDates, and a loop `continue` in getDatesInRange: the same rule reshaped per site."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":4,"where":"getWeekendAdjustedDay (shared/schedules.ts) gains a holidays option; the daily-skip special case is kept outside it at getNextDate, getUpcomingDates, getDatesInRange and the schedule-template `!isDaily` toggle, each overriding the helper's skipWeekend flag."}}

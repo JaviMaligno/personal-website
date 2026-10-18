@@ -1,0 +1,13 @@
+{
+  "id": "f749e0d397",
+  "reuse": {"score": 4, "why": "All link rules (already-linked refusal, closed-account refusal, takeover) go into the existing shared linkBankSyncAccount, Fintegra linking is a thin wrapper over it, and the unlink field reset is extracted into clearAccountLink and reused by unlinkAccount; the Fintegra download and account-list calls, however, copy the Akahu functions instead of sharing them."},
+  "duplication": {"score": 2, "why": "downloadFintegraTransactions is a verbatim copy of downloadAkahuTransactions and fintegraAccounts a verbatim copy of akahuAccounts, differing only in the server key and log text."},
+  "placement": {"score": 4, "why": "Link rules live in linkBankSyncAccount, the download in sync.ts's provider dispatch, the base path in server-config.ts and the type in types/models, matching where the tree puts each provider concern."},
+  "scope": {"score": 3, "why": "Adds an unrequested `fintegra-accounts` listing handler and touches desktop-client files although step 2 is server-only (partly forced by the satisfies Record<BankSyncProviders> type); otherwise focused."},
+  "maintainability": {"score": 3, "why": "The linking rules are well centralised and testable, but each provider keeps adding near-identical HTTP functions, so a change to the shared request/response handling must be repeated per provider."},
+  "bypasses_abstraction": {"value": false, "where": "All link entry points, including the new linkFintegraAccount, go through linkBankSyncAccount; unlinkAccount now uses the extracted clearAccountLink."},
+  "duplicated_blocks": 2,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "The Fintegra functions in sync.ts and app.ts are open copies of the Akahu ones (same shape, provider name swapped), not reshaped."},
+  "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "linkBankSyncAccount gains the requested replaceExistingLink flag and generic closed/already-linked checks that apply to every provider; no provider-specific branches or bypassing link paths."}
+}

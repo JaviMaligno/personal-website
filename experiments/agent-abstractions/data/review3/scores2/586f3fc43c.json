@@ -1,0 +1,13 @@
+{
+  "id": "586f3fc43c",
+  "reuse": {"score": 5, "why": "Extends the existing getDateWithSkippedWeekend and isDailyWeekendSkip machinery and adds one shared isWeekendOrHoliday predicate that every former d.isWeekend check now calls."},
+  "duplication": {"score": 4, "why": "The holiday rule is defined once, but the change edits the already-parallel skip/move filter+map pipelines in getUpcomingDates and getDatesInRange in lockstep instead of consolidating them, and threads holidays by hand at five call sites."},
+  "placement": {"score": 5, "why": "Holiday detection and moving live in shared/schedules.ts with the weekend rule; the server callers only pass config data."},
+  "scope": {"score": 5, "why": "Only the schedule date path, the recur data plumbing and the type change."},
+  "maintainability": {"score": 4, "why": "Clear single definitions of non-working day and of the move; the remaining per-caller skip/move dispatch and the margin heuristic are pre-existing patterns lightly extended."},
+  "bypasses_abstraction": {"value": false, "where": "All weekend checks were switched to isWeekendOrHoliday and all moves still go through getDateWithSkippedWeekend."},
+  "duplicated_blocks": 1,
+  "would_merge": "yes",
+  "disguised_duplication": {"value": false, "where": "No new logic is copied; the parallel pipelines in server/schedules/app.ts pre-date the change."},
+  "one_place": {"value": true, "where": "shared/schedules.ts isWeekendOrHoliday (used by getNextDate, getUpcomingDates, getDatesInRange and inside getDateWithSkippedWeekend, which schedule-template also calls)."}
+}

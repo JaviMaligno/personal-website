@@ -1,0 +1,12 @@
+{"id":"7054c3e457",
+"reuse":{"score":3,"why":"Extends the existing getDateWithSkippedWeekend and RSchedule/recurConfigToRSchedule and adds a shared isHoliday, but the new handler and getUpcomingDates re-decide the daily-skip rule themselves instead of going through getNextDate or one shared adjustment function."},
+"duplication":{"score":2,"why":"The off-day predicate (weekend or holiday) is written three times (isOff closure in getDateWithSkippedWeekend, notWeekend in getNextDate, isOffDay in app.ts) and the 'daily skips, others move' branching is repeated in getNextDate, schedule-template, getUpcomingDates and getDatesInRange."},
+"placement":{"score":3,"why":"Holiday and weekend helpers sit in shared/schedules.ts where the weekend logic lives, but the daily-skip policy and isOffDay leak into server/schedules/app.ts and schedule-template.ts rather than living in the shared schedules module."},
+"scope":{"score":4,"why":"Changes are confined to schedule date logic, types, tests and release notes for the four steps; no unrelated edits."},
+"maintainability":{"score":2,"why":"The weekend/holiday rule now has four independent implementations of the daily-vs-move dispatch plus magic look-ahead margins (7 + holidays, 3 + holidays), so the next rule change must be made in several places consistently."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates daily branch and getDatesInRange implement their own skip/move dispatch with isOffDay instead of a shared schedule-date adjustment; schedule-template.ts computes isDailySkipped and passes noSkipWeekend to getNextDate to steer it."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The weekend-or-holiday predicate appears renamed as isOff (getDateWithSkippedWeekend), notWeekend (getNextDate) and isOffDay (app.ts); the daily-skip branch is reshaped as a filter in getNextDate, a loop in getUpcomingDates and a continue in getDatesInRange."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains a holidays parameter and the recur schedule data gains an isDaily flag; getNextDate gains a daily special case (skipsWeekendDays filter and guard around the move); getUpcomingDates, getDatesInRange and schedule-template.ts each re-decide the daily-skip rule outside the shared helpers."}
+}

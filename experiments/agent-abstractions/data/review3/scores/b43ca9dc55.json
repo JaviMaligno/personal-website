@@ -1,0 +1,12 @@
+{"id": "b43ca9dc55",
+ "reuse": {"score": 3, "why": "Extends the existing getBulkBudgetCategories and getBudgetData queries, but leaves setZero on its own inline query instead of routing it through getBulkBudgetCategories."},
+ "duplication": {"score": 2, "why": "The notes join and '#fixed' LIKE predicate are written three times (bulk query, budget-data query with a JS check in copyPreviousMonth, and setZero's inline query)."},
+ "placement": {"score": 3, "why": "The rule sits in the budget actions module's SQL like the existing hidden/template rules, but as raw string matching repeated per query rather than a named predicate."},
+ "scope": {"score": 5, "why": "Only the month-wide actions and their test are touched."},
+ "maintainability": {"score": 2, "why": "Changing the tag or adding another action requires editing three separate queries and a JS branch that must stay in sync."},
+ "bypasses_abstraction": {"value": true, "where": "setZero keeps its own inline category query instead of using getBulkBudgetCategories, so the rule is added there separately."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The same LIKE '%#fixed%' expression is repeated openly; copyPreviousMonth's group_fixed column plus JS check mirrors the existing hidden-check pattern rather than hiding the copy."},
+ "one_place": {"value": false, "where": "The '#fixed' rule lands in getBulkBudgetCategories, in getBudgetData/copyPreviousMonth and in setZero's own query: three definitions."}
+}

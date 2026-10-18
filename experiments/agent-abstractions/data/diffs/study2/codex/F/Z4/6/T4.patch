@@ -1,0 +1,66 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index d2be95e..066427e 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -33,6 +33,7 @@ import {
+   getNextDateAfter,
+   getScheduledAmount,
+   getStatus,
++  isScheduleHoliday,
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+ import type {
+@@ -535,7 +536,7 @@ async function getDatesInRange({ config, start, end }) {
+           .occurrences({ start: rangeStart, end: rangeEnd })
+           .toArray()
+           .map(({ date }) => {
+-            if (skipDailyWeekends && (d.isWeekend(date) || config.holidays?.includes(dayFromDate(date)))) {
++            if (skipDailyWeekends && (d.isWeekend(date) || isScheduleHoliday(date, config.holidays))) {
+               return null;
+             }
+             const finalDate = applyWeekendRule(date, {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 92db802..958a145 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -546,6 +546,21 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2021, 4, 13))).toBe('2021-05-17');
+     });
+ 
++    it('skips recurring month and day holidays each year', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2022-12-25',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          holidays: ['12-25'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2023, 11, 24))).toBe('2023-12-26');
++    });
++
+     it('ignores holidays when weekend handling is off', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 28f6708..b941628 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -402,7 +402,13 @@ export function applyWeekendRule(date: Date, rule: WeekendRule): Date {
+ }
+ 
+ function isBlockedScheduleDay(date: Date, holidays?: string[]) {
+-  return d.isWeekend(date) || holidays?.includes(monthUtils.dayFromDate(date));
++  return d.isWeekend(date) || isScheduleHoliday(date, holidays);
++}
++
++export function isScheduleHoliday(date: Date, holidays?: string[]) {
++  const day = monthUtils.dayFromDate(date);
++  const monthDay = day.slice(5);
++  return holidays?.some(holiday => holiday === day || holiday === monthDay) ?? false;
+ }
+ 
+ // applyWeekendRule for a 'YYYY-MM-DD' day; without the rule the day is returned

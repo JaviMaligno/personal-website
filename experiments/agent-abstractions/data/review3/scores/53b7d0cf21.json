@@ -1,0 +1,12 @@
+{"id":"53b7d0cf21",
+"reuse":{"score":3,"why":"Holidays are threaded into the existing getDateWithSkippedWeekend and a shared isHoliday is added. But the daily skip rule is not made shared: getDatesInRange re-derives it inline, and getUpcomingDates and the template never apply it."},
+"duplication":{"score":2,"why":"The 'weekend or holiday' isSkippedDay predicate is written twice in shared/schedules.ts (getNextDate and getDateWithSkippedWeekend), and getDatesInRange repeats the daily `frequency === 'daily' && skipWeekend && (isWeekend || isHoliday)` check inline."},
+"placement":{"score":3,"why":"Holiday matching and the move loop sit in shared/schedules.ts as they should, but the daily-skip policy is split between a special branch inside getNextDate and an inline copy in the server handler getDatesInRange."},
+"scope":{"score":5,"why":"Every edit serves one of the four steps: the daily skip, the range handler, holidays and recurring holidays."},
+"maintainability":{"score":2,"why":"Schedule dates are computed by several paths that apply different subsets of the rules: getNextDate skips daily weekends and holidays, getDatesInRange re-implements that, and getUpcomingDates and the budget template only move dates. Changing the weekend policy means updating each path by hand."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getDatesInRange re-implements the daily weekend/holiday skip outside shared/schedules.ts. getUpcomingDates and budget/schedule-template.ts call getDateWithSkippedWeekend directly and so never get the daily skip that getNextDate applies."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The isSkippedDay closure appears in both getNextDate and getDateWithSkippedWeekend (shared/schedules.ts) with slightly different gating, and getDatesInRange restates the daily-skip condition from getNextDate's special branch in a different form."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains a `holidays` parameter. getNextDate gains a daily-frequency special branch with its own occurrence-scan loop. Call sites bypassing that rule: getDatesInRange (re-implements it), getUpcomingDates and schedule-template's createScheduleList (move daily weekend occurrences through the bare helper)."}
+}

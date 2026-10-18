@@ -1,0 +1,99 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+new file mode 100644
+index 0000000..1885e88
+--- /dev/null
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -0,0 +1,28 @@
++import type { ScheduleEntity } from '#types/models';
++
++import { scheduleModel } from './api-models';
++
++function toExternal(amount: ScheduleEntity['_amount']) {
++  return scheduleModel.toExternal({
++    id: 's1',
++    _amount: amount,
++    _amountOp: 'is',
++  } as ScheduleEntity);
++}
++
++describe('scheduleModel.toExternal expectedAmount', () => {
++  it('gives a single amount as is', () => {
++    expect(toExternal(-5000).expectedAmount).toBe(-5000);
++  });
++
++  it('gives the end of a range furthest from zero', () => {
++    expect(toExternal({ num1: -10100, num2: -20000 }).expectedAmount).toBe(
++      -20000,
++    );
++    expect(toExternal({ num1: 300, num2: -200 }).expectedAmount).toBe(300);
++  });
++
++  it('gives 0 when there is no amount', () => {
++    expect(toExternal(undefined as never).expectedAmount).toBe(0);
++  });
++});
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..db1497a 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,3 +1,4 @@
++import { getScheduledAmount } from '#shared/schedules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -237,8 +238,13 @@ export type APIScheduleEntity = Pick<
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
+ };
+ 
++// Schedule as returned by the schedule list.
++export type APIScheduleListEntity = APIScheduleEntity & {
++  expectedAmount: number; // the single amount the schedule is expected to post
++};
++
+ export const scheduleModel = {
+-  toExternal(schedule: ScheduleEntity): APIScheduleEntity {
++  toExternal(schedule: ScheduleEntity): APIScheduleListEntity {
+     return {
+       id: schedule.id,
+       name: schedule.name,
+@@ -251,6 +257,7 @@ export const scheduleModel = {
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
++      expectedAmount: getScheduledAmount(schedule._amount),
+     };
+   },
+   //just an update
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 679a8c9..47c2f8d 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -10,6 +10,7 @@ import type {
+   APIPayeeEntity,
+   APIRuleEntity,
+   APIScheduleEntity,
++  APIScheduleListEntity,
+   APITagEntity,
+ } from '#server/api-models';
+ import type { BudgetFileHandlers } from '#server/budgetfiles/app';
+@@ -303,7 +304,7 @@ export type ApiHandlers = {
+ 
+   'api/schedule-delete': (id: string) => Promise<void>;
+ 
+-  'api/schedules-get': () => Promise<APIScheduleEntity[]>;
++  'api/schedules-get': () => Promise<APIScheduleListEntity[]>;
+   'api/get-id-by-name': (arg: {
+     type: string;
+     name: string;
+diff --git a/upcoming-release-notes/api-schedule-expected-amount.md b/upcoming-release-notes/api-schedule-expected-amount.md
+new file mode 100644
+index 0000000..0e3f509
+--- /dev/null
++++ b/upcoming-release-notes/api-schedule-expected-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Add `expectedAmount` to schedules returned by the API's schedule list

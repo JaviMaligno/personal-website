@@ -1,0 +1,12 @@
+{"id":"2f94b6482d",
+"reuse":{"score":3,"why":"Extends the existing shared getScheduledAmount so server callers get the rule, but re-derives the 7.5% cent-rounded tolerance inline instead of calling getApproxNumberThreshold from shared/rules."},
+"duplication":{"score":3,"why":"The tolerance formula 'Math.round(Math.abs(amount) * 0.075)' duplicates getApproxNumberThreshold, so matching and planning tolerances can now drift apart."},
+"placement":{"score":4,"why":"The worst-case rule lives in shared/schedules.ts getScheduledAmount, which already owns the range rule; callers only pass their op."},
+"scope":{"score":5,"why":"Only the helper, its call sites and a test are touched."},
+"maintainability":{"score":3,"why":"An optional positional op after a boolean (getScheduledAmount(x, false, op)) is easy to forget, and several callers silently don't pass it."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getScheduledAmount computes the approximate tolerance itself rather than using getApproxNumberThreshold (shared/rules.ts)."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The tolerance expression is a recognisable inline copy of getApproxNumberThreshold, not reshaped."},
+"one_place":{"value":false,"where":"The rule is defined once in getScheduledAmount but is opt-in through an optional op: server/schedules/app.ts (amount-action sync, ~line 162) and the desktop-client callers (Balance.tsx, SchedulesTable.tsx, etc.) still call it without the op and keep the exact value."}
+}

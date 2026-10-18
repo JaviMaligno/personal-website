@@ -1,0 +1,61 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index f5f0999..d7041af 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -649,6 +649,25 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2020, 11, 7))).toBe('2020-12-08');
+     });
+ 
++    it('treats an MM-DD holiday as that day in every year', () => {
++      const dateCond = weekly({
++        start: '2021-12-03',
++        holidays: ['12-03'],
++        weekendSolveMode: 'after',
++      });
++
++      expect(getNextDate(dateCond, new Date(2021, 11, 3))).toBe('2021-12-06');
++    });
++
++    it('mixes MM-DD and YYYY-MM-DD holidays in the same list', () => {
++      const dateCond = weekly({
++        holidays: ['12-04', '2020-12-07'],
++        weekendSolveMode: 'after',
++      });
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 4))).toBe('2020-12-08');
++    });
++
+     it('ignores holidays when weekend handling is off', () => {
+       const dateCond = weekly({
+         skipWeekend: false,
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index db19bf2..c169b28 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -338,8 +338,13 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+   return null;
+ }
+ 
++function isHoliday(date: Date, holidays: readonly string[]) {
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
++}
++
+ function isNonWorkingDay(date: Date, holidays: readonly string[]) {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  return d.isWeekend(date) || isHoliday(date, holidays);
+ }
+ 
+ // A run of consecutive weekend days and holidays is at most 3n + 2 days long
+diff --git a/upcoming-release-notes/recurring-holidays.md b/upcoming-release-notes/recurring-holidays.md
+new file mode 100644
+index 0000000..b6c659a
+--- /dev/null
++++ b/upcoming-release-notes/recurring-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow schedule holidays as `MM-DD` to recur every year

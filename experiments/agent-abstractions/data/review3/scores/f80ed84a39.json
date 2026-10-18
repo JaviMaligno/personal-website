@@ -1,0 +1,12 @@
+{"id":"f80ed84a39",
+"reuse":{"score":2,"why":"Leaves the tree's single weekend definition (applyWeekendRule) and the rrule builder recurConfigToRSchedule (whose daily case could filter weekdays) untouched, and writes separate daily-skip logic in three callers."},
+"duplication":{"score":2,"why":"The 'daily and skipWeekend means skip' test and weekend filtering are written separately in getNextDate, getUpcomingDates and schedule-template's movesWeekends."},
+"placement":{"score":3,"why":"Part of the rule is in shared/schedules.ts getNextDate, but server/schedules/app.ts and budget/schedule-template.ts each decide it themselves rather than calling a shared definition."},
+"scope":{"score":4,"why":"Edits are on-topic; the frequency is added to the RSchedule data blob to support the shared check."},
+"maintainability":{"score":2,"why":"Three independent encodings with heuristics (take 7, count*4, `movesWeekends ? true : false`) will drift; getDatesInRange-style callers must remember the new special case."},
+"bypasses_abstraction":{"value":true,"where":"getUpcomingDates (server/schedules/app.ts) and createScheduleList (schedule-template.ts) decide daily weekend skipping themselves instead of via applyWeekendRule or recurConfigToRSchedule"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The daily-skip condition appears as `frequency === 'daily'` in getNextDate, `skipsWeekends` in getUpcomingDates and the negated `movesWeekends` in schedule-template, each with its own weekend filtering."},
+"one_place":{"value":false,"where":"Daily-skip rule split across getNextDate (shared/schedules.ts), getUpcomingDates (server/schedules/app.ts) and createScheduleList (server/budget/schedule-template.ts); applyWeekendRule, documented as the single definition, is unchanged."}
+}

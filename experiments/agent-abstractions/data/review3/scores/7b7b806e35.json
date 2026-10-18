@@ -1,0 +1,12 @@
+{"id": "7b7b806e35",
+ "reuse": {"score": 4, "why": "Consolidates the existing per-action category queries into getMonthWideCategories and a forEachMonthWideCategory loop and keeps using setBudget/setNMonthAvg/getCategoryAverage, though the template check is a raw goal_def IS NULL rather than going through the goal-template module's notion of a saved template."},
+ "duplication": {"score": 4, "why": "Removes three copies of the visible-category query and loop; only copyPreviousMonth keeps its own loop that repeats the income/tracking-budget skip."},
+ "placement": {"score": 5, "why": "The selection function and iterator live in budget/actions.ts beside the actions that use them."},
+ "scope": {"score": 5, "why": "Only the month-wide actions, the dropped getBudgetData helper they no longer need, and tests."},
+ "maintainability": {"score": 4, "why": "One documented definition of which categories month-wide actions may touch; the separate copyPreviousMonth loop is a small seam where the income rule could drift."},
+ "bypasses_abstraction": {"value": false, "where": "All month-wide actions go through getMonthWideCategories; copyPreviousMonth skips only the new iterator, not the selection."},
+ "duplicated_blocks": 1,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "The income check left in copyPreviousMonth is a plain repeated line, not a reshaped copy."},
+ "one_place": {"value": true, "where": "getMonthWideCategories in server/budget/actions.ts holds the hidden/hidden-group/saved-template exclusion and is used by copyPreviousMonth, setZero, set3MonthAvg, set6MonthAvg and set12MonthAvg."}
+}

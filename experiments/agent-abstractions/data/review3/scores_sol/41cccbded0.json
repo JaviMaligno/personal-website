@@ -1,0 +1,44 @@
+{
+ "id": "41cccbded0",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses budget writes, spreadsheet access, batching and undo wrappers, but introduces separate group-note storage instead of using the existing notes model."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Category-selection queries and eligibility guards are repeated across six month-wide actions, with only fixed-tag parsing shared."
+ },
+ "placement": {
+  "score": 2,
+  "why": "Budget actions and handler registration belong in their existing modules, but adding category_groups.notes splits note ownership from the established notes subsystem."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are confined to the requested month-wide actions, their registration, supporting schema and tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate eligibility changes across six implementations and reconcile two representations of group notes, while new unknown fields discard an existing goal_def type."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "The migration and actions.ts read category_groups.notes, bypassing the notes table used by notes/app.ts and group NotesButton consumers."
+ },
+ "duplicated_blocks": 5,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "actions.ts expresses the same hidden/template eligibility policy through SQL predicates in five actions and JavaScript conditions in copyPreviousMonth."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 0,
+  "special_case_branches": 0,
+  "bypassing_call_sites": 6,
+  "where": "All six month-wide actions obtain group notes through the new category_groups.notes representation rather than the established notes model; no shared helper gains parameters or special-case branches."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 49.5
+ }
+}

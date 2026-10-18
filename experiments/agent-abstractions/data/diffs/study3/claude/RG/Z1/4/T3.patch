@@ -1,0 +1,96 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index fede332..ab8f08d 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -70,6 +70,7 @@ type BudgetData = {
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
+   goal_def: string | null;
++  cat_group: string | null;
+   category: string;
+   amount: number;
+ };
+@@ -83,10 +84,10 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      > & { goal_def: string | null }
++      > & { goal_def: string | null; cat_group: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, c.cat_group, g.hidden AS group_hidden
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -218,10 +219,28 @@ function hasSavedTemplates(goalDef: string | null | undefined): boolean {
+   return goalDef != null && goalDef !== '' && goalDef !== '[]';
+ }
+ 
++const FIXED_GROUP_TAG = /(^|\s)#fixed(?![\w-])/i;
++
++// Ids of category groups whose notes carry the `#fixed` tag.
++async function getFixedGroupIds(): Promise<Set<string>> {
++  const rows = await db.all<{ id: string; note: string | null }>(
++    `SELECT g.id, n.note
++     FROM category_groups g
++     JOIN notes n ON n.id = g.id
++     WHERE g.tombstone = 0 AND n.note LIKE '%#fixed%'`,
++  );
++  return new Set(
++    rows.filter(r => r.note && FIXED_GROUP_TAG.test(r.note)).map(r => r.id),
++  );
++}
++
+ // Categories that month-wide actions may write to: not hidden, not in a
+-// hidden group, and without saved budget templates.
+-function getBulkEditableCategories() {
+-  return db.all<db.DbViewCategoryWithGroupHidden>(
++// hidden group, not in a `#fixed` group, and without saved budget templates.
++async function getBulkEditableCategories() {
++  const fixedGroupIds = await getFixedGroupIds();
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { cat_group: string }
++  >(
+     `
+   SELECT c.*
+   FROM categories c
+@@ -230,6 +249,7 @@ function getBulkEditableCategories() {
+     AND (c.goal_def IS NULL OR c.goal_def IN ('', '[]'))
+   `,
+   );
++  return categories.filter(c => !fixedGroupIds.has(c.cat_group));
+ }
+ 
+ // Actions
+@@ -242,6 +262,7 @@ export async function copyPreviousMonth({
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
++  const fixedGroupIds = await getFixedGroupIds();
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+@@ -251,7 +272,9 @@ export async function copyPreviousMonth({
+       if (
+         prevBudget.hidden === 1 ||
+         prevBudget.group_hidden === 1 ||
+-        hasSavedTemplates(prevBudget.goal_def)
++        hasSavedTemplates(prevBudget.goal_def) ||
++        (prevBudget.cat_group != null &&
++          fixedGroupIds.has(prevBudget.cat_group))
+       ) {
+         return;
+       }
+diff --git a/upcoming-release-notes/skip-fixed-groups-bulk-actions.md b/upcoming-release-notes/skip-fixed-groups-bulk-actions.md
+new file mode 100644
+index 0000000..95ef86b
+--- /dev/null
++++ b/upcoming-release-notes/skip-fixed-groups-bulk-actions.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Month-wide budget actions now skip categories in groups whose notes contain the `#fixed` tag

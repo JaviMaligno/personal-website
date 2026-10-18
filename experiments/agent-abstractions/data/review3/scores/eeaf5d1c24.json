@@ -1,0 +1,12 @@
+{"id":"eeaf5d1c24",
+"reuse":{"score":3,"why":"Adds a new getRangedAmount used by the existing getScheduledAmount, but the five server/shared sites keep their own missing/number/range dispatch instead of calling getScheduledAmount, which already decides all three cases."},
+"duplication":{"score":3,"why":"The range rule itself is defined once, but the `== null ? 0 : number ? value : range` dispatch stays copied at four sites (and a number-or-range dispatch at the fifth) alongside the helper that already covers it."},
+"placement":{"score":5,"why":"The rule sits in shared/schedules.ts next to getScheduledAmount, where the tree keeps schedule amount logic."},
+"scope":{"score":5,"why":"Only the range rule, its call sites, comments, tests and a release note in the repo's usual format."},
+"maintainability":{"score":4,"why":"A future change to the range rule is one edit, but having getRangedAmount and getScheduledAmount side by side with sites picking between them leaves the null/number handling scattered."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts updateActions and postTransactionForSchedule, shared/schedules.ts computeSchedulePreviewTransactions, forecast-schedules.ts normalizeSchedule and budget/schedule-template.ts keep their own dispatch instead of calling the existing getScheduledAmount."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The remaining per-site dispatch is the pre-existing open copy, not reshaped; the range arithmetic itself is now shared."},
+"one_place":{"value":true,"where":"getRangedAmount in packages/loot-core/src/shared/schedules.ts, used by getScheduledAmount (client) and by all five server/shared sites that previously computed the midpoint."}
+}

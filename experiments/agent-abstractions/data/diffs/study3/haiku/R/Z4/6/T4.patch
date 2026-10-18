@@ -1,0 +1,94 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 82328a2..c7c1466 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -645,6 +645,57 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2020, 11, 7))).toBe('2020-12-09');
+     });
+ 
++    it('treats an MM-DD holiday as that day in every year', () => {
++      const dateCond = {
++        op: 'is',
++        field: 'date',
++        value: {
++          start: '2021-12-11',
++          frequency: 'weekly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-13'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2021, 11, 11))).toBe('2021-12-14');
++    });
++
++    it('skips a daily occurrence on an MM-DD holiday', () => {
++      const dateCond = {
++        op: 'is',
++        field: 'date',
++        value: {
++          start: '2020-12-07',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-08'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-09');
++    });
++
++    it('applies full-date and MM-DD holidays in the same list', () => {
++      const dateCond = {
++        op: 'is',
++        field: 'date',
++        value: {
++          start: '2020-12-12',
++          frequency: 'weekly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['2020-12-14', '12-15'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 12))).toBe('2020-12-16');
++    });
++
+     it('ignores holidays when weekend handling is off', () => {
+       const dateCond = {
+         op: 'is',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 0366c19..a22380d 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -294,11 +294,14 @@ function skipsDailyHolidays(config: HolidayConfig) {
+   return Boolean(config.skipWeekend) && config.frequency === 'daily';
+ }
+ 
++// A holiday is either a full date (YYYY-MM-DD) or a yearly one (MM-DD).
++function isHoliday(date: Date, holidays: readonly string[] = []) {
++  const day = monthUtils.dayFromDate(date);
++  return holidays.some(holiday => holiday === day || holiday === day.slice(5));
++}
++
+ export function isSkippedDailyOccurrence(config: HolidayConfig, date: Date) {
+-  return (
+-    skipsDailyHolidays(config) &&
+-    (config.holidays ?? []).includes(monthUtils.dayFromDate(date))
+-  );
++  return skipsDailyHolidays(config) && isHoliday(date, config.holidays);
+ }
+ 
+ export function getExtraDailyOccurrenceCount(config: HolidayConfig) {
+@@ -377,7 +380,7 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+ }
+ 
+ function isWeekendOrHoliday(date: Date, holidays: readonly string[] = []) {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  return d.isWeekend(date) || isHoliday(date, holidays);
+ }
+ 
+ export function getDateWithSkippedWeekend(

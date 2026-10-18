@@ -1,0 +1,185 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 84d9707..7f140dc 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -8,6 +8,7 @@ import * as prefs from '#server/prefs';
+ import { loadRules, updateRule } from '#server/transactions/transaction-rules';
+ import { q } from '#shared/query';
+ import { getNextDate } from '#shared/schedules';
++import type { RecurConfig } from '#types/models';
+ 
+ import {
+   advanceSchedulesService,
+@@ -1205,4 +1206,98 @@ describe('schedule app', () => {
+       expect(prefs.getPrefs().lastScheduleRun).toBe('2020-12-01');
+     });
+   });
++
++  describe('get-dates-in-range', () => {
++    const getDatesInRange = (
++      config: RecurConfig,
++      start: string,
++      end: string,
++    ): Promise<string[]> =>
++      schedulesApp.handlers['schedule/get-dates-in-range']({
++        config,
++        start,
++        end,
++      });
++
++    it('lists weekly occurrences within the period', async () => {
++      const config: RecurConfig = {
++        start: '2020-12-01',
++        frequency: 'weekly',
++        interval: 1,
++        patterns: [],
++      };
++
++      expect(await getDatesInRange(config, '2020-12-05', '2020-12-20')).toEqual(
++        ['2020-12-08', '2020-12-15'],
++      );
++    });
++
++    it('moves weekend occurrences after the weekend and uses the moved day for the period', async () => {
++      const config: RecurConfig = {
++        start: '2020-12-05',
++        frequency: 'weekly',
++        interval: 1,
++        patterns: [],
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++      };
++
++      expect(await getDatesInRange(config, '2020-12-01', '2020-12-14')).toEqual(
++        ['2020-12-07', '2020-12-14'],
++      );
++      expect(await getDatesInRange(config, '2020-12-05', '2020-12-06')).toEqual(
++        [],
++      );
++    });
++
++    it('moves weekend occurrences before the weekend into the period', async () => {
++      const config: RecurConfig = {
++        start: '2020-12-05',
++        frequency: 'weekly',
++        interval: 1,
++        patterns: [],
++        skipWeekend: true,
++        weekendSolveMode: 'before',
++      };
++
++      expect(await getDatesInRange(config, '2020-12-11', '2020-12-11')).toEqual(
++        ['2020-12-11'],
++      );
++      expect(await getDatesInRange(config, '2020-12-12', '2020-12-13')).toEqual(
++        [],
++      );
++    });
++
++    it('skips weekend occurrences of daily schedules', async () => {
++      const config: RecurConfig = {
++        start: '2020-12-04',
++        frequency: 'daily',
++        interval: 1,
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++      };
++
++      expect(await getDatesInRange(config, '2020-12-04', '2020-12-07')).toEqual(
++        ['2020-12-04', '2020-12-07'],
++      );
++    });
++
++    it('lists each day once when two occurrences move onto the same day', async () => {
++      const config: RecurConfig = {
++        start: '2020-12-01',
++        frequency: 'monthly',
++        interval: 1,
++        patterns: [
++          { type: 'day', value: 5 },
++          { type: 'day', value: 6 },
++        ],
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++      };
++
++      expect(await getDatesInRange(config, '2020-12-01', '2020-12-31')).toEqual(
++        ['2020-12-07'],
++      );
++    });
++  });
+ });
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 7840ae6..7de8039 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -22,7 +22,13 @@ import {
+ } from '#server/transactions/transaction-rules';
+ import { undoable } from '#server/undo';
+ import { RSchedule } from '#server/util/rschedule';
+-import { currentDay, dayFromDate } from '#shared/months';
++import {
++  addDays,
++  currentDay,
++  dayFromDate,
++  parseDate,
++  subDays,
++} from '#shared/months';
+ import { q } from '#shared/query';
+ import {
+   applyWeekendRule,
+@@ -522,6 +528,38 @@ async function getUpcomingDates({ config, count }) {
+   }
+ }
+ 
++// Weekend solving moves an occurrence at most two days, so occurrences this far
++// outside the period can still land inside it.
++const WEEKEND_SHIFT_DAYS = 2;
++
++async function getDatesInRange({ config, start, end }) {
++  const rules = recurConfigToRSchedule(config);
++
++  try {
++    const schedule = new RSchedule({ rrules: rules });
++
++    const occurrences = schedule
++      .occurrences({
++        start: parseDate(subDays(start, WEEKEND_SHIFT_DAYS)),
++        end: parseDate(addDays(end, WEEKEND_SHIFT_DAYS)),
++      })
++      .toArray();
++
++    const days = new Set<string>();
++    for (const { date } of occurrences) {
++      const adjusted = applyWeekendRule(date, config);
++      if (adjusted) {
++        days.add(dayFromDate(adjusted));
++      }
++    }
++
++    return [...days].filter(day => day >= start && day <= end).sort();
++  } catch (err) {
++    captureBreadcrumb(config);
++    throw err;
++  }
++}
++
+ // Services
+ 
+ function onRuleUpdate(rule) {
+@@ -834,6 +872,7 @@ export type SchedulesHandlers = {
+   'schedule/force-run-service': typeof advanceSchedulesService;
+   'schedule/discover': typeof discoverSchedules;
+   'schedule/get-upcoming-dates': typeof getUpcomingDates;
++  'schedule/get-dates-in-range': typeof getDatesInRange;
+ };
+ 
+ // Expose functions to the client
+@@ -854,6 +893,7 @@ app.method(
+ );
+ app.method('schedule/discover', discoverSchedules);
+ app.method('schedule/get-upcoming-dates', getUpcomingDates);
++app.method('schedule/get-dates-in-range', getDatesInRange);
+ 
+ app.service(trackJSONPaths);
+ 

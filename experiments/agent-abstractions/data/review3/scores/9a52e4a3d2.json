@@ -1,0 +1,12 @@
+{"id":"9a52e4a3d2",
+"reuse":{"score":3,"why":"Folds the skipWeekend flag and holidays into the existing getDateWithSkippedWeekend helper, but the daily-skip decision is not put in a shared helper and getDatesInRange re-tests d.isWeekend||isHoliday instead of reusing the (unexported) isNonWorkingDay."},
+"duplication":{"score":2,"why":"The daily-skip filter is written twice inside getNextDate and again in getDatesInRange, and schedule-template.ts keeps its outer skipWeekend ternary while also passing the flag into the helper, so the weekend decision is still repeated."},
+"placement":{"score":3,"why":"Holiday/weekend moving sits in shared/schedules.ts, but the daily-skip decision is written inline in getNextDate and in the server handler instead of one shared definition as Step 0 asks."},
+"scope":{"score":4,"why":"All edits serve the requested steps; no unrelated changes beyond an import addition."},
+"maintainability":{"score":2,"why":"Step 0's 'one definition' goal is only partly met: the skip/move decision is spread over getNextDate, getDatesInRange, getUpcomingDates (which ignores daily skipping) and the budget template (outer ternary, no daily skip), with magic look-ahead constants."},
+"bypasses_abstraction":{"value":true,"where":"getUpcomingDates and budget/schedule-template.ts call getDateWithSkippedWeekend directly for daily schedules, bypassing the daily-skip rule; getDatesInRange re-implements the daily-skip check inline"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"daily skip appears as isDailyWithSkippedWeekends filters (x2) in getNextDate and as a null-returning map branch in getDatesInRange; schedule-template keeps `skipWeekend ? helper(..., skipWeekend===true) : date`"},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains skipWeekend and holidays; getNextDate gains two isDailyWithSkippedWeekends filter branches; getDatesInRange reimplements the rule while getUpcomingDates and schedule-template.ts bypass it"}
+}

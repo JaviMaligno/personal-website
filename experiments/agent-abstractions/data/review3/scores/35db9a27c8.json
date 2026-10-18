@@ -1,0 +1,11 @@
+{"id":"35db9a27c8",
+"reuse":{"score":4,"why":"Builds the recurrence with the shared recurConfigToRSchedule and RSchedule and moves weekend days with the shared applyWeekendRule, as getUpcomingDates does, though it re-states the daily-skip rule locally."},
+"duplication":{"score":3,"why":"The occurrence pipeline (RSchedule from recurConfigToRSchedule, map through applyWeekendRule, dayFromDate, captureBreadcrumb catch) is a near-copy of getUpcomingDates, and the moveWeekend = frequency !== 'daily' branch repeats knowledge recurConfigToRSchedule already encodes."},
+"placement":{"score":4,"why":"A handler in server/schedules/app.ts next to getUpcomingDates is where the tree puts these; the range-enumeration core could have been a shared helper in shared/schedules but this is acceptable."},
+"scope":{"score":5,"why":"Only the new handler, its registration/type and tests."},
+"maintainability":{"score":4,"why":"Short and readable with the shared weekend rule, but the daily special case and the parallel copy of the getUpcomingDates pipeline are two places to keep in step."},
+"bypasses_abstraction":{"value":false,"where":"weekend adjustment and recurrence building go through applyWeekendRule and recurConfigToRSchedule"},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":true,"where":"getDatesInRange reshapes the getUpcomingDates occurrence->applyWeekendRule->dayFromDate pipeline into a loop with a Set instead of extracting it; the daily-skip rule is restated as moveWeekend"},
+"t2_reuse":"helper"}

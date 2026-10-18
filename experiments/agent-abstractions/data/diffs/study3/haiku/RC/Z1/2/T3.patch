@@ -1,0 +1,185 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 3ecbb49..c00482a 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -531,4 +531,62 @@ describe('month-wide budget actions', () => {
+     );
+     expect(getBudget({ category: 'template-cat', month: '2024-02' })).toBe(500);
+   });
++
++  it('leaves categories in #fixed groups untouched, using only the group notes', async () => {
++    await setupDatabase();
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'fixed-group-cat',
++      name: 'fixed-group-cat',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'cat-with-fixed-note',
++      name: 'cat-with-fixed-note',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.insertCategoryGroup({
++      id: 'near-miss-group',
++      name: 'Near miss group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'near-miss-cat',
++      name: 'near-miss-cat',
++      cat_group: 'near-miss-group',
++      is_income: 0,
++    });
++    await db.update('notes', { id: 'fixed-group', note: 'Rent #fixed' });
++    await db.update('notes', { id: 'near-miss-group', note: '#fixedish' });
++    await db.update('notes', { id: 'cat-with-fixed-note', note: '#fixed' });
++    await sheet.waitOnSpreadsheet();
++
++    for (const category of [
++      'cat1',
++      'fixed-group-cat',
++      'cat-with-fixed-note',
++      'near-miss-cat',
++    ]) {
++      await setBudget({ category, month: '2024-02', amount: 500 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(getBudget({ category: 'cat1', month: '2024-02' })).toBe(0);
++    expect(getBudget({ category: 'fixed-group-cat', month: '2024-02' })).toBe(
++      500,
++    );
++    expect(
++      getBudget({ category: 'cat-with-fixed-note', month: '2024-02' }),
++    ).toBe(0);
++    expect(getBudget({ category: 'near-miss-cat', month: '2024-02' })).toBe(0);
++  });
+ });
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 9e729f0..927af84 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -70,6 +71,7 @@ type BudgetData = {
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
+   has_template: 1 | 0;
++  cat_group: string;
+   category: string;
+   amount: number;
+ };
+@@ -83,10 +85,10 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      > & { has_template: 1 | 0 }
++      > & { has_template: 1 | 0; cat_group: string }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden,
++    SELECT b.*, c.is_income, c.hidden, c.cat_group, g.hidden AS group_hidden,
+       c.goal_def IS NOT NULL AS has_template
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+@@ -216,9 +218,10 @@ function setCarryover(
+ }
+ 
+ // Which categories a month-wide action fills. Hidden categories, categories in
+-// hidden groups and categories with saved templates are never filled. Income
+-// categories are only filled in tracking budgets. 'copyable' also includes
+-// categories with no group row; 'visible' skips them.
++// hidden groups, categories in groups tagged #fixed and categories with saved
++// templates are never filled. Income categories are only filled in tracking
++// budgets. 'copyable' also includes categories with no group row; 'visible'
++// skips them.
+ type MonthFillScope = 'copyable' | 'visible';
+ 
+ type MonthFillCategory = {
+@@ -226,11 +229,27 @@ type MonthFillCategory = {
+   hidden: 1 | 0;
+   group_hidden: 1 | 0 | null;
+   has_template: 1 | 0;
++  cat_group: string;
+ };
+ 
++async function getFixedCostGroupIds(): Promise<Set<string>> {
++  const groupNotes = await db.all<{ id: string; note: string }>(`
++    SELECT n.id, n.note
++    FROM notes n
++    JOIN category_groups g ON g.id = n.id
++    WHERE g.tombstone = 0
++  `);
++  return new Set(
++    groupNotes
++      .filter(({ note }) => extractTagsFromText(note).includes('fixed'))
++      .map(({ id }) => id),
++  );
++}
++
+ function isMonthFillCategory(
+   cat: MonthFillCategory,
+   scope: MonthFillScope,
++  fixedGroupIds: Set<string>,
+ ): boolean {
+   if (cat.is_income === 1 && !isTrackingBudget()) {
+     return false;
+@@ -238,6 +257,9 @@ function isMonthFillCategory(
+   if (cat.hidden === 1 || cat.group_hidden === 1 || cat.has_template === 1) {
+     return false;
+   }
++  if (fixedGroupIds.has(cat.cat_group)) {
++    return false;
++  }
+   if (scope === 'visible') {
+     return cat.group_hidden === 0;
+   }
+@@ -245,14 +267,17 @@ function isMonthFillCategory(
+ }
+ 
+ async function getMonthFillCategories(scope: MonthFillScope) {
++  const fixedGroupIds = await getFixedCostGroupIds();
+   const categories = await db.all<{ id: string } & MonthFillCategory>(`
+-    SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden,
++    SELECT c.id, c.is_income, c.hidden, c.cat_group, g.hidden AS group_hidden,
+       c.goal_def IS NOT NULL AS has_template
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+     WHERE c.tombstone = 0
+   `);
+-  return categories.filter(cat => isMonthFillCategory(cat, scope));
++  return categories.filter(cat =>
++    isMonthFillCategory(cat, scope, fixedGroupIds),
++  );
+ }
+ 
+ // Spending is stored as negative, so an expense's average is flipped to a
+@@ -271,10 +296,11 @@ export async function copyPreviousMonth({
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
++  const fixedGroupIds = await getFixedCostGroupIds();
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+-      if (!isMonthFillCategory(prevBudget, 'copyable')) {
++      if (!isMonthFillCategory(prevBudget, 'copyable', fixedGroupIds)) {
+         return;
+       }
+       void setBudget({

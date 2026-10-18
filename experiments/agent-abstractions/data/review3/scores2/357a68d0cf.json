@@ -1,0 +1,11 @@
+{"id": "357a68d0cf",
+"reuse": {"score": 3, "why": "Extends the existing getDateWithSkippedWeekend and getNextDate and adds shared predicates (isDailyWeekendSkip, isNonBusinessDay), but the new range handler and getUpcomingDates recompose the skip-or-move rule themselves instead of sharing one occurrence-to-final-day function."},
+"duplication": {"score": 2, "why": "The 'filter daily non-business days, then move weekend/holiday days when skipWeekend' pipeline is written out in getUpcomingDates, getDatesInRange and (as a branch) getNextDate, and schedule-template keeps its own skipWeekend ? adjust : date wrapper."},
+"placement": {"score": 4, "why": "Date rules live in shared/schedules.ts and the handler in server/schedules/app.ts as the tree does; the rule composition leaking into each server caller is the weak point."},
+"scope": {"score": 4, "why": "Changes stay on schedules, the template engine, rule parsing and the type; the release note and tests are expected, nothing unrelated."},
+"maintainability": {"score": 3, "why": "Workable, but the noSkipWeekend flag of getNextDate now also switches daily skipping, lookahead/padding heuristics are magic numbers, and changing the rule again means editing three or four call sites."},
+"bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getUpcomingDates and getDatesInRange, and budget/schedule-template.ts getAdjustedDate, apply the daily-skip/move decision themselves rather than through getNextDate or a single shared adjust function."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "getDatesInRange repeats getUpcomingDates' filter(isDailyWeekendSkip/isNonBusinessDay) + map(getDateWithSkippedWeekend) chain with the predicate inlined differently; schedule-template wraps the same ternary in a local getAdjustedDate closure."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 3, "where": "getDateWithSkippedWeekend gains a holidays parameter; getNextDate gains a skipDailyWeekends special-case branch and its noSkipWeekend flag is overloaded by schedule-template; getUpcomingDates, getDatesInRange and schedule-template's getAdjustedDate each re-implement the skip-or-move composition."}}

@@ -1,0 +1,45 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 3847254..0168e7e 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -524,6 +524,22 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2021, 4, 16))).toBe('2021-05-18');
+     });
+ 
++    it('skips recurring month-day holidays and one-time holidays', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2021-12-24',
++          frequency: 'daily',
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-25', '2021-12-26'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2021, 11, 25))).toBe('2021-12-27');
++      expect(getNextDate(dateCond, new Date(2022, 11, 25))).toBe('2022-12-26');
++    });
++
+     it('returns last occurrence for a recurring schedule with an end date in the past', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 742b842..aa9befd 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -369,7 +369,12 @@ export function getDateWithSkippedWeekend(
+ }
+ 
+ function isWeekendOrHoliday(date: Date, holidays: string[]) {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  const dateString = monthUtils.dayFromDate(date);
++  const monthAndDay = dateString.slice(5);
++  return (
++    d.isWeekend(date) ||
++    holidays.some(holiday => holiday === dateString || holiday === monthAndDay)
++  );
+ }
+ 
+ function filterDailyNonHolidays<T extends { date: Date }>(

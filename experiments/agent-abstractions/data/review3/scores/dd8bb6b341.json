@@ -1,0 +1,12 @@
+{"id": "dd8bb6b341",
+"reuse": {"score": 3, "why": "Adds one getFixedGroupIds lookup reused by all actions, but parses the tag with its own regex instead of the existing shared/tags helpers (extractTagsFromText) and adds no shared category selection for the month-wide actions."},
+"duplication": {"score": 3, "why": "The same fetch-the-set-then-skip pattern is pasted into six month-wide actions and a seventh variant in goal-template, beside the already repeated hidden/template checks."},
+"placement": {"score": 3, "why": "The fixed-group lookup sits in budget/actions.ts and goal-template imports it from there, which fits, but tag recognition is defined locally rather than in shared/tags.ts where the tree keeps note-tag parsing."},
+"scope": {"score": 4, "why": "Focused on the rule plus a test and release note; widening getBudgetData/BudgetData with cat_group is incidental support."},
+"maintainability": {"score": 3, "why": "Which groups are fixed is defined once, but every month-wide action must remember to call and check it, so a new action or a further exclusion rule means editing seven sites again."},
+"bypasses_abstraction": {"value": true, "where": "server/budget/actions.ts FIXED_TAG regex re-implements note-tag matching that shared/tags.ts (extractTagsFromText) already provides, with different case sensitivity."},
+"duplicated_blocks": 6,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "The repeated `if (fixedGroupIds.has(cat.cat_group)) continue/return` checks are plain repetitions in copyPreviousMonth, setZero, set3MonthAvg, setLastMonthSpending, set12MonthAvg, set6MonthAvg, not disguised."},
+"one_place": {"value": true, "where": "The fixed-group rule is defined once in getFixedGroupIds (server/budget/actions.ts) and every month-wide path (the six actions and goal-template computeTemplates) uses it, though each applies the skip itself."}
+}

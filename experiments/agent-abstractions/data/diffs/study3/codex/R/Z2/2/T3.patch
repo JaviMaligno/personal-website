@@ -1,0 +1,173 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+index b173e2d..96d394d 100644
+--- a/packages/loot-core/src/server/api-models.test.ts
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
+ import { scheduleModel } from './api-models';
+ 
+ describe('scheduleModel', () => {
+-  function makeSchedule(amount: number | { num1: number; num2: number }) {
++  function makeSchedule(
++    amount: number | { num1: number; num2: number },
++    amountOp = 'isbetween',
++  ) {
+     return {
+       id: 'schedule-id',
+       name: 'Schedule',
+@@ -15,7 +18,7 @@ describe('scheduleModel', () => {
+       _payee: 'payee-id',
+       _account: 'account-id',
+       _amount: amount,
+-      _amountOp: 'isbetween',
++      _amountOp: amountOp,
+       _date: '2024-01-01',
+       _conditions: [],
+       _actions: [],
+@@ -42,4 +45,14 @@ describe('scheduleModel', () => {
+       expectedAmount,
+     );
+   });
++
++  it.each([
++    [-10000, -10750],
++    [10000, 10750],
++    [-1234, -1327],
++  ])('derives worst case for approximate amount %i', (amount, expected) => {
++    expect(
++      scheduleModel.toExternal(makeSchedule(amount, 'isapprox')).expectedAmount,
++    ).toBe(expected);
++  });
+ });
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index ffa9a51..331abb9 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,3 +1,4 @@
++import { getApproxNumberThreshold } from '#shared/rules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -254,7 +255,11 @@ export const scheduleModel = {
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+-            ? schedule._amount
++            ? schedule._amountOp === 'isapprox'
++              ? schedule._amount +
++                Math.sign(schedule._amount || 1) *
++                  getApproxNumberThreshold(schedule._amount)
++              : schedule._amount
+             : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
+               ? schedule._amount.num1
+               : schedule._amount.num2,
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 6657f87..b5b72c5 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -5,6 +5,7 @@ import * as db from '#server/db';
+ import { runRules } from '#server/transactions/transaction-rules';
+ import * as monthUtils from '#shared/months';
+ import { q } from '#shared/query';
++import { getApproxNumberThreshold } from '#shared/rules';
+ import {
+   extractScheduleConds,
+   getNextDate,
+@@ -49,6 +50,7 @@ type RawScheduleData = {
+   _payee?: string | null;
+   _account?: string | null;
+   _amount?: number | { num1: number; num2: number } | null;
++  _amountOp?: string;
+   _date?: string | RecurConfig | null;
+   _conditions?: RuleConditionEntity[];
+ };
+@@ -93,10 +95,14 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged ("is between") amount is scheduled at its rounded midpoint.
++  // Ranged ("is between") amounts use their rounded midpoint; approximate
++  // amounts use the tolerance endpoint furthest from zero for planning.
+   const amount =
+     typeof amountValue === 'number'
+-      ? amountValue
++      ? (schedule._amountOp ?? conditions.amount?.op) === 'isapprox'
++        ? amountValue +
++          Math.sign(amountValue || 1) * getApproxNumberThreshold(amountValue)
++        : amountValue
+       : Math.round((amountValue.num1 + amountValue.num2) / 2);
+ 
+   return {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index b722098..4b55820 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -107,6 +107,36 @@ describe('schedules', () => {
+   });
+ 
+   describe('computeSchedulePreviewTransactions', () => {
++    it.each([
++      [-10000, -10750],
++      [10000, 10750],
++      [-1234, -1327],
++    ])('uses the approximate amount tolerance for %i', (amount, expected) => {
++      const schedule: ScheduleEntity = {
++        id: 'sched-approx',
++        rule: 'rule-1',
++        completed: false,
++        posts_transaction: false,
++        tombstone: false,
++        _payee: 'payee-1',
++        _account: 'acct-1',
++        _amount: amount,
++        _amountOp: 'isapprox',
++        _date: '2017-01-03',
++        next_date: '2017-01-03',
++        _conditions: [{ field: 'date', op: 'is', value: '2017-01-03' }],
++        _actions: [],
++      };
++
++      const result = computeSchedulePreviewTransactions(
++        [schedule],
++        new Map([['sched-approx', 'upcoming']]),
++        '7',
++      );
++
++      expect(result[0].amount).toBe(expected);
++    });
++
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 31588c0..0365b96 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -7,6 +7,7 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import { q } from './query';
++import { getApproxNumberThreshold } from './rules';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+@@ -496,13 +497,17 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // A missing amount previews as 0; a ranged ("is between") amount uses
+-      // the endpoint furthest from zero for worst-case planning.
++      // A missing amount previews as 0; ranged and approximate amounts use
++      // their worst-case value for planning.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+-            ? schedule._amount
++            ? schedule._amountOp === 'isapprox'
++              ? schedule._amount +
++                Math.sign(schedule._amount || 1) *
++                  getApproxNumberThreshold(schedule._amount)
++              : schedule._amount
+             : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
+               ? schedule._amount.num1
+               : schedule._amount.num2;

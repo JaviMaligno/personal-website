@@ -1,0 +1,13 @@
+{
+  "id": "7c0e3fc6b7",
+  "reuse": {"score": 3, "why": "Replaces the three copied category queries with one getBudgetableCategories helper and reuses extractTagsFromText and getSheetValue, but copyPreviousMonth keeps its own inline exclusion rule instead of using the helper."},
+  "duplication": {"score": 2, "why": "The '#fixed group or income outside tracking' guard is pasted into five loops, and the hidden/template exclusion is written twice (SQL in the helper, TS predicate in copyPreviousMonth), with the notes/group join also duplicated in getBudgetData."},
+  "placement": {"score": 4, "why": "All logic stays in budget/actions.ts and the new method is registered in app.ts next to its siblings, matching the tree's layering."},
+  "scope": {"score": 4, "why": "Edits are limited to the budget actions, their handler registration and tests for the requested behaviours."},
+  "maintainability": {"score": 2, "why": "The exclusion rule is split between a SQL helper, five copied in-loop guards and a separate TS predicate in copyPreviousMonth, which also silently ignores includeHiddenCategories, so the next rule change must be applied in several places."},
+  "bypasses_abstraction": {"value": true, "where": "copyPreviousMonth in actions.ts re-implements hidden/group-hidden/template/#fixed exclusion inline over getBudgetData instead of using getBudgetableCategories, and does not accept includeHiddenCategories."},
+  "duplicated_blocks": 6,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "The template exclusion appears as SQL 'goal_def IS NULL OR goal_def = '[]'' in getBudgetableCategories and as a reshaped TS condition in copyPreviousMonth; the hidden rule likewise as SQL vs TS."},
+  "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 6, "where": "getBudgetableCategories gains includeHiddenCategories with an inline '? OR' SQL branch; the #fixed rule never enters it, so setZero, setLastMonthSpending, set3/6/12MonthAvg each re-check it, and copyPreviousMonth bypasses the helper entirely."}
+}

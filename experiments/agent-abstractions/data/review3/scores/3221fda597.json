@@ -1,0 +1,12 @@
+{"id": "3221fda597",
+"reuse": {"score": 4, "why": "Consolidates the five link handlers into linkAccountAndSync, reuses findOrCreateBank, handleSyncResponse and the unlink field reset (extracted as clearAccountLink), but re-lists the provider union in LinkAccountFields instead of using AccountSyncSource/BankSyncProviders and copies the Akahu download function for Fintegra."},
+"duplication": {"score": 4, "why": "Removes five copies of the upgrade-or-create/sync/notify block and the unlink reset; the new downloadFintegraTransactions is a near-verbatim copy of downloadAkahuTransactions (same post/token/error/shape logic with another base URL)."},
+"placement": {"score": 5, "why": "Link logic and guards stay in server/accounts/app.ts, the download in sync.ts's provider dispatch, the URL in server-config.ts and the types in types/models, matching where each provider lives."},
+"scope": {"score": 5, "why": "All edits serve the five steps (refactor, uniqueness, Fintegra, closed accounts, replaceExistingLink) plus tests."},
+"maintainability": {"score": 4, "why": "One link path with explicit variations (fileId, notified tables) and one guard every handler calls make future changes single-point; the guard named assert* also unlinks the previous holder as a side effect, and per-provider download functions remain copy-paste."},
+"bypasses_abstraction": {"value": false, "where": "All six link handlers go through assertBankAccountNotLinked and linkAccountAndSync; unlinkAccount uses clearAccountLink."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "downloadFintegraTransactions copies downloadAkahuTransactions openly (slightly trimmed), not disguised; the link copies were genuinely removed."},
+"abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "replaceExistingLink added to assertBankAccountNotLinked with a branch that unlinks the holder instead of throwing; linkAccountAndSync's fileId and tables parameters carry the pre-existing per-provider variations explicitly and no handler bypasses either helper."}
+}

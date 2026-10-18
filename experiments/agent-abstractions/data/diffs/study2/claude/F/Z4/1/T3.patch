@@ -1,0 +1,210 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 155b975..42a162f 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -175,6 +175,7 @@ async function createScheduleList(
+             skipWeekend: dateConditions.value.skipWeekend,
+             solveMode: dateConditions.value.weekendSolveMode,
+             frequency: dateConditions.value.frequency,
++            holidays: dateConditions.value.holidays,
+           };
+           let nextBaseDate = getNextDate(
+             dateConditions,
+diff --git a/packages/loot-core/src/server/rules/rule-utils.ts b/packages/loot-core/src/server/rules/rule-utils.ts
+index 0c0e719..2284a63 100644
+--- a/packages/loot-core/src/server/rules/rule-utils.ts
++++ b/packages/loot-core/src/server/rules/rule-utils.ts
+@@ -229,6 +229,7 @@ export function parseRecurDate(desc) {
+           skipWeekend: desc.skipWeekend,
+           weekendSolve: desc.weekendSolveMode,
+           frequency: desc.frequency,
++          holidays: desc.holidays,
+         },
+       }),
+     };
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 657613a..bd9057a 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -507,16 +507,18 @@ async function getUpcomingDates({ config, count }) {
+       skipWeekend: config.skipWeekend,
+       solveMode: config.weekendSolveMode,
+       frequency: config.frequency,
++      holidays: config.holidays,
+     };
+     const start = d.startOfDay(new Date());
+ 
+     if (rule.skipWeekend && rule.frequency === 'daily') {
+       // Weekend occurrences are skipped, so look further ahead to fill `count`
+       const result: string[] = [];
++      const extra = rule.holidays?.length ?? 0;
+       let seen = 0;
+       for (const date of schedule.occurrences({ start })) {
+         // Bounded, as e.g. a weekly-on-Saturday daily interval never matches
+-        if (result.length >= count || ++seen > count * 7 + 14) break;
++        if (result.length >= count || ++seen > count * 7 + 14 + extra) break;
+         if (!isSkippedByWeekendRule(date.date, rule)) {
+           result.push(dayFromDate(date.date));
+         }
+@@ -550,12 +552,14 @@ export async function getDatesInRange({
+       skipWeekend: config.skipWeekend,
+       solveMode: config.weekendSolveMode,
+       frequency: config.frequency,
++      holidays: config.holidays,
+     };
+ 
+     // Weekend adjustment moves an occurrence by at most 2 days, so look a
+     // little beyond the period and decide by the adjusted day.
+-    const from = d.subDays(parseDate(start), 3);
+-    const to = d.endOfDay(d.addDays(parseDate(end), 3));
++    const margin = 3 + (config.holidays?.length ?? 0);
++    const from = d.subDays(parseDate(start), margin);
++    const to = d.endOfDay(d.addDays(parseDate(end), margin));
+ 
+     const days = new Set<string>();
+     for (const occurrence of schedule.occurrences({ start: from, end: to })) {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 45c33ba..e37c32f 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -4,6 +4,7 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import {
++  applyWeekendRule,
+   computeSchedulePreviewTransactions,
+   getHasTransactionsQuery,
+   getNextDate,
+@@ -14,6 +15,7 @@ import {
+   indexPostedScheduleTransactions,
+   isCustomUpcomingLength,
+   isScheduleOccurrencePosted,
++  isSkippedByWeekendRule,
+   UPCOMING_LENGTH_PRESET_LABELS,
+   UPCOMING_LENGTH_PRESET_OPTIONS,
+   UPCOMING_LENGTH_PRESET_VALUES,
+@@ -663,3 +665,35 @@ describe('schedules', () => {
+     });
+   });
+ });
++
++describe('holidays', () => {
++  const rule = (solveMode: 'before' | 'after', frequency = 'weekly') => ({
++    skipWeekend: true,
++    solveMode,
++    frequency,
++    holidays: ['2024-01-08', '2024-01-12'],
++  });
++
++  it('moves weekend dates past a holiday', () => {
++    // Saturday 2024-01-06; Monday the 8th is a holiday
++    expect(
++      monthUtils.dayFromDate(
++        applyWeekendRule(new Date(2024, 0, 6), rule('after')),
++      ),
++    ).toBe('2024-01-09');
++  });
++
++  it('moves holiday dates in the schedule direction', () => {
++    expect(
++      monthUtils.dayFromDate(
++        applyWeekendRule(new Date(2024, 0, 12), rule('before')),
++      ),
++    ).toBe('2024-01-11');
++  });
++
++  it('skips holidays for daily schedules', () => {
++    expect(
++      isSkippedByWeekendRule(new Date(2024, 0, 8), rule('after', 'daily')),
++    ).toBe(true);
++  });
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 8118619..a6edb8c 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -297,19 +297,22 @@ export function getNextDate(
+       skipWeekend: value.schedule.data.skipWeekend && !noSkipWeekend,
+       solveMode: value.schedule.data.weekendSolve,
+       frequency: value.schedule.data.frequency,
++      holidays: value.schedule.data.holidays,
+     };
+ 
+     let dates: { date: Date }[];
+     if (dropsWeekends(rule)) {
+-      const take = 14;
++      const take = 14 + (rule.holidays?.length ?? 0);
+       const forward = value.schedule.occurrences({ start, take }).toArray();
+-      dates = forward.filter(o => !d.isWeekend(o.date)).slice(0, 1);
++      dates = forward
++        .filter(o => !isSkippedByWeekendRule(o.date, rule))
++        .slice(0, 1);
+       if (dates.length === 0 && forward.length < take) {
+         // Limited occurrences: find the last one that isn't a weekend
+         dates = value.schedule
+           .occurrences({ reverse: true, take })
+           .toArray()
+-          .filter(o => !d.isWeekend(o.date))
++          .filter(o => !isSkippedByWeekendRule(o.date, rule))
+           .slice(0, 1);
+       }
+     } else {
+@@ -376,8 +379,16 @@ export type WeekendRule = {
+   skipWeekend?: boolean;
+   solveMode?: 'after' | 'before';
+   frequency?: string;
++  // 'YYYY-MM-DD' days treated like weekend days
++  holidays?: string[];
+ };
+ 
++function isOffDay(date: Date, rule: WeekendRule): boolean {
++  return (
++    d.isWeekend(date) || !!rule.holidays?.includes(monthUtils.dayFromDate(date))
++  );
++}
++
+ // Daily schedules skip weekend occurrences instead of moving them.
+ function dropsWeekends(rule: WeekendRule): boolean {
+   return !!rule.skipWeekend && rule.frequency === 'daily';
+@@ -385,16 +396,25 @@ function dropsWeekends(rule: WeekendRule): boolean {
+ 
+ // True when the rule drops this date altogether (daily schedules on a weekend).
+ export function isSkippedByWeekendRule(date: Date, rule: WeekendRule): boolean {
+-  return dropsWeekends(rule) && d.isWeekend(date);
++  return dropsWeekends(rule) && isOffDay(date, rule);
+ }
+ 
+ // With `skipWeekend`, a date on a weekend moves to the following Monday
+ // ('after') or the previous Friday ('before'); otherwise it is unchanged.
+ // Daily schedules never move (see isSkippedByWeekendRule).
+ export function applyWeekendRule(date: Date, rule: WeekendRule): Date {
+-  return rule.skipWeekend && !dropsWeekends(rule)
+-    ? getDateWithSkippedWeekend(date, rule.solveMode)
+-    : date;
++  if (!rule.skipWeekend || dropsWeekends(rule)) return date;
++  if (rule.solveMode !== 'after' && rule.solveMode !== 'before') {
++    return getDateWithSkippedWeekend(date, rule.solveMode);
++  }
++  const step = rule.solveMode === 'after' ? 1 : -1;
++  // Weekends plus holidays bound how far a date can have to move
++  const maxSteps = 2 + (rule.holidays?.length ?? 0);
++  let result = date;
++  for (let i = 0; i < maxSteps && isOffDay(result, rule); i++) {
++    result = d.addDays(result, step);
++  }
++  return result;
+ }
+ 
+ // applyWeekendRule for a 'YYYY-MM-DD' day; without the rule the day is returned
+diff --git a/packages/loot-core/src/types/models/schedule.ts b/packages/loot-core/src/types/models/schedule.ts
+index ecf222a..f40cf1c 100644
+--- a/packages/loot-core/src/types/models/schedule.ts
++++ b/packages/loot-core/src/types/models/schedule.ts
+@@ -17,6 +17,7 @@ export type RecurConfig = {
+   endOccurrences?: number;
+   endDate?: string;
+   weekendSolveMode?: 'before' | 'after';
++  holidays?: string[];
+ };
+ 
+ export type ScheduleEntity = {

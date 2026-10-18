@@ -1,0 +1,12 @@
+{"id":"3a50ec3c43",
+"reuse":{"score":4,"why":"Extends the existing getBudgetData query and collapses the three copied visible-category queries into one helper; the goal_def parsing is a small new check rather than reusing goal-template's (unexported) template loading."},
+"duplication":{"score":4,"why":"Removes three identical category queries, but the hidden/group-hidden rule is still written twice: in getFillableCategories' SQL and in copyPreviousMonth's own row check."},
+"placement":{"score":5,"why":"Both helpers sit in server/budget/actions.ts beside the month-wide actions that use them."},
+"scope":{"score":5,"why":"Only the month-wide actions and their category selection are touched."},
+"maintainability":{"score":4,"why":"A named selection function makes the rule visible, but copyPreviousMonth applies the same rule through a separate path (budget rows plus inline hidden and template checks) that must be kept in step."},
+"bypasses_abstraction":{"value":false,"where":"No pre-existing selection abstraction is bypassed; copyPreviousMonth iterates budget rows as before and calls hasSavedTemplates."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The remaining hidden check in copyPreviousMonth is pre-existing and visible, not a reshaped copy."},
+"one_place":{"value":false,"where":"setZero and set3/6/12MonthAvg use getFillableCategories, but copyPreviousMonth in server/budget/actions.ts decides hidden/group-hidden itself and calls hasSavedTemplates separately, so the rule lives in two places."}
+}

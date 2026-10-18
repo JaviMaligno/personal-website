@@ -1,0 +1,217 @@
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 3f61fa4..5907d5b 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,4 +1,4 @@
+-import { worstCaseAmount } from '#shared/rules';
++import { expectedScheduleAmount } from '#shared/rules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -242,13 +242,14 @@ export type APIScheduleListEntity = APIScheduleEntity & {
+   expectedAmount: number; // the single amount the schedule is expected to post, in integer units
+ };
+ 
+-function getExpectedAmount(amount: ScheduleEntity['_amount'] | null): number {
++function getExpectedAmount(
++  amount: ScheduleEntity['_amount'] | null,
++  amountOp: string,
++): number {
+   if (amount == null) {
+     return 0;
+   }
+-  return typeof amount === 'number'
+-    ? amount
+-    : worstCaseAmount(amount.num1, amount.num2);
++  return expectedScheduleAmount(amountOp, amount);
+ }
+ 
+ export const scheduleModel = {
+@@ -265,7 +266,7 @@ export const scheduleModel = {
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+-      expectedAmount: getExpectedAmount(schedule._amount),
++      expectedAmount: getExpectedAmount(schedule._amount, schedule._amountOp),
+     };
+   },
+   //just an update
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 50b2085..050d414 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -6,7 +6,7 @@ import { getRuleForSchedule } from '#server/schedules/app';
+ import { prefetchBalanceOfForTransaction } from '#server/transactions/transaction-rules';
+ import type { Currency } from '#shared/currencies';
+ import * as monthUtils from '#shared/months';
+-import { worstCaseAmount } from '#shared/rules';
++import { expectedScheduleAmount } from '#shared/rules';
+ import {
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
+@@ -60,13 +60,10 @@ async function createScheduleList(
+     const conditions = rule.serialize().conditions;
+     const { date: dateConditions, amount: amountCondition } =
+       extractScheduleConds(conditions);
+-    let scheduleAmount =
+-      amountCondition.op === 'isbetween'
+-        ? worstCaseAmount(
+-            amountCondition.value.num1,
+-            amountCondition.value.num2,
+-          )
+-        : amountCondition.value;
++    let scheduleAmount = expectedScheduleAmount(
++      amountCondition.op,
++      amountCondition.value,
++    );
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+       switch (template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index d923e6e..66546d0 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -5,7 +5,7 @@ import * as db from '#server/db';
+ import { runRules } from '#server/transactions/transaction-rules';
+ import * as monthUtils from '#shared/months';
+ import { q } from '#shared/query';
+-import { worstCaseAmount } from '#shared/rules';
++import { expectedScheduleAmount } from '#shared/rules';
+ import {
+   extractScheduleConds,
+   getNextDate,
+@@ -50,6 +50,7 @@ type RawScheduleData = {
+   _payee?: string | null;
+   _account?: string | null;
+   _amount?: number | { num1: number; num2: number } | null;
++  _amountOp?: string;
+   _date?: string | RecurConfig | null;
+   _conditions?: RuleConditionEntity[];
+ };
+@@ -94,10 +95,10 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  const amount =
+-    typeof amountValue === 'number'
+-      ? amountValue
+-      : worstCaseAmount(amountValue.num1, amountValue.num2);
++  const amount = expectedScheduleAmount(
++    schedule._amountOp ?? conditions.amount?.op,
++    amountValue,
++  );
+ 
+   return {
+     id: schedule.id,
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 3a03353..7bfebe1 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -24,7 +24,7 @@ import { undoable } from '#server/undo';
+ import { RSchedule } from '#server/util/rschedule';
+ import { currentDay, dayFromDate } from '#shared/months';
+ import { q } from '#shared/query';
+-import { worstCaseAmount } from '#shared/rules';
++import { expectedScheduleAmount } from '#shared/rules';
+ import {
+   DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   extractScheduleConds,
+@@ -157,9 +157,7 @@ function updateActions(
+   const amount =
+     amountValue == null
+       ? 0
+-      : typeof amountValue === 'number'
+-        ? amountValue
+-        : worstCaseAmount(amountValue.num1, amountValue.num2);
++      : expectedScheduleAmount(amountCond.op, amountValue);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -597,9 +595,7 @@ async function postTransactionForSchedule({
+   const amount =
+     schedule._amount == null
+       ? 0
+-      : typeof schedule._amount === 'number'
+-        ? schedule._amount
+-        : worstCaseAmount(schedule._amount.num1, schedule._amount.num2);
++      : expectedScheduleAmount(schedule._amountOp, schedule._amount);
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/rules.test.ts b/packages/loot-core/src/shared/rules.test.ts
+index 993433b..bc189a7 100644
+--- a/packages/loot-core/src/shared/rules.test.ts
++++ b/packages/loot-core/src/shared/rules.test.ts
+@@ -1,6 +1,11 @@
+ import { describe, expect, it } from 'vitest';
+ 
+-import { getValidOps, isValidOp, worstCaseAmount } from './rules';
++import {
++  expectedScheduleAmount,
++  getValidOps,
++  isValidOp,
++  worstCaseAmount,
++} from './rules';
+ 
+ describe('rules', () => {
+   describe('isValidOp', () => {
+@@ -72,4 +77,33 @@ describe('rules', () => {
+       expect(worstCaseAmount(120, -50)).toBe(120);
+     });
+   });
++
++  describe('expectedScheduleAmount', () => {
++    it('returns an exact amount unchanged', () => {
++      expect(expectedScheduleAmount('is', -10000)).toBe(-10000);
++      expect(expectedScheduleAmount('is', 10000)).toBe(10000);
++    });
++
++    it('returns the worst case end of a range', () => {
++      expect(
++        expectedScheduleAmount('isbetween', { num1: -10000, num2: -20000 }),
++      ).toBe(-20000);
++    });
++
++    it('expects an approximate negative amount at the tolerance end furthest from zero', () => {
++      expect(expectedScheduleAmount('isapprox', -10000)).toBe(-10750);
++    });
++
++    it('expects an approximate positive amount at the tolerance end furthest from zero', () => {
++      expect(expectedScheduleAmount('isapprox', 10000)).toBe(10750);
++    });
++
++    it('rounds the approximate tolerance to the cent', () => {
++      expect(expectedScheduleAmount('isapprox', -1234)).toBe(-1327);
++    });
++
++    it('keeps zero approximate amount at zero', () => {
++      expect(expectedScheduleAmount('isapprox', 0)).toBe(0);
++    });
++  });
+ });
+diff --git a/packages/loot-core/src/shared/rules.ts b/packages/loot-core/src/shared/rules.ts
+index 6f924c8..23cf328 100644
+--- a/packages/loot-core/src/shared/rules.ts
++++ b/packages/loot-core/src/shared/rules.ts
+@@ -163,6 +163,21 @@ export function worstCaseAmount(num1: number, num2: number): number {
+   return Math.abs(num1) >= Math.abs(num2) ? num1 : num2;
+ }
+ 
++// An approximate amount is expected at the end of its tolerance furthest from zero.
++export function expectedScheduleAmount(
++  op: string,
++  value: number | { num1: number; num2: number },
++): number {
++  if (typeof value !== 'number') {
++    return worstCaseAmount(value.num1, value.num2);
++  }
++  if (op !== 'isapprox') {
++    return value;
++  }
++  const tolerance = getApproxNumberThreshold(value);
++  return value < 0 ? value - tolerance : value + tolerance;
++}
++
+ export function parse(item) {
+   if (item.op === 'set-split-amount') {
+     if (item.options.method === 'fixed-amount') {

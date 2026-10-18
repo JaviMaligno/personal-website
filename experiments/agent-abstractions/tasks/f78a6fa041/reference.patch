@@ -1,0 +1,257 @@
+diff --git a/packages/docs/docs/api/reference.md b/packages/docs/docs/api/reference.md
+index 14b9269f6baa9b151d58bf1c9686cb919d5be50b..c4a47167f4d0140a5d570a382557c163774e2c06 100644
+--- a/packages/docs/docs/api/reference.md
++++ b/packages/docs/docs/api/reference.md
+@@ -279,6 +279,7 @@ This method has the following optional flags (passed as the `opts` object):
+ - `defaultCleared`: whether imported transactions should be marked as cleared (defaults to `true`)
+ - `dryRun`: if `true`, returns what would be added/updated without actually modifying the database (defaults to `false`)
+ - `reimportDeleted`: if `true`, transactions that were previously imported and then deleted will be reimported; if `false`, they will be skipped (defaults to `true` for backward compatibility — note that the [file import UI](../transactions/importing.md#avoiding-duplicate-transactions) defaults to `false`)
++- `payeeNameNormalization`: how `payee_name` is processed when creating a payee — `'title-case'` re-capitalizes each word, `'original'` keeps the name as given, apart from trimming surrounding whitespace (defaults to `'title-case'`)
+ 
+ Example using opts:
+ 
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 03ec882efdf0e2d76fc383704bfb03bc2310ee6b..c8922134cca9f6a6c387fda55434ce96583e7f07 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -1646,16 +1646,25 @@ async function importTransactions({
+     throw APIError('transactions-import: accountId must be an id');
+   }
+ 
++  const payeeNameNormalization = opts?.payeeNameNormalization ?? 'title-case';
++  if (!bankSync.PAYEE_NAME_NORMALIZATIONS.includes(payeeNameNormalization)) {
++    throw APIError(
++      `transactions-import: payeeNameNormalization must be one of ${bankSync.PAYEE_NAME_NORMALIZATIONS.join(
++        ', ',
++      )}, got '${String(payeeNameNormalization)}'`,
++    );
++  }
++
+   try {
+     const reconciled = await bankSync.reconcileTransactions(
+       accountId,
+       transactions,
+-      false,
+-      true,
+-      isPreview,
+-      opts?.defaultCleared,
+-      false,
+-      opts?.reimportDeleted,
++      {
++        isPreview,
++        defaultCleared: opts?.defaultCleared,
++        reimportDeleted: opts?.reimportDeleted,
++        payeeNameNormalization,
++      },
+     );
+     return {
+       errors: [],
+diff --git a/packages/loot-core/src/server/accounts/sync.ts b/packages/loot-core/src/server/accounts/sync.ts
+index 93aca4a9da65b327a92cad332aa5a1a0f9e86b1c..efcf65e14e9ad4643509d0d2266b523ba5379448 100644
+--- a/packages/loot-core/src/server/accounts/sync.ts
++++ b/packages/loot-core/src/server/accounts/sync.ts
+@@ -413,10 +413,34 @@ async function resolvePayee(trans, payeeName, payeesToCreate) {
+   return trans.payee;
+ }
+ 
++export const PAYEE_NAME_NORMALIZATIONS = ['original', 'title-case'] as const;
++export type PayeeNameNormalization = (typeof PAYEE_NAME_NORMALIZATIONS)[number];
++
++function normalizePayeeName(
++  payeeName: string,
++  normalization: PayeeNameNormalization,
++): string {
++  switch (normalization) {
++    case 'original':
++      return payeeName;
++    case 'title-case':
++      return title(payeeName);
++    default:
++      normalization satisfies never;
++      throw new Error(
++        `Unknown payee name normalization: ${String(normalization)}`,
++      );
++  }
++}
++
+ async function normalizeTransactions(
+   transactions,
+   acctId,
+-  { rawPayeeName = false } = {},
++  {
++    payeeNameNormalization = 'title-case',
++  }: {
++    payeeNameNormalization?: PayeeNameNormalization;
++  } = {},
+ ) {
+   const payeesToCreate = new Map();
+ 
+@@ -454,7 +478,7 @@ async function normalizeTransactions(
+       if (trimmed === '') {
+         payee_name = null;
+       } else {
+-        payee_name = rawPayeeName ? trimmed : title(trimmed);
++        payee_name = normalizePayeeName(trimmed, payeeNameNormalization);
+       }
+     }
+ 
+@@ -584,6 +608,19 @@ async function createNewPayees(payeesToCreate, addsAndUpdates) {
+   });
+ }
+ 
++export type MatchTransactionsOptions = {
++  isBankSyncAccount?: boolean;
++  strictIdChecking?: boolean;
++  reimportDeleted?: boolean;
++  payeeNameNormalization?: PayeeNameNormalization;
++};
++
++export type ReconcileTransactionsOptions = MatchTransactionsOptions & {
++  isPreview?: boolean;
++  defaultCleared?: boolean;
++  updateDates?: boolean;
++};
++
+ export type ReconcileTransactionsResult = {
+   added: string[];
+   updated: string[];
+@@ -598,12 +635,15 @@ export type ReconcileTransactionsResult = {
+ export async function reconcileTransactions(
+   acctId,
+   transactions,
+-  isBankSyncAccount = false,
+-  strictIdChecking = true,
+-  isPreview = false,
+-  defaultCleared = true,
+-  updateDates = false,
+-  reimportDeleted?: boolean,
++  {
++    isBankSyncAccount = false,
++    strictIdChecking = true,
++    isPreview = false,
++    defaultCleared = true,
++    updateDates = false,
++    reimportDeleted,
++    payeeNameNormalization,
++  }: ReconcileTransactionsOptions = {},
+ ): Promise<ReconcileTransactionsResult> {
+   logger.log('Performing transaction reconciliation');
+ 
+@@ -617,13 +657,12 @@ export async function reconcileTransactions(
+     transactionsStep1,
+     transactionsStep2,
+     transactionsStep3,
+-  } = await matchTransactions(
+-    acctId,
+-    transactions,
++  } = await matchTransactions(acctId, transactions, {
+     isBankSyncAccount,
+     strictIdChecking,
+     reimportDeleted,
+-  );
++    payeeNameNormalization,
++  });
+ 
+   // Finally, generate & commit the changes
+   for (const { trans, subtransactions, match } of transactionsStep3) {
+@@ -758,9 +797,12 @@ export async function reconcileTransactions(
+ export async function matchTransactions(
+   acctId,
+   transactions,
+-  isBankSyncAccount = false,
+-  strictIdChecking = true,
+-  reimportDeletedOverride?: boolean,
++  {
++    isBankSyncAccount = false,
++    strictIdChecking = true,
++    reimportDeleted: reimportDeletedOverride,
++    payeeNameNormalization,
++  }: MatchTransactionsOptions = {},
+ ) {
+   logger.log('Performing transaction reconciliation matching');
+ 
+@@ -775,14 +817,11 @@ export async function matchTransactions(
+ 
+   const hasMatched = new Set();
+ 
+-  const transactionNormalization = isBankSyncAccount
+-    ? normalizeBankSyncTransactions
+-    : normalizeTransactions;
+-
+-  const { normalized, payeesToCreate } = await transactionNormalization(
+-    transactions,
+-    acctId,
+-  );
++  const { normalized, payeesToCreate } = isBankSyncAccount
++    ? await normalizeBankSyncTransactions(transactions, acctId)
++    : await normalizeTransactions(transactions, acctId, {
++        payeeNameNormalization,
++      });
+ 
+   // The first pass runs the rules, and preps data for fuzzy matching
+   const accounts: db.DbAccount[] = await db.getAccounts();
+@@ -968,7 +1007,7 @@ export async function addTransactions(
+   const { normalized, payeesToCreate } = await normalizeTransactions(
+     transactions,
+     acctId,
+-    { rawPayeeName: true },
++    { payeeNameNormalization: 'original' },
+   );
+ 
+   const accounts: db.DbAccount[] = await db.getAccounts();
+@@ -1125,15 +1164,11 @@ async function processBankSyncDownload(
+         starting_balance_flag: true,
+       });
+ 
+-      const result = await reconcileTransactions(
+-        id,
+-        transactions,
+-        true,
+-        useStrictIdChecking,
+-        false,
+-        true,
++      const result = await reconcileTransactions(id, transactions, {
++        isBankSyncAccount: true,
++        strictIdChecking: useStrictIdChecking,
+         updateDates,
+-      );
++      });
+       return {
+         ...result,
+         added: [initialId, ...result.added],
+@@ -1150,11 +1185,11 @@ async function processBankSyncDownload(
+     const result = await reconcileTransactions(
+       id,
+       importTransactions ? transactions : [],
+-      true,
+-      useStrictIdChecking,
+-      false,
+-      true,
+-      updateDates,
++      {
++        isBankSyncAccount: true,
++        strictIdChecking: useStrictIdChecking,
++        updateDates,
++      },
+     );
+ 
+     if (currentBalance != null) {
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 383e1788018dbcc2492c3aab227c73911fc6a3c0..2b89b3e2929a7c033f6b1ae453fd59339a1f6365 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -1,5 +1,6 @@
+ // @ts-strict-ignore
+ import type { ImportTransactionsResult } from '#server/accounts/app';
++import type { PayeeNameNormalization } from '#server/accounts/sync';
+ import type {
+   APIAccountEntity,
+   APIAccountGroupEntity,
+@@ -32,6 +33,7 @@ export type ImportTransactionsOpts = {
+   defaultCleared?: boolean;
+   dryRun?: boolean;
+   reimportDeleted?: boolean;
++  payeeNameNormalization?: PayeeNameNormalization;
+ };
+ 
+ export type ApiHandlers = {

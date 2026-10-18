@@ -1,0 +1,13 @@
+{
+  "id": "974991670f",
+  "reuse": {"score": 4, "why": "Introduces getFillableCategories and replaces the three copied hidden-filter queries (and setZero's unfiltered one) with it, and the new action uses it too, but copyPreviousMonth does not use it."},
+  "duplication": {"score": 3, "why": "The eligibility rule (hidden/group hidden unless included, saved templates, #fixed group) is written once in getFillableCategories and again as a row condition in copyPreviousMonth, so each step's rule change had to be applied twice."},
+  "placement": {"score": 4, "why": "Selection helpers sit in budget/actions.ts beside the actions, though copyPreviousMonth keeps deciding eligibility inline over getBudgetData rows, which had to grow a goal_def column for it."},
+  "scope": {"score": 5, "why": "Only the eligibility rules, the new action, its registration, the flag and release notes."},
+  "maintainability": {"score": 3, "why": "Most actions share one selection function, but the next eligibility rule must again be added in two places that already differ in shape (SQL plus filter vs per-row condition)."},
+  "bypasses_abstraction": {"value": true, "where": "copyPreviousMonth in budget/actions.ts re-implements the hidden, saved-template and #fixed exclusions inline instead of calling getFillableCategories."},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "copyPreviousMonth's combined condition (includeHiddenCategories/hidden/group_hidden, hasSavedTemplates(goal_def), fixedIds.has) restates getFillableCategories' SQL filter and post-filter in a reshaped per-row form."},
+  "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getFillableCategories gains includeHiddenCategories with a conditional SQL fragment; copyPreviousMonth bypasses it with its own eligibility condition."}
+}

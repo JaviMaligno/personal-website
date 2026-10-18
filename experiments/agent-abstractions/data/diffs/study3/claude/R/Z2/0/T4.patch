@@ -1,0 +1,89 @@
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index a6af56b..b0ceacc 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -95,7 +95,7 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged ("is between") amount is scheduled at the end of the range furthest from zero
++  // A ranged ("is between") amount is scheduled at the lowest value the range allows
+   // (for approximate amounts, the end of the tolerance).
+   const amount = getWorstCaseAmount(
+     amountValue,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 95a2a7a..853d82b 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -647,18 +647,23 @@ describe('schedules', () => {
+ });
+ 
+ describe('getRangedAmount', () => {
+-  it('picks the end furthest from zero regardless of order', () => {
++  it('picks the lowest end regardless of order', () => {
+     expect(getRangedAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+     expect(getRangedAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-    expect(getRangedAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-    expect(getRangedAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    expect(getRangedAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++    expect(getRangedAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++  });
++
++  it('picks the negative end of a range spanning zero', () => {
++    expect(getRangedAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++    expect(getRangedAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+   });
+ });
+ 
+ describe('getWorstCaseAmount', () => {
+-  it('expects approximate amounts at the end of the tolerance furthest from zero', () => {
++  it('expects approximate amounts at the lowest end of the tolerance', () => {
+     expect(getWorstCaseAmount(-10000, 'isapprox')).toBe(-10750);
+-    expect(getWorstCaseAmount(10000, 'isapprox')).toBe(10750);
++    expect(getWorstCaseAmount(10000, 'isapprox')).toBe(9250);
+     expect(getWorstCaseAmount(-1234, 'isapprox')).toBe(-1327);
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index fe9a7db..c021866 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -354,21 +354,21 @@ export function getDateWithSkippedWeekend(
+   return date;
+ }
+ 
+-// A ranged ("is between") amount is planned for the worst case: the end of
+-// the range furthest from zero.
++// A ranged ("is between") amount is planned for the worst case: the lowest
++// value the range allows.
+ export function getRangedAmount(range: { num1: number; num2: number }): number {
+-  return Math.abs(range.num1) >= Math.abs(range.num2) ? range.num1 : range.num2;
++  return Math.min(range.num1, range.num2);
+ }
+ 
+ // An approximate ("is approx") amount is planned for the worst case too: the
+-// end of its tolerance furthest from zero.
++// lowest value its tolerance allows.
+ export function getWorstCaseAmount(
+   amount: number | { num1: number; num2: number },
+   op?: string | null,
+ ): number {
+   if (typeof amount !== 'number') return getRangedAmount(amount);
+   if (op === 'isapprox') {
+-    return amount + Math.sign(amount) * getApproxNumberThreshold(amount);
++    return amount - getApproxNumberThreshold(amount);
+   }
+   return amount;
+ }
+diff --git a/upcoming-release-notes/schedule-worst-case-lowest.md b/upcoming-release-notes/schedule-worst-case-lowest.md
+new file mode 100644
+index 0000000..80b54f2
+--- /dev/null
++++ b/upcoming-release-notes/schedule-worst-case-lowest.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Ranged and approximate schedule amounts are now expected at the lowest value they allow, so incoming money is planned at its smallest amount.

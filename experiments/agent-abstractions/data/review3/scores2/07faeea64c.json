@@ -1,0 +1,11 @@
+{"id":"07faeea64c",
+"reuse":{"score":3,"why":"Extends getDateWithSkippedWeekend with holidays and adds shared predicates (skipsWeekendOccurrences, isNonWorkingDay), but no shared function decides skip-versus-move, so each consumer composes the rule itself."},
+"duplication":{"score":2,"why":"The 'daily skip: drop non-working day, else if skipWeekend move it' decision is written out separately in getNextDate, schedule-template, getUpcomingDates and getDatesInRange, and firstWeekdayOccurrence/lastWeekdayOccurrence are near-copies."},
+"placement":{"score":3,"why":"Predicates and the holiday-aware move sit correctly in shared/schedules.ts, but the composed weekend rule lives in each server caller."},
+"scope":{"score":5,"why":"All edits serve the four steps, with tests and release notes."},
+"maintainability":{"score":3,"why":"Every path now handles daily skips and holidays consistently today, but a future change to the rule must be repeated in four places with slightly different shapes (filter loop, continue, guard flag, closure)."},
+"bypasses_abstraction":{"value":true,"where":"getUpcomingDates and getDatesInRange (server/schedules/app.ts), createScheduleList (budget/schedule-template.ts) and getNextDate each wrap getDateWithSkippedWeekend in their own skipsWeekendOccurrences/isNonWorkingDay branching instead of one shared weekend-rule function."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The skip-or-move decision reappears as a push/filter loop in getUpcomingDates, an if/continue in getDatesInRange, resolveDate/isSkippedOccurrence closures in schedule-template, and a !skipsDailyWeekends guard plus firstWeekdayOccurrence in getNextDate."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":4,"where":"getDateWithSkippedWeekend gains holidays; the daily special case is kept outside it and re-applied at getNextDate, getUpcomingDates, getDatesInRange and createScheduleList."}}

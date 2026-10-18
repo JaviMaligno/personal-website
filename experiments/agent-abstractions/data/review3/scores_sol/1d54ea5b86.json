@@ -1,0 +1,44 @@
+{
+ "id": "1d54ea5b86",
+ "reuse": {
+  "score": 4,
+  "why": "Most consumers share getPlannedAmount through direct calls or getScheduledAmount, and approximate planning reuses getApproxNumberThreshold, but preview generation shares only range selection."
+ },
+ "duplication": {
+  "score": 4,
+  "why": "The main amount decision is centralized, but computeSchedulePreviewTransactions retains its own missing, numeric, and range dispatch."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Schedule amount policy belongs in shared/schedules.ts, with API serialization and UI consumers delegating to that layer."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on schedule amount planning, its consumers, the API field, tests, and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralization improves ownership, but the preview bypass, loosely typed operator parameters, and outdated policy comments leave competing descriptions and implementations of the rule."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/shared/schedules.ts: computeSchedulePreviewTransactions calls getRangeAmount while retaining local dispatch instead of delegating the full decision to getPlannedAmount."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "computeSchedulePreviewTransactions replaces midpoint arithmetic with getRangeAmount but preserves the surrounding missing/number/range decision already implemented by getPlannedAmount."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "getScheduledAmount gains an optional op parameter, getPlannedAmount introduces an isapprox branch, and computeSchedulePreviewTransactions bypasses the complete planning helper."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 28.2
+ }
+}

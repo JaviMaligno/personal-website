@@ -1,0 +1,45 @@
+{
+ "id": "e7eb0a8988",
+ "reuse": {
+  "score": 4,
+  "why": "Fintegra reuses findOrCreateBank and finishLinkingAccount, and every provider calls the shared link guard, but replacement copies unlinkAccount's local cleanup."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "The diff duplicates the unlink field-reset block and the existing providers' transaction request and response-normalization workflow."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider integration follows the existing module boundaries, although mutating an old account inside ensureBankAccountIsNotLinked obscures the separation between validation and linking."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits directly support the requested linking rules, Fintegra integration, or their tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared validation and linking reuse are helpful, but duplicated unlink cleanup and a validation-named helper that performs replacement mutations create avoidable maintenance risks."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "app.ts: ensureBankAccountIsNotLinked reproduces unlinkAccount's local cleanup directly; extracting that cleanup would allow both operations to share it while keeping provider cleanup separate."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "sync.ts: downloadFintegraTransactions repeats the existing provider download workflow with a renamed provider, compacted request arguments, and reshaped response construction."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 0,
+  "where": "app.ts: across the requested changes, ensureBankAccountIsNotLinked gains closed-destination rejection and a replaceExistingLink parameter with a replacement branch that mutates the previous account; all six provider link handlers use it."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 37.6
+ }
+}

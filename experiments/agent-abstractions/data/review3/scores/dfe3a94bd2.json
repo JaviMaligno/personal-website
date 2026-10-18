@@ -1,0 +1,12 @@
+{"id": "dfe3a94bd2",
+ "reuse": {"score": 2, "why": "Adds a new worstCaseAmount instead of changing the existing exported getScheduledAmount in shared/schedules.ts, which already decides the missing/number/range cases and serves the desktop client."},
+ "duplication": {"score": 3, "why": "The range arithmetic is now shared by the four server sites, but each keeps its own `missing ? 0 : number ? value : range` dispatch, and worstCaseAmount runs parallel to getScheduledAmount's range branch."},
+ "placement": {"score": 3, "why": "A schedule-amount rule is placed in shared/rules.ts (rule condition helpers) rather than shared/schedules.ts, where the tree keeps getScheduledAmount and other schedule logic."},
+ "scope": {"score": 5, "why": "Only the amount sites, the helper, its tests and a release note."},
+ "maintainability": {"score": 2, "why": "Two definitions of the expected amount now disagree: getScheduledAmount (desktop balance and schedule tables) and computeSchedulePreviewTransactions still use the midpoint while the server sites use worstCaseAmount."},
+ "bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts, forecast-schedules.ts and schedule-template.ts call a new worstCaseAmount instead of shared/schedules.ts getScheduledAmount; computeSchedulePreviewTransactions in shared/schedules.ts and getScheduledAmount itself were left on the midpoint."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "worstCaseAmount is an openly separate helper beside getScheduledAmount, not a reshaped copy."},
+ "one_place": {"value": false, "where": "The rule lands in worstCaseAmount (shared/rules.ts) for four server sites, but getScheduledAmount and computeSchedulePreviewTransactions in shared/schedules.ts still compute the midpoint, and each site keeps its own missing/number dispatch."}
+}

@@ -1,0 +1,145 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 5b9f191..3791a35 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -61,8 +61,10 @@ async function createScheduleList(
+       extractScheduleConds(conditions);
+     let scheduleAmount =
+       amountCondition.op === 'isbetween'
+-        ? Math.round(amountCondition.value.num1 + amountCondition.value.num2) /
+-          2
++        ? Math.abs(amountCondition.value.num1) >=
++          Math.abs(amountCondition.value.num2)
++          ? amountCondition.value.num1
++          : amountCondition.value.num2
+         : amountCondition.value;
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 6657f87..494cc73 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -93,11 +93,13 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged ("is between") amount is scheduled at its rounded midpoint.
++  // A ranged ("is between") amount uses the endpoint furthest from zero.
+   const amount =
+     typeof amountValue === 'number'
+       ? amountValue
+-      : Math.round((amountValue.num1 + amountValue.num2) / 2);
++      : Math.abs(amountValue.num1) >= Math.abs(amountValue.num2)
++        ? amountValue.num1
++        : amountValue.num2;
+ 
+   return {
+     id: schedule.id,
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index b82b437..36a884e 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -151,14 +151,16 @@ function updateActions(
+   // Mirrors how `_amount` resolves: a deleted/empty amount condition value
+   // yields 0, so the action is synced to 0 too, keeping it consistent with
+   // the amount the schedule actually posts. A ranged ("is between") amount
+-  // is scheduled at its rounded midpoint.
++  // uses the endpoint furthest from zero.
+   const amountValue = amountCond.value;
+   const amount =
+     amountValue == null
+       ? 0
+       : typeof amountValue === 'number'
+         ? amountValue
+-        : Math.round((amountValue.num1 + amountValue.num2) / 2);
++        : Math.abs(amountValue.num1) >= Math.abs(amountValue.num2)
++          ? amountValue.num1
++          : amountValue.num2;
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -592,13 +594,15 @@ async function postTransactionForSchedule({
+   }
+ 
+   // A missing amount (deleted condition) posts 0; a ranged ("is between")
+-  // amount posts its rounded midpoint.
++  // amount posts the endpoint furthest from zero.
+   const amount =
+     schedule._amount == null
+       ? 0
+       : typeof schedule._amount === 'number'
+         ? schedule._amount
+-        : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++        : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
++          ? schedule._amount.num1
++          : schedule._amount.num2;
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..31f78b5 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -9,6 +9,7 @@ import {
+   getNextDate,
+   getNextDateAfter,
+   getScheduleOccurrenceMatchStartDate,
++  getScheduledAmount,
+   getStatus,
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+@@ -32,6 +33,20 @@ describe('schedules', () => {
+     MockDate.reset();
+   });
+ 
++  describe('getScheduledAmount', () => {
++    it('uses the ranged endpoint furthest from zero regardless of order', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
++      expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++    });
++
++    it('keeps inverse schedule amounts consistent', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 }, true)).toBe(
++        20000,
++      );
++    });
++  });
++
+   describe('getStatus', () => {
+     it('returns completed if completed', () => {
+       expect(getStatus(todayString, true, false, '7')).toBe('completed');
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..2c61f9c 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -364,8 +364,9 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const avg = (amount.num1 + amount.num2) / 2;
+-  return inverse ? -Math.round(avg) : Math.round(avg);
++  const expected =
++    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  return inverse ? -expected : expected;
+ }
+ 
+ export function getUpcomingDays(
+@@ -497,13 +498,15 @@ export function computeSchedulePreviewTransactions(
+       }
+ 
+       // A missing amount previews as 0; a ranged ("is between") amount as its
+-      // rounded midpoint.
++      // endpoint furthest from zero.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amount
+-            : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++            : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
++              ? schedule._amount.num1
++              : schedule._amount.num2;
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

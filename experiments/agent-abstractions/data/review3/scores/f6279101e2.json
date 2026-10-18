@@ -1,0 +1,12 @@
+{"id":"f6279101e2",
+"reuse":{"score":3,"why":"The rule is added to the existing shouldFillCategory gate, which every month-wide action already uses, but the tag test is a hand-written regex instead of the tree's shared tag parser (extractTagsFromText in #shared/tags), and setZero keeps its own copy of the category query instead of reusing getAverageFillCategories."},
+"duplication":{"score":3,"why":"The same `LEFT JOIN notes gn ON gn.id = g.id` / `gn.note AS group_notes` addition and the widened row type are pasted into three separate SQL queries (getBudgetData, getAverageFillCategories, setZero), two of which were already identical copies."},
+"placement":{"score":4,"why":"The predicate sits next to hasSavedTemplates and is consulted from shouldFillCategory in the budget actions module, where the fill rules already live; the tag parsing itself would belong in shared/tags."},
+"scope":{"score":4,"why":"Focused on the feature plus a test and release note, but it accidentally deletes the line of the doc comment that lists the existing exclusions, leaving a dangling blank line."},
+"maintainability":{"score":3,"why":"The one gate is easy to follow, but the notes join is now maintained in three queries, and the private case-insensitive regex disagrees with how the rest of the app tokenises tags (case-sensitive, '#'-delimited, '##' escape)."},
+"bypasses_abstraction":{"value":true,"where":"isFixedGroup in server/budget/actions.ts uses its own regex instead of extractTagsFromText from #shared/tags; setZero repeats the category query instead of calling getAverageFillCategories"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated join/type additions are plain copies, not reshaped; the tag regex reimplements the shared tag parsing in a different form, but nothing is copied from it"},
+"one_place":{"value":true,"where":"The #fixed rule is checked once, in shouldFillCategory (via isFixedGroup), which copyPreviousMonth, setZero and the average-based actions all call; only the data feed (the notes join) is repeated in three queries"}
+}

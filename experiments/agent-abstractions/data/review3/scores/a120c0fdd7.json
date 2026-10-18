@@ -1,0 +1,12 @@
+{"id":"a120c0fdd7",
+"reuse":{"score":5,"why":"It replaces three identical category queries and copyPreviousMonth's inline hidden check with one getMonthWideCategories selection, reuses the existing extractTagsFromText for the #fixed tag, and builds the new action on getSheetValue/setBudget/batchMessages."},
+"duplication":{"score":4,"why":"The selection is now defined once, but the 'is_income && !isTrackingBudget()' skip is still repeated in each month-wide action including the new setLastMonthSpending, and copyPreviousMonth intersects getBudgetData's rows with a second category query."},
+"placement":{"score":5,"why":"The selection helper sits in budget/actions.ts next to the actions that use it, and the new handler is registered in budget/app.ts like its siblings, with undoable/mutator wrapping."},
+"scope":{"score":5,"why":"Changes are limited to the month-wide actions, the new handler, tests and release notes."},
+"maintainability":{"score":4,"why":"One documented function decides which categories month-wide actions touch, with a single explicit includeHiddenCategories parameter; the leftover per-action income check is a small wrinkle."},
+"bypasses_abstraction":{"value":false,"where":"none; every month-wide action (copyPreviousMonth, setZero, setLastMonthSpending, set3/6/12MonthAvg) takes its categories from getMonthWideCategories"},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"none; the remaining repeated income/tracking check is a verbatim one-liner, not reshaped"},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"getMonthWideCategories gained only the includeHiddenCategories parameter with its hidden-filter ternary, which is the requested variation; no caller bypasses it."}
+}

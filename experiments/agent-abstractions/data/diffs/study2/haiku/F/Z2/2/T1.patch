@@ -1,0 +1,113 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 63fd79c..8b189c8 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -60,13 +60,7 @@ async function createScheduleList(
+     const conditions = rule.serialize().conditions;
+     const { date: dateConditions, amount: amountCondition } =
+       extractScheduleConds(conditions);
+-    // Templates round the range's sum before halving; the half unit this can
+-    // leave is rounded after the adjustment below.
+-    let scheduleAmount = getScheduledAmount(
+-      amountCondition.value,
+-      false,
+-      'halfOfRoundedSum',
+-    );
++    let scheduleAmount = getScheduledAmount(amountCondition.value);
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+       switch (template.adjustmentType) {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..08d096d 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -8,6 +8,7 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
++  getScheduledAmount,
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+@@ -642,4 +643,35 @@ describe('schedules', () => {
+       expect(isCustomUpcomingLength(undefined)).toBe(false);
+     });
+   });
++
++  describe('getScheduledAmount', () => {
++    it('returns a single amount unchanged', () => {
++      expect(getScheduledAmount(-5000)).toBe(-5000);
++    });
++
++    it('returns zero for a schedule without an amount', () => {
++      expect(getScheduledAmount(null)).toBe(0);
++    });
++
++    it('plans a negative range at the end furthest from zero', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
++      expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
++    });
++
++    it('plans a positive range at the end furthest from zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    });
++
++    it('plans a range spanning zero at the end with the larger magnitude', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(5000);
++      expect(getScheduledAmount({ num1: 3000, num2: -5000 })).toBe(-5000);
++    });
++
++    it('inverts the planned amount when requested', () => {
++      expect(getScheduledAmount({ num1: -10100, num2: -20000 }, true)).toBe(
++        20000,
++      );
++    });
++  });
+ });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 67871e6..3369105 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -378,12 +378,11 @@ export function applyWeekendRuleToDay(
+ }
+ 
+ // The amount a schedule is expected to post. A ranged ("is between") amount is
+-// scheduled at its midpoint: rounded ('roundedMidpoint'), or half of the rounded
+-// sum ('halfOfRoundedSum', budget templates), which can leave a half unit.
++// planned at the end of the range furthest from zero, so variable bills are
++// budgeted for their worst case.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+-  rangeRounding: 'roundedMidpoint' | 'halfOfRoundedSum' = 'roundedMidpoint',
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+@@ -392,11 +391,9 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const midpoint =
+-    rangeRounding === 'halfOfRoundedSum'
+-      ? Math.round(amount.num1 + amount.num2) / 2
+-      : Math.round((amount.num1 + amount.num2) / 2);
+-  return inverse ? -midpoint : midpoint;
++  const worstCase =
++    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  return inverse ? -worstCase : worstCase;
+ }
+ 
+ export function getUpcomingDays(
+diff --git a/upcoming-release-notes/plan-variable-schedules-worst-case.md b/upcoming-release-notes/plan-variable-schedules-worst-case.md
+new file mode 100644
+index 0000000..0b3b9c4
+--- /dev/null
++++ b/upcoming-release-notes/plan-variable-schedules-worst-case.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Budget variable schedules for their worst case: a bill that is "between" two amounts is now planned at the amount furthest from zero.

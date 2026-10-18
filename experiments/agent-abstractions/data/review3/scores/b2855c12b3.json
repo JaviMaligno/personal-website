@@ -1,0 +1,11 @@
+{"id":"b2855c12b3",
+"reuse":{"score":2,"why":"getNextDate drops the existing applyWeekendRule/getDateWithSkippedWeekend and re-implements weekend shifting inline with holidays, while getDatesInRange, getUpcomingDates and schedule-template keep using applyWeekendRule without holidays, so the shared helper is no longer the single weekend rule."},
+"duplication":{"score":2,"why":"The daily skip loop is written twice in getNextDate (forward and reverse), the daily weekend skip is written again in getDatesInRange, and the before/after shifting loop duplicates getDateWithSkippedWeekend."},
+"placement":{"score":3,"why":"getDatesInRange sits sensibly next to getUpcomingDates in server/schedules/app.ts, but the daily-skip and holiday rules are embedded in getNextDate's body instead of in the shared weekend-rule functions of shared/schedules.ts."},
+"scope":{"score":4,"why":"Edits serve the four steps, though holidays are only wired into getNextDate, leaving other date paths unchanged."},
+"maintainability":{"score":2,"why":"The weekend/holiday rule now exists in three divergent forms (inline loops in getNextDate, a daily special case in getDatesInRange, and the untouched applyWeekendRule), with magic attempt bounds and an empty if-branch, which invites drift."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getNextDate replaces applyWeekendRule with an inline shift loop; server/schedules/app.ts getDatesInRange handles daily weekends itself and passes skipWeekend:false to applyWeekendRule for daily."},
+"duplicated_blocks":3,
+"would_merge":"no",
+"disguised_duplication":{"value":true,"where":"getNextDate's direction loop (weekendSolve 'before' ? -1 : 1, step until not weekend/holiday) is a reshaped copy of getDateWithSkippedWeekend; the forward and reverse daily-skip loops are mirrored copies of each other."},
+"abstraction_drift":{"value":true,"parameters_added":0,"special_case_branches":2,"bypassing_call_sites":2,"where":"applyWeekendRule gains no holidays/daily support; instead getNextDate adds an isDaily branch and its own shifting loop and getDatesInRange adds a daily ternary (skipWeekend: frequency !== 'daily' && ...) plus its own weekend filter, both bypassing the shared helper."}}

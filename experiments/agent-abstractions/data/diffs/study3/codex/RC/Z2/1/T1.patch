@@ -1,0 +1,77 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 6e5ec02..1df5a3d 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -27,8 +27,8 @@ import { q } from '#shared/query';
+ import {
+   DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   extractScheduleConds,
+-  getExpectedScheduleAmount,
+   getDateWithSkippedWeekend,
++  getExpectedScheduleAmount,
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..e38cb8a 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -5,6 +5,7 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ import * as monthUtils from './months';
+ import {
+   computeSchedulePreviewTransactions,
++  getExpectedScheduleAmount,
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
+@@ -32,6 +33,19 @@ describe('schedules', () => {
+     MockDate.reset();
+   });
+ 
++  describe('getExpectedScheduleAmount', () => {
++    it.each([
++      [{ num1: -10100, num2: -20000 }, -20000],
++      [{ num1: -20000, num2: -10100 }, -20000],
++      [{ num1: 10100, num2: 20000 }, 20000],
++      [{ num1: 20000, num2: 10100 }, 20000],
++      [10000, 10000],
++      [null, 0],
++    ])('resolves %j to %i', (amount, expected) => {
++      expect(getExpectedScheduleAmount(amount)).toBe(expected);
++    });
++  });
++
+   describe('getStatus', () => {
+     it('returns completed if completed', () => {
+       expect(getStatus(todayString, true, false, '7')).toBe('completed');
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 5001fff..484611f 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -365,21 +365,17 @@ export function getScheduledAmount(
+   return inverse ? -expectedAmount : expectedAmount;
+ }
+ 
+-/**
+- * Resolve a ranged schedule amount to its expected value. The budget template
+- * path historically rounds the sum before dividing; keep that option so this
+- * refactor preserves its results for half values.
+- */
++/** Resolve a ranged schedule amount to the endpoint furthest from zero. */
+ export function getExpectedScheduleAmount(
+   amount: number | { num1: number; num2: number } | null | undefined,
+-  rounding: 'midpoint' | 'template' = 'midpoint',
++  _rounding: 'midpoint' | 'template' = 'midpoint',
+ ): number {
+   if (amount == null) return 0;
+   if (typeof amount === 'number') return amount;
+ 
+-  return rounding === 'template'
+-    ? Math.round(amount.num1 + amount.num2) / 2
+-    : Math.round((amount.num1 + amount.num2) / 2);
++  return Math.abs(amount.num1) >= Math.abs(amount.num2)
++    ? amount.num1
++    : amount.num2;
+ }
+ 
+ export function getUpcomingDays(

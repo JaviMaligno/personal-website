@@ -1,0 +1,11 @@
+{"id":"6443f7ed20",
+"reuse":{"score":3,"why":"Reuses the existing ensureAccountNotLinked guard as the single entry point for all providers, but copies unlinkAccount's 'unlinked state' field reset instead of extracting it into a shared local-unlink helper."},
+"duplication":{"score":3,"why":"The eight-field db.updateAccount reset block is a verbatim copy of the one inside unlinkAccount in accounts/app.ts; the flag threading through six link functions is unavoidable given the existing structure."},
+"placement":{"score":3,"why":"A function named ensureAccountNotLinked, a precondition check, now also mutates another account, and does so before the new link is created; the takeover would read better as an explicit step in the link flow."},
+"scope":{"score":5,"why":"Only the flag, its threading through the provider link functions and the takeover logic plus a test are changed."},
+"maintainability":{"score":3,"why":"The unlinked-account field list now lives in two places that must stay in sync, and the side effect is hidden behind a guard-style name."},
+"bypasses_abstraction":{"value":true,"where":"link.ts ensureAccountNotLinked writes the unlink field reset directly with db.updateAccount instead of sharing the local part of unlinkAccount (accounts/app.ts)."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied reset in link.ts is verbatim from unlinkAccount, with a comment explaining why; not disguised."}
+}

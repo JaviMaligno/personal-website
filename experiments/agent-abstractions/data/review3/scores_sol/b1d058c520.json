@@ -1,0 +1,45 @@
+{
+ "id": "b1d058c520",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses recurrence conversion and weekend adjustment helpers, but repeats the daily-versus-other-frequency policy across consumers."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Daily skipping decisions recur in getNextDate, both date-list handlers, and the budget template, with filtering and holiday-dependent enumeration limits also repeated."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Holiday matching belongs appropriately in shared/schedules.ts, but schedule policy remains distributed across server handlers and budget logic."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the four requested scheduling changes and their supporting types, tests, and release notes."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate several implementations of occurrence handling and independently maintained enumeration bounds when scheduling rules evolve."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "server/schedules/app.ts:getDatesInRange constructs and processes raw occurrences instead of sharing getNextDate's effective-date policy; getUpcomingDates and budget/schedule-template.ts also maintain that policy locally."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The daily exception appears as a search branch in shared/schedules.ts:getNextDate, filter/map processing in the two server date-list handlers, and an inverted movesWeekend flag in budget/schedule-template.ts."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 3,
+  "where": "getDateWithSkippedWeekend gains the holidays parameter, getNextDate gains a daily-specific branch, and getDatesInRange, getUpcomingDates, and createScheduleList independently decide how the daily exception applies."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 36.3
+ }
+}

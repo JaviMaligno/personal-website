@@ -1,0 +1,11 @@
+{"id":"4dfa2b659b",
+"reuse":{"score":3,"why":"Collapses the repeated category queries into getMonthActionCategories, but restates the 'saved UI template' test as inline SQL (the COALESCE(JSON_EXTRACT(template_settings...)) fragment from statements.ts) and does not reuse the new selection in copyPreviousMonth."},
+"duplication":{"score":3,"why":"Removes three copies of the avg-action query, but copyPreviousMonth keeps its own separate hidden check in JS and the template-source expression is copied from statements.ts/cleanup-template-notes.ts."},
+"placement":{"score":4,"why":"The shared selection lives in budget/actions.ts beside the actions that use it, which fits the tree's layering."},
+"scope":{"score":5,"why":"Only the month-wide action selection and a test for it."},
+"maintainability":{"score":3,"why":"The exclusion rule is now split between an SQL WHERE clause for four actions and a JS hidden check in copyPreviousMonth that lacks the template rule, so the two paths will drift."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth in budget/actions.ts still filters with its own `prevBudget.hidden === 1 || prevBudget.group_hidden === 1` instead of the new getMonthActionCategories rule."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The template-source test in getMonthActionCategories is a recognisable copy of the COALESCE(JSON_EXTRACT(...,'$.source'),'notes') fragment in statements.ts, only negated."},
+"one_place":{"value":false,"where":"The rule lives in getMonthActionCategories (setZero, set3/6/12MonthAvg) but copyPreviousMonth applies its own hidden-only check via getBudgetData and never applies the saved-template exclusion."}}

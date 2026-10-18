@@ -1,0 +1,59 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 59735e7..fa9c660 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -37,9 +37,10 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+-      [{ num1: 10100, num2: 20000 }, 20000],
+-      [{ num1: 20000, num2: 10100 }, 20000],
+-    ])('uses the endpoint furthest from zero', (range, expected) => {
++      [{ num1: 10100, num2: 20000 }, 10100],
++      [{ num1: 20000, num2: 10100 }, 10100],
++      [{ num1: -3000, num2: 5000 }, -3000],
++    ])('uses the lowest value in the range', (range, expected) => {
+       expect(getScheduledAmount(range)).toBe(expected);
+     });
+ 
+@@ -50,7 +51,7 @@ describe('schedules', () => {
+ 
+     it.each([
+       [-10000, -10750],
+-      [10000, 10750],
++      [10000, 9250],
+       [-1234, -1327],
+     ])('uses the approximate amount tolerance for %i', (amount, expected) => {
+       expect(
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 6ea9950..9cc5a01 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -377,9 +377,9 @@ export function applyWeekendRuleToDay(
+     : day;
+ }
+ 
+-// The amount a schedule is expected to post. For a ranged ("is between") amount,
+-// use the endpoint furthest from zero so planning covers the worst case.
+-// For an approximate amount, use the end of its tolerance furthest from zero.
++// The amount a schedule is expected to post. For a ranged ("is between") or
++// approximate amount, use the lowest value allowed so planning covers the
++// worst case for both money going out and money coming in.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -393,12 +393,11 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     if (amountOp === 'isapprox') {
+       const tolerance = Math.round(Math.abs(amount) * 0.075);
+-      amount += amount < 0 ? -tolerance : tolerance;
++      amount -= tolerance;
+     }
+     return inverse ? -amount : amount;
+   }
+-  const expectedAmount =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  const expectedAmount = Math.min(amount.num1, amount.num2);
+   return inverse ? -expectedAmount : expectedAmount;
+ }
+ 

@@ -1,0 +1,12 @@
+{"id": "f44d468cff",
+ "reuse": {"score": 3, "why": "Reuses getDateWithSkippedWeekend (extended with holidays), recurConfigToRSchedule and RSchedule, but the daily-skip rule is not put in a shared helper and getDatesInRange rebuilds the getUpcomingDates pipeline rather than sharing it."},
+ "duplication": {"score": 2, "why": "The daily weekend/holiday skip rule is written twice (a retry loop in getNextDate and a null-map filter in getDatesInRange), and getDatesInRange copies the RSchedule/occurrences/breadcrumb skeleton of getUpcomingDates."},
+ "placement": {"score": 3, "why": "Holiday matching and the weekend move live in shared/schedules.ts where they belong, but the daily-skip decision is placed inside getNextDate and inline in the server handler instead of in the weekend-adjustment helper."},
+ "scope": {"score": 4, "why": "Edits stay on schedules, recur config typing and the new handler; tests are related."},
+ "maintainability": {"score": 2, "why": "The weekend rule now has three variants (move in getDateWithSkippedWeekend, skip loop in getNextDate, skip filter in getDatesInRange) and getUpcomingDates/schedule-template still only move, so future rule changes must be found in several places."},
+ "bypasses_abstraction": {"value": true, "where": "getDatesInRange in server/schedules/app.ts decides daily skipping inline (isWeekend/isHoliday) around getDateWithSkippedWeekend; getUpcomingDates and budget/schedule-template.ts call getDateWithSkippedWeekend directly without the daily rule."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "Daily skip rule appears as a bounded for-loop over occurrences in shared/schedules.ts getNextDate and as a map-to-null + filter(Boolean) in server/schedules/app.ts getDatesInRange; getDatesInRange reshapes getUpcomingDates (range window instead of count)."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 3, "where": "holidays parameter added to getDateWithSkippedWeekend; DAILY special-case branch added inside getNextDate; getDatesInRange re-implements the daily skip, and getUpcomingDates and schedule-template's two calls bypass it (counted as getDatesInRange, getUpcomingDates, schedule-template)."}
+}

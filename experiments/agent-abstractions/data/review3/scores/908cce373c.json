@@ -1,0 +1,12 @@
+{"id": "908cce373c",
+ "reuse": {"score": 1, "why": "The tree already exports getScheduleAmount in shared/schedules.ts with exactly this missing/number/range-furthest-from-zero rule, and the diff writes its own inline version instead of calling it."},
+ "duplication": {"score": 2, "why": "The expected-amount rule is re-implemented inline in scheduleModel.toExternal, duplicating getScheduleAmount (and even differing on ties with > instead of >=)."},
+ "placement": {"score": 3, "why": "Adding the field in the API model mapper is the right spot, but the business rule belongs in the shared schedules module rather than the API layer."},
+ "scope": {"score": 5, "why": "Only the new field, its type and a focused test are added."},
+ "maintainability": {"score": 2, "why": "Two definitions of the expected amount can drift apart, and the API already disagrees on equal-magnitude ranges."},
+ "bypasses_abstraction": {"value": true, "where": "scheduleModel.toExternal in server/api-models.ts computes expectedAmount itself instead of calling getScheduleAmount from #shared/schedules."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "api-models.ts reshapes getScheduleAmount's null check and range comparison into a ?? 0 default plus a nested ternary, so the copy is not obvious."},
+ "t2_reuse": "reimplements"
+}

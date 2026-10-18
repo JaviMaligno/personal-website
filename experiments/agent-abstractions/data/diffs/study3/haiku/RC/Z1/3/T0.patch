@@ -1,0 +1,191 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..5baee29 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -213,6 +213,48 @@ function setCarryover(
+   });
+ }
+ 
++// Which categories a month-wide action writes to. 'all' includes hidden categories
++// and categories in hidden groups; 'visible' leaves them out and also leaves out
++// categories without a group; 'not-hidden' leaves out hidden ones but keeps
++// categories without a group.
++type MonthFillScope = 'all' | 'visible' | 'not-hidden';
++
++type FillFlags = {
++  is_income: 1 | 0;
++  hidden: 1 | 0;
++  group_hidden: 1 | 0 | null;
++};
++
++function isMonthFillTarget(cat: FillFlags, scope: MonthFillScope): boolean {
++  if (cat.is_income === 1 && !isTrackingBudget()) {
++    return false;
++  }
++  if (scope === 'all') {
++    return true;
++  }
++  if (scope === 'visible') {
++    return cat.hidden === 0 && cat.group_hidden === 0;
++  }
++  return cat.hidden !== 1 && cat.group_hidden !== 1;
++}
++
++async function getMonthFillCategories(
++  scope: MonthFillScope,
++): Promise<(FillFlags & { id: string })[]> {
++  const categories = await db.all<FillFlags & { id: string }>(`
++    SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden
++    FROM categories c
++    LEFT JOIN category_groups g ON c.cat_group = g.id
++    WHERE c.tombstone = 0
++  `);
++  return categories.filter(cat => isMonthFillTarget(cat, scope));
++}
++
++// Averages are spending, which is negative for expenses; the budget is the positive amount.
++function spendingToBudgetAmount(spending: number, is_income: number): number {
++  return is_income === 0 ? -spending : spending;
++}
++
+ // Actions
+ 
+ export async function copyPreviousMonth({
+@@ -226,10 +268,7 @@ export async function copyPreviousMonth({
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+-      if (prevBudget.is_income === 1 && !isTrackingBudget()) {
+-        return;
+-      }
+-      if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
++      if (!isMonthFillTarget(prevBudget, 'not-hidden')) {
+         return;
+       }
+       void setBudget({
+@@ -259,15 +298,10 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
+-  );
++  const categories = await getMonthFillCategories('all');
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
+-        return;
+-      }
+       void setBudget({ category: cat.id, month, amount: 0 });
+     });
+   });
+@@ -278,32 +312,21 @@ export async function set3MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getMonthFillCategories('visible');
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
+-        continue;
+-      }
+-
+-      let avg = await getCategoryAverage({
++      const avg = await getCategoryAverage({
+         month,
+         maxMonths: 3,
+         categoryId: cat.id,
+       });
+ 
+-      if (cat.is_income === 0) {
+-        avg *= -1;
+-      }
+-
+-      void setBudget({ category: cat.id, month, amount: avg });
++      void setBudget({
++        category: cat.id,
++        month,
++        amount: spendingToBudgetAmount(avg, cat.is_income),
++      });
+     }
+   });
+ }
+@@ -313,20 +336,10 @@ export async function set12MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getMonthFillCategories('visible');
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
+-        continue;
+-      }
+       void setNMonthAvg({ month, N: 12, category: cat.id });
+     }
+   });
+@@ -337,20 +350,10 @@ export async function set6MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getMonthFillCategories('visible');
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
+-        continue;
+-      }
+       void setNMonthAvg({ month, N: 6, category: cat.id });
+     }
+   });
+@@ -370,18 +373,18 @@ export async function setNMonthAvg({
+     [category],
+   );
+ 
+-  let avg = await getCategoryAverage({
++  const avg = await getCategoryAverage({
+     month,
+     maxMonths: N,
+     categoryId: category,
+   });
+ 
+   await batchMessages(async () => {
+-    if (categoryFromDb.is_income === 0) {
+-      avg *= -1;
+-    }
+-
+-    void setBudget({ category, month, amount: avg });
++    void setBudget({
++      category,
++      month,
++      amount: spendingToBudgetAmount(avg, categoryFromDb.is_income),
++    });
+   });
+ }
+ 

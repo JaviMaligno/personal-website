@@ -1,0 +1,150 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index a13a142..c9036d8 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -303,6 +303,38 @@ describe('accountsBankSync', () => {
+   });
+ });
+ 
++describe('bank account linking', () => {
++  it('refuses to link an account already linked through the same provider', async () => {
++    insertBank({ id: 'bank1', bank_id: 'sfin-bank', name: 'SimpleFin' });
++    await db.insertAccount({
++      id: 'linked-account',
++      name: 'Checking',
++      bank: 'bank1',
++      account_id: 'external-1',
++      account_sync_source: 'simpleFin',
++      closed: 1,
++    });
++
++    await expect(
++      app.handlers['simplefin-accounts-link']({
++        externalAccount: {
++          account_id: 'external-1',
++          balance: 100,
++          name: 'Checking',
++        },
++      }),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    expect(await db.all<db.DbAccount>('SELECT * FROM accounts')).toHaveLength(
++      1,
++    );
++    expect(await db.all<db.DbPayee>('SELECT * FROM payees')).toHaveLength(0);
++  });
++});
++
+ describe('bank sync handlers must not nest mutators', () => {
+   it('does not register the sync handlers as mutating methods', () => {
+     expect(isMutating(app.handlers['accounts-bank-sync'])).toBe(false);
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 1ca2951..ad76105 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -52,6 +52,23 @@ type LinkAccountBaseParams = {
+   startingBalance?: number;
+ };
+ 
++async function ensureBankAccountIsNotLinked(
++  provider: NonNullable<db.DbAccount['account_sync_source']>,
++  accountId: string,
++  upgradingId?: AccountEntity['id'],
++) {
++  const existingAccount = await db.first<Pick<db.DbAccount, 'id'>>(
++    `SELECT id FROM accounts
++     WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0
++       AND id != ?`,
++    [provider, accountId, upgradingId ?? ''],
++  );
++
++  if (existingAccount) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ export type AccountHandlers = {
+   'account-update': typeof updateAccount;
+   'accounts-get': typeof getAccounts;
+@@ -180,6 +197,11 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
++  await ensureBankAccountIsNotLinked(
++    'goCardless',
++    account.account_id,
++    upgradingId,
++  );
+   let id;
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+@@ -247,6 +269,11 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
++  await ensureBankAccountIsNotLinked(
++    'simpleFin',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id;
+ 
+   const institution = {
+@@ -324,6 +351,11 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
++  await ensureBankAccountIsNotLinked(
++    'pluggyai',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id;
+   const fileId = getPrefs()?.cloudFileId;
+ 
+@@ -403,6 +435,11 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
++  await ensureBankAccountIsNotLinked(
++    'akahu',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id;
+ 
+   const institution = {
+@@ -477,6 +514,11 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
++  await ensureBankAccountIsNotLinked(
++    'enableBanking',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id: string | undefined;
+ 
+   const institution = {
+diff --git a/packages/loot-core/src/server/db/types/index.ts b/packages/loot-core/src/server/db/types/index.ts
+index ee0000a..ab4ec27 100644
+--- a/packages/loot-core/src/server/db/types/index.ts
++++ b/packages/loot-core/src/server/db/types/index.ts
+@@ -21,7 +21,13 @@ export type DbAccount = {
+   type?: string | null;
+   subtype?: string | null;
+   bank?: string | null;
+-  account_sync_source?: 'simpleFin' | 'goCardless' | null;
++  account_sync_source?:
++    | 'simpleFin'
++    | 'goCardless'
++    | 'pluggyai'
++    | 'akahu'
++    | 'enableBanking'
++    | null;
+   last_reconciled?: string | null;
+   last_sync?: string | null;
+   bank_sync_status?:

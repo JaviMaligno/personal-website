@@ -1,0 +1,44 @@
+{
+ "id": "24b61c3e21",
+ "reuse": {
+  "score": 4,
+  "why": "All providers share the new link preparation helper, Fintegra reuses findOrCreateBank, and both unlink paths share clearBankAccountLink."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Fintegra adds copies of the existing account linking workflow and Akahu transaction downloader instead of sharing their common logic."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Link policies and local unlink operations belong in accounts/link.ts, while handlers, downloads, configuration, and provider types follow existing module boundaries."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are confined to the requested linking rules, replacement option, Fintegra integration, and supporting tests and registration."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized link policies simplify future rule changes, but another duplicated linking workflow and downloader increase the number of implementations maintainers must keep aligned."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "Every link handler calls prepareBankAccountLink and findOrCreateBank, and replacement and explicit unlinking both call clearBankAccountLink."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "app.ts linkFintegraAccount reproduces the existing provider linking workflow with renamed provider references, and sync.ts downloadFintegraTransactions reproduces downloadAkahuTransactions with a different endpoint and log label."
+ },
+ "abstraction_drift": {
+  "value": false,
+  "parameters_added": 1,
+  "special_case_branches": 0,
+  "bypassing_call_sites": 0,
+  "where": "prepareBankAccountLink gains the requested replaceExistingLink option while retaining provider-independent policies; all six provider handlers use it without provider-specific exceptions."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 41.8
+ }
+}

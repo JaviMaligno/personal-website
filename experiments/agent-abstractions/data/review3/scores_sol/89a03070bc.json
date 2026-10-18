@@ -1,0 +1,45 @@
+{
+ "id": "89a03070bc",
+ "reuse": {
+  "score": 4,
+  "why": "All six linking handlers share the new guard and reuse findOrCreateBank, syncAccount and handleSyncResponse, although local unlink cleanup is copied."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Fintegra duplicates the existing link workflow and transaction downloader, while replacement duplicates unlinkAccount's field-clearing block."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider types, configuration and downloads follow existing layers, but account detachment is unexpectedly embedded in a validation helper."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The changes stay focused on linking safeguards, Fintegra integration and replacement support."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized linking rules help maintenance, but duplicated workflows and destructive updates inside ensureBankAccountIsNotLinked obscure ownership and sequencing."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "Existing applicable bank lookup and sync helpers are used; unlinkAccount also performs provider cleanup, so it cannot directly serve local-only replacement."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "linkFintegraAccount reproduces existing provider linking with different field selections, and downloadFintegraTransactions reshapes the existing authenticated transaction-download sequence."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 0,
+  "where": "ensureBankAccountIsNotLinked gains replaceExistingLink, a closed-target rejection branch and a replacement branch that mutates the previous account; all six linking handlers still call it."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 35.9
+ }
+}

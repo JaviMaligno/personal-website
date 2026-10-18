@@ -1,0 +1,17 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 6120fb5..8845900 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -108,9 +108,11 @@ async function updateAccount({
+   Partial<
+     Pick<AccountEntity, 'name' | 'last_reconciled' | 'account_group_id'>
+   >) {
++  if (name !== undefined) {
++    await db.runQuery('UPDATE accounts SET name = ? WHERE id = ?', [name, id]);
++  }
+   await domainAccounts.setAccountFields({
+     id,
+-    ...(name !== undefined && { name }),
+     ...(last_reconciled && { last_reconciled }),
+     ...(account_group_id !== undefined && { account_group_id }),
+   });

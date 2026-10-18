@@ -1,0 +1,12 @@
+{"id": "cf2125a28d",
+"reuse": {"score": 4, "why": "Extends getDateWithSkippedWeekend for holidays, routes the budget template through getNextDate instead of its own weekend code, and reuses getWeekdayOccurrences in getNextDate and getUpcomingDates, but getDatesInRange's daily branch tests d.isWeekend itself instead of the shared weekend/holiday predicate."},
+"duplication": {"score": 3, "why": "getLastWeekdayOccurrence mirrors getWeekdayOccurrences' windowed loop in reverse, the 'skipWeekend ? getDateWithSkippedWeekend(...) : date' ternary is repeated in getNextDate, getUpcomingDates and getDatesInRange, and the daily-skip rule is coded a third time inline in getDatesInRange."},
+"placement": {"score": 4, "why": "Weekend/holiday logic sits in shared/schedules.ts and the new handler next to get-upcoming-dates in server/schedules/app.ts; the margin arithmetic stays inline in the handler."},
+"scope": {"score": 4, "why": "All edits serve the four steps; the schedule-template simplification is a reasonable consequence of moving the weekend decision into getNextDate."},
+"maintainability": {"score": 3, "why": "Holiday solving is centralised and the template no longer duplicates weekend handling, but the daily-skip rule exists in three shapes and the range handler's copy omits holidays, the kind of drift that duplication invites."},
+"bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getDatesInRange: the daily branch filters with d.isWeekend directly instead of getWeekdayOccurrences/isWeekendOrHoliday."},
+"duplicated_blocks": 3,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "getLastWeekdayOccurrence is getWeekdayOccurrences' window loop reshaped for reverse search; getDatesInRange re-expresses the daily skip as an inline isWeekend check."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getDateWithSkippedWeekend gains holidays; getNextDate gains a daily-skip special-case branch; getDatesInRange re-implements the daily skip instead of using the shared helper."}
+}

@@ -1,0 +1,59 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index e594c02..d47dcba 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -522,6 +522,19 @@ describe('schedules', () => {
+       );
+     });
+ 
++    it('supports MM-DD holidays that repeat every year', () => {
++      const start = new Date(2017, 0, 1);
++      expect(getNextDate(monthly('after', ['01-09']), start)).toBe(
++        '2017-01-10',
++      );
++      expect(
++        getNextDate(monthly('after', ['01-09', '2017-01-10']), start),
++      ).toBe('2017-01-11');
++      expect(getNextDate(monthly('after', ['2016-01-09']), start)).toBe(
++        '2017-01-09',
++      );
++    });
++
+     it('skips holidays for daily schedules', () => {
+       const cond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 479499b..91b2dde 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -383,12 +383,13 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+   return null;
+ }
+ 
+-// A weekend day or a holiday ('YYYY-MM-DD' days)
++// A weekend day or a holiday. Holidays are 'YYYY-MM-DD' (that day only) or
++// 'MM-DD' (that day every year).
+ export function isNonWorkingDay(date: Date, holidays?: string[]): boolean {
+-  return (
+-    d.isWeekend(date) ||
+-    (holidays?.length ? holidays.includes(monthUtils.dayFromDate(date)) : false)
+-  );
++  if (d.isWeekend(date)) return true;
++  if (!holidays?.length) return false;
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
+ }
+ 
+ export function getDateWithSkippedWeekend(
+diff --git a/packages/loot-core/src/types/models/schedule.ts b/packages/loot-core/src/types/models/schedule.ts
+index f40cf1c..5075d77 100644
+--- a/packages/loot-core/src/types/models/schedule.ts
++++ b/packages/loot-core/src/types/models/schedule.ts
+@@ -17,6 +17,7 @@ export type RecurConfig = {
+   endOccurrences?: number;
+   endDate?: string;
+   weekendSolveMode?: 'before' | 'after';
++  // 'YYYY-MM-DD' (one day) or 'MM-DD' (that day every year)
+   holidays?: string[];
+ };
+ 

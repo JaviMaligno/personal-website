@@ -1,0 +1,12 @@
+{"id":"40dedd7b96",
+"reuse":{"score":3,"why":"Routes every provider, Fintegra included, through the existing linkBankSyncAccount and findOrCreateBank and one new guard, but copies the Akahu downloader wholesale and re-codes unlinkAccount's field reset instead of sharing them."},
+"duplication":{"score":2,"why":"downloadFintegraTransactions is a line-for-line copy of downloadAkahuTransactions with names swapped, and the replaced-account reset duplicates the db.updateAccount block of unlinkAccount."},
+"placement":{"score":4,"why":"Link preconditions sit in one guard in accounts/app.ts called before any write, provider download code in sync.ts and the base path in server-config.ts, matching the tree's layout."},
+"scope":{"score":4,"why":"Changes cover the four requested steps; the desktop-client label and disabled-provider entries are small type-driven necessities."},
+"maintainability":{"score":3,"why":"Link rules are centralised in one guard, but the copied downloader and copied unlink reset will drift, and the positional boolean replaceExistingLink plus replacedIds threading widens two helper signatures."},
+"bypasses_abstraction":{"value":true,"where":"linkBankSyncAccount's replacedIds loop re-implements the local part of unlinkAccount instead of sharing it; downloadFintegraTransactions copies downloadAkahuTransactions rather than parameterising a common downloader"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copies (Fintegra downloader, unlink field reset) are verbatim, not disguised"},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":0,"where":"assertBankAccountNotLinked gains the replaceExistingLink flag that switches its throw off; linkBankSyncAccount gains a replacedIds parameter with an unlink loop; all six provider link functions call the guard"}
+}

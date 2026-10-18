@@ -1,0 +1,12 @@
+{"id":"99dbe5a5d8",
+"reuse":{"score":4,"why":"All month-wide fills, including the new last-month action, go through one isCategoryFilled predicate and one averageToBudgetAmount, and keep using getBudgetData, getCategoryAverage and setNMonthAvg."},
+"duplication":{"score":3,"why":"setZero repeats the categories/groups/notes SELECT that getAverageFillCategories already wraps, and the 'zero' and 'copy' switch arms are identical."},
+"placement":{"score":4,"why":"Selection rules live together in budget/actions.ts next to the actions that use them; the template and #fixed checks could arguably sit with the template/notes code but nothing there already provides them."},
+"scope":{"score":3,"why":"Mostly focused, but resetIncomeCarryover gains an includeHiddenCategories parameter it never uses, and averageToBudgetAmount is reused for non-average last-month spending under a misleading name."},
+"maintainability":{"score":3,"why":"One predicate owns the rule, but the kind switch adds an average-only hidden/group check that re-states the hidden rule a second time in a ternary, and the duplicated query must be kept in sync."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":""},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"isCategoryFilled (budget/actions.ts) gains includeHiddenCategories and its 'average' arm re-tests hidden/group_hidden through an includeHiddenCategories ternary; resetIncomeCarryover gets the flag without using the predicate"}
+}

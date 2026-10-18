@@ -1,0 +1,13 @@
+{
+  "id": "4922079749",
+  "reuse": {"score": 3, "why": "Reuses getRangedAmount and getApproxNumberThreshold, but adds a new getExpectedAmount beside the existing getScheduledAmount (which already decides missing/number/range) instead of extending it with the operator."},
+  "duplication": {"score": 3, "why": "Consolidates four server-side inline dispatches into one helper, but that helper re-implements getScheduledAmount's null/number/range dispatch, leaving two parallel definitions of the expected amount."},
+  "placement": {"score": 5, "why": "The rule lives in shared/schedules.ts next to the other amount helpers and server modules import it."},
+  "scope": {"score": 4, "why": "Focused on the amount rule; the extra _amountOp field and fallback in forecast normalizeSchedule are needed plumbing."},
+  "maintainability": {"score": 3, "why": "Server paths are now uniform, but API expectedAmount (api-models.ts) and all client consumers still use getScheduledAmount without the approximate rule, so two helpers now disagree."},
+  "bypasses_abstraction": {"value": true, "where": "getExpectedAmount in shared/schedules.ts is created alongside getScheduledAmount instead of extending it; api-models.ts expectedAmount and desktop-client consumers keep using getScheduledAmount"},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "getExpectedAmount's 'null -> 0, non-number -> getRangedAmount, number -> value' is getScheduledAmount's dispatch reshaped with early returns and an op parameter instead of inverse"},
+  "one_place": {"value": false, "where": "Server paths (schedule-template, forecast normalizeSchedule, schedules/app updateActions and postTransactionForSchedule, computeSchedulePreviewTransactions) use getExpectedAmount, but api-models.ts scheduleModel.toExternal expectedAmount and the client use getScheduledAmount, which ignores the approximate rule"}
+}

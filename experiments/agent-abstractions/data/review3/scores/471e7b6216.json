@@ -1,0 +1,12 @@
+{"id": "471e7b6216",
+"reuse": {"score": 3, "why": "It reuses getRangeScheduleAmount and getApproxNumberThreshold, and routes every loot-core path, the API included, through one helper. That helper is a new getExpectedScheduleAmount alongside the existing getScheduledAmount, which does the same dispatch, rather than an extension of it."},
+"duplication": {"score": 3, "why": "The inline server ternaries are removed, but getExpectedScheduleAmount repeats getScheduledAmount's missing/number/range dispatch, so two parallel expected-amount functions remain."},
+"placement": {"score": 4, "why": "The rule sits in shared/schedules.ts next to the range helper."},
+"scope": {"score": 4, "why": "Focused on the amount sites. The extra _amountOp field on RawScheduleData and the `schedule._amountOp ?? conditions.amount?.op` fallback are slightly defensive."},
+"maintainability": {"score": 3, "why": "Server and API paths now agree, but getScheduledAmount stays exported with the old rule and is still used by the desktop client's Balance and schedule lists, so the planning rule now differs between client and server."},
+"bypasses_abstraction": {"value": true, "where": "getExpectedScheduleAmount in shared/schedules.ts is added beside getScheduledAmount instead of extending it, and the desktop-client callers keep the old helper."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "getExpectedScheduleAmount restates getScheduledAmount's null/number/range dispatch under a new name, with the approximate branch added."},
+"one_place": {"value": false, "where": "The approximate rule is in getExpectedScheduleAmount and used by preview, posting, action sync, forecast, template and api-models. getScheduledAmount (desktop-client Balance, SchedulesTable, mobile lists) still resolves approximate amounts at the exact value."}
+}

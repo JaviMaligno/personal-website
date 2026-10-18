@@ -1,0 +1,11 @@
+{"id":"931dead163",
+"reuse":{"score":2,"why":"Only getNextDate gets the new rule; getUpcomingDates and the budget template each re-decide 'daily + skipWeekend means skip' with their own condition instead of sharing a weekend-adjustment function."},
+"duplication":{"score":2,"why":"The daily-skip rule is written three times (getNextDate's skipsWeekendDays from the new isDaily data flag, schedule-template's isDailySkipped from config, getUpcomingDates' own loop filtering d.isWeekend), and the template's two copied nextDate ternaries are both edited in place."},
+"placement":{"score":3,"why":"The core rule sits in shared/schedules.ts, but the same rule is also embedded in the server schedules app and budget template, and a derived isDaily flag is stored on RSchedule data in rule-utils."},
+"scope":{"score":4,"why":"Changes stay on the weekend-handling paths plus a test and release note, though encoding isDaily into recurrence data is an extra moving part."},
+"maintainability":{"score":2,"why":"A future change to which frequencies skip versus move must be found and kept consistent in three differently-shaped places, and the template's negated flag passed as noSkipWeekend is hard to follow."},
+"bypasses_abstraction":{"value":true,"where":"packages/loot-core/src/server/schedules/app.ts getUpcomingDates iterates occurrences and filters weekends itself instead of going through the shared getNextDate/getDateWithSkippedWeekend path"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Weekend-skip filtering is reshaped per site: .filter(notWeekend) over take:7 in shared getNextDate, a for-of loop with d.isWeekend in schedules/app.ts getUpcomingDates, and a renamed isDailySkipped boolean in budget/schedule-template.ts"},
+"one_place":{"value":false,"where":"Rule decided separately in shared/schedules.ts getNextDate (schedule.data.isDaily set in rules/rule-utils.ts parseRecurDate), server/schedules/app.ts getUpcomingDates (config.frequency === 'daily'), and server/budget/schedule-template.ts createScheduleList (isDailySkipped)"}}

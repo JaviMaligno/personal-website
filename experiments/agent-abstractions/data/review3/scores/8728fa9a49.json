@@ -1,0 +1,12 @@
+{"id": "8728fa9a49",
+ "reuse": {"score": 3, "why": "Holiday handling is threaded through the shared getDateWithSkippedWeekend and a new shared isNonWorkingDay, but the daily-skip versus move decision is re-derived in getNextDate, in a server-only getAdjustedOccurrence and in schedule-template instead of one shared function."},
+ "duplication": {"score": 2, "why": "The 'skipWeekend and daily => drop, otherwise move' dispatch exists three times (shared getNextDate, schedules/app.ts getAdjustedOccurrence, schedule-template movesWeekends), and getDatesInRange repeats getUpcomingDates' RSchedule/try/captureBreadcrumb scaffold."},
+ "placement": {"score": 3, "why": "isHoliday/isNonWorkingDay and the solve loop sit correctly in shared/schedules.ts, but getAdjustedOccurrence, the occurrence-adjustment rule, is placed in server/schedules/app.ts where the shared layer and budget templates cannot use it."},
+ "scope": {"score": 4, "why": "Changes stay on schedule weekend/holiday handling and the new range method for the four steps; release notes and tests are proportionate."},
+ "maintainability": {"score": 3, "why": "Any further change to weekend semantics must be made in three diverging places, and schedule-template's movesWeekends || !skipWeekend argument to getNextDate is hard to reason about."},
+ "bypasses_abstraction": {"value": true, "where": "server/budget/schedule-template.ts computes its own movesWeekends and drives getNextDate's noSkipWeekend flag with it instead of using a shared adjustment; server/schedules/app.ts getAdjustedOccurrence re-implements getNextDate's daily/move logic rather than sharing it."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "getAdjustedOccurrence (null-for-skipped-daily, else getDateWithSkippedWeekend) restates getNextDate's isKept filter plus frequency !== 'daily' move branch in a reshaped form, and schedule-template's movesWeekends is a third rendering of the same condition."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 2, "where": "getDateWithSkippedWeekend gains a holidays parameter; getNextDate gains a daily-frequency filter branch and a frequency !== 'daily' exclusion on its move branch; schedule-template (movesWeekends) and schedules/app.ts getAdjustedOccurrence decide daily-vs-move themselves."}
+}

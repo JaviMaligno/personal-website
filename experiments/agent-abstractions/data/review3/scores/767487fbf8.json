@@ -1,0 +1,11 @@
+{"id":"767487fbf8",
+"reuse":{"score":4,"why":"Introduces a shared category query (getMonthActionCategories) and predicate (shouldSetMonthBudget) and routes setZero and the 3/6/12-month averages through them, replacing three copied queries; copyPreviousMonth does not reuse them."},
+"duplication":{"score":3,"why":"The saved-template CASE expression is written twice (getBudgetData and getMonthActionCategories) and copyPreviousMonth keeps its own hidden/group-hidden/template/income check parallel to shouldSetMonthBudget."},
+"placement":{"score":4,"why":"Selection and policy sit in budget/actions.ts next to the actions that use them, consistent with the tree; the rule is in one module, though split across two code paths."},
+"scope":{"score":5,"why":"Only the month-wide actions, their category selection and a test are changed."},
+"maintainability":{"score":4,"why":"Most actions now share one policy function, a clear improvement, but a future exclusion must still be added to both shouldSetMonthBudget and the copyPreviousMonth branch plus both SQL queries."},
+"bypasses_abstraction":{"value":false,"where":"No pre-existing month-action policy existed; copyPreviousMonth simply does not adopt the new one (see duplication)."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"copyPreviousMonth in budget/actions.ts re-expresses shouldSetMonthBudget as two separate if-guards (income, then hidden||group_hidden||has_saved_templates), and the template CASE SQL is repeated in getBudgetData."},
+"one_place":{"value":false,"where":"setZero and set3/6/12MonthAvg use shouldSetMonthBudget/getMonthActionCategories, but copyPreviousMonth applies the rule through its own inline checks over getBudgetData's own template CASE."}}

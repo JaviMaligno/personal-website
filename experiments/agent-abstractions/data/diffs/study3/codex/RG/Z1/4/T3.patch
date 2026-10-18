@@ -1,0 +1,178 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index f1afc34..1562b62 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -10,8 +10,8 @@ import {
+   getSheetValue,
+   set3MonthAvg,
+   setBudget,
+-  setLastMonthSpending,
+   setCategoryCarryover,
++  setLastMonthSpending,
+   setNMonthAvg,
+ } from './actions';
+ import * as budget from './base';
+@@ -235,6 +235,33 @@ describe('set budget average', () => {
+     }
+   });
+ 
++  it('leaves fixed-group categories untouched, while category notes do not apply', async () => {
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed costs',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'fixed-cat',
++      name: 'Rent',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insert('notes', {
++      id: 'fixed-group',
++      note: 'Monthly expenses #fixed',
++    });
++    await db.insert('notes', { id: 'cat1', note: '#fixed' });
++    await setBudget({ category: 'fixed-cat', month: '2024-04', amount: 4321 });
++    await setBudget({ category: 'cat1', month: '2024-04', amount: 4321 });
++
++    await set3MonthAvg({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-fixed-cat')).toBe(4321);
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(600);
++  });
++
+   it('sets a bulk 3 month average from the first activity month', async () => {
+     await setBudget({ category: 'cat1', month: '2023-12', amount: 1000 });
+ 
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 64bf9da..15d354c 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -69,6 +70,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  group_notes: string | null;
+   category: string;
+   amount: number;
+   goal_def?: unknown;
+@@ -83,26 +85,36 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      >
++      > &
++      Pick<BudgetData, 'group_notes'>
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++      n.note AS group_notes
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+   );
+ }
+ 
++function isFixedGroupNote(notes: string | null | undefined): boolean {
++  return extractTagsFromText(notes ?? '').includes('fixed');
++}
++
+ function getBudgetableCategories(): Promise<
+-  db.DbViewCategoryWithGroupHidden[]
++  (db.DbViewCategoryWithGroupHidden & { group_notes: string | null })[]
+ > {
+-  return db.all<db.DbViewCategoryWithGroupHidden>(`
+-    SELECT c.*, g.hidden AS group_hidden
++  return db.all<
++    db.DbViewCategoryWithGroupHidden & { group_notes: string | null }
++  >(`
++    SELECT c.*, g.hidden AS group_hidden, n.note AS group_notes
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+       AND (c.goal_def IS NULL OR c.goal_def = '[]')
+   `);
+@@ -245,6 +257,7 @@ export async function copyPreviousMonth({
+       if (
+         prevBudget.hidden === 1 ||
+         prevBudget.group_hidden === 1 ||
++        isFixedGroupNote(prevBudget.group_notes) ||
+         (prevBudget.goal_def != null && prevBudget.goal_def !== '[]')
+       ) {
+         return;
+@@ -280,7 +293,10 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
++      if (
++        isFixedGroupNote(cat.group_notes) ||
++        (cat.is_income === 1 && !isTrackingBudget())
++      ) {
+         return;
+       }
+       void setBudget({ category: cat.id, month, amount: 0 });
+@@ -298,7 +314,10 @@ export async function setLastMonthSpending({
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
++      if (
++        isFixedGroupNote(cat.group_notes) ||
++        (cat.is_income === 1 && !isTrackingBudget())
++      ) {
+         continue;
+       }
+ 
+@@ -324,7 +343,10 @@ export async function set3MonthAvg({
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
++      if (
++        isFixedGroupNote(cat.group_notes) ||
++        (cat.is_income === 1 && !isTrackingBudget())
++      ) {
+         continue;
+       }
+ 
+@@ -352,7 +374,10 @@ export async function set12MonthAvg({
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
++      if (
++        isFixedGroupNote(cat.group_notes) ||
++        (cat.is_income === 1 && !isTrackingBudget())
++      ) {
+         continue;
+       }
+       void setNMonthAvg({ month, N: 12, category: cat.id });
+@@ -369,7 +394,10 @@ export async function set6MonthAvg({
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+-      if (cat.is_income === 1 && !isTrackingBudget()) {
++      if (
++        isFixedGroupNote(cat.group_notes) ||
++        (cat.is_income === 1 && !isTrackingBudget())
++      ) {
+         continue;
+       }
+       void setNMonthAvg({ month, N: 6, category: cat.id });

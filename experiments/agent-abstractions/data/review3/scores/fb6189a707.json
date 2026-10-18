@@ -1,0 +1,12 @@
+{"id": "fb6189a707",
+ "reuse": {"score": 3, "why": "Extends the existing getDateWithSkippedWeekend helper with a holidays parameter, but app.ts re-writes the weekend-or-holiday predicate inline instead of using the new isNonWorkingDay, which is kept private."},
+ "duplication": {"score": 2, "why": "The 'isWeekend || holidays.includes(day)' test is written three times (private helper in shared/schedules.ts plus two inline copies in server/schedules/app.ts), and the daily-skip branch is now repeated in getUpcomingDates as well as getDatesInRange and getNextDate."},
+ "placement": {"score": 3, "why": "The core adjustment correctly lives in shared/schedules.ts, but the non-working-day rule leaks into server/schedules/app.ts and getNextDate reaches into dateCond.value.holidays with a fallback instead of carrying holidays through the parsed schedule data uniformly."},
+ "scope": {"score": 3, "why": "Mostly focused, but it reformats untouched conditions in getNextDate and changes getUpcomingDates' daily behaviour (now skipping weekend days) beyond the holiday feature."},
+ "maintainability": {"score": 2, "why": "The holiday rule has several independent definitions and the budget schedule-template callers of getDateWithSkippedWeekend were not given holidays, so the rule already disagrees across paths."},
+ "bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getUpcomingDates/getDatesInRange inline 'd.isWeekend(date) || config.holidays?.includes(dayFromDate(date))' instead of a shared non-working-day predicate; server/budget/schedule-template.ts calls getDateWithSkippedWeekend without holidays."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The copies of the non-working-day predicate in app.ts are plain inline repetitions, not reshaped."},
+ "one_place": {"value": false, "where": "Rule defined in private isNonWorkingDay (shared/schedules.ts) plus two inline copies in server/schedules/app.ts; server/budget/schedule-template.ts getDateWithSkippedWeekend calls ignore holidays."}
+}

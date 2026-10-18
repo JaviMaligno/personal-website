@@ -1,0 +1,12 @@
+{"id": "aa8989e70d",
+ "reuse": {"score": 5, "why": "Builds one selection predicate/query used by every month-wide action and reuses the tree's extractTagsFromText for the #fixed tag, getSheetValue, batchMessages and the undoable/mutator registration."},
+ "duplication": {"score": 4, "why": "The per-action queries, income checks and sign flips collapse into isMonthFillCategory/getMonthFillCategories/averageToBudget; only the extra goal_def/notes join is written in both getBudgetData and getMonthFillCategories."},
+ "placement": {"score": 5, "why": "The shared definition lives in budget/actions.ts beside the actions and the new method is registered in budget/app.ts like its siblings."},
+ "scope": {"score": 5, "why": "Edits are confined to the month-wide actions, their registration and focused tests."},
+ "maintainability": {"score": 4, "why": "A named rules object makes the averages' stricter null-visibility behaviour explicit and later rules land in one predicate; minor nits are averageToBudget being reused for last month's spending under an average-specific name and the loosely typed goal_def check."},
+ "bypasses_abstraction": {"value": false, "where": "copyPreviousMonth, setZero, setLastMonthSpending and the three averages all decide through isMonthFillCategory; setNMonthAvg uses averageToBudget."},
+ "duplicated_blocks": 1,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "The only repeated piece is the notes/goal_def join in two SQL queries, which is visible rather than disguised."},
+ "abstraction_drift": {"value": false, "parameters_added": 2, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "isMonthFillCategory takes a MonthFillRules object (unknownVisibilityIsHidden, the preserved averages inconsistency) and includeHiddenCategories; both are real, named variations and no call site bypasses it."}
+}

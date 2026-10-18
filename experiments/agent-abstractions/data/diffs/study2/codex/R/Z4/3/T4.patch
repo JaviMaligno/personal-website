@@ -1,0 +1,84 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index df57ad1..7119ae7 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -500,6 +500,22 @@ describe('schedules', () => {
+       );
+     });
+ 
++    it('matches annual holidays by month and day alongside one-time holidays', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2021-12-24',
++          frequency: 'daily',
++          skipWeekend: true,
++          holidays: ['12-25', '2021-12-26'],
++          weekendSolveMode: 'after',
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2022, 11, 24))).toBe('2022-12-26');
++      expect(getNextDate(dateCond, new Date(2021, 11, 25))).toBe('2021-12-27');
++    });
++
+     it('moves weekend occurrences past weekends and holidays', () => {
+       const dateCond = {
+         op: 'isapprox',
+@@ -515,6 +531,21 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2021, 4, 15))).toBe('2021-05-18');
+     });
+ 
++    it('moves recurring occurrences past annual holidays', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2022-12-24',
++          frequency: 'weekly',
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-26'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2022, 11, 24))).toBe('2022-12-27');
++    });
++
+     it('returns last occurrence for a recurring schedule with an end date in the past', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 38c7841..e24053a 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -310,7 +310,7 @@ export function getNextDate(
+         ? dates.find(
+             ({ date }) =>
+               !d.isWeekend(date) &&
+-              !value.schedule.data.holidays?.includes(monthUtils.dayFromDate(date)),
++              !isHoliday(date, value.schedule.data.holidays),
+           )
+         : dates[0];
+     };
+@@ -368,14 +368,19 @@ export function getDateWithSkippedWeekend(
+   if (solveMode !== 'after' && solveMode !== 'before') {
+     throw new Error('Unknown weekend solve mode, this should not happen!');
+   }
+-  const isUnavailable = (day: Date) =>
+-    d.isWeekend(day) || holidays.includes(monthUtils.dayFromDate(day));
++  const isUnavailable = (day: Date) => d.isWeekend(day) || isHoliday(day, holidays);
+   while (isUnavailable(date)) {
+     date = d.addDays(date, solveMode === 'after' ? 1 : -1);
+   }
+   return date;
+ }
+ 
++function isHoliday(date: Date, holidays: string[] = []) {
++  const dateString = monthUtils.dayFromDate(date);
++  const monthAndDay = dateString.slice(5);
++  return holidays.some(holiday => holiday === dateString || holiday === monthAndDay);
++}
++
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,

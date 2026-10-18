@@ -1,0 +1,48 @@
+diff --git a/packages/loot-core/src/server/budget/app.ts b/packages/loot-core/src/server/budget/app.ts
+index 16ab8d3..25b41f8 100644
+--- a/packages/loot-core/src/server/budget/app.ts
++++ b/packages/loot-core/src/server/budget/app.ts
+@@ -307,12 +307,18 @@ async function createCategory({
+ }
+ 
+ async function updateCategory(category: CategoryEntity): Promise<void> {
++  const fields = categoryModel.toDb({
++    ...category,
++    // Partial updates (e.g. only `hidden`) do not carry a name.
++    ...(typeof category.name === 'string' && {
++      name: category.name.trim(),
++    }),
++  });
+   try {
+     await categoryCommands.updateCategory(
+-      categoryModel.toDb({
+-        ...category,
+-        name: category.name.trim(),
+-      }),
++      // `toDb` drops null values, which would turn `group: null` into "group
++      // not mentioned"; pass it on as an empty group so the command refuses it.
++      category.group === null ? { ...fields, cat_group: '' } : fields,
+     );
+   } catch (e) {
+     if (
+diff --git a/packages/loot-core/src/server/domain/categories.ts b/packages/loot-core/src/server/domain/categories.ts
+index d3339a6..fdc837e 100644
+--- a/packages/loot-core/src/server/domain/categories.ts
++++ b/packages/loot-core/src/server/domain/categories.ts
+@@ -19,9 +19,15 @@ export function createCategory(
+ }
+ 
+ // [updateCategory]
+-export function updateCategory(
++// An update may leave `cat_group` out (the group is kept) or move the category
++// to another group, but never clear it: a category without a group is not
++// listed anywhere and can no longer be reached.
++export async function updateCategory(
+   c: WithRequired<Partial<DbCategory>, 'name' | 'is_income' | 'cat_group'>,
+ ): Promise<void> {
++  if (Object.hasOwn(c, 'cat_group') && !c.cat_group) {
++    throw new Error('Updating a category: a category must belong to a group');
++  }
+   return w.updateCategory(c);
+ }
+ 

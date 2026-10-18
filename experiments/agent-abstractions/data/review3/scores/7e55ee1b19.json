@@ -1,0 +1,12 @@
+{"id":"7e55ee1b19",
+"reuse":{"score":3,"why":"Correctly extends the existing getMonthWideCategories and getBudgetData selectors, but writes its own #fixed regex instead of using the tag parsing in shared/tags.ts (extractTagsFromText), with subtly different delimiter rules."},
+"duplication":{"score":4,"why":"The fixed-group lookup is one helper, though the same 'fetch fixed groups then filter by cat_group' step is repeated in both selectors."},
+"placement":{"score":4,"why":"The rule sits with the other month-wide exclusion rules in budget/actions.ts, but tag-matching semantics belong to shared/tags.ts."},
+"scope":{"score":5,"why":"Only the two selectors, a test block and a release note are touched."},
+"maintainability":{"score":3,"why":"Mixing an SQL rule (NO_SAVED_TEMPLATES) with a post-query JS filter and a private tag regex that can diverge from how notes tags are parsed elsewhere makes the exclusion logic harder to reason about."},
+"bypasses_abstraction":{"value":true,"where":"budget/actions.ts FIXED_TAG regex re-implements note tag detection instead of shared/tags.ts extractTagsFromText."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"FIXED_TAG /(?<![\\w#])#fixed(?![\\w-])/ is a reshaped version of the tag delimiter logic in shared/tags.ts."},
+"one_place":{"value":true,"where":"getFixedGroupIds in budget/actions.ts, applied by both month-wide selectors getMonthWideCategories and getBudgetData."}
+}

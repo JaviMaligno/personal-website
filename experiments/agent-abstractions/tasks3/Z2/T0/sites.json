@@ -1,0 +1,48 @@
+{
+  "zone": "Z2",
+  "source": "docs/study2-variants.md (paths relative to packages/loot-core/src); R form = the frozen R variant (tag rf-frozen)",
+  "logic": "Scheduled amount of a ranged schedule: the single amount a schedule with a ranged amount is expected to post (tasks2/Z2/chain.json has no 'logic' field; this is its 'description', without the T3 clause)",
+  "decision": "the amount of a ranged ({num1, num2}) / numeric / missing schedule amount",
+  "sites": [
+    {
+      "id": "forecast",
+      "file": "server/forecast/forecast-schedules.ts",
+      "function": "normalizeSchedule",
+      "decides": "inlined ternary (R): number -> itself, range -> Math.round((num1 + num2) / 2); null branch dropped (value checked non-null just before)"
+    },
+    {
+      "id": "rule-action-sync",
+      "file": "server/schedules/app.ts",
+      "function": "updateActions",
+      "decides": "inlined ternary (R): null -> 0, number -> itself, range -> rounded midpoint"
+    },
+    {
+      "id": "post-transaction",
+      "file": "server/schedules/app.ts",
+      "function": "postTransactionForSchedule",
+      "decides": "inlined ternary (R), as above"
+    },
+    {
+      "id": "preview",
+      "file": "shared/schedules.ts",
+      "function": "computeSchedulePreviewTransactions",
+      "decides": "inlined ternary (R), as above"
+    },
+    {
+      "id": "budget-template",
+      "file": "server/budget/schedule-template.ts",
+      "function": "runSchedule",
+      "decides": "hand copy (base): op === 'isbetween' ? Math.round(num1 + num2) / 2 : value (halves the rounded sum)"
+    }
+  ],
+  "existing_helper": {
+    "file": "shared/schedules.ts",
+    "function": "getScheduledAmount(amount, inverse = false)",
+    "note": "exported (desktop-client imports it) but called by nothing in loot-core in R; re-using it counts as the shared definition (spec section 3)"
+  },
+  "preserved_inconsistencies": [
+    "the template halves the rounded sum, every other site rounds the midpoint (hidden test: template-half-of-rounded-sum)",
+    "the template dispatches on op === 'isbetween', the others on the value's type, and only the others map null to 0: unobservable (Condition validates template rules), nothing to preserve"
+  ],
+  "f_reference": "F: getScheduledAmount(amount, inverse, rangeRounding: 'roundedMidpoint' | 'halfOfRoundedSum'), all five sites call it"
+}

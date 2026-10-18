@@ -1,0 +1,13 @@
+{
+  "id": "659a5eb625",
+  "reuse": {"score": 3, "why": "Reuses the existing visible-category query shape for setZero and adds one shared SQL fragment for the template rule, but does not introduce or use a single category-selection helper, so each action keeps its own query."},
+  "duplication": {"score": 2, "why": "setZero gets a fourth copy of the hidden/hidden-group SELECT already pasted in the three average actions, and copyPreviousMonth applies the template rule through a separate extra query instead of the same filter."},
+  "placement": {"score": 4, "why": "Everything stays in budget/actions.ts beside the actions, consistent with the tree, though the rule is spread between SQL fragments and an in-memory Set check."},
+  "scope": {"score": 5, "why": "Only the month-wide actions' selection changes; single-category actions are untouched."},
+  "maintainability": {"score": 3, "why": "The template condition is named once (NO_SAVED_TEMPLATE) but the hidden rule now lives in four SQL strings plus a JS check, and copyPreviousMonth uses a different mechanism, so the next rule change must again touch five places."},
+  "bypasses_abstraction": {"value": false, "where": "No shared selection abstraction existed in the tree to go around; the diff extends the per-action queries."},
+  "duplicated_blocks": 2,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "copyPreviousMonth re-expresses the template rule as a separate getCategoriesWithSavedTemplates query plus Set lookup, a reshaped form of the NO_SAVED_TEMPLATE WHERE clause the other actions use."},
+  "one_place": {"value": false, "where": "The template condition is one fragment, but the month-wide selection rule as a whole (hidden, hidden group, template) is still applied separately in setZero, set3MonthAvg, set6MonthAvg, set12MonthAvg SQL and in copyPreviousMonth's JS filters."}
+}

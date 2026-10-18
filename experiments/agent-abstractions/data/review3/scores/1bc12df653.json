@@ -1,0 +1,11 @@
+{"id":"1bc12df653",
+"reuse":{"score":2,"why":"Instead of extracting and reusing the local-clearing part of the existing unlinkAccount, it rewrites the same db.updateAccount field reset inline."},
+"duplication":{"score":2,"why":"The eight-field reset block is a verbatim copy of the one in unlinkAccount, so the definition of an 'unlinked' account now lives in two places."},
+"placement":{"score":2,"why":"A side-effecting unlink is put inside ensureBankAccountIsNotLinked, a guard whose name and role are validation, so a check function now mutates another account before the link runs."},
+"scope":{"score":5,"why":"Only the flag, the guard and its six call sites plus tests are touched."},
+"maintainability":{"score":2,"why":"Hidden mutation in a guard plus a copied reset block that can drift from unlinkAccount make this harder to own; a shared clearLocalBankLink helper called from both would be clearer."},
+"bypasses_abstraction":{"value":true,"where":"accounts/app.ts ensureBankAccountIsNotLinked re-does the db.updateAccount reset of unlinkAccount instead of going through a shared local-unlink helper."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied reset block in ensureBankAccountIsNotLinked is an undisguised verbatim copy of unlinkAccount's update."}
+}

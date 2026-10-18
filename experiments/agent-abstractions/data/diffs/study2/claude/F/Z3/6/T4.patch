@@ -1,0 +1,214 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 9fd3adc..9204beb 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -52,6 +52,9 @@ type LinkAccountBaseParams = {
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
++  // Unlink any other local account holding this bank account instead of
++  // refusing the link.
++  replaceExistingLink?: boolean;
+ };
+ 
+ export type AccountHandlers = {
+@@ -179,6 +182,7 @@ async function assertNotLinkedElsewhere(
+   syncSource: AccountSyncSource,
+   providerAccountId: string,
+   upgradingId?: string,
++  replaceExistingLink = false,
+ ) {
+   if (upgradingId) {
+     const target = await db.first<Pick<db.DbAccount, 'closed'>>(
+@@ -196,7 +200,7 @@ async function assertNotLinkedElsewhere(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',
+     [syncSource, providerAccountId, upgradingId ?? null],
+   );
+-  if (existing) {
++  if (existing && !replaceExistingLink) {
+     throw new Error('This bank account is already linked to another account.');
+   }
+ }
+@@ -216,6 +220,7 @@ async function linkBankSyncAccount({
+   offBudget,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+   fileId,
+   changedTables = ['transactions', 'accounts'],
+ }: LinkAccountBaseParams & {
+@@ -233,6 +238,27 @@ async function linkBankSyncAccount({
+ }) {
+   let id: string;
+ 
++  if (replaceExistingLink) {
++    // Detach the previous holder the way "unlink account" does, without
++    // telling the provider: the bank connection stays in use by this link.
++    const holders = await db.all<Pick<db.DbAccount, 'id'>>(
++      'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',
++      [syncSource, newAccount.account_id, upgradingId ?? null],
++    );
++    for (const holder of holders) {
++      await db.updateAccount({
++        id: holder.id,
++        account_id: null,
++        bank: null,
++        balance_current: null,
++        balance_available: null,
++        balance_limit: null,
++        account_sync_source: null,
++        bank_sync_status: null,
++      });
++    }
++  }
++
+   if (upgradingId) {
+     const accRow = await db.first<db.DbAccount>(
+       'SELECT * FROM accounts WHERE id = ?',
+@@ -293,11 +319,17 @@ async function linkGoCardlessAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
+-  await assertNotLinkedElsewhere('goCardless', account.account_id, upgradingId);
++  await assertNotLinkedElsewhere(
++    'goCardless',
++    account.account_id,
++    upgradingId,
++    replaceExistingLink,
++  );
+ 
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+@@ -314,6 +346,7 @@ async function linkGoCardlessAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+   });
+ }
+ 
+@@ -323,6 +356,7 @@ async function linkSimpleFinAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
+@@ -330,6 +364,7 @@ async function linkSimpleFinAccount({
+     'simpleFin',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -356,6 +391,7 @@ async function linkSimpleFinAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+   });
+ }
+ 
+@@ -365,6 +401,7 @@ async function linkPluggyAiAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
+@@ -374,6 +411,7 @@ async function linkPluggyAiAccount({
+     'pluggyai',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -400,6 +438,7 @@ async function linkPluggyAiAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+     fileId,
+   });
+ }
+@@ -410,6 +449,7 @@ async function linkAkahuAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
+@@ -417,6 +457,7 @@ async function linkAkahuAccount({
+     'akahu',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -440,6 +481,7 @@ async function linkAkahuAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+     changedTables: ['transactions'],
+   });
+ }
+@@ -450,6 +492,7 @@ async function linkFintegraAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerFintegraAccount;
+ }) {
+@@ -457,6 +500,7 @@ async function linkFintegraAccount({
+     'fintegra',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -477,6 +521,7 @@ async function linkFintegraAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+   });
+ }
+ 
+@@ -486,6 +531,7 @@ async function linkEnableBankingAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
+@@ -493,6 +539,7 @@ async function linkEnableBankingAccount({
+     'enableBanking',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -523,6 +570,7 @@ async function linkEnableBankingAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+   });
+ }
+ 

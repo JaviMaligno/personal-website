@@ -1,0 +1,61 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index d97e117..ab40eb3 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -47,13 +47,13 @@ describe('schedules', () => {
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+     });
+ 
+-    it('plans a ranged income at the end furthest from zero', () => {
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    it('plans a ranged income at the end closest to zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
+     });
+ 
+-    it('uses the larger magnitude when the range crosses zero', () => {
+-      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(5000);
++    it('plans a range that crosses zero at its negative end', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
+       expect(getScheduledAmount({ num1: 3000, num2: -5000 })).toBe(-5000);
+     });
+ 
+@@ -62,8 +62,8 @@ describe('schedules', () => {
+       expect(getScheduledAmount(-1234, 'isapprox')).toBe(-1327);
+     });
+ 
+-    it('plans an approximate income at the end of its tolerance furthest from zero', () => {
+-      expect(getScheduledAmount(10000, 'isapprox')).toBe(10750);
++    it('plans an approximate income at the end of its tolerance closest to zero', () => {
++      expect(getScheduledAmount(10000, 'isapprox')).toBe(9250);
+     });
+ 
+     it('keeps a single amount unchanged when it is not approximate', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 23b67f0..530e3a9 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -364,17 +364,16 @@ export function getScheduledAmount(
+   if (amount == null) return 0;
+ 
+   if (typeof amount === 'number') {
+-    // Plan for the worst case: the end of the tolerance furthest from zero.
++    // Plan for the lowest value the amount allows.
+     const planned =
+       amountOp === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
++        ? amount - getApproxNumberThreshold(amount)
+         : amount;
+     return inverse ? -planned : planned;
+   }
+-  // Plan for the worst case: the range end furthest from zero.
+-  const worstCase =
+-    Math.abs(amount.num2) > Math.abs(amount.num1) ? amount.num2 : amount.num1;
+-  return inverse ? -worstCase : worstCase;
++  // Plan for the lowest value the range allows.
++  const lowest = Math.min(amount.num1, amount.num2);
++  return inverse ? -lowest : lowest;
+ }
+ 
+ export function getUpcomingDays(

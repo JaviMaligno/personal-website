@@ -1,0 +1,101 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+index 26ab792..9daf3b3 100644
+--- a/packages/loot-core/src/server/api-models.test.ts
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -3,10 +3,12 @@ import type { ScheduleEntity } from '#types/models';
+ 
+ describe('scheduleModel', () => {
+   it.each([
+-    [{ num1: -10100, num2: -20000 }, -20000],
+-    [12500, 12500],
+-    [null, 0],
+-  ])('includes the expected schedule amount for %j', (amount, expectedAmount) => {
++    [{ num1: -10100, num2: -20000 }, 'isbetween', -20000],
++    [12500, 'is', 12500],
++    [-10000, 'isapprox', -10750],
++    [10000, 'isapprox', 10750],
++    [null, 'is', 0],
++  ])('includes the expected schedule amount for %j', (amount, amountOp, expectedAmount) => {
+     const schedule = {
+       id: 'schedule-id',
+       name: 'Schedule',
+@@ -18,7 +20,7 @@ describe('scheduleModel', () => {
+       _payee: 'payee-id',
+       _account: 'account-id',
+       _amount: amount,
+-      _amountOp: 'isbetween',
++      _amountOp: amountOp,
+       _date: '2024-01-01',
+       _conditions: [],
+       _actions: [],
+@@ -27,7 +29,7 @@ describe('scheduleModel', () => {
+     const result = scheduleModel.toExternal(schedule);
+ 
+     expect(result.amount).toEqual(amount);
+-    expect(result.amountOp).toBe('isbetween');
++    expect(result.amountOp).toBe(amountOp);
+     expect(result.expectedAmount).toBe(expectedAmount);
+   });
+ });
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 4970441..73221cd 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -251,7 +251,12 @@ export const scheduleModel = {
+       payee: schedule._payee,
+       account: schedule._account,
+       amount: schedule._amount,
+-      expectedAmount: getScheduledAmount(schedule._amount),
++      expectedAmount: getScheduledAmount(
++        schedule._amount,
++        false,
++        'roundedMidpoint',
++        schedule._amountOp as AmountOPType,
++      ),
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+     };
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 3797121..fcd0533 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -41,6 +41,16 @@ describe('schedules', () => {
+       expect(getScheduledAmount(-123)).toBe(-123);
+       expect(getScheduledAmount(null)).toBe(0);
+     });
++
++    it.each([
++      [-10000, -10750],
++      [10000, 10750],
++      [-1234, -1327],
++    ])('uses the approximate tolerance furthest from zero for %i', (amount, expected) => {
++      expect(getScheduledAmount(amount, false, 'roundedMidpoint', 'isapprox')).toBe(
++        expected,
++      );
++    });
+   });
+ 
+   beforeEach(() => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 3f43013..f151e55 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -383,12 +383,18 @@ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+   rangeRounding: 'roundedMidpoint' | 'halfOfRoundedSum' = 'roundedMidpoint',
++  amountOp: 'is' | 'isapprox' | 'isbetween' = 'isbetween',
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+   if (amount == null) return 0;
+ 
+   if (typeof amount === 'number') {
++    if (amountOp === 'isapprox') {
++      const tolerance = Math.round(Math.abs(amount) * 0.075);
++      const worstCase = amount + Math.sign(amount) * tolerance;
++      return inverse ? -worstCase : worstCase;
++    }
+     return inverse ? -amount : amount;
+   }
+   // Keep the optional argument for compatibility with callers that used to

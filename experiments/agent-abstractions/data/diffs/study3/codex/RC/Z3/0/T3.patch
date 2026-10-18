@@ -1,0 +1,78 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index 4ee86fe..ed445e4 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -1,5 +1,6 @@
+ // @ts-strict-ignore
+ import * as asyncStorage from '#platform/server/asyncStorage';
++import * as connection from '#platform/server/connection';
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ import { isMutating, runHandler, runMutator } from '#server/mutators';
+@@ -355,6 +356,42 @@ describe('simpleFin account linking', () => {
+     expect(bankSync.syncAccount).toHaveBeenCalledOnce();
+     expect(await db.all('SELECT id FROM accounts')).toHaveLength(1);
+   });
++
++  it('rejects linking a closed account without changing or syncing anything', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'acct1', name: 'Checking', accountId: 'external-1' },
++    ]);
++    db.runQuery('UPDATE accounts SET closed = 1 WHERE id = ?', ['acct1']);
++    const sendSpy = vi.spyOn(connection, 'send');
++    sendSpy.mockClear();
++
++    await expect(
++      simpleFinLinkHandler({
++        upgradingId: 'acct1',
++        externalAccount: {
++          account_id: 'external-1',
++          name: 'Checking',
++          institution: 'SimpleFin',
++          orgDomain: 'sfin-bank',
++          balance: 0,
++        },
++      }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(await db.first('SELECT * FROM accounts WHERE id = ?', ['acct1'])).toMatchObject({
++      closed: 1,
++      account_id: 'external-1',
++      account_sync_source: 'simpleFin',
++    });
++    expect(await db.all('SELECT id FROM accounts')).toHaveLength(1);
++    expect(await db.all('SELECT id FROM payees')).toHaveLength(0);
++    expect(await db.all('SELECT id FROM banks')).toHaveLength(1);
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    expect(sendSpy).not.toHaveBeenCalledWith('sync-event', expect.anything());
++    sendSpy.mockRestore();
++  });
+ });
+ 
+ describe('Fintegra account linking', () => {
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index b7c49eb..55a24c1 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -136,6 +136,19 @@ async function assertBankAccountNotLinked(
+   account: Pick<LinkAccountFields, 'account_id' | 'account_sync_source'>,
+   upgradingId?: AccountEntity['id'],
+ ) {
++  if (upgradingId) {
++    const upgradingAccount = await db.first<{ closed: number }>(
++      'SELECT closed FROM accounts WHERE id = ?',
++      [upgradingId],
++    );
++
++    if (upgradingAccount?.closed === 1) {
++      throw APIError(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const existing = await db.first<{ id: string }>(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_id = ? AND account_sync_source = ? AND id IS NOT ?',
+     [account.account_id, account.account_sync_source, upgradingId ?? null],

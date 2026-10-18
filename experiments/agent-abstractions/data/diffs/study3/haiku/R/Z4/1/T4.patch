@@ -1,0 +1,67 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index ab08271..3924d02 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -566,6 +566,42 @@ describe('schedules', () => {
+       });
+ 
+       describe('with holidays', () => {
++        it('treats an `MM-DD` holiday as recurring every year', () => {
++          const dateCond = {
++            op: 'isapprox',
++            value: {
++              start: '2020-12-07',
++              frequency: 'weekly',
++              patterns: [],
++              skipWeekend: true,
++              weekendSolveMode: 'after',
++              holidays: ['12-07'],
++            },
++          };
++
++          expect(getNextDate(dateCond, new Date(2020, 11, 1))).toBe(
++            '2020-12-08',
++          );
++        });
++
++        it('applies an `MM-DD` holiday in years after the one it was written for', () => {
++          const dateCond = {
++            op: 'isapprox',
++            value: {
++              start: '2021-12-06',
++              frequency: 'weekly',
++              patterns: [],
++              skipWeekend: true,
++              weekendSolveMode: 'after',
++              holidays: ['12-06'],
++            },
++          };
++
++          expect(getNextDate(dateCond, new Date(2021, 11, 1))).toBe(
++            '2021-12-07',
++          );
++        });
++
+         it('moves a weekday occurrence on a holiday `after`', () => {
+           const dateCond = {
+             op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index b32731a..1e3522e 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -367,8 +367,14 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+   return null;
+ }
+ 
++// Holiday entries are either a full `YYYY-MM-DD` day or a `MM-DD` that recurs every year.
++function isHoliday(date: Date, holidays: readonly string[]) {
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
++}
++
+ function isNonWorkingDay(date: Date, holidays: readonly string[]) {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  return d.isWeekend(date) || isHoliday(date, holidays);
+ }
+ 
+ // Returns null when a daily schedule's occurrence falls on a weekend or holiday,

@@ -1,0 +1,229 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index c209ee1..d2f001d 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -232,7 +232,6 @@ describe('set budget average', () => {
+     await db.update('category_groups', { id: 'group1', name: 'group1' });
+     await db.insert('notes', { id: 'group1', note: 'Monthly expenses #fixed' });
+     await db.insert('notes', { id: 'cat1', note: 'category note #fixed' });
+-    await db.insertCategoryGroup({ id: 'regular-group', name: 'Regular' });
+     await db.insertCategory({
+       id: 'regular-cat', name: 'Regular category', cat_group: 'regular-group',
+     });
+@@ -241,8 +240,9 @@ describe('set budget average', () => {
+     await db.insertCategory({
+       id: 'hidden-cat', name: 'Hidden category', cat_group: 'hidden-group',
+     });
++    await db.insertCategoryGroup({ id: 'regular-group', name: 'Regular' });
+     await db.insertCategory({
+-      id: 'hidden-category', name: 'Hidden category', cat_group: 'group1', hidden: 1,
++      id: 'hidden-category', name: 'Hidden category', cat_group: 'regular-group', hidden: 1,
+     });
+     await db.insertCategory({
+       id: 'template-cat', name: 'Templated', cat_group: 'group1',
+@@ -268,6 +268,42 @@ describe('set budget average', () => {
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(500);
+     expect(await getSheetValue('budget202404', 'budget-regular-cat')).toBe(0);
+   });
++
++  it('includes hidden categories when requested while keeping other exclusions', async () => {
++    await db.insertCategoryGroup({ id: 'hidden-group', name: 'Hidden', hidden: 1 });
++    await db.insertCategoryGroup({ id: 'regular-group', name: 'Regular' });
++    await db.insertCategory({
++      id: 'hidden-cat', name: 'Hidden category', cat_group: 'hidden-group',
++    });
++    await db.insertCategory({
++      id: 'hidden-category', name: 'Hidden category', cat_group: 'regular-group', hidden: 1,
++    });
++    await db.insertCategory({ id: 'template-cat', name: 'Templated', cat_group: 'group1' });
++    await db.update('categories', {
++      id: 'template-cat',
++      goal_def: JSON.stringify([{ directive: 'template', type: 'simple' }]),
++    });
++    await db.insert('notes', { id: 'group1', note: 'Group #fixed' });
++    await db.insertCategory({ id: 'regular-cat', name: 'Regular category', cat_group: 'regular-group' });
++    await sheet.loadSpreadsheet(db);
++    await budget.createBudget(['2024-04']);
++
++    for (const category of ['hidden-cat', 'hidden-category', 'template-cat', 'cat1', 'regular-cat']) {
++      await setBudget({ category, month: '2024-04', amount: 500 });
++    }
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-04', includeHiddenCategories: true });
++    await sheet.waitOnSpreadsheet();
++
++    for (const category of ['hidden-cat', 'hidden-category']) {
++      expect(await getSheetValue('budget202404', `budget-${category}`)).toBe(0);
++    }
++    for (const category of ['template-cat', 'cat1']) {
++      expect(await getSheetValue('budget202404', `budget-${category}`)).toBe(500);
++    }
++    expect(await getSheetValue('budget202404', 'budget-regular-cat')).toBe(0);
++  });
+ });
+ 
+ describe('coverOverbudgeted', () => {
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index b90d70f..b56a5b3 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -219,8 +219,10 @@ function setCarryover(
+ 
+ export async function copyPreviousMonth({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+@@ -232,8 +234,8 @@ export async function copyPreviousMonth({
+         return;
+       }
+       if (
+-        prevBudget.hidden === 1 ||
+-        prevBudget.group_hidden === 1 ||
++        (!includeHiddenCategories &&
++          (prevBudget.hidden === 1 || prevBudget.group_hidden === 1)) ||
+         prevBudget.has_template === 1
+       ) {
+         return;
+@@ -264,18 +266,24 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
++export async function setZero({
++  month,
++  includeHiddenCategories = false,
++}: {
++  month: string;
++  includeHiddenCategories?: boolean;
++}): Promise<void> {
+   const categories = await db.all<db.DbViewCategory>(
+     `SELECT c.* FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
+      LEFT JOIN notes n ON n.id = g.id
+-     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++     WHERE c.tombstone = 0 AND (? OR (c.hidden = 0 AND g.hidden = 0))
+        AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+        AND NOT EXISTS (
+          SELECT 1 FROM json_each(COALESCE(c.goal_def, '[]'))
+          WHERE json_extract(value, '$.directive') = 'template'
+       )`,
+-    [makeTagAqlRegex('fixed')],
++    [includeHiddenCategories ? 1 : 0, makeTagAqlRegex('fixed')],
+   );
+ 
+   await batchMessages(async () => {
+@@ -290,20 +298,22 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function setLastMonthSpending({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await db.all<db.DbViewCategory>(
+     `SELECT c.* FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
+      LEFT JOIN notes n ON n.id = g.id
+-     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++     WHERE c.tombstone = 0 AND (? OR (c.hidden = 0 AND g.hidden = 0))
+        AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+        AND NOT EXISTS (
+          SELECT 1 FROM json_each(COALESCE(c.goal_def, '[]'))
+          WHERE json_extract(value, '$.directive') = 'template'
+        )`,
+-    [makeTagAqlRegex('fixed')],
++    [includeHiddenCategories ? 1 : 0, makeTagAqlRegex('fixed')],
+   );
+   const previousMonth = monthUtils.prevMonth(month);
+   const previousSheet = monthUtils.sheetForMonth(previousMonth);
+@@ -328,8 +338,10 @@ export async function setLastMonthSpending({
+ 
+ export async function set3MonthAvg({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+@@ -337,14 +349,14 @@ export async function set3MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   LEFT JOIN notes n ON n.id = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0 AND (? OR (c.hidden = 0 AND g.hidden = 0))
+     AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+     AND NOT EXISTS (
+       SELECT 1 FROM json_each(COALESCE(c.goal_def, '[]'))
+       WHERE json_extract(value, '$.directive') = 'template'
+     )
+   `,
+-    [makeTagAqlRegex('fixed')],
++    [includeHiddenCategories ? 1 : 0, makeTagAqlRegex('fixed')],
+   );
+ 
+   await batchMessages(async () => {
+@@ -370,8 +382,10 @@ export async function set3MonthAvg({
+ 
+ export async function set12MonthAvg({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+@@ -379,14 +393,14 @@ export async function set12MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   LEFT JOIN notes n ON n.id = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0 AND (? OR (c.hidden = 0 AND g.hidden = 0))
+     AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+     AND NOT EXISTS (
+       SELECT 1 FROM json_each(COALESCE(c.goal_def, '[]'))
+       WHERE json_extract(value, '$.directive') = 'template'
+     )
+   `,
+-    [makeTagAqlRegex('fixed')],
++    [includeHiddenCategories ? 1 : 0, makeTagAqlRegex('fixed')],
+   );
+ 
+   await batchMessages(async () => {
+@@ -401,8 +415,10 @@ export async function set12MonthAvg({
+ 
+ export async function set6MonthAvg({
+   month,
++  includeHiddenCategories = false,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+@@ -410,14 +426,14 @@ export async function set6MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   LEFT JOIN notes n ON n.id = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0 AND (? OR (c.hidden = 0 AND g.hidden = 0))
+     AND (n.note IS NULL OR NOT REGEXP(?, n.note))
+     AND NOT EXISTS (
+       SELECT 1 FROM json_each(COALESCE(c.goal_def, '[]'))
+       WHERE json_extract(value, '$.directive') = 'template'
+     )
+   `,
+-    [makeTagAqlRegex('fixed')],
++    [includeHiddenCategories ? 1 : 0, makeTagAqlRegex('fixed')],
+   );
+ 
+   await batchMessages(async () => {

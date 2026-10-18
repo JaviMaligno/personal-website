@@ -1,0 +1,11 @@
+{"id":"291b38c182",
+"reuse":{"score":4,"why":"Builds on recurConfigToRSchedule, getDateWithSkippedWeekend, RSchedule and dayFromDate throughout, and extends getDateWithSkippedWeekend for holidays rather than writing a second adjuster."},
+"duplication":{"score":3,"why":"getDatesInRange re-creates getUpcomingDates' RSchedule construction, weekend-adjust map and breadcrumb handling, and the new RSchedule({ rrules, exdates }) pairing is spelled out at each construction site instead of in one builder."},
+"placement":{"score":4,"why":"Recurrence rules and weekend/holiday adjustment live in shared/schedules.ts and the handler in schedules/app.ts, but the daily-frequency rule is decided in three places (recurConfigToRSchedule, recurConfigToExdates and getDatesInRange)."},
+"scope":{"score":5,"why":"All edits serve the four steps: daily skip, range handler, holidays and yearly holidays, with tests and release notes."},
+"maintainability":{"score":3,"why":"Two mechanisms for 'off days' (byDayOfWeek/exdates for daily vs. forward/backward stepping otherwise), exdates that every RSchedule caller must remember to pass, and a 200-year expansion of MM-DD holidays make the design fragile."},
+"bypasses_abstraction":{"value":true,"where":"schedules/app.ts getDatesInRange re-decides the daily exception with its own `config.frequency !== 'daily'` check instead of relying on recurConfigToRSchedule/getDateWithSkippedWeekend; find-schedules.ts takeDates still builds RSchedule without recurConfigToExdates."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getDatesInRange in schedules/app.ts reshapes getUpcomingDates' occurrence + skip-weekend pipeline (range bounds with a margin and a Set instead of take/count) rather than sharing it."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":1,"where":"getDateWithSkippedWeekend gains a holidays parameter; recurConfigToRSchedule gains a daily skipWeekend branch and the new recurConfigToExdates a daily-only branch with yearly expansion; getDatesInRange checks frequency !== 'daily' itself."}}

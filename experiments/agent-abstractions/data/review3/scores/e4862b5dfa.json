@@ -1,0 +1,12 @@
+{"id": "e4862b5dfa",
+ "reuse": {"score": 4, "why": "Adds getRangedAmount to shared/schedules.ts and routes getScheduledAmount and every server site through it, but the sites keep their own number-vs-range dispatch instead of calling the existing getScheduledAmount, which already handles both."},
+ "duplication": {"score": 4, "why": "The midpoint arithmetic is removed from all six places; the surrounding missing/number/range ternaries stay duplicated at the call sites."},
+ "placement": {"score": 5, "why": "The rule lives in shared/schedules.ts next to getScheduledAmount, the module both server and client already use for schedule amounts."},
+ "scope": {"score": 5, "why": "Only the ranged-amount rule, a unit test and a release note."},
+ "maintainability": {"score": 4, "why": "A future change to the rule is one edit; the two overlapping helpers (getRangedAmount and getScheduledAmount) and the per-site dispatch are a small wart."},
+ "bypasses_abstraction": {"value": true, "where": "schedules/app.ts (updateActions, postTransactionForSchedule), forecast-schedules.ts normalizeSchedule and shared/schedules.ts computeSchedulePreviewTransactions keep their own typeof-number dispatch rather than calling the existing getScheduledAmount."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "No duplicated logic is introduced; the remaining per-site ternaries are pre-existing and left as they were."},
+ "one_place": {"value": true, "where": "getRangedAmount in shared/schedules.ts decides the range rule; schedule-template, forecast-schedules, schedules/app (two sites), computeSchedulePreviewTransactions and getScheduledAmount (used by the client) all call it."}
+}

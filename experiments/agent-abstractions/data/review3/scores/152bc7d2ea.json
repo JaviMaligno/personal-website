@@ -1,0 +1,12 @@
+{"id":"152bc7d2ea",
+"reuse":{"score":4,"why":"Uses db.first and the existing AccountSyncSource type; adds one guard helper rather than reimplementing anything existing, though link.ts (the module for link-related bank lookups like findOrCreateBank) was not reused as its home."},
+"duplication":{"score":4,"why":"The rule lives in one helper; only a 5-line call is repeated in each of the five provider link functions, which mirrors the tree's already duplicated per-provider structure."},
+"placement":{"score":4,"why":"Guard is a private function in accounts/app.ts next to the link handlers; link.ts holds the analogous findOrCreateBank DB helper and would be a slightly more natural home."},
+"scope":{"score":4,"why":"Focused on the guard plus tests; widening DbAccount.account_sync_source to all providers is adjacent typing cleanup, not strictly required."},
+"maintainability":{"score":4,"why":"Single clearly-named guard with explicit upgradingId exception is easy to own; a new provider must remember to add the call, as with the other per-provider steps."},
+"bypasses_abstraction":{"value":false,"where":"none; the check is a new guard called first in every link*Account function"},
+"duplicated_blocks":0,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"none; only the guard invocation repeats per provider"},
+"one_place":{"value":true,"where":"ensureBankAccountIsNotLinked in packages/loot-core/src/server/accounts/app.ts is the single definition, called by all five link functions (goCardless, simpleFin, pluggyai, akahu, enableBanking)"}
+}

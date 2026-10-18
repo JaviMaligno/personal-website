@@ -1,0 +1,118 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 493c99f..4ffc353 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -218,6 +218,20 @@ function setCarryover(
+ // Month-wide actions must not touch categories managed by saved templates
+ const NO_SAVED_TEMPLATES = `(c.goal_def IS NULL OR TRIM(c.goal_def) IN ('', '[]'))`;
+ 
++const FIXED_TAG = /(?<![\w#])#fixed(?![\w-])/i;
++
++// Categories in a group whose notes carry the #fixed tag are left alone too
++async function getFixedCategoryIds(): Promise<Set<string>> {
++  const rows = await db.all<{ id: string; note: string | null }>(
++    `SELECT c.id, n.note FROM categories c
++     JOIN notes n ON n.id = c.cat_group
++     WHERE c.tombstone = 0`,
++  );
++  return new Set(
++    rows.filter(r => r.note && FIXED_TAG.test(r.note)).map(r => r.id),
++  );
++}
++
+ export async function copyPreviousMonth({
+   month,
+ }: {
+@@ -231,6 +245,9 @@ export async function copyPreviousMonth({
+     `SELECT c.id FROM categories c WHERE NOT ${NO_SAVED_TEMPLATES}`,
+   );
+   const templatedIds = new Set(templated.map(c => c.id));
++  for (const id of await getFixedCategoryIds()) {
++    templatedIds.add(id);
++  }
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+@@ -279,9 +296,13 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+     AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
++  const fixedIds = await getFixedCategoryIds();
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
++      if (fixedIds.has(cat.id)) {
++        return;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+@@ -304,10 +325,14 @@ export async function setLastMonthSpending({
+     AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
++  const fixedIds = await getFixedCategoryIds();
+   const prevSheet = monthUtils.sheetForMonth(monthUtils.prevMonth(month));
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedIds.has(cat.id)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+@@ -336,9 +361,13 @@ export async function set3MonthAvg({
+     AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
++  const fixedIds = await getFixedCategoryIds();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedIds.has(cat.id)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+@@ -372,9 +401,13 @@ export async function set12MonthAvg({
+     AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
++  const fixedIds = await getFixedCategoryIds();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedIds.has(cat.id)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+@@ -397,9 +430,13 @@ export async function set6MonthAvg({
+     AND ${NO_SAVED_TEMPLATES}
+   `,
+   );
++  const fixedIds = await getFixedCategoryIds();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
++      if (fixedIds.has(cat.id)) {
++        continue;
++      }
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+diff --git a/upcoming-release-notes/skip-fixed-groups.md b/upcoming-release-notes/skip-fixed-groups.md
+new file mode 100644
+index 0000000..bd18a58
+--- /dev/null
++++ b/upcoming-release-notes/skip-fixed-groups.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Month-wide budget actions skip categories in groups tagged `#fixed` in the group notes

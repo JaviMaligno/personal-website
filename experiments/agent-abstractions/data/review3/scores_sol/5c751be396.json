@@ -1,0 +1,45 @@
+{
+ "id": "5c751be396",
+ "reuse": {
+  "score": 4,
+  "why": "Fintegra reuses findOrCreateBank and linkBankSyncAccount, but transaction downloading and local unlink cleanup repeat existing logic."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "The change repeats validation orchestration across six handlers, copies the local unlink field reset, and adds another substantially identical transaction downloader."
+ },
+ "placement": {
+  "score": 4,
+  "why": "The changes follow the existing account, sync, configuration, and model layers, although shared link validation remains distributed across provider handlers."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the requested linking rules, Fintegra integration, associated types, and tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared guards reduce rule duplication, but an assertion that conditionally unlinks accounts hides mutation and duplicates cleanup that must remain aligned with unlinkAccount."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "Fintegra uses the existing bank and linking helpers; unlinkAccount includes provider side effects and offers no reusable local-only cleanup operation."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "sync.ts downloadFintegraTransactions reshapes the existing downloaders' token lookup, authenticated POST, error handling, and response mapping with renamed variables and an inline return."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 0,
+  "where": "assertBankAccountNotLinked gains replaceExistingLink and branches for refusal versus local unlinking, turning a validation helper into a conditional mutation; all six linking handlers call the shared guards."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 40.4
+ }
+}

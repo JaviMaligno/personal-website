@@ -1,0 +1,12 @@
+{"id": "f0837e077e",
+ "reuse": {"score": 4, "why": "Routes every range computation to the existing getScheduledAmount, but three sites keep their own missing/number dispatch even though the helper already handles null and single amounts."},
+ "duplication": {"score": 3, "why": "The `== null ? 0 : number ? value : helper(range)` dispatch is left duplicated in updateActions, postTransactionForSchedule and computeSchedulePreviewTransactions, repeating logic the helper contains."},
+ "placement": {"score": 5, "why": "The rule change is made in shared/schedules.ts, the shared home of schedule amount logic."},
+ "scope": {"score": 5, "why": "Only the rule, its consumers' range branches, comments and a test are touched."},
+ "maintainability": {"score": 4, "why": "The range rule now has one definition, but the surviving wrapper dispatches mean a change to missing or single-amount handling would still need several edits."},
+ "bypasses_abstraction": {"value": false, "where": "Range amounts at every site go through getScheduledAmount; only the surrounding dispatch is left local."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The residual dispatches are left verbatim, not reshaped."},
+ "one_place": {"value": true, "where": "packages/loot-core/src/shared/schedules.ts getScheduledAmount defines the range rule and every server and client path calls it for ranges (three sites keep a redundant outer null/number dispatch)."}
+}

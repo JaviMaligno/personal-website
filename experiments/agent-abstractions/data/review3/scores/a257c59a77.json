@@ -1,0 +1,12 @@
+{"id": "a257c59a77",
+ "reuse": {"score": 5, "why": "Extends the existing getDateWithSkippedWeekend helper so every existing weekend-handling path (getNextDate, getUpcomingDates, schedule-template) picks up the daily rule through it."},
+ "duplication": {"score": 4, "why": "The rule itself is defined once; schedule-template's two identical inline ternaries are folded into a local getAdjustedDate, and only the 'take more occurrences then drop nulls' pattern recurs at two callers."},
+ "placement": {"score": 5, "why": "The weekend rule stays in shared/schedules.ts, with parseRecurDate carrying frequency into the schedule data where the shared code reads it."},
+ "scope": {"score": 5, "why": "Only the weekend helper, its callers, the schedule data and tests are touched."},
+ "maintainability": {"score": 4, "why": "One definition with a clear null contract for skipped days; the null-aware loop in schedule-template and the fixed count*7 window are slightly awkward but readable."},
+ "bypasses_abstraction": {"value": false, "where": "All weekend-handling call sites go through getDateWithSkippedWeekend."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "No reshaped copies; the duplicated schedule-template ternaries were consolidated."},
+ "one_place": {"value": true, "where": "getDateWithSkippedWeekend in shared/schedules.ts returns null for daily weekend occurrences, and getNextDate, getUpcomingDates and budget/schedule-template.ts all call it with the schedule frequency."}
+}

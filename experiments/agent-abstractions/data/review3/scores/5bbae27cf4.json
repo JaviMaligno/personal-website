@@ -1,0 +1,12 @@
+{"id": "5bbae27cf4",
+ "reuse": {"score": 4, "why": "Introduces getBulkEditableCategories and hasSavedTemplates and routes setZero and the N-month averages through them, reusing setNMonthAvg instead of re-inlining the average; copyPreviousMonth reuses only hasSavedTemplates."},
+ "duplication": {"score": 3, "why": "Three copies of the category query are collapsed, but copyPreviousMonth still applies the income, hidden and group-hidden rules with its own checks over getBudgetData, so the selection rule now exists as SQL+filter in one place and as inline checks in another."},
+ "placement": {"score": 4, "why": "The selection helper and template predicate live in server/budget/actions.ts beside the actions that use them, which is where the tree keeps this logic."},
+ "scope": {"score": 3, "why": "Besides the requested rule it restructures set3/6/12MonthAvg into setAllCategoriesNMonthAvg and switches the per-category writes from void to await, which goes beyond the fix."},
+ "maintainability": {"score": 3, "why": "Most month-wide actions now share one selection function, but copyPreviousMonth keeps a parallel version of the rule that must be kept in sync by hand."},
+ "bypasses_abstraction": {"value": true, "where": "server/budget/actions.ts copyPreviousMonth decides income/hidden/group-hidden/template exclusion inline instead of using getBulkEditableCategories."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "copyPreviousMonth's checks are plain inline conditions (and the template check calls the shared hasSavedTemplates), not a reshaped copy."},
+ "one_place": {"value": false, "where": "The rule lives in getBulkEditableCategories (SQL hidden filters + JS template/income filter) for setZero and the averages, and separately as inline checks in copyPreviousMonth."}
+}

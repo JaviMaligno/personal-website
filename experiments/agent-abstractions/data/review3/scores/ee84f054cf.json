@@ -1,0 +1,11 @@
+{"id":"ee84f054cf",
+"reuse":{"score":5,"why":"Extends the existing shared weekend helpers (getDateWithSkippedWeekend, isDroppedWeekendOccurrence, the search-limit constant) rather than adding parallel holiday logic at the call sites."},
+"duplication":{"score":4,"why":"Holiday membership is decided once in isWeekendOrHoliday, but the holidays argument has to be threaded through four copies of the pre-existing 'skipWeekend && !skipsWeekendOccurrences ? getDateWithSkippedWeekend(...)' ternary, which the diff extends rather than consolidates."},
+"placement":{"score":5,"why":"The rule lives in shared/schedules.ts with the other weekend logic; server callers only pass the config field, and the type and rule-utils mapping are updated where the config is defined and parsed."},
+"scope":{"score":5,"why":"Only the weekend helpers, their callers, the RecurConfig type and tests are changed."},
+"maintainability":{"score":4,"why":"Clear single predicate and generalised stepping loop; the search window bounds (getWeekendSkipSearchLimit vs getDatesInRangeSearchPadding) are two separate heuristics and every caller must remember to pass holidays explicitly."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":0,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":""},
+"one_place":{"value":true,"where":"shared/schedules.ts isWeekendOrHoliday, used by both getDateWithSkippedWeekend and isDroppedWeekendOccurrence; call sites in schedules/app.ts, schedule-template.ts and getNextDate only pass config.holidays"}}

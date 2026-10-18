@@ -1,0 +1,11 @@
+{"id":"3a76df299d",
+"reuse":{"score":3,"why":"Threads the flag through the existing assertBankAccountNotLinked guard that every handler already calls, but rewrites unlinkAccount's column reset instead of extracting and sharing it."},
+"duplication":{"score":2,"why":"The eight-column unlink reset is copied from unlinkAccount, and the upgradingId 'not found' lookup repeats the check each link handler already performs right after the guard."},
+"placement":{"score":3,"why":"Putting the takeover in the shared pre-link guard runs it in the right order for every provider, but a function named assert...NotLinked now performs writes to another account."},
+"scope":{"score":5,"why":"Only the flag, its plumbing through the six handlers, tests and a release note."},
+"maintainability":{"score":3,"why":"One place handles the takeover for all providers, but the hidden mutation inside an assert helper and the copied unlink reset that can drift from unlinkAccount make it harder to own."},
+"bypasses_abstraction":{"value":true,"where":"assertBankAccountNotLinked clears the holder with its own db.updateAccount instead of reusing the reset in unlinkAccount (app.ts)"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":""}
+}

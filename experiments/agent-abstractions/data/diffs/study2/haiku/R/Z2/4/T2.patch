@@ -1,0 +1,119 @@
+diff --git a/packages/loot-core/src/server/api.test.ts b/packages/loot-core/src/server/api.test.ts
+index 32f6ed6..13ba90e 100644
+--- a/packages/loot-core/src/server/api.test.ts
++++ b/packages/loot-core/src/server/api.test.ts
+@@ -8,6 +8,8 @@ import { app as accountsApp } from './accounts/app';
+ import { installAPI } from './api';
+ import { createBudget } from './budget/base';
+ import * as prefs from './prefs';
++import { app as rulesApp } from './rules/app';
++import { app as schedulesApp } from './schedules/app';
+ 
+ vi.mock('#shared/errors', () => ({
+   getBankSyncError: vi.fn(error => `Bank sync error: ${error}`),
+@@ -249,4 +251,66 @@ describe('API handlers', () => {
+       expect(handlers['rule-update']).toHaveBeenCalledWith(internalRule);
+     });
+   });
++
++  describe('api/schedules-get', () => {
++    beforeEach(global.emptyDatabase());
++
++    beforeEach(async () => {
++      await prefs.loadPrefs();
++      handlers['rule-add'] = rulesApp.handlers['rule-add'];
++      handlers['schedule/create'] = schedulesApp.handlers['schedule/create'];
++      await db.insertAccount({ id: 'acct1', name: 'Marcus' });
++      await db.insertPayee({ id: 'payee1', name: 'Shop' });
++    });
++
++    // The schedules view reads condition values through schedules_json_paths,
++    // which the trackJSONPaths service fills; the service isn't running here.
++    const trackJSONPaths = (id: string) =>
++      db.runQuery(
++        'INSERT OR REPLACE INTO schedules_json_paths (schedule_id, payee, account, amount, date) VALUES (?, ?, ?, ?, ?)',
++        [id, '$[0]', '$[1]', '$[3]', '$[2]'],
++      );
++
++    it('exposes the furthest-from-zero amount of a ranged schedule as expectedAmount', async () => {
++      const id = await handlers['api/schedule-create']({
++        name: 'ranged',
++        posts_transaction: false,
++        payee: 'payee1',
++        account: 'acct1',
++        amount: { num1: -10100, num2: -20000 },
++        amountOp: 'isbetween',
++        date: '2026-01-01',
++      });
++      trackJSONPaths(id);
++
++      const schedules = await handlers['api/schedules-get']();
++      expect(schedules).toEqual([
++        expect.objectContaining({
++          id,
++          name: 'ranged',
++          amount: { num1: -10100, num2: -20000 },
++          amountOp: 'isbetween',
++          expectedAmount: -20000,
++        }),
++      ]);
++    });
++
++    it('uses a single amount as expectedAmount', async () => {
++      const id = await handlers['api/schedule-create']({
++        name: 'single',
++        posts_transaction: false,
++        payee: 'payee1',
++        account: 'acct1',
++        amount: -5000,
++        amountOp: 'is',
++        date: '2026-01-01',
++      });
++      trackJSONPaths(id);
++
++      const schedules = await handlers['api/schedules-get']();
++      expect(schedules).toEqual([
++        expect.objectContaining({ id, amount: -5000, expectedAmount: -5000 }),
++      ]);
++    });
++  });
+ });
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index dd819a0..d609a19 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -11,6 +11,7 @@ import {
+ } from '#shared/errors';
+ import * as monthUtils from '#shared/months';
+ import { q } from '#shared/query';
++import { getScheduledAmount } from '#shared/schedules';
+ import {
+   deleteTransaction,
+   ungroupTransactions,
+@@ -928,7 +929,10 @@ handlers['api/schedules-get'] = async function () {
+   checkFileOpen();
+   const { data } = await aqlQuery(q('schedules').select('*'));
+   const schedules = data as ScheduleEntity[];
+-  return schedules.map(schedule => scheduleModel.toExternal(schedule));
++  return schedules.map(schedule => ({
++    ...scheduleModel.toExternal(schedule),
++    expectedAmount: getScheduledAmount(schedule._amount),
++  }));
+ };
+ 
+ handlers['api/schedule-create'] = withMutation(async function (
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 679a8c9..be7b134 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -303,7 +303,9 @@ export type ApiHandlers = {
+ 
+   'api/schedule-delete': (id: string) => Promise<void>;
+ 
+-  'api/schedules-get': () => Promise<APIScheduleEntity[]>;
++  'api/schedules-get': () => Promise<
++    (APIScheduleEntity & { expectedAmount: number })[]
++  >;
+   'api/get-id-by-name': (arg: {
+     type: string;
+     name: string;

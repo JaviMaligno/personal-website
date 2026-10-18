@@ -1,0 +1,53 @@
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 000dda5..25cfa7f 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -375,7 +375,7 @@ export type WeekendRule = {
+   frequency?: string;
+   skipWeekend?: boolean;
+   solveMode?: 'after' | 'before';
+-  // Days (YYYY-MM-DD) treated exactly like weekend days.
++  // Days treated exactly like weekend days: YYYY-MM-DD, or MM-DD every year.
+   holidays?: string[];
+ };
+ 
+@@ -388,17 +388,19 @@ export function weekendRuleFromConfig(config: RecurConfig): WeekendRule {
+   };
+ }
+ 
+-// Whether the weekend rule avoids `date`: a weekend day or a holiday.
++// Whether the weekend rule avoids `date`: a weekend day or a holiday. A
++// holiday is one day (YYYY-MM-DD) or that day in every year (MM-DD).
+ export function isWeekendRuleDay(date: Date, rule: WeekendRule): boolean {
+   if (d.isWeekend(date)) {
+     return true;
+   }
+   const holidays = rule.holidays;
+-  return (
+-    holidays != null &&
+-    holidays.length > 0 &&
+-    holidays.includes(monthUtils.dayFromDate(date))
+-  );
++  if (holidays == null || holidays.length === 0) {
++    return false;
++  }
++  const day = monthUtils.dayFromDate(date);
++  const monthDay = day.slice(5);
++  return holidays.some(holiday => holiday === day || holiday === monthDay);
+ }
+ 
+ // With `skipWeekend`, daily schedules drop their occurrences on weekend days
+diff --git a/packages/loot-core/src/types/models/schedule.ts b/packages/loot-core/src/types/models/schedule.ts
+index cd82df4..921fd01 100644
+--- a/packages/loot-core/src/types/models/schedule.ts
++++ b/packages/loot-core/src/types/models/schedule.ts
+@@ -17,7 +17,8 @@ export type RecurConfig = {
+   endOccurrences?: number;
+   endDate?: string;
+   weekendSolveMode?: 'before' | 'after';
+-  // Days (YYYY-MM-DD) treated like weekend days when `skipWeekend` is on.
++  // Days treated like weekend days when `skipWeekend` is on: one day
++  // (YYYY-MM-DD) or that day in every year (MM-DD).
+   holidays?: string[];
+ };
+ 

@@ -1,0 +1,104 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 3986917..8defa64 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -51,6 +51,7 @@ type LinkAccountBaseParams = {
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
++  replaceExistingLink?: boolean;
+ };
+ 
+ export type AccountHandlers = {
+@@ -237,18 +238,40 @@ async function assertAccountNotClosed(accountId?: string) {
+   }
+ }
+ 
++function clearAccountLink(id: string) {
++  return db.updateAccount({
++    id,
++    account_id: null,
++    bank: null,
++    balance_current: null,
++    balance_available: null,
++    balance_limit: null,
++    account_sync_source: null,
++    bank_sync_status: null,
++  });
++}
++
+ async function assertBankAccountNotLinked(
+   syncSource: string,
+   accountId: string,
+   upgradingId?: string,
++  replaceExistingLink = false,
+ ) {
+-  const existing = await db.first<{ id: string }>(
+-    'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ? LIMIT 1',
++  const existing = await db.all<{ id: string }>(
++    'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',
+     [syncSource, accountId, upgradingId ?? null],
+   );
+-  if (existing) {
++  if (existing.length === 0) {
++    return;
++  }
++  if (!replaceExistingLink) {
+     throw new Error('This bank account is already linked to another account.');
+   }
++  // Only clear the local link; the bank connection stays in use by the new
++  // link, so nothing is sent to the bank provider.
++  for (const { id } of existing) {
++    await clearAccountLink(id);
++  }
+ }
+ 
+ type LinkBankAccountParams = LinkAccountBaseParams & {
+@@ -272,10 +295,16 @@ async function linkBankAccount({
+   startingBalance,
+   newAccount,
+   fileId,
++  replaceExistingLink = false,
+   tables = ['transactions', 'accounts'],
+ }: LinkBankAccountParams) {
+   await assertAccountNotClosed(upgradingId);
+-  await assertBankAccountNotLinked(syncSource, externalId, upgradingId);
++  await assertBankAccountNotLinked(
++    syncSource,
++    externalId,
++    upgradingId,
++    replaceExistingLink,
++  );
+ 
+   const bank = await link.findOrCreateBank(institution, bankKey);
+ 
+@@ -1576,16 +1605,7 @@ async function unlinkAccount({ id }: { id: AccountEntity['id'] }) {
+ 
+   const isGoCardless = accRow.account_sync_source === 'goCardless';
+ 
+-  await db.updateAccount({
+-    id,
+-    account_id: null,
+-    bank: null,
+-    balance_current: null,
+-    balance_available: null,
+-    balance_limit: null,
+-    account_sync_source: null,
+-    bank_sync_status: null,
+-  });
++  await clearAccountLink(id);
+ 
+   if (isGoCardless === false) {
+     return;
+diff --git a/upcoming-release-notes/replace-existing-bank-link.md b/upcoming-release-notes/replace-existing-bank-link.md
+new file mode 100644
+index 0000000..fae329e
+--- /dev/null
++++ b/upcoming-release-notes/replace-existing-bank-link.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow linking a bank account that is already linked to another local account by replacing the existing link.

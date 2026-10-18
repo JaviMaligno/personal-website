@@ -1,0 +1,12 @@
+{"id":"96f075fa26",
+"reuse":{"score":5,"why":"Builds on the tree's WeekendRule, applyWeekendRule and applyWeekendRuleToDay, folds the old getDateWithSkippedWeekend into them, and the new handler and budget template use the same rule object."},
+"duplication":{"score":3,"why":"The RecurConfig-to-WeekendRule mapping is written identically in getUpcomingDates and getDatesInRange, the 'filter isDroppedWeekendOccurrence then applyWeekendRule' sequence is repeated at three call sites, and getDatesInRange repeats getUpcomingDates' RSchedule/try/captureBreadcrumb skeleton."},
+"placement":{"score":5,"why":"The weekend/holiday/daily rule lives in shared/schedules.ts beside the existing rule, and the handler sits with the other schedule handlers in server/schedules/app.ts."},
+"scope":{"score":5,"why":"Changes are limited to the schedule date rule, its consumers, the parsed schedule data and the type, with focused tests."},
+"maintainability":{"score":4,"why":"The rule is centralised and documented, but splitting it into applyWeekendRule plus isDroppedWeekendOccurrence means every consumer has to remember to call both in the right order."},
+"bypasses_abstraction":{"value":false,"where":"All consumers go through applyWeekendRule / isDroppedWeekendOccurrence with a WeekendRule."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"Repeated pieces are verbatim small mappings and call sequences, not reshaped copies of logic."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":0,"where":"WeekendRule gains `daily` and `holidays`; applyWeekendRule gets an early `rule.daily` return, with the daily skip moved to a companion isDroppedWeekendOccurrence that callers must also call; no caller bypasses the rule."}
+}

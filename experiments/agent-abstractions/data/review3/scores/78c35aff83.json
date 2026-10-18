@@ -1,0 +1,11 @@
+{"id":"78c35aff83",
+"reuse":{"score":3,"why":"Introduces getMonthActionCategories and getFixedGroupIds and routes setZero and the average/spending actions through them, but copyPreviousMonth does not use the selection helper and re-decides the exclusions on getBudgetData rows."},
+"duplication":{"score":2,"why":"The month-wide exclusion rule (hidden/hidden group unless includeHiddenCategories, saved template via goal_def, #fixed group) is written twice: as SQL in getMonthActionCategories and as a JS condition in copyPreviousMonth; the income/tracking guard also stays repeated per action."},
+"placement":{"score":4,"why":"Helpers sit in budget/actions.ts with the actions and the new method is registered in budget/app.ts like its siblings; only the rule's split between SQL and an inline condition is off."},
+"scope":{"score":4,"why":"Changes are confined to the month-wide actions, the new handler, tests and a release note; the extra goal_def/cat_group columns on the shared getBudgetData exist only to support the inline copy."},
+"maintainability":{"score":3,"why":"Each later exclusion must be added both to the SQL and to copyPreviousMonth, and the helper's comment says it returns the categories to leave alone while it returns the ones to fill."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth in budget/actions.ts filters hidden, goal_def and fixedGroupIds inline instead of using getMonthActionCategories."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The exclusion rule is reshaped from a SQL WHERE clause in getMonthActionCategories into a boolean condition over getBudgetData rows in copyPreviousMonth."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":1,"where":"getMonthActionCategories gains includeHiddenCategories (step 4); copyPreviousMonth bypasses it and re-implements the exclusions inline across steps 1, 3 and 4."}}

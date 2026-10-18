@@ -1,0 +1,11 @@
+{"id": "a170b2e2a7",
+ "reuse": {"score": 3, "why": "Reuses the existing ensureBankAccountIsNotLinked check and its single call path for all providers, but copies the field-clearing update from unlinkAccount instead of extracting it into a shared local-unlink helper that both could call."},
+ "duplication": {"score": 3, "why": "The eight-field db.updateAccount block that defines an 'unlinked account' is duplicated verbatim from unlinkAccount, so the definition of unlinked now lives in two places."},
+ "placement": {"score": 3, "why": "The takeover mutation is placed inside a function named and shaped as a precondition check (ensureBankAccountIsNotLinked), mixing validation with a side effect."},
+ "scope": {"score": 5, "why": "Only the flag plumbing, the takeover branch and one test; no unrelated edits."},
+ "maintainability": {"score": 3, "why": "The flag is threaded uniformly through every provider, but a maintainer must remember to keep the copied unlink fields in sync with unlinkAccount, and the check's name no longer describes what it does."},
+ "bypasses_abstraction": {"value": true, "where": "packages/loot-core/src/server/accounts/app.ts ensureBankAccountIsNotLinked re-implements unlinkAccount's db.updateAccount detachment rather than factoring out the local part of unlinkAccount (the comment explains avoiding the GoCardless side effect, but no shared piece is extracted)."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The copied update block is an overt verbatim copy of unlinkAccount's update."}
+}

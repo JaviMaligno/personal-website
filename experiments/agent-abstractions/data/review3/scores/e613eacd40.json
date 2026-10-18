@@ -1,0 +1,11 @@
+{"id":"e613eacd40",
+"reuse":{"score":3,"why":"Reuses recurConfigToRSchedule, RSchedule, dayFromDate and the shared getDateWithSkippedWeekend, but writes its own daily-skip-vs-move weekend decision instead of extracting one shared occurrence-adjustment helper from getUpcomingDates/getNextDate."},
+"duplication":{"score":3,"why":"The 'skipWeekend && daily ? drop weekend : move with solve mode' rule is now spelled out a fourth time (getNextDate, getUpcomingDates, schedule-template, new handler), plus the same try/captureBreadcrumb wrapper as getUpcomingDates."},
+"placement":{"score":4,"why":"Handler sits next to getUpcomingDates in schedules/app.ts and is registered in the handler map, matching where the tree puts sibling handlers; the weekend rule itself would better live in shared/schedules.ts."},
+"scope":{"score":5,"why":"Only the new handler, its type registration, a focused test and a release note."},
+"maintainability":{"score":3,"why":"Small and readable, but a future change to weekend handling must be repeated here as well as in the other copies."},
+"bypasses_abstraction":{"value":false,"where":"Calls getDateWithSkippedWeekend and RSchedule rather than going around them; the daily rule has no shared abstraction to bypass."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"schedules/app.ts getDatesInRange: the daily-skip/move branching of getUpcomingDates is reshaped from two separate code paths into a per-occurrence if/else inside the loop rather than shared."},
+"t2_reuse":"copy"}

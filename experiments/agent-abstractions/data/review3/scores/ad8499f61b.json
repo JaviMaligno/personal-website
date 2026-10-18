@@ -1,0 +1,12 @@
+{"id":"ad8499f61b",
+"reuse":{"score":3,"why":"Leaves the existing weekend helper getDateWithSkippedWeekend untouched and writes the new daily-skip rule inline in two callers instead of extending the shared helper or a shared predicate."},
+"duplication":{"score":2,"why":"The 'daily and skipWeekend' predicate and the over-fetch-then-filter-weekends logic are written twice, in getNextDate and getUpcomingDates, with different lookahead sizes (7 vs count * 2 + 14)."},
+"placement":{"score":3,"why":"getNextDate in shared/schedules.ts is a reasonable home, but the same rule is also re-decided in server/schedules/app.ts instead of being exposed from the shared module."},
+"scope":{"score":5,"why":"Only the schedule rule, the frequency passed through parseRecurDate, a test and a release note."},
+"maintainability":{"score":3,"why":"Two independent copies of the rule with different lookahead heuristics can drift, and schedule-template's own skipWeekend handling only stays correct because getNextDate now filters even when noSkipWeekend is passed."},
+"bypasses_abstraction":{"value":true,"where":"getUpcomingDates in packages/loot-core/src/server/schedules/app.ts filters weekends with d.isWeekend itself rather than going through the shared weekend handling in shared/schedules.ts."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The skip-weekend-days filter appears as pickOccurrence with take 7 in getNextDate (shared/schedules.ts) and as a separate branch with take count * 2 + 14 in getUpcomingDates (server/schedules/app.ts), reshaped rather than shared."},
+"one_place":{"value":false,"where":"The daily-skip rule is decided in getNextDate (shared/schedules.ts) and again in getUpcomingDates (server/schedules/app.ts); getDateWithSkippedWeekend, used by schedule-template.ts, does not know the rule."}
+}

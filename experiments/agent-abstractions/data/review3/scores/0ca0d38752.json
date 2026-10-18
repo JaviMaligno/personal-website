@@ -1,0 +1,13 @@
+{
+  "id": "0ca0d38752",
+  "reuse": {"score": 3, "why": "Extends the shared shouldBudgetCategory predicate, but detects the tag with a raw SQL LIKE '%#fixed%' instead of the existing extractTagsFromText tag parser in #shared/tags."},
+  "duplication": {"score": 2, "why": "The tag test (n.note LIKE '%#fixed%') and the notes join are pasted into six separate SQL queries, so the real decision is copied six times."},
+  "placement": {"score": 3, "why": "The predicate in month-budget-categories.ts only reads a precomputed flag; the substance of the rule (what counts as a #fixed tag) lives in SQL strings scattered across the action functions."},
+  "scope": {"score": 5, "why": "Only the month-wide actions, the shared predicate and a test are touched."},
+  "maintainability": {"score": 2, "why": "Changing what counts as the fixed tag requires editing six SQL strings consistently, and the substring match diverges from the app's tag semantics."},
+  "bypasses_abstraction": {"value": true, "where": "Tag detection via SQL LIKE in getBudgetData, setZero, setLastMonthSpending, set3/6/12MonthAvg bypasses extractTagsFromText in packages/loot-core/src/shared/tags.ts."},
+  "duplicated_blocks": 5,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "The duplicated LIKE expression and join are verbatim copies across the six queries, not disguised."},
+  "one_place": {"value": false, "where": "shouldBudgetCategory only checks group_fixed; the rule itself (n.note LIKE '%#fixed%') is defined separately in each of six queries in packages/loot-core/src/server/budget/actions.ts."}
+}

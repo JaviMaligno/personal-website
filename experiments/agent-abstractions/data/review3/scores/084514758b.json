@@ -1,0 +1,11 @@
+{"id":"084514758b",
+"reuse":{"score":3,"why":"Uses rschedule occurrences and d.isWeekend, but bolts the daily rule inline into getNextDate instead of extending the existing getDateWithSkippedWeekend helper that the other weekend paths call."},
+"duplication":{"score":2,"why":"The condition isDaily && skipWeekend && !noSkipWeekend is repeated three times inside getNextDate, and the occurrence-fetch call is duplicated in a new loop."},
+"placement":{"score":3,"why":"Change sits in shared/schedules.ts, the right module, but in one consumer function rather than in the shared weekend-handling helper."},
+"scope":{"score":4,"why":"Focused on getNextDate plus one test; no unrelated edits, though it misses the other code paths the request implies."},
+"maintainability":{"score":2,"why":"Inline loop with a magic 366 bound, triple-repeated predicate, and the rule now diverges between getNextDate and the upcoming-dates preview and template paths that still move weekend dates."},
+"bypasses_abstraction":{"value":true,"where":"getNextDate in packages/loot-core/src/shared/schedules.ts encodes the daily rule inline and bypasses getDateWithSkippedWeekend, which server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts keep using unchanged"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repetition is literal (same predicate thrice, same occurrences call), not disguised."},
+"one_place":{"value":false,"where":"Rule lands only in getNextDate; getUpcomingDates (server/schedules/app.ts) and schedule-template.ts still call getDateWithSkippedWeekend and move daily weekend occurrences."}}

@@ -1,0 +1,11 @@
+{"id": "5942c9d8cf",
+ "reuse": {"score": 4, "why": "Extends the existing getScheduleDate/getScheduleDateString weekend definition with a holidays parameter rather than writing a new mover, but the daily-skip checks re-test weekend-or-holiday inline instead of sharing a predicate."},
+ "duplication": {"score": 3, "why": "The weekend-or-holiday test is written three times (local isNonWorkingDay closure in getScheduleDate, inline in getNextDate, inline in getDatesInRange)."},
+ "placement": {"score": 4, "why": "The holiday move lives in shared/schedules.ts with the weekend rule, but the non-working-day predicate is not exposed there, so call sites rebuild it."},
+ "scope": {"score": 4, "why": "Mostly focused, with an unrelated fallback added to the solve mode in getNextDate (weekendSolve ?? weekendSolveMode)."},
+ "maintainability": {"score": 3, "why": "Holidays are threaded by hand per caller and the schedule-template and getDateWithSkippedWeekend callers were not given them, so the rule already differs between paths and future changes need several edits."},
+ "bypasses_abstraction": {"value": false, "where": ""},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "packages/loot-core/src/shared/schedules.ts getNextDate and packages/loot-core/src/server/schedules/app.ts getDatesInRange re-express getScheduleDate's isNonWorkingDay closure inline (isWeekend || holidays.includes / holidays?.includes(dayFromDate(...)))"},
+ "one_place": {"value": false, "where": "The holiday test is defined in getScheduleDate's local closure and again inline in getNextDate and getDatesInRange; server/budget/schedule-template.ts calls getScheduleDateString without holidays and getDateWithSkippedWeekend does not forward them"}}

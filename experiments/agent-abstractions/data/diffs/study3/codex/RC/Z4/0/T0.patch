@@ -1,0 +1,52 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index b82b437..25ca1f3 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -512,9 +512,11 @@ async function getUpcomingDates({ config, count }) {
+       .occurrences({ start: d.startOfDay(new Date()), take: count })
+       .toArray()
+       .map(date =>
+-        config.skipWeekend
+-          ? getDateWithSkippedWeekend(date.date, config.weekendSolveMode)
+-          : date.date,
++        getDateWithSkippedWeekend(
++          date.date,
++          config.weekendSolveMode,
++          config.skipWeekend === true,
++        ),
+       )
+       .map(date => dayFromDate(date));
+   } catch (err) {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..48aaf7a 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -303,12 +303,11 @@ export function getNextDate(
+ 
+     if (dates.length > 0) {
+       let date = dates[0].date;
+-      if (value.schedule.data.skipWeekend && !noSkipWeekend) {
+-        date = getDateWithSkippedWeekend(
+-          date,
+-          value.schedule.data.weekendSolve,
+-        );
+-      }
++      date = getDateWithSkippedWeekend(
++        date,
++        value.schedule.data.weekendSolve,
++        value.schedule.data.skipWeekend === true && !noSkipWeekend,
++      );
+       return monthUtils.dayFromDate(date);
+     }
+   }
+@@ -340,8 +339,9 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+ export function getDateWithSkippedWeekend(
+   date: Date,
+   solveMode: 'after' | 'before',
++  skipWeekend = true,
+ ) {
+-  if (d.isWeekend(date)) {
++  if (skipWeekend && d.isWeekend(date)) {
+     if (solveMode === 'after') {
+       return d.nextMonday(date);
+     } else if (solveMode === 'before') {

@@ -1,0 +1,12 @@
+{"id": "af4721eafb",
+"reuse": {"score": 3, "why": "Extends the existing getScheduleDate weekend helper for holidays and reuses RSchedule/recurConfigToRSchedule for the range handler, but keeps the daily-skip rule outside the helper."},
+"duplication": {"score": 2, "why": "The daily weekend/holiday skip test (daily && skipWeekend && (isWeekend || isHoliday)) is written twice, in getNextDate's loop and in getDatesInRange, each also passing skipWeekend && !daily to the helper."},
+"placement": {"score": 3, "why": "Holiday matching and moving sit in shared/schedules.ts as they should, but the daily rule is decided by each caller rather than by the shared weekend function."},
+"scope": {"score": 5, "why": "Changes cover exactly the four requested steps plus tests."},
+"maintainability": {"score": 2, "why": "The schedule-date rule is now split: getUpcomingDates still moves daily weekend occurrences, schedule-template ignores holidays, and the daily skip lives in two hand-written copies, so future rule changes must touch several sites."},
+"bypasses_abstraction": {"value": true, "where": "shared/schedules.ts getNextDate and server/schedules/app.ts getDatesInRange decide the daily skip themselves around getScheduleDate; getUpcomingDates and budget/schedule-template.ts call the helper without the daily/holiday rule."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "The daily skip is expressed as a while-loop in getNextDate and as a continue-filter in getDatesInRange: the same rule reshaped rather than shared."},
+"abstraction_drift": {"value": true, "parameters_added": 2, "special_case_branches": 0, "bypassing_call_sites": 4, "where": "getScheduleDate/getScheduleDateString gain a holidays parameter; getNextDate and getDatesInRange re-implement the daily skip and pass skipWeekend && !daily; getUpcomingDates does not apply the daily skip; schedule-template.ts calls getScheduleDateString without holidays."}
+}

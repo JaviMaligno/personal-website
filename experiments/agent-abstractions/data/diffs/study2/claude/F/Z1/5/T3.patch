@@ -1,0 +1,154 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index ee63d58..1a6ee07 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -13,6 +13,7 @@ import {
+   setCategoryCarryover,
+   setLastMonthSpending,
+   setNMonthAvg,
++  setZero,
+ } from './actions';
+ import * as budget from './base';
+ 
+@@ -219,6 +220,34 @@ describe('setLastMonthSpending', () => {
+   });
+ });
+ 
++describe('#fixed groups', () => {
++  beforeEach(async () => {
++    await global.emptyDatabase()();
++    await setupAverageDatabase();
++    await setBudget({ category: 'cat1', month: '2024-01', amount: 500 });
++    await sheet.waitOnSpreadsheet();
++  });
++
++  afterEach(async () => {
++    await global.emptyDatabase()();
++  });
++
++  it('leaves categories in a #fixed group untouched', async () => {
++    await db.update('notes', { id: 'group1', note: 'Rent etc #fixed' });
++    await setZero({ month: '2024-01' });
++    await sheet.waitOnSpreadsheet();
++    expect(await getSheetValue('budget202401', 'budget-cat1')).toBe(500);
++  });
++
++  it('ignores the tag in the category notes and similar tags', async () => {
++    await db.update('notes', { id: 'cat1', note: '#fixed' });
++    await db.update('notes', { id: 'group1', note: '#fixedish' });
++    await setZero({ month: '2024-01' });
++    await sheet.waitOnSpreadsheet();
++    expect(await getSheetValue('budget202401', 'budget-cat1')).toBe(0);
++  });
++});
++
+ describe('coverOverbudgeted', () => {
+   beforeEach(global.emptyDatabase());
+   afterEach(global.emptyDatabase());
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index fb13be5..9001d93 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -220,6 +220,7 @@ type BulkBudgetCategory = Pick<
+   'id' | 'is_income' | 'hidden' | 'goal_def'
+ > & {
+   group_hidden: db.DbCategoryGroup['hidden'] | null;
++  group_id: string | null;
+ };
+ 
+ function hasSavedTemplates(goalDef: string | null | undefined): boolean {
+@@ -234,10 +235,27 @@ function hasSavedTemplates(goalDef: string | null | undefined): boolean {
+   }
+ }
+ 
++const FIXED_TAG = /(?<![\w#])#fixed(?![\w-])/i;
++
++export function hasFixedTag(note: string | null | undefined): boolean {
++  return !!note && FIXED_TAG.test(note);
++}
++
++// Ids of the category groups whose own notes carry the `#fixed` tag.
++export async function getFixedGroupIds(): Promise<Set<string>> {
++  const groups = await db.all<{ id: string; note: string | null }>(
++    `SELECT g.id, n.note FROM category_groups g
++     JOIN notes n ON n.id = g.id
++     WHERE g.tombstone = 0`,
++  );
++  return new Set(groups.filter(g => hasFixedTag(g.note)).map(g => g.id));
++}
++
+ // The categories a bulk budget action (copy last month, set to zero, set to an
+ // N-month average) writes. Income categories take part only in tracking
+ // budgets. Hidden categories, categories in hidden groups and categories with
+-// at least one saved budget template are skipped.
++// at least one saved budget template are skipped, as are categories in a group
++// tagged `#fixed` in its notes.
+ // `skipMissingGroup` also skips a category whose group row does not exist: the
+ // average actions have always done so, copy last month has not.
+ async function getBulkBudgetCategories({
+@@ -247,15 +265,19 @@ async function getBulkBudgetCategories({
+ }): Promise<BulkBudgetCategory[]> {
+   const categories = await db.all<BulkBudgetCategory>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden, g.id AS group_id
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+   const tracking = isTrackingBudget();
++  const fixedGroups = await getFixedGroupIds();
+ 
+   return categories.filter(cat => {
++    if (cat.group_id != null && fixedGroups.has(cat.group_id)) {
++      return false;
++    }
+     if (cat.is_income === 1 && !tracking) {
+       return false;
+     }
+diff --git a/packages/loot-core/src/server/budget/goal-template.test.ts b/packages/loot-core/src/server/budget/goal-template.test.ts
+index d495e12..f4641da 100644
+--- a/packages/loot-core/src/server/budget/goal-template.test.ts
++++ b/packages/loot-core/src/server/budget/goal-template.test.ts
+@@ -15,6 +15,7 @@ import {
+ import * as statements from './statements';
+ 
+ vi.mock('./actions', () => ({
++  getFixedGroupIds: vi.fn().mockResolvedValue(new Set()),
+   getSheetValue: vi.fn(),
+   getSheetBoolean: vi.fn(),
+   isTrackingBudget: vi.fn(),
+diff --git a/packages/loot-core/src/server/budget/goal-template.ts b/packages/loot-core/src/server/budget/goal-template.ts
+index 979a56e..4a4e705 100644
+--- a/packages/loot-core/src/server/budget/goal-template.ts
++++ b/packages/loot-core/src/server/budget/goal-template.ts
+@@ -8,7 +8,13 @@ import type { CategoryEntity, CategoryGroupEntity } from '#types/models';
+ import type { CleanupTemplate } from '#types/models/cleanup-templates';
+ import type { Template } from '#types/models/templates';
+ 
+-import { getSheetValue, isTrackingBudget, setBudget, setGoal } from './actions';
++import {
++  getFixedGroupIds,
++  getSheetValue,
++  isTrackingBudget,
++  setBudget,
++  setGoal,
++} from './actions';
+ import { CategoryTemplateContext } from './category-template-context';
+ import { tombstoneOrphanCleanupGroups } from './cleanup-groups';
+ import { checkTemplateNotes, storeNoteTemplates } from './template-notes';
+@@ -142,7 +148,12 @@ async function getCategories(): Promise<CategoryEntity[]> {
+   const { data: categoryGroups }: { data: CategoryGroupEntity[] } =
+     await aqlQuery(q('category_groups').filter({ hidden: false }).select('*'));
+ 
+-  return categoryGroups.flatMap(g => g.categories || []).filter(c => !c.hidden);
++  const fixedGroups = await getFixedGroupIds();
++
++  return categoryGroups
++    .filter(g => !fixedGroups.has(g.id))
++    .flatMap(g => g.categories || [])
++    .filter(c => !c.hidden);
+ }
+ 
+ async function getTemplates(

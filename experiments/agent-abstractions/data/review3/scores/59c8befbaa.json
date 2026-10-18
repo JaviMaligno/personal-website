@@ -1,0 +1,11 @@
+{"id": "59c8befbaa",
+ "reuse": {"score": 4, "why": "Link rules go through one new prepareBankAccountLink helper used by every provider, unlinkAccount's reset is reused via clearAccountBankLink, and the Akahu download is generalised for Fintegra; but the Fintegra link copies Akahu's link body instead of sharing it."},
+ "duplication": {"score": 3, "why": "linkBankSyncAccount is a near-verbatim copy of linkAkahuAccount (upgrade/insert/sync/notify) while linkAkahuAccount keeps its own copy, adding a sixth copy of the link body."},
+ "placement": {"score": 5, "why": "Link rules live in accounts/app.ts next to the link handlers, download logic in sync.ts, URL in server-config, types in types/models, matching the tree's layering."},
+ "scope": {"score": 4, "why": "Focused on the four steps, though the 'generic' linkBankSyncAccount and the client provider entries go slightly beyond the server-only Fintegra step."},
+ "maintainability": {"score": 4, "why": "A single guard for the link rules is easy to own; the generic linker that only Fintegra uses leaves two parallel implementations of the same flow."},
+ "bypasses_abstraction": {"value": false, "where": ""},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "packages/loot-core/src/server/accounts/app.ts linkBankSyncAccount: generalised (provider parameter) copy of linkAkahuAccount, which is not migrated onto it"},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "prepareBankAccountLink gained replaceExistingLink (step 4) and a closed-account check (step 3, a general rule, not a caller special case); all five provider link handlers and the new one call it"}}

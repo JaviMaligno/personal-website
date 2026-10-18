@@ -1,0 +1,55 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5405af0..29eaa8d 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -650,9 +650,9 @@ describe('schedules', () => {
+       expect(getScheduledAmount(-5000, 'is', true)).toBe(5000);
+     });
+ 
+-    it('uses the end of an approximate amount tolerance furthest from zero', () => {
++    it('uses the end of an approximate amount tolerance with the least money in', () => {
+       expect(getScheduledAmount(-10000, 'isapprox')).toBe(-10750);
+-      expect(getScheduledAmount(10000, 'isapprox')).toBe(10750);
++      expect(getScheduledAmount(10000, 'isapprox')).toBe(9250);
+       expect(getScheduledAmount(-1234, 'isapprox')).toBe(-1327);
+       expect(getScheduledAmount(0, 'isapprox')).toBe(0);
+     });
+@@ -671,9 +671,14 @@ describe('schedules', () => {
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+     });
+ 
+-    it('uses the end of an income range furthest from zero', () => {
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    it('uses the end of an income range closest to zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    });
++
++    it('uses the negative end of a range that spans zero', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++      expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+     });
+ 
+     it('inverts the worst-case amount of a range', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index ddd0bde..a8b37ed 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -366,14 +366,9 @@ export function getScheduledAmount(
+   let worstCase: number;
+   if (typeof amount === 'number') {
+     worstCase =
+-      op === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
+-        : amount;
++      op === 'isapprox' ? amount - getApproxNumberThreshold(amount) : amount;
+   } else {
+-    worstCase =
+-      Math.abs(amount.num1) >= Math.abs(amount.num2)
+-        ? amount.num1
+-        : amount.num2;
++    worstCase = Math.min(amount.num1, amount.num2);
+   }
+   return inverse ? -worstCase : worstCase;
+ }

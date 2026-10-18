@@ -1,0 +1,12 @@
+{"id": "16602bda7e",
+ "reuse": {"score": 3, "why": "Extends getDateWithSkippedWeekend with holidays and threads holidays through schedule-template, parseRecurDate and getUpcomingDates, but the non-working-day predicate (isNonWorkingDay) stays private, so the server code rebuilds it from d.isWeekend plus isHoliday."},
+ "duplication": {"score": 2, "why": "The daily-skip rule (daily + skipWeekend + weekend-or-holiday) is written three times: a while loop in getNextDate, a negated filter in getUpcomingDates and an if/continue in getDatesInRange; the schedule-template adjustWeekend closure does remove a local duplicate."},
+ "placement": {"score": 3, "why": "The weekend/holiday move lives in shared/schedules.ts, but the daily-skip decision is spread across the shared module and two server handlers instead of living beside the move rule."},
+ "scope": {"score": 4, "why": "All edits serve the four steps; the getNextDate edit leaves mis-indented code, but nothing unrelated is touched."},
+ "maintainability": {"score": 2, "why": "Three diverging copies of the skip rule, an odd holidays ? isNonWorkingDay : d.isWeekend ternary in getNextDate, a frequency !== 'DAILY' guard wrapped around the helper call, and a holidays.length + 2 search window heuristic make the rule hard to change safely."},
+ "bypasses_abstraction": {"value": true, "where": "getUpcomingDates and getDatesInRange in server/schedules/app.ts decide the daily skip with their own (d.isWeekend || isHoliday) conditions instead of a shared schedule rule."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "The same daily weekend/holiday skip appears reshaped as a while-advance loop (getNextDate), a .filter(!(...)) (getUpcomingDates) and a for/continue (getDatesInRange)."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 2, "where": "getDateWithSkippedWeekend gains a holidays parameter; getNextDate gains a DAILY skip loop with a holidays-present ternary and a frequency !== 'DAILY' guard around the helper; getUpcomingDates and getDatesInRange re-implement the daily skip test."}
+}

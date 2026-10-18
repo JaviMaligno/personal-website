@@ -1,0 +1,44 @@
+{
+ "id": "2b3e5688ae",
+ "reuse": {
+  "score": 1,
+  "why": "Both amount consumers bypass getScheduledAmount, and the preview calculation repeats getApproxNumberThreshold instead of reusing it."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The change adds another missing/number/range dispatch and duplicates the existing approximate-tolerance formula."
+ },
+ "placement": {
+  "score": 2,
+  "why": "Schedule amount policy is embedded in API serialization and preview generation instead of centralized in the existing shared schedule helper."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits concern schedule amount expectations, their API representation, or associated tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate separate amount policies across the API, previews, posting, action synchronization, and the existing helper."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "scheduleModel.toExternal and computeSchedulePreviewTransactions bypass shared/schedules.ts:getScheduledAmount; the preview also bypasses shared/rules.ts:getApproxNumberThreshold."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "scheduleModel.toExternal reshapes the existing missing/number/range dispatch using nullish coalescing, while preview generation embeds the existing tolerance calculation inside a larger expression."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 0,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 2,
+  "where": "computeSchedulePreviewTransactions gains an isapprox branch; it and scheduleModel.toExternal implement amount policy outside getScheduledAmount, leaving the existing shared definition unchanged."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 30.8
+ }
+}

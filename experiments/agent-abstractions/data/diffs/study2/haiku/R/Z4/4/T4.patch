@@ -1,0 +1,68 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index c147f92..66f2430 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -636,6 +636,40 @@ describe('schedules', () => {
+ 
+         expect(getNextDate(dateCond, new Date(2020, 11, 7))).toBe('2020-12-15');
+       });
++
++      it('moves a weekday occurrence on a yearly MM-DD holiday later', () => {
++        const dateCond = recur('weekly', '2020-12-09', {
++          holidays: ['12-09'],
++        });
++
++        expect(getNextDate(dateCond, new Date(2020, 11, 9))).toBe('2020-12-10');
++      });
++
++      it('applies a yearly MM-DD holiday in a later year', () => {
++        const dateCond = recur('daily', '2020-12-24', {
++          holidays: ['12-28'],
++        });
++
++        expect(getNextDate(dateCond, new Date(2021, 11, 28))).toBe(
++          '2021-12-29',
++        );
++      });
++
++      it('does not apply a yearly MM-DD holiday to other days of the year', () => {
++        const dateCond = recur('weekly', '2020-12-08', {
++          holidays: ['12-09'],
++        });
++
++        expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-08');
++      });
++
++      it('applies full dates and yearly holidays together in one list', () => {
++        const dateCond = recur('daily', '2020-12-07', {
++          holidays: ['2020-12-08', '12-09'],
++        });
++
++        expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-10');
++      });
+     });
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index fc7b239..97efb04 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -287,11 +287,17 @@ export function isDailyWeekendSkip(recur: {
+   return recur.frequency === 'daily' && Boolean(recur.skipWeekend);
+ }
+ 
++// Holidays are either a full `YYYY-MM-DD` date or a yearly `MM-DD` date
++function isHoliday(date: Date, holidays: readonly string[]): boolean {
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
++}
++
+ export function isNonWorkingDay(
+   date: Date,
+   holidays: readonly string[] = [],
+ ): boolean {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  return d.isWeekend(date) || isHoliday(date, holidays);
+ }
+ 
+ export function getNextDate(

@@ -1,0 +1,82 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..d4cd5e5 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -8,6 +8,7 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
++  getScheduledAmount,
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+@@ -32,6 +33,32 @@ describe('schedules', () => {
+     MockDate.reset();
+   });
+ 
++  describe('getScheduledAmount', () => {
++    it.each([
++      [{ num1: -10100, num2: -20000 }, -20000],
++      [{ num1: -20000, num2: -10100 }, -20000],
++      [{ num1: 10100, num2: 20000 }, 20000],
++      [{ num1: 20000, num2: 10100 }, 20000],
++    ])('uses the range endpoint furthest from zero', (range, expected) => {
++      expect(getScheduledAmount(range)).toBe(expected);
++    });
++
++    it('keeps the midpoint estimate for budget templates', () => {
++      expect(
++        getScheduledAmount(
++          { num1: -10100, num2: -20000 },
++          false,
++          'halfOfRoundedSum',
++        ),
++      ).toBe(-15050);
++    });
++
++    it('preserves single and missing amounts', () => {
++      expect(getScheduledAmount(-12500)).toBe(-12500);
++      expect(getScheduledAmount(null)).toBe(0);
++    });
++  });
++
+   describe('getStatus', () => {
+     it('returns completed if completed', () => {
+       expect(getStatus(todayString, true, false, '7')).toBe('completed');
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 67871e6..ba1fb18 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -377,11 +377,11 @@ export function applyWeekendRuleToDay(
+     : day;
+ }
+ 
+-// The amount a schedule is expected to post. A ranged ("is between") amount is
+-// scheduled at its midpoint: rounded ('roundedMidpoint'), or half of the rounded
+-// sum ('halfOfRoundedSum', budget templates), which can leave a half unit.
++// The amount a schedule is expected to post. Ranged schedule amounts use the
++// endpoint furthest from zero so the forecast covers the worst case. Budget
++// templates retain their midpoint estimate, with the sum rounded before halving.
+ export function getScheduledAmount(
+-  amount: number | { num1: number; num2: number },
++  amount: number | { num1: number; num2: number } | null,
+   inverse: boolean = false,
+   rangeRounding: 'roundedMidpoint' | 'halfOfRoundedSum' = 'roundedMidpoint',
+ ): number {
+@@ -392,11 +392,13 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const midpoint =
++  const rangedAmount =
+     rangeRounding === 'halfOfRoundedSum'
+       ? Math.round(amount.num1 + amount.num2) / 2
+-      : Math.round((amount.num1 + amount.num2) / 2);
+-  return inverse ? -midpoint : midpoint;
++      : Math.abs(amount.num1) >= Math.abs(amount.num2)
++        ? amount.num1
++        : amount.num2;
++  return inverse ? -rangedAmount : rangedAmount;
+ }
+ 
+ export function getUpcomingDays(

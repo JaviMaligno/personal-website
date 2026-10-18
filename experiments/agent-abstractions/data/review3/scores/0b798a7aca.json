@@ -1,0 +1,11 @@
+{"id":"0b798a7aca",
+"reuse":{"score":3,"why":"Extends the existing WeekendRule/applyWeekendRule and reuses recurConfigToRSchedule, but rewrites applyWeekendRule's body so the existing getDateWithSkippedWeekend is left unused, and the new handler re-derives the daily-skip rule instead of calling a shared one."},
+"duplication":{"score":2,"why":"The daily-skip decision (skipWeekend && daily && (isWeekend || isHoliday)) is written once in getNextDate and again in getDatesInRange, and the weekend-moving logic now exists both in the orphaned getDateWithSkippedWeekend and in the new applyWeekendRule loop."},
+"placement":{"score":4,"why":"Holiday matching and the weekend rule stay in shared/schedules.ts and the handler in schedules/app.ts, but the daily-skip rule is embedded in getNextDate and the handler rather than in the weekend-rule layer."},
+"scope":{"score":4,"why":"Mostly focused, with a gratuitous import reorder in schedules/app.ts."},
+"maintainability":{"score":2,"why":"Daily handling is special-cased in two places with a magic take count (holidays.length + 8) in getNextDate, the safety throw for an unknown solve mode was dropped, and a dead helper remains, so the rule is easy to change inconsistently."},
+"bypasses_abstraction":{"value":true,"where":"applyWeekendRule no longer goes through getDateWithSkippedWeekend (shared/schedules.ts), and getDatesInRange (schedules/app.ts) applies its own daily-skip check before applyWeekendRule instead of a shared rule."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The daily weekend/holiday skip appears as a find() over extra occurrences in getNextDate and as a map-to-null filter in getDatesInRange; the weekend move is reshaped as an addDays loop in applyWeekendRule while getDateWithSkippedWeekend still holds the old version."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":1,"where":"holidays added to WeekendRule; getNextDate gains a daily-only take count and a daily-only skip branch; getDatesInRange re-implements the daily skip instead of using a shared definition."}}

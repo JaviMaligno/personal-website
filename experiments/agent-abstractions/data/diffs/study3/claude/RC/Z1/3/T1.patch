@@ -1,0 +1,94 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 5a69bc9..36a147e 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -69,6 +69,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  goal_def?: string | null;
+   category: string;
+   amount: number;
+ };
+@@ -85,7 +86,7 @@ function getBudgetData<T extends BudgetTable>(
+       >
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -102,7 +103,10 @@ function getBudgetData<T extends BudgetTable>(
+ //   are positively known to be visible (a category without a group is skipped)
+ type MonthFillHiddenMode = 'include' | 'skip' | 'skip-unless-visible';
+ 
+-type MonthFillCategory = Pick<BudgetData, 'is_income' | 'hidden'> & {
++type MonthFillCategory = Pick<
++  BudgetData,
++  'is_income' | 'hidden' | 'goal_def'
++> & {
+   // null when the category has no matching group row
+   group_hidden: BudgetData['group_hidden'] | null;
+ };
+@@ -110,6 +114,18 @@ type MonthFillCategory = Pick<BudgetData, 'is_income' | 'hidden'> & {
+ // The single definition of which categories a month-wide budget action
+ // (copy previous month, set to zero, averages) writes. Income categories are
+ // only written in tracking budgets.
++function hasSavedTemplates(goalDef: string | null | undefined): boolean {
++  if (!goalDef) {
++    return false;
++  }
++  try {
++    const templates = JSON.parse(goalDef);
++    return Array.isArray(templates) ? templates.length > 0 : !!templates;
++  } catch {
++    return true;
++  }
++}
++
+ function shouldFillCategory(
+   cat: MonthFillCategory,
+   hiddenMode: MonthFillHiddenMode,
+@@ -118,6 +134,11 @@ function shouldFillCategory(
+     return false;
+   }
+ 
++  // Template-managed categories are never overwritten
++  if (hasSavedTemplates(cat.goal_def)) {
++    return false;
++  }
++
+   if (hiddenMode === 'include') {
+     return true;
+   }
+@@ -132,7 +153,7 @@ async function getMonthFillCategories(
+ ): Promise<Array<MonthFillCategory & { id: string }>> {
+   const categories = await db.all<MonthFillCategory & { id: string }>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden
++  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0
+@@ -310,7 +331,7 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await getMonthFillCategories('include');
++  const categories = await getMonthFillCategories('skip');
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+diff --git a/upcoming-release-notes/skip-hidden-template-categories.md b/upcoming-release-notes/skip-hidden-template-categories.md
+new file mode 100644
+index 0000000..b0c6e94
+--- /dev/null
++++ b/upcoming-release-notes/skip-hidden-template-categories.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Month-wide budget actions no longer overwrite hidden categories or categories with saved budget templates

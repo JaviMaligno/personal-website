@@ -1,0 +1,44 @@
+{
+ "id": "22671e9458",
+ "reuse": {
+  "score": 3,
+  "why": "Fintegra reuses findOrCreateBank and linkBankSyncAccount, but takeover duplicates unlink cleanup and DbAccount repeats the existing BankSyncProviders union."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "The shared eligibility helper centralizes linking rules, but the diff duplicates local unlink cleanup and the existing transaction-download workflow."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Changes follow the existing account, sync, configuration and model layers, although a helper named ensureBankAccountIsNotLinked now also performs unlink mutations."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The changes remain focused on the requested linking rules, takeover option and Fintegra integration."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared validation and linking limit divergence, but duplicated unlink state transitions and a validation helper with mutation responsibilities make future changes harder to own."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "accounts/app.ts: ensureBankAccountIsNotLinked repeats unlinkAccount's local cleanup instead of extracting a shared local unlink operation that both paths can use without provider disconnection."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "accounts/sync.ts: downloadFintegraTransactions reshapes the existing provider download workflow into compact request and response expressions while retaining its token lookup, POST, error conversion and response mapping."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 3,
+  "bypassing_call_sites": 0,
+  "where": "accounts/app.ts: the shared eligibility helper accumulates closed-account rejection, duplicate-link rejection and takeover mutation, adding replaceExistingLink; all six provider link handlers call it."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 41.3
+ }
+}

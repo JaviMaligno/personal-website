@@ -1,0 +1,44 @@
+{
+ "id": "00b984cd9d",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses budget, averaging, batching and undo helpers, but introduces custom tag parsing despite the existing extractTagsFromText helper."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Average actions are consolidated, but category eligibility is expressed in two SQL implementations and income eligibility remains repeated across three execution paths."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Budget policy and method registration remain in their established server modules, although tag recognition belongs behind the existing shared tag abstraction."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the requested month-wide actions, their tests, method registration and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The shared argument type and average wrappers simplify ownership, but parallel eligibility implementations require coordinated updates whenever the policy changes."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "actions.ts uses FIXED_COST_TAG_REGEX instead of shared/tags.ts extractTagsFromText, while copyPreviousMonth and setZero implement eligibility outside forEachMonthWideCategory."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "getCategoryIdsExcludedFromMonthWideActions expresses hidden, template and fixed-group eligibility as exclusions, while getCategoriesForMonthWideAverage reshapes the same policy into inclusion predicates."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 2,
+  "where": "includeHiddenCategories adds a policy parameter with conditional SQL in both selection helpers; copyPreviousMonth and setZero bypass the shared month-wide iterator and retain separate income checks."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 38.9
+ }
+}

@@ -1,0 +1,48 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 3a9468d..716409a 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -110,7 +110,8 @@ describe('schedules', () => {
+     it.each([
+       ['negative range in ascending order', { num1: -10100, num2: -20000 }, -20000],
+       ['negative range in descending order', { num1: -20000, num2: -10100 }, -20000],
+-      ['positive range', { num1: 10100, num2: 20000 }, 20000],
++      ['positive range', { num1: 10100, num2: 20000 }, 10100],
++      ['range spanning zero', { num1: -3000, num2: 5000 }, -3000],
+     ])('uses the endpoint furthest from zero for a %s', (_label, range, expected) => {
+       const schedule: ScheduleEntity = {
+         id: 'sched-range',
+@@ -139,7 +140,7 @@ describe('schedules', () => {
+ 
+     it.each([
+       ['negative approximate amount', -10000, -10750],
+-      ['positive approximate amount', 10000, 10750],
++      ['positive approximate amount', 10000, 9250],
+       ['cent-rounded negative tolerance', -1234, -1327],
+     ])('uses the furthest tolerance endpoint for %s', (_label, value, expected) => {
+       const schedule: ScheduleEntity = {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index f2cca0d..b9fccd8 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -498,17 +498,16 @@ export function computeSchedulePreviewTransactions(
+       }
+ 
+       // A missing amount previews as 0. Ranged and approximate amounts use
+-      // the endpoint furthest from zero to plan for the worst case.
++      // the lowest value allowed to plan for the worst case.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amount +
+               (schedule._amountOp === 'isapprox'
+-                ? Math.sign(schedule._amount) *
+-                  getApproxNumberThreshold(schedule._amount)
++                ? -getApproxNumberThreshold(schedule._amount)
+                 : 0)
+-            : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
++            : schedule._amount.num1 <= schedule._amount.num2
+               ? schedule._amount.num1
+               : schedule._amount.num2;
+ 

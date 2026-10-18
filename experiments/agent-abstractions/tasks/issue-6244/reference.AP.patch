@@ -1,0 +1,139 @@
+diff --git a/packages/desktop-client/src/components/accounts/Account.tsx b/packages/desktop-client/src/components/accounts/Account.tsx
+index 8cc8dcb..48bee7a 100644
+--- a/packages/desktop-client/src/components/accounts/Account.tsx
++++ b/packages/desktop-client/src/components/accounts/Account.tsx
+@@ -1560,8 +1560,11 @@ class AccountInternal extends PureComponent<
+ 
+     switch (name) {
+       case 'post-transaction':
+-        for (const id of scheduleIds) {
+-          await send('schedule/post-transaction', { id });
++        // Preview ids are `preview/<schedule id>/<occurrence date>`: post the
++        // occurrence that was picked, not always the schedule's next date
++        for (const previewId of ids) {
++          const [, id, date] = previewId.split('/');
++          await send('schedule/post-transaction', { id, date });
+         }
+         void this.refetchTransactions();
+         break;
+diff --git a/packages/desktop-client/src/components/mobile/accounts/AccountTransactions.tsx b/packages/desktop-client/src/components/mobile/accounts/AccountTransactions.tsx
+index 445faa8..60a3361 100644
+--- a/packages/desktop-client/src/components/mobile/accounts/AccountTransactions.tsx
++++ b/packages/desktop-client/src/components/mobile/accounts/AccountTransactions.tsx
+@@ -194,6 +194,8 @@ function TransactionListWithPreviews({
+                   await send('schedule/post-transaction', {
+                     id: parts[1],
+                     today,
++                    // the picked occurrence (`preview/<schedule id>/<date>`)
++                    date: parts[2],
+                   });
+                   dispatch(
+                     collapseModals({
+diff --git a/packages/desktop-client/src/components/mobile/accounts/AllAccountTransactions.tsx b/packages/desktop-client/src/components/mobile/accounts/AllAccountTransactions.tsx
+index e5f2679..7f45d21 100644
+--- a/packages/desktop-client/src/components/mobile/accounts/AllAccountTransactions.tsx
++++ b/packages/desktop-client/src/components/mobile/accounts/AllAccountTransactions.tsx
+@@ -116,6 +116,8 @@ function TransactionListWithPreviews() {
+                   await send('schedule/post-transaction', {
+                     id: parts[1],
+                     today,
++                    // the picked occurrence (`preview/<schedule id>/<date>`)
++                    date: parts[2],
+                   });
+                   dispatch(
+                     collapseModals({
+diff --git a/packages/desktop-client/src/components/mobile/accounts/OffBudgetAccountTransactions.tsx b/packages/desktop-client/src/components/mobile/accounts/OffBudgetAccountTransactions.tsx
+index 7bf23ba..b1325ba 100644
+--- a/packages/desktop-client/src/components/mobile/accounts/OffBudgetAccountTransactions.tsx
++++ b/packages/desktop-client/src/components/mobile/accounts/OffBudgetAccountTransactions.tsx
+@@ -90,6 +90,8 @@ function TransactionListWithPreviews() {
+                   await send('schedule/post-transaction', {
+                     id: parts[1],
+                     today,
++                    // the picked occurrence (`preview/<schedule id>/<date>`)
++                    date: parts[2],
+                   });
+                   dispatch(
+                     collapseModals({
+diff --git a/packages/desktop-client/src/components/mobile/accounts/OnBudgetAccountTransactions.tsx b/packages/desktop-client/src/components/mobile/accounts/OnBudgetAccountTransactions.tsx
+index 5c1a8b7..82479ec 100644
+--- a/packages/desktop-client/src/components/mobile/accounts/OnBudgetAccountTransactions.tsx
++++ b/packages/desktop-client/src/components/mobile/accounts/OnBudgetAccountTransactions.tsx
+@@ -90,6 +90,8 @@ function TransactionListWithPreviews() {
+                   await send('schedule/post-transaction', {
+                     id: parts[1],
+                     today,
++                    // the picked occurrence (`preview/<schedule id>/<date>`)
++                    date: parts[2],
+                   });
+                   dispatch(
+                     collapseModals({
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 1616d50..8ee2548 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -210,11 +210,15 @@ export async function setNextDate({
+   conditions,
+   reset,
+   advance,
++  after,
+ }: {
+   id: string;
+   conditions?;
+   reset?: boolean;
+   advance?: boolean;
++  // With `advance`: move to the first occurrence after this date instead of
++  // the first one after the current next date
++  after?: string;
+ }) {
+   if (conditions == null) {
+     const rule = await getRuleForSchedule(id);
+@@ -233,7 +237,7 @@ export async function setNextDate({
+   // Only do this if a date condition exists
+   if (dateCond) {
+     const newNextDate = advance
+-      ? getNextDateAfter(dateCond, nextDate)
++      ? getNextDateAfter(dateCond, after ?? nextDate)
+       : getNextDate(dateCond, new Date());
+ 
+     if (newNextDate != null && newNextDate !== nextDate) {
+@@ -564,9 +568,12 @@ function onApplySync(oldValues, newValues) {
+ async function postTransactionForSchedule({
+   id,
+   today,
++  date,
+ }: {
+   id: string;
+   today?: boolean;
++  // The occurrence to post (`YYYY-MM-DD`); defaults to the schedule's next date
++  date?: string;
+ }) {
+   const { data } = await aqlQuery(q('schedules').filter({ id }).select('*'));
+   const schedule = data[0];
+@@ -578,7 +585,7 @@ async function postTransactionForSchedule({
+     payee: schedule._payee,
+     account: schedule._account,
+     amount: getScheduledAmount(schedule._amount),
+-    date: today ? currentDay() : schedule.next_date,
++    date: today ? currentDay() : (date ?? schedule.next_date),
+     schedule: schedule.id,
+     cleared: false,
+   };
+@@ -586,6 +593,17 @@ async function postTransactionForSchedule({
+   if (transaction.account) {
+     await addTransactions(transaction.account, [transaction]);
+   }
++
++  // Posting a later occurrence: move the next date past it, so the schedule
++  // does not keep offering (and posting) an occurrence on or before it
++  if (
++    !today &&
++    date != null &&
++    schedule.next_date != null &&
++    date > schedule.next_date
++  ) {
++    await setNextDate({ id: schedule.id, advance: true, after: date });
++  }
+ }
+ 
+ async function getSchedule(id: string): Promise<ScheduleEntity | null> {

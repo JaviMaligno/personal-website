@@ -1,0 +1,12 @@
+{"id":"c89d15b64c",
+"reuse":{"score":4,"why":"Introduces getMonthActionCategories, getFixedCostGroupIds and forEachMonthActionCategory and routes setZero, the averages and the new setLastMonthSpending through them, reusing setNMonthAvg, setBudget and getSheetValue; copyPreviousMonth reuses only the fixed-group lookup."},
+"duplication":{"score":3,"why":"copyPreviousMonth keeps a row-level copy of the hidden/hidden-group, #fixed and saved-template exclusions (with its own includeHiddenCategories branch) parallel to the helper's SQL, and setZero keeps its own income-in-tracking loop beside forEachMonthActionCategory."},
+"placement":{"score":4,"why":"The selection rules live in budget/actions.ts as shared helpers next to the actions and the new method is registered with its siblings in budget/app.ts; only copyPreviousMonth applies the rules at its own site."},
+"scope":{"score":5,"why":"All edits serve the four steps (exclusions, new action, #fixed groups, opt-in hidden flag) plus tests; nothing unrelated."},
+"maintainability":{"score":3,"why":"Most actions share one selection and loop, but the category rules must still be kept in sync in two shapes (SQL helper and copyPreviousMonth's row checks), and setZero is a half-migrated sibling of forEachMonthActionCategory."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth in packages/loot-core/src/server/budget/actions.ts decides hidden, #fixed and goal_def exclusions inline instead of using getMonthActionCategories; setZero iterates and applies the income rule itself instead of using forEachMonthActionCategory."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The parallel exclusion chain in copyPreviousMonth is an openly separate copy in row form, not a renamed or reshaped one."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":1,"where":"getMonthActionCategories gains the includeHiddenCategories parameter (threaded through forEachMonthActionCategory); copyPreviousMonth re-implements the helper's exclusions at the row level instead of calling it."}
+}

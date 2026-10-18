@@ -1,0 +1,45 @@
+{
+ "id": "b707afab41",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses recurrence conversion and weekend adjustment helpers, but duplicates daily occurrence selection across three consumers."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Daily exclusion logic appears in getNextDate and both server handlers, while the original weekend mover remains alongside its replacement."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Holiday matching belongs appropriately in shared schedules, but daily exclusion policy is split between that module and server handlers."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits address the requested recurrence rules, range handler, holiday configuration, or associated tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate three implementations of daily exclusion and separate occurrence lookahead heuristics instead of owning one shared policy."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "shared/schedules.ts: applyWeekendRule replaces its delegation to getDateWithSkippedWeekend with independent adjustment logic while retaining the original helper."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "Daily exclusion is expressed as filtering in getNextDate and getUpcomingDates, and as a continue branch in getDatesInRange."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 2,
+  "where": "WeekendRule gains holidays; getNextDate adds a daily-specific exclusion branch; getUpcomingDates and getDatesInRange independently implement that exclusion policy."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 36.8
+ }
+}

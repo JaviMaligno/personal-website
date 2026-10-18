@@ -1,0 +1,126 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index c4c518b..67d1aa9 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -336,8 +336,9 @@ describe('bank account linking', () => {
+       account_sync_source: 'fintegra',
+       offbudget: 1,
+     });
+-    expect(await db.first('SELECT * FROM banks WHERE bank_id = ?', ['example-org']))
+-      .toMatchObject({ name: 'Example Bank' });
++    expect(
++      await db.first('SELECT * FROM banks WHERE bank_id = ?', ['example-org']),
++    ).toMatchObject({ name: 'Example Bank' });
+     expect(bankSync.syncAccount).toHaveBeenCalledWith(
+       undefined,
+       undefined,
+@@ -373,6 +374,71 @@ describe('bank account linking', () => {
+     expect(await db.all('SELECT * FROM banks')).toHaveLength(1);
+     expect(await db.all('SELECT * FROM payees')).toHaveLength(0);
+   });
++
++  it.each([
++    { accountId: 'other-bank-account', name: 'Closed local account' },
++    { accountId: 'ext-1', name: 'Already linked closed account' },
++  ])(
++    'rejects linking a closed account ($name) before changing local data or syncing',
++    async ({ accountId, name }) => {
++      await setupSimpleFinAccounts([{ id: 'acct1', name, accountId }]);
++      await db.update('accounts', { id: 'acct1', closed: 1 });
++      const accountBefore = await db.first(
++        'SELECT * FROM accounts WHERE id = ?',
++        ['acct1'],
++      );
++      const banksBefore = await db.all('SELECT * FROM banks');
++
++      await expect(
++        app.handlers['simplefin-accounts-link']({
++          upgradingId: 'acct1',
++          externalAccount: {
++            account_id: 'ext-1',
++            name: 'Checking from bank',
++            balance: 125,
++            orgDomain: 'sfin-bank',
++          },
++        }),
++      ).rejects.toMatchObject({
++        type: 'APIError',
++        message:
++          'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      });
++
++      expect(bankSync.syncAccount).not.toHaveBeenCalled();
++      expect(
++        await db.first('SELECT * FROM accounts WHERE id = ?', ['acct1']),
++      ).toEqual(accountBefore);
++      expect(await db.all('SELECT * FROM banks')).toEqual(banksBefore);
++      expect(await db.all('SELECT * FROM payees')).toHaveLength(0);
++    },
++  );
++
++  it('allows linking a reopened account', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'acct1', name: 'Checking', accountId: 'old-ext' },
++    ]);
++    await db.update('accounts', { id: 'acct1', closed: 1 });
++    await db.update('accounts', { id: 'acct1', closed: 0 });
++    vi.mocked(bankSync.syncAccount).mockResolvedValue({
++      added: [],
++      updated: [],
++      updatedPreview: [],
++    });
++
++    await expect(
++      app.handlers['simplefin-accounts-link']({
++        upgradingId: 'acct1',
++        externalAccount: {
++          account_id: 'ext-1',
++          name: 'Checking from bank',
++          balance: 125,
++          orgDomain: 'sfin-bank',
++        },
++      }),
++    ).resolves.toBe('ok');
++    expect(bankSync.syncAccount).toHaveBeenCalled();
++  });
+ });
+ 
+ describe('bank sync handlers must not nest mutators', () => {
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 6b03fa9..3c38bca 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -6,6 +6,24 @@ import { APIError } from '#server/errors';
+ 
+ const DUPLICATE_ACCOUNT_ERROR =
+   'This bank account is already linked to another account.';
++const CLOSED_ACCOUNT_ERROR =
++  'Closed accounts cannot be linked to a bank account. Reopen the account first.';
++
++/** Reject an account that cannot receive bank transactions. */
++export async function ensureAccountIsOpen(accountId?: db.DbAccount['id']) {
++  if (!accountId) {
++    return;
++  }
++
++  const account = await db.first<{ closed: number }>(
++    'SELECT closed FROM accounts WHERE id = ?',
++    [accountId],
++  );
++
++  if (account?.closed === 1) {
++    throw APIError(CLOSED_ACCOUNT_ERROR);
++  }
++}
+ 
+ /** Reject a bank account that is already attached to a different live account. */
+ export async function ensureAccountIsNotLinked(
+@@ -13,6 +31,8 @@ export async function ensureAccountIsNotLinked(
+   accountId: db.DbAccount['account_id'],
+   upgradingId?: db.DbAccount['id'],
+ ) {
++  await ensureAccountIsOpen(upgradingId);
++
+   const existingAccount = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+      WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0
