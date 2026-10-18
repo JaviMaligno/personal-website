@@ -17,8 +17,8 @@ export const skillCategoryOrder: SkillCategory[] = ['content', 'devWorkflow', 'q
 
 export const skills: Skill[] = [
   // Content & media
-  { slug: 'demo-video',    key: 'demoVideo',    category: 'content', visibility: 'public',   repoUrl: `${REPO}/content-media/demo-video`,    tags: ['Chrome CDP', 'Google TTS', 'ffmpeg'], featured: true },
-  { slug: 'blog-writer',   key: 'blogWriter',   category: 'content', visibility: 'public',   repoUrl: `${REPO}/content-media/blog-writer`,   tags: ['Astro', 'i18n', 'Content'] },
+  { slug: 'demo-video',    key: 'demoVideo',    category: 'content', visibility: 'public',   repoUrl: `${REPO}/content-media/demo-video`,    tags: ['Chrome CDP', 'Google TTS', 'ffmpeg'] },
+  { slug: 'blog-writer',   key: 'blogWriter',   category: 'content', visibility: 'public',   repoUrl: `${REPO}/content-media/blog-writer`,   tags: ['Astro', 'i18n', 'Content'], featured: true },
   { slug: 'spotify-upload',key: 'spotifyUpload',category: 'content', visibility: 'public',   repoUrl: `${REPO}/content-media/spotify-upload`,tags: ['Browser automation', 'Podcast'] },
   { slug: 'tailor-cv',     key: 'tailorCv',     category: 'content', visibility: 'public',   repoUrl: `${REPO}/content-media/tailor-cv`,     tags: ['DOCX', 'PDF', 'Job search'] },
   // Dev workflow

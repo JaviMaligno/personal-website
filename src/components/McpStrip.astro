@@ -1,0 +1,57 @@
+---
+import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../i18n';
+import { projects } from '../data/projects';
+
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+const s = t('skills');
+const p = t('projects');
+const mcps = projects.filter((project) => project.category === 'mcp');
+const base = getLocalizedPath('/', lang);
+// Project titles read "MCP Server: Bitbucket"; the strip already says MCP.
+const shortTitle = (title: string) => title.replace(/^[^:]*:\s*/, '');
+---
+
+<div class="mcp-group">
+  <h3 class="group-title">
+    <span>{s.mcp.title} · {mcps.length}</span>
+    <a href={`${base}#projects`}>{s.mcp.allProjects}</a>
+  </h3>
+  <div class="mcp-strip">
+    {mcps.map((mcp) => (
+      <a class="mcp-chip" href={`${base}projects/${mcp.slug}`}>
+        {shortTitle(p[mcp.key as keyof typeof p].title)}
+        <small>{mcp.tags.slice(0, 2).join(' · ')}</small>
+      </a>
+    ))}
+  </div>
+</div>
+
+<style>
+  .mcp-group { margin-top: var(--space-xl); }
+  .group-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 1.125rem;
+    color: var(--text-secondary, var(--text-muted));
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .group-title a { font-size: 0.875rem; font-weight: 400; color: var(--accent-text); text-decoration: none; }
+  .mcp-strip { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .mcp-chip {
+    padding: 0.875rem 1.125rem;
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .mcp-chip:hover { transform: translateY(-2px); border-color: var(--accent-text); }
+  .mcp-chip small { display: block; color: var(--text-muted); font-weight: 400; font-size: 0.75rem; }
+</style>

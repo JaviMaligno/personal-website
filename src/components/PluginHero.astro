@@ -1,0 +1,180 @@
+---
+import { getCollection } from 'astro:content';
+import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../i18n';
+import type { Plugin } from '../data/plugins';
+
+interface Props {
+  plugin: Plugin;
+}
+
+const { plugin } = Astro.props;
+const lang = getLangFromUrl(Astro.url) as Language;
+const t = useTranslations(lang);
+const s = t('skills');
+const p = s.plugins[plugin.key as keyof typeof s.plugins];
+
+// A video's article link appears only once that article is on the site, so
+// videos of scheduled articles can ship before the article does.
+const posts = await getCollection('blog', ({ data }) => data.lang === lang);
+const videos = plugin.videos.map((v) => {
+  const post = posts.find((x) => x.data.translationKey === v.translationKey);
+  return {
+    ...v,
+    articleUrl: post ? `${getLocalizedPath('/', lang)}blog/${post.slug.replace(`${lang}/`, '')}` : null,
+  };
+});
+const first = videos[0];
+---
+
+<div class="card plugin-hero" data-plugin-hero>
+  <div class="phone">
+    <video
+      src={`/videos/plugins/${first.slug}.mp4`}
+      poster={`/videos/plugins/${first.slug}.jpg`}
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      aria-label={first.title}
+    ></video>
+  </div>
+  <div class="plugin-body">
+    <span class="plugin-badge">{s.pluginBadge}</span>
+    <h3>{p.title}</h3>
+    <p class="lead">{p.description}</p>
+    <ul class="plugin-skills">
+      {plugin.skills.map((skill, i) => (
+        <li><code>{skill}</code><span>{p.skills[i]}</span></li>
+      ))}
+    </ul>
+    <p class="videos-label">{s.videosLabel}</p>
+    <div class="video-chips" role="group" aria-label={s.videosLabel}>
+      {videos.map((v, i) => (
+        <button
+          type="button"
+          class="video-chip"
+          aria-pressed={i === 0 ? 'true' : 'false'}
+          data-src={`/videos/plugins/${v.slug}.mp4`}
+          data-poster={`/videos/plugins/${v.slug}.jpg`}
+          data-title={v.title}
+          data-article={v.articleUrl ?? ''}
+        >
+          ▶ {v.title} <small>{v.duration}</small>
+        </button>
+      ))}
+    </div>
+    <div class="plugin-actions">
+      <a class="btn btn-primary" href={plugin.repoUrl} target="_blank" rel="noopener">{s.repoLabel}</a>
+      <a class="btn btn-secondary" data-article-link href={first.articleUrl ?? '#'} hidden={!first.articleUrl}>{s.articleLabel}</a>
+    </div>
+    <div class="tags">
+      {plugin.tags.map((tag) => <span class="tag">{tag}</span>)}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-plugin-hero]').forEach((hero) => {
+    const video = hero.querySelector('video')!;
+    const article = hero.querySelector<HTMLAnchorElement>('[data-article-link]')!;
+    const chips = hero.querySelectorAll<HTMLButtonElement>('.video-chip');
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+        video.poster = chip.dataset.poster!;
+        video.src = chip.dataset.src!;
+        video.setAttribute('aria-label', chip.dataset.title!);
+        video.play().catch(() => {});
+        const url = chip.dataset.article;
+        article.hidden = !url;
+        if (url) article.href = url;
+      });
+    });
+  });
+</script>
+
+<style>
+  .plugin-hero {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--space-xl);
+    align-items: center;
+    margin-top: var(--space-xl);
+    padding: var(--space-lg);
+    background: linear-gradient(180deg, var(--bg-card), var(--bg-secondary));
+    border-color: rgba(129, 140, 248, 0.25);
+  }
+  .phone {
+    aspect-ratio: 9 / 16;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    background: #000;
+    box-shadow: var(--shadow-lg);
+  }
+  .phone video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .plugin-badge {
+    display: inline-block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    background: var(--accent-surface);
+    border: 1px solid rgba(129, 140, 248, 0.35);
+    color: var(--accent-text);
+  }
+  .plugin-body h3 { font-size: 1.75rem; color: var(--text-primary); margin: var(--space-sm) 0 var(--space-xs); }
+  .lead { font-size: 1.05rem; max-width: 560px; }
+  .plugin-skills {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-md) 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.625rem;
+  }
+  .plugin-skills li {
+    background: var(--bg-secondary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+  .plugin-skills code {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    background: none;
+    padding: 0;
+  }
+  .videos-label { font-size: 0.875rem; margin-bottom: 0.625rem; }
+  .video-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: var(--space-md); }
+  .video-chip {
+    font: inherit;
+    font-size: 0.8125rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+  }
+  .video-chip:hover { border-color: var(--accent-text); }
+  .video-chip[aria-pressed='true'] { border-color: var(--accent-text); background: var(--accent-surface); }
+  .video-chip small { color: var(--text-muted); }
+  .plugin-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+  .plugin-actions [hidden] { display: none; }
+  .tags { margin-top: var(--space-sm); }
+  @media (max-width: 820px) {
+    .plugin-hero { grid-template-columns: 1fr; gap: var(--space-md); padding: var(--space-md); }
+    .phone { width: 100%; max-width: 260px; margin: 0 auto; }
+    .plugin-skills { grid-template-columns: 1fr; }
+    .plugin-body h3 { font-size: 1.5rem; }
+  }
+</style>

@@ -2,6 +2,10 @@
 import { getLangFromUrl, useTranslations, getLocalizedPath, type Language } from '../i18n';
 import { getSkillsByCategory, getFeaturedSkills } from '../data/skills';
 import SkillCard from './SkillCard.astro';
+import PluginHero from './PluginHero.astro';
+import McpStrip from './McpStrip.astro';
+import { plugins } from '../data/plugins';
+import { skills } from '../data/skills';
 
 interface Props {
   full?: boolean;
@@ -24,8 +28,14 @@ const repoRoot = 'https://github.com/JaviMaligno/agilabs-skills';
       <p>{s.section.subtitle}</p>
     </div>
 
+    {plugins.map((plugin) => <PluginHero plugin={plugin} />)}
+
     {full ? (
       <>
+        <h3 class="collection-title">
+          <span>{s.section.collectionTitle} · {skills.length}</span>
+          <a href={repoRoot} target="_blank" rel="noopener">GitHub →</a>
+        </h3>
         {groups.map((group) => (
           <div class="skill-group">
             <h3 class="group-title">{s.categories[group.category]}</h3>
@@ -34,13 +44,11 @@ const repoRoot = 'https://github.com/JaviMaligno/agilabs-skills';
             </div>
           </div>
         ))}
-        <div class="view-all">
-          <a href={repoRoot} target="_blank" rel="noopener" class="view-all-link">{s.section.ctaLabel}</a>
-        </div>
+        <McpStrip />
       </>
     ) : (
       <>
-        <div class="grid grid-3">
+        <div class="grid grid-3 featured-skills">
           {featured.map((skill) => <SkillCard skill={skill} />)}
         </div>
         <div class="view-all">
@@ -52,7 +60,17 @@ const repoRoot = 'https://github.com/JaviMaligno/agilabs-skills';
 </section>
 
 <style>
-  .skill-group { margin-top: var(--space-xl); }
+  .collection-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin-top: var(--space-2xl);
+  }
+  .collection-title a { font-size: 0.875rem; font-weight: 400; color: var(--accent-text); text-decoration: none; }
+  .featured-skills { margin-top: var(--space-lg); }
+  .skill-group { margin-top: var(--space-lg); }
   .group-title {
     font-size: 1.125rem;
     color: var(--text-secondary, var(--text-muted));
