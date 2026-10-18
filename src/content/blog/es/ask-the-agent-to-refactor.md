@@ -1,7 +1,7 @@
 ---
 title: "Pídele el refactor al agente. Escribir la regla no basta"
 description: "Matt Pocock dice que hay que diseñar más abstracciones para los agentes de código y reforzarlas con un lint estricto. Probé si el propio agente puede ser el diseñador, con tres palancas sobre código repetido en 384 cadenas de tareas. Una regla escrita y un lint de duplicación ayudaron a un agente de tres. Pedir el refactor ayudó a los tres, y lo que compra es sobre todo búsqueda, no diseño."
-pubDate: 2026-11-14
+pubDate: 2026-10-19
 tags: ["Agentes", "Claude Code", "Codex", "Diseño de software", "Experimentos"]
 lang: es
 translationKey: ask-the-agent-to-refactor

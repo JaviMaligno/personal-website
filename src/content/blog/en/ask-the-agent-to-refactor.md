@@ -1,7 +1,7 @@
 ---
 title: "Ask the agent to refactor. Writing the rule isn't enough"
 description: "Matt Pocock says to design more abstractions for coding agents and to back them with harsh lint. I tested whether the agent itself can be the designer, with three levers on repeated code across 384 task chains. A written rule and a duplication lint helped one agent out of three. Asking for the refactor helped all three, and what it buys is search more than design."
-pubDate: 2026-11-14
+pubDate: 2026-10-19
 tags: ["Agents", "Claude Code", "Codex", "Software Design", "Experiments"]
 lang: en
 translationKey: ask-the-agent-to-refactor
