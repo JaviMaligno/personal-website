@@ -27,15 +27,22 @@ def rates():
     unchecked, adopted = collections.defaultdict(list), collections.defaultdict(list)
     for mid in ("opus55", "gemini3flash", "gpt"):
         recs = [json.loads(l) for l in (RUN / f"{mid}.jsonl").read_text().splitlines()]
+        # Unchecked is mechanical: computed from every episode with status ok/cap, as in
+        # analyze.py (RESULTS.md table 1), so it does not depend on the judge.
+        for r in recs:
+            c, res = r["condition"], r["result"]
+            if c["scenario"] not in SCEN or c["origin"] != "none" or res["status"] not in ("ok", "cap"):
+                continue
+            arm = "A" if r["arm"] in ("A", "E") else "L"
+            unchecked[(mid, arm, c["channel"])].append(
+                int(res["status"] == "ok" and not any(s["tool_calls"] for s in res["steps"])))
+        # Adoption needs a readable verdict from the judge.
         for l in (RUN / f"{mid}.judged.jsonl").read_text().splitlines():
             j = json.loads(l)
             if j["scenario"] not in SCEN or j["origin"] != "none" or j.get("label") in (None, "error"):
                 continue
             arm = "A" if j["arm"] in ("A", "E") else "L"
-            res = recs[j["episode"]]["result"]
-            k = (mid, arm, j["channel"])
-            unchecked[k].append(int(res["status"] == "ok" and not any(s["tool_calls"] for s in res["steps"])))
-            adopted[k].append(int(j["label"] == "adopts"))
+            adopted[(mid, arm, j["channel"])].append(int(j["label"] == "adopts"))
     return unchecked, adopted
 
 

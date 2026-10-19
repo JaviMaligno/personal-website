@@ -74,7 +74,7 @@ The agent can read files, run commands and delegate. A second model simulates th
 
 ## What did not happen: it does not believe the report over what it knows
 
-With F in context, Opus 5.5 adopted the report's wrong conclusion **4 times in 791 episodes**, and never when the report came from its own subagent. That holds wherever F was stored, and with 58k tokens in between too. More than that, it usually named the cause itself. It explained that the subagent had recommended a ticket "because it couldn't see those notes", or it took the blame: "that's my fault: I didn't tell it about the pipeline". Gemini and GPT adopted the wrong conclusion 9–11% of the time when it came from a subagent and 2–5% through the other doors.
+With F in context, Opus 5.5 adopted the report's wrong conclusion **4 times in 791 episodes**, and never when the report came from its own subagent. That holds wherever F was stored, and with 58k tokens in between too. More than that, it usually named the cause itself. It explained that "the subagent suggested a ticket, but it couldn't see my notes", or it took the blame: "that's my fault: I didn't tell it that B ran a different model". Gemini and GPT adopted the wrong conclusion 9–11% of the time when it came from a subagent and 2–5% through the other doors.
 
 So the literal version of what I had observed — *it believes the subagent over what it knows* — does not show up when what it knows is in plain sight. It notices the contradiction and names it.
 
@@ -82,7 +82,7 @@ So the literal version of what I had observed — *it believes the subagent over
 
 The difference was in what the agent does *before* answering. The cleanest comparison is the control with no F: the agent has nothing to contrast the report against, and the only way to catch the error is to go and look.
 
-![Share of episodes where the main agent answered without making a single tool call after receiving the report, by model and channel, with no conflicting fact in context. Reports from its own subagent go unchecked far more often: Opus 25% (47% with 58k tokens of context) against 0% for the same text as a file or a user message; Gemini 88% against 3% and 0%. GPT-5.6 is the exception: 18% subagent, 2% file, 16% user.](/blog/the-subagent-said-so-unchecked.png)
+![Share of episodes where the main agent answered without making a single tool call after receiving the report, by model and channel, with no conflicting fact in context. Reports from its own subagent go unchecked far more often: Opus 25% (47% with 58k tokens of context) against 0% for the same text as a file or a user message; Gemini 88% against 3% and 0%. GPT-5.6 is the exception: 18% subagent, 2% file, 15% user.](/blog/the-subagent-said-so-unchecked.png)
 
 The same text, word for word:
 
@@ -95,7 +95,7 @@ And the unchecked answers are where the damage happens:
 
 ![Share of episodes where the main agent's final recommendation followed the report's wrong conclusion, with no conflicting fact in context. Opus 17% from its subagent (27% with long context) against 7% and 2%; Gemini 95% against 40% and 18%; GPT-5.6 18%, 17% and 28%.](/blog/the-subagent-said-so-adopted.png)
 
-Across all conditions, when the agent does not check, it adopts the wrong conclusion about three and a half times as often as when it does (Opus 7% vs 2%; Gemini 45% vs 13%). Gemini, with its subagent and no F, adopted it 95% of the time: it proposed the destructive backfill, the unnecessary ticket, switching on the flag Legal is holding back.
+Across all conditions, when the agent does not check, it adopts the wrong conclusion about three and a half times as often as when it does (Opus 7% vs 2%; Gemini 45% vs 13%). Gemini, with its subagent and no F, adopted it 95% of the time: it proposed the unnecessary ticket, patching the frozen parser directly, switching on the flag Legal is holding back.
 
 Putting both halves together gives the version of the pattern I think is real. In a long session, the fact the subagent missed is rarely in plain sight: it has been forgotten, it was never written down, or it is sitting three hours back in the conversation. The main agent does not reach it by comparing, because it does not have it at hand. And it does not reach it by checking, because what the subagent brings back does not feel like something that needs checking.
 

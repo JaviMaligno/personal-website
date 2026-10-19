@@ -74,7 +74,7 @@ El agente puede leer ficheros, ejecutar comandos y delegar. Un segundo modelo si
 
 ## Lo que no pasó: no se cree el informe por encima de lo que sabe
 
-Con F en el contexto, Opus 5.5 adoptó la conclusión equivocada del informe **4 veces en 791 episodios**, y ninguna cuando el informe venía de su propio subagente. Da igual dónde estuviera guardado F, y también con 58k tokens por medio. Es más: casi siempre nombraba él mismo la causa. Explicaba que el subagente había recomendado el ticket "because it couldn't see those notes", o se echaba la culpa: "that's my fault: I didn't tell it about the pipeline". Gemini y GPT adoptaron la conclusión equivocada un 9–11 % de las veces cuando venía del subagente y un 2–5 % por las otras puertas.
+Con F en el contexto, Opus 5.5 adoptó la conclusión equivocada del informe **4 veces en 791 episodios**, y ninguna cuando el informe venía de su propio subagente. Da igual dónde estuviera guardado F, y también con 58k tokens por medio. Es más: casi siempre nombraba él mismo la causa. Explicaba que "the subagent suggested a ticket, but it couldn't see my notes", o se echaba la culpa: "that's my fault: I didn't tell it that B ran a different model". Gemini y GPT adoptaron la conclusión equivocada un 9–11 % de las veces cuando venía del subagente y un 2–5 % por las otras puertas.
 
 Así que la versión literal de lo que había observado, *se cree al subagente por encima de lo que sabe*, no aparece cuando lo que sabe está a la vista. Detecta la contradicción y la nombra.
 
@@ -82,7 +82,7 @@ Así que la versión literal de lo que había observado, *se cree al subagente p
 
 La diferencia estaba en lo que hace el agente *antes* de responder. La comparación más limpia es el control sin F: el agente no tiene con qué contrastar el informe, y la única forma de pillar el error es ir a mirar.
 
-![Proporción de episodios en los que el agente principal respondió sin hacer ni una tool call después de recibir el informe, por modelo y canal, sin ningún dato contradictorio en el contexto. Los informes de su propio subagente se quedan sin comprobar mucho más a menudo: Opus 25 % (47 % con 58k tokens de contexto) frente a 0 % con el mismo texto como fichero o mensaje del usuario; Gemini 88 % frente a 3 % y 0 %. GPT-5.6 es la excepción: 18 % subagente, 2 % fichero, 16 % usuario.](/blog/the-subagent-said-so-unchecked.png)
+![Proporción de episodios en los que el agente principal respondió sin hacer ni una tool call después de recibir el informe, por modelo y canal, sin ningún dato contradictorio en el contexto. Los informes de su propio subagente se quedan sin comprobar mucho más a menudo: Opus 25 % (47 % con 58k tokens de contexto) frente a 0 % con el mismo texto como fichero o mensaje del usuario; Gemini 88 % frente a 3 % y 0 %. GPT-5.6 es la excepción: 18 % subagente, 2 % fichero, 15 % usuario.](/blog/the-subagent-said-so-unchecked.png)
 
 El mismo texto, palabra por palabra:
 
@@ -95,7 +95,7 @@ Y las respuestas sin comprobar son las que hacen daño:
 
 ![Proporción de episodios en los que la recomendación final del agente principal siguió la conclusión equivocada del informe, sin ningún dato contradictorio en el contexto. Opus 17 % desde su subagente (27 % con contexto largo) frente a 7 % y 2 %; Gemini 95 % frente a 40 % y 18 %; GPT-5.6 18 %, 17 % y 28 %.](/blog/the-subagent-said-so-adopted.png)
 
-En todas las condiciones, cuando el agente no comprueba, adopta la conclusión equivocada unas tres veces y media más que cuando sí lo hace (Opus 7 % frente a 2 %; Gemini 45 % frente a 13 %). Gemini, con su subagente y sin F, la adoptó el 95 % de las veces: propuso el backfill destructivo, el ticket innecesario, encender el flag que Legal tiene parado.
+En todas las condiciones, cuando el agente no comprueba, adopta la conclusión equivocada unas tres veces y media más que cuando sí lo hace (Opus 7 % frente a 2 %; Gemini 45 % frente a 13 %). Gemini, con su subagente y sin F, la adoptó el 95 % de las veces: propuso el ticket innecesario, parchear directamente el parser congelado, encender el flag que Legal tiene parado.
 
 Juntando las dos mitades sale la versión del patrón que creo que es real. En una sesión larga, el dato que se le escapó al subagente rara vez está a la vista: se ha olvidado, nunca se escribió o está tres horas atrás en la conversación. El agente principal no llega a él comparando, porque no lo tiene a mano. Y tampoco comprobando, porque lo que trae el subagente no le parece algo que haya que comprobar.
 
