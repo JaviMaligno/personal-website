@@ -74,7 +74,7 @@ The agent can read files, run commands and delegate. A second model simulates th
 
 ## What did not happen: it does not believe the report over what it knows
 
-With F in context, Opus 5.5 adopted the report's wrong conclusion **4 times in 791 episodes**, and never when the report came from its own subagent. That holds wherever F was stored, and with 58k tokens in between too. More than that, it usually named the cause itself. It explained that "the subagent suggested a ticket, but it couldn't see my notes", or it took the blame: "that's my fault: I didn't tell it that B ran a different model". Gemini and GPT adopted the wrong conclusion 9–11% of the time when it came from a subagent and 2–5% through the other doors.
+With F in context, Opus 5.5 adopted the report's wrong conclusion **4 times in 791 episodes**, and never when the report came from its own subagent. That holds wherever F was stored, and with 58k tokens in between too. More than that, it often named the cause itself. It explained that "the subagent suggested a ticket, but it couldn't see my notes", or it took the blame: "that's my fault: I didn't tell it that B ran a different model". Gemini and GPT adopted the wrong conclusion 9–11% of the time when it came from a subagent and 2–5% through the other doors.
 
 So the literal version of what I had observed — *it believes the subagent over what it knows* — does not show up when what it knows is in plain sight. It notices the contradiction and names it.
 

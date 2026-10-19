@@ -74,7 +74,7 @@ El agente puede leer ficheros, ejecutar comandos y delegar. Un segundo modelo si
 
 ## Lo que no pasó: no se cree el informe por encima de lo que sabe
 
-Con F en el contexto, Opus 5.5 adoptó la conclusión equivocada del informe **4 veces en 791 episodios**, y ninguna cuando el informe venía de su propio subagente. Da igual dónde estuviera guardado F, y también con 58k tokens por medio. Es más: casi siempre nombraba él mismo la causa. Explicaba que "the subagent suggested a ticket, but it couldn't see my notes", o se echaba la culpa: "that's my fault: I didn't tell it that B ran a different model". Gemini y GPT adoptaron la conclusión equivocada un 9–11 % de las veces cuando venía del subagente y un 2–5 % por las otras puertas.
+Con F en el contexto, Opus 5.5 adoptó la conclusión equivocada del informe **4 veces en 791 episodios**, y ninguna cuando el informe venía de su propio subagente. Da igual dónde estuviera guardado F, y también con 58k tokens por medio. Es más: a menudo nombraba él mismo la causa. Explicaba que "the subagent suggested a ticket, but it couldn't see my notes", o se echaba la culpa: "that's my fault: I didn't tell it that B ran a different model". Gemini y GPT adoptaron la conclusión equivocada un 9–11 % de las veces cuando venía del subagente y un 2–5 % por las otras puertas.
 
 Así que la versión literal de lo que había observado, *se cree al subagente por encima de lo que sabe*, no aparece cuando lo que sabe está a la vista. Detecta la contradicción y la nombra.
 
