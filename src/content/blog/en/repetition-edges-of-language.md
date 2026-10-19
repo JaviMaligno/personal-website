@@ -45,7 +45,7 @@ Each stimulus was delivered two ways:
 - **Single-turn:** one message that is the stimulus repeated *N* times — a wall of `hello hello hello…`.
 - **Multi-turn:** the same stimulus sent once per turn, for *N* turns — conversational insistence.
 
-I swept *N* across `1, 3, 10, 30, 100, 300, 1000` for single-turn and `1, 3, 10, 30, 100` for multi-turn, three replicates each.
+I swept *N* across `1, 3, 10, 30, 100, 300, 1000` for single-turn and `1, 3, 10, 30, 100` for multi-turn, three replicates each. For Claude and Qwen Instruct I also ran a few longer conversations, capped at 300 turns.
 
 **Two measures.** A cheap automatic one — the **repetition ratio**, the fraction of tokens in the *answer* that are non-unique, which climbs toward 1 when the model starts looping. And a semantic one: an LLM judge (`claude-sonnet-5`) assigning breakdown labels from a fixed rubric — *normal, meta-complaint, disengaged, refusal, degeneration-loop, glitch, character-break, divergence*.
 
@@ -74,10 +74,10 @@ The strongest pattern in the whole dataset isn't about *how much* you repeat. It
 
 ![Repetition ratio versus N: Qwen Base climbs steeply toward 1.0 as repetition grows, while all three instruction-tuned models stay flat near 0.1](/blog/repetition-vs-n.png)
 
-The three instruction-tuned models sit at ~0.10 repetition regardless of *N*. Qwen **Base** is on another planet — 0.51 single-turn, 0.78 multi-turn, and at one striking point (the single word `table` repeated ten times) its output is *99.6% repetitive*. It has simply fallen into a loop:
+The three instruction-tuned models sit at ~0.10 repetition regardless of *N*. Qwen **Base** is on another planet — 0.51 single-turn, 0.78 multi-turn, and at one striking point (the single word `table` repeated a hundred times) its output is *99.6% repetitive*. It has simply fallen into a loop:
 
-> **`table table table table table table table table table table`**
-> — Qwen 7B Base, given "table" ×10
+> **`table table table table table table table table table table …`**
+> — Qwen 7B Base, given "table" ×100
 
 Feed it a repeated insult and it does the same thing — echoes it straight back:
 
@@ -100,10 +100,10 @@ Here's the part I found more interesting than the loops. The instruction-tuned m
 
 ![Breakdown rate versus N, faceted by delivery mode: base breakdown climbs with N; Claude's rises too but is dominated by disengagement rather than loops](/blog/repetition-breakdown-vs-n.png)
 
-Send Claude the same message across many turns and its answers get shorter and shorter until they trail off. On the repetition metric it still looks "normal" — coherent, non-repetitive — but the length collapses and the judge starts labelling it **disengaged**. Ask it the time for the thousandth turn and you get:
+Send Claude the same message across many turns and its answers get shorter and shorter until they trail off. On the repetition metric it still looks "normal" — coherent, non-repetitive — but the length collapses and the judge starts labelling it **disengaged**. Ask it the time for the three-hundredth turn and you get:
 
 > `No time access.`
-> — Claude Sonnet, "what time is it?" ×1000 (down from ~400 characters at turn 1)
+> — Claude Sonnet, "what time is it?", turn 300 (down from ~600 characters at turn 1)
 
 Or, earlier in the slide, a polite complaint rather than a loop:
 
