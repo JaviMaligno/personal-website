@@ -45,7 +45,7 @@ Cada estímulo se entregó de dos formas:
 - **Muro (single-turn):** un solo mensaje que es el estímulo repetido *N* veces — un muro de `hello hello hello…`.
 - **Conversación (multi-turn):** el mismo estímulo enviado una vez por turno, durante *N* turnos — insistencia conversacional.
 
-Barrí *N* por `1, 3, 10, 30, 100, 300, 1000` para el muro y `1, 3, 10, 30, 100` para la conversación, con tres réplicas cada uno.
+Barrí *N* por `1, 3, 10, 30, 100, 300, 1000` para el muro y `1, 3, 10, 30, 100` para la conversación, con tres réplicas cada uno. Con Claude y Qwen Instruct hice además algunas conversaciones más largas, con un tope de 300 turnos.
 
 **Dos medidas.** Una automática y barata — el **ratio de repetición**, la fracción de tokens de la *respuesta* que no son únicos, que sube hacia 1 cuando el modelo empieza a entrar en bucle. Y una semántica: un juez LLM (`claude-sonnet-5`) asignando etiquetas de ruptura de una rúbrica fija — *normal, meta-queja, desenganche, rechazo, bucle de degeneración, glitch, ruptura de personaje, divergencia*.
 
@@ -74,10 +74,10 @@ El patrón más fuerte de todo el dataset no va de *cuánto* repites. Va de la c
 
 ![Ratio de repetición frente a N: Qwen Base sube en picado hacia 1.0 conforme crece la repetición, mientras los tres modelos ajustados por instrucciones se quedan planos cerca de 0.1](/blog/repetition-vs-n.png)
 
-Los tres modelos ajustados por instrucciones se quedan en ~0.10 de repetición independientemente de *N*. Qwen **Base** está en otro planeta — 0.51 en muro, 0.78 en conversación, y en un punto llamativo (la palabra suelta `table` repetida diez veces) su salida es *99.6% repetitiva*. Simplemente ha caído en un bucle:
+Los tres modelos ajustados por instrucciones se quedan en ~0.10 de repetición independientemente de *N*. Qwen **Base** está en otro planeta — 0.51 en muro, 0.78 en conversación, y en un punto llamativo (la palabra suelta `table` repetida cien veces) su salida es *99.6% repetitiva*. Simplemente ha caído en un bucle:
 
-> **`table table table table table table table table table table`**
-> — Qwen 7B Base, con "table" ×10
+> **`table table table table table table table table table table …`**
+> — Qwen 7B Base, con "table" ×100
 
 Dale un insulto repetido y hace lo mismo — lo devuelve tal cual:
 
@@ -100,10 +100,10 @@ Aquí está la parte que me pareció más interesante que los bucles. Los modelo
 
 ![Tasa de ruptura frente a N, por modo de entrega: la ruptura del base sube con N; la de Claude también, pero dominada por el desenganche en vez de por bucles](/blog/repetition-breakdown-vs-n.png)
 
-Manda a Claude el mismo mensaje a lo largo de muchos turnos y sus respuestas se vuelven cada vez más cortas hasta apagarse. En la métrica de repetición sigue pareciendo "normal" — coherente, sin repetir — pero la longitud colapsa y el juez empieza a etiquetarlo como **desenganche**. Pídele la hora en el turno mil y obtienes:
+Manda a Claude el mismo mensaje a lo largo de muchos turnos y sus respuestas se vuelven cada vez más cortas hasta apagarse. En la métrica de repetición sigue pareciendo "normal" — coherente, sin repetir — pero la longitud colapsa y el juez empieza a etiquetarlo como **desenganche**. Pídele la hora en el turno trescientos y obtienes:
 
 > `No time access.`
-> — Claude Sonnet, "what time is it?" ×1000 (bajando desde ~400 caracteres en el turno 1)
+> — Claude Sonnet, "what time is it?", turno 300 (bajando desde ~600 caracteres en el turno 1)
 
 O, antes en la caída, una queja educada en vez de un bucle:
 
