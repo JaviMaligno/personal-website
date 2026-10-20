@@ -12,7 +12,9 @@ export interface PluginVideo {
 export interface Plugin {
   slug: string;
   key: string;             // i18n key under `skills.plugins.<key>`
-  repoUrl: string;
+  repoUrl: string | null;  // null for private repos
+  projectSlug?: string;    // case study under /projects/ to link instead
+  pipeline?: string[];     // phase skills, drawn as a stepper when there are no videos
   skills: string[];        // skill folder names inside the plugin
   tags: string[];
   videos: PluginVideo[];   // first one plays by default
@@ -31,5 +33,15 @@ export const plugins: Plugin[] = [
       { slug: 'nobody-tells-the-implementer-why', translationKey: 'nobody-tells-the-implementer-why', title: 'Nobody tells the implementer why', duration: '60 s' },
       { slug: 'that-was-for-another-chat', translationKey: 'that-was-for-another-chat', title: 'That was for another chat', duration: '59 s' },
     ],
+  },
+  {
+    slug: 'data-source-automator',
+    key: 'dataSourceAutomator',
+    repoUrl: null,
+    projectSlug: 'data-source-automator',
+    pipeline: ['research', 'requirements', 'contract', 'implement', 'verify', 'publish'],
+    skills: ['new-source', 'intake', 'benchmark', 'retro'],
+    tags: ['Claude Code plugin', 'Multi-agent', 'Playwright', 'HITL'],
+    videos: [],
   },
 ];
