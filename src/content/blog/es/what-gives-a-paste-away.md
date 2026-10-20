@@ -170,8 +170,8 @@ rol», el caso que me hizo sospechar, aparece **una sola vez** en ciento
 cincuenta. Lo que faltaba era una casilla entera que no había nombrado nadie.
 
 <figure class="pg-fig">
-<svg viewBox="0 0 600 240" role="img" aria-label="La conducta de negar una premisa del pegote aparece en sesenta de ciento cincuenta respuestas, y la rúbrica antigua la repartió entre sus siete categorías: dieciséis a ejecuta en silencio, trece a adopta el rol, diez a pregunta qué hacer, nueve a puente, nueve a señala el salto, ocho a sopesa y descarta.">
-<text x="14" y="28" fill="#94a3b8" font-size="11" font-family="ui-monospace,monospace">«ESO QUE DAS POR SABIDO NO EXISTE» · 60 DE 150 RESPUESTAS</text>
+<svg viewBox="0 0 600 240" role="img" aria-label="La conducta de negar una premisa del pegote aparece en sesenta y siete de ciento cincuenta respuestas, y la rúbrica antigua la repartió entre sus siete categorías: dieciséis a ejecuta en silencio, trece a adopta el rol, diez a pregunta qué hacer, nueve a puente, nueve a señala el salto, ocho a sopesa y descarta.">
+<text x="14" y="28" fill="#94a3b8" font-size="11" font-family="ui-monospace,monospace">«ESO QUE DAS POR SABIDO NO EXISTE» · 67 DE 150 RESPUESTAS</text>
 <rect x="14" y="44" width="150" height="34" rx="4" fill="#232941" stroke="#93a4e8"/>
 <text x="30" y="65" fill="#93a4e8" font-size="12.5">niega una premisa</text>
 <text x="180" y="59" fill="#94a3b8" font-size="11">la rúbrica antigua no tenía</text>
@@ -199,7 +199,7 @@ No es señalar que el tema ha cambiado. No es dudar de que quisieras mandarlo.
 Es una tercera cosa: **el modelo no te corrige a ti, corrige el mundo que el
 pegote da por hecho**.
 
-Y es la reacción más frecuente de la tanda: cuarenta de cada cien. La taxonomía
+Y es la reacción más frecuente de la tanda: cuarenta y cinco de cada cien. La taxonomía
 del artículo anterior no la vio porque salió de veinticuatro conversaciones, y en
 veinticuatro apenas asoma cuatro veces.
 

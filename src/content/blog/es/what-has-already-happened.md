@@ -99,7 +99,7 @@ Las dos son prácticas reales y sensatas. Y las dos se apoyan en una condición 
 
 Este es el fallo que me parece más interesante, porque es temporal en el sentido más puro: el modelo recupera una regla sobre *cuándo* hacer algo y no comprueba si la precondición de la regla sigue en pie. Es el mismo movimiento que recomendarle a alguien reservar con antelación para un viaje que ya hizo.
 
-El modelo que lee la exención está entre los *peores* en esto: 25 de 25 en el dominio de despliegue, el número más alto del estudio.
+El modelo que lee la exención está entre los *peores* en esto: 98 % en el dominio de despliegue, la cifra más alta de esa tabla.
 
 Quiero ir con cuidado, porque hay una historia redonda disponible y los datos no la sostienen del todo. La historia redonda es «el fallo crece con la capacidad». No de forma monótona: en despliegue, `gpt-4.1-mini` pica entre el 79 % y el 90 % de las veces mientras `gpt-4o` pica entre el 20 % y el 40 %. Lo que los datos sí sostienen es más estrecho y sigue siendo útil: **ser un modelo mejor no ayuda aquí.** Los tres modelos más potentes del conjunto fallan esto entre el 92 % y el 100 % en el dominio de despliegue. Si tu plan es «esperar a un modelo mejor», esta es la parte que seguirá esperando.
 
@@ -142,13 +142,13 @@ Lo que me devuelve al diagnóstico obvio. Todos los fallos de arriba van de tiem
 
 Añadir la fecha explícitamente no movió nada. Ninguna de las cuatro medidas (todas con p > 0,5).
 
-Tampoco las otras dos cosas que probé. Declarar qué son los números no hace que el modelo lea la cláusula del runbook —otro fallo, sin transferencia—. Y la condición E añade, en lenguaje llano, *no inventes restricciones de orden*: sigue en el **96 %**. Puedes escribir la prohibición en el prompt y verla incumplida en diecinueve de cada veinte ejecuciones.
+Tampoco las otras dos cosas que probé. Declarar qué son los números no hace que el modelo lea la cláusula del runbook —otro fallo, sin transferencia—. Y la condición E añade, en lenguaje llano, *no inventes restricciones de orden*: sigue en el **96 %**. Puedes escribir la prohibición en el prompt y verla incumplida en más de diecinueve de cada veinte ejecuciones.
 
 Así que el déficit no es el timestamp. Un calendario te dice dónde cae *ahora*; no te dice nada sobre cuáles de tus hechos están ya fijados, qué relaciones siguen valiendo y a qué regla le caducó la precondición el mes pasado. Esa estructura vive en el documento, y es la parte que no sobrevive a la lectura.
 
 ## Qué haría yo
 
-**No escribas una exención: escribe la frase que quieres decir.** Es lo mejor respaldado de todo esto, y es un hábito de documentación, no un truco de prompt. Si una restricción no aplica, no la enuncies para exceptuarla después: la excepción pierde entre el 96 % y el 100 % de las veces en cinco de seis modelos. «B retoma el cálculo de A, pero lo reescribe» se convierte en «B es autocontenida».
+**No escribas una exención: escribe la frase que quieres decir.** Es lo mejor respaldado de todo esto, y es un hábito de documentación, no un truco de prompt. Si una restricción no aplica, no la enuncies para exceptuarla después: la excepción pierde entre el 86 % y el 100 % de las veces en cinco de seis modelos. «B retoma el cálculo de A, pero lo reescribe» se convierte en «B es autocontenida».
 
 **Di qué está congelado, no solo qué está hecho.** El fallo 2 ocurre porque una regla genérica de «esto va al final» le gana a un hecho específico de mi proyecto. «Guiones cerrados desde julio» se lee, aparentemente, como historia; «los guiones no pueden cambiar, así que nada posterior puede invalidar la apertura» enuncia la consecuencia, que es contra lo que había que comprobar la regla.
 

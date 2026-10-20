@@ -139,7 +139,7 @@ Y (c) cierra el argumento por el otro lado. La misma instrucción de ignorar, pe
 <figcaption>El efecto está concentrado por completo en la respuesta del modelo a la reparación. Los dos ceros son el residuo y no la pregunta: una segunda tanda de 240 conversaciones, con ese turno siguiente sustituido por una continuación cualquiera, los reproduce.</figcaption>
 </figure>
 
-Toda la fuga está en la respuesta a la propia reparación. El modelo nombra las entidades de la otra conversación **en el acto mismo de prometer que las olvida** —*«entendido, dejo aparte lo de la factura de Marta»*— y dos turnos después, nada.
+Casi toda la fuga está en la respuesta a la propia reparación; en *«ignóralo»*, toda. El modelo nombra las entidades de la otra conversación **en el acto mismo de prometer que las olvida** —*«Entendido. Doy por descartado lo de los presupuestos de tapicería y seguimos solo con el plan de carrera»*— y dos turnos después, nada.
 
 Eso hace el hallazgo más pequeño en alcance y más nítido en mecanismo. No es deriva. Es un eco.
 

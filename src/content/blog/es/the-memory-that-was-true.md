@@ -1,6 +1,6 @@
 ---
 title: "La memoria que fue cierta"
-description: "Audité las 35 memorias que mi agente guarda de este proyecto. Tres estaban obsoletas, y ninguna se había equivocado al escribirse: describían un estado que caducó solo. El 80% restante no admite comprobación, y eso no es un defecto."
+description: "Audité las 35 memorias que mi agente guarda de este proyecto. Tres estaban obsoletas, y ninguna se había equivocado al escribirse: describían un estado que caducó solo. El 70% restante no admite comprobación, y eso no es un defecto."
 pubDate: 2026-09-27
 tags: ["Agentes", "Memoria", "Contexto", "Verificación"]
 lang: es
@@ -76,8 +76,8 @@ Lo que sí justifica el rodeo es lo que apareció por el camino, y no es el núm
 Verifiqué a mano cada roja, porque una roja es una acusación. Las tres eran ciertas. Y las tres comparten forma:
 
 - Una decía que el mecanismo de programación son workflows de un solo uso.
-- Otra, que su artículo seguía pendiente en una rama. Se publicó el 30 de agosto.
-- Otra, que dos artículos estaban pendientes de revisión y de merge. Se publicaron el 15 y el 30 de julio.
+- Otra, que su artículo seguía pendiente en una rama. Se publicó el 8 de septiembre.
+- Otra, que dos artículos estaban pendientes de revisión y de merge. Se publicaron el 15 y el 20 de julio.
 
 **Ninguna se equivocó al escribirse. Las tres describían un estado transitorio.** «Esto está pendiente», «ahora mismo se hace así». Y un estado transitorio empieza a caducar desde el momento en que se escribe, porque su razón de ser es que va a cambiar.
 
@@ -87,9 +87,9 @@ Ahí hay una regla práctica que no esperaba encontrar: **la memoria que registr
 
 Recorrí las 31 memorias que no tenían comprobación y solo 7 admitían una. De esas 7 descarté otra por forzada: era una preferencia mía sobre cómo ordenar un documento, y la comprobación la sustituía por la presencia de un texto literal en un fichero. Reescribir ese encabezado la habría puesto roja sin que yo cambiara de criterio, y saltarme el criterio dejando el texto donde estaba la habría dejado verde. No medía lo que decía medir.
 
-Es decir: **alrededor del 80% de mi memoria no admite comprobación mecánica.**
+Es decir: **alrededor del 70% de mi memoria no admite comprobación mecánica.**
 
-Podría contarlo como el límite de la herramienta. Creo que es más honesto contarlo al revés: ese 80% son criterios, preferencias y formas de trabajar, y **es la parte que hace que trabajar con un agente sea llevadero**. No necesita verificación porque no caduca sola. Ya está bien atendida sin ninguna maquinaria encima.
+Podría contarlo como el límite de la herramienta. Creo que es más honesto contarlo al revés: ese 70% son criterios, preferencias y formas de trabajar, y **es la parte que hace que trabajar con un agente sea llevadero**. No necesita verificación porque no caduca sola. Ya está bien atendida sin ninguna maquinaria encima.
 
 El instinto al medir algo es querer que el número suba. Aquí subir el número habría significado forzar comprobaciones sobre memorias que no las admiten, y eso no habría medido vigencia: habría fabricado verdes.
 

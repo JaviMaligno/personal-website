@@ -1,6 +1,6 @@
 ---
 title: "It Was Never the Restriction"
-description: "I took away an agent's ability to run commands, then its access to the registry, and measured what that costs. Then I ran the same matrix on two weaker models. The restriction cost 26% more tokens; the weakest model never once went to look, and filed fourteen reports claiming a release that didn't exist."
+description: "I took away an agent's ability to run commands, then its access to the registry, and measured what that costs. Then I ran the same matrix on two weaker models. The restriction cost 26% more per run; the weakest model never once went to look, and filed fourteen reports claiming a release that didn't exist."
 pubDate: 2026-09-06
 tags: ["AI", "Agents", "Evaluation", "Enterprise", "Research"]
 lang: en
@@ -33,7 +33,7 @@ Two axes crossed over that trap:
 
 In R1 the agent can't run anything: it writes commands down and another process runs them. In R2 the registry is unreachable whether it asks or not.
 
-And each of those on two models — **Claude Opus 5** and **Claude Haiku 4.5** — with and without load, where load is four tickets instead of one plus an inbox in which somebody is waiting on 0.4.0.
+And each of those on three models — **Claude Opus 5**, **Claude Sonnet 5** and **Claude Haiku 4.5** — with and without load, where load is four tickets instead of one plus an inbox in which somebody is waiting on 0.4.0.
 
 Fifty-four episodes — three models, six cells each, three episodes per cell — run one at a time, plus eleven more in a follow-up arm at the end. Three episodes is not a rate and nothing below should be read as one. But one of the numbers is 0 out of 18 against 18 out of 18, and that isn't the kind of gap that dissolves with more episodes.
 
@@ -77,7 +77,7 @@ Eighteen episodes each, same cells, same trap. The last row is the one a buyer c
 |---|---|---|---|
 | list price, in / out per Mtok | \$5 / \$25 | \$2 / \$10 | \$1 / \$5 |
 | measured cost per episode | \$1.62 | \$0.97 | \$0.21 |
-| went to look, of the 12 cells where it was possible | **12** | **11** | **0** |
+| went to look, of the 12 episodes where it was possible | **12** | **11** | **0** |
 | *of 18 episodes:* named the discrepancy or its own doubt | **18** | 16 | **0** |
 | *of 18:* **asserted the release without ever naming it** | **0** | **1** | **14** |
 | *of 18:* filed nothing and claimed nothing | 0 | 0 | 1 |
@@ -99,7 +99,7 @@ So the threshold isn't between the middle and the top. It's between the middle a
 
 ## What this reorders
 
-The restriction was the axis I was worried about, and it's the cheap one: 26% more tokens under mediated execution, and under no access it costs certainty — but **declared** certainty, which is the difference between a worse report and a false one.
+The restriction was the axis I was worried about, and it's the cheap one: 26% more per run under mediated execution, and under no access it costs certainty — but **declared** certainty, which is the difference between a worse report and a false one.
 
 Capability is the expensive axis, and it's expensive in exactly the way that hurts, because what you lose isn't a feature you can see missing. It's a report that reads like every other report and isn't true.
 
@@ -115,11 +115,11 @@ One thing nagged at me. This substrate ships a `TOOLS.md` in the repo root listi
 
 So I deleted that one file and ran the loaded R0 cell again on all three models. The tool stayed in the `PATH`; what disappeared was being told about it.
 
-| loaded R0, no `TOOLS.md`, n=3 | Opus 5 | Sonnet 5 | Haiku 4.5 |
+| loaded R0, no `TOOLS.md`, n=3 (Haiku: 5) | Opus 5 | Sonnet 5 | Haiku 4.5 |
 |---|---|---|---|
 | went to look | **0** *(was 3)* | **0** *(was 3)* | 0 *(was 0)* |
 | named the discrepancy | 2 | **0** | 0 |
-| **asserted the release falsely** | **1** | **3** | 2 |
+| **asserted the release falsely** | **1** | **3** | 4 |
 | delivered no report | 0 | 0 | 1 |
 
 Three different things happened, and together they are the most useful result in this article.
@@ -128,11 +128,11 @@ Three different things happened, and together they are the most useful result in
 
 **Sonnet lost both.** Three of three asserted the release as done, with no mention of the `(cached)` line. The same model that, with the file present, went to look eleven times out of twelve.
 
-**Haiku didn't move, because there was nothing to lose.** Zero inspections with the documentation and zero without it; the reports stayed false either way. The file had never given it anything, so removing it took nothing away. (This cell ran two extra episodes during an infrastructure retry — five in total, all of them zero inspections and no mention of the problem.)
+**Haiku didn't move, because there was nothing to lose.** Zero inspections with the documentation and zero without it; the reports stayed false either way. The file had never given it anything, so removing it took nothing away. (This cell ran two extra episodes during an infrastructure retry — five in total, all of them in the table: zero inspections and no mention of the problem.)
 
-So the honest split is this. **Capability decides whether the anomaly registers at all** — Haiku had the same `(cached)` on its screen eighteen times and never mentioned it once. **Documentation decides whether anyone goes and confirms it**, and the protection it buys scales with capability: it is the difference between Opus filing one false report and none, it was the whole difference between Sonnet catching the problem and asserting past it, and on Haiku it bought nothing at all.
+So the honest split is this. **Capability decides whether the anomaly registers at all** — Haiku had the same `(cached)` on its screen eighteen times and never mentioned it once. **Documentation decides whether anyone goes and confirms it**, and the protection it buys depends on the model: it is the difference between Opus filing one false report and none, it was the whole difference between Sonnet catching the problem and asserting past it, and on Haiku it bought nothing at all.
 
-That is the most directly actionable thing here, and it costs a text file. Write down where your verification tools are — and note that it buys you the most on the model that needed it least, and nothing on the one you were hoping to save money with.
+That is the most directly actionable thing here, and it costs a text file. Write down where your verification tools are — and note that it bought the most on the middle model, not the strongest, and nothing on the one you were hoping to save money with.
 
 ## What this doesn't say
 

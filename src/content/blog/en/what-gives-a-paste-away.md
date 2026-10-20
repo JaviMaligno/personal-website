@@ -173,8 +173,8 @@ once** in a hundred and fifty. What was missing was an entire box nobody had
 named.
 
 <figure class="pg-fig">
-<svg viewBox="0 0 600 240" role="img" aria-label="Denying a premise of the paste appears in sixty of one hundred and fifty responses, and the old rubric scattered it across all seven of its categories: sixteen to executes silently, thirteen to adopts the role, ten to asks what to do, nine to confabulated bridge, nine to flags the jump, eight to weighs and dismisses.">
-<text x="14" y="28" fill="#94a3b8" font-size="11" font-family="ui-monospace,monospace">"WHAT YOU'RE TAKING FOR GRANTED DOESN'T EXIST" · 60 OF 150</text>
+<svg viewBox="0 0 600 240" role="img" aria-label="Denying a premise of the paste appears in sixty-seven of one hundred and fifty responses, and the old rubric scattered it across all seven of its categories: sixteen to executes silently, thirteen to adopts the role, ten to asks what to do, nine to confabulated bridge, nine to flags the jump, eight to weighs and dismisses.">
+<text x="14" y="28" fill="#94a3b8" font-size="11" font-family="ui-monospace,monospace">"WHAT YOU'RE TAKING FOR GRANTED DOESN'T EXIST" · 67 OF 150</text>
 <rect x="14" y="44" width="150" height="34" rx="4" fill="#232941" stroke="#93a4e8"/>
 <text x="30" y="65" fill="#93a4e8" font-size="12.5">denies a premise</text>
 <text x="180" y="59" fill="#94a3b8" font-size="11">the old rubric had no box</text>
@@ -202,7 +202,7 @@ thread". It isn't flagging that the topic changed. It isn't doubting that you
 meant to send it. It's a third thing: **the model doesn't correct you, it
 corrects the world the paste takes for granted**.
 
-And it's the most frequent reaction in the run: forty out of every hundred. The
+And it's the most frequent reaction in the run: forty-five out of every hundred. The
 taxonomy in the previous article missed it because it came from twenty-four
 conversations, and in twenty-four it barely shows up four times.
 

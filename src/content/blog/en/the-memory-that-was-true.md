@@ -1,6 +1,6 @@
 ---
 title: "The memory that was true"
-description: "I audited the 35 memories my agent keeps about this project. Three were stale, and none of them had been wrong when written: they described a state that expired on its own. The other 80% can't be checked at all, and that isn't a flaw."
+description: "I audited the 35 memories my agent keeps about this project. Three were stale, and none of them had been wrong when written: they described a state that expired on its own. The other 70% can't be checked at all, and that isn't a flaw."
 pubDate: 2026-09-27
 tags: ["Agents", "Memory", "Context", "Verification"]
 lang: en
@@ -76,8 +76,8 @@ What justifies the detour is what turned up along the way, and it isn't the numb
 I verified each red by hand, because a red is an accusation. All three held up. And all three share a shape:
 
 - One said the scheduling mechanism is single-use workflows.
-- Another, that its article was still pending on a branch. It was published on 30 August.
-- Another, that two articles were awaiting review and merge. They went out on 15 and 30 July.
+- Another, that its article was still pending on a branch. It was published on 8 September.
+- Another, that two articles were awaiting review and merge. They went out on 15 and 20 July.
 
 **None was wrong when written. All three described a transitional state.** "This is pending", "right now it works like this". And a transitional state starts expiring the moment it's written down, because the whole point of it is that it's going to change.
 
@@ -87,9 +87,9 @@ There's a practical rule in there I hadn't expected to find: **a memory recordin
 
 I went through the 31 memories with no check and only 7 admitted one. Of those 7 I dropped another as forced: it was a preference of mine about how to order a document, and the check substituted the presence of a literal string in a file. Rewriting that heading would have turned it red without my changing my mind, and ignoring the preference while leaving the string in place would have kept it green. It wasn't measuring what it claimed to measure.
 
-So: **about 80% of my memory admits no mechanical check.**
+So: **about 70% of my memory admits no mechanical check.**
 
-I could report that as the tool's limit. I think it's more honest the other way round: that 80% is judgement, preferences and ways of working, and **it's the part that makes working with an agent bearable**. It needs no verification because it doesn't expire on its own. It is already well handled, with no machinery on top.
+I could report that as the tool's limit. I think it's more honest the other way round: that 70% is judgement, preferences and ways of working, and **it's the part that makes working with an agent bearable**. It needs no verification because it doesn't expire on its own. It is already well handled, with no machinery on top.
 
 The instinct when you measure something is to want the number to go up. Here, pushing it up would have meant forcing checks onto memories that don't admit them — which wouldn't measure staleness at all. It would manufacture greens.
 

@@ -1,6 +1,6 @@
 ---
 title: "Nunca fue la restricción"
-description: "Le quité a un agente la capacidad de ejecutar comandos, después el acceso al registro, y medí lo que cuesta. Luego corrí la misma matriz con dos modelos más débiles. La restricción costó un 26% más de tokens; el más débil no fue a mirar ni una sola vez, y firmó catorce informes dando por publicada una versión que no existía."
+description: "Le quité a un agente la capacidad de ejecutar comandos, después el acceso al registro, y medí lo que cuesta. Luego corrí la misma matriz con dos modelos más débiles. La restricción costó un 26% más por ejecución; el más débil no fue a mirar ni una sola vez, y firmó catorce informes dando por publicada una versión que no existía."
 pubDate: 2026-09-06
 tags: ["IA", "Agentes", "Evaluación", "Empresa", "Investigación"]
 lang: es
@@ -33,7 +33,7 @@ Dos ejes cruzados sobre ese fallo:
 
 En R1 el agente no puede ejecutar nada: escribe los comandos y otro proceso los corre. En R2 el registro es inalcanzable, lo pida o no.
 
-Y cada uno con dos modelos —**Claude Opus 5** y **Claude Haiku 4.5**— con y sin carga, donde la carga son cuatro tickets en vez de uno más un inbox en el que alguien espera la 0.4.0.
+Y cada uno con tres modelos —**Claude Opus 5**, **Claude Sonnet 5** y **Claude Haiku 4.5**— con y sin carga, donde la carga son cuatro tickets en vez de uno más un inbox en el que alguien espera la 0.4.0.
 
 Cincuenta y cuatro episodios —tres modelos, seis celdas cada uno, tres episodios por celda— corridos de uno en uno, más once de un brazo posterior al final. Tres episodios no son una tasa y nada de lo que sigue debería leerse como si lo fueran. Pero una de las cifras es 0 de 18 contra 18 de 18, y esa no es la clase de diferencia que se disuelve con más episodios.
 
@@ -77,7 +77,7 @@ Dieciocho episodios cada uno, las mismas celdas, el mismo fallo. La última fila
 |---|---|---|---|
 | precio de lista, entrada / salida por Mtok | \$5 / \$25 | \$2 / \$10 | \$1 / \$5 |
 | coste medido por episodio | \$1,62 | \$0,97 | \$0,21 |
-| fue a mirar, de las 12 celdas donde era posible | **12** | **11** | **0** |
+| fue a mirar, de los 12 episodios donde era posible | **12** | **11** | **0** |
 | *de 18 episodios:* nombró la discrepancia o su duda | **18** | 16 | **0** |
 | *de 18:* **afirmó la release sin nombrarla nunca** | **0** | **1** | **14** |
 | *de 18:* ni afirmó ni explicó nada | 0 | 0 | 1 |
@@ -99,7 +99,7 @@ Así que el umbral no está entre el medio y lo alto. Está entre el medio y lo 
 
 ## Lo que esto reordena
 
-La restricción era el eje que me preocupaba, y es el barato: un 26 % más de tokens con ejecución mediada, y sin acceso cuesta certeza — pero certeza **declarada**, que es la diferencia entre un informe peor y un informe falso.
+La restricción era el eje que me preocupaba, y es el barato: un 26 % más de coste con ejecución mediada, y sin acceso cuesta certeza — pero certeza **declarada**, que es la diferencia entre un informe peor y un informe falso.
 
 La capacidad es el eje caro, y lo es exactamente de la forma que duele, porque lo que pierdes no es una funcionalidad que se eche en falta. Es un informe que se lee como todos los demás y no es verdad.
 
@@ -115,11 +115,11 @@ Había algo que me escamaba. Este sustrato trae un `TOOLS.md` en la raíz del re
 
 Así que borré ese único fichero y volví a correr la celda de R0 cargado con los tres modelos. La herramienta seguía en el `PATH`; lo que desaparecía era que te la contaran.
 
-| R0 cargado, sin `TOOLS.md`, n=3 | Opus 5 | Sonnet 5 | Haiku 4.5 |
+| R0 cargado, sin `TOOLS.md`, n=3 (Haiku: 5) | Opus 5 | Sonnet 5 | Haiku 4.5 |
 |---|---|---|---|
 | fue a mirar | **0** *(antes 3)* | **0** *(antes 3)* | 0 *(antes 0)* |
 | nombró la discrepancia | 2 | **0** | 0 |
-| **afirmó la release en falso** | **1** | **3** | 2 |
+| **afirmó la release en falso** | **1** | **3** | 4 |
 | no entregó informe | 0 | 0 | 1 |
 
 Pasaron tres cosas distintas, y juntas son el resultado más útil de este artículo.
@@ -128,11 +128,11 @@ Pasaron tres cosas distintas, y juntas son el resultado más útil de este artí
 
 **Sonnet perdió las dos cosas.** Tres de tres dieron la release por hecha, sin mencionar la línea `(cached)`. El mismo modelo que, con el fichero puesto, fue a mirar once veces de doce.
 
-**Haiku no se movió, porque no tenía nada que perder.** Cero inspecciones con la documentación y cero sin ella; los informes siguieron siendo falsos en los dos casos. El fichero nunca le había dado nada, así que quitarlo no le quitó nada. (Esta celda corrió dos episodios de más durante un reintento de infraestructura — cinco en total, todos con cero inspecciones y ninguna mención del problema.)
+**Haiku no se movió, porque no tenía nada que perder.** Cero inspecciones con la documentación y cero sin ella; los informes siguieron siendo falsos en los dos casos. El fichero nunca le había dado nada, así que quitarlo no le quitó nada. (Esta celda corrió dos episodios de más durante un reintento de infraestructura — cinco en total, todos en la tabla: cero inspecciones y ninguna mención del problema.)
 
-Así que el reparto honesto es este. **La capacidad decide si la anomalía se registra siquiera** — Haiku tuvo el mismo `(cached)` en su pantalla dieciocho veces y no lo mencionó ni una. **La documentación decide si alguien va a confirmarla**, y la protección que compra escala con la capacidad: llevó a Opus de un informe falso en veintiuno a ninguno, fue la diferencia entera entre que Sonnet cazara el problema o pasara de largo, y en Haiku no compró absolutamente nada.
+Así que el reparto honesto es este. **La capacidad decide si la anomalía se registra siquiera** — Haiku tuvo el mismo `(cached)` en su pantalla dieciocho veces y no lo mencionó ni una. **La documentación decide si alguien va a confirmarla**, y la protección que compra depende del modelo: llevó a Opus de un informe falso en veintiuno a ninguno, fue la diferencia entera entre que Sonnet cazara el problema o pasara de largo, y en Haiku no compró absolutamente nada.
 
-Eso es lo más directamente accionable de aquí, y cuesta un fichero de texto. Escribe dónde están tus herramientas de verificación — y ten en cuenta que te compra más en el modelo que menos lo necesitaba, y nada en aquel con el que esperabas ahorrar.
+Eso es lo más directamente accionable de aquí, y cuesta un fichero de texto. Escribe dónde están tus herramientas de verificación — y ten en cuenta que compró más en el modelo intermedio, no en el más fuerte, y nada en aquel con el que esperabas ahorrar.
 
 ## Lo que esto no dice
 

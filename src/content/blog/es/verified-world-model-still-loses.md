@@ -40,7 +40,7 @@ Así que la pregunta interesante pasa a ser: **¿cuándo se puede engañar al ga
 
 ## El instrumento: una regla rara que decide partidas
 
-Para hacer real esa condición no inventé un juego desde cero — tomé un juego de ajedrez generalizado *del propio paper de DeepMind* (`army5x5a`, definido en [su Apéndice H.5](https://arxiv.org/abs/2510.04542): un tablero 5×5 con piezas de general, infantería y caballería, se gana capturando al general rival) y le añadí una regla: si la partida llega a un tope alto de jugadas con ambos generales aún vivos, gana quien tenga más material en vez de empatar. Bajo juego *aleatorio*, esa regla decide la partida un 2.5% de las veces — las partidas aleatorias acaban pronto, por error. Bajo juego *competente* decide cerca de la mitad de las partidas, porque el buen juego sobrevive hasta el tope.
+Para hacer real esa condición no inventé un juego desde cero — tomé un juego de ajedrez generalizado *del propio paper de DeepMind* (`army5x5a`, definido en [su Apéndice H.5](https://arxiv.org/abs/2510.04542): un tablero 5×5 con piezas de general, infantería y caballería, se gana capturando al general rival) y le añadí una regla: si la partida llega a un tope alto de jugadas con ambos generales aún vivos, gana quien tenga más material en vez de empatar. Bajo juego *aleatorio*, esa regla decide la partida un 2.5% de las veces — solo un 3% de las partidas aleatorias llega al tope; el resto acaba antes, por error. Bajo juego *competente* decide cerca de la mitad de las partidas, porque el buen juego sobrevive hasta el tope.
 
 <figure class="cwm-fig">
 <svg viewBox="0 0 600 200" role="img" aria-label="Con qué frecuencia decide la regla la partida: 2.5% bajo juego aleatorio, cerca del 50% bajo juego competente">
@@ -66,7 +66,7 @@ Ahora omite esa regla de la especificación y sintetiza un modelo del mundo. El 
 - es **≥98% preciso** sobre la distribución exacta de estados que visita el planificador,
 - y aun así **pierde sistemáticamente al jugar** (tasa de victoria 0.404 vs 0.495 de un baseline justo calibrado — un *coste de juego* de 0.091, con intervalos de confianza al 95% que no se solapan; IC 95% agrupado por semilla [0.065, 0.117] sobre 20 semillas).
 
-En todo el texto, **coste de juego** es simplemente la tasa de victoria que sacrifica el fallo: la tasa del baseline justo menos la del modelo defectuoso, ambos jugando contra el juego real al mismo presupuesto. 0 significa "juega tan bien como la verdad"; cuanto mayor, más partidas te está costando el fallo.
+En todo el texto, **coste de juego** es simplemente la tasa de victoria que sacrifica el fallo: la tasa del baseline justo menos la del modelo defectuoso (los empates cuentan como media victoria), ambos jugando contra el juego real al mismo presupuesto. 0 significa "juega tan bien como la verdad"; cuanto mayor, más partidas te está costando el fallo.
 
 El puñado de estados que falla son exactamente los que deciden partidas. Las medias lo esconden — el error queda *diluido* por todas las posiciones normales que acierta. Precisión de predicción y adecuación para jugar se separan, de forma limpia y reproducible.
 
@@ -85,7 +85,7 @@ El puñado de estados que falla son exactamente los que deciden partidas. Las me
   <line x1="488.25" y1="63" x2="488.25" y2="77" stroke="#6366f1" stroke-width="2"/>
   <circle cx="447.25" cy="70" r="6" fill="#6366f1" stroke="#1a1a24" stroke-width="2"/>
   <text x="447.25" y="52" text-anchor="middle" fill="#818cf8" font-size="12" font-family="ui-monospace,monospace">0.495</text>
-  <text x="138" y="124" text-anchor="end" fill="#f8fafc" font-size="13">CWM ciego a la regla</text>
+  <text x="138" y="124" text-anchor="end" fill="#f8fafc" font-size="13">Instrumento ciego</text>
   <line x1="219.7" y1="120" x2="301.7" y2="120" stroke="#f43f5e" stroke-width="2"/>
   <line x1="219.7" y1="113" x2="219.7" y2="127" stroke="#f43f5e" stroke-width="2"/>
   <line x1="301.7" y1="113" x2="301.7" y2="127" stroke="#f43f5e" stroke-width="2"/>
@@ -94,7 +94,7 @@ El puñado de estados que falla son exactamente los que deciden partidas. Las me
   <line x1="301.7" y1="95" x2="406.25" y2="95" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="2 3"/>
   <text x="354" y="90" text-anchor="middle" fill="#9CA3AF" font-size="11" font-family="ui-monospace,monospace">brecha 0.091</text>
 </svg>
-<figcaption>El modelo ciego a la regla (rosa), que pasa el gate y es ≥98% preciso, pierde contra el baseline justo (índigo). Los intervalos al 95% no se solapan — el coste de juego de 0.091 no es un artefacto de muestreo.</figcaption>
+<figcaption>El sustituto escrito a mano y ciego a la regla (rosa), que pasa el gate y es ≥98% preciso, pierde contra el baseline justo (índigo). Los intervalos al 95% no se solapan — el coste de juego de 0.091 no es un artefacto de muestreo.</figcaption>
 </figure>
 
 Para asegurarme de que no era un artefacto de mi sustituto escrito a mano, también lo ejecuté de extremo a extremo a través del pipeline de síntesis real, al mismo presupuesto y con sus propios intervalos de confianza: el modelo sintetizado pasa el gate *solo* cuando la regla rara está ausente de su muestra, y cuando lo hace, pierde al jugar — con un coste al menos tan grande como el de arriba. El mismo efecto, sin un humano dibujando a mano el modelo defectuoso.
@@ -230,7 +230,7 @@ Seamos claros: Beacon es un *testigo construido a propósito*, no algo con lo qu
 
 Debajo hay un punto estructural limpio: un gate de precisión de transición es **ciego por construcción** a la función de creencias. Lo que un jugador puede y no puede ver nunca aparece en una transición "este estado pasó a ese estado" — así que ningún chequeo de transiciones puede cazar un modelo de creencias erróneo; necesitas un chequeo *aparte* sobre las creencias. (Estos resultados de información imperfecta usan juegos que instrumenté a mano para aislar el efecto, en vez de modelos totalmente sintetizados — una distinción que mantengo con cuidado en el paper.)
 
-La mitad más esperanzadora de la historia es que ese chequeo aparte a menudo *basta*, y de forma demostrable. En el paper desarrollo una cota de cobertura: un inference gate aleatorio está garantizado que caza los errores de creencias en cuanto muestrea más de aproximadamente `bᵈ` partidas, donde `b` es cuántas opciones enfrenta un jugador en cada paso y `d` es cómo de profundo llegan las decisiones del juego. Los juegos superficiales superan ese listón con holgura — que es exactamente por qué el póker de Kuhn y Leduc *no* muestran brecha de creencias: su gate es demostrablemente suficiente. Para juegos demasiado grandes para enumerar, hay una cota compañera que limita el error no detectado que una función de creencias que pasa el gate puede esconder. Beacon es simplemente el caso diseñado para caer al lado malo de esa cota. Lo que sigue faltando — y lo que marcaría como trabajo futuro — es un chequeo de creencias *adversarial* que muestree deliberadamente la región profunda alcanzable por la habilidad, en vez de esperar a que el juego aleatorio se cuele ahí; ese es el chequeo que cerraría de verdad el hueco con forma de Beacon.
+La mitad más esperanzadora de la historia es que ese chequeo aparte a menudo *basta*, y de forma demostrable. En el paper desarrollo una cota de cobertura: un inference gate aleatorio está garantizado que caza los errores de creencias en cuanto muestrea más de aproximadamente `bᵈ` partidas, donde `b` es cuántas opciones enfrenta un jugador en cada paso y `d` es cómo de profundo llegan las decisiones del juego. Los juegos superficiales superan ese listón con holgura — que es exactamente por qué el póker de Kuhn y Leduc *no* muestran brecha de creencias: su gate es demostrablemente suficiente. Para juegos demasiado grandes para enumerar, hay una cota compañera que limita el error no detectado que una función de creencias que pasa el gate puede esconder. Beacon es simplemente el caso diseñado para caer al lado malo de esa cota. El arreglo es un chequeo de creencias *adversarial* que muestree deliberadamente la región profunda alcanzable por la habilidad, en vez de esperar a que el juego aleatorio se cuele ahí, y la versión revisada del preprint (v2) lo añade: cambiar una sola de las 2000 partidas aleatorias del gate por una del planificador de referencia de confianza hace que el veredicto sobre Beacon pase de aceptar a rechazar, y cierra el hueco con forma de Beacon en este testigo.
 
 ## Lo que me llevo de esto
 
