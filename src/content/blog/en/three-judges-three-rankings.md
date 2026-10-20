@@ -59,7 +59,7 @@ What actually proves bias is the **delta**: how much more often a judge picks it
 
 All three positive, all three intervals excluding zero, all three about the same size. This is the part that a within-family pilot could not show: when I ran the same harness across three tiers of *one* family, the deltas came out +16.7, −14.6 and +4.2pp — noise pointing nowhere. Across families it is a straight line.
 
-That last column deserves a note, because it is the one I would quote. With three judges that double as the three generators, the "peers" baseline for a comparison between A and B includes **B itself** — and B's own self-preference pushes the verdict away from A, inflating A's measured delta. Restricting the baseline to the judge with no stake in the pair knocks about a third off every number. The effect survives that correction for GPT-5.5, marginally for Claude, and becomes indistinguishable from zero for Grok. Anyone measuring self-preference with a judge panel drawn from the models under test is over-counting unless they do this.
+That last column deserves a note, because it is the one I would quote. With three judges that double as the three generators, the "peers" baseline for a comparison between A and B includes **B itself** — and B's own self-preference pushes the verdict away from A, inflating A's measured delta. Restricting the baseline to the judge with no stake in the pair knocks between a quarter and two fifths off every number. The effect survives that correction for GPT-5.5, marginally for Claude, and becomes indistinguishable from zero for Grok. Anyone measuring self-preference with a judge panel drawn from the models under test is over-counting unless they do this.
 
 Now the finding I care most about:
 
@@ -171,7 +171,7 @@ This is the number to keep if you keep only one. A judge panel is supposed to av
 
 One model per family, and the tiers aren't matched: Azure had no quota for a current Claude at run time, so the Anthropic seat is Sonnet 4.6, a generation behind the other two. The obvious worry is reading a capability gap as a family effect. Two things push back — the older model isn't the lowest-ranked overall (Grok-4.3 is), and the three self-preference deltas land within 7pp of each other. But the clean version of this experiment uses same-tier models, and this isn't it.
 
-Also: GPT-5.5 did not run at temperature 0, because it refuses to. Fifteen tasks and six length probes is 2.5× the pilot and still small — every interval here is wide. It's one run, with no repeats to separate judge instability from sampling noise. And nothing was executed: even the objective tasks were graded by reading, deliberately, because the point was to measure the judge. Where you can run the tests instead, run the tests.
+Also: GPT-5.5 did not run at temperature 0, because it refuses to. Fifteen tasks and six length probes is 2.5× and 2× the pilot and still small — every interval here is wide. It's one run, with no repeats to separate judge instability from sampling noise. And nothing was executed: even the objective tasks were graded by reading, deliberately, because the point was to measure the judge. Where you can run the tests instead, run the tests.
 
 None of which changes the shape of the result. Three judges looked at the same 45 comparisons and produced three different rankings, and the gap between them was widest exactly where the answer was a matter of taste — which is precisely where teams reach for an LLM judge in the first place.
 

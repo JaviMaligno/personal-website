@@ -139,7 +139,7 @@ And (c) closes the argument from the other side. Same instruction to ignore, but
 <figcaption>The effect is concentrated entirely in the model's reply to the repair. The two zeros are the residue and not the question: a second run of 240 conversations, with that following turn replaced by an ordinary continuation, reproduces them.</figcaption>
 </figure>
 
-All of the leakage is in the reply to the repair itself. The model names the other conversation's entities **in the act of promising to forget them** — *"understood, I'll set aside the thing about Marta's invoice"* — and then, two turns later, nothing.
+Almost all of the leakage is in the reply to the repair itself; for *"ignore it"*, all of it. The model names the other conversation's entities **in the act of promising to forget them** — *"Understood. I'll drop the upholstery quotes and stick to the race plan"* — and then, two turns later, nothing.
 
 That makes the finding smaller in scope and sharper in mechanism. It is not drift. It is an echo.
 

@@ -99,7 +99,7 @@ Both are real, sensible practices. And both rest on a condition that this materi
 
 This is the failure I find most interesting, because it's temporal in the purest sense: the model retrieves a rule about *when* to do something, and doesn't check whether the rule's precondition still holds. It's the same move as advising someone to book early for a trip that already happened.
 
-The model that reads the exemption is among the *worst* at this — 25 out of 25 in the deployment domain, the highest number in the study.
+The model that reads the exemption is among the *worst* at this — 98% in the deployment domain, the highest figure in that table.
 
 I want to be careful, because there's a tidy story available and the data doesn't quite support it. The tidy story is "the failure grows with capability." Not monotonically: in the deployment domain `gpt-4.1-mini` falls for it 79–90% of the time while `gpt-4o` does 20–40%. What the data does support is narrower and still useful: **being a better model does not help here.** The three strongest models in the set fail this 92–100% of the time in the deployment domain. If your plan is "wait for a better model," this is the part that will still be waiting.
 
@@ -142,13 +142,13 @@ Which brings me back to the obvious diagnosis. Every failure above is about time
 
 Adding the date explicitly moved nothing. Not one of the four measures (all p > 0.5).
 
-Nor did the other two things I tried. Declaring what the numbers are doesn't make a model read the runbook clause — different failure, no transfer. And condition E adds, in plain language, *don't invent ordering constraints*: still **96%**. You can write the prohibition into the prompt and watch it violated in nineteen of twenty runs.
+Nor did the other two things I tried. Declaring what the numbers are doesn't make a model read the runbook clause — different failure, no transfer. And condition E adds, in plain language, *don't invent ordering constraints*: still **96%**. You can write the prohibition into the prompt and watch it violated in more than nineteen of every twenty runs.
 
 So the deficit isn't the timestamp. A calendar tells you where *now* sits; it tells you nothing about which of your facts are already fixed, which relations still hold, and which rule's precondition expired last month. That structure lives in the document, and it's the part that doesn't survive being read.
 
 ## What I'd actually do
 
-**Don't write an exemption — write the sentence you mean.** The best-supported item here, and it's a documentation habit rather than a prompt trick. If a constraint doesn't apply, don't state the constraint and then except it: the exception loses 96–100% of the time in five of six models. "B reuses A's calculation, but it rewrites it" becomes "B is self-contained."
+**Don't write an exemption — write the sentence you mean.** The best-supported item here, and it's a documentation habit rather than a prompt trick. If a constraint doesn't apply, don't state the constraint and then except it: the exception loses 86–100% of the time in five of six models. "B reuses A's calculation, but it rewrites it" becomes "B is self-contained."
 
 **Say what's frozen, not just what's done.** Failure 2 happens because a generic "do this last" rule outranks a specific fact about my project. "Scripts closed since July" apparently reads as history; "the scripts cannot change, so nothing later can invalidate the opener" states the consequence, which is what the rule needed to be checked against.
 

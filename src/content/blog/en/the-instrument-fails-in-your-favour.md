@@ -57,7 +57,7 @@ Redone by hand, case by case, the defensible number was **75% on a conservative 
 
 But the gold set wasn't the only defect, and the others are the reason I put this case in an article about instruments rather than about graders. The comparator was **order-sensitive** (an entity can carry several codes; a different order counted as wrong), **blind to compatibility** (two codes can both be legitimately right; one was scored a hit and the other an error), and **binary** (missing the branch entirely and missing a subcategory within the right branch scored the same).
 
-Three independent defects, and **all three could only subtract points**. That is the signature to learn. When every flaw in a measurement pushes the same way, the resulting number is not merely noisy — it is biased, and you can tell the direction without knowing the magnitude. A noisy instrument gives you a wide interval. A directionally broken one gives you a confident wrong answer, which is worse, because nobody rethinks a roadmap over a wide interval.
+Three independent defects in the comparator, and **all three could only subtract points**. That is the signature to learn. When every flaw in a measurement pushes the same way, the resulting number is not merely noisy — it is biased, and you can tell the direction without knowing the magnitude. A noisy instrument gives you a wide interval. A directionally broken one gives you a confident wrong answer, which is worse, because nobody rethinks a roadmap over a wide interval.
 
 ## 4. The instrument that isn't broken and still measures nothing
 
@@ -75,7 +75,7 @@ I also published a finding from that pilot that did not replicate: that judges i
 
 ## 5. Why they all point the same way
 
-Five instruments across three studies, plus a fourth failure mode where nothing is broken. The direction is the part that needs explaining, because random bugs would have gone both ways.
+Five instruments across three cases — a detector and a scorer, an inherited eval, a gold set and a comparator — plus a fourth failure mode where nothing is broken. The direction is the part that needs explaining, because random bugs would have gone both ways.
 
 The mechanism is not sophisticated: **you stop looking when the number confirms.** A result that matches your expectation ends the investigation, so a bug that produces one is never encountered. A result that contradicts it starts an investigation, and that investigation finds whatever bug is there. The instrument isn't biased. Your stopping rule is, and it filters which defects you ever meet.
 

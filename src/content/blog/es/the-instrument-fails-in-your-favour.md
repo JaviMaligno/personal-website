@@ -57,7 +57,7 @@ Rehecho a mano, caso por caso, el número defendible era **75% en lectura conser
 
 Pero el gold set no era el único defecto, y los otros son la razón de que este caso esté en un artículo sobre instrumentos y no sobre evaluadores. El comparador era **sensible al orden** (una entidad puede llevar varios códigos; que volvieran en otro orden contaba como error), **ciego a la compatibilidad** (dos códigos pueden ser legítimamente correctos a la vez; uno contaba como acierto y el otro como fallo) y **binario** (fallar la rama entera y fallar una subcategoría dentro de la rama correcta puntuaban igual).
 
-Tres defectos independientes, y **los tres solo podían restar puntos**. Esa es la firma que hay que aprender a reconocer. Cuando todos los defectos de una medición empujan hacia el mismo lado, el número resultante no es simplemente ruidoso: es sesgado, y puedes saber la dirección sin conocer la magnitud. Un instrumento ruidoso te da un intervalo ancho. Uno roto direccionalmente te da una respuesta equivocada con confianza, que es peor, porque nadie replantea una hoja de ruta por un intervalo ancho.
+Tres defectos independientes en el comparador, y **los tres solo podían restar puntos**. Esa es la firma que hay que aprender a reconocer. Cuando todos los defectos de una medición empujan hacia el mismo lado, el número resultante no es simplemente ruidoso: es sesgado, y puedes saber la dirección sin conocer la magnitud. Un instrumento ruidoso te da un intervalo ancho. Uno roto direccionalmente te da una respuesta equivocada con confianza, que es peor, porque nadie replantea una hoja de ruta por un intervalo ancho.
 
 ## 4. El instrumento que no está roto y aun así no mide nada
 
@@ -75,7 +75,7 @@ También publiqué un hallazgo de ese piloto que no replicó: que los jueces inf
 
 ## 5. Por qué todos apuntan al mismo sitio
 
-Cinco instrumentos en tres estudios, más un cuarto modo de fallo en el que no hay nada roto. La dirección es la parte que pide explicación, porque unos bugs aleatorios habrían ido para los dos lados.
+Cinco instrumentos en tres casos —un detector y un scorer, un eval heredado, un gold set y un comparador—, más un cuarto modo de fallo en el que no hay nada roto. La dirección es la parte que pide explicación, porque unos bugs aleatorios habrían ido para los dos lados.
 
 El mecanismo no es sofisticado: **dejas de buscar cuando el número confirma.** Un resultado que coincide con tu expectativa cierra la investigación, así que un bug que produzca uno de esos nunca se encuentra. Un resultado que la contradice abre una investigación, y esa investigación encuentra el bug que haya. El instrumento no está sesgado. Lo está tu criterio de parada, y es él quien filtra qué defectos llegas a conocer.
 

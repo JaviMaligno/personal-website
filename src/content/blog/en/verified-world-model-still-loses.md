@@ -40,7 +40,7 @@ So the interesting question becomes: **when can the gate be fooled?** And the co
 
 ## The instrument: a rare rule that decides games
 
-To make that condition real I didn't invent a game from scratch — I took a small generalized-chess game *from that same DeepMind paper* (`army5x5a`, defined in [its Appendix H.5](https://arxiv.org/abs/2510.04542): a 5×5 board with general, infantry, and cavalry pieces, won by capturing the enemy general) and added one rule: if the game reaches a long move cap with both generals still alive, the player with more material wins instead of drawing. Under *random* play, that rule decides the game about 2.5% of the time — random games end early, by blunder. Under *competent* play it decides roughly half of all games, because good play survives to the cap.
+To make that condition real I didn't invent a game from scratch — I took a small generalized-chess game *from that same DeepMind paper* (`army5x5a`, defined in [its Appendix H.5](https://arxiv.org/abs/2510.04542): a 5×5 board with general, infantry, and cavalry pieces, won by capturing the enemy general) and added one rule: if the game reaches a long move cap with both generals still alive, the player with more material wins instead of drawing. Under *random* play, that rule decides the game about 2.5% of the time — only about 3% of random games reach the cap; the rest end earlier, by blunder. Under *competent* play it decides roughly half of all games, because good play survives to the cap.
 
 <figure class="cwm-fig">
 <svg viewBox="0 0 600 200" role="img" aria-label="How often the rule decides the game: 2.5% under random play, about 50% under competent play">
@@ -66,7 +66,7 @@ Now omit that rule from the spec and synthesize a world model. The result is a m
 - is **≥98% accurate** on the exact distribution of states the planner visits,
 - and yet **loses systematically at play** (win rate 0.404 vs 0.495 for a calibrated fair baseline — a *play cost* of 0.091, with non-overlapping 95% confidence intervals; seed-clustered 95% CI [0.065, 0.117] over 20 seeds).
 
-Throughout, **play cost** is just the win rate the flaw gives up: the fair baseline's win rate minus the flawed model's, both playing the true game at the same budget. 0 means "plays as well as the truth"; bigger means "the flaw is costing you games."
+Throughout, **play cost** is just the win rate the flaw gives up: the fair baseline's win rate minus the flawed model's (draws count as half a win), both playing the true game at the same budget. 0 means "plays as well as the truth"; bigger means "the flaw is costing you games."
 
 The handful of states it gets wrong are exactly the ones that decide games. Averages hide it — the error is *diluted* away by all the ordinary positions it gets right. Prediction accuracy and play-adequacy come apart, cleanly and reproducibly.
 
@@ -85,7 +85,7 @@ The handful of states it gets wrong are exactly the ones that decide games. Aver
   <line x1="488.25" y1="63" x2="488.25" y2="77" stroke="#6366f1" stroke-width="2"/>
   <circle cx="447.25" cy="70" r="6" fill="#6366f1" stroke="#1a1a24" stroke-width="2"/>
   <text x="447.25" y="52" text-anchor="middle" fill="#818cf8" font-size="12" font-family="ui-monospace,monospace">0.495</text>
-  <text x="138" y="124" text-anchor="end" fill="#f8fafc" font-size="13">Rule-blind CWM</text>
+  <text x="138" y="124" text-anchor="end" fill="#f8fafc" font-size="13">Rule-blind stand-in</text>
   <line x1="219.7" y1="120" x2="301.7" y2="120" stroke="#f43f5e" stroke-width="2"/>
   <line x1="219.7" y1="113" x2="219.7" y2="127" stroke="#f43f5e" stroke-width="2"/>
   <line x1="301.7" y1="113" x2="301.7" y2="127" stroke="#f43f5e" stroke-width="2"/>
@@ -94,7 +94,7 @@ The handful of states it gets wrong are exactly the ones that decide games. Aver
   <line x1="301.7" y1="95" x2="406.25" y2="95" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="2 3"/>
   <text x="354" y="90" text-anchor="middle" fill="#9CA3AF" font-size="11" font-family="ui-monospace,monospace">gap 0.091</text>
 </svg>
-<figcaption>The gate-passing, ≥98%-accurate rule-blind model (rose) loses to the fair baseline (indigo). The 95% intervals don't overlap — the 0.091 play cost isn't a sampling artifact.</figcaption>
+<figcaption>The gate-passing, ≥98%-accurate rule-blind hand-written stand-in (rose) loses to the fair baseline (indigo). The 95% intervals don't overlap — the 0.091 play cost isn't a sampling artifact.</figcaption>
 </figure>
 
 To be sure this wasn't an artifact of my hand-written stand-in, I also ran it end-to-end through the actual synthesis pipeline, at the same budget and with its own confidence intervals: the synthesized model passes the gate *only* when the rare rule happens to be absent from its sample, and when it does, it loses at play — with a cost at least as large as the one above. Same effect, no human in the loop drawing the flawed model by hand.
@@ -232,7 +232,7 @@ To be upfront: Beacon is a *deliberately constructed witness*, not something a m
 
 There's a clean structural point underneath: a transition-accuracy gate is **blind by construction** to the belief function. What a player can and cannot see never appears in a "this state became that state" transition — so no amount of transition-checking can catch a wrong belief model; you need a *separate* check on the beliefs themselves. (These imperfect-information results use games I instrumented by hand to isolate the effect, rather than fully synthesized models — a distinction I'm careful to keep in the paper.)
 
-The more hopeful half of the story is that this separate check is often *enough*, and provably so. In the paper I work out a coverage bound: a random inference gate is guaranteed to catch belief errors once it samples more than roughly `bᵈ` play-throughs, where `b` is how many choices a player faces at each step and `d` is how deep the game's decisions reach. Shallow games clear that bar easily — which is exactly why Kuhn and Leduc poker show *no* belief gap at all; their gate is provably sufficient. For games too large to enumerate, there's a companion bound that caps the undetected error a gate-passing belief function can hide. Beacon is simply the case engineered to sit on the wrong side of that bound. What's still missing — and what I'd flag as future work — is an *adversarial* belief check that deliberately samples the deep, skill-reachable region instead of hoping random play wanders in; that's the check that would actually close the Beacon-shaped hole.
+The more hopeful half of the story is that this separate check is often *enough*, and provably so. In the paper I work out a coverage bound: a random inference gate is guaranteed to catch belief errors once it samples more than roughly `bᵈ` play-throughs, where `b` is how many choices a player faces at each step and `d` is how deep the game's decisions reach. Shallow games clear that bar easily — which is exactly why Kuhn and Leduc poker show *no* belief gap at all; their gate is provably sufficient. For games too large to enumerate, there's a companion bound that caps the undetected error a gate-passing belief function can hide. Beacon is simply the case engineered to sit on the wrong side of that bound. The fix is an *adversarial* belief check that deliberately samples the deep, skill-reachable region instead of hoping random play wanders in, and the revised preprint (v2) adds it: swapping just one of the gate's 2,000 random play-throughs for one from the trusted reference planner flips Beacon's verdict from accept to reject, closing the Beacon-shaped hole in this witness.
 
 ## What I actually take from this
 
