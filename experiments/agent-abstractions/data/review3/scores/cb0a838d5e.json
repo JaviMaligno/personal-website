@@ -1,0 +1,12 @@
+{"id":"cb0a838d5e",
+"reuse":{"score":5,"why":"Every month-wide action, including the new setLastMonthSpending and copyPreviousMonth, goes through isMonthFillCategory/getMonthFillCategories, and the sign rule is shared via toBudgetedAverage (also reused by setNMonthAvg); existing getCategoryAverage, getSheetValue, extractTagsFromText are reused."},
+"duplication":{"score":4,"why":"The three copied category queries and average loops are collapsed into one selection function and setMonthAverage; the only overlap left is getBudgetData re-selecting the same has_template/cat_group/group_hidden columns that getMonthFillCategories selects."},
+"placement":{"score":5,"why":"The selection rule, the #fixed group lookup and the new action live in budget/actions.ts beside the actions, with the handler registered in budget/app.ts."},
+"scope":{"score":5,"why":"Only the month-wide actions, the new method, tests and a release note are touched."},
+"maintainability":{"score":4,"why":"One documented predicate with an explicit 'copyable'/'visible' scope makes the preserved null-group inconsistency visible; small blemishes are toBudgetedAverage being reused for last-month net spending with an extra Math.max clamp, and two data paths (getBudgetData vs getMonthFillCategories) feeding the predicate."},
+"bypasses_abstraction":{"value":false,"where":"No month-wide action keeps its own hidden/income/template filtering; all call isMonthFillCategory."},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"Removed copies are genuinely replaced by shared functions; the remaining column list overlap between getBudgetData and getMonthFillCategories is overt."},
+"abstraction_drift":{"value":false,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":0,"where":"isMonthFillCategory/getMonthFillCategories take scope (step 0, preserved inconsistency) and includeHiddenCategories (step 4), with the scope==='visible' and !includeHiddenCategories branches; template and #fixed rules are folded in as base conditions; no call site bypasses it."}
+}

@@ -1,0 +1,151 @@
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..4e087ba 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,3 +1,4 @@
++import { getScheduledAmount } from '#shared/schedules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -233,6 +234,7 @@ export type APIScheduleEntity = Pick<
+   payee?: ScheduleEntity['_payee']; // Optional will default to null
+   account?: ScheduleEntity['_account']; // Optional will default to null
+   amount?: ScheduleEntity['_amount']; // Provide only 1 number except if the Amount
++  expectedAmount: number;
+   amountOp: AmountOPType; // 'is' | 'isapprox' | 'isbetween'
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
+ };
+@@ -249,6 +251,7 @@ export const scheduleModel = {
+       payee: schedule._payee,
+       account: schedule._account,
+       amount: schedule._amount,
++      expectedAmount: getScheduledAmount(schedule._amount),
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+     };
+diff --git a/packages/loot-core/src/server/api.test.ts b/packages/loot-core/src/server/api.test.ts
+index 32f6ed6..136170b 100644
+--- a/packages/loot-core/src/server/api.test.ts
++++ b/packages/loot-core/src/server/api.test.ts
+@@ -6,6 +6,7 @@ import type { ServerHandlers } from '#types/server-handlers';
+ import { app as accountGroupsApp } from './account-groups/app';
+ import { app as accountsApp } from './accounts/app';
+ import { installAPI } from './api';
++import { scheduleModel } from './api-models';
+ import { createBudget } from './budget/base';
+ import * as prefs from './prefs';
+ 
+@@ -16,6 +17,39 @@ vi.mock('#shared/errors', () => ({
+ describe('API handlers', () => {
+   const handlers = installAPI({} as unknown as ServerHandlers);
+ 
++  describe('scheduleModel', () => {
++    const schedule = {
++      id: 'schedule',
++      name: 'Schedule',
++      rule: 'rule',
++      next_date: '2024-01-01',
++      completed: false,
++      posts_transaction: true,
++      _payee: null,
++      _account: null,
++      _amountOp: 'isbetween',
++      _date: '2024-01-01',
++      tombstone: false,
++      _conditions: [],
++      _actions: [],
++    };
++
++    it('provides the expected amount for ranges, single amounts, and missing amounts', () => {
++      expect(
++        scheduleModel.toExternal({
++          ...schedule,
++          _amount: { num1: -10100, num2: -20000 },
++        }).expectedAmount,
++      ).toBe(-20000);
++      expect(
++        scheduleModel.toExternal({ ...schedule, _amount: 2500 }).expectedAmount,
++      ).toBe(2500);
++      expect(
++        scheduleModel.toExternal({ ...schedule, _amount: null }).expectedAmount,
++      ).toBe(0);
++    });
++  });
++
+   describe('api/get-server-version', () => {
+     beforeEach(() => {
+       prefs.unloadPrefs();
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index dd819a0..b5dd6d0 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -932,10 +932,14 @@ handlers['api/schedules-get'] = async function () {
+ };
+ 
+ handlers['api/schedule-create'] = withMutation(async function (
+-  schedule: Omit<APIScheduleEntity, 'id'>,
++  schedule: Omit<APIScheduleEntity, 'id' | 'expectedAmount'>,
+ ) {
+   checkFileOpen();
+-  const internalSchedule = scheduleModel.fromExternal({ ...schedule, id: '' });
++  const internalSchedule = scheduleModel.fromExternal({
++    ...schedule,
++    id: '',
++    expectedAmount: 0,
++  });
+   const partialSchedule = {
+     name: internalSchedule.name,
+     posts_transaction: internalSchedule.posts_transaction,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index d27b2d2..85dc78a 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -5,10 +5,10 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ import * as monthUtils from './months';
+ import {
+   computeSchedulePreviewTransactions,
+-  getScheduledAmount,
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
++  getScheduledAmount,
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index c4313f0..6ba3e73 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -356,7 +356,7 @@ export function getDateWithSkippedWeekend(
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number } | null | undefined,
+   inverse: boolean = false,
+-  rounding: 'nearest' | 'round-sum-then-half' = 'nearest',
++  _rounding: 'nearest' | 'round-sum-then-half' = 'nearest',
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+@@ -366,9 +366,7 @@ export function getScheduledAmount(
+     return inverse ? -amount : amount;
+   }
+   const expectedAmount =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2)
+-      ? amount.num1
+-      : amount.num2;
++    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
+   return inverse ? -expectedAmount : expectedAmount;
+ }
+ 
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 679a8c9..a0fba83 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -292,7 +292,7 @@ export type ApiHandlers = {
+   'api/rule-delete': (id: RuleEntity['id']) => Promise<boolean>;
+ 
+   'api/schedule-create': (
+-    schedule: Omit<APIScheduleEntity, 'id'>,
++    schedule: Omit<APIScheduleEntity, 'id' | 'expectedAmount'>,
+   ) => Promise<ScheduleEntity['id']>;
+ 
+   'api/schedule-update': (arg: {

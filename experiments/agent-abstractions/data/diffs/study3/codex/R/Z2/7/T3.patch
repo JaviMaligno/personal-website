@@ -1,0 +1,101 @@
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index a9d9fe0..c8f9bbb 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -251,7 +251,10 @@ export const scheduleModel = {
+       payee: schedule._payee,
+       account: schedule._account,
+       amount: schedule._amount,
+-      expectedAmount: getExpectedScheduleAmount(schedule._amount),
++      expectedAmount: getExpectedScheduleAmount(
++        schedule._amount,
++        schedule._amountOp,
++      ),
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+     };
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 62b653f..f7d662c 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -152,7 +152,7 @@ function updateActions(
+   // Mirrors how `_amount` resolves: a deleted/empty amount condition value
+   // yields 0, so the action is synced to 0 too, keeping it consistent with
+   // the amount the schedule actually posts.
+-  const amount = getExpectedScheduleAmount(amountCond.value);
++  const amount = getExpectedScheduleAmount(amountCond.value, amountCond.op);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -586,7 +586,10 @@ async function postTransactionForSchedule({
+   }
+ 
+   // Ranged amounts post the endpoint furthest from zero.
+-  const amount = getExpectedScheduleAmount(schedule._amount);
++  const amount = getExpectedScheduleAmount(
++    schedule._amount,
++    schedule._amountOp,
++  );
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 728d5dc..0309646 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -40,9 +40,13 @@ describe('schedules', () => {
+       [{ num1: 10100, num2: 20000 }, 20000],
+       [{ num1: 20000, num2: 10100 }, 20000],
+       [-10100, -10100],
++      [-10000, -10750, 'isapprox'],
++      [10000, 10750, 'isapprox'],
++      [-1234, -1327, 'isapprox'],
++      [10000, 10000, 'is'],
+       [null, 0],
+-    ])('resolves %j to %i', (amount, expected) => {
+-      expect(getExpectedScheduleAmount(amount)).toBe(expected);
++    ])('resolves %j to %i', (amount, expected, op?: string) => {
++      expect(getExpectedScheduleAmount(amount, op)).toBe(expected);
+     });
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 83bd82d..2cca92c 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -3,6 +3,7 @@ import type { IRuleOptions } from '@rschedule/core';
+ import * as d from 'date-fns';
+ 
+ import { Condition } from '#server/rules';
++import { getApproxNumberThreshold } from '#shared/rules';
+ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+@@ -13,9 +14,14 @@ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ /** Resolve the amount a variable schedule should use for planning/posting. */
+ export function getExpectedScheduleAmount(
+   amount: number | { num1: number; num2: number } | null | undefined,
++  op?: string,
+ ): number {
+   if (amount == null) return 0;
+-  if (typeof amount === 'number') return amount;
++  if (typeof amount === 'number') {
++    return op === 'isapprox'
++      ? amount + Math.sign(amount || 1) * getApproxNumberThreshold(amount)
++      : amount;
++  }
+   return Math.abs(amount.num1) >= Math.abs(amount.num2)
+     ? amount.num1
+     : amount.num2;
+@@ -508,7 +514,10 @@ export function computeSchedulePreviewTransactions(
+       }
+ 
+       // Ranged amounts use the endpoint furthest from zero for planning.
+-      const amount = getExpectedScheduleAmount(schedule._amount);
++      const amount = getExpectedScheduleAmount(
++        schedule._amount,
++        schedule._amountOp,
++      );
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

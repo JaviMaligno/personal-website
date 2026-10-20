@@ -1,0 +1,84 @@
+diff --git a/packages/api/methods.test.ts b/packages/api/methods.test.ts
+index 3aa5929..4f2ccb6 100644
+--- a/packages/api/methods.test.ts
++++ b/packages/api/methods.test.ts
+@@ -1142,6 +1142,7 @@ test('Schedules: successfully complete schedules operations', async () => {
+         posts_transaction: true,
+         //       amount: -5000,
+         amountOp: 'is',
++        expectedAmount: 0,
+         date: {
+           frequency: 'monthly',
+           interval: 1,
+@@ -1157,6 +1158,7 @@ test('Schedules: successfully complete schedules operations', async () => {
+         posts_transaction: false,
+         amount: 4000,
+         amountOp: 'is',
++        expectedAmount: 4000,
+         date: '2025-06-13',
+       }),
+     ]),
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..185053a 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,3 +1,4 @@
++import { getScheduledAmount } from '#shared/schedules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -237,8 +238,12 @@ export type APIScheduleEntity = Pick<
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
+ };
+ 
++export type APIScheduleListEntity = APIScheduleEntity & {
++  expectedAmount: number;
++};
++
+ export const scheduleModel = {
+-  toExternal(schedule: ScheduleEntity): APIScheduleEntity {
++  toExternal(schedule: ScheduleEntity): APIScheduleListEntity {
+     return {
+       id: schedule.id,
+       name: schedule.name,
+@@ -251,6 +256,7 @@ export const scheduleModel = {
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
++      expectedAmount: getScheduledAmount(schedule._amount),
+     };
+   },
+   //just an update
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 679a8c9..47c2f8d 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -10,6 +10,7 @@ import type {
+   APIPayeeEntity,
+   APIRuleEntity,
+   APIScheduleEntity,
++  APIScheduleListEntity,
+   APITagEntity,
+ } from '#server/api-models';
+ import type { BudgetFileHandlers } from '#server/budgetfiles/app';
+@@ -303,7 +304,7 @@ export type ApiHandlers = {
+ 
+   'api/schedule-delete': (id: string) => Promise<void>;
+ 
+-  'api/schedules-get': () => Promise<APIScheduleEntity[]>;
++  'api/schedules-get': () => Promise<APIScheduleListEntity[]>;
+   'api/get-id-by-name': (arg: {
+     type: string;
+     name: string;
+diff --git a/upcoming-release-notes/api-schedule-expected-amount.md b/upcoming-release-notes/api-schedule-expected-amount.md
+new file mode 100644
+index 0000000..c9202bf
+--- /dev/null
++++ b/upcoming-release-notes/api-schedule-expected-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Add `expectedAmount` to schedules returned by the API, giving the single amount a schedule is expected to post

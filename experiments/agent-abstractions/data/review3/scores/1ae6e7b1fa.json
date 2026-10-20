@@ -1,0 +1,12 @@
+{"id":"1ae6e7b1fa",
+"reuse":{"score":3,"why":"Follows the existing getCategoriesWithSavedTemplates pattern with a set-returning helper, but parses the tag with its own case-insensitive FIXED_TAG regex instead of the shared tag parser (extractTagsFromText in shared/tags.ts, which is case sensitive and handles '##' escaping)."},
+"duplication":{"score":2,"why":"The same 'fetch fixed set, then if fixed.has(id) skip' block is pasted into all six month-wide actions on top of their already-duplicated category-selection queries, instead of folding the exclusion into a single selection."},
+"placement":{"score":4,"why":"The helper sits in budget/actions.ts next to the template-exclusion helper, where the month-wide selection logic lives."},
+"scope":{"score":5,"why":"Only the six month-wide actions, a test and a release note are touched."},
+"maintainability":{"score":3,"why":"The tag rule has one definition, but the month-wide exclusion set is still assembled separately in every action (SQL filter, template set, fixed set, income check), so the next exclusion needs six more edits."},
+"bypasses_abstraction":{"value":true,"where":"getCategoriesInFixedGroups (budget/actions.ts) matches '#fixed' with its own regex instead of using the tag extraction in shared/tags.ts."},
+"duplicated_blocks":6,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated fixed.has checks are verbatim copies, not disguised."},
+"one_place":{"value":true,"where":"getCategoriesInFixedGroups/FIXED_TAG in budget/actions.ts define the #fixed rule and every month-wide action calls it, though each applies the skip with its own check."}
+}

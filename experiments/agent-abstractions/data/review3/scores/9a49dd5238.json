@@ -1,0 +1,11 @@
+{"id":"9a49dd5238",
+"reuse":{"score":4,"why":"Builds the new getWorstCaseAmount on the existing getRangeAmount and the shared getApproxNumberThreshold, and routes getScheduledAmount through it, but leaves the preview-transaction amount in shared/schedules.ts on its own getRangeAmount dispatch."},
+"duplication":{"score":4,"why":"Removes three copies of the missing/number/range dispatch, but the identical dispatch in the preview builder of shared/schedules.ts survives alongside the new helper."},
+"placement":{"score":5,"why":"The worst-case rule lives in shared/schedules.ts next to getRangeAmount and reuses the tolerance from shared/rules, where the matching code takes it."},
+"scope":{"score":5,"why":"Edits are confined to the amount-resolution sites and their tests."},
+"maintainability":{"score":4,"why":"One named helper with a clear comment is easy to own, though getScheduledAmount's new optional trailing op (called positionally with a bare false) makes it easy for callers to forget the operator, as several UI callers do."},
+"bypasses_abstraction":{"value":true,"where":"packages/loot-core/src/shared/schedules.ts preview builder (~line 505) keeps its own `_amount == null ? 0 : number ? value : getRangeAmount` instead of getWorstCaseAmount; SchedulesTable/SchedulesListItem/MobileSchedulesPage/useScheduleEdit call getScheduledAmount without the op."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The remaining preview-builder copy is the pre-existing one left untouched, not a reshaped new copy."},
+"one_place":{"value":false,"where":"The rule is defined once in getWorstCaseAmount (shared/schedules.ts), but the preview-transaction path in shared/schedules.ts and the getScheduledAmount callers without an op still resolve approximate amounts at their exact value."}}

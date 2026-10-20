@@ -1,0 +1,92 @@
+diff --git a/packages/loot-core/migrations/1791800000000_category_group_notes.sql b/packages/loot-core/migrations/1791800000000_category_group_notes.sql
+new file mode 100644
+index 0000000..7158de3
+--- /dev/null
++++ b/packages/loot-core/migrations/1791800000000_category_group_notes.sql
+@@ -0,0 +1,5 @@
++BEGIN TRANSACTION;
++
++ALTER TABLE category_groups ADD COLUMN notes TEXT;
++
++COMMIT;
+diff --git a/packages/loot-core/src/server/aql/schema/index.ts b/packages/loot-core/src/server/aql/schema/index.ts
+index 2ecf4a6..2942081 100644
+--- a/packages/loot-core/src/server/aql/schema/index.ts
++++ b/packages/loot-core/src/server/aql/schema/index.ts
+@@ -101,6 +101,7 @@ export const schema = {
+   category_groups: {
+     id: f('id'),
+     name: f('string'),
++    notes: f('string'),
+     is_income: f('boolean'),
+     hidden: f('boolean'),
+     sort_order: f('float'),
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index ccd37d3..4f43af1 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -217,6 +217,12 @@ describe('month-wide budget actions', () => {
+       is_income: 0,
+       hidden: 1,
+     });
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed costs',
++      is_income: 0,
++      notes: 'Rent and subscriptions #fixed',
++    });
+     await db.insertCategory({
+       id: 'normal',
+       name: 'Normal',
+@@ -233,6 +239,11 @@ describe('month-wide budget actions', () => {
+       name: 'In hidden group',
+       cat_group: 'hidden-group',
+     });
++    await db.insertCategory({
++      id: 'fixed-category',
++      name: 'Rent',
++      cat_group: 'fixed-group',
++    });
+     await db.insertCategory({
+       id: 'templated',
+       name: 'Templated',
+@@ -250,6 +261,7 @@ describe('month-wide budget actions', () => {
+       'hidden-category',
+       'group-hidden-category',
+       'templated',
++      'fixed-category',
+     ]) {
+       await setBudget({ category, month: '2024-01', amount: 123 });
+     }
+@@ -261,6 +273,7 @@ describe('month-wide budget actions', () => {
+       'hidden-category',
+       'group-hidden-category',
+       'templated',
++      'fixed-category',
+     ]) {
+       expect(await getSheetValue('budget202401', `budget-${category}`)).toBe(
+         123,
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index d7ea81d..aecb5ee 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -86,6 +86,7 @@ function getBulkBudgetCategories(): Promise<BulkBudgetCategory[]> {
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+       AND c.goal_def IS NULL
++      AND (g.notes IS NULL OR g.notes NOT LIKE '%#fixed%')
+   `);
+ }
+ 
+diff --git a/packages/loot-core/src/server/db/types/index.ts b/packages/loot-core/src/server/db/types/index.ts
+index ee0000a..01d78ce 100644
+--- a/packages/loot-core/src/server/db/types/index.ts
++++ b/packages/loot-core/src/server/db/types/index.ts
+@@ -69,6 +69,7 @@ export type DbCategory = {
+ export type DbCategoryGroup = {
+   id: string;
+   name: string;
++  notes?: string | null;
+   is_income: 1 | 0;
+   sort_order: number;
+   hidden: 1 | 0;

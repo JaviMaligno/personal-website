@@ -1,0 +1,12 @@
+{"id":"bdd151768b",
+"reuse":{"score":3,"why":"Uses findOrCreateBank, syncAccount and handleSyncResponse and extracts finishAccountLink/unlinkAccountLocally, but the new Fintegra link and download functions re-copy the provider boilerplate instead of factoring the shared upgrade-or-insert and download paths."},
+"duplication":{"score":2,"why":"linkFintegraAccount repeats the upgrade-or-insert-account-plus-payee block that already exists five times, and downloadFintegraTransactions repeats the Akahu/Enable Banking download body."},
+"placement":{"score":4,"why":"Link rules sit in accounts/app.ts next to the link handlers, the download in accounts/sync.ts dispatch, server URL in server-config and the type under types/models, matching the tree's layout."},
+"scope":{"score":4,"why":"Edits serve the four steps; the finishAccountLink extraction across existing providers is a small related cleanup."},
+"maintainability":{"score":3,"why":"The link-guard rules live in one helper used by all six providers, which is good, but that helper named assert... also performs a closed-account check and unlinks another account as a side effect, and the per-provider link bodies remain a sixfold copy."},
+"bypasses_abstraction":{"value":false,"where":"Every link handler, including Fintegra, calls assertBankAccountNotLinked and finishAccountLink; no existing helper is bypassed."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"linkFintegraAccount (app.ts) and downloadFintegraTransactions (sync.ts) are compressed/reformatted copies of the existing provider link and Enable Banking download bodies (collapsed objects, inlined destructuring), so the copy is reshaped rather than shared."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":0,"where":"assertBankAccountNotLinked in packages/loot-core/src/server/accounts/app.ts: gains the replaceExistingLink flag (step 4), an upgradingId closed-account branch (step 3) and a replace-and-unlink branch (step 4), turning an assertion into a check-and-mutate helper."}
+}

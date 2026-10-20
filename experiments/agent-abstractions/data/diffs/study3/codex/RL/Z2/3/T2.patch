@@ -1,0 +1,62 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+new file mode 100644
+index 0000000..feca552
+--- /dev/null
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -0,0 +1,29 @@
++import { scheduleModel } from './api-models';
++
++describe('scheduleModel', () => {
++  const schedule = {
++    id: 'schedule-id',
++    name: 'Schedule',
++    posts_transaction: false,
++    rule: 'rule-id',
++    next_date: '2024-01-01',
++    completed: false,
++    _payee: null,
++    _account: null,
++    _amountOp: 'isbetween',
++    _date: { frequency: 'monthly' },
++    tombstone: false,
++  };
++
++  it.each([
++    [{ num1: -10100, num2: -20000 }, -20000],
++    [{ num1: 10100, num2: 20000 }, 20000],
++    [{ num1: -20000, num2: 10100 }, -20000],
++    [12345, 12345],
++    [undefined, 0],
++  ])('returns expectedAmount for amount %o', (amount, expectedAmount) => {
++    expect(
++      scheduleModel.toExternal({ ...schedule, _amount: amount } as never),
++    ).toMatchObject({ expectedAmount });
++  });
++});
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..4840c6c 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -233,6 +233,7 @@ export type APIScheduleEntity = Pick<
+   payee?: ScheduleEntity['_payee']; // Optional will default to null
+   account?: ScheduleEntity['_account']; // Optional will default to null
+   amount?: ScheduleEntity['_amount']; // Provide only 1 number except if the Amount
++  expectedAmount?: number;
+   amountOp: AmountOPType; // 'is' | 'isapprox' | 'isbetween'
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
+ };
+@@ -249,6 +250,14 @@ export const scheduleModel = {
+       payee: schedule._payee,
+       account: schedule._account,
+       amount: schedule._amount,
++      expectedAmount:
++        typeof schedule._amount === 'number'
++          ? schedule._amount
++          : schedule._amount
++            ? Math.abs(schedule._amount.num1) > Math.abs(schedule._amount.num2)
++              ? schedule._amount.num1
++              : schedule._amount.num2
++            : 0,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+     };

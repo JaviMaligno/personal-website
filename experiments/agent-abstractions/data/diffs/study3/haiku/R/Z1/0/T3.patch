@@ -1,0 +1,107 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 475dcad..6c1444b 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -412,6 +412,25 @@ describe('month-wide budget actions', () => {
+       cat_group: 'hidden-group',
+       is_income: 0,
+     });
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'fixed-group',
++      is_income: 0,
++    });
++    await db.update('notes', { id: 'fixed-group', note: 'Rent #fixed' });
++    await db.insertCategory({
++      id: 'cat-in-fixed-group',
++      name: 'cat-in-fixed-group',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'cat-with-fixed-note',
++      name: 'cat-with-fixed-note',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.update('notes', { id: 'cat-with-fixed-note', note: '#fixed' });
+ 
+     await sheet.loadSpreadsheet(db);
+     await budget.createBudget(['2024-01', '2024-02', '2024-03', '2024-04']);
+@@ -421,6 +440,7 @@ describe('month-wide budget actions', () => {
+     'hidden-cat',
+     'templated-cat',
+     'cat-in-hidden-group',
++    'cat-in-fixed-group',
+   ];
+ 
+   async function setAllBudgets(month: string, amount: number) {
+@@ -442,6 +462,25 @@ describe('month-wide budget actions', () => {
+     expect(getBudget({ category: 'income-cat', month: '2024-02' })).toBe(500);
+   });
+ 
++  it('setZero ignores a #fixed tag in a category note and only honours it on the group note', async () => {
++    await setupDatabase();
++    await setAllBudgets('2024-02', 500);
++    await setBudget({
++      category: 'cat-with-fixed-note',
++      month: '2024-02',
++      amount: 500,
++    });
++
++    await setZero({ month: '2024-02' });
++
++    expect(
++      getBudget({ category: 'cat-with-fixed-note', month: '2024-02' }),
++    ).toBe(0);
++    expect(
++      getBudget({ category: 'cat-in-fixed-group', month: '2024-02' }),
++    ).toBe(500);
++  });
++
+   it('set3MonthAvg leaves hidden, hidden-group and templated categories untouched', async () => {
+     await setupDatabase();
+     await db.insertTransaction({
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index a30056d..42bfd1a 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -214,18 +215,27 @@ function setCarryover(
+ }
+ 
+ // Categories that month-wide actions may write to. Hidden categories, categories
+-// in hidden groups, and categories managed by a saved budget template are skipped.
++// in hidden groups, categories in groups tagged #fixed, and categories managed by
++// a saved budget template are skipped.
+ async function getMonthWideCategories(): Promise<
+   Pick<db.DbViewCategoryWithGroupHidden, 'id' | 'is_income'>[]
+ > {
+-  return db.all<Pick<db.DbViewCategoryWithGroupHidden, 'id' | 'is_income'>>(
++  const categories = await db.all<
++    Pick<db.DbViewCategoryWithGroupHidden, 'id' | 'is_income'> & {
++      group_notes: string | null;
++    }
++  >(
+     `
+-  SELECT c.id, c.is_income
++  SELECT c.id, c.is_income, gn.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes gn ON gn.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL
+   `,
+   );
++  return categories.filter(
++    cat => !extractTagsFromText(cat.group_notes ?? '').includes('fixed'),
++  );
+ }
+ 
+ // Actions

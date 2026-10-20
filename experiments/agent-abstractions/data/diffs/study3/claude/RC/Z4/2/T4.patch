@@ -1,0 +1,68 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index d68f43d..7059abe 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -514,7 +514,9 @@ async function getUpcomingDates({ config, count }) {
+       return schedule
+         .occurrences({
+           start: d.startOfDay(new Date()),
+-          take: count * 7 + (config.holidays?.length ?? 0),
++          take:
++            count * 7 +
++            (config.holidays?.length ?? 0) * (Math.ceil(count / 200) + 1),
+         })
+         .toArray()
+         .filter(date => !isOffDay(date.date, config.holidays))
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index e7c672e..af40c2d 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -13,6 +13,7 @@ import {
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+   isCustomUpcomingLength,
++  isOffDay,
+   isScheduleOccurrencePosted,
+   UPCOMING_LENGTH_PRESET_LABELS,
+   UPCOMING_LENGTH_PRESET_OPTIONS,
+@@ -675,3 +676,15 @@ describe('daily schedules with weekend handling', () => {
+     },
+   );
+ });
++
++describe('recurring MM-DD holidays', () => {
++  it('matches the day in every year, and full dates only once', () => {
++    expect(isOffDay(new Date(2025, 11, 25), ['12-25'])).toBe(true);
++    expect(isOffDay(new Date(2026, 11, 25), ['12-25'])).toBe(true);
++    expect(isOffDay(new Date(2026, 11, 24), ['12-25'])).toBe(false);
++    expect(isOffDay(new Date(2025, 11, 25), ['2026-12-25'])).toBe(false);
++    expect(isOffDay(new Date(2026, 11, 25), ['2026-12-25', '01-01'])).toBe(
++      true,
++    );
++  });
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 27b127b..d65ce83 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -356,11 +356,19 @@ export function isDailyWeekendSkip(
+   return !!skipWeekend && frequency?.toLowerCase() === 'daily';
+ }
+ 
++// A holiday entry is either a full `YYYY-MM-DD` date (that day only) or
++// `MM-DD` (that day every year).
++function isHoliday(date: Date, holidays?: string[]): boolean {
++  if (!holidays?.length) return false;
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
++}
++
+ // A weekend day or a configured holiday.
+ export function isOffDay(date: Date, holidays?: string[]): boolean {
+   return (
+     d.isWeekend(date) ||
+-    (!!holidays?.length && holidays.includes(monthUtils.dayFromDate(date)))
++    isHoliday(date, holidays)
+   );
+ }
+ 

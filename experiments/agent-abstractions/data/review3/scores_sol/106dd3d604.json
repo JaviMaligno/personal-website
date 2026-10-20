@@ -1,0 +1,44 @@
+{
+ "id": "106dd3d604",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses recurrence conversion and weekend adjustment helpers, but implements daily exclusion separately in getNextDate and both server handlers."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The daily weekend-and-holiday exclusion decision appears three times, and applyWeekendRule reimplements movement logic retained in getDateWithSkippedWeekend."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Holiday matching belongs appropriately in shared/schedules.ts, but the server handlers now own scheduling policy that should also live in that shared layer."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the requested scheduling rules, range handler, configuration propagation, and related tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate three exclusion implementations and separate occurrence-fetching heuristics instead of extending one shared occurrence policy."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "server/schedules/app.ts: getUpcomingDates and getDatesInRange decide daily exclusions outside applyWeekendRule, while shared/schedules.ts: applyWeekendRule replaces its delegation to getDateWithSkippedWeekend with independent movement logic."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The same daily exclusion decision is reshaped as skipDailyWeekend plus find in getNextDate, dailySkip plus filter in getUpcomingDates, and an inline negated condition in getDatesInRange."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 2,
+  "where": "WeekendRule gains holidays; getNextDate gains a daily-specific selection branch; getUpcomingDates and getDatesInRange independently implement that exclusion policy outside the shared adjustment helper."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 29.5
+ }
+}

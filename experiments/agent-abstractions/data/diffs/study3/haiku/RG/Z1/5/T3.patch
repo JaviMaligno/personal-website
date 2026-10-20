@@ -1,0 +1,115 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index f0d7039..abde47b 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -264,6 +264,25 @@ describe('month-wide budget actions', () => {
+       id: 'cat-templated',
+       goal_def: JSON.stringify([{ type: 'simple', monthly: 250 }]),
+     });
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed',
++      is_income: 0,
++    });
++    await db.update('notes', { id: 'fixed-group', note: 'Rent #fixed' });
++    await db.insertCategory({
++      id: 'cat-in-fixed-group',
++      name: 'rent',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'cat-with-fixed-note',
++      name: 'fixed note',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.update('notes', { id: 'cat-with-fixed-note', note: '#fixed' });
+ 
+     await sheet.loadSpreadsheet(db);
+     await budget.createBudget(['2024-01', '2024-02', '2024-03', '2024-04']);
+@@ -275,6 +294,8 @@ describe('month-wide budget actions', () => {
+     'cat-hidden',
+     'cat-in-hidden-group',
+     'cat-templated',
++    'cat-in-fixed-group',
++    'cat-with-fixed-note',
+   ];
+ 
+   async function setBudgetsForAllCategories(month: string, amount: number) {
+@@ -302,6 +323,21 @@ describe('month-wide budget actions', () => {
+     expect(await getSheetValue('budget202404', 'budget-income-cat')).toBe(500);
+   });
+ 
++  it('setZero leaves categories in #fixed groups untouched, but not categories with #fixed in their own notes', async () => {
++    await setupMonthActionDatabase();
++    await setBudgetsForAllCategories('2024-04', 500);
++
++    await setZero({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(
++      await getSheetValue('budget202404', 'budget-cat-in-fixed-group'),
++    ).toBe(500);
++    expect(
++      await getSheetValue('budget202404', 'budget-cat-with-fixed-note'),
++    ).toBe(0);
++  });
++
+   it('copyPreviousMonth leaves hidden and template-managed categories untouched', async () => {
+     await setupMonthActionDatabase();
+     await setBudgetsForAllCategories('2024-03', 700);
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index ef92808..69a5fdb 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -213,19 +214,35 @@ function setCarryover(
+   });
+ }
+ 
++async function getFixedGroupIds(): Promise<Set<string>> {
++  const groupNotes = await db.all<db.DbNote>(`
++    SELECT n.id, n.note
++    FROM notes n
++    JOIN category_groups g ON g.id = n.id
++    WHERE g.tombstone = 0 AND n.note LIKE '%#fixed%'
++  `);
++  return new Set(
++    groupNotes
++      .filter(({ note }) => extractTagsFromText(note).includes('fixed'))
++      .map(({ id }) => id),
++  );
++}
++
+ // Categories that month-wide actions may write to. Hidden categories, categories
+-// in hidden groups and categories managed by a saved template are left untouched.
+-async function getMonthActionCategories(): Promise<
+-  db.DbViewCategoryWithGroupHidden[]
+-> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(`
++// in hidden groups, categories in groups tagged #fixed in their notes and
++// categories managed by a saved template are left untouched.
++async function getMonthActionCategories(): Promise<db.DbCategory[]> {
++  const categories = await db.all<db.DbCategory>(`
+     SELECT c.*
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL
+   `);
++  const fixedGroupIds = await getFixedGroupIds();
+   return categories.filter(
+-    cat => !(cat.is_income === 1 && !isTrackingBudget()),
++    cat =>
++      !(cat.is_income === 1 && !isTrackingBudget()) &&
++      !fixedGroupIds.has(cat.cat_group),
+   );
+ }
+ 

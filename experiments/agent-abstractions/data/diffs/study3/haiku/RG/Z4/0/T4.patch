@@ -1,0 +1,62 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index eea76ad..5104874 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -593,6 +593,37 @@ describe('schedules', () => {
+         expect(result).toBe('2020-12-02');
+       });
+ 
++      it('skips a recurring MM-DD holiday in every year', () => {
++        const result = getNextDate(
++          dailyFromSaturday({
++            weekendSolveMode: 'before',
++            holidays: ['12-07'],
++          }),
++          new Date(2020, 11, 7),
++        );
++        expect(result).toBe('2020-12-08');
++      });
++
++      it('skips a MM-DD holiday and a YYYY-MM-DD holiday in the same list', () => {
++        const holidays = ['12-07', '2020-12-08'];
++        const result = getNextDate(
++          dailyFromSaturday({ weekendSolveMode: 'before', holidays }),
++          new Date(2020, 11, 7),
++        );
++        expect(result).toBe('2020-12-09');
++      });
++
++      it('does not treat a YYYY-MM-DD holiday as recurring', () => {
++        const result = getNextDate(
++          dailyFromSaturday({
++            weekendSolveMode: 'before',
++            holidays: ['2019-12-07'],
++          }),
++          new Date(2020, 11, 7),
++        );
++        expect(result).toBe('2020-12-07');
++      });
++
+       it('moves a weekend occurrence past a holiday on the following Monday', () => {
+         const result = getNextDate(
+           {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 5c5b945..44dcf31 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -357,8 +357,14 @@ type WeekendRule = Partial<
+   >
+ >;
+ 
++// Entries are either a full YYYY-MM-DD date or a recurring MM-DD day.
++function isHoliday(date: Date, holidays: string[]): boolean {
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
++}
++
+ function isNonWorkingDay(date: Date, holidays: string[] = []): boolean {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  return d.isWeekend(date) || isHoliday(date, holidays);
+ }
+ 
+ function getDateWithSkippedNonWorkingDays(

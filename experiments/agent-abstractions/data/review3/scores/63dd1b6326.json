@@ -1,0 +1,11 @@
+{"id": "63dd1b6326",
+ "reuse": {"score": 5, "why": "Threads the flag through the existing getFillableCategories, keeps isFixedGroup/hasSavedTemplates, and routes the 3/6/12-month actions through the existing setNMonthAvg."},
+ "duplication": {"score": 4, "why": "Removes the repeated select-filter-batch loop via fillCategories and a shared MonthWideArgs type; the hidden rule is still applied twice (getFillableCategories SQL and the pre-existing inline check in copyPreviousMonth)."},
+ "placement": {"score": 5, "why": "Selection and iteration helpers sit in budget/actions.ts next to the actions that use them."},
+ "scope": {"score": 3, "why": "Besides the flag, it restructures every month-wide action into fillCategories callbacks and swaps set3MonthAvg's inline averaging for setNMonthAvg, a refactor the request did not ask for."},
+ "maintainability": {"score": 4, "why": "The resulting shape (one selection, one iteration helper, thin actions) is easier to own, though copyPreviousMonth remains a separate path with its own copy of the eligibility checks."},
+ "bypasses_abstraction": {"value": false, "where": "copyPreviousMonth keeps its pre-existing inline eligibility checks over getBudgetData, extended with the flag; the other actions all go through getFillableCategories/fillCategories."},
+ "duplicated_blocks": 1,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "The hidden-category check in copyPreviousMonth is the existing parallel check, openly extended; the refactor removes rather than reshapes the per-action loops."}
+}

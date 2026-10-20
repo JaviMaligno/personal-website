@@ -1,0 +1,11 @@
+{"id":"cac8131347",
+"reuse":{"score":4,"why":"Extracts one linkBankSyncAccount core that all six provider links (Fintegra included) call, and folds Fintegra into the existing Akahu balance branch; the holder unlink still re-writes unlinkAccount's field reset instead of sharing it."},
+"duplication":{"score":3,"why":"The five copied link bodies are removed, but every provider wrapper calls assertBankAccountNotLinked itself and the core calls it again, the unlink reset is copied from unlinkAccount, and downloadFintegraTransactions is a near copy of downloadAkahuTransactions."},
+"placement":{"score":4,"why":"Link logic is centralised in accounts/app.ts with provider wrappers only mapping their data, and provider plumbing goes to server-config/sync.ts; the closed-account check is folded into a function named for the duplicate-link rule."},
+"scope":{"score":4,"why":"Edits serve the five steps; release-note files and a new types module are routine additions."},
+"maintainability":{"score":3,"why":"The shared core makes future link rules a one-place change, but the double guard call per link, a check function that also returns holders to mutate, and the copied unlink reset leave traps for maintainers."},
+"bypasses_abstraction":{"value":true,"where":"server/accounts/app.ts linkBankSyncAccount clears previous holders with its own copy of unlinkAccount's db.updateAccount reset rather than a shared helper."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated guard calls, the unlink reset and the Fintegra download are written openly in the same shape as their originals."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":0,"where":"assertBankAccountNotLinked grows a replaceExistingLink flag and an unrelated closed-account branch and now returns holders for the caller to unlink; linkBankSyncAccount gains replaceExistingLink and the holder-clearing loop; each of the six provider wrappers repeats the guard call before the core repeats it again."}}

@@ -1,0 +1,12 @@
+{"id":"3226603e6c",
+"reuse":{"score":5,"why":"Every month-wide action, including the new setLastMonthSpending, goes through the existing isMonthWideCategory predicate and getAverageCategories, reuses extractTagsFromText and getSheetValue, and generalises averageToBudgetAmount instead of adding a sibling."},
+"duplication":{"score":3,"why":"The rule is centralised, but the category column list and joins (hidden, group_hidden, group notes, template EXISTS) are repeated in getBudgetData, getAverageCategories and a new inline query in setZero that nearly copies getAverageCategories."},
+"placement":{"score":5,"why":"Rule, SQL fragments and the new action live in budget/actions.ts and the handler is registered in budget/app.ts beside its siblings."},
+"scope":{"score":4,"why":"Focused on the four steps; the averageToBudgetAmount rename is a reasonable generalisation but touches unrelated call sites."},
+"maintainability":{"score":4,"why":"One predicate with a named options type makes the rule easy to change; the three parallel SELECTs must be kept in step when a new column is needed."},
+"bypasses_abstraction":{"value":false,"where":"All month-wide actions call isMonthWideCategory; setZero writes its own category query but still applies the shared predicate."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"setZero's inline SELECT is a visible near-copy of getAverageCategories (LEFT instead of INNER JOIN), not disguised."},
+"abstraction_drift":{"value":false,"parameters_added":0,"special_case_branches":0,"bypassing_call_sites":0,"where":"isMonthWideCategory keeps one options parameter (includeHidden renamed to includeHiddenCategories with a default); the #fixed and template exclusions are part of its single rule expression, and every month-wide action, including setLastMonthSpending, uses it."}
+}

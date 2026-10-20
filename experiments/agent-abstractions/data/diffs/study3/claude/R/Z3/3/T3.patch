@@ -1,0 +1,61 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index a13a142..5bbd831 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -339,3 +339,34 @@ describe('bank sync handlers must not nest mutators', () => {
+     expect(result.errors).toEqual([]);
+   });
+ });
++
++describe('linking to a closed account', () => {
++  it('is refused without changing anything', async () => {
++    await db.insertAccount({ id: 'acct1', name: 'Old', closed: 1 });
++
++    await expect(
++      app.handlers['simplefin-accounts-link']({
++        externalAccount: {
++          account_id: 'ext-1',
++          name: 'Bank',
++          institution: 'Inst',
++          orgDomain: 'inst.example',
++          orgId: 'org',
++          balance: 0,
++        },
++        upgradingId: 'acct1',
++      } as never),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    const acct = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['acct1'],
++    );
++    expect(acct.account_id).toBeNull();
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    const banks = await db.all('SELECT * FROM banks');
++    expect(banks).toHaveLength(0);
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index ef622f1..6dc9bae 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -176,6 +176,17 @@ async function assertBankAccountNotLinked(
+   providerAccountId: string,
+   upgradingId?: string,
+ ) {
++  if (upgradingId) {
++    const target = await db.first<{ closed: number }>(
++      'SELECT closed FROM accounts WHERE id = ? AND tombstone = 0',
++      [upgradingId],
++    );
++    if (target?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
+   const existing = await db.first<{ id: string }>(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ? LIMIT 1',
+     [provider, providerAccountId, upgradingId ?? null],

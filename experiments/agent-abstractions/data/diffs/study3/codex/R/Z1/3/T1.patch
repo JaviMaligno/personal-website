@@ -1,0 +1,106 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index cea172c..f454f53 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -184,6 +184,29 @@ describe('set budget average', () => {
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(600);
+   });
+ 
++  it('leaves hidden and UI template categories unchanged in bulk averages', async () => {
++    await db.updateWithSchema('categories', {
++      id: 'cat1',
++      template_settings: { source: 'ui' },
++    });
++    await db.insertCategory({
++      id: 'hidden-cat',
++      name: 'hidden',
++      cat_group: 'group1',
++      is_income: 0,
++      hidden: 1,
++    });
++    await setBudget({ category: 'cat1', month: '2024-04', amount: 111 });
++    await setBudget({ category: 'hidden-cat', month: '2024-04', amount: 222 });
++    await sheet.waitOnSpreadsheet();
++
++    await set3MonthAvg({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(111);
++    expect(await getSheetValue('budget202404', 'budget-hidden-cat')).toBe(222);
++  });
++
+   it('sets a bulk 3 month average from the first activity month', async () => {
+     await setBudget({ category: 'cat1', month: '2023-12', amount: 1000 });
+ 
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..6491b79 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -71,6 +71,7 @@ type BudgetData = {
+   group_hidden: 1 | 0;
+   category: string;
+   amount: number;
++  template_source: string | null;
+ };
+ 
+ function getBudgetData<T extends BudgetTable>(
+@@ -82,10 +83,11 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      >
++      > & { template_source: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden,
++           JSON_EXTRACT(c.template_settings, '$.source') AS template_source
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -232,6 +234,9 @@ export async function copyPreviousMonth({
+       if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
+         return;
+       }
++      if (prevBudget.template_source === 'ui') {
++        return;
++      }
+       void setBudget({
+         category: prevBudget.category,
+         month,
+@@ -260,7 +265,10 @@ export async function copySinglePreviousMonth({
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
++    `SELECT c.* FROM categories c
++     LEFT JOIN category_groups g ON c.cat_group = g.id
++     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++       AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'`,
+   );
+ 
+   await batchMessages(async () => {
+@@ -284,6 +292,7 @@ export async function set3MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'
+   `,
+   );
+ 
+@@ -319,6 +328,7 @@ export async function set12MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'
+   `,
+   );
+ 
+@@ -343,6 +353,7 @@ export async function set6MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'
+   `,
+   );
+ 

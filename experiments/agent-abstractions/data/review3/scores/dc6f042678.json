@@ -1,0 +1,12 @@
+{"id":"dc6f042678",
+"reuse":{"score":3,"why":"Extends the shared getDateWithSkippedWeekend with holidays and adds shared predicates (skipsWeekendDays, isSkippedWeekendDay, scan/shift bounds), but each consumer still assembles the full weekend rule itself instead of calling one shared 'apply weekend rule' function."},
+"duplication":{"score":2,"why":"The composition 'skip if daily weekend/holiday, else move if skipWeekend, else keep' is written three times: applyWeekendRule in schedules/app.ts, getWeekendMovedDay plus an isSkippedWeekendDay guard in budget/schedule-template.ts, and inline in getNextDate/findNextOccurrence in shared/schedules.ts."},
+"placement":{"score":3,"why":"Holiday and weekend predicates correctly live in shared/schedules.ts, but the full rule (applyWeekendRule) is private to server/schedules/app.ts and a near twin is private to schedule-template.ts, rather than in the shared module."},
+"scope":{"score":4,"why":"Mostly what the four steps need; restricting getNextDate's reverse fallback to bounded schedules (isBoundedSchedule) is an extra behaviour tweak."},
+"maintainability":{"score":3,"why":"Bounds and predicates are well commented, but a future weekend/holiday rule change must be repeated in three call-site compositions that can drift."},
+"bypasses_abstraction":{"value":true,"where":"schedule-template.ts getWeekendMovedDay and getNextDate's inline skipDays/getDateWithSkippedWeekend logic re-implement what applyWeekendRule in schedules/app.ts does, instead of sharing one function."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"applyWeekendRule (app.ts), getWeekendMovedDay + isSkippedWeekendDay guard (schedule-template.ts) and findNextOccurrence filter + skipWeekend branch (getNextDate) are the same rule reshaped and renamed per site."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains a holidays parameter; the daily-skip special case is not taken by any shared function, so three call sites (schedules/app.ts applyWeekendRule, schedule-template.ts getWeekendMovedDay, shared getNextDate) each compose skipsWeekendDays/isSkippedWeekendDay with getDateWithSkippedWeekend themselves."}
+}

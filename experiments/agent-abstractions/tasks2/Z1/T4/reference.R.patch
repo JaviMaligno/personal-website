@@ -1,0 +1,202 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 99c5373..e0df9a1 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -216,12 +216,21 @@ function setCarryover(
+ 
+ // Actions
+ 
++// Arguments of the month-wide budget actions. `includeHiddenCategories` also
++// fills hidden categories and categories in hidden groups; the other
++// exclusions still apply.
++type BulkBudgetActionArgs = {
++  month: string;
++  includeHiddenCategories?: boolean;
++};
++
+ // Month-wide budget actions fill in the budget of every category for a month
+ // in one go. They leave some categories untouched (their budget keeps its
+ // value): hidden categories, categories in hidden groups, and categories with
+ // at least one saved budget template (a non-empty `goal_def`, as the template
+ // editor stores them), and categories in a group whose notes carry the
+-// `#fixed` tag.
++// `#fixed` tag. Hidden categories are filled when the caller asks to include
++// them.
+ type BulkActionCategory = {
+   id: db.DbCategory['id'];
+   hidden: db.DbCategory['hidden'];
+@@ -251,16 +260,22 @@ function hasSavedTemplates(goalDef: string | null | undefined): boolean {
+   }
+ }
+ 
+-function isUntouchedByBulkActions(cat: BulkActionCategory): boolean {
++function isUntouchedByBulkActions(
++  cat: BulkActionCategory,
++  includeHidden: boolean,
++): boolean {
+   return (
+-    cat.hidden === 1 ||
+-    cat.group_hidden === 1 ||
++    (!includeHidden && (cat.hidden === 1 || cat.group_hidden === 1)) ||
+     hasSavedTemplates(cat.goal_def) ||
+     isFixedGroupNote(cat.group_note)
+   );
+ }
+ 
+-async function getCategoriesUntouchedByBulkActions(): Promise<Set<string>> {
++async function getCategoriesUntouchedByBulkActions({
++  includeHidden,
++}: {
++  includeHidden: boolean;
++}): Promise<Set<string>> {
+   const categories = await db.all<BulkActionCategory>(
+     `
+     SELECT c.id, c.hidden, g.hidden AS group_hidden, c.goal_def,
+@@ -271,18 +286,23 @@ async function getCategoriesUntouchedByBulkActions(): Promise<Set<string>> {
+     WHERE c.tombstone = 0
+   `,
+   );
+-  return new Set(categories.filter(isUntouchedByBulkActions).map(c => c.id));
++  return new Set(
++    categories
++      .filter(cat => isUntouchedByBulkActions(cat, includeHidden))
++      .map(cat => cat.id),
++  );
+ }
+ 
+ export async function copyPreviousMonth({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: BulkBudgetActionArgs): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
+-  const untouched = await getCategoriesUntouchedByBulkActions();
++  const untouched = await getCategoriesUntouchedByBulkActions({
++    includeHidden: includeHiddenCategories,
++  });
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+@@ -318,11 +338,16 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
++export async function setZero({
++  month,
++  includeHiddenCategories = false,
++}: BulkBudgetActionArgs): Promise<void> {
+   const categories = await db.all<db.DbViewCategory>(
+     'SELECT * FROM v_categories WHERE tombstone = 0',
+   );
+-  const untouched = await getCategoriesUntouchedByBulkActions();
++  const untouched = await getCategoriesUntouchedByBulkActions({
++    includeHidden: includeHiddenCategories,
++  });
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+@@ -339,18 +364,19 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function set3MonthAvg({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: BulkBudgetActionArgs): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+   SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0 AND g.id IS NOT NULL
+   `,
+   );
+-  const untouched = await getCategoriesUntouchedByBulkActions();
++  const untouched = await getCategoriesUntouchedByBulkActions({
++    includeHidden: includeHiddenCategories,
++  });
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -378,18 +404,19 @@ export async function set3MonthAvg({
+ 
+ export async function set12MonthAvg({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: BulkBudgetActionArgs): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+   SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0 AND g.id IS NOT NULL
+   `,
+   );
+-  const untouched = await getCategoriesUntouchedByBulkActions();
++  const untouched = await getCategoriesUntouchedByBulkActions({
++    includeHidden: includeHiddenCategories,
++  });
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -406,18 +433,19 @@ export async function set12MonthAvg({
+ 
+ export async function set6MonthAvg({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: BulkBudgetActionArgs): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+   SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0 AND g.id IS NOT NULL
+   `,
+   );
+-  const untouched = await getCategoriesUntouchedByBulkActions();
++  const untouched = await getCategoriesUntouchedByBulkActions({
++    includeHidden: includeHiddenCategories,
++  });
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -457,18 +485,19 @@ async function getActivityByCategory(
+ // (income categories, when filled, with what they received).
+ export async function setLastMonthSpending({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: BulkBudgetActionArgs): Promise<void> {
+   const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+   SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0 AND g.id IS NOT NULL
+   `,
+   );
+-  const untouched = await getCategoriesUntouchedByBulkActions();
++  const untouched = await getCategoriesUntouchedByBulkActions({
++    includeHidden: includeHiddenCategories,
++  });
+   const activity = await getActivityByCategory(monthUtils.prevMonth(month));
+ 
+   await batchMessages(async () => {

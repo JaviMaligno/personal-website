@@ -1,0 +1,12 @@
+{"id": "2287fc48ca",
+ "reuse": {"score": 5, "why": "Adds the rule to the existing isEligibleForMonthAction predicate and parses the tag with the shared extractTagsFromText."},
+ "duplication": {"score": 4, "why": "The #fixed check is written once, but getMonthActionCategories now filters hidden/template both in its SQL and again through isEligibleForMonthAction, leaving those rules decided twice on that path."},
+ "placement": {"score": 5, "why": "The group-note join is added to the two existing data queries and the rule to the shared eligibility predicate in budget/actions.ts."},
+ "scope": {"score": 4, "why": "Production change is tight; the test file also gets prettier reformatting of unrelated assertions and an assertion on the SQL join itself."},
+ "maintainability": {"score": 4, "why": "Every month-wide action now goes through one predicate, though the redundant SQL filters in getMonthActionCategories could drift from it."},
+ "bypasses_abstraction": {"value": false, "where": "copyPreviousMonth (via getBudgetData rows) and the getMonthActionCategories actions both use isEligibleForMonthAction."},
+ "duplicated_blocks": 1,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "The leftover hidden/goal_def SQL conditions in getMonthActionCategories duplicate the predicate openly; no reshaped copy is introduced."},
+ "one_place": {"value": true, "where": "isEligibleForMonthAction in server/budget/actions.ts, now applied by copyPreviousMonth and by getMonthActionCategories (setZero, averages, last-month spending)."}
+}

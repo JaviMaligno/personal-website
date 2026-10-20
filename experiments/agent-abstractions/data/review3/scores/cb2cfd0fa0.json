@@ -1,0 +1,33 @@
+{
+ "id": "cb2cfd0fa0",
+ "reuse": {
+  "score": 3,
+  "why": "The range rule is changed inside the shared getScheduledAmount and its rounding option is dropped, but api-models.ts keeps its own copy of the rule, edited in parallel instead of calling the helper."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Leaves two definitions of the ranged-amount rule (shared/schedules.ts and scheduleModel.toExternal) and the approximate-tolerance rule still lives only inline in schedule-template.ts."
+ },
+ "placement": {
+  "score": 3,
+  "why": "The range part sits in shared/schedules.ts, but the approximate part of the same 'lowest value it allows' rule stays in the budget template module and the API model holds its own copy."
+ },
+ "scope": {
+  "score": 5,
+  "why": "Only the rule sites and their tests are touched."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Removing the rounding option simplifies the helper, but the next change to the rule still has to be made in two or three places that can drift apart."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/server/api-models.ts scheduleModel.toExternal computes expectedAmount with its own Math.min expression instead of calling getScheduledAmount."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The api-models copy is the same missing/number/range dispatch as getScheduledAmount written inline; it is kept openly, not disguised."
+ }
+}

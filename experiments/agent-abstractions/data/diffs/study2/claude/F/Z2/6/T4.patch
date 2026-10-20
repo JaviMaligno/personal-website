@@ -1,0 +1,66 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 26f1eda..58370b6 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -649,12 +649,13 @@ describe('getScheduledAmount', () => {
+   it('uses the end of a range furthest from zero', () => {
+     expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+     expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-    expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++    expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++    expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+   });
+ 
+   it('uses the end of the tolerance furthest from zero for approximate amounts', () => {
+     expect(getScheduledAmount(-10000, false, 'isapprox')).toBe(-10750);
+-    expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
++    expect(getScheduledAmount(10000, false, 'isapprox')).toBe(9250);
+     expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
+     expect(getScheduledAmount(-1234, true, 'isapprox')).toBe(1327);
+   });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 158c728..cdc6c58 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -379,8 +379,9 @@ export function applyWeekendRuleToDay(
+ }
+ 
+ // The amount a schedule is expected to post. A ranged ("is between") amount is
+-// scheduled at the end of the range furthest from zero (the worst case), and an
+-// approximate amount at the end of its tolerance furthest from zero.
++// scheduled at the lowest value it allows (the worst case): the end furthest
++// from zero for money going out, the end closest to zero for money coming in.
++// An approximate amount is scheduled at the low end of its tolerance.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -392,14 +393,11 @@ export function getScheduledAmount(
+ 
+   if (typeof amount === 'number') {
+     const expected =
+-      op === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
+-        : amount;
++      op === 'isapprox' ? amount - getApproxNumberThreshold(amount) : amount;
+     return inverse ? -expected : expected;
+   }
+-  const furthest =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
+-  return inverse ? -furthest : furthest;
++  const lowest = Math.min(amount.num1, amount.num2);
++  return inverse ? -lowest : lowest;
+ }
+ 
+ export function getUpcomingDays(
+diff --git a/upcoming-release-notes/schedule-lowest-amount.md b/upcoming-release-notes/schedule-lowest-amount.md
+new file mode 100644
+index 0000000..9caa54f
+--- /dev/null
++++ b/upcoming-release-notes/schedule-lowest-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Schedule ranged and approximate amounts are now expected at the lowest value they allow, so incoming money is planned at its low end

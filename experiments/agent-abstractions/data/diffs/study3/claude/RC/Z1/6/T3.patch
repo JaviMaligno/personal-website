@@ -1,0 +1,106 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 7784951..2acf841 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -69,6 +69,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  group_notes?: string | null;
+   category: string;
+   amount: number;
+   goal_def?: string | null;
+@@ -83,13 +84,15 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      > & { goal_def: string | null }
++      > & { goal_def: string | null; group_notes: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden, c.goal_def
++    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden, c.goal_def,
++           gn.note AS group_notes
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes gn ON gn.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -222,9 +225,16 @@ type MonthFillCategory = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden?: 1 | 0 | null;
++  group_notes?: string | null;
+   goal_def?: string | null;
+ };
+ 
++const FIXED_GROUP_TAG = /(^|[^\w#])#fixed(?![\w-])/;
++
++function isFixedGroup(notes: string | null | undefined): boolean {
++  return notes != null && FIXED_GROUP_TAG.test(notes);
++}
++
+ function hasSavedTemplates(goalDef: string | null | undefined): boolean {
+   if (!goalDef) {
+     return false;
+@@ -253,6 +263,10 @@ function isCategoryFilled(
+     return false;
+   }
+ 
++  if (isFixedGroup(cat.group_notes)) {
++    return false;
++  }
++
+   switch (kind) {
+     case 'zero':
+       return true;
+@@ -271,12 +285,16 @@ function averageToBudgetAmount(avg: number, isIncome: 1 | 0): number {
+ 
+ async function getAverageFillCategories(): Promise<db.DbViewCategory[]> {
+   const categories = await db.all<
+-    db.DbViewCategory & { group_hidden: 1 | 0 | null }
++    db.DbViewCategory & {
++      group_hidden: 1 | 0 | null;
++      group_notes: string | null;
++    }
+   >(
+     `
+-  SELECT c.*, g.hidden AS group_hidden
++  SELECT c.*, g.hidden AS group_hidden, gn.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes gn ON gn.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -329,13 +347,15 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await db.all<
+     db.DbViewCategory & {
+       group_hidden: 1 | 0 | null;
++      group_notes: string | null;
+       goal_def: string | null;
+     }
+   >(
+     `
+-  SELECT c.*, g.hidden AS group_hidden
++  SELECT c.*, g.hidden AS group_hidden, gn.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes gn ON gn.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+diff --git a/upcoming-release-notes/skip-fixed-groups.md b/upcoming-release-notes/skip-fixed-groups.md
+new file mode 100644
+index 0000000..2336dec
+--- /dev/null
++++ b/upcoming-release-notes/skip-fixed-groups.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Month-wide budget actions skip categories in groups whose notes contain the `#fixed` tag

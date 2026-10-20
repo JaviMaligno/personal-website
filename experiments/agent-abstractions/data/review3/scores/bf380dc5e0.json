@@ -1,0 +1,12 @@
+{"id":"bf380dc5e0",
+"reuse":{"score":4,"why":"Extends the existing getDateWithSkippedWeekend with a holidays parameter and passes it at all its call sites, and threads the field through parseRecurDate data; the daily-skip rule is extended in place at its two existing copies rather than through a shared predicate."},
+"duplication":{"score":3,"why":"The 'weekend or holiday' predicate is written three times: an isSkippedDay closure in getNextDate, another in getDateWithSkippedWeekend, and an inline expression in getDatesInRange."},
+"placement":{"score":4,"why":"The moving rule stays in shared/schedules.ts, but the daily skip for getDatesInRange is still decided inline in the server's schedules/app.ts."},
+"scope":{"score":5,"why":"Only the holidays field, its plumbing, tests; the getDateWithSkippedWeekend rewrite is needed for consecutive skipped days."},
+"maintainability":{"score":3,"why":"The move-to-nearest-business-day loop is clean and central, but what counts as a skipped day must be kept in step across three spots, and getNextDate's holidays list is tied to the noSkipWeekend-adjusted flag in a non-obvious way."},
+"bypasses_abstraction":{"value":false,"where":"Every move goes through getDateWithSkippedWeekend; the daily-skip copies were pre-existing and are extended in place."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The skipped-day test appears as isSkippedDay closures in getNextDate and getDateWithSkippedWeekend (shared/schedules.ts) and reshaped inline in getDatesInRange (server/schedules/app.ts) instead of one exported predicate."},
+"one_place":{"value":false,"where":"Moving lands in one place (getDateWithSkippedWeekend, used by getNextDate, getUpcomingDates, getDatesInRange, schedule-template), but the daily holiday skip is added separately in getNextDate and in getDatesInRange's inline condition."}
+}

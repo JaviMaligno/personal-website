@@ -1,0 +1,12 @@
+{"id":"e6e1d8dc35",
+"reuse":{"score":3,"why":"Consolidates the averaging actions into setMonthAverage but re-inlines the average/sign logic of the existing setNMonthAvg instead of calling it, and leaves copyPreviousMonth on a separate TS predicate."},
+"duplication":{"score":2,"why":"The eligibility rule (hidden, group hidden, saved template) is written twice, once in SQL in getMonthActionCategories and once in isEligibleForMonthAction, and setMonthAverage duplicates setNMonthAvg's average-and-flip logic."},
+"placement":{"score":4,"why":"All logic stays in budget/actions.ts next to the actions it serves, which matches the tree's layering."},
+"scope":{"score":4,"why":"Focused on month-wide actions plus a test; it also folds the 3/6/12 month averages into one function, a reasonable but extra refactor, and leaves an unused BudgetCategory-related goal_def type on BudgetData."},
+"maintainability":{"score":3,"why":"Two differently-shaped definitions of the same rule (SQL with empty-string check vs JS truthiness) can drift; a future rule change must be made in both."},
+"bypasses_abstraction":{"value":true,"where":"setMonthAverage re-implements setNMonthAvg (getCategoryAverage + sign flip + setBudget) instead of calling it for set6MonthAvg/set12MonthAvg, which previously did."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The skip rule appears as a SQL WHERE clause in getMonthActionCategories and as isEligibleForMonthAction used only by copyPreviousMonth; setMonthAverage reshapes setNMonthAvg's body inline."},
+"one_place":{"value":false,"where":"Rule lives both in getMonthActionCategories SQL (setZero, averages) and isEligibleForMonthAction (copyPreviousMonth)."}
+}

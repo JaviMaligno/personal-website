@@ -1,0 +1,11 @@
+{"id": "0e81ae881c",
+ "reuse": {"score": 4, "why": "Every midpoint copy (schedules app x2, forecast, template, preview) is routed to one new shared getExpectedAmount using the existing getApproxNumberThreshold, but the already-exported getScheduledAmount helper was not made the definition and instead re-dispatches around it."},
+ "duplication": {"score": 4, "why": "Six inline copies are removed; the remaining overlap is getScheduledAmount repeating the null/number/range dispatch of getExpectedAmount instead of delegating to it."},
+ "placement": {"score": 5, "why": "The rule lives in shared/schedules.ts next to getScheduledAmount, used by server modules and the API model as the tree's layering expects."},
+ "scope": {"score": 5, "why": "Changes are limited to the amount rule, its consumers, the API field and release notes."},
+ "maintainability": {"score": 4, "why": "One rule function is easy to change, but two overlapping public helpers (getExpectedAmount and getScheduledAmount with an op parameter) leave ambiguity about which to call."},
+ "bypasses_abstraction": {"value": false, "where": ""},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "packages/loot-core/src/shared/schedules.ts getScheduledAmount: re-does the null/number/range dispatch, calling getExpectedAmount only for numbers and getRangedAmount for ranges, instead of delegating fully"},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "getScheduledAmount gained an op parameter for the approximate rule; getExpectedAmount gained the isapprox branch as part of the rule itself; all amount sites call the shared functions"}}

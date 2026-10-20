@@ -1,0 +1,12 @@
+{"id": "fe88a6ed53",
+ "reuse": {"score": 3, "why": "Every provider calls one shared guard and link.findOrCreateBank, but the Fintegra link flow and download function are copied from Akahu and the guard rewrites unlinkAccount's local field reset instead of sharing it."},
+ "duplication": {"score": 2, "why": "linkFintegraAccount copies linkAkahuAccount, downloadFintegraTransactions copies downloadAkahuTransactions, and the unlink column reset copies unlinkAccount; the upgrading-account lookup and not-found error are also repeated between the guard and every link function."},
+ "placement": {"score": 3, "why": "The guard sits in accounts/app.ts next to the link handlers, but it mixes validation (duplicate link, closed target) with a side effect (unlinking previous holders) under an 'assert' name, and the provider-specific link body stays per handler."},
+ "scope": {"score": 5, "why": "All edits serve the four requested steps; release notes and config entries are the expected companions."},
+ "maintainability": {"score": 2, "why": "A function named assertBankAccountNotLinked that also mutates other accounts is surprising, the unlink reset can drift from unlinkAccount, and a sixth copy of the link flow is added."},
+ "bypasses_abstraction": {"value": true, "where": "assertBankAccountNotLinked in server/accounts/app.ts performs the unlink by writing the same db.updateAccount column reset as unlinkAccount instead of sharing that logic."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The copied link flow, download function and unlink reset are verbatim, not reshaped."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 0, "where": "assertBankAccountNotLinked gains the replaceExistingLink parameter, a closed-target branch and a replace/unlink loop over the steps, turning a check into a check-plus-mutation; all six link handlers call it, while the unlink step inside it re-implements unlinkAccount's reset."}
+}

@@ -1,0 +1,12 @@
+{"id":"218615f046",
+"reuse":{"score":3,"why":"Extends the existing getDateWithSkippedWeekend with holidays and calls it from every move site, but adds no shared weekend-or-holiday predicate, and getUpcomingDates re-implements getNextDate's daily advance loop instead of sharing it."},
+"duplication":{"score":2,"why":"The weekend-or-holiday predicate is written four times (isSkippedDay in getNextDate, getDateWithSkippedWeekend and getDatesInRange, plus an inline condition in getUpcomingDates), and getUpcomingDates gets a new copy of getNextDate's 'advance the recurrence past skipped days' loop."},
+"placement":{"score":4,"why":"The move rule stays in shared/schedules.ts; the daily skip loop for upcoming dates is added in server/schedules/app.ts rather than shared with the equivalent loop in shared/schedules.ts."},
+"scope":{"score":4,"why":"Focused on holidays, though getUpcomingDates also gains new daily weekend-skipping behaviour that the tree did not have there."},
+"maintainability":{"score":2,"why":"What counts as a non-working day is defined in four places and the daily-skip loop in two, so the next change to either (e.g. recurring holidays) has to find every copy."},
+"bypasses_abstraction":{"value":true,"where":"getUpcomingDates in server/schedules/app.ts re-implements the daily skip loop that getNextDate in shared/schedules.ts already has, and each site redefines the skipped-day predicate instead of sharing one."},
+"duplicated_blocks":4,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The skipped-day predicate is repeated as local isSkippedDay closures and as an inline while-condition in getUpcomingDates; the getUpcomingDates loop is a forward-only reshaped copy of getNextDate's daily loop."},
+"one_place":{"value":false,"where":"The holiday rule is spread over getDateWithSkippedWeekend, getNextDate (shared/schedules.ts), getUpcomingDates and getDatesInRange (server/schedules/app.ts), each with its own weekend-or-holiday check."}
+}

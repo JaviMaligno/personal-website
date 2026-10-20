@@ -1,0 +1,12 @@
+{"id":"9e4fb2a568",
+"reuse":{"score":3,"why":"Puts the skip logic in getNextDate via a firstWeekdayOccurrence helper and keeps using getDateWithSkippedWeekend, but getUpcomingDates and schedule-template re-decide the daily-vs-move rule instead of delegating to one shared adjustment."},
+"duplication":{"score":3,"why":"The condition 'skipWeekend and frequency is daily' and the resulting skip-or-move dispatch are written separately in getNextDate, schedule-template.ts and getUpcomingDates."},
+"placement":{"score":3,"why":"The core skip is in shared/schedules.ts where weekend logic lives, but the frequency-based policy also leaks into server/schedules/app.ts and the budget template code."},
+"scope":{"score":5,"why":"Only the weekend-handling call sites, the recur data, a test and a release note are touched."},
+"maintainability":{"score":3,"why":"Readable, but a later change to weekend rules has to be repeated in three dispatch sites, and the schedule-template site works by inverting the noSkipWeekend flag of getNextDate, which is subtle."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates filters d.isWeekend itself for daily schedules instead of reusing getNextDate/firstWeekdayOccurrence; schedule-template.ts computes isDaily and steers getNextDate through noSkipWeekend."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The daily-skip / other-move dispatch is reshaped as an early return in getNextDate, a movedForWeekend/nextOccurrence pair in schedule-template.ts and an if/else inside a loop in getUpcomingDates."},
+"one_place":{"value":false,"where":"The rule is decided in shared/schedules.ts getNextDate (isDaily data flag), server/budget/schedule-template.ts (isDaily from frequency) and server/schedules/app.ts getUpcomingDates (skipsWeekendDays)."}
+}

@@ -1,0 +1,152 @@
+diff --git a/packages/desktop-client/src/components/formula/formulaBadgeRanges.ts b/packages/desktop-client/src/components/formula/formulaBadgeRanges.ts
+index 75cdb52ca449385c83697ebd2cbff9b5610969b5..4172b4ee8ef3a73a498f3b77aaa5a131b730e63f 100644
+--- a/packages/desktop-client/src/components/formula/formulaBadgeRanges.ts
++++ b/packages/desktop-client/src/components/formula/formulaBadgeRanges.ts
+@@ -93,6 +93,10 @@ const transactionNamedExpressionBadges: Record<string, string> = {
+   reconciled: 'reconciled',
+   balance: 'balance',
+   parent_amount: 'parent_amount',
++  parent_notes: 'parent_notes',
++  parent_imported_payee: 'parent_imported_payee',
++  parent_payee: 'parent_payee',
++  parent_account: 'parent_account',
+ };
+ 
+ const queryNameFunctions = new Set([
+diff --git a/packages/desktop-client/src/components/formula/formulaCatalog.ts b/packages/desktop-client/src/components/formula/formulaCatalog.ts
+index 8680076f11101f8ffb0da143462e3c839ed4c933..32484cbfaedc98dc36405de0240cde291df80ab8 100644
+--- a/packages/desktop-client/src/components/formula/formulaCatalog.ts
++++ b/packages/desktop-client/src/components/formula/formulaCatalog.ts
+@@ -1456,6 +1456,42 @@ export function getRuleFieldCompletions(): Completion[] {
+         'The amount of the parent transaction in cents in split transactions.\n\nExample: =(parent_amount / 100) * .05',
+       ),
+     },
++    {
++      label: 'parent_notes',
++      type: 'variable',
++      section: ruleFieldSection,
++      boost: 5,
++      info: t(
++        'Notes of the parent transaction in split rules. Empty when absent.',
++      ),
++    },
++    {
++      label: 'parent_imported_payee',
++      type: 'variable',
++      section: ruleFieldSection,
++      boost: 5,
++      info: t(
++        'Imported payee text of the parent transaction in split rules. Empty when absent.',
++      ),
++    },
++    {
++      label: 'parent_payee',
++      type: 'variable',
++      section: ruleFieldSection,
++      boost: 5,
++      info: t(
++        'Payee ID of the parent transaction in split rules. Empty when absent.',
++      ),
++    },
++    {
++      label: 'parent_account',
++      type: 'variable',
++      section: ruleFieldSection,
++      boost: 5,
++      info: t(
++        'Account ID of the parent transaction in split rules. Empty when absent.',
++      ),
++    },
+   ];
+ }
+ 
+diff --git a/packages/loot-core/src/server/rules/action.ts b/packages/loot-core/src/server/rules/action.ts
+index 1fa741939ce70ccdb8a4dfbc30f7af19af3691d0..4882abf977c7f1eb08cafc8766770ef8d7523aa5 100644
+--- a/packages/loot-core/src/server/rules/action.ts
++++ b/packages/loot-core/src/server/rules/action.ts
+@@ -343,6 +343,11 @@ export class Action {
+         } else {
+           cellValue = fieldValues[key];
+         }
++        // Parent text is data, even when it looks like a spreadsheet formula,
++        // date or number. The apostrophe is HyperFormula's literal-text escape.
++        if (key.startsWith('parent_') && typeof cellValue === 'string') {
++          cellValue = `'${cellValue}`;
++        }
+         hfInstance.addNamedExpression(key, cellValue);
+       }
+       hfInstance.setCellContents({ sheet: sheetId, col: 0, row: 0 }, [
+diff --git a/packages/loot-core/src/server/rules/rule.ts b/packages/loot-core/src/server/rules/rule.ts
+index 465170f3daed122dd9e54002e20647be88f218f9..9d5deebed56c5b89d352d8160324ff31ac12b5db 100644
+--- a/packages/loot-core/src/server/rules/rule.ts
++++ b/packages/loot-core/src/server/rules/rule.ts
+@@ -43,7 +43,16 @@ function execSplitActions(actions: Action[], transaction) {
+       const { data } = addSplitTransaction(newTransactions, transaction.id);
+       newTransactions = data;
+     }
++    // Keep parent data separate from the child fields changed by split actions.
+     newTransactions[splitTransactionIndex].parent_amount = transaction.amount;
++    newTransactions[splitTransactionIndex].parent_notes =
++      transaction.notes ?? '';
++    newTransactions[splitTransactionIndex].parent_imported_payee =
++      transaction.imported_payee ?? '';
++    newTransactions[splitTransactionIndex].parent_payee =
++      transaction.payee ?? '';
++    newTransactions[splitTransactionIndex].parent_account =
++      transaction.account ?? '';
+     newTransactions[splitTransactionIndex].balance = transaction.balance;
+     newTransactions[splitTransactionIndex]._balanceOfPrefetched =
+       transaction._balanceOfPrefetched;
+diff --git a/packages/loot-core/src/server/transactions/transaction-rules.ts b/packages/loot-core/src/server/transactions/transaction-rules.ts
+index 843a986a4076c5f890bdbd0994b7050531583fc2..f4efc50a60c34dd77df5e124fe7c664c1eed304f 100644
+--- a/packages/loot-core/src/server/transactions/transaction-rules.ts
++++ b/packages/loot-core/src/server/transactions/transaction-rules.ts
+@@ -1005,6 +1005,10 @@ export type TransactionForRules = TransactionEntity & {
+   /** The transaction's category's group id; see prepareTransactionForRules */
+   category_group?: string;
+   parent_amount?: number;
++  parent_notes?: string;
++  parent_imported_payee?: string;
++  parent_payee?: string;
++  parent_account?: string;
+   /** Prefetched cent balances for BALANCE_OF("…") in rule formulas; cleared in finalize */
+   _balanceOfPrefetched?: Map<string, number>;
+ };
+@@ -1197,8 +1201,16 @@ export async function finalizeTransactionForRules(
+     delete trans._balanceOfPrefetched;
+   }
+ 
+-  if ('parent_amount' in trans) {
+-    delete trans.parent_amount;
++  for (const field of [
++    'parent_amount',
++    'parent_notes',
++    'parent_imported_payee',
++    'parent_payee',
++    'parent_account',
++  ] as const) {
++    if (field in trans) {
++      delete trans[field];
++    }
+   }
+ 
+   if (trans.subtransactions?.length) {
+@@ -1211,8 +1223,16 @@ export async function finalizeTransactionForRules(
+         delete stx._balanceOfPrefetched;
+       }
+ 
+-      if ('parent_amount' in stx) {
+-        delete stx.parent_amount;
++      for (const field of [
++        'parent_amount',
++        'parent_notes',
++        'parent_imported_payee',
++        'parent_payee',
++        'parent_account',
++      ] as const) {
++        if (field in stx) {
++          delete stx[field];
++        }
+       }
+     });
+   }

@@ -1,0 +1,12 @@
+{"id": "01c2d5e79d",
+ "reuse": {"score": 3, "why": "Five server copies of the midpoint rule are routed to the existing shared getScheduledAmount, but the new API expectedAmount field re-implements the rule inline instead of calling that helper."},
+ "duplication": {"score": 3, "why": "The inline ternary chain in scheduleModel.toExternal duplicates the missing/number/range dispatch of getScheduledAmount and has drifted from it (still furthest-from-zero, no approximate handling)."},
+ "placement": {"score": 4, "why": "The rule lives in shared/schedules.ts where the tree keeps schedule amount logic; only the API model computes its own copy in the API mapping layer."},
+ "scope": {"score": 4, "why": "Edits are tied to the requested rule changes and the new field; the Omit<'expectedAmount'> type adjustments on create/update are necessary consequences rather than unrelated edits."},
+ "maintainability": {"score": 3, "why": "Most consumers now share one definition, but the API field silently diverges from it and desktop-client callers do not pass the op, so the approximate rule is applied inconsistently; the positional false for inverse at every new call is awkward."},
+ "bypasses_abstraction": {"value": true, "where": "packages/loot-core/src/server/api-models.ts scheduleModel.toExternal computes expectedAmount inline instead of calling getScheduledAmount(schedule._amount, false, schedule._amountOp)."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "api-models.ts expectedAmount: the missing/number/range dispatch of getScheduledAmount reshaped as a nested ternary with an abs comparison, now out of sync with the shared rule."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "shared/schedules.ts getScheduledAmount gains an optional op parameter and an isapprox branch; api-models.ts toExternal bypasses it (desktop-client callers also call it without op)."}
+}

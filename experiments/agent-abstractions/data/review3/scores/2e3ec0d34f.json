@@ -1,0 +1,12 @@
+{"id": "2e3ec0d34f",
+ "reuse": {"score": 5, "why": "Fintegra goes through newly extracted linkBankSyncAccount/finishBankSyncLink and downloadBankSyncTransactions shared with the existing providers, and the takeover reuses the reset extracted from unlinkAccount (clearAccountBankLink)."},
+ "duplication": {"score": 5, "why": "Removes the copied per-provider link bodies and the Pluggy/Akahu download copies; the only repetition left is the one-line account-id getter per handler registration."},
+ "placement": {"score": 5, "why": "Link-rule queries/assertions go to accounts/link.ts beside findOrCreateBank, handler wiring stays in app.ts, downloads in sync.ts, URL in server-config."},
+ "scope": {"score": 4, "why": "Consolidating the existing provider link and download functions goes beyond the request, but it directly serves adding Fintegra and the cross-provider rules; client edits are only required Record entries."},
+ "maintainability": {"score": 4, "why": "Clear single guard and single link path; the higher-order refuseIfBankAccountLinked wrapper at registration time is a little indirect but keeps every provider covered."},
+ "bypasses_abstraction": {"value": false, "where": "All six link handlers are wrapped by refuseIfBankAccountLinked; unlinkAccount and the takeover share clearAccountBankLink."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "Former copies were merged into shared functions, not reshaped."},
+ "abstraction_drift": {"value": false, "parameters_added": 0, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "refuseIfBankAccountLinked (app.ts) gained the closed-account call and a replaceExistingLink branch read from args; link.ts assertions stay single-purpose; no call site bypasses it."}
+}

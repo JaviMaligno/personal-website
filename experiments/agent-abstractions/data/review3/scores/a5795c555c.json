@@ -1,0 +1,11 @@
+{"id": "a5795c555c",
+"reuse": {"score": 3, "why": "Extends the shared getScheduleAmount, but recomputes the 7.5% rounded tolerance inline instead of calling the existing getApproxNumberThreshold from shared/rules."},
+"duplication": {"score": 3, "why": "Math.round(Math.abs(amount) * 0.075) is a verbatim copy of getApproxNumberThreshold, so the matching and planning tolerances can drift apart."},
+"placement": {"score": 5, "why": "The rule lives in shared/schedules.ts getScheduleAmount and each server caller only forwards its operator."},
+"scope": {"score": 5, "why": "Limited to the amount helper, forwarding the op at its five call sites, and tests."},
+"maintainability": {"score": 3, "why": "Single definition with an op parameter is easy to follow, but the duplicated tolerance constant and the stale doc comment (still describing only ranges) add risk."},
+"bypasses_abstraction": {"value": true, "where": "getScheduleAmount in shared/schedules.ts recomputes the approximate-amount tolerance instead of using getApproxNumberThreshold (shared/rules.ts)."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "The tolerance formula is copied verbatim, not disguised."},
+"one_place": {"value": true, "where": "The worst-case rule for approximate amounts is added only to getScheduleAmount, which all server planning paths (schedule-template, forecast, updateActions, postTransactionForSchedule, preview) call with the op; only the tolerance formula is duplicated from rules.ts."}}

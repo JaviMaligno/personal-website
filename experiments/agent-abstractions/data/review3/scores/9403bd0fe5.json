@@ -1,0 +1,12 @@
+{"id":"9403bd0fe5",
+"reuse":{"score":4,"why":"All six link handlers route through the new linkBankSyncAccount and reuse findOrCreateBank, syncAccount and handleSyncResponse, but the take-over path re-writes unlinkAccount's field reset instead of sharing it."},
+"duplication":{"score":3,"why":"The five copied link bodies are collapsed into one helper, but the diff copies unlinkAccount's account-reset block and adds downloadFintegraTransactions as another near-copy of the Akahu/Pluggy download functions."},
+"placement":{"score":4,"why":"Linking helpers live in accounts/app.ts next to the handlers, the Fintegra download in sync.ts and the URL in server-config, matching the tree's layering."},
+"scope":{"score":4,"why":"Changes stay on linking and the Fintegra provider; widening DbAccount.account_sync_source to all providers is a small adjacent type fix."},
+"maintainability":{"score":4,"why":"One linking definition with explicit fileId/eventTables variations is easy to own, though the guard must be remembered at every handler separately and 'ensure...' silently unlinks another account as a side effect."},
+"bypasses_abstraction":{"value":true,"where":"ensureBankAccountIsNotLinked writes the unlink field reset with db.updateAccount instead of going through unlinkAccount (or a shared extraction of its reset part), with a comment about avoiding the GoCardless requisition removal."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied unlink reset and the Fintegra download function are plain copies, not reshaped; the old link bodies were genuinely removed."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":0,"where":"linkBankSyncAccount stays generic (fileId and eventTables encode existing provider variations); later steps put the duplicate/closed/replace rules in a separate ensureBankAccountIsNotLinked helper that gains the replaceExistingLink parameter; every handler including Fintegra calls both helpers, none re-implements them."}
+}

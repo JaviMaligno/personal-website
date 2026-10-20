@@ -1,0 +1,11 @@
+{"id":"a7ebdab100",
+"reuse":{"score":4,"why":"Builds on the existing applyWeekendRule/WeekendRule/getDateWithSkippedWeekend abstraction for moves and holidays, and adds shared isDailyWeekendSkip/isWeekendOrHoliday predicates, but the daily-skip selection is not folded into a shared occurrence function."},
+"duplication":{"score":3,"why":"The occurrences -> filter daily weekend/holiday skip -> applyWeekendRule -> dayFromDate pipeline is written twice in schedules/app.ts (getUpcomingDates, getDatesInRange), with a third variant (getWeekdayOccurrence) in shared/schedules.ts, each with its own over-fetch heuristic."},
+"placement":{"score":4,"why":"Holiday and weekend rules live in shared/schedules.ts; the daily-skip orchestration is spread into the server handlers rather than kept with the rule."},
+"scope":{"score":4,"why":"Changes serve the four steps; a stray change adds async to two describe callbacks in app.test.ts."},
+"maintainability":{"score":3,"why":"Holiday handling flows through one function, but the skip-for-daily logic and its lookahead/margin heuristics must be kept consistent across three places, and getNextDate's daily branch ignores its noSkipWeekend flag."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Daily skip + weekend rule pipeline repeated in getUpcomingDates and getDatesInRange (server/schedules/app.ts) and reshaped as getWeekdayOccurrence in shared/schedules.ts getNextDate."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":2,"where":"holidays added to WeekendRule/getDateWithSkippedWeekend; getNextDate gains an isDailyWeekendSkip early-return branch that bypasses noSkipWeekend; getUpcomingDates and getDatesInRange each implement the daily skip filter themselves rather than through a shared function."}}

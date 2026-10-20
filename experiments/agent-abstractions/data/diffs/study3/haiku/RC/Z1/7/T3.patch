@@ -1,0 +1,140 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 6d8360e..7e4bec7 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -75,6 +75,34 @@ describe('month-wide budget actions', () => {
+       id: 'template-cat',
+       goal_def: JSON.stringify([{ type: 'fixed', amount: 100 }]),
+     });
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed costs',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'fixed-group-cat',
++      name: 'rent',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insertCategoryGroup({
++      id: 'plain-note-group',
++      name: 'Plain note',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'plain-note-cat',
++      name: 'subscriptions',
++      cat_group: 'plain-note-group',
++      is_income: 0,
++    });
++    await db.update('notes', { id: 'fixed-group', note: 'Rent #fixed' });
++    await db.update('notes', {
++      id: 'plain-note-group',
++      note: 'Subscriptions, not #fixed-ish',
++    });
++    await db.update('notes', { id: 'visible-cat', note: '#fixed' });
+     await sheet.loadSpreadsheet(db);
+     await budget.createBudget(['2024-01', '2024-02']);
+   }
+@@ -83,11 +111,16 @@ describe('month-wide budget actions', () => {
+     'hidden-cat',
+     'hidden-group-cat',
+     'template-cat',
++    'fixed-group-cat',
+   ];
+ 
+-  it('setZero clears only categories that are not hidden or template-managed', async () => {
++  it('setZero clears only categories that are not hidden, template-managed or in a #fixed group', async () => {
+     await setupDatabase();
+-    for (const category of ['visible-cat', ...protectedCategories]) {
++    for (const category of [
++      'visible-cat',
++      'plain-note-cat',
++      ...protectedCategories,
++    ]) {
+       await setBudget({ category, month: '2024-02', amount: 500 });
+     }
+     await sheet.waitOnSpreadsheet();
+@@ -96,6 +129,7 @@ describe('month-wide budget actions', () => {
+     await sheet.waitOnSpreadsheet();
+ 
+     expect(getBudget({ category: 'visible-cat', month: '2024-02' })).toBe(0);
++    expect(getBudget({ category: 'plain-note-cat', month: '2024-02' })).toBe(0);
+     for (const category of protectedCategories) {
+       expect(getBudget({ category, month: '2024-02' })).toBe(500);
+     }
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 4bfefdf..966c594 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -70,6 +71,7 @@ type BudgetData = {
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
+   has_template: 1 | 0;
++  group_note: string | null;
+   category: string;
+   amount: number;
+ };
+@@ -83,14 +85,15 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      > & { has_template: 1 | 0 }
++      > & { has_template: 1 | 0; group_note: string | null }
+   >(
+     `
+     SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden,
+-      c.goal_def IS NOT NULL AS has_template
++      c.goal_def IS NOT NULL AS has_template, gn.note AS group_note
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes gn ON gn.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -222,8 +225,13 @@ type CategoryFlags = {
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
+   has_template: 1 | 0;
++  group_note: string | null;
+ };
+ 
++function isFixedGroup(category: Pick<CategoryFlags, 'group_note'>): boolean {
++  return extractTagsFromText(category.group_note ?? '').includes('fixed');
++}
++
+ // The single definition of which categories a month-wide action writes.
+ // Copy keeps categories without a group, while average requires one.
+ function isWrittenByMonthAction(
+@@ -237,7 +245,8 @@ function isWrittenByMonthAction(
+   if (
+     category.hidden === 1 ||
+     category.group_hidden === 1 ||
+-    category.has_template === 1
++    category.has_template === 1 ||
++    isFixedGroup(category)
+   ) {
+     return false;
+   }
+@@ -260,9 +269,10 @@ function getCategoriesWithGroupHidden(): Promise<
+ > {
+   return db.all<CategoryFlags & { id: string }>(`
+     SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden,
+-      c.goal_def IS NOT NULL AS has_template
++      c.goal_def IS NOT NULL AS has_template, gn.note AS group_note
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes gn ON gn.id = g.id
+     WHERE c.tombstone = 0
+   `);
+ }

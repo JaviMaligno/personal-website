@@ -1,0 +1,11 @@
+{"id":"d09443f10d",
+"reuse":{"score":3,"why":"Reuses recurConfigToRSchedule, RSchedule, getDateWithSkippedWeekend, dayFromDate and captureBreadcrumb, but writes the weekend decision (skip for daily, move otherwise) a third time instead of sharing it with getUpcomingDates and getNextDate."},
+"duplication":{"score":2,"why":"The skipWeekend / daily-skip / move-by-solve-mode branch repeats the same decision already written in getUpcomingDates (same file) and getNextDate (shared/schedules.ts), and the try/captureBreadcrumb wrapper is copied from getUpcomingDates."},
+"placement":{"score":4,"why":"The handler sits next to getUpcomingDates in schedules/app.ts and is registered like it; the per-occurrence weekend rule would belong better in shared/schedules.ts beside getDateWithSkippedWeekend."},
+"scope":{"score":5,"why":"Only adds the handler, its registration and a test."},
+"maintainability":{"score":3,"why":"Three copies of the weekend rule (and one defaults weekendSolveMode to 'after' while the others do not) will drift the next time weekend handling changes."},
+"bypasses_abstraction":{"value":false,"where":"No shared per-occurrence weekend function exists to bypass; the change calls getDateWithSkippedWeekend and the RSchedule helpers directly."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getDatesInRange in schedules/app.ts rewrites getUpcomingDates' weekend branches as a per-occurrence loop with continue statements and a Set, the same decision in a different shape."},
+"t2_reuse":"reimplements"}

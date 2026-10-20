@@ -1,0 +1,81 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 363b30b..02f2012 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -74,6 +74,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  goal_def: string | null;
+   category: string;
+   amount: number;
+ };
+@@ -87,10 +88,10 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      >
++      > & { goal_def: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden, c.goal_def
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+diff --git a/packages/loot-core/src/server/budget/month-action-categories.ts b/packages/loot-core/src/server/budget/month-action-categories.ts
+index d0d4d4f..cfb753f 100644
+--- a/packages/loot-core/src/server/budget/month-action-categories.ts
++++ b/packages/loot-core/src/server/budget/month-action-categories.ts
+@@ -5,17 +5,21 @@ export type MonthBudgetAction = 'copy-previous' | 'zero' | 'average';
+ export type MonthBudgetCategory = Pick<
+   db.DbViewCategoryWithGroupHidden,
+   'id' | 'is_income' | 'hidden' | 'group_hidden'
+->;
++> & { goal_def: string | null };
+ 
+ export function shouldIncludeMonthBudgetCategory(
+   action: MonthBudgetAction,
+-  category: Pick<MonthBudgetCategory, 'is_income' | 'hidden' | 'group_hidden'>,
++  category: Pick<
++    MonthBudgetCategory,
++    'is_income' | 'hidden' | 'group_hidden' | 'goal_def'
++  >,
+   isTrackingBudget: boolean,
+ ): boolean {
+   return (
+     (isTrackingBudget || category.is_income === 0) &&
+-    (action === 'zero' ||
+-      (category.hidden === 0 && category.group_hidden === 0))
++    category.hidden === 0 &&
++    category.group_hidden === 0 &&
++    (!category.goal_def || category.goal_def === '[]')
+   );
+ }
+ 
+@@ -30,7 +34,8 @@ export async function getMonthBudgetCategories(
+   if (action === 'copy-previous') {
+     categories = await db.all<MonthBudgetCategory>(
+       `
+-      SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden
++      SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden,
++             c.goal_def
+       FROM ${isTrackingBudget ? 'reflect_budgets' : 'zero_budgets'} b
+       JOIN categories c ON b.category = c.id
+       LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -40,12 +45,11 @@ export async function getMonthBudgetCategories(
+     );
+   } else {
+     categories = await db.all<MonthBudgetCategory>(`
+-      SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden
++      SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden,
++             c.goal_def
+       FROM categories c
+       LEFT JOIN category_groups g ON c.cat_group = g.id
+-      WHERE c.tombstone = 0${
+-        action === 'average' ? ' AND c.hidden = 0 AND g.hidden = 0' : ''
+-      }
++      WHERE c.tombstone = 0
+     `);
+   }
+ 

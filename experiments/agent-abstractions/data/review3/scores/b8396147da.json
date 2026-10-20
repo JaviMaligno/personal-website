@@ -1,0 +1,12 @@
+{"id":"b8396147da",
+"reuse":{"score":5,"why":"Detects the tag with the tree's shared extractTagsFromText from #shared/tags and hooks into the existing getMonthWideCategories selection and copyPreviousMonth's skip checks instead of writing new paths."},
+"duplication":{"score":4,"why":"The `LEFT JOIN notes n ON n.id = g.id` / `group_notes` column is added to both getBudgetData and getMonthWideCategories and the check is called in both paths, following the tree's existing two-path structure (NO_TEMPLATE_SQL vs hasSavedTemplates) rather than adding new logic copies."},
+"placement":{"score":5,"why":"isFixedGroup sits next to hasSavedTemplates in budget/actions.ts, the module where month-wide skip rules live, and tag parsing stays in shared/tags."},
+"scope":{"score":5,"why":"Only the predicate, the two data feeds, the two checks and a release note; no unrelated edits."},
+"maintainability":{"score":4,"why":"The tag rule has one named definition built on the shared tag parser; a maintainer still has to remember that month-wide actions have two entry paths (getMonthWideCategories and copyPreviousMonth), a split the change inherits rather than resolves, and no test is added."},
+"bypasses_abstraction":{"value":false,"where":"Uses extractTagsFromText and the existing getMonthWideCategories; copyPreviousMonth's own skip list predates the change"},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"The only repetition is the same notes join added to two queries, a plain copy"},
+"one_place":{"value":true,"where":"The #fixed rule is defined once in isFixedGroup (server/budget/actions.ts) and both month-wide paths (getMonthWideCategories for setZero/averages, and copyPreviousMonth) call it; only the notes join feeding it is in two queries"}
+}

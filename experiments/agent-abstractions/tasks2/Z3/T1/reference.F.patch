@@ -1,0 +1,144 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 5a12ca5..ff6b8f1 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -170,15 +170,20 @@ async function getAccountProperties({ id }: { id: AccountEntity['id'] }) {
+   };
+ }
+ 
+-// Links a bank-sync provider account once its bank row exists: upgrade the
+-// local account `upgradingId` to sync with the provider, or create a new
+-// account (with its transfer payee); then run the initial sync and tell the
+-// client what changed.
++// Links a bank-sync provider account: refuse the link when another local
++// account already holds the bank account; otherwise find or create its bank
++// row (`findOrCreateBank`), upgrade the local account `upgradingId` to sync
++// with the provider or create a new account (with its transfer payee), then
++// run the initial sync and tell the client what changed.
++// The refusal happens before anything is written, so it changes nothing. An
++// account holds the link when it is not deleted (closed accounts still hold
++// it) and has the same provider and provider account id; `upgradingId` never
++// counts, so re-linking an account to its own bank account keeps working.
+ // `newAccount` is the set of account columns written on creation (only
+ // `account_id` is written on upgrade). `fileId` is passed to the initial sync
+ // only by PluggyAI; Akahu reports only `transactions` as changed.
+ async function linkBankSyncAccount({
+-  bank,
++  findOrCreateBank,
+   syncSource,
+   newAccount,
+   upgradingId,
+@@ -188,7 +193,7 @@ async function linkBankSyncAccount({
+   fileId,
+   changedTables = ['transactions', 'accounts'],
+ }: LinkAccountBaseParams & {
+-  bank: Awaited<ReturnType<typeof link.findOrCreateBank>>;
++  findOrCreateBank: () => ReturnType<typeof link.findOrCreateBank>;
+   syncSource: AccountSyncSource;
+   newAccount: {
+     account_id: string;
+@@ -200,6 +205,18 @@ async function linkBankSyncAccount({
+   fileId?: string;
+   changedTables?: string[];
+ }) {
++  const holder = await db.first<Pick<db.DbAccount, 'id'>>(
++    `SELECT id FROM accounts
++       WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?
++         AND id != ?`,
++    [syncSource, newAccount.account_id, upgradingId ?? ''],
++  );
++
++  if (holder) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++
++  const bank = await findOrCreateBank();
+   let id: string;
+ 
+   if (upgradingId) {
+@@ -266,10 +283,9 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
+-  const bank = await link.findOrCreateBank(account.institution, requisitionId);
+-
+   return linkBankSyncAccount({
+-    bank,
++    findOrCreateBank: () =>
++      link.findOrCreateBank(account.institution, requisitionId),
+     syncSource: 'goCardless',
+     newAccount: {
+       account_id: account.account_id,
+@@ -300,13 +316,12 @@ async function linkSimpleFinAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
+-  const bank = await link.findOrCreateBank(
+-    institution,
+-    externalAccount.orgDomain ?? externalAccount.orgId,
+-  );
+-
+   return linkBankSyncAccount({
+-    bank,
++    findOrCreateBank: () =>
++      link.findOrCreateBank(
++        institution,
++        externalAccount.orgDomain ?? externalAccount.orgId,
++      ),
+     syncSource: 'simpleFin',
+     newAccount: {
+       account_id: externalAccount.account_id,
+@@ -338,13 +353,12 @@ async function linkPluggyAiAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
+-  const bank = await link.findOrCreateBank(
+-    institution,
+-    externalAccount.orgDomain ?? externalAccount.orgId,
+-  );
+-
+   return linkBankSyncAccount({
+-    bank,
++    findOrCreateBank: () =>
++      link.findOrCreateBank(
++        institution,
++        externalAccount.orgDomain ?? externalAccount.orgId,
++      ),
+     syncSource: 'pluggyai',
+     newAccount: {
+       account_id: externalAccount.account_id,
+@@ -372,13 +386,12 @@ async function linkAkahuAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
+-  const bank = await link.findOrCreateBank(
+-    institution,
+-    externalAccount.orgDomain ?? externalAccount.orgId,
+-  );
+-
+   return linkBankSyncAccount({
+-    bank,
++    findOrCreateBank: () =>
++      link.findOrCreateBank(
++        institution,
++        externalAccount.orgDomain ?? externalAccount.orgId,
++      ),
+     syncSource: 'akahu',
+     newAccount: {
+       account_id: externalAccount.account_id,
+@@ -413,13 +426,9 @@ async function linkEnableBankingAccount({
+   // account-level identifier (account_id) rather than institution-level
+   // IDs. This creates one bank entry per Enable Banking account, unlike
+   // GoCardless (requisitionId) or SimpleFin/PluggyAi (orgDomain/orgId).
+-  const bank = await link.findOrCreateBank(
+-    institution,
+-    externalAccount.account_id,
+-  );
+-
+   return linkBankSyncAccount({
+-    bank,
++    findOrCreateBank: () =>
++      link.findOrCreateBank(institution, externalAccount.account_id),
+     syncSource: 'enableBanking',
+     newAccount: {
+       account_id: externalAccount.account_id,

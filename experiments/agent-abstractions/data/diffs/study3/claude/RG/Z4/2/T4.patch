@@ -1,0 +1,78 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 9fe1686..a4a3a50 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -13,6 +13,7 @@ import {
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+   isCustomUpcomingLength,
++  isNonWorkingDay,
+   isScheduleOccurrencePosted,
+   UPCOMING_LENGTH_PRESET_LABELS,
+   UPCOMING_LENGTH_PRESET_OPTIONS,
+@@ -668,3 +669,18 @@ describe('daily schedules with weekend handling', () => {
+     },
+   );
+ });
++
++describe('isNonWorkingDay holidays', () => {
++  it('treats MM-DD entries as holidays in every year', () => {
++    expect(isNonWorkingDay(new Date(2024, 11, 25), ['12-25'])).toBe(true);
++    expect(isNonWorkingDay(new Date(2025, 11, 25), ['12-25'])).toBe(true);
++    expect(isNonWorkingDay(new Date(2025, 11, 24), ['12-25'])).toBe(false);
++  });
++
++  it('keeps YYYY-MM-DD entries to that one year and allows mixing', () => {
++    const holidays = ['2025-12-24', '12-25'];
++    expect(isNonWorkingDay(new Date(2025, 11, 24), holidays)).toBe(true);
++    expect(isNonWorkingDay(new Date(2026, 11, 24), holidays)).toBe(false);
++    expect(isNonWorkingDay(new Date(2026, 11, 25), holidays)).toBe(true);
++  });
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 8d7a45e..03ecf90 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -337,12 +337,13 @@ export function skipsWeekendOccurrences(data: {
+ // Guards against schedules (e.g. every 7 days) that only land on weekends.
+ const MAX_WEEKDAY_SEARCH = 1000;
+ 
+-// A weekend day, or one of the schedule's holidays.
++// A weekend day, or one of the schedule's holidays (`YYYY-MM-DD` or yearly `MM-DD`).
+ export function isNonWorkingDay(date: Date, holidays?: string[]): boolean {
+-  return (
+-    d.isWeekend(date) ||
+-    (!!holidays?.length && holidays.includes(monthUtils.dayFromDate(date)))
+-  );
++  if (d.isWeekend(date)) return true;
++  if (!holidays?.length) return false;
++  const day = monthUtils.dayFromDate(date);
++  // Entries are either `YYYY-MM-DD` (one day) or `MM-DD` (every year).
++  return holidays.includes(day) || holidays.includes(day.slice(5));
+ }
+ 
+ function firstWeekdayOccurrence(schedule, start: Date) {
+diff --git a/packages/loot-core/src/types/models/schedule.ts b/packages/loot-core/src/types/models/schedule.ts
+index f40cf1c..989ed15 100644
+--- a/packages/loot-core/src/types/models/schedule.ts
++++ b/packages/loot-core/src/types/models/schedule.ts
+@@ -17,6 +17,7 @@ export type RecurConfig = {
+   endOccurrences?: number;
+   endDate?: string;
+   weekendSolveMode?: 'before' | 'after';
++  // `YYYY-MM-DD` for a single day, or `MM-DD` for every year
+   holidays?: string[];
+ };
+ 
+diff --git a/upcoming-release-notes/yearly-recurring-holidays.md b/upcoming-release-notes/yearly-recurring-holidays.md
+new file mode 100644
+index 0000000..f70901b
+--- /dev/null
++++ b/upcoming-release-notes/yearly-recurring-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow schedule holidays to be entered as `MM-DD` to repeat every year

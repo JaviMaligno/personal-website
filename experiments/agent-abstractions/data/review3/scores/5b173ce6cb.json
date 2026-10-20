@@ -1,0 +1,12 @@
+{"id":"5b173ce6cb",
+"reuse":{"score":3,"why":"schedule-template delegates the daily case to getNextDate and keeps getDateWithSkippedWeekend for moves, but getUpcomingDates writes its own weekend-filtering loop instead of a shared helper, and recurConfigToRSchedule's daily case is not used for the skip."},
+"duplication":{"score":3,"why":"The two copied ternaries in schedule-template are folded into getEffectiveDate, yet the 'skipWeekend and daily means skip' decision is still written three times (getNextDate, getUpcomingDates, getEffectiveDate)."},
+"placement":{"score":3,"why":"The core skip lives in shared getNextDate, but the dispatch between skipping and moving is re-made in server/schedules/app.ts and in a private helper in budget/schedule-template.ts."},
+"scope":{"score":5,"why":"Only the weekend handling paths, the frequency in the schedule data and focused tests change."},
+"maintainability":{"score":3,"why":"Readable, but magic bounds (lookahead 8, count*7+14) and three separate dispatches make the daily rule easy to change in one place and miss in others."},
+"bypasses_abstraction":{"value":true,"where":"getUpcomingDates in server/schedules/app.ts filters weekend occurrences itself instead of going through getNextDate or a shared weekend helper"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The daily-skip condition is restated as skipsWeekendDays (getNextDate), `config.skipWeekend && config.frequency === 'daily'` (getUpcomingDates) and the frequency branch in getEffectiveDate, each with its own weekday filtering."},
+"one_place":{"value":false,"where":"Rule decided in getNextDate (shared/schedules.ts), getUpcomingDates (server/schedules/app.ts) and getEffectiveDate (server/budget/schedule-template.ts)."}
+}

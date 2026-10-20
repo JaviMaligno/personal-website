@@ -1,0 +1,45 @@
+{
+ "id": "8f4f0b9346",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses recurrence conversion and weekend adjustment helpers, but shares only predicates for daily skipping rather than the complete occurrence-resolution policy."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Skip-versus-move orchestration is repeated across four consumers, and the holiday-dependent look-ahead formula is repeated in getNextDate and getUpcomingDates."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Holiday matching belongs appropriately in shared/schedules.ts, but schedule eligibility and adjustment decisions remain distributed into server handlers and budget calculations."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the requested scheduling changes, their model data, tests, and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The small shared predicates help, but future scheduling-policy changes still require coordinating several resolution pipelines and independently maintained enumeration bounds."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "server/budget/schedule-template.ts requests raw dates with getNextDate(..., true) and implements daily skipping locally; server/schedules/app.ts independently composes occurrence filtering and adjustment in both date handlers."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "Daily non-working-day suppression appears as array filters in shared/schedules.ts and server/schedules/app.ts, but as a conditional budget increment plus a local resolveDate function in server/budget/schedule-template.ts."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 3,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 3,
+  "where": "A holidays parameter is added to applyWeekendRule, applyWeekendRuleToDay, and getDateWithSkippedWeekend; getNextDate gains a daily-skipping specialization, while createScheduleList, getUpcomingDates, and getDatesInRange independently implement that policy outside it."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 38.0
+ }
+}

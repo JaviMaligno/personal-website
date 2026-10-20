@@ -1,0 +1,12 @@
+{"id": "a115f3a909",
+"reuse": {"score": 2, "why": "It reuses getWorstCaseAmount and getApproxNumberThreshold, but adds a new getExpectedAmount instead of extending the existing getScheduledAmount, which already performs the missing/number/range dispatch for the API and the desktop client."},
+"duplication": {"score": 2, "why": "getExpectedAmount re-creates getScheduledAmount's null/number/range dispatch alongside it. The inline ternaries it replaces are removed, but the tree now has two competing 'expected amount' functions."},
+"placement": {"score": 4, "why": "The new rule sits in shared/schedules.ts next to the existing amount helpers, the right module."},
+"scope": {"score": 4, "why": "Focused on the amount sites, plus an _amountOp field on RawScheduleData. The forecast call adds a fallback (`schedule._amountOp ?? conditions.amount?.op`) that is slightly defensive."},
+"maintainability": {"score": 2, "why": "There are now two near-identical exported helpers with different rules. Callers of getScheduledAmount (api-models expectedAmount, Balance, the schedule tables) silently keep the old rule, so the next change has to touch both."},
+"bypasses_abstraction": {"value": true, "where": "shared/schedules.ts getExpectedAmount sits beside getScheduledAmount instead of extending it, and api-models.ts and the desktop-client callers stay on the old helper."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "getExpectedAmount restates getScheduledAmount's missing/number/range dispatch under a new name, with the approximate case added."},
+"one_place": {"value": false, "where": "The approximate rule lives only in getExpectedAmount (used by preview, posting, action sync, forecast and template). getScheduledAmount, used by api-models expectedAmount and the desktop-client Balance, still applies the old rule."}
+}

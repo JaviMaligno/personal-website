@@ -1,0 +1,12 @@
+{"id": "657c33155f",
+ "reuse": {"score": 3, "why": "The new getExpectedScheduleAmount builds on getScheduledAmount and the server callers are routed through it, but it re-derives the 7.5% tolerance inline instead of calling the existing getApproxNumberThreshold in shared/rules.ts."},
+ "duplication": {"score": 3, "why": "It removes the inline null/number/range ternaries in app.ts and computeSchedulePreviewTransactions, but duplicates the approximate-tolerance formula and leaves schedule-template.ts deciding which ops go to the helper."},
+ "placement": {"score": 5, "why": "The rule sits in shared/schedules.ts beside getScheduledAmount, and the server modules only consume it."},
+ "scope": {"score": 5, "why": "Only the amount resolution call sites, one type field and focused tests change."},
+ "maintainability": {"score": 3, "why": "Two exported helpers with overlapping meaning (getScheduledAmount vs getExpectedScheduleAmount) invite the wrong choice, and the tolerance now lives in two places that can drift apart from transaction matching."},
+ "bypasses_abstraction": {"value": true, "where": "getExpectedScheduleAmount computes Math.round(Math.abs(amount) * 0.075) itself instead of calling getApproxNumberThreshold from shared/rules.ts"},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "The tolerance in getExpectedScheduleAmount restates getApproxNumberThreshold's formula inline; schedule-template.ts keeps its own op dispatch (isbetween || isapprox ? helper : value) around a helper that already handles every op."},
+ "one_place": {"value": false, "where": "The server paths (app.ts, computeSchedulePreviewTransactions, forecast-schedules.ts, api-models.ts, schedule-template.ts) use getExpectedScheduleAmount, but schedule-template.ts still pre-selects ops itself, the tolerance is defined separately from getApproxNumberThreshold, and client consumers (Balance.tsx, SchedulesTable, mobile lists, useScheduleEdit) still call getScheduledAmount without the approximate rule."}
+}

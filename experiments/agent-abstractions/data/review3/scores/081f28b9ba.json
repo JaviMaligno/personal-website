@@ -1,0 +1,12 @@
+{"id":"081f28b9ba",
+"reuse":{"score":3,"why":"Routes the five inline midpoint copies through the existing getScheduledAmount, but the new API field gets its own getExpectedScheduleAmount that re-implements the missing/number/range dispatch instead of calling that helper."},
+"duplication":{"score":3,"why":"The range rule (Math.min of the endpoints) and the missing-amount case are written twice, in getScheduledAmount and in api-models' getExpectedScheduleAmount."},
+"placement":{"score":3,"why":"The approximate-amount rule lives only in server/api-models.ts, so the planning code in shared/schedules.ts (forecast, posting, previews, templates) never applies it; the rule belongs in the shared helper."},
+"scope":{"score":5,"why":"Edits are limited to the amount rule, its call sites and the API field."},
+"maintainability":{"score":2,"why":"Two definitions of the expected amount now disagree (approximate amounts handled only in the API) and the schedule-template call passes an opaque `op !== 'isbetween'` as a rounding flag."},
+"bypasses_abstraction":{"value":true,"where":"server/api-models.ts getExpectedScheduleAmount computes the expected amount itself instead of calling shared getScheduledAmount."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getExpectedScheduleAmount in api-models.ts restates getScheduledAmount's null/number/range logic under a new name with the approximate case bolted on."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":1,"where":"getScheduledAmount gained a round flag (and a rounding branch) used only by schedule-template; api-models bypasses the helper with its own definition."}
+}

@@ -1,0 +1,13 @@
+{
+  "id": "bcac0c7251",
+  "reuse": {"score": 3, "why": "Reuses findOrCreateBank, syncAccount, handleSyncResponse and adds one shared guard called by every link handler, but the unlink-on-replace re-writes unlinkAccount's field reset instead of reusing it and the Fintegra link/download are near-verbatim copies of the Pluggy ones."},
+  "duplication": {"score": 2, "why": "linkFintegraAccount copies linkPluggyAiAccount almost line for line, downloadFintegraTransactions copies downloadPluggyAiTransactions, and the replacement path copies unlinkAccount's db.updateAccount reset block; the helper also repeats the link handlers' 'account not found' lookup."},
+  "placement": {"score": 4, "why": "Guard lives in accounts/app.ts next to the link handlers, download in sync.ts, server URL in server-config and type in types/models, matching the tree's layering; only the guard mutating other accounts is a slightly odd place for unlinking."},
+  "scope": {"score": 4, "why": "Changes are confined to the four requested behaviours plus required wiring (provider list, client label/flag, release notes); the client edits are minimal type-satisfying additions."},
+  "maintainability": {"score": 3, "why": "One guard enforces the rules for all providers, which is good, but it is named as an assertion while it also unlinks accounts, and each new provider still means another ~70-line copy of link and download code."},
+  "bypasses_abstraction": {"value": true, "where": "assertBankAccountNotLinked in accounts/app.ts unlinks the previous holder with its own db.updateAccount field reset instead of going through the existing unlinkAccount logic (whose reset fields it duplicates)."},
+  "duplicated_blocks": 3,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "The copies (Fintegra link handler vs Pluggy, Fintegra download vs Pluggy download, unlink field reset vs unlinkAccount) are verbatim, not disguised."},
+  "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 0, "where": "assertBankAccountNotLinked grew a replaceExistingLink parameter (step 4) and gained a closed-target branch (step 3) and an unlink-and-proceed branch with its own existence check (step 4), turning an assertion into a mixed validate/mutate helper; all six link handlers call it."}
+}

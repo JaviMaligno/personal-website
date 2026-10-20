@@ -1,0 +1,155 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index e7c5c1a..236bab6 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -247,6 +247,14 @@ describe('set budget average', () => {
+       expect(await getSheetValue('budget202404', `budget-${category}`)).toBe(123);
+     }
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
++
++    await setBudget({ category: 'hidden-cat', month: '2024-04', amount: 123 });
++    await setBudget({ category: 'group-hidden-cat', month: '2024-04', amount: 123 });
++    await setZero({ month: '2024-04', includeHiddenCategories: true });
++    await sheet.waitOnSpreadsheet();
++    expect(await getSheetValue('budget202404', 'budget-hidden-cat')).toBe(0);
++    expect(await getSheetValue('budget202404', 'budget-group-hidden-cat')).toBe(0);
++    expect(await getSheetValue('budget202404', 'budget-template-cat')).toBe(123);
+   });
+ 
+   it('leaves categories in fixed groups unchanged in bulk actions', async () => {
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 9f079bd..a78bc67 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -74,7 +74,9 @@ type BudgetData = {
+   amount: number;
+ };
+ 
+-function getCategoriesForBulkBudgetAction(): Promise<
++function getCategoriesForBulkBudgetAction(
++  includeHiddenCategories = false,
++): Promise<
+   db.DbViewCategoryWithGroupHidden[]
+ > {
+   return db.all<db.DbViewCategoryWithGroupHidden & { group_notes: string }>(`
+@@ -83,10 +85,9 @@ function getCategoriesForBulkBudgetAction(): Promise<
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+     LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0
+-      AND c.hidden = 0
+-      AND g.hidden = 0
++      AND (? = 1 OR (c.hidden = 0 AND g.hidden = 0))
+       AND c.goal_def IS NULL
+-  `).then(categories => {
++  `, [includeHiddenCategories ? 1 : 0]).then(categories => {
+     const fixedTag = new RegExp(makeTagAqlRegex('fixed'));
+     return categories.filter(cat => !fixedTag.test(cat.group_notes || ''));
+   });
+@@ -236,19 +237,26 @@ function setCarryover(
+ 
+ export async function copyPreviousMonth({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
++  const eligibleCategories = new Set(
++    (await getCategoriesForBulkBudgetAction(includeHiddenCategories)).map(
++      category => category.id,
++    ),
++  );
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+       if (prevBudget.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+-      if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
++      if (!eligibleCategories.has(prevBudget.category)) {
+         return;
+       }
+       void setBudget({
+@@ -277,8 +285,14 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await getCategoriesForBulkBudgetAction();
++export async function setZero({
++  month,
++  includeHiddenCategories,
++}: {
++  month: string;
++  includeHiddenCategories?: boolean;
++}): Promise<void> {
++  const categories = await getCategoriesForBulkBudgetAction(includeHiddenCategories);
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+@@ -292,10 +306,12 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function setLastMonthSpending({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  const categories = (await getCategoriesForBulkBudgetAction()).filter(
++  const categories = (await getCategoriesForBulkBudgetAction(includeHiddenCategories)).filter(
+     cat => cat.is_income === 0 || isTrackingBudget(),
+   );
+   const previousMonth = monthUtils.prevMonth(month);
+@@ -318,36 +334,44 @@ export async function setLastMonthSpending({
+ 
+ export async function set3MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  await setBulkNMonthAvg({ month, N: 3 });
++  await setBulkNMonthAvg({ month, N: 3, includeHiddenCategories });
+ }
+ 
+ export async function set12MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  await setBulkNMonthAvg({ month, N: 12 });
++  await setBulkNMonthAvg({ month, N: 12, includeHiddenCategories });
+ }
+ 
+ export async function set6MonthAvg({
+   month,
++  includeHiddenCategories,
+ }: {
+   month: string;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  await setBulkNMonthAvg({ month, N: 6 });
++  await setBulkNMonthAvg({ month, N: 6, includeHiddenCategories });
+ }
+ 
+ async function setBulkNMonthAvg({
+   month,
+   N,
++  includeHiddenCategories,
+ }: {
+   month: string;
+   N: number;
++  includeHiddenCategories?: boolean;
+ }): Promise<void> {
+-  const categories = await getCategoriesForBulkBudgetAction();
++  const categories = await getCategoriesForBulkBudgetAction(includeHiddenCategories);
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {

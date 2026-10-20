@@ -1,0 +1,44 @@
+{
+ "id": "80cbffd836",
+ "reuse": {
+  "score": 3,
+  "why": "All providers reuse the shared link guards and bank lookup, but takeover repeats ownership lookup and unlink cleanup, while Fintegra copies the existing linking workflow."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The change duplicates four substantial blocks: ownership lookup, local unlink cleanup, account linking orchestration, and transaction download plumbing."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Link policies, request handlers, provider downloads, configuration, and model types all reside in the established modules and layers."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on the requested linking rules, takeover option, and Fintegra integration."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared guards make the new policies discoverable, but duplicated ownership queries and unlink field lists create multiple definitions that maintainers must keep aligned."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "All six linking handlers call the shared guards and findOrCreateBank; the existing unlinkAccount also disconnects providers, so it is not directly reusable for takeover."
+ },
+ "duplicated_blocks": 4,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "downloadFintegraTransactions reshapes the existing provider download logic with a direct response projection, and prepareAccountLink embeds the ownership query already contained in assertAccountNotLinked."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 0,
+  "where": "The shared link preparation interface gains replaceExistingLink and a takeover branch that repeats the ownership lookup; all provider linking handlers still route through the shared preparation."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 47.2
+ }
+}

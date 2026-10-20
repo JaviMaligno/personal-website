@@ -1,0 +1,86 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 74be769..55f6734 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -213,7 +213,9 @@ function setCarryover(
+   });
+ }
+ 
+-async function getTemplatedCategoryIds(): Promise<Set<string>> {
++// Categories that month-wide actions must leave alone: those with a goal
++// template, and those in a group whose notes carry the `#fixed` tag.
++async function getProtectedCategoryIds(): Promise<Set<string>> {
+   const rows = await db.all<{ id: string; goal_def: string | null }>(
+     'SELECT id, goal_def FROM categories WHERE tombstone = 0 AND goal_def IS NOT NULL',
+   );
+@@ -228,6 +230,16 @@ async function getTemplatedCategoryIds(): Promise<Set<string>> {
+       // Unparseable definitions are not usable templates
+     }
+   }
++  const fixedRows = await db.all<{ id: string; note: string | null }>(
++    `SELECT c.id, n.note FROM categories c
++     JOIN notes n ON n.id = c.cat_group
++     WHERE c.tombstone = 0 AND n.note LIKE '%#fixed%'`,
++  );
++  for (const row of fixedRows) {
++    if (/(^|\s)#fixed(?![\w-])/i.test(row.note ?? '')) {
++      ids.add(row.id);
++    }
++  }
+   return ids;
+ }
+ 
+@@ -241,7 +253,7 @@ export async function copyPreviousMonth({
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
+-  const templated = await getTemplatedCategoryIds();
++  const templated = await getProtectedCategoryIds();
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+@@ -287,7 +299,7 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+      LEFT JOIN category_groups g ON c.cat_group = g.id
+      WHERE c.tombstone = 0 AND c.hidden = 0 AND (g.hidden = 0 OR g.hidden IS NULL)`,
+   );
+-  const templated = await getTemplatedCategoryIds();
++  const templated = await getProtectedCategoryIds();
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+@@ -313,7 +325,7 @@ export async function setLastMonthSpending({
+      LEFT JOIN category_groups g ON c.cat_group = g.id
+      WHERE c.tombstone = 0 AND c.hidden = 0 AND (g.hidden = 0 OR g.hidden IS NULL)`,
+   );
+-  const templated = await getTemplatedCategoryIds();
++  const templated = await getProtectedCategoryIds();
+   const isTracking = isTrackingBudget();
+ 
+   await batchMessages(async () => {
+@@ -348,7 +360,7 @@ export async function set3MonthAvg({
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+-  const templated = await getTemplatedCategoryIds();
++  const templated = await getProtectedCategoryIds();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -387,7 +399,7 @@ export async function set12MonthAvg({
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+-  const templated = await getTemplatedCategoryIds();
++  const templated = await getProtectedCategoryIds();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -415,7 +427,7 @@ export async function set6MonthAvg({
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+-  const templated = await getTemplatedCategoryIds();
++  const templated = await getProtectedCategoryIds();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {

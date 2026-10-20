@@ -1,0 +1,13 @@
+{
+  "id": "c9aca177de",
+  "reuse": {"score": 4, "why": "Reuses recurConfigToRSchedule, RSchedule, dayFromDate and the shared getDateWithWeekendRule for the weekend move, but re-derives the daily-schedule weekend skip itself and imports parseISO separately instead of using monthUtils.parseDate / the existing `d` namespace."},
+  "duplication": {"score": 4, "why": "The daily-schedules-skip-weekends rule (frequency === 'daily' && skipWeekend && isWeekend) is restated as a filter, duplicating the decision getNextDate makes inline; the rest is new logic."},
+  "placement": {"score": 5, "why": "The handler sits beside getUpcomingDates in server/schedules/app.ts, is registered in SchedulesHandlers and app.method like its neighbours, and leaves the date arithmetic to shared/schedules."},
+  "scope": {"score": 5, "why": "Only the new handler, its registration and focused tests."},
+  "maintainability": {"score": 4, "why": "Readable pipeline with a comment on the two-day margin, but the daily-skip rule now lives in two places in different shapes, so changing it needs both edits."},
+  "bypasses_abstraction": {"value": false, "where": "Weekend adjustment goes through getDateWithWeekendRule; no existing shared helper for the daily skip was bypassed (getNextDate keeps it inline)."},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "getDatesInRange in server/schedules/app.ts restates getNextDate's daily weekend-skip loop (shared/schedules.ts) as a `.filter(!(isDaily && config.skipWeekend && d.isWeekend(date)))`, reshaped rather than extracted and shared."},
+  "t2_reuse": "helper"
+}

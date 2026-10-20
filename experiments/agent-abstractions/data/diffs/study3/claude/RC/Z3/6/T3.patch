@@ -1,0 +1,102 @@
+diff --git a/packages/loot-core/src/server/accounts/app.test.ts b/packages/loot-core/src/server/accounts/app.test.ts
+new file mode 100644
+index 0000000..ed7e2c0
+--- /dev/null
++++ b/packages/loot-core/src/server/accounts/app.test.ts
+@@ -0,0 +1,52 @@
++import * as db from '#server/db';
++import { loadMappings } from '#server/db/mappings';
++
++import { app } from './app';
++
++beforeEach(async () => {
++  await global.emptyDatabase()();
++  await loadMappings();
++});
++
++const externalAccount = {
++  account_id: 'ext-1',
++  name: 'Checking',
++  balance: 0,
++  orgId: 'org',
++  orgDomain: 'bank.example',
++  institution: 'Bank',
++};
++
++async function link(upgradingId: string) {
++  return app.handlers['simplefin-accounts-link']({
++    externalAccount,
++    upgradingId,
++  } as never);
++}
++
++describe('linking a bank account', () => {
++  it('refuses a closed account and leaves it untouched', async () => {
++    const id = await db.insertAccount({ name: 'Old', closed: 1 });
++    const before = await db.first('SELECT * FROM accounts WHERE id = ?', [id]);
++
++    await expect(link(id)).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(await db.first('SELECT * FROM accounts WHERE id = ?', [id])).toEqual(
++      before,
++    );
++    expect(await db.all('SELECT id FROM banks')).toHaveLength(0);
++  });
++
++  it('refuses a closed account that already holds the link', async () => {
++    const id = await db.insertAccount({
++      name: 'Old',
++      closed: 1,
++      account_id: 'ext-1',
++      account_sync_source: 'simpleFin',
++    });
++
++    await expect(link(id)).rejects.toThrow(/Closed accounts cannot be linked/);
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 12791bd..d3a665b 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -252,13 +252,25 @@ async function linkBankSyncAccount({
+   return 'ok';
+ }
+ 
+-// Refuses to link a bank account that another (non-deleted) local account
+-// already holds through the same provider.
++// Refuses to link into a closed account, or to link a bank account that
++// another (non-deleted) local account already holds through the same provider.
+ async function assertBankAccountNotLinked(
+   syncSource: NonNullable<AccountEntity['account_sync_source']>,
+   externalAccountId: string,
+   upgradingId?: string,
+ ) {
++  if (upgradingId) {
++    const target = await db.first<{ closed: number }>(
++      'SELECT closed FROM accounts WHERE id = ? AND tombstone = 0',
++      [upgradingId],
++    );
++    if (target?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const existing = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+      WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?
+diff --git a/upcoming-release-notes/refuse-linking-closed-accounts.md b/upcoming-release-notes/refuse-linking-closed-accounts.md
+new file mode 100644
+index 0000000..bc9a2ee
+--- /dev/null
++++ b/upcoming-release-notes/refuse-linking-closed-accounts.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Refuse to link a bank account to a closed account

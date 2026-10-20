@@ -1,0 +1,123 @@
+diff --git a/packages/loot-core/src/server/api.test.ts b/packages/loot-core/src/server/api.test.ts
+index 32f6ed6..501fc49 100644
+--- a/packages/loot-core/src/server/api.test.ts
++++ b/packages/loot-core/src/server/api.test.ts
+@@ -1,4 +1,5 @@
+ import * as db from '#server/db';
++import { loadMappings } from '#server/db/mappings';
+ import * as sheet from '#server/sheet';
+ import { getBankSyncError } from '#shared/errors';
+ import type { ServerHandlers } from '#types/server-handlers';
+@@ -8,6 +9,8 @@ import { app as accountsApp } from './accounts/app';
+ import { installAPI } from './api';
+ import { createBudget } from './budget/base';
+ import * as prefs from './prefs';
++import { app as schedulesApp } from './schedules/app';
++import { loadRules } from './transactions/transaction-rules';
+ 
+ vi.mock('#shared/errors', () => ({
+   getBankSyncError: vi.fn(error => `Bank sync error: ${error}`),
+@@ -105,6 +108,67 @@ describe('API handlers', () => {
+     });
+   });
+ 
++  describe('api/schedules-get', () => {
++    beforeEach(global.emptyDatabase());
++
++    beforeEach(async () => {
++      await sheet.loadSpreadsheet(db);
++      await prefs.loadPrefs();
++      await loadMappings();
++      await loadRules();
++      handlers['schedule/create'] = schedulesApp.handlers['schedule/create'];
++      schedulesApp.startServices();
++    });
++
++    afterEach(async () => {
++      await schedulesApp.stopServices();
++    });
++
++    const date = {
++      frequency: 'monthly' as const,
++      interval: 1,
++      start: '2026-01-01',
++    };
++
++    it('includes expectedAmount for single, ranged and missing amounts', async () => {
++      await handlers['api/schedule-create']({
++        name: 'single',
++        posts_transaction: true,
++        amount: -5000,
++        amountOp: 'is',
++        date,
++      });
++      await handlers['api/schedule-create']({
++        name: 'ranged',
++        posts_transaction: true,
++        amount: { num1: -10100, num2: -20000 },
++        amountOp: 'isbetween',
++        date,
++      });
++      await handlers['api/schedule-create']({
++        name: 'no-amount',
++        posts_transaction: true,
++        amountOp: 'is',
++        date,
++      });
++
++      const schedules = await handlers['api/schedules-get']();
++      const byName = Object.fromEntries(schedules.map(s => [s.name, s]));
++
++      expect(byName['single']).toMatchObject({
++        amount: -5000,
++        amountOp: 'is',
++        expectedAmount: -5000,
++      });
++      expect(byName['ranged']).toMatchObject({
++        amount: { num1: -10100, num2: -20000 },
++        amountOp: 'isbetween',
++        expectedAmount: -20000,
++      });
++      expect(byName['no-amount']).toMatchObject({ expectedAmount: 0 });
++    });
++  });
++
+   describe('api/budget-month', () => {
+     beforeEach(global.emptyDatabase());
+ 
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index dd819a0..d609a19 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -11,6 +11,7 @@ import {
+ } from '#shared/errors';
+ import * as monthUtils from '#shared/months';
+ import { q } from '#shared/query';
++import { getScheduledAmount } from '#shared/schedules';
+ import {
+   deleteTransaction,
+   ungroupTransactions,
+@@ -928,7 +929,10 @@ handlers['api/schedules-get'] = async function () {
+   checkFileOpen();
+   const { data } = await aqlQuery(q('schedules').select('*'));
+   const schedules = data as ScheduleEntity[];
+-  return schedules.map(schedule => scheduleModel.toExternal(schedule));
++  return schedules.map(schedule => ({
++    ...scheduleModel.toExternal(schedule),
++    expectedAmount: getScheduledAmount(schedule._amount),
++  }));
+ };
+ 
+ handlers['api/schedule-create'] = withMutation(async function (
+diff --git a/upcoming-release-notes/schedules-api-expected-amount.md b/upcoming-release-notes/schedules-api-expected-amount.md
+new file mode 100644
+index 0000000..308be7e
+--- /dev/null
++++ b/upcoming-release-notes/schedules-api-expected-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Add `expectedAmount` to schedules returned by the API, giving the single amount a schedule is expected to post (the end of a range furthest from zero)

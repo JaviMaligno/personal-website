@@ -1,0 +1,155 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index bd04c05..59bb386 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -77,6 +77,7 @@ type BudgetData = {
+   category: string;
+   amount: number;
+   goal_def: string | null;
++  group_notes: string | null;
+ };
+ 
+ function getBudgetData<T extends BudgetTable>(
+@@ -88,13 +89,15 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      > & { goal_def: string | null }
++      > & { goal_def: string | null; group_notes: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++           n.note AS group_notes
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -264,11 +267,12 @@ export async function copySinglePreviousMonth({
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await db.all<
+-    db.DbViewCategoryWithGroupHidden & { goal_def: string | null }
++    db.DbViewCategoryWithGroupHidden & { goal_def: string | null; group_notes: string | null }
+   >(
+-    `SELECT c.*, g.hidden AS group_hidden
++    `SELECT c.*, g.hidden AS group_hidden, n.note AS group_notes
+      FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+      WHERE c.tombstone = 0`,
+   );
+   const writableCategories = categoriesForMonthBudgetAction(
+@@ -289,11 +293,12 @@ export async function setLastMonthSpending({
+   month: string;
+ }): Promise<void> {
+   const categories = await db.all<
+-    db.DbViewCategoryWithGroupHidden & { goal_def: string | null }
++    db.DbViewCategoryWithGroupHidden & { goal_def: string | null; group_notes: string | null }
+   >(
+-    `SELECT c.*, g.hidden AS group_hidden
++    `SELECT c.*, g.hidden AS group_hidden, n.note AS group_notes
+      FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+      WHERE c.tombstone = 0`,
+   );
+   const writableCategories = categoriesForMonthBudgetAction(
+@@ -323,12 +328,13 @@ export async function set3MonthAvg({
+   month: string;
+ }): Promise<void> {
+   const categories = await db.all<
+-    db.DbViewCategoryWithGroupHidden & { goal_def: string | null }
++    db.DbViewCategoryWithGroupHidden & { goal_def: string | null; group_notes: string | null }
+   >(
+     `
+-  SELECT c.*, g.hidden AS group_hidden
++  SELECT c.*, g.hidden AS group_hidden, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -358,12 +364,13 @@ export async function set12MonthAvg({
+   month: string;
+ }): Promise<void> {
+   const categories = await db.all<
+-    db.DbViewCategoryWithGroupHidden & { goal_def: string | null }
++    db.DbViewCategoryWithGroupHidden & { goal_def: string | null; group_notes: string | null }
+   >(
+     `
+-  SELECT c.*, g.hidden AS group_hidden
++  SELECT c.*, g.hidden AS group_hidden, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -385,12 +392,13 @@ export async function set6MonthAvg({
+   month: string;
+ }): Promise<void> {
+   const categories = await db.all<
+-    db.DbViewCategoryWithGroupHidden & { goal_def: string | null }
++    db.DbViewCategoryWithGroupHidden & { goal_def: string | null; group_notes: string | null }
+   >(
+     `
+-  SELECT c.*, g.hidden AS group_hidden
++  SELECT c.*, g.hidden AS group_hidden, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+diff --git a/packages/loot-core/src/server/budget/month-budget-categories.test.ts b/packages/loot-core/src/server/budget/month-budget-categories.test.ts
+index dea6143..74cd4e9 100644
+--- a/packages/loot-core/src/server/budget/month-budget-categories.test.ts
++++ b/packages/loot-core/src/server/budget/month-budget-categories.test.ts
+@@ -3,16 +3,21 @@ import { describe, expect, it } from 'vitest';
+ import { categoriesForMonthBudgetAction } from './month-budget-categories';
+ 
+ describe('categoriesForMonthBudgetAction', () => {
+-  it('skips hidden categories, hidden groups, and categories with saved templates', () => {
++  it('skips hidden categories, hidden groups, fixed groups, and categories with saved templates', () => {
+     const categories = [
+       { id: 'visible', is_income: 0 as const, hidden: 0 as const, group_hidden: 0 as const, goal_def: null },
+       { id: 'hidden', is_income: 0 as const, hidden: 1 as const, group_hidden: 0 as const, goal_def: null },
+       { id: 'hidden-group', is_income: 0 as const, hidden: 0 as const, group_hidden: 1 as const, goal_def: null },
++      { id: 'fixed-group', is_income: 0 as const, hidden: 0 as const, group_hidden: 0 as const, group_notes: 'Rent #fixed monthly', goal_def: null },
++      { id: 'category-note', is_income: 0 as const, hidden: 0 as const, group_hidden: 0 as const, notes: '#fixed', goal_def: null },
++      { id: 'not-fixed-tag', is_income: 0 as const, hidden: 0 as const, group_hidden: 0 as const, group_notes: '#fixedcost', goal_def: null },
+       { id: 'templated', is_income: 0 as const, hidden: 0 as const, group_hidden: 0 as const, goal_def: '[]' },
+     ];
+ 
+     expect(categoriesForMonthBudgetAction(categories, false).map(c => c.id)).toEqual([
+       'visible',
++      'category-note',
++      'not-fixed-tag',
+     ]);
+   });
+ 
+diff --git a/packages/loot-core/src/server/budget/month-budget-categories.ts b/packages/loot-core/src/server/budget/month-budget-categories.ts
+index e97a046..feb9b41 100644
+--- a/packages/loot-core/src/server/budget/month-budget-categories.ts
++++ b/packages/loot-core/src/server/budget/month-budget-categories.ts
+@@ -2,6 +2,7 @@ type CategoryBudgetFields = {
+   is_income: 0 | 1;
+   hidden?: 0 | 1;
+   group_hidden?: 0 | 1;
++  group_notes?: string | null;
+   goal_def?: string | null;
+ };
+ 
+@@ -22,6 +23,7 @@ export function categoriesForMonthBudgetAction<T extends CategoryBudgetFields>(
+     return (
+       category.hidden === 0 &&
+       category.group_hidden === 0 &&
++      !/(^|\s)#fixed\b/i.test(category.group_notes ?? '') &&
+       !category.goal_def
+     );
+   });

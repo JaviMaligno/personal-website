@@ -1,0 +1,102 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index ceab3d4..e304f2f 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -25,8 +25,8 @@ import { RSchedule } from '#server/util/rschedule';
+ import { currentDay, dayFromDate } from '#shared/months';
+ import { q } from '#shared/query';
+ import {
+-  DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   applyWeekendRule,
++  DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   extractScheduleConds,
+   getHasTransactionsQuery,
+   getNextDate,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 8d8ca7b..2abbba2 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -646,18 +646,20 @@ describe('schedules', () => {
+ });
+ 
+ describe('getScheduledAmount', () => {
+-  it('uses the end of a range furthest from zero', () => {
++  it('uses the lowest end of a range', () => {
+     expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+     expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-    expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-    expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++    expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++    expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+   });
+ });
+ 
+ describe('getScheduledAmount (approximate)', () => {
+-  it('uses the end of the tolerance furthest from zero', () => {
++  it('uses the lowest end of the tolerance', () => {
+     expect(getScheduledAmount(-10000, false, 'isapprox')).toBe(-10750);
+-    expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
++    expect(getScheduledAmount(10000, false, 'isapprox')).toBe(9250);
+     expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
+     expect(getScheduledAmount(10000, false, 'is')).toBe(10000);
+   });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 9031198..ec9ede9 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -379,10 +379,10 @@ export function applyWeekendRuleToDay(
+ }
+ 
+ // The amount a schedule is expected to post. A ranged ("is between") amount is
+-// scheduled at the end of the range furthest from zero (the worst case for
+-// planning), whichever order the two values were entered in. An approximate
+-// ("isapprox") amount is scheduled at the end of its matching tolerance furthest
+-// from zero.
++// scheduled at the lowest value in the range (the worst case for planning: the
++// most money out, or the least money in), whichever order the two values were
++// entered in. An approximate ("isapprox") amount is scheduled at the lowest
++// value of its matching tolerance.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -394,15 +394,13 @@ export function getScheduledAmount(
+ 
+   if (typeof amount === 'number') {
+     if (op === 'isapprox') {
+-      const worst =
+-        amount + Math.sign(amount) * getApproxNumberThreshold(amount);
++      const worst = amount - getApproxNumberThreshold(amount);
+       return inverse ? -worst : worst;
+     }
+     return inverse ? -amount : amount;
+   }
+-  const furthest =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
+-  return inverse ? -furthest : furthest;
++  const lowest = Math.min(amount.num1, amount.num2);
++  return inverse ? -lowest : lowest;
+ }
+ 
+ export function getUpcomingDays(
+diff --git a/upcoming-release-notes/approx-amount-worst-case.md b/upcoming-release-notes/approx-amount-worst-case.md
+index 444fa12..70a5a81 100644
+--- a/upcoming-release-notes/approx-amount-worst-case.md
++++ b/upcoming-release-notes/approx-amount-worst-case.md
+@@ -3,4 +3,4 @@ category: Enhancements
+ authors: [agent]
+ ---
+ 
+-Schedules with an approximate amount are now expected at the end of their tolerance furthest from zero
++Schedules with an approximate amount are now expected at the lowest value of their tolerance (least money in, most money out)
+diff --git a/upcoming-release-notes/plan-variable-schedules-worst-case.md b/upcoming-release-notes/plan-variable-schedules-worst-case.md
+index 7d3e1fb..47ea12c 100644
+--- a/upcoming-release-notes/plan-variable-schedules-worst-case.md
++++ b/upcoming-release-notes/plan-variable-schedules-worst-case.md
+@@ -3,4 +3,4 @@ category: Enhancements
+ authors: [agent]
+ ---
+ 
+-Variable ("is between") schedules are now planned at the end of the range furthest from zero
++Variable ("is between") schedules are now planned at the lowest value of the range (least money in, most money out)

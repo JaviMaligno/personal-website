@@ -1,0 +1,228 @@
+diff --git a/packages/desktop-client/src/components/modals/ImportTransactionsModal/ImportTransactionsModal.tsx b/packages/desktop-client/src/components/modals/ImportTransactionsModal/ImportTransactionsModal.tsx
+index 1c5eb29..7f276e6 100644
+--- a/packages/desktop-client/src/components/modals/ImportTransactionsModal/ImportTransactionsModal.tsx
++++ b/packages/desktop-client/src/components/modals/ImportTransactionsModal/ImportTransactionsModal.tsx
+@@ -360,6 +360,8 @@ export function ImportTransactionsModal({
+           selected: _selected,
+           selected_merge: _selected_merge,
+           tombstone: _tombstone,
++          previewed: _previewed,
++          existing_id: _existing_id,
+           ...finalTransaction
+         } = trans;
+         previewTransactions.push({
+@@ -641,13 +643,11 @@ export function ImportTransactionsModal({
+     let errorMessage;
+ 
+     for (let trans of transactions) {
+-      if (
+-        trans.isMatchedTransaction ||
+-        (reconcile && !trans.selected && !trans.ignored)
+-      ) {
++      if (trans.isMatchedTransaction || (reconcile && !trans.selected)) {
+         // skip transactions that are
+         // - matched transaction (existing transaction added to show update changes)
+-        // - unselected transactions that are not ignored by the reconcilation algorithm (only when reconcilation is enabled)
++        // - unselected transactions (only when reconcilation is enabled); the
++        //   ones ignored by the reconcilation algorithm would not change anything
+         continue;
+       }
+ 
+@@ -691,6 +691,8 @@ export function ImportTransactionsModal({
+         selected: _selected,
+         selected_merge: _selected_merge,
+         trx_id: _trx_id,
++        previewed: _previewed,
++        existing_id: _existing_id,
+         ...finalTransaction
+       } = trans;
+ 
+@@ -705,8 +707,23 @@ export function ImportTransactionsModal({
+         finalTransaction.forceAddTransaction = true;
+       }
+ 
++      // In reconcile mode, pass the preview's decision along so the import
++      // does exactly what the preview showed: merge into the existing
++      // transaction it matched, or add the row as a new transaction (`null`).
++      let matchedTransactionId: string | null | undefined;
++      if (reconcile && trans.previewed && !trans.tombstone) {
++        matchedTransactionId =
++          trans.existing &&
++          trans.selected_merge &&
++          trans.existing_id &&
++          !finalTransaction.forceAddTransaction
++            ? trans.existing_id
++            : null;
++      }
++
+       finalTransactions.push({
+         ...finalTransaction,
++        ...(matchedTransactionId !== undefined && { matchedTransactionId }),
+         category: category_id,
+         date,
+         amount: amountToInteger(amount),
+@@ -855,6 +872,10 @@ export function ImportTransactionsModal({
+               currentTrx.selected = !currentTrx.ignored;
+               currentTrx.selected_merge = currentTrx.existing;
+ 
++              // remember the preview's decision, to pass it to the import
++              currentTrx.previewed = true;
++              currentTrx.existing_id = existingTrx?.id;
++
+               next = next.concat({ ...currentTrx });
+ 
+               if (existingTrx) {
+diff --git a/packages/desktop-client/src/components/modals/ImportTransactionsModal/utils.ts b/packages/desktop-client/src/components/modals/ImportTransactionsModal/utils.ts
+index 33f1d6e..705e42a 100644
+--- a/packages/desktop-client/src/components/modals/ImportTransactionsModal/utils.ts
++++ b/packages/desktop-client/src/components/modals/ImportTransactionsModal/utils.ts
+@@ -128,6 +128,10 @@ export type ImportTransaction = {
+   ignored: boolean;
+   selected: boolean;
+   selected_merge: boolean;
++  // Set from the preview: whether the row went through it, and the id of the
++  // existing transaction the preview matched it to (if any)
++  previewed?: boolean;
++  existing_id?: string;
+   amount: number;
+   inflow: number;
+   outflow: number;
+@@ -182,6 +186,8 @@ export function applyFieldMappings(
+   result.selected = transaction.selected;
+   result.selected_merge = transaction.selected_merge;
+   result.tombstone = transaction.tombstone;
++  result.previewed = transaction.previewed;
++  result.existing_id = transaction.existing_id;
+   return result as ImportTransaction;
+ }
+ 
+diff --git a/packages/loot-core/src/server/accounts/sync.ts b/packages/loot-core/src/server/accounts/sync.ts
+index 5c0f65f..924271e 100644
+--- a/packages/loot-core/src/server/accounts/sync.ts
++++ b/packages/loot-core/src/server/accounts/sync.ts
+@@ -463,8 +463,14 @@ async function normalizeTransactions(
+       throw new Error('`date` is required when adding a transaction');
+     }
+ 
+-    // Strip off the irregular properties
+-    const { payee_name: originalPayeeName, subtransactions, ...rest } = trans;
++    // Strip off the irregular properties. `matchedTransactionId` is an
++    // instruction for the matching step only and is never stored.
++    const {
++      payee_name: originalPayeeName,
++      subtransactions,
++      matchedTransactionId,
++      ...rest
++    } = trans;
+     trans = rest;
+ 
+     if (trans.amount != null && !Number.isInteger(trans.amount)) {
+@@ -512,12 +518,33 @@ async function normalizeTransactions(
+         ? subtransactions.map(t => ({ ...t, account: acctId }))
+         : null,
+       trans,
++      matchedTransactionId: normalizeMatchDecision(matchedTransactionId),
+     });
+   }
+ 
+   return { normalized, payeesToCreate };
+ }
+ 
++// A preview decision for one imported row: a string is the id of the
++// existing transaction the preview matched it to, `null` means the preview
++// found no match, and `undefined` means no decision was given.
++type MatchDecision = string | null | undefined;
++
++function normalizeMatchDecision(value: unknown): MatchDecision {
++  if (value === undefined) {
++    return undefined;
++  }
++  if (value === null) {
++    return null;
++  }
++  if (typeof value !== 'string' || value === '') {
++    throw new TransactionError(
++      `matchedTransactionId is invalid, must be a transaction id or null: ${String(value)}`,
++    );
++  }
++  return value;
++}
++
+ async function normalizeBankSyncTransactions(transactions, acctId) {
+   const payeesToCreate = new Map();
+ 
+@@ -867,21 +894,51 @@ export async function matchTransactions(
+   const accountsMap = new Map(accounts.map(account => [account.id, account]));
+ 
+   const transactionsStep1 = [];
+-  for (const {
+-    payee_name,
+-    trans: originalTrans,
+-    subtransactions,
+-  } of normalized) {
++  for (const entry of normalized) {
++    const { payee_name, trans: originalTrans, subtransactions } = entry;
++    const matchDecision: MatchDecision =
++      'matchedTransactionId' in entry ? entry.matchedTransactionId : undefined;
++
+     // Run the rules
+     const trans = await runRules(originalTrans, accountsMap);
+ 
+     let match = null;
+     let fuzzyDataset = null;
+ 
++    if (matchDecision === null) {
++      // The preview found no match for this row: it is added as a new
++      // transaction, whatever else is in the batch.
++      transactionsStep1.push({
++        payee_name,
++        trans,
++        subtransactions: trans.subtransactions || subtransactions,
++        match: null,
++        fuzzyDataset: null,
++      });
++      continue;
++    }
++
++    if (typeof matchDecision === 'string') {
++      // The preview matched this row to this exact transaction: merge into
++      // it, whatever else is in the batch. If it no longer exists (e.g. it was
++      // deleted since the preview), fall back to the regular matching below.
++      const table = reimportDeleted
++        ? 'v_transactions'
++        : 'v_transactions_internal';
++      match = await db.first<db.DbTransaction>(
++        `SELECT * FROM ${table} WHERE id = ? AND account = ?`,
++        [matchDecision, acctId],
++      );
++
++      if (match) {
++        hasMatched.add(match.id);
++      }
++    }
++
+     // First, match with an existing transaction's imported_id. This
+     // is the highest fidelity match and should always be attempted
+     // first.
+-    if (trans.imported_id) {
++    if (!match && trans.imported_id) {
+       const table = reimportDeleted
+         ? 'v_transactions'
+         : 'v_transactions_internal';
+diff --git a/packages/loot-core/src/types/models/import-transaction.ts b/packages/loot-core/src/types/models/import-transaction.ts
+index c9779fb..9a1a4db 100644
+--- a/packages/loot-core/src/types/models/import-transaction.ts
++++ b/packages/loot-core/src/types/models/import-transaction.ts
+@@ -44,6 +44,12 @@ export type ImportTransactionEntity = {
+   /** A flag indicating if the transaction has cleared or not */
+   cleared?: boolean;
+ 
++  /** Only in import requests: the decision a previous preview made for this
++   * row. A transaction id merges the row into exactly that existing
++   * transaction; `null` adds the row as a new transaction. When absent, the
++   * import runs its own duplicate detection. Never stored. */
++  matchedTransactionId?: string | null;
++
+   /** An array of subtransactions for a split transaction.
+    * Only available in get or create/import requests.
+    * If amounts don't equal total amount, API call will succeed but error will show in app */

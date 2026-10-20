@@ -1,0 +1,44 @@
+{
+ "id": "049276ec96",
+ "reuse": {
+  "score": 4,
+  "why": "The API, templates, forecasts and previews reuse shared amount helpers and the existing tolerance function, but updateActions retains its own numeric dispatch."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Most arithmetic is consolidated, but updateActions still duplicates the shared helper's decision about numeric amounts."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Expected-amount policy remains in shared schedules, tolerance remains in shared rules, and API response typing stays in the existing API layer."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on schedule amount planning, its API exposure, and associated tests and documentation."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralization improves ownership, but partial delegation and optional operator propagation leave callers responsible for applying the complete policy."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/server/schedules/app.ts:updateActions returns numeric amounts directly instead of passing them and amountCond.op through getExpectedScheduleAmount."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "updateActions replaces only its range arithmetic with a helper call while retaining the numeric dispatch already owned by getExpectedScheduleAmount."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 2,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "An optional op parameter is added to both getExpectedScheduleAmount and getScheduledAmount, an isapprox branch is added to the former, and updateActions bypasses that branch for numeric amounts."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 38.3
+ }
+}

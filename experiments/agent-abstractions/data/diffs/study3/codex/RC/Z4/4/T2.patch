@@ -1,0 +1,135 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 84d9707..e391fa5 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -14,6 +14,7 @@ import {
+   areConditionValuesEqual,
+   createSchedule,
+   deleteSchedule,
++  getDatesInRange,
+   app as schedulesApp,
+   setNextDate,
+   skipNextDate,
+@@ -28,6 +29,67 @@ beforeEach(async () => {
+ });
+ 
+ describe('schedule app', () => {
++  describe('getDatesInRange', () => {
++    it('filters on adjusted dates and handles daily weekend skips', async () => {
++      expect(
++        await getDatesInRange({
++          config: {
++            start: '2024-06-01',
++            frequency: 'weekly',
++            patterns: [{ type: 'SA', value: 1 }],
++            skipWeekend: true,
++            weekendSolveMode: 'before',
++          },
++          start: '2024-05-31',
++          end: '2024-06-07',
++        }),
++      ).toEqual(['2024-05-31', '2024-06-07']);
++
++      expect(
++        await getDatesInRange({
++          config: {
++            start: '2024-06-01',
++            frequency: 'daily',
++            skipWeekend: true,
++            weekendSolveMode: 'after',
++          },
++          start: '2024-06-01',
++          end: '2024-06-03',
++        }),
++      ).toEqual(['2024-06-03']);
++    });
++
++    it('includes an occurrence moved into the period and excludes one moved out', async () => {
++      expect(
++        await getDatesInRange({
++          config: {
++            start: '2024-06-01',
++            frequency: 'weekly',
++            patterns: [{ type: 'SA', value: 1 }],
++            skipWeekend: true,
++            weekendSolveMode: 'after',
++          },
++          start: '2024-06-03',
++          end: '2024-06-03',
++        }),
++      ).toEqual(['2024-06-03']);
++
++      expect(
++        await getDatesInRange({
++          config: {
++            start: '2024-06-01',
++            frequency: 'weekly',
++            patterns: [{ type: 'SA', value: 1 }],
++            skipWeekend: true,
++            weekendSolveMode: 'before',
++          },
++          start: '2024-06-01',
++          end: '2024-06-01',
++        }),
++      ).toEqual([]);
++    });
++  });
++
+   describe('utility', () => {
+     it('conditions are updated when they exist', () => {
+       const conds = [
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 3bf9b10..992f091 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -525,6 +525,34 @@ async function getUpcomingDates({ config, count }) {
+   }
+ }
+ 
++export async function getDatesInRange({ config, start, end }) {
++  const rules = recurConfigToRSchedule(config);
++  const schedule = new RSchedule({ rrules: rules });
++  const rangeStart = d.subDays(d.startOfDay(new Date(`${start}T00:00:00`)), 3);
++  const rangeEnd = d.addDays(d.startOfDay(new Date(`${end}T00:00:00`)), 3);
++  const isDaily = config.frequency === 'daily';
++
++  return [
++    ...new Set(
++      schedule
++        .occurrences({ start: rangeStart, end: rangeEnd })
++        .toArray()
++        .flatMap(({ date }) => {
++          if (isDaily && config.skipWeekend && d.isWeekend(date)) {
++            return [];
++          }
++          const finalDate = getDateWithWeekendRule(
++            date,
++            config.skipWeekend,
++            config.weekendSolveMode,
++          );
++          const day = dayFromDate(finalDate);
++          return day >= start && day <= end ? [day] : [];
++        }),
++    ),
++  ].sort();
++}
++
+ // Services
+ 
+ function onRuleUpdate(rule) {
+@@ -837,6 +865,7 @@ export type SchedulesHandlers = {
+   'schedule/force-run-service': typeof advanceSchedulesService;
+   'schedule/discover': typeof discoverSchedules;
+   'schedule/get-upcoming-dates': typeof getUpcomingDates;
++  'schedule/get-dates-in-range': typeof getDatesInRange;
+ };
+ 
+ // Expose functions to the client
+@@ -857,6 +886,7 @@ app.method(
+ );
+ app.method('schedule/discover', discoverSchedules);
+ app.method('schedule/get-upcoming-dates', getUpcomingDates);
++app.method('schedule/get-dates-in-range', getDatesInRange);
+ 
+ app.service(trackJSONPaths);
+ 

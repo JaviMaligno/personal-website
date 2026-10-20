@@ -1,0 +1,12 @@
+{"id":"4b4ef9ff3e",
+"reuse":{"score":3,"why":"Fintegra linking reuses findOrCreateBank and the shared linkBankSyncAccount, but clearing the previous holder re-writes unlinkAccount's column reset, and the download function is a near-verbatim copy of downloadAkahuTransactions rather than a shared helper."},
+"duplication":{"score":2,"why":"assertBankAccountNotLinked is called both in each of six provider wrappers and again inside linkBankSyncAccount (the same query run twice per link), the unlink reset duplicates unlinkAccount, and downloadFintegraTransactions copies the Akahu download body."},
+"placement":{"score":3,"why":"Putting the guard and takeover inside linkBankSyncAccount is the right layer, but the extra per-wrapper pre-checks spread the rule back into each provider and the closed-account rule is hidden inside a function named for the link-uniqueness rule."},
+"scope":{"score":4,"why":"Changes serve the four steps; release-note files are extra but conventional; the Fintegra sync-source is added to a local union instead of SYNC_PROVIDERS, a small inconsistency."},
+"maintainability":{"score":2,"why":"A maintainer must understand why the same assertion runs twice, the guard's name hides the closed-account rule, and provider lists (SYNC_PROVIDERS vs the local union) now disagree."},
+"bypasses_abstraction":{"value":true,"where":"linkBankSyncAccount clears previous holders with its own db.updateAccount block instead of reusing unlinkAccount's local reset; 'fintegra' added to LinkBankSyncAccountParams' union but not to SYNC_PROVIDERS/AccountSyncSource."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"Duplicates (double assertion calls, unlink reset, Akahu-style download) are plain copies, not reshaped."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":1,"where":"replaceExistingLink added to LinkAccountBaseParams and to assertBankAccountNotLinked; the helper gains a closed-account branch and linkBankSyncAccount a takeover loop re-implementing unlinkAccount; six wrappers call the guard on their own as well as through the shared path."}
+}

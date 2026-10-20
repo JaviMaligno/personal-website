@@ -1,0 +1,12 @@
+{"id": "2c5aed0031",
+ "reuse": {"score": 5, "why": "Every expected-amount path (preview, posting, forecast, template, balance, API model) goes through the existing getScheduledAmount, and the approximate tolerance reuses the existing getApproxNumberThreshold from shared/rules."},
+ "duplication": {"score": 5, "why": "The worst-case rule exists once in getScheduledAmount; the API field calls it instead of recomputing, and the tolerance arithmetic is not copied."},
+ "placement": {"score": 5, "why": "The rule lives in shared/schedules.ts where the amount helper already was; the API exposure sits in the existing scheduleModel mapper."},
+ "scope": {"score": 4, "why": "Focused on the amount rule, the API field and tests, with one unrelated import reorder in schedules/app.ts."},
+ "maintainability": {"score": 4, "why": "One clear helper with a documented rule, though callers now thread an untyped op string after a positional `false` inverse flag at every site, which is easy to forget (display sites legitimately omit it)."},
+ "bypasses_abstraction": {"value": false, "where": "All planning/posting call sites use getScheduledAmount; no inline min/midpoint logic remains."},
+ "duplicated_blocks": 0,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "No duplicated logic; the previous rangeRounding variants were removed rather than reshaped."},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "getScheduledAmount swapped its rangeRounding parameter for an `op` parameter (net one new parameter replacing one removed) and gained one isapprox branch; all expected-amount call sites route through it; UI display sites call it without op by design."}
+}

@@ -1,0 +1,31 @@
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index a0b327f..20beb06 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -593,13 +593,22 @@ handlers['api/transaction-update'] = withMutation(async function ({
+   );
+   const transactions = ungroupTransactions(data);
+ 
+-  if (transactions.length === 0) {
++  // Merge the partial `fields` over the stored transaction so a partial update
++  // only changes what was sent. This matters for split children: the split
++  // logic rebuilds a child from the object it is given, so passing only the
++  // changed fields would reset its amount, category, etc.
++  const existing = transactions.find(t => t.id === id);
++  if (existing == null) {
+     return [];
+   }
+ 
+-  // @ts-expect-error - fix me
+-  const { diff } = updateTransaction(transactions, { id, ...fields });
+-  return handlers['transactions-batch-update'](diff)['updated'];
++  const { diff } = updateTransaction(transactions, {
++    ...existing,
++    ...fields,
++    id,
++  });
++  const result = await handlers['transactions-batch-update'](diff);
++  return result.updated;
+ });
+ 
+ handlers['api/transaction-delete'] = withMutation(async function ({ id }) {

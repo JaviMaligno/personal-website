@@ -1,0 +1,45 @@
+{
+ "id": "a95232e507",
+ "reuse": {
+  "score": 3,
+  "why": "Most consumers reuse getScheduledAmount and the existing tolerance helper, but the API introduces its own expectedScheduleAmount implementation."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The API helper duplicates the shared helper's missing, numeric, and ranged amount decision instead of sharing that policy."
+ },
+ "placement": {
+  "score": 3,
+  "why": "The shared schedules module appropriately owns the planning rule, but api-models also embeds that domain policy in its serialization layer."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits concern schedule amount planning, its API representation, or directly related tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Separate API policy and an optional operator omitted by existing planning consumers leave maintainers with multiple effective definitions of expected amount."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/server/api-models.ts: scheduleModel.toExternal calls local expectedScheduleAmount instead of shared getScheduledAmount."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "api-models.ts renames and reshapes the shared amount decision as expectedScheduleAmount, retaining parallel missing/number/range dispatch and endpoint selection."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "getScheduledAmount gains optional op and an isapprox branch; scheduleModel.toExternal bypasses it through expectedScheduleAmount, while existing consumers such as accounts/Balance.tsx omit the newly required policy context."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 40.6
+ }
+}

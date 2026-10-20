@@ -1,0 +1,12 @@
+{"id":"c8e0df1453",
+"reuse":{"score":3,"why":"Keeps calling getScheduleDate for the move, but decides the new daily-skip rule inline in getNextDate rather than extending the tree's shared weekend function that getUpcomingDates and schedule-template also use."},
+"duplication":{"score":4,"why":"No copied blocks; the occurrence query is re-issued in a loop, but that is new logic rather than a duplicate."},
+"placement":{"score":3,"why":"The weekend rule is split: the skip lives in getNextDate's occurrence loop and the call to getScheduleDate is special-cased with `skipWeekend && !isDaily`, instead of the frequency-aware rule living with getScheduleDate/getScheduleDateString."},
+"scope":{"score":5,"why":"Only getNextDate and tests are touched."},
+"maintainability":{"score":3,"why":"The rule now depends on which entry point is used: getNextDate skips daily weekend dates while getUpcomingDates and the schedule-template path (getNextDate with noSkipWeekend plus getScheduleDateString) still move them, which a maintainer has to know."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getNextDate computes the daily/weekend decision itself and passes a masked flag to getScheduleDate instead of giving getScheduleDate (used by getUpcomingDates and getScheduleDateString) the frequency."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No duplicated logic introduced."},
+"one_place":{"value":false,"where":"Rule lands only in getNextDate; server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts (via getScheduleDateString) still apply the old move-to-Friday/Monday rule to daily schedules."}
+}

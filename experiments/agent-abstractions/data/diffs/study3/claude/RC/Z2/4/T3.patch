@@ -1,0 +1,147 @@
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index bb47e32..ba6c1b6 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -253,7 +253,11 @@ export const scheduleModel = {
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+-      expectedAmount: getScheduledAmount(schedule._amount),
++      expectedAmount: getScheduledAmount(
++        schedule._amount,
++        false,
++        schedule._amountOp,
++      ),
+     };
+   },
+   //just an update
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index aa3fc3f..d7078b0 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -61,8 +61,8 @@ async function createScheduleList(
+     const { date: dateConditions, amount: amountCondition } =
+       extractScheduleConds(conditions);
+     let scheduleAmount =
+-      amountCondition.op === 'isbetween'
+-        ? getExpectedAmount(amountCondition.value)
++      amountCondition.op === 'isbetween' || amountCondition.op === 'isapprox'
++        ? getExpectedAmount(amountCondition.value, amountCondition.op)
+         : amountCondition.value;
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index a110cce..e5dc0cf 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -95,7 +95,10 @@ export function normalizeSchedule(
+   }
+ 
+   // A ranged ("is between") amount is scheduled at its rounded midpoint.
+-  const amount = getExpectedAmount(amountValue);
++  const amount = getExpectedAmount(
++    amountValue,
++    schedule._amountOp ?? conditions.amount?.op,
++  );
+ 
+   return {
+     id: schedule.id,
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 55ea0f1..5bc4867 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -154,7 +154,8 @@ function updateActions(
+   // the amount the schedule actually posts. A ranged ("is between") amount
+   // is scheduled at its rounded midpoint.
+   const amountValue = amountCond.value;
+-  const amount = amountValue == null ? 0 : getExpectedAmount(amountValue);
++  const amount =
++    amountValue == null ? 0 : getExpectedAmount(amountValue, amountCond.op);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -590,7 +591,9 @@ async function postTransactionForSchedule({
+   // A missing amount (deleted condition) posts 0; a ranged ("is between")
+   // amount posts its rounded midpoint.
+   const amount =
+-    schedule._amount == null ? 0 : getExpectedAmount(schedule._amount);
++    schedule._amount == null
++      ? 0
++      : getExpectedAmount(schedule._amount, schedule._amountOp);
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 668e87b..9f3bfbf 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -652,4 +652,12 @@ describe('getExpectedAmount', () => {
+     expect(getExpectedAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+     expect(getExpectedAmount(5000)).toBe(5000);
+   });
++
++  it('uses the end of the tolerance furthest from zero for approximate amounts', () => {
++    expect(getExpectedAmount(-10000, 'isapprox')).toBe(-10750);
++    expect(getExpectedAmount(10000, 'isapprox')).toBe(10750);
++    expect(getExpectedAmount(-1234, 'isapprox')).toBe(-1327);
++    expect(getExpectedAmount(0, 'isapprox')).toBe(0);
++    expect(getExpectedAmount(-10000, 'is')).toBe(-10000);
++  });
+ });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 2142839..60e96fd 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -7,6 +7,7 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import { q } from './query';
++import { getApproxNumberThreshold } from './rules';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+@@ -354,11 +355,17 @@ export function getDateWithSkippedWeekend(
+ }
+ 
+ // The single amount a schedule amount is expected to come to: a plain number
+-// as-is, a ranged ("is between") amount as the end furthest from zero.
++// as-is, an approximate ("isapprox") amount as the end of its tolerance
++// furthest from zero, a ranged ("is between") amount as the end furthest from
++// zero.
+ export function getExpectedAmount(
+   amount: number | { num1: number; num2: number },
++  op?: string | null,
+ ): number {
+   if (typeof amount === 'number') {
++    if (op === 'isapprox') {
++      return amount + Math.sign(amount) * getApproxNumberThreshold(amount);
++    }
+     return amount;
+   }
+   return Math.abs(amount.num1) >= Math.abs(amount.num2)
+@@ -369,12 +376,13 @@ export function getExpectedAmount(
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
++  op?: string | null,
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+   if (amount == null) return 0;
+ 
+-  const expected = getExpectedAmount(amount);
++  const expected = getExpectedAmount(amount, op);
+   return inverse ? -expected : expected;
+ }
+ 
+@@ -509,7 +517,9 @@ export function computeSchedulePreviewTransactions(
+       // A missing amount previews as 0; a ranged ("is between") amount as its
+       // rounded midpoint.
+       const amount =
+-        schedule._amount == null ? 0 : getExpectedAmount(schedule._amount);
++        schedule._amount == null
++          ? 0
++          : getExpectedAmount(schedule._amount, schedule._amountOp);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

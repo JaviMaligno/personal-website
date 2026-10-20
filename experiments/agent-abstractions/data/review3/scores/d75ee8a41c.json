@@ -1,0 +1,11 @@
+{"id": "d75ee8a41c",
+"reuse": {"score": 3, "why": "Adds findWeekdayOccurrence and uses it in getNextDate, but getUpcomingDates writes its own weekday filter loop instead of using it, and schedule-template re-derives the daily rule itself."},
+"duplication": {"score": 2, "why": "The 'daily + skipWeekend means drop weekends' decision is written three times (getNextDate, getUpcomingDates, schedule-template's movesWeekend), each in a different shape."},
+"placement": {"score": 3, "why": "The core rule sits in shared/schedules.ts, but server/schedules/app.ts and budget/schedule-template.ts each keep their own frequency branching rather than delegating to it."},
+"scope": {"score": 5, "why": "Edits only the weekend-handling paths, the frequency passthrough in parseRecurDate, and tests."},
+"maintainability": {"score": 2, "why": "Passing movesWeekend into getNextDate's noSkipWeekend parameter is a confusing inversion, and the daily rule now has three independent implementations to keep consistent."},
+"bypasses_abstraction": {"value": true, "where": "getUpcomingDates in server/schedules/app.ts filters weekend days itself instead of using findWeekdayOccurrence/getNextDate, and schedule-template.ts computes its own movesWeekend flag."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "The daily weekend-skip decision is reshaped at each site: a helper call in getNextDate, an inline loop with isWeekend in getUpcomingDates, and an inverted movesWeekend flag in schedule-template."},
+"one_place": {"value": false, "where": "The rule is decided separately in shared/schedules.ts getNextDate, server/schedules/app.ts getUpcomingDates and budget/schedule-template.ts createScheduleList."}}

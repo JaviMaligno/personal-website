@@ -1,0 +1,12 @@
+{"id": "e6bbcc3824",
+"reuse": {"score": 4, "why": "Puts the rule in the existing getExpectedAmount helper and reuses getApproxNumberThreshold from shared/rules for the matching tolerance."},
+"duplication": {"score": 4, "why": "The tolerance arithmetic exists once, but each server site keeps its own null/op dispatch and schedule-template adds a second op check before calling the helper."},
+"placement": {"score": 4, "why": "The rule sits in shared/schedules.ts beside the range rule; the extra op condition in schedule-template.ts keeps part of the dispatch at a call site."},
+"scope": {"score": 5, "why": "Only the helper, its callers and a test change."},
+"maintainability": {"score": 3, "why": "An optional untyped op parameter is threaded through call sites (getScheduledAmount gains it after inverse, forcing a positional false), and the client callers of getScheduledAmount (Balance.tsx, SchedulesTable.tsx, mobile lists) were not updated, so they still plan approximate amounts at the exact value."},
+"bypasses_abstraction": {"value": false, "where": "All touched sites call getExpectedAmount/getScheduledAmount; no site recomputes the tolerance."},
+"duplicated_blocks": 0,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "None."},
+"one_place": {"value": false, "where": "The rule is defined once in getExpectedAmount, but it only applies when the caller passes op; desktop-client getScheduledAmount callers (accounts/Balance.tsx, schedules/SchedulesTable.tsx, mobile schedules) and the isbetween/isapprox check in budget/schedule-template.ts decide separately."}
+}

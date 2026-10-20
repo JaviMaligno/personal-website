@@ -1,0 +1,12 @@
+{"id": "6458177bc0",
+"reuse": {"score": 3, "why": "Introduces getBulkBudgetCategories and reuses getCategoryAverage/setBudget, but setBulkNMonthAvg re-writes setNMonthAvg's average-and-sign logic instead of calling it, and copyPreviousMonth does not use the new selection."},
+"duplication": {"score": 3, "why": "The three averaging actions are consolidated, but the exclusion rule exists twice (SQL+filter in getBulkBudgetCategories and hand-written hidden/#fixed/goal_def checks in copyPreviousMonth) and the expense sign flip is repeated."},
+"placement": {"score": 4, "why": "All selection logic stays in budget/actions.ts and the new handler is registered in budget/app.ts like its siblings."},
+"scope": {"score": 4, "why": "Focused on month-wide actions; unformatted long lines and widening getBudgetData's query/type are slightly beyond what is needed."},
+"maintainability": {"score": 3, "why": "Most actions share one category selection, but a future exclusion must be added in two different forms (SQL in the selector, JS checks in copyPreviousMonth) and the hidden rule is split between a SQL flag and a caller check."},
+"bypasses_abstraction": {"value": true, "where": "budget/actions.ts copyPreviousMonth applies hidden, #fixed and goal_def exclusions itself over getBudgetData rows instead of using getBulkBudgetCategories; setBulkNMonthAvg bypasses setNMonthAvg"},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "copyPreviousMonth re-expresses the getBulkBudgetCategories exclusions as early returns; setBulkNMonthAvg reshapes setNMonthAvg's body inline"},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 1, "where": "getBulkBudgetCategories gains includeHiddenCategories; copyPreviousMonth keeps its own exclusion branches (hidden flag, isFixedGroupNote, goal_def) instead of calling the shared selection"}
+}

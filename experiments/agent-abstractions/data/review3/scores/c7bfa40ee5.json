@@ -1,0 +1,11 @@
+{"id": "c7bfa40ee5",
+ "reuse": {"score": 4, "why": "Adds the option to the existing getCategoriesForBulkAction selection that setZero, setLastMonthSpending and the average actions already share, but leaves copyPreviousMonth on its own inline hidden check."},
+ "duplication": {"score": 4, "why": "The hidden rule remains in two places (the bulk-action SQL and copyPreviousMonth's inline condition), and the same optional flag is threaded identically through five action signatures."},
+ "placement": {"score": 5, "why": "The selection change lives in the shared category query in budget/actions.ts, where the tree decides bulk-action eligibility."},
+ "scope": {"score": 5, "why": "Only the flag, the shared query and a test."},
+ "maintainability": {"score": 3, "why": "The `? = 1 OR (...)` SQL toggle is workable, but copyPreviousMonth, also a month-wide action, silently ignores the new flag because its eligibility is still decided separately on getBudgetData rows."},
+ "bypasses_abstraction": {"value": true, "where": "copyPreviousMonth in packages/loot-core/src/server/budget/actions.ts keeps its own hidden/group_hidden/fixed/goal_def condition and is not given the flag."},
+ "duplicated_blocks": 0,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The diff adds no new duplicated logic; the parallel copyPreviousMonth predicate predates it."}
+}

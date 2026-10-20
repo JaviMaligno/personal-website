@@ -1,0 +1,12 @@
+{"id": "ef0e2f7472",
+ "reuse": {"score": 4, "why": "Builds on the existing getScheduledAmount and the existing getApproxNumberThreshold tolerance helper, and routes four of the five copies through getScheduledAmount; schedule-template uses only the sub-helpers."},
+ "duplication": {"score": 4, "why": "The five midpoint copies collapse into shared helpers, but schedule-template keeps its own op dispatch (isbetween/isapprox/is) that duplicates the dispatch inside getScheduledAmount."},
+ "placement": {"score": 5, "why": "The rule and its parts live in shared/schedules.ts next to the other schedule helpers; expectedAmount is produced in scheduleModel.toExternal, the API mapping layer."},
+ "scope": {"score": 5, "why": "Edits are confined to the amount rule, its call sites, the API model, tests and release notes for the requested steps."},
+ "maintainability": {"score": 4, "why": "Clear named helpers with tests; the loosely typed op?: string parameter and the separate dispatch in schedule-template mean a future rule change must be checked in two places."},
+ "bypasses_abstraction": {"value": true, "where": "createScheduleList in packages/loot-core/src/server/budget/schedule-template.ts dispatches on amountCondition.op itself and calls getRangeWorstCase/getApproxWorstCase instead of getScheduledAmount(value, false, op)"},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "schedule-template.ts re-expresses getScheduledAmount's op dispatch as a nested ternary over getRangeWorstCase/getApproxWorstCase, a reshaped copy of the shared function's branching."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getScheduledAmount gains an optional op parameter and an op==='isapprox' branch; schedule-template.ts createScheduleList bypasses it with its own dispatch."}
+}

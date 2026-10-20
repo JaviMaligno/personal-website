@@ -1,0 +1,12 @@
+{"id": "f019ee889d",
+ "reuse": {"score": 4, "why": "Every month-wide action, including the new setLastMonthSpending, goes through the existing shouldBudgetCategory and averageToBudgetAmount helpers, but the category query is not shared."},
+ "duplication": {"score": 2, "why": "The category query with the new has_template/group_fixed columns (notes join, goal_def IS NOT NULL, LIKE '%#fixed%') is written out in setZero, setLastMonthSpending, set3MonthAvg, set6MonthAvg, set12MonthAvg and again in getBudgetData."},
+ "placement": {"score": 3, "why": "The hidden/fixed/template decision belongs in month-budget-categories.ts and does go there, but what counts as 'has a template' and 'fixed group' is defined in SQL at six query sites, so part of the rule sits in the data layer of each action."},
+ "scope": {"score": 5, "why": "All edits serve the four steps (exclusions, new action, fixed groups, includeHiddenCategories), plus tests."},
+ "maintainability": {"score": 3, "why": "The helper is the single gate, but changing the template or #fixed definition means editing six SQL strings, and the now-unused `action` parameter of shouldBudgetCategory is left in place."},
+ "bypasses_abstraction": {"value": false, "where": "All month-wide actions call shouldBudgetCategory; none skip it."},
+ "duplicated_blocks": 4,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The repeated category queries in actions.ts are visible near-verbatim copies (only whitespace differs), not disguised."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "shouldBudgetCategory (month-budget-categories.ts) gains includeHiddenCategories and two input fields, and its `action` parameter is now unused; the has_template and group_fixed flags it decides on are computed separately in six SQL queries in actions.ts (getBudgetData, setZero, setLastMonthSpending, set3/6/12MonthAvg) rather than by the shared definition."}
+}

@@ -1,0 +1,45 @@
+{
+ "id": "8f5ac31b07",
+ "reuse": {
+  "score": 4,
+  "why": "Fintegra reuses findOrCreateBank, linkBankSyncAccount and the import pipeline, although downloading and local unlink cleanup introduce copies."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The change duplicates Akahu's transaction downloader, unlinkAccount's local cleanup and the holder-selection query."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider integration follows the existing module boundaries, but assertBankAccountNotLinked now owns closed-account validation beyond its named responsibility."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits address the four requested steps, with desktop changes limited to accommodating the expanded provider type."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared linking remains useful, but duplicated cleanup and holder selection create multiple places to maintain the same policies."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "Fintegra uses the existing linking abstractions; unlinkAccount includes remote cleanup and therefore cannot directly serve the local-only takeover operation."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The downloader, unlink cleanup and repeated holder predicate are recognizable copies rather than duplication hidden through substantial restructuring."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 2,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 0,
+  "where": "replaceExistingLink is threaded into both assertBankAccountNotLinked and linkBankSyncAccount, adding conditional rejection and conditional takeover branches while splitting holder selection across the two helpers."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 46.1
+ }
+}

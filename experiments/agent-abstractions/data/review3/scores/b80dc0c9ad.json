@@ -1,0 +1,10 @@
+{"id":"b80dc0c9ad",
+"reuse":{"score":2,"why":"Copies the field-clearing update from unlinkAccount instead of extracting a shared local-unlink helper that both unlinkAccount and the new path could call (unlinkAccount itself cannot be called because of the GoCardless removal)."},
+"duplication":{"score":2,"why":"The eight-field db.updateAccount block that defines an 'unlinked' account is copied verbatim from unlinkAccount, so the definition of an unlinked account now lives in two places."},
+"placement":{"score":3,"why":"The flag is threaded uniformly through all six providers via the existing shared guard, but the guard named ensureBankAccountIsNotLinked now performs a destructive write before the link itself is attempted, mixing validation and mutation."},
+"scope":{"score":4,"why":"Focused on the flag and its tests; only minor incidental reformatting of two existing test assertions."},
+"maintainability":{"score":3,"why":"Single entry point for the rule is good, but the misleadingly named guard with a side effect and the copied unlink field list will drift if unlinkAccount changes."},
+"bypasses_abstraction":{"value":true,"where":"app.ts ensureBankAccountIsNotLinked: re-does unlinkAccount's db.updateAccount clearing instead of a shared local-unlink helper"},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied unlink field list is a verbatim copy of unlinkAccount's update, not disguised"}}

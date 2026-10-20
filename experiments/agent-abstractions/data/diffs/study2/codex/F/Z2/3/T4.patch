@@ -1,0 +1,52 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index f6faee6..cf6d145 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -30,10 +30,12 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+-      [{ num1: 10100, num2: 20000 }, 20000],
+-      [{ num1: 20000, num2: 10100 }, 20000],
++      [{ num1: 10100, num2: 20000 }, 10100],
++      [{ num1: 20000, num2: 10100 }, 10100],
++      [{ num1: -3000, num2: 5000 }, -3000],
++      [{ num1: 5000, num2: -3000 }, -3000],
+       [10000, 10000],
+-      [10000, 10750, 'isapprox'],
++      [10000, 9250, 'isapprox'],
+       [-10000, -10750, 'isapprox'],
+       [-1234, -1327, 'isapprox'],
+       [0, 0, 'isapprox'],
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index c6eca27..3ccbf46 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -377,9 +377,9 @@ export function applyWeekendRuleToDay(
+     : day;
+ }
+ 
+-// The amount a schedule is expected to post. Ranged amounts use the endpoint
+-// furthest from zero, and approximate amounts use the tolerance boundary furthest
+-// from zero.
++// The amount a schedule is expected to post. Ranged amounts use the lowest
++// value allowed, and approximate amounts use the tolerance boundary that lowers
++// the expected amount (less income or more expense).
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -392,12 +392,11 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     const expectedAmount =
+       op === 'isapprox'
+-        ? amount + Math.sign(amount) * Math.round(Math.abs(amount) * 0.075)
++        ? amount - Math.round(Math.abs(amount) * 0.075)
+         : amount;
+     return inverse ? -expectedAmount : expectedAmount;
+   }
+-  const expectedAmount =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  const expectedAmount = Math.min(amount.num1, amount.num2);
+   return inverse ? -expectedAmount : expectedAmount;
+ }
+ 

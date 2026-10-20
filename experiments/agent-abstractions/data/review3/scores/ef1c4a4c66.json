@@ -1,0 +1,12 @@
+{"id":"ef1c4a4c66",
+"reuse":{"score":5,"why":"All server-side expected-amount sites and the API model now call the existing exported getScheduledAmount, and the approximate tolerance reuses getApproxNumberThreshold from shared/rules."},
+"duplication":{"score":5,"why":"Five inline midpoint/missing-amount ternaries are deleted in favour of the single helper; no new copy of the rule is introduced."},
+"placement":{"score":4,"why":"The rule sits in shared/schedules.ts and expectedAmount is produced in the API model layer (scheduleModel.toExternal), both sensible; widening toExternal's return type to the list-specific APIScheduleListEntity couples the generic converter to one endpoint."},
+"scope":{"score":5,"why":"Edits are limited to the rule, its callers, the API field, tests and release notes."},
+"maintainability":{"score":4,"why":"One function owns the planning rule, but the operator is an optional parameter and only Balance.tsx among the client callers was updated to pass it, so SchedulesTable, SchedulesListItem and MobileSchedulesPage silently get the range rule without the approximate one."},
+"bypasses_abstraction":{"value":false,"where":"No site reimplements the amount rule; the client callers that omit the operator still go through getScheduledAmount"},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"Inline copies were removed rather than reshaped"},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"getScheduledAmount gains an optional `op` parameter and an `isapprox` branch (the requested rule); every site calls it, though four client call sites in SchedulesTable.tsx, SchedulesListItem.tsx and MobileSchedulesPage.tsx do not pass the operator"}
+}

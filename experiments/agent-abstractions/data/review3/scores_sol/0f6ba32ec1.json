@@ -1,0 +1,44 @@
+{
+ "id": "0f6ba32ec1",
+ "reuse": {
+  "score": 4,
+  "why": "Fintegra reuses findOrCreateBank and linkAccountAndSync, and unlinking shares clearAccountLink, although transaction downloading repeats existing provider plumbing."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Link validation and clearing are shared, but downloadFintegraTransactions duplicates the authenticated request, error handling, and response normalization of existing downloaders."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider integration follows existing module boundaries, but assertBankAccountNotLinked mixes validation with the state-changing takeover operation."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on the requested linking rules, Fintegra integration, and related tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared linking primitives help maintenance, but a mutating assertion and another repeated downloader make responsibilities less clear."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "All six provider handlers use the shared validation and linking functions, and both unlink paths use clearAccountLink."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "sync.ts: downloadFintegraTransactions reshapes the existing downloadEnableBankingTransactions request/error/normalization sequence using a typed response and direct property access."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 0,
+  "where": "app.ts: assertBankAccountNotLinked gains replaceExistingLink and a takeover-versus-rejection branch, expanding an assertion into an operation that clears another account's link."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 30.3
+ }
+}

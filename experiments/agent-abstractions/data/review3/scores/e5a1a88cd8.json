@@ -1,0 +1,13 @@
+{
+  "id": "e5a1a88cd8",
+  "reuse": {"score": 2, "why": "The new setMonthAvg re-inlines the body of the existing exported setNMonthAvg (getCategoryAverage + income sign flip + setBudget) instead of calling it, and the saved-template SQL test is written afresh rather than shared with the identical source='ui' checks already in statements.ts."},
+  "duplication": {"score": 2, "why": "The saved-template condition appears twice in actions.ts (the visibleUntemplatedCategory WHERE fragment and the CASE in getBudgetData), the hidden/group-hidden rule is decided in SQL for setZero/averages but in JS for copyPreviousMonth, and setMonthAvg copies setNMonthAvg."},
+  "placement": {"score": 4, "why": "All changes stay in server/budget/actions.ts next to the month-wide actions and their query helpers, which is where this tree keeps that logic."},
+  "scope": {"score": 3, "why": "Besides the exclusion rule it restructures set3/6/12MonthAvg into a new setMonthAvg and swaps set6/12's per-category setNMonthAvg calls for inlined logic, an unrequested refactor of the averaging path."},
+  "maintainability": {"score": 2, "why": "The exclusion rule is spread over a SQL WHERE string, a SQL CASE column and a JS condition, so a future change to which categories month-wide actions skip must be made in several shapes."},
+  "bypasses_abstraction": {"value": true, "where": "setMonthAvg in server/budget/actions.ts reimplements setNMonthAvg instead of calling it; copyPreviousMonth applies the hidden/template rule in JS instead of the new getVisibleUntemplatedCategories selection."},
+  "duplicated_blocks": 3,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "setMonthAvg is setNMonthAvg's body reshaped into a loop (category is_income taken from the row instead of a query); the saved-template predicate is restated as a WHERE fragment and as a CASE expression in getBudgetData."},
+  "one_place": {"value": false, "where": "Hidden/group-hidden/saved-template exclusion lives in visibleUntemplatedCategory (setZero, set3/6/12MonthAvg via getVisibleUntemplatedCategories) and separately in getBudgetData's CASE plus copyPreviousMonth's JS if-condition."}
+}

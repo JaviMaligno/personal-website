@@ -1,0 +1,11 @@
+{"id":"005b97e45c",
+"reuse":{"score":5,"why":"Introduces one exported isHoliday helper built on the existing monthUtils.dayFromDate and replaces every inline `holidays.includes(dayFromDate(...))` check in shared/schedules.ts and schedules/app.ts with it."},
+"duplication":{"score":4,"why":"The five copies of the holiday membership test are collapsed into one function; the surrounding `isWeekend(date) || isHoliday(date, holidays)` pairing is still repeated at those five sites, which a single non-working-day predicate would have removed."},
+"placement":{"score":4,"why":"The helper lives in shared/schedules.ts with the other schedule date rules and is imported by the server app; it is placed at the top of the file among the preset constants rather than next to getDateWithSkippedWeekend."},
+"scope":{"score":5,"why":"Only the holiday matching and its tests change."},
+"maintainability":{"score":4,"why":"The MM-DD vs YYYY-MM-DD rule now has one definition that every holiday check uses; the remaining weekend-or-holiday composition at each site is the main thing a maintainer would still have to keep in sync."},
+"bypasses_abstraction":{"value":false,"where":"All holiday checks in the tree (getNextDate x2, getDateWithSkippedWeekend, getUpcomingDates, getDatesInRange) now call isHoliday"},
+"duplicated_blocks":0,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"The previous inline copies were replaced by calls, not reshaped"}
+}

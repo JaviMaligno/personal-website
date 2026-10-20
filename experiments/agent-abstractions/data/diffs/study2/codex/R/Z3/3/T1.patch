@@ -1,0 +1,89 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 1ca2951..45ccbca 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -52,6 +52,24 @@ type LinkAccountBaseParams = {
+   startingBalance?: number;
+ };
+ 
++async function assertBankAccountIsNotLinked(
++  provider: NonNullable<AccountEntity['account_sync_source']>,
++  accountId: string,
++  upgradingId?: AccountEntity['id'],
++) {
++  const existingAccount = await db.first<{ id: string }>(
++    `SELECT a.id FROM accounts a
++     WHERE a.tombstone = 0 AND a.account_sync_source = ? AND a.account_id = ?
++       AND (? IS NULL OR a.id != ?)
++     LIMIT 1`,
++    [provider, accountId, upgradingId ?? null, upgradingId ?? null],
++  );
++
++  if (existingAccount) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ export type AccountHandlers = {
+   'account-update': typeof updateAccount;
+   'accounts-get': typeof getAccounts;
+@@ -180,6 +198,11 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
++  await assertBankAccountIsNotLinked(
++    'goCardless',
++    account.account_id,
++    upgradingId,
++  );
+   let id;
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+@@ -247,6 +270,11 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
++  await assertBankAccountIsNotLinked(
++    'simpleFin',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id;
+ 
+   const institution = {
+@@ -324,6 +352,11 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
++  await assertBankAccountIsNotLinked(
++    'pluggyai',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id;
+   const fileId = getPrefs()?.cloudFileId;
+ 
+@@ -403,6 +436,11 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
++  await assertBankAccountIsNotLinked(
++    'akahu',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id;
+ 
+   const institution = {
+@@ -477,6 +515,11 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
++  await assertBankAccountIsNotLinked(
++    'enableBanking',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id: string | undefined;
+ 
+   const institution = {

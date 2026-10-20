@@ -1,0 +1,11 @@
+{"id":"724294d31a",
+"reuse":{"score":4,"why":"Reuses extractTagsFromText, getCategoryAverage, getSheetValue, setBudget and the undoable/mutator wiring, and introduces getMonthActionCategories/setBudgetsForActionCategories that most month-wide actions share; copyPreviousMonth and setZero do not use the new setter helper."},
+"duplication":{"score":3,"why":"Removes the three copied category queries of the average actions, but the exclusion rule (hidden/group hidden unless includeHidden, #fixed group, saved template) is written twice, once in getMonthActionCategories' SQL and once as JS conditions in copyPreviousMonth over getBudgetData, and setZero repeats the batch loop with its own income check."},
+"placement":{"score":5,"why":"All logic stays in server/budget/actions.ts with the method registered in budget/app.ts like its siblings."},
+"scope":{"score":4,"why":"Focused on the four steps; the rewrite of set6/12MonthAvg from setNMonthAvg to the shared average path is a related consolidation, not unrelated churn."},
+"maintainability":{"score":3,"why":"Mostly a clean shared selection + setter, but the next exclusion rule must be added in two places (SQL helper and copyPreviousMonth's inline checks), which is exactly how these drift."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth decides the exclusions inline over getBudgetData rows instead of using getMonthActionCategories; setZero calls getMonthActionCategories but hand-rolls the loop and income check instead of setBudgetsForActionCategories."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"copyPreviousMonth's chain of hidden/group_hidden/isFixedGroupNote/goal_def checks restates the WHERE/filter rule of getMonthActionCategories in row-wise JS form."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":2,"where":"getMonthActionCategories gains includeHiddenCategories with a conditional SQL fragment; copyPreviousMonth re-implements the selection rule and setZero re-implements the setter loop."}}

@@ -1,0 +1,12 @@
+{"id":"14484ed5f9",
+"reuse":{"score":3,"why":"Works inside the existing getNextDate and its RSchedule occurrences, but does not put the daily rule where the weekend rule is shared (getDateWithSkippedWeekend or the recurrence config), so other weekend-handling callers do not get it."},
+"duplication":{"score":4,"why":"No copied block; the daily check is written once, though it reads frequency from dateCond.value while the rest of the function reads value.schedule.data."},
+"placement":{"score":3,"why":"The rule is placed in getNextDate only, while getUpcomingDates in server/schedules/app.ts and createScheduleList in server/budget/schedule-template.ts apply weekend handling themselves via getDateWithSkippedWeekend and keep moving daily weekend occurrences."},
+"scope":{"score":5,"why":"One change in getNextDate and one parameterised test; nothing unrelated."},
+"maintainability":{"score":2,"why":"The daily-skip rule now lives in one of three weekend-handling paths, so the schedule's upcoming-dates list and budget templates disagree with getNextDate, and a re-query loop per weekend day is harder to reason about than excluding the days in the recurrence."},
+"bypasses_abstraction":{"value":false,"where":"Uses the existing getNextDate/RSchedule path; it does not route around an existing abstraction, it just does not cover the other callers."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No duplicated logic."},
+"one_place":{"value":false,"where":"Changed only in getNextDate (packages/loot-core/src/shared/schedules.ts); getUpcomingDates (server/schedules/app.ts) and createScheduleList (server/budget/schedule-template.ts) still apply getDateWithSkippedWeekend to daily occurrences."}
+}

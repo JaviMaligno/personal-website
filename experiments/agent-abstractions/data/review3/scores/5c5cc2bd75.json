@@ -1,0 +1,11 @@
+{"id": "5c5cc2bd75",
+ "reuse": {"score": 3, "why": "There is no shared category-selection helper in this tree to reuse; the change keeps using the existing getFixedGroupIds/hasSavedTemplates exclusions, but it does not introduce one either, so the selection query stays copied across actions."},
+ "duplication": {"score": 2, "why": "The same `includeHiddenCategories ? '' : 'AND c.hidden = 0 AND g.hidden = 0'` SQL fragment and the same optional parameter are pasted into five copied queries, plus a sixth variant in copyPreviousMonth, instead of being decided once."},
+ "placement": {"score": 4, "why": "The flag is handled in the action functions in server/budget/actions.ts where these actions live, though the hidden rule would better sit in one selection function there."},
+ "scope": {"score": 5, "why": "Only the month-wide actions' signatures, their hidden filters and a release note change."},
+ "maintainability": {"score": 2, "why": "The hidden rule now has six hand-maintained copies with an interpolated SQL conditional each, so any further change to which categories month-wide actions touch has to be repeated everywhere."},
+ "bypasses_abstraction": {"value": false, "where": "No shared selection abstraction exists in this tree for the actions to bypass; each action already ran its own query."},
+ "duplicated_blocks": 6,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The repeated fragment is pasted verbatim into setZero, set3MonthAvg, setLastMonthSpending, set12MonthAvg and set6MonthAvg, and expressed as a JS condition in copyPreviousMonth; it is open, not disguised."}
+}

@@ -1,0 +1,13 @@
+{
+  "id": "be8a4b4aa9",
+  "reuse": {"score": 3, "why": "Reuses getNextDate and getDateWithSkippedWeekend, but getUpcomingDates and the budget template each re-derive the daily-drops-weekend rule instead of getting it from one shared predicate or from getNextDate."},
+  "duplication": {"score": 2, "why": "`skipWeekend && frequency === 'daily'` plus an isWeekend filter is written in getNextDate (twice, for the forward and reverse lookups), getUpcomingDates and schedule-template.ts."},
+  "placement": {"score": 3, "why": "The core rule is put in shared/schedules.ts getNextDate where weekend solving already lives, but server/schedules/app.ts and server/budget/schedule-template.ts carry their own copies of the decision."},
+  "scope": {"score": 5, "why": "Edits are limited to the weekend rule, the frequency plumbing in parseRecurDate, and tests."},
+  "maintainability": {"score": 2, "why": "Three independently phrased versions of the same rule, with differing lookahead caps (7 attempts vs count*7+7), will drift the next time weekend handling changes."},
+  "bypasses_abstraction": {"value": true, "where": "getUpcomingDates (server/schedules/app.ts) and createScheduleList (server/budget/schedule-template.ts) decide weekend dropping themselves instead of going through getNextDate/getDateWithSkippedWeekend."},
+  "duplicated_blocks": 2,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "The same dropsWeekend predicate is re-expressed as `dropsWeekend`/`isDroppedWeekend` in the template, an inline early-return loop in getUpcomingDates, and a take-N-then-filter in getNextDate."},
+  "one_place": {"value": false, "where": "The daily-skip rule is defined separately in shared/schedules.ts getNextDate, server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts createScheduleList."}
+}

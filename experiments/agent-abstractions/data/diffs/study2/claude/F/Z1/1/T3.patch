@@ -1,0 +1,45 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 0f6414b..83308fa 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -220,12 +220,17 @@ type BulkBudgetCategory = Pick<
+   'id' | 'is_income' | 'hidden' | 'goal_def'
+ > & {
+   group_hidden: db.DbCategoryGroup['hidden'] | null;
++  group_notes: string | null;
+ };
+ 
++// A group is fixed when its notes contain the `#fixed` tag as a whole word.
++const FIXED_TAG = /(^|\s)#fixed(?![\w-])/i;
++
+ // The categories a bulk budget action (copy last month, set to zero, set to an
+ // N-month average) writes. Income categories take part only in tracking
+ // budgets. Hidden categories, categories in hidden groups and categories with
+-// saved budget templates are skipped.
++// saved budget templates, and categories in groups tagged `#fixed` in the
++// group's notes are skipped.
+ // `skipMissingGroup` also skips a category whose group row does not exist: the
+ // average actions have always done so, copy last month has not.
+ async function getBulkBudgetCategories({
+@@ -235,9 +240,10 @@ async function getBulkBudgetCategories({
+ }): Promise<BulkBudgetCategory[]> {
+   const categories = await db.all<BulkBudgetCategory>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -250,6 +256,9 @@ async function getBulkBudgetCategories({
+     if (hasSavedTemplates(cat.goal_def)) {
+       return false;
+     }
++    if (cat.group_notes && FIXED_TAG.test(cat.group_notes)) {
++      return false;
++    }
+     if (cat.hidden === 1 || cat.group_hidden === 1) {
+       return false;
+     }

@@ -1,0 +1,100 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 1ca2951..54cf7eb 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -181,6 +181,12 @@ async function linkGoCardlessAccount({
+   account: SyncServerGoCardlessAccount;
+ }) {
+   let id;
++  await link.ensureAccountIsNotLinked(
++    'goCardless',
++    requisitionId,
++    account.account_id,
++    upgradingId,
++  );
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+   if (upgradingId) {
+@@ -256,6 +262,13 @@ async function linkSimpleFinAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await link.ensureAccountIsNotLinked(
++    'simpleFin',
++    externalAccount.orgDomain ?? externalAccount.orgId,
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+@@ -334,6 +347,13 @@ async function linkPluggyAiAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await link.ensureAccountIsNotLinked(
++    'pluggyai',
++    externalAccount.orgDomain ?? externalAccount.orgId,
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+@@ -409,6 +429,13 @@ async function linkAkahuAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await link.ensureAccountIsNotLinked(
++    'akahu',
++    externalAccount.orgDomain ?? externalAccount.orgId,
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+@@ -486,6 +513,13 @@ async function linkEnableBankingAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await link.ensureAccountIsNotLinked(
++    'enableBanking',
++    externalAccount.account_id,
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   // Enable Banking uses a session-per-account model, so we use the
+   // account-level identifier (account_id) rather than institution-level
+   // IDs. This creates one bank entry per Enable Banking account, unlike
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 19f9163..20f0240 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -50,3 +50,22 @@ export async function findOrCreateBank(
+ 
+   return bankData;
+ }
++
++export async function ensureAccountIsNotLinked(
++  provider: string,
++  bankId: db.DbBank['bank_id'],
++  accountId: db.DbAccount['account_id'],
++  upgradingId?: db.DbAccount['id'],
++) {
++  const existing = await db.first<{ id: string }>(
++    `SELECT a.id FROM accounts a
++     JOIN banks b ON b.id = a.bank
++     WHERE a.tombstone = 0 AND a.account_sync_source = ?
++       AND b.bank_id = ? AND a.account_id = ? AND a.id IS NOT ?`,
++    [provider, bankId, accountId, upgradingId ?? null],
++  );
++
++  if (existing) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}

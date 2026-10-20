@@ -1,0 +1,11 @@
+{"id": "86de65d25d",
+"reuse": {"score": 3, "why": "The link-eligibility rule is one shared helper and unlink reuses the extracted clearAccountBankLink, but Fintegra linking and download copy the Akahu functions instead of sharing a common link/download path."},
+"duplication": {"score": 2, "why": "linkFintegraAccount is a near line-for-line copy of linkAkahuAccount, downloadFintegraTransactions copies downloadAkahuTransactions, and the same five-line assert-then-clear preamble is pasted into all six link functions."},
+"placement": {"score": 4, "why": "Link rules live in accounts/app.ts next to the link handlers, download in sync.ts beside the other providers, config and types in their usual modules."},
+"scope": {"score": 5, "why": "All edits serve the four steps; extracting clearAccountBankLink out of unlinkAccount is directly needed by step 4."},
+"maintainability": {"score": 3, "why": "Rules are centralised in one helper, but adding a provider still means copying a whole link and download function and remembering the preamble in each, and an 'assert' function that returns an account to unlink mixes validation with the replace decision."},
+"bypasses_abstraction": {"value": false, "where": "Every link handler, including the new Fintegra one, goes through assertCanLinkBankAccount and the shared findOrCreateBank/syncAccount/handleSyncResponse."},
+"duplicated_blocks": 3,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "downloadFintegraTransactions is downloadAkahuTransactions reshaped (destructured response, dropped 'error' branch and logging); the Akahu balance branch in processBankSyncDownload is widened to fintegra rather than shared by name."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 0, "where": "assertCanLinkBankAccount in accounts/app.ts: step 3 adds the closed-upgrading-account branch and step 4 adds the replaceExistingLink parameter with a branch that turns the assertion into returning the account to unlink; every call site then repeats the clearAccountBankLink follow-up."}}

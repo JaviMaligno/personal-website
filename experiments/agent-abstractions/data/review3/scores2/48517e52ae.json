@@ -1,0 +1,11 @@
+{"id":"48517e52ae",
+"reuse":{"score":1,"why":"Ignores the tree's notes storage (the notes table keyed by group id, used by notes-save) by adding a new category_groups.notes column via migration, and hand-writes a #fixed regex instead of the existing extractTagsFromText in shared/tags."},
+"duplication":{"score":2,"why":"The same SELECT change and the same isFixedGroup skip are pasted into five month-wide actions plus copyPreviousMonth, on top of the already-copied category queries it leaves in place."},
+"placement":{"score":2,"why":"Introduces a schema change and a parallel notes field for data the tree already stores in the notes table, and tag parsing outside shared/tags."},
+"scope":{"score":3,"why":"A migration and DB type change go beyond the request, which only needed to read existing group notes."},
+"maintainability":{"score":1,"why":"Two sources of truth for group notes (the new column is never written by the notes UI), a bespoke tag regex, and the exclusion rule spread across six functions make this hard to own."},
+"bypasses_abstraction":{"value":true,"where":"New category_groups.notes column instead of the notes table/notes-save API; inline /#fixed/ regex instead of extractTagsFromText; per-action queries instead of a shared category selection."},
+"duplicated_blocks":6,
+"would_merge":"no",
+"disguised_duplication":{"value":false,"where":"The duplicated skip and query edits are verbatim copies, not disguised."},
+"one_place":{"value":false,"where":"The #fixed exclusion is applied separately in copyPreviousMonth, setZero, setLastMonthSpending, set3MonthAvg, set6MonthAvg and set12MonthAvg (only the predicate isFixedGroup is shared)."}}

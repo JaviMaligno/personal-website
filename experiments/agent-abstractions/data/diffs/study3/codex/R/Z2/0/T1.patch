@@ -1,0 +1,115 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index b82b437..50e893e 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -31,6 +31,7 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
++  getScheduledAmount,
+   getStatus,
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+@@ -150,15 +151,15 @@ function updateActions(
+ 
+   // Mirrors how `_amount` resolves: a deleted/empty amount condition value
+   // yields 0, so the action is synced to 0 too, keeping it consistent with
+-  // the amount the schedule actually posts. A ranged ("is between") amount
+-  // is scheduled at its rounded midpoint.
++  // the amount the schedule actually posts. Ranged amounts use the endpoint
++  // furthest from zero.
+   const amountValue = amountCond.value;
+   const amount =
+     amountValue == null
+       ? 0
+       : typeof amountValue === 'number'
+         ? amountValue
+-        : Math.round((amountValue.num1 + amountValue.num2) / 2);
++        : getScheduledAmount(amountValue);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -591,14 +592,14 @@ async function postTransactionForSchedule({
+     return;
+   }
+ 
+-  // A missing amount (deleted condition) posts 0; a ranged ("is between")
+-  // amount posts its rounded midpoint.
++  // A missing amount (deleted condition) posts 0; ranged amounts post the
++  // endpoint furthest from zero.
+   const amount =
+     schedule._amount == null
+       ? 0
+       : typeof schedule._amount === 'number'
+         ? schedule._amount
+-        : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++        : getScheduledAmount(schedule._amount);
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..ba2bc96 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -9,6 +9,7 @@ import {
+   getNextDate,
+   getNextDateAfter,
+   getScheduleOccurrenceMatchStartDate,
++  getScheduledAmount,
+   getStatus,
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+@@ -32,6 +33,17 @@ describe('schedules', () => {
+     MockDate.reset();
+   });
+ 
++  describe('getScheduledAmount', () => {
++    it.each([
++      [{ num1: -10100, num2: -20000 }, -20000],
++      [{ num1: -20000, num2: -10100 }, -20000],
++      [{ num1: 10100, num2: 20000 }, 20000],
++      [{ num1: 20000, num2: 10100 }, 20000],
++    ])('uses the endpoint furthest from zero', (range, expected) => {
++      expect(getScheduledAmount(range)).toBe(expected);
++    });
++  });
++
+   describe('getStatus', () => {
+     it('returns completed if completed', () => {
+       expect(getStatus(todayString, true, false, '7')).toBe('completed');
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..11ca33e 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -364,8 +364,11 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const avg = (amount.num1 + amount.num2) / 2;
+-  return inverse ? -Math.round(avg) : Math.round(avg);
++  const expected =
++    Math.abs(amount.num1) >= Math.abs(amount.num2)
++      ? amount.num1
++      : amount.num2;
++  return inverse ? -expected : expected;
+ }
+ 
+ export function getUpcomingDays(
+@@ -496,14 +499,14 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // A missing amount previews as 0; a ranged ("is between") amount as its
+-      // rounded midpoint.
++      // A missing amount previews as 0; a ranged amount uses the endpoint
++      // furthest from zero.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amount
+-            : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++            : getScheduledAmount(schedule._amount);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

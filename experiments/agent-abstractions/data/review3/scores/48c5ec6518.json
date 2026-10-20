@@ -1,0 +1,7 @@
+{"id": "48c5ec6518",
+ "completeness": {"per_site": {"copy-previous-month": "full", "set-zero": "full", "set-3month-avg": "full", "set-6month-avg": "full", "set-12month-avg": "full", "set-n-month-avg-sign": "full"},
+  "left_out": {}, "sites_full": 6, "sites_partial": 0, "sites_total": 6, "value": 1.0,
+  "why": "copyPreviousMonth and setZero call isCategoryFilled with an explicit kind, the three averages take their category set from getAverageFillCategories (whose SQL no longer filters hidden rows; the hidden and income rules are decided by isCategoryFilled 'average'), and both sign inversions go through averageToBudgetAmount; the setZero and missing-group inconsistencies are carried by the kind argument and the un-awaited writes stay as site-local data handling."},
+ "interface": {"score": 4, "why": "One selection function with a kind parameter that makes the preserved inconsistencies explicit (zero writes hidden, copy keeps NULL groups, average drops them) and a small sign helper; no speculative options, though the kind values name the callers ('copy'/'zero'/'average') rather than the hidden-category rule they select, and getAverageFillCategories types its rows as DbViewCategory while selecting group_hidden."},
+ "disguised_duplication": {"value": false, "where": "The income/hidden checks and the three copied average queries are removed in favour of isCategoryFilled, getAverageFillCategories and averageToBudgetAmount in server/budget/actions.ts; no copy remains in reshaped form."}
+}

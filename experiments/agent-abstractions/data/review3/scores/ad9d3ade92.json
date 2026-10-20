@@ -1,0 +1,13 @@
+{
+  "id": "ad9d3ade92",
+  "reuse": {"score": 4, "why": "Reuses isTrackingBudget, getCategoryAverage, getBudgetData, setBudget and the shared extractTagsFromText for the #fixed tag; the templated-category query is a small new SQL check next to goal-template's private getTemplates."},
+  "duplication": {"score": 4, "why": "The repeated income/hidden checks, the three copies of the visible-categories SQL and the average sign flip are consolidated into isMonthFillCategory, getMonthFillCategories and averageToBudgetAmount; only copyPreviousMonth re-composes the filter with managedIds itself."},
+  "placement": {"score": 5, "why": "The selection and sign helpers live in budget/actions.ts beside the month-wide actions that use them, and the new action is registered in budget/app.ts next to its siblings."},
+  "scope": {"score": 5, "why": "Every edit serves one of the steps (shared definition, exclusions, new action, #fixed groups, includeHiddenCategories) plus tests and a release note."},
+  "maintainability": {"score": 4, "why": "A future rule change lands in one place for most actions, with the ungrouped-category inconsistency named as an explicit scope; copyPreviousMonth's separate composition and reusing averageToBudgetAmount for last-month spending are small wrinkles."},
+  "bypasses_abstraction": {"value": true, "where": "copyPreviousMonth calls isMonthFillCategory and getManagedCategoryIds separately instead of a single shared selection, so it composes the exclusion rule itself"},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "The only repeat is copyPreviousMonth's isMonthFillCategory && !managedIds.has(...) composition, which is visible rather than disguised"},
+  "abstraction_drift": {"value": true, "parameters_added": 2, "special_case_branches": 2, "bypassing_call_sites": 1, "where": "isMonthFillCategory/getMonthFillCategories gained the scope and includeHiddenCategories parameters with a branch for each; copyPreviousMonth bypasses getMonthFillCategories and joins the managed-id exclusion itself"}
+}

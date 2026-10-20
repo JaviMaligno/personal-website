@@ -1,0 +1,154 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index de582a9..7a57753 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -33,6 +33,7 @@ import {
+   getNextDateAfter,
+   getScheduledAmount,
+   getStatus,
++  hasCloseOccurrences,
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+ import type {
+@@ -777,11 +778,29 @@ export async function advanceSchedulesService(syncSuccess) {
+       if (schedule._date) {
+         // Move forward recurring schedules
+         if (isRecurringSchedule(schedule)) {
+-          try {
+-            await setNextDate({ id: schedule.id });
+-          } catch {
+-            // This might error if the rule is corrupted and it can't
+-            // find the rule
++          if (hasCloseOccurrences(schedule, schedule.next_date)) {
++            // Occurrences are close together (e.g. daily): step through them
++            // one by one so the schedule stops on its first unpaid occurrence
++            // instead of jumping to today and hiding missed ones.
++            let currentSchedule = schedule;
++            while (currentSchedule.next_date < currentDay()) {
++              const updatedSchedule =
++                await advanceRecurringScheduleFromNextDate(currentSchedule);
++              if (
++                updatedSchedule == null ||
++                !(await hasTransactionForSchedule(updatedSchedule))
++              ) {
++                break;
++              }
++              currentSchedule = updatedSchedule;
++            }
++          } else {
++            try {
++              await setNextDate({ id: schedule.id });
++            } catch {
++              // This might error if the rule is corrupted and it can't
++              // find the rule
++            }
+           }
+         } else {
+           if (schedule._date < currentDay()) {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index b83cb4b..3559e83 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -80,12 +80,73 @@ export type ScheduleOccurrenceMatchInput = {
+   _conditions?: RuleConditionEntity[];
+ };
+ 
++// How many days before an occurrence a payment still counts as paying it, for
++// schedules with an approximate date.
++const APPROX_DATE_LOOKBACK_DAYS = 2;
++
++/**
++ * The latest occurrence of a recurring date condition strictly before
++ * `occurrenceDate` that falls within the approximate-date lookback window, or
++ * null if there is none (or the condition is not recurring).
++ */
++function getPreviousCloseOccurrence(
++  dateCond: RuleConditionEntity | undefined,
++  occurrenceDate: string,
++): string | null {
++  if (!dateCond || dateCond.value == null) {
++    return null;
++  }
++
++  let value;
++  try {
++    value = new Condition(dateCond.op, 'date', dateCond.value, null).getValue();
++  } catch {
++    return null;
++  }
++  if (value?.type !== 'recur') {
++    return null;
++  }
++
++  const windowStart = monthUtils.subDays(
++    occurrenceDate,
++    APPROX_DATE_LOOKBACK_DAYS,
++  );
++  // Start a little earlier so weekend adjustments that move an occurrence
++  // into the window are still seen.
++  const searchStart = d.startOfDay(
++    monthUtils.parseDate(monthUtils.subDays(windowStart, 3)),
++  );
++  const { skipWeekend, weekendSolve } = value.schedule.data ?? {};
++
++  let previous: string | null = null;
++  const occurrences = value.schedule
++    .occurrences({ start: searchStart, take: APPROX_DATE_LOOKBACK_DAYS + 8 })
++    .toArray();
++  for (const occurrence of occurrences) {
++    let date: Date = occurrence.date;
++    if (skipWeekend) {
++      date = getDateWithSkippedWeekend(date, weekendSolve);
++    }
++    const day = monthUtils.dayFromDate(date);
++    if (day >= windowStart && day < occurrenceDate) {
++      if (previous == null || day > previous) {
++        previous = day;
++      }
++    }
++  }
++  return previous;
++}
++
+ /**
+  * Lower bound for matching a posted transaction to a schedule occurrence date.
+  *
+  * Used by getHasTransactionsQuery for `next_date` (lower bound only). Forecast
+  * occurrence dedup also applies an upper bound of `occurrenceDate`; see
+  * isScheduleOccurrencePosted.
++ *
++ * For approximate dates the lookback never reaches the previous occurrence:
++ * a transaction posted for one occurrence must not count as paying a later
++ * one (e.g. daily or every-other-day schedules).
+  */
+ export function getScheduleOccurrenceMatchStartDate(
+   schedule: ScheduleOccurrenceMatchInput,
+@@ -98,7 +159,27 @@ export function getScheduleOccurrenceMatchStartDate(
+   if (schedule.posts_transaction) {
+     return occurrenceDate;
+   }
+-  return monthUtils.subDays(occurrenceDate, 2);
++  const previous = getPreviousCloseOccurrence(dateCond, occurrenceDate);
++  if (previous != null) {
++    return monthUtils.addDays(previous, 1);
++  }
++  return monthUtils.subDays(occurrenceDate, APPROX_DATE_LOOKBACK_DAYS);
++}
++
++/**
++ * Whether the occurrences of a schedule are close enough together that the
++ * approximate-date lookback before `occurrenceDate` would reach the previous
++ * occurrence.
++ */
++export function hasCloseOccurrences(
++  schedule: ScheduleOccurrenceMatchInput,
++  occurrenceDate: string,
++): boolean {
++  const dateCond = schedule._conditions?.find(c => c.field === 'date');
++  if (dateCond?.op !== 'isapprox') {
++    return false;
++  }
++  return getPreviousCloseOccurrence(dateCond, occurrenceDate) != null;
+ }
+ 
+ export type PostedScheduleTransaction = {

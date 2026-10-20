@@ -1,0 +1,11 @@
+{"id":"aa3da287de",
+"reuse":{"score":3,"why":"Holiday handling is centralised in isNonWorkingDay and getDateWithSkippedWeekend, but no shared 'adjust or skip this occurrence' function is created, so each date site re-derives the daily-skip rule around those helpers."},
+"duplication":{"score":2,"why":"The 'skipWeekend && frequency === daily ? skip non-working days : move' decision is written separately in getNextDate, getUpcomingDates, getDatesInRange and schedule-template's skipsDays/moveWeekend pair, and getDatesInRange's occurrence loop parallels getUpcomingDates."},
+"placement":{"score":3,"why":"Core day predicates live in shared/schedules.ts, but the daily-skip policy is spread across server/schedules/app.ts and server/budget/schedule-template.ts instead of living in the shared schedule layer."},
+"scope":{"score":4,"why":"All edits serve the four steps; the rule-utils change to carry frequency/holidays into the recur data is needed, and only release notes are extra."},
+"maintainability":{"score":2,"why":"The weekend policy now has four independent implementations, and schedule-template drives it by inverting the noSkipWeekend flag (!skipsDays), which is hard to follow and easy to break."},
+"bypasses_abstraction":{"value":true,"where":"schedule-template.ts computes skipsDays/moveWeekend itself and repurposes getNextDate's noSkipWeekend flag; getUpcomingDates and getDatesInRange each implement their own daily-skip branch rather than sharing getNextDate's."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The daily-skip decision appears as skipsWeekendDays in getNextDate and getDatesInRange, an inline condition in getUpcomingDates and the skipsDays/moveWeekend pair in schedule-template: the same rule renamed and reshaped per site."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains a holidays parameter; getNextDate gains a daily-skip special case; getUpcomingDates, getDatesInRange and createScheduleList (schedule-template) each re-implement the skip-vs-move decision instead of calling one shared function."}}

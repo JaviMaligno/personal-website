@@ -1,0 +1,370 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index 8afdc28..8e81579 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -276,6 +276,125 @@ describe('simpleFinAccountsLink', () => {
+   });
+ });
+ 
++describe('fintegraAccountsLink', () => {
++  const alreadyLinkedMessage =
++    'This bank account is already linked to another account.';
++  const fintegraAccountsLinkHandler = app.handlers['fintegra-accounts-link'];
++
++  const externalFintegraAccount = {
++    balance: 0,
++    account_id: 'fin-1',
++    name: 'Current Account',
++    institution: 'Fintegra Bank',
++    orgId: 'org-1',
++  };
++
++  beforeEach(() => {
++    vi.mocked(bankSync.syncAccount).mockResolvedValue({
++      added: [],
++      updated: [],
++      updatedPreview: [],
++    });
++  });
++
++  it('creates an account synced from Fintegra, named after the external account', async () => {
++    await fintegraAccountsLinkHandler({
++      externalAccount: externalFintegraAccount,
++      offBudget: true,
++      startingDate: '2024-01-01',
++      startingBalance: 1000,
++    });
++
++    const account = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE account_id = ?',
++      ['fin-1'],
++    );
++    expect(account!.account_sync_source).toBe('fintegra');
++    expect(account!.name).toBe('Current Account');
++    expect(account!.official_name).toBe('Current Account');
++    expect(account!.offbudget).toBe(1);
++
++    const bank = await db.first<db.DbBank>('SELECT * FROM banks');
++    expect(bank!.bank_id).toBe('org-1');
++    expect(bank!.name).toBe('Fintegra Bank');
++
++    expect(bankSync.syncAccount).toHaveBeenCalledWith(
++      undefined,
++      undefined,
++      account!.id,
++      'fin-1',
++      'org-1',
++      '2024-01-01',
++      1000,
++      undefined,
++    );
++  });
++
++  it('groups accounts from the same organisation and institution under one bank', async () => {
++    await fintegraAccountsLinkHandler({
++      externalAccount: externalFintegraAccount,
++    });
++    await fintegraAccountsLinkHandler({
++      externalAccount: { ...externalFintegraAccount, account_id: 'fin-2' },
++    });
++
++    const banks = await db.all<db.DbBank>('SELECT * FROM banks');
++    expect(banks).toHaveLength(1);
++
++    const accounts = await db.all<db.DbAccount>(
++      'SELECT * FROM accounts WHERE account_sync_source = ?',
++      ['fintegra'],
++    );
++    expect(accounts.map(a => a.bank)).toEqual([banks[0].id, banks[0].id]);
++  });
++
++  it('refuses to link a Fintegra account that another local account already holds', async () => {
++    insertBank({ id: 'bank1', bank_id: 'org-1', name: 'Fintegra Bank' });
++    await db.insertAccount({
++      id: 'acct1',
++      name: 'Current Account',
++      bank: 'bank1',
++      account_id: 'fin-1',
++      account_sync_source: 'fintegra',
++    });
++
++    await expect(
++      fintegraAccountsLinkHandler({
++        externalAccount: externalFintegraAccount,
++      }),
++    ).rejects.toThrow(alreadyLinkedMessage);
++
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('upgrades an existing local account into a Fintegra-synced account', async () => {
++    await db.insertAccount({ id: 'acct2', name: 'Savings' });
++
++    await fintegraAccountsLinkHandler({
++      externalAccount: externalFintegraAccount,
++      upgradingId: 'acct2',
++    });
++
++    const target = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['acct2'],
++    );
++    expect(target!.account_id).toBe('fin-1');
++    expect(target!.account_sync_source).toBe('fintegra');
++    expect(target!.name).toBe('Savings');
++    expect(bankSync.syncAccount).toHaveBeenCalledWith(
++      undefined,
++      undefined,
++      'acct2',
++      'fin-1',
++      'org-1',
++      undefined,
++      undefined,
++      undefined,
++    );
++  });
++});
++
+ describe('accountsBankSync', () => {
+   it('persists ok status after a successful sync', async () => {
+     insertBank({ id: 'bank1', bank_id: 'gc-bank', name: 'GoCardless' });
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 6be8019..7b93754 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -35,6 +35,7 @@ import type {
+   ImportTransactionEntity,
+   SyncServerAkahuAccount,
+   SyncServerEnableBankingAccount,
++  SyncServerFintegraAccount,
+   SyncServerGoCardlessAccount,
+   SyncServerPluggyAiAccount,
+   SyncServerSimpleFinAccount,
+@@ -63,6 +64,7 @@ export type AccountHandlers = {
+   'pluggyai-accounts-link': typeof linkPluggyAiAccount;
+   'akahu-accounts-link': typeof linkAkahuAccount;
+   'enablebanking-accounts-link': typeof linkEnableBankingAccount;
++  'fintegra-accounts-link': typeof linkFintegraAccount;
+   'account-create': typeof createAccount;
+   'account-close': typeof closeAccount;
+   'account-reopen': typeof reopenAccount;
+@@ -85,6 +87,7 @@ export type AccountHandlers = {
+   'simplefin-accounts': typeof simpleFinAccounts;
+   'pluggyai-accounts': typeof pluggyAiAccounts;
+   'akahu-accounts': typeof akahuAccounts;
++  'fintegra-accounts': typeof fintegraAccounts;
+   'gocardless-get-banks': typeof getGoCardlessBanks;
+   'gocardless-create-web-token': typeof createGoCardlessWebToken;
+   'accounts-bank-sync': typeof accountsBankSync;
+@@ -274,6 +277,41 @@ async function linkBankSyncAccount({
+   return 'ok';
+ }
+ 
++async function linkFintegraAccount({
++  externalAccount,
++  upgradingId,
++  offBudget = false,
++  startingDate,
++  startingBalance,
++}: LinkAccountBaseParams & {
++  externalAccount: SyncServerFintegraAccount;
++}) {
++  await assertBankAccountNotLinkedElsewhere({
++    syncSource: 'fintegra',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
++  const bank = await link.findOrCreateBank(
++    { name: externalAccount.institution ?? null },
++    externalAccount.orgId,
++  );
++
++  return linkBankSyncAccount({
++    bank,
++    syncSource: 'fintegra',
++    newAccount: {
++      account_id: externalAccount.account_id,
++      name: externalAccount.name,
++      official_name: externalAccount.name,
++    },
++    upgradingId,
++    offBudget,
++    startingDate,
++    startingBalance,
++  });
++}
++
+ async function linkGoCardlessAccount({
+   requisitionId,
+   account,
+@@ -968,6 +1006,32 @@ async function akahuAccounts() {
+   }
+ }
+ 
++async function fintegraAccounts() {
++  const userToken = await asyncStorage.getItem('user-token');
++
++  if (!userToken) {
++    return { error: 'unauthorized' };
++  }
++
++  const serverConfig = getServer();
++  if (!serverConfig) {
++    throw new Error('Failed to get server config.');
++  }
++
++  try {
++    return await post(
++      serverConfig.FINTEGRA_SERVER + '/accounts',
++      {},
++      {
++        'X-ACTUAL-TOKEN': userToken,
++      },
++      60000,
++    );
++  } catch {
++    return { error_code: 'TIMED_OUT' };
++  }
++}
++
+ async function enableBankingStatus() {
+   const userToken = await asyncStorage.getItem('user-token');
+ 
+@@ -1742,6 +1806,8 @@ app.method('enablebanking-configure', enableBankingConfigure);
+ app.method('simplefin-accounts', simpleFinAccounts);
+ app.method('pluggyai-accounts', pluggyAiAccounts);
+ app.method('akahu-accounts', akahuAccounts);
++app.method('fintegra-accounts-link', linkFintegraAccount);
++app.method('fintegra-accounts', fintegraAccounts);
+ app.method('gocardless-get-banks', getGoCardlessBanks);
+ app.method('gocardless-create-web-token', createGoCardlessWebToken);
+ app.method('accounts-bank-sync', accountsBankSync);
+diff --git a/packages/loot-core/src/server/accounts/sync.ts b/packages/loot-core/src/server/accounts/sync.ts
+index c15278c..8f2211a 100644
+--- a/packages/loot-core/src/server/accounts/sync.ts
++++ b/packages/loot-core/src/server/accounts/sync.ts
+@@ -355,6 +355,45 @@ async function downloadAkahuTransactions(
+   return retVal;
+ }
+ 
++async function downloadFintegraTransactions(
++  acctId: AccountEntity['id'],
++  since: string,
++) {
++  const userToken = await asyncStorage.getItem('user-token');
++  if (!userToken) return;
++
++  logger.log('Pulling transactions from Fintegra');
++
++  const res = await post(
++    getServer().FINTEGRA_SERVER + '/transactions',
++    {
++      accountId: acctId,
++      startDate: since,
++    },
++    {
++      'X-ACTUAL-TOKEN': userToken,
++    },
++    60000,
++  );
++
++  if (res.error_code) {
++    throw BankSyncError(res.error_type, res.error_code);
++  } else if ('error' in res) {
++    throw BankSyncError('Connection', res.error);
++  }
++
++  let retVal = {};
++  const singleRes = res as BankSyncResponse;
++  retVal = {
++    transactions: singleRes.transactions.all,
++    accountBalance: singleRes.balances,
++    startingBalance: singleRes.startingBalance,
++  };
++
++  logger.log('Response:', retVal);
++  return retVal;
++}
++
+ async function downloadEnableBankingTransactions(
+   acctId: string,
+   since: string,
+@@ -1159,7 +1198,10 @@ async function processBankSyncDownload(
+         return total - amountToInteger(trans.transactionAmount.amount);
+       }, currentBalance);
+       balanceToUse = previousBalance;
+-    } else if (acctRow.account_sync_source === 'akahu') {
++    } else if (
++      acctRow.account_sync_source === 'akahu' ||
++      acctRow.account_sync_source === 'fintegra'
++    ) {
+       const currentBalance = download.startingBalance;
+       const previousBalance = transactions.reduce(
+         (total, trans) =>
+@@ -1258,6 +1300,8 @@ export async function syncAccount(
+     );
+   } else if (acctRow.account_sync_source === 'akahu') {
+     download = await downloadAkahuTransactions(acctId, syncStartDate);
++  } else if (acctRow.account_sync_source === 'fintegra') {
++    download = await downloadFintegraTransactions(acctId, syncStartDate);
+   } else if (acctRow.account_sync_source === 'goCardless') {
+     download = await downloadGoCardlessTransactions(
+       userId,
+diff --git a/packages/loot-core/src/server/server-config.ts b/packages/loot-core/src/server/server-config.ts
+index b0c6e7e..00f351e 100644
+--- a/packages/loot-core/src/server/server-config.ts
++++ b/packages/loot-core/src/server/server-config.ts
+@@ -10,6 +10,7 @@ type ServerConfig = {
+   PLUGGYAI_SERVER: string;
+   AKAHU_SERVER: string;
+   ENABLEBANKING_SERVER: string;
++  FINTEGRA_SERVER: string;
+ };
+ 
+ let config: ServerConfig | null = null;
+@@ -49,6 +50,7 @@ export function getServer(url?: string): ServerConfig | null {
+         PLUGGYAI_SERVER: joinURL(url, '/pluggyai'),
+         AKAHU_SERVER: joinURL(url, '/akahu'),
+         ENABLEBANKING_SERVER: joinURL(url, '/enablebanking'),
++        FINTEGRA_SERVER: joinURL(url, '/fintegra'),
+       };
+     } catch (error) {
+       logger.warn(
+diff --git a/packages/loot-core/src/types/models/bank-sync.ts b/packages/loot-core/src/types/models/bank-sync.ts
+index c518239..e2724b0 100644
+--- a/packages/loot-core/src/types/models/bank-sync.ts
++++ b/packages/loot-core/src/types/models/bank-sync.ts
+@@ -26,6 +26,7 @@ export const SYNC_PROVIDERS = [
+   'pluggyai',
+   'enableBanking',
+   'akahu',
++  'fintegra',
+ ] as const;
+ 
+ export type BankSyncProviders = (typeof SYNC_PROVIDERS)[number];
+diff --git a/packages/loot-core/src/types/models/fintegra.ts b/packages/loot-core/src/types/models/fintegra.ts
+new file mode 100644
+index 0000000..5fc66f1
+--- /dev/null
++++ b/packages/loot-core/src/types/models/fintegra.ts
+@@ -0,0 +1,7 @@
++export type SyncServerFintegraAccount = {
++  balance: number;
++  account_id: string;
++  institution?: string;
++  orgId?: string;
++  name: string;
++};
+diff --git a/packages/loot-core/src/types/models/index.ts b/packages/loot-core/src/types/models/index.ts
+index 9f8f908..406bff5 100644
+--- a/packages/loot-core/src/types/models/index.ts
++++ b/packages/loot-core/src/types/models/index.ts
+@@ -7,6 +7,7 @@ export type * from './category';
+ export type * from './category-group';
+ export type * from './dashboard';
+ export type * from './enablebanking';
++export type * from './fintegra';
+ export type * from './forecast';
+ export type * from './gocardless';
+ export type * from './import-transaction';

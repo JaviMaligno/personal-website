@@ -1,0 +1,233 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index d77cfce..4798b25 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -431,6 +431,61 @@ describe('month-wide budget actions', () => {
+       templated: 500,
+     });
+   });
++
++  it('setZero fills hidden and hidden-group categories when includeHiddenCategories is true', async () => {
++    await setupDatabase();
++    await setBudgets('2024-02', 5000);
++
++    await setZero({ month: '2024-02', includeHiddenCategories: true });
++
++    await expectBudgets('2024-02', {
++      visible: 0,
++      'hidden-cat': 0,
++      'in-hidden-group': 0,
++      'in-fixed-group': 5000,
++      'in-fixedish-group': 0,
++      'fixed-note-cat': 0,
++      templated: 5000,
++    });
++  });
++
++  it('set3MonthAvg fills hidden and hidden-group categories when includeHiddenCategories is true', async () => {
++    await setupDatabase();
++    await setBudgets('2024-02', 5000);
++
++    await set3MonthAvg({ month: '2024-02', includeHiddenCategories: true });
++
++    await expectBudgets('2024-02', {
++      visible: 0,
++      'hidden-cat': 0,
++      'in-hidden-group': 0,
++      'in-fixed-group': 5000,
++      'in-fixedish-group': 0,
++      'fixed-note-cat': 0,
++      templated: 5000,
++    });
++  });
++
++  it('copyPreviousMonth copies hidden and hidden-group categories when includeHiddenCategories is true', async () => {
++    await setupDatabase();
++    await setBudgets('2024-01', 1000);
++    await setBudgets('2024-02', 500);
++
++    await copyPreviousMonth({
++      month: '2024-02',
++      includeHiddenCategories: true,
++    });
++
++    await expectBudgets('2024-02', {
++      visible: 1000,
++      'hidden-cat': 1000,
++      'in-hidden-group': 1000,
++      'in-fixed-group': 500,
++      'in-fixedish-group': 1000,
++      'fixed-note-cat': 1000,
++      templated: 500,
++    });
++  });
+ });
+ 
+ describe('coverOverbudgeted', () => {
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 3de8522..725ec66 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -229,15 +229,23 @@ async function getFixedCostGroupIdsJson(): Promise<string> {
+   );
+ }
+ 
+-async function getCategoryIdsExcludedFromMonthWideActions(): Promise<
+-  Set<string>
+-> {
++type MonthWideActionArgs = {
++  month: string;
++  includeHiddenCategories?: boolean;
++};
++
++async function getCategoryIdsExcludedFromMonthWideActions(
++  includeHiddenCategories: boolean,
++): Promise<Set<string>> {
++  const hiddenClause = includeHiddenCategories
++    ? ''
++    : 'c.hidden = 1 OR g.hidden = 1 OR ';
+   const rows = await db.all<{ id: string }>(
+     `
+     SELECT c.id
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+-    WHERE c.hidden = 1 OR g.hidden = 1 OR c.goal_def IS NOT NULL
++    WHERE ${hiddenClause}c.goal_def IS NOT NULL
+       OR c.cat_group IN (SELECT value FROM json_each(?))
+   `,
+     [await getFixedCostGroupIdsJson()],
+@@ -249,13 +257,14 @@ async function getCategoryIdsExcludedFromMonthWideActions(): Promise<
+ 
+ export async function copyPreviousMonth({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: MonthWideActionArgs): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
+-  const excluded = await getCategoryIdsExcludedFromMonthWideActions();
++  const excluded = await getCategoryIdsExcludedFromMonthWideActions(
++    includeHiddenCategories,
++  );
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+@@ -291,11 +300,16 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
++export async function setZero({
++  month,
++  includeHiddenCategories = false,
++}: MonthWideActionArgs): Promise<void> {
+   const categories = await db.all<db.DbViewCategory>(
+     'SELECT * FROM v_categories WHERE tombstone = 0',
+   );
+-  const excluded = await getCategoryIdsExcludedFromMonthWideActions();
++  const excluded = await getCategoryIdsExcludedFromMonthWideActions(
++    includeHiddenCategories,
++  );
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+@@ -310,15 +324,18 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+   });
+ }
+ 
+-async function getCategoriesForMonthWideAverage(): Promise<
+-  db.DbViewCategoryWithGroupHidden[]
+-> {
++async function getCategoriesForMonthWideAverage(
++  includeHiddenCategories: boolean,
++): Promise<db.DbViewCategoryWithGroupHidden[]> {
++  const hiddenClause = includeHiddenCategories
++    ? ''
++    : 'AND c.hidden = 0 AND g.hidden = 0';
+   return db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+   SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL
++  WHERE c.tombstone = 0 AND c.goal_def IS NULL ${hiddenClause}
+     AND c.cat_group NOT IN (SELECT value FROM json_each(?))
+   `,
+     [await getFixedCostGroupIdsJson()],
+@@ -326,9 +343,12 @@ async function getCategoriesForMonthWideAverage(): Promise<
+ }
+ 
+ async function forEachMonthWideCategory(
++  includeHiddenCategories: boolean,
+   apply: (cat: db.DbViewCategoryWithGroupHidden) => Promise<void>,
+ ): Promise<void> {
+-  const categories = await getCategoriesForMonthWideAverage();
++  const categories = await getCategoriesForMonthWideAverage(
++    includeHiddenCategories,
++  );
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -343,35 +363,32 @@ async function forEachMonthWideCategory(
+ async function setMonthWideNMonthAvg({
+   month,
+   N,
+-}: {
+-  month: string;
+-  N: number;
+-}): Promise<void> {
+-  await forEachMonthWideCategory(cat =>
++  includeHiddenCategories = false,
++}: MonthWideActionArgs & { N: number }): Promise<void> {
++  await forEachMonthWideCategory(includeHiddenCategories, cat =>
+     setNMonthAvg({ month, N, category: cat.id }),
+   );
+ }
+ 
+-export function set3MonthAvg({ month }: { month: string }): Promise<void> {
+-  return setMonthWideNMonthAvg({ month, N: 3 });
++export function set3MonthAvg(args: MonthWideActionArgs): Promise<void> {
++  return setMonthWideNMonthAvg({ ...args, N: 3 });
+ }
+ 
+-export function set6MonthAvg({ month }: { month: string }): Promise<void> {
+-  return setMonthWideNMonthAvg({ month, N: 6 });
++export function set6MonthAvg(args: MonthWideActionArgs): Promise<void> {
++  return setMonthWideNMonthAvg({ ...args, N: 6 });
+ }
+ 
+-export function set12MonthAvg({ month }: { month: string }): Promise<void> {
+-  return setMonthWideNMonthAvg({ month, N: 12 });
++export function set12MonthAvg(args: MonthWideActionArgs): Promise<void> {
++  return setMonthWideNMonthAvg({ ...args, N: 12 });
+ }
+ 
+ export async function setLastMonthSpending({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: MonthWideActionArgs): Promise<void> {
+   const prevSheetName = monthUtils.sheetForMonth(monthUtils.prevMonth(month));
+ 
+-  await forEachMonthWideCategory(async cat => {
++  await forEachMonthWideCategory(includeHiddenCategories, async cat => {
+     const netAmount = await getSheetValue(
+       prevSheetName,
+       'sum-amount-' + cat.id,
+diff --git a/upcoming-release-notes/month-wide-include-hidden.md b/upcoming-release-notes/month-wide-include-hidden.md
+new file mode 100644
+index 0000000..ece6a7f
+--- /dev/null
++++ b/upcoming-release-notes/month-wide-include-hidden.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Add an option to month-wide budget actions to include hidden categories and hidden category groups

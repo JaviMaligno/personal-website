@@ -1,0 +1,12 @@
+{"id": "b025479ab6",
+ "reuse": {"score": 3, "why": "Routes forecast, posting, preview, action sync and the budget template through the existing getScheduledAmount and reuses getApproxNumberThreshold, but the API schedule model re-implements the missing/number/range resolution inline instead of calling getScheduledAmount."},
+ "duplication": {"score": 3, "why": "Removes four inline midpoint copies, yet adds a new inline copy of the lowest-value rule in api-models.ts that must be kept in sync with getScheduledAmount."},
+ "placement": {"score": 3, "why": "The range rule lives in shared/schedules.ts, but the approximate-amount worst-case rule is applied only inside schedule-template.ts rather than in the shared expected-amount definition, so other consumers of the expected amount do not see it."},
+ "scope": {"score": 4, "why": "Changes are limited to the expected-amount logic, its consumers and tests; the test helper amountOp parameter is a small supporting change."},
+ "maintainability": {"score": 3, "why": "One helper now owns the range rule, but the rule is split three ways (helper for ranges, budget template for approx, API model inline), so the next rule change needs edits in several places."},
+ "bypasses_abstraction": {"value": true, "where": "packages/loot-core/src/server/api-models.ts scheduleModel.toExternal computes expectedAmount with its own null/number/Math.min ternary instead of getScheduledAmount; schedule-template.ts applies the isapprox tolerance outside the shared helper."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The api-models.ts expectedAmount ternary is an overt inline copy of getScheduledAmount's logic, not a reshaped one."},
+ "abstraction_drift": {"value": true, "parameters_added": 0, "special_case_branches": 0, "bypassing_call_sites": 2, "where": "getScheduledAmount itself only had its type widened to accept null/undefined; api-models.ts re-implements it and schedule-template.ts adds an isapprox branch around the call instead of inside the shared definition."}
+}

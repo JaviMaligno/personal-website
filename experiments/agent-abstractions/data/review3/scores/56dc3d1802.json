@@ -1,0 +1,11 @@
+{"id":"56dc3d1802",
+"reuse":{"score":3,"why":"Extends the existing getExpectedScheduleAmount helper, but recomputes the 7.5% rounded tolerance inline instead of calling the existing getApproxNumberThreshold from shared/rules."},
+"duplication":{"score":3,"why":"Math.round(Math.abs(amount) * 0.075) duplicates getApproxNumberThreshold, so matching and planning tolerances can drift apart."},
+"placement":{"score":4,"why":"The rule sits in the shared amount helper in shared/schedules.ts, but every caller must now thread the op through a third positional argument after an unrelated rounding flag."},
+"scope":{"score":4,"why":"Mostly focused; making APIScheduleEntity.expectedAmount optional is an unrelated type edit."},
+"maintainability":{"score":3,"why":"Opt-in positional amountOp after a dummy 'midpoint' argument is easy to forget, and getScheduledAmount (used by client Balance and schedule lists) does not pass it."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getExpectedScheduleAmount recomputes the approx tolerance instead of using getApproxNumberThreshold in shared/rules.ts."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The tolerance formula is a direct inline copy of getApproxNumberThreshold, not reshaped."},
+"one_place":{"value":false,"where":"The worst-case rule lives in getExpectedScheduleAmount, but it only applies when each caller passes amountOp; getScheduledAmount (client Balance/schedule views) does not, and the tolerance is a second copy of getApproxNumberThreshold."}}

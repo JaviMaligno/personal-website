@@ -1,0 +1,11 @@
+{"id":"40740a5e4c",
+"reuse":{"score":5,"why":"Extends the existing single weekend-rule definition (applyWeekendRule / applyWeekendRuleToDay / getDateWithSkippedWeekend) and RSchedule instead of adding a parallel holiday mechanism."},
+"duplication":{"score":4,"why":"No logic is copied, but every RSchedule construction site (rule-utils, find-schedules, two in schedules/app) now repeats the rrules+exdates pairing, and holidays is threaded by hand through each applyWeekendRule call."},
+"placement":{"score":5,"why":"Move and skip logic live in shared/schedules.ts next to the existing weekend rule and recurConfigToRSchedule; call sites only pass config data."},
+"scope":{"score":5,"why":"Limited to the holiday feature: type field, shared rule, call-site threading, a focused test and a release note."},
+"maintainability":{"score":4,"why":"The move rule is cleanly generalised via isOffDay, but the daily-skip half is split between recurConfigToRSchedule (weekends) and a separate recurConfigToExdates every caller must remember to add, and getMaxWeekendShift is a coarse bound."},
+"bypasses_abstraction":{"value":false,"where":"All move decisions still go through applyWeekendRule/getDateWithSkippedWeekend in shared/schedules.ts."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"Nothing is copied; the repeated `new RSchedule({ rrules: recurConfigToRSchedule(config), exdates: recurConfigToExdates(config) })` at four sites is repetition of a call pair, not disguised logic."},
+"one_place":{"value":true,"where":"Holiday moves land in getDateWithSkippedWeekend (isOffDay) used via applyWeekendRule by every path; daily holiday skipping lands in recurConfigToExdates in shared/schedules.ts, which all four RSchedule sites call, though separately from the weekend skip in recurConfigToRSchedule."}}

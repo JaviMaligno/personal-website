@@ -1,0 +1,45 @@
+{
+ "id": "53b1c65066",
+ "reuse": {
+  "score": 4,
+  "why": "Fintegra uses the existing shared linking and bank-selection helpers, and takeover reuses extracted unlink cleanup, although transaction downloading repeats existing provider logic."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "The Fintegra downloader duplicates Akahu's request/error/response workflow, and its starting-balance branch repeats the same transaction reduction."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Link orchestration, link lookup, provider downloads, configuration, and model types follow the tree's existing module boundaries."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits support the four requested changes, with client changes limited to accommodating the expanded provider type."
+ },
+ "maintainability": {
+  "score": 4,
+  "why": "Centralized linking rules and shared cleanup make the design straightforward to maintain, but the copied download workflow adds another implementation to keep aligned."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "All provider link handlers use linkBankSyncAccount and findOrCreateBank; takeover and ordinary unlink share clearAccountBankLink."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "In sync.ts, Fintegra's starting-balance branch reshapes Akahu's reduction into a direct assignment, while downloadFintegraTransactions slightly reshapes the existing downloader's result construction."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 5,
+  "bypassing_call_sites": 0,
+  "where": "linkBankSyncAccount gains replaceExistingLink and closed-target, replacement, and holder-present branches; syncAccount and processBankSyncDownload each gain a Fintegra branch, with no linking callers bypassing the shared helper."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 32.2
+ }
+}

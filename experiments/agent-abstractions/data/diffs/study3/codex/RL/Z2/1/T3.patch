@@ -1,0 +1,52 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 6f0606e..fc41920 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -29,6 +29,10 @@ describe('schedules', () => {
+       [{ num1: 10100, num2: 20000 }, 20000],
+       [{ num1: 20000, num2: 10100 }, 20000],
+       [{ num1: -5000, num2: 8000 }, 8000],
++      [{ value: -10000, op: 'isapprox' }, -10750],
++      [{ value: 10000, op: 'isapprox' }, 10750],
++      [{ value: -1234, op: 'isapprox' }, -1327],
++      [{ value: 0, op: 'isapprox' }, 0],
+       [12500, 12500],
+       [null, 0],
+     ])('resolves %j to %d', (amount, expected) => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 0fd19de..27621cb 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -3,6 +3,7 @@ import type { IRuleOptions } from '@rschedule/core';
+ import * as d from 'date-fns';
+ 
+ import { Condition } from '#server/rules';
++import { getApproxNumberThreshold } from '#shared/rules';
+ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+@@ -11,7 +12,12 @@ import { q } from './query';
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+ export function getScheduleAmount(
+-  amount: number | { num1: number; num2: number } | null | undefined,
++  amount:
++    | number
++    | { num1: number; num2: number }
++    | { value: number; op: string }
++    | null
++    | undefined,
+ ): number {
+   if (amount == null) {
+     return 0;
+@@ -19,6 +25,10 @@ export function getScheduleAmount(
+   if (typeof amount === 'number') {
+     return amount;
+   }
++  if ('value' in amount) {
++    const tolerance = getApproxNumberThreshold(amount.value);
++    return amount.value + Math.sign(amount.value || 1) * tolerance;
++  }
+   return Math.abs(amount.num1) >= Math.abs(amount.num2)
+     ? amount.num1
+     : amount.num2;

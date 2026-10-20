@@ -1,0 +1,251 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 43a687b..739f5d0 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -51,6 +51,7 @@ type LinkAccountBaseParams = {
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
++  replaceExistingLink?: boolean;
+ };
+ 
+ export type AccountHandlers = {
+@@ -178,16 +179,21 @@ async function linkGoCardlessAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
+   await link.assertAccountOpen(upgradingId);
+-  await link.assertAccountNotLinked(
++  const replacedAccountId = await link.assertAccountNotLinked(
+     'goCardless',
+     account.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
++  if (replacedAccountId) {
++    await link.unlinkLocalAccount(replacedAccountId);
++  }
+   let id;
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+@@ -252,15 +258,20 @@ async function linkSimpleFinAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
+   await link.assertAccountOpen(upgradingId);
+-  await link.assertAccountNotLinked(
++  const replacedAccountId = await link.assertAccountNotLinked(
+     'simpleFin',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
++  if (replacedAccountId) {
++    await link.unlinkLocalAccount(replacedAccountId);
++  }
+   let id;
+ 
+   const institution = {
+@@ -335,15 +346,20 @@ async function linkPluggyAiAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
+   await link.assertAccountOpen(upgradingId);
+-  await link.assertAccountNotLinked(
++  const replacedAccountId = await link.assertAccountNotLinked(
+     'pluggyai',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
++  if (replacedAccountId) {
++    await link.unlinkLocalAccount(replacedAccountId);
++  }
+   let id;
+   const fileId = getPrefs()?.cloudFileId;
+ 
+@@ -420,15 +436,20 @@ async function linkAkahuAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
+   await link.assertAccountOpen(upgradingId);
+-  await link.assertAccountNotLinked(
++  const replacedAccountId = await link.assertAccountNotLinked(
+     'akahu',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
++  if (replacedAccountId) {
++    await link.unlinkLocalAccount(replacedAccountId);
++  }
+   let id;
+ 
+   const institution = {
+@@ -500,15 +521,20 @@ async function linkEnableBankingAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
+   await link.assertAccountOpen(upgradingId);
+-  await link.assertAccountNotLinked(
++  const replacedAccountId = await link.assertAccountNotLinked(
+     'enableBanking',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
++  if (replacedAccountId) {
++    await link.unlinkLocalAccount(replacedAccountId);
++  }
+   let id: string | undefined;
+ 
+   const institution = {
+@@ -591,13 +617,18 @@ async function linkFintegraAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & { externalAccount: SyncServerFintegraAccount }) {
+   await link.assertAccountOpen(upgradingId);
+-  await link.assertAccountNotLinked(
++  const replacedAccountId = await link.assertAccountNotLinked(
+     'fintegra',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
++  if (replacedAccountId) {
++    await link.unlinkLocalAccount(replacedAccountId);
++  }
+   const bank = await link.findOrCreateBank(
+     { name: externalAccount.institution },
+     externalAccount.orgId,
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index a911d9b..b9f75e9 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -5,6 +5,7 @@ import {
+   assertAccountNotLinked,
+   assertAccountOpen,
+   findOrCreateBank,
++  unlinkLocalAccount,
+ } from './link';
+ 
+ beforeEach(async () => {
+@@ -126,6 +127,14 @@ describe('assertAccountNotLinked', () => {
+     ).resolves.toBeUndefined();
+   });
+ 
++  it('returns a conflicting account when replacement is enabled', async () => {
++    await insertLinkedAccount('linked', 'simpleFin', 'external-1');
++
++    await expect(
++      assertAccountNotLinked('simpleFin', 'external-1', undefined, true),
++    ).resolves.toBe('linked');
++  });
++
+   it('ignores deleted accounts and links from other providers', async () => {
+     await insertLinkedAccount('deleted', 'simpleFin', 'external-1', 1);
+     await insertLinkedAccount('other-provider', 'akahu', 'external-1');
+@@ -136,6 +145,37 @@ describe('assertAccountNotLinked', () => {
+   });
+ });
+ 
++describe('unlinkLocalAccount', () => {
++  it('clears local link metadata while preserving account state and transactions', async () => {
++    await db.insertWithUUID('accounts', {
++      id: 'linked',
++      name: 'Keep this account',
++      account_sync_source: 'simpleFin',
++      account_id: 'external-1',
++      bank: 'bank-1',
++      balance_current: 100,
++      closed: 1,
++    });
++
++    await unlinkLocalAccount('linked');
++
++    const account = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['linked'],
++    );
++    expect(account).toMatchObject({
++      id: 'linked',
++      name: 'Keep this account',
++      closed: 1,
++      account_id: null,
++      bank: null,
++      balance_current: null,
++      account_sync_source: null,
++      bank_sync_status: null,
++    });
++  });
++});
++
+ describe('assertAccountOpen', () => {
+   it('rejects a closed account', async () => {
+     await db.insertWithUUID('accounts', {
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index e72f17a..2c6ad29 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -55,7 +55,8 @@ export async function assertAccountNotLinked(
+   provider: string,
+   accountId: string,
+   upgradingId?: string,
+-) {
++  replaceExistingLink = false,
++): Promise<string | undefined> {
+   const existing = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+      WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0
+@@ -65,10 +66,27 @@ export async function assertAccountNotLinked(
+   );
+ 
+   if (existing) {
+-    throw new Error('This bank account is already linked to another account.');
++    if (!replaceExistingLink) {
++      throw new Error('This bank account is already linked to another account.');
++    }
++
++    return existing.id;
+   }
+ }
+ 
++export async function unlinkLocalAccount(accountId: string) {
++  await db.updateAccount({
++    id: accountId,
++    account_id: null,
++    bank: null,
++    balance_current: null,
++    balance_available: null,
++    balance_limit: null,
++    account_sync_source: null,
++    bank_sync_status: null,
++  });
++}
++
+ export async function assertAccountOpen(accountId?: string) {
+   if (!accountId) {
+     return;

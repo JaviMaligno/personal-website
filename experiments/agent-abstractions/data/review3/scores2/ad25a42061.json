@@ -1,0 +1,11 @@
+{"id": "ad25a42061",
+"reuse": {"score": 4, "why": "Threads the flag through the existing getMonthActionCategories / forEachMonthActionCategory / setNMonthAvgForAllCategories helpers, but copyPreviousMonth keeps its own inline exclusion chain rather than using the shared selection."},
+"duplication": {"score": 3, "why": "The hidden rule and its new opt-out are now expressed twice, once as the SQL hiddenFilter in getMonthActionCategories and once as the !includeHiddenCategories && (hidden || group_hidden) check in copyPreviousMonth."},
+"placement": {"score": 4, "why": "The flag lives in the shared selection helper in budget/actions.ts and a MonthActionArgs type is shared by the actions; the copyPreviousMonth branch stays local to that action."},
+"scope": {"score": 5, "why": "Touches only the month-wide actions, their selection helper and a test."},
+"maintainability": {"score": 4, "why": "A single typed argument shape and one parameter on the selection helper are clean; the copyPreviousMonth path still has to be kept in sync by hand."},
+"bypasses_abstraction": {"value": true, "where": "copyPreviousMonth in budget/actions.ts applies the hidden/includeHiddenCategories rule itself instead of going through getMonthActionCategories (a pre-existing bypass that the diff extends)."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "The hidden rule is stated as an SQL fragment in getMonthActionCategories and reshaped as a JS boolean guard in copyPreviousMonth."}
+}

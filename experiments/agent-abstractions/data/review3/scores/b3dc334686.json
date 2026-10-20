@@ -1,0 +1,12 @@
+{"id":"b3dc334686",
+"reuse":{"score":5,"why":"Every planning and display path (preview, forecast, posting, action sync, budget templates, API, desktop and mobile UI) goes through the existing getScheduledAmount, and the tolerance comes from the existing getApproxNumberThreshold."},
+"duplication":{"score":5,"why":"The worst-case rule for ranges and approximate amounts is defined once; callers only pass their own amount and op."},
+"placement":{"score":4,"why":"The rule sits correctly in shared/schedules.ts. However, expectedAmount is added in the api.ts handler with an ad hoc intersection type instead of in scheduleModel.toExternal/APIScheduleEntity in api-models.ts, where the API shape is defined."},
+"scope":{"score":4,"why":"Mostly focused. It also reorders an import in schedules/app.ts, and it drops the templates' halfOfRoundedSum variant, which the new rule makes moot."},
+"maintainability":{"score":4,"why":"One small, tested function decides the expected amount everywhere. The new op parameter is inserted before inverse, and the API docs text added for expectedAmount ('end of the range furthest from zero') contradicts the final 'lowest value' rule."},
+"bypasses_abstraction":{"value":false,"where":"No call site computes the expected amount itself; all use getScheduledAmount."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No duplicated logic."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"getScheduledAmount gains `op` (and loses rangeRounding) plus an isapprox branch, both part of the rule itself. No call site goes around it."}
+}

@@ -1,0 +1,161 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index b42e3f0..b659a4b 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -262,6 +262,36 @@ describe('set budget average', () => {
+     }
+   });
+ 
++  it('leaves categories in fixed groups unchanged for month-wide actions', async () => {
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed costs',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'fixed-category',
++      name: 'Rent',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'category-note-only',
++      name: 'Flexible',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.insert('notes', { id: 'fixed-group', note: 'Monthly bills #fixed' });
++    await db.insert('notes', { id: 'category-note-only', note: '#fixed' });
++    await setBudget({ category: 'fixed-category', month: '2024-04', amount: 77 });
++    await setBudget({ category: 'category-note-only', month: '2024-04', amount: 77 });
++
++    await setZero({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-fixed-category')).toBe(77);
++    expect(await getSheetValue('budget202404', 'budget-category-note-only')).toBe(0);
++  });
++
+   it('does not zero hidden or template categories', async () => {
+     await db.insertCategory({
+       id: 'hidden-category',
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 4033caa..392f1c8 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -69,6 +69,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  group_fixed: 1 | 0;
+   goal_def?: string | null;
+   category: string;
+   amount: number;
+@@ -76,7 +77,7 @@ type BudgetData = {
+ 
+ type MonthActionCategory = Pick<
+   BudgetData,
+-  'is_income' | 'hidden' | 'group_hidden' | 'goal_def'
++  'is_income' | 'hidden' | 'group_hidden' | 'group_fixed' | 'goal_def'
+ >;
+ 
+ /** Shared rules for deciding which categories a whole-month action writes. */
+@@ -87,6 +88,7 @@ function shouldWriteMonthActionCategory(
+   return (
+     category.hidden === 0 &&
+     category.group_hidden === 0 &&
++    category.group_fixed === 0 &&
+     !category.goal_def &&
+     (tracking || category.is_income === 0)
+   );
+@@ -110,12 +112,15 @@ function getBudgetData<T extends BudgetTable>(
+             db.DbViewCategoryWithGroupHidden,
+             'is_income' | 'hidden' | 'group_hidden'
+           >
++        & { group_fixed: 0 | 1 }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++      CASE WHEN lower(COALESCE(n.note, '')) LIKE '%#fixed%' THEN 1 ELSE 0 END AS group_fixed
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -290,9 +295,11 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await db.all<
+     MonthActionCategory & Pick<db.DbCategory, 'id'>
+   >(
+-    `SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    `SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++       CASE WHEN lower(COALESCE(n.note, '')) LIKE '%#fixed%' THEN 1 ELSE 0 END AS group_fixed
+      FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
++     LEFT JOIN notes n ON n.id = g.id
+      WHERE c.tombstone = 0`,
+   );
+ 
+@@ -319,9 +326,11 @@ export async function setLastMonthSpending({
+   const categories = await db.all<
+     MonthActionCategory & Pick<db.DbCategory, 'id'>
+   >(
+-    `SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    `SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++       CASE WHEN lower(COALESCE(n.note, '')) LIKE '%#fixed%' THEN 1 ELSE 0 END AS group_fixed
+      FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
++     LEFT JOIN notes n ON n.id = g.id
+      WHERE c.tombstone = 0`,
+   );
+   const prevMonth = monthUtils.prevMonth(month);
+@@ -352,11 +361,13 @@ export async function set3MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden & { group_fixed: 0 | 1 }>(
+     `
+-  SELECT c.*, c.goal_def, g.hidden AS group_hidden
++  SELECT c.*, c.goal_def, g.hidden AS group_hidden,
++    CASE WHEN lower(COALESCE(n.note, '')) LIKE '%#fixed%' THEN 1 ELSE 0 END AS group_fixed
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -391,11 +402,13 @@ export async function set12MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden & { group_fixed: 0 | 1 }>(
+     `
+-  SELECT c.*, c.goal_def, g.hidden AS group_hidden
++  SELECT c.*, c.goal_def, g.hidden AS group_hidden,
++    CASE WHEN lower(COALESCE(n.note, '')) LIKE '%#fixed%' THEN 1 ELSE 0 END AS group_fixed
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -419,11 +432,13 @@ export async function set6MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden & { group_fixed: 0 | 1 }>(
+     `
+-    SELECT c.*, c.goal_def, g.hidden AS group_hidden
++    SELECT c.*, c.goal_def, g.hidden AS group_hidden,
++      CASE WHEN lower(COALESCE(n.note, '')) LIKE '%#fixed%' THEN 1 ELSE 0 END AS group_fixed
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );

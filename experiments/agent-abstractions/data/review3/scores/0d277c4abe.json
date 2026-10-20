@@ -1,0 +1,12 @@
+{"id": "0d277c4abe",
+ "reuse": {"score": 5, "why": "Builds on the tree's single weekend-rule definition (applyWeekendRule / applyWeekendRuleToDay / getDateWithSkippedWeekend) at every site, and the new range handler reuses applyWeekendRule, recurConfigToRSchedule and the captureBreadcrumb pattern."},
+ "duplication": {"score": 3, "why": "Holiday matching exists in two representations (isOffDay's YYYY-MM-DD / MM-DD Set lookup for moves, and recurConfigToExdates' year-by-year expansion for daily skips), and the exdates argument has to be added separately at each of the four RSchedule constructions."},
+ "placement": {"score": 4, "why": "The daily skip is expressed in recurConfigToRSchedule and holidays in shared/schedules.ts, so all consumers share it; pairing rrules with exdates is left to each caller instead of one schedule factory."},
+ "scope": {"score": 5, "why": "All edits serve the four steps (daily skip, range handler, holidays, yearly holidays) plus release notes."},
+ "maintainability": {"score": 3, "why": "The design is centralised, but a % 7 'empty rule' hack, a 60-year exdate expansion around the current year, and the need to remember exdates whenever an RSchedule is built are fragile."},
+ "bypasses_abstraction": {"value": false, "where": "Every weekend/holiday move goes through applyWeekendRule or applyWeekendRuleToDay, and every RSchedule construction in the tree receives recurConfigToExdates."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "The full-date-or-MM-DD holiday rule is implemented once as a Set lookup in isOffDay and again as a date expansion in recurConfigToExdates in shared/schedules.ts."},
+ "abstraction_drift": {"value": true, "parameters_added": 3, "special_case_branches": 2, "bypassing_call_sites": 0, "where": "A holidays parameter is threaded through applyWeekendRule, applyWeekendRuleToDay and getDateWithSkippedWeekend; recurConfigToRSchedule gains a daily skipWeekend branch plus an interval % 7 weekend-start special case; no call site bypasses the shared rule."}
+}

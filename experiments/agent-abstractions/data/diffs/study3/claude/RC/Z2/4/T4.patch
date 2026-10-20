@@ -1,0 +1,59 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 9f3bfbf..9350e7a 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -646,16 +646,19 @@ describe('schedules', () => {
+ });
+ 
+ describe('getExpectedAmount', () => {
+-  it('uses the end of a range furthest from zero', () => {
++  it('uses the lowest end of a range', () => {
+     expect(getExpectedAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+     expect(getExpectedAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-    expect(getExpectedAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++    expect(getExpectedAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++    expect(getExpectedAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    expect(getExpectedAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++    expect(getExpectedAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+     expect(getExpectedAmount(5000)).toBe(5000);
+   });
+ 
+-  it('uses the end of the tolerance furthest from zero for approximate amounts', () => {
++  it('uses the lowest end of the tolerance for approximate amounts', () => {
+     expect(getExpectedAmount(-10000, 'isapprox')).toBe(-10750);
+-    expect(getExpectedAmount(10000, 'isapprox')).toBe(10750);
++    expect(getExpectedAmount(10000, 'isapprox')).toBe(9250);
+     expect(getExpectedAmount(-1234, 'isapprox')).toBe(-1327);
+     expect(getExpectedAmount(0, 'isapprox')).toBe(0);
+     expect(getExpectedAmount(-10000, 'is')).toBe(-10000);
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 60e96fd..2e20337 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -355,22 +355,19 @@ export function getDateWithSkippedWeekend(
+ }
+ 
+ // The single amount a schedule amount is expected to come to: a plain number
+-// as-is, an approximate ("isapprox") amount as the end of its tolerance
+-// furthest from zero, a ranged ("is between") amount as the end furthest from
+-// zero.
++// as-is, an approximate ("isapprox") amount as the lowest end of its
++// tolerance, a ranged ("is between") amount as its lowest end.
+ export function getExpectedAmount(
+   amount: number | { num1: number; num2: number },
+   op?: string | null,
+ ): number {
+   if (typeof amount === 'number') {
+     if (op === 'isapprox') {
+-      return amount + Math.sign(amount) * getApproxNumberThreshold(amount);
++      return amount - getApproxNumberThreshold(amount);
+     }
+     return amount;
+   }
+-  return Math.abs(amount.num1) >= Math.abs(amount.num2)
+-    ? amount.num1
+-    : amount.num2;
++  return Math.min(amount.num1, amount.num2);
+ }
+ 
+ export function getScheduledAmount(

@@ -1,0 +1,11 @@
+{"id":"073c31eaae",
+"reuse":{"score":3,"why":"The link guard is one shared assertBankAccountLinkable used by every provider and findOrCreateBank/syncAccount/handleSyncResponse are reused, but the unlink field reset is rewritten instead of being extracted from unlinkAccount, and Fintegra is added by copying Akahu's link and download functions."},
+"duplication":{"score":2,"why":"linkFintegraAccount is a near-verbatim copy of linkAkahuAccount, downloadFintegraTransactions copies downloadAkahuTransactions, and releaseAccountLinks repeats unlinkAccount's db.updateAccount reset block."},
+"placement":{"score":4,"why":"The guard and link functions sit in accounts/app.ts next to the provider link handlers, the download in accounts/sync.ts and the URL in server-config.ts, matching the tree's layering."},
+"scope":{"score":4,"why":"Changes serve the four steps; the small desktop-client edits are needed to satisfy the extended provider union rather than unrelated work."},
+"maintainability":{"score":3,"why":"Link rules are centralised in one guard, but each new provider adds another ~80-line copy and the unlink reset now lives in two places that can drift."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":""},
+"abstraction_drift":{"value":false,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":0,"where":"assertBankAccountLinkable gains upgradingId and replaceExistingLink parameters and a closed-target branch; all six provider link functions (including the new Fintegra one) call it and releaseAccountLinks in the same order."}}

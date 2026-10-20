@@ -1,0 +1,45 @@
+{
+ "id": "4b4ef9ff3e",
+ "reuse": {
+  "score": 3,
+  "why": "Fintegra reuses findOrCreateBank and linkBankSyncAccount, but copies the Akahu downloader and the local clearing operation from unlinkAccount."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The change duplicates two substantial existing blocks and repeats validation in every provider adapter and again in the shared linking function."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider transport, configuration, types and linking remain in their established modules, although validation orchestration is spread between adapters and the shared linking function."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits directly support the four requested linking and Fintegra changes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared linking remains useful, but duplicated download and unlink logic, repeated checks and an assertion that also returns replacement candidates increase maintenance overhead."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "app.ts linkBankSyncAccount reproduces unlinkAccount's local field-clearing operation instead of extracting a shared local unlink primitive that both operations can use."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "sync.ts downloadFintegraTransactions reproduces downloadAkahuTransactions with provider names changed and the response mapping reshaped into a const initializer."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 3,
+  "bypassing_call_sites": 0,
+  "where": "The shared linking parameters gain replaceExistingLink; assertBankAccountNotLinked adds branches for an upgrade target, its closed state and conflicting holders without replacement; all six provider adapters still route through shared validation and linking."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 27.2
+ }
+}

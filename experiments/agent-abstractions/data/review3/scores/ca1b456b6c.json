@@ -1,0 +1,11 @@
+{"id":"ca1b456b6c",
+"reuse":{"score":2,"why":"The rule changes in the shared getScheduledAmount, but the API's expectedAmount re-implements range resolution inline instead of calling it, and only the preview path passes the operator needed for the approximate rule."},
+"duplication":{"score":2,"why":"api-models.ts duplicates the missing/number/range dispatch of getScheduledAmount with the old furthest-from-zero rule, so it already disagrees with the helper's final lowest-value rule."},
+"placement":{"score":3,"why":"The rule sits correctly in shared/schedules.ts, but the API model computes its own version locally."},
+"scope":{"score":4,"why":"Focused on the amount rule and the API field, with some type churn to keep expectedAmount out of the create input."},
+"maintainability":{"score":2,"why":"A now-meaningless rangeRounding parameter is kept and passed as 'roundedMidpoint' just to reach the new amountOp argument, the API field drifts from the helper, and posting/forecast/UI callers ignore the approximate rule."},
+"bypasses_abstraction":{"value":true,"where":"packages/loot-core/src/server/api-models.ts scheduleModel.toExternal computes expectedAmount inline instead of calling getScheduledAmount."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"api-models.ts expectedAmount: getScheduledAmount's null/number/range dispatch reshaped as a nested ternary with Math.abs comparison."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":1,"where":"getScheduledAmount gains a 4th positional amountOp parameter (behind the now-dead rangeRounding) and an 'isapprox' branch; api-models.ts bypasses it; only computeSchedulePreviewTransactions passes amountOp while schedules/app.ts, forecast-schedules.ts and desktop-client callers do not."}}

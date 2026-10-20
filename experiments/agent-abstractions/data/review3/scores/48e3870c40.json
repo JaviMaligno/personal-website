@@ -1,0 +1,12 @@
+{"id":"48e3870c40",
+"reuse":{"score":2,"why":"Adds shared guard helpers, but the Fintegra link and download are hand-copied from the Akahu versions, and the holder-unlink reset re-writes unlinkAccount's field reset instead of extracting it."},
+"duplication":{"score":2,"why":"linkFintegraAccount is a seventh copy of the per-provider link body, downloadFintegraTransactions is a compacted copy of downloadAkahuTransactions, the account-reset block copies unlinkAccount's update, and the two guard calls are repeated in all six handlers."},
+"placement":{"score":3,"why":"Handlers and downloader sit in the right modules, but linking rules are defined in app.ts rather than beside findOrCreateBank in accounts/link.ts, and a function named assert... performs the take-over write."},
+"scope":{"score":4,"why":"Mostly focused, with an incidental widening of DbAccount.account_sync_source that leaves out the new 'fintegra' source."},
+"maintainability":{"score":2,"why":"Every linking rule must be wired into six copied handlers by hand, and assertBankAccountNotLinked silently mutating another account behind a boolean flag is surprising to a maintainer."},
+"bypasses_abstraction":{"value":false,"where":"No shared link routine existed to bypass; all handlers call the new guards."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"downloadFintegraTransactions in sync.ts is downloadAkahuTransactions compacted (destructured response, inlined objects), and the reset in assertBankAccountNotLinked copies unlinkAccount's db.updateAccount block under a different function."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"assertBankAccountNotLinked gained replaceExistingLink and a branch that unlinks the holder instead of throwing, turning an assertion into a mutating operation; it is called (with assertAccountIsOpen) from each of six copied link handlers."}
+}

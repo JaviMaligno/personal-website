@@ -1,0 +1,111 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index bb20ca2..e66f052 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -13,6 +13,7 @@ import {
+   setCategoryCarryover,
+   setLastMonthSpending,
+   setNMonthAvg,
++  setZero,
+ } from './actions';
+ import * as budget from './base';
+ 
+@@ -193,6 +194,49 @@ describe('set budget average', () => {
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(4200);
+   });
+ 
++  it('leaves categories in a #fixed group untouched on month-wide actions', async () => {
++    await db.insertCategoryGroup({ id: 'fixed1', name: 'Fixed', is_income: 0 });
++    await db.insertCategory({
++      id: 'rent',
++      name: 'rent',
++      cat_group: 'fixed1',
++      is_income: 0,
++    });
++    await db.insertCategoryGroup({ id: 'other1', name: 'Other', is_income: 0 });
++    await db.insertCategory({
++      id: 'misc',
++      name: 'misc',
++      cat_group: 'other1',
++      is_income: 0,
++    });
++    db.runQuery('INSERT INTO notes (id, note) VALUES (?, ?)', [
++      'fixed1',
++      'Bills #fixed',
++    ]);
++    db.runQuery('INSERT INTO notes (id, note) VALUES (?, ?)', [
++      'other1',
++      'Bills #fixedcosts',
++    ]);
++    db.runQuery('INSERT INTO notes (id, note) VALUES (?, ?)', ['rent', 'x']);
++    db.runQuery('INSERT INTO notes (id, note) VALUES (?, ?)', [
++      'cat1',
++      '#fixed',
++    ]);
++    await sheet.waitOnSpreadsheet();
++
++    await setBudget({ category: 'rent', month: '2024-04', amount: 5000 });
++    await setBudget({ category: 'misc', month: '2024-04', amount: 700 });
++    await setBudget({ category: 'cat1', month: '2024-04', amount: 300 });
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-rent')).toBe(5000);
++    expect(await getSheetValue('budget202404', 'budget-misc')).toBe(0);
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
++  });
++
+   it('sets a bulk 3 month average from complete months', async () => {
+     await set3MonthAvg({ month: '2024-04' });
+     await sheet.waitOnSpreadsheet();
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 1a4129a..d22bb94 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -213,21 +213,29 @@ function setCarryover(
+   });
+ }
+ 
++// Matches the `#fixed` tag as a whole word (not `#fixedcosts`).
++const FIXED_TAG = /(^|[^\w#-])#fixed(?![\w-])/i;
++
+ // Categories that month-wide actions may write to: not hidden, not in a
+-// hidden group, and without saved budget templates.
++// hidden group, not in a group tagged `#fixed` in its notes, and without
++// saved budget templates.
+ async function getFillableCategories(): Promise<
+   db.DbViewCategoryWithGroupHidden[]
+ > {
+-  return db.all<db.DbViewCategoryWithGroupHidden>(
++  const rows = await db.all<
++    db.DbViewCategoryWithGroupHidden & { group_note: string | null }
++  >(
+     `
+-  SELECT c.*
++  SELECT c.*, n.note AS group_note
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND COALESCE(c.hidden, 0) = 0
+     AND COALESCE(g.hidden, 0) = 0
+     AND (c.goal_def IS NULL OR TRIM(c.goal_def) IN ('', '[]', 'null'))
+   `,
+   );
++  return rows.filter(row => !FIXED_TAG.test(row.group_note ?? ''));
+ }
+ 
+ // Actions
+diff --git a/upcoming-release-notes/skip-fixed-groups-in-bulk-budget-actions.md b/upcoming-release-notes/skip-fixed-groups-in-bulk-budget-actions.md
+new file mode 100644
+index 0000000..95ef86b
+--- /dev/null
++++ b/upcoming-release-notes/skip-fixed-groups-in-bulk-budget-actions.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Month-wide budget actions now skip categories in groups whose notes contain the `#fixed` tag

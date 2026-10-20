@@ -1,0 +1,11 @@
+{"id":"859246def0",
+"reuse":{"score":4,"why":"Five actions get the flag through the existing getMonthActionCategories selector, but copyPreviousMonth keeps its own inline exclusion check instead of being routed through it."},
+"duplication":{"score":3,"why":"The new 'include hidden' rule is written twice: as a SQL predicate in getMonthActionCategories and as a boolean guard in copyPreviousMonth's inline filter, plus the same flag plumbing repeated in six signatures."},
+"placement":{"score":4,"why":"The rule sits in the shared selector in budget/actions.ts where the exclusions live, though the copyPreviousMonth copy keeps part of it at the call site."},
+"scope":{"score":5,"why":"Only the month-wide actions, their selector, tests and a release note are changed."},
+"maintainability":{"score":3,"why":"Workable, but the hidden-category rule now has two definitions that must be kept in sync and the flag is threaded by hand through every action."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth in budget/actions.ts applies the hidden/hidden-group rule (now conditioned on includeHiddenCategories) inline instead of using getMonthActionCategories."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The hidden rule appears as `(? = 1 OR (c.hidden = 0 AND g.hidden = 0))` in getMonthActionCategories SQL and reshaped as `!includeHiddenCategories && (hidden === 1 || group_hidden === 1)` in copyPreviousMonth."}
+}

@@ -1,0 +1,12 @@
+{"id": "97ee729545",
+ "reuse": {"score": 5, "why": "Introduces one getMonthWideTargetCategories selection used by every month-wide action, and routes the averaging actions through the existing setNMonthAvg instead of their own copies."},
+ "duplication": {"score": 5, "why": "Replaces three copy-pasted category queries and three near-identical loops with one selection function and one setMonthWideAverage helper; copyPreviousMonth drops its own hidden check in favour of the shared set."},
+ "placement": {"score": 5, "why": "The eligibility query and the averaging helper live in budget/actions.ts beside the month-wide actions that use them."},
+ "scope": {"score": 4, "why": "Focused on month-wide actions; consolidating set3MonthAvg onto setNMonthAvg goes slightly beyond the request but stays within the same functions."},
+ "maintainability": {"score": 4, "why": "A single place defines the exclusions; copyPreviousMonth's membership check against a separately fetched id set is a little indirect and getBudgetData still selects the hidden columns it no longer needs."},
+ "bypasses_abstraction": {"value": false, "where": "copyPreviousMonth, setZero and the 3/6/12-month averages all take their targets from getMonthWideTargetCategories."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "Duplicated loops and queries are removed, not reshaped."},
+ "one_place": {"value": true, "where": "getMonthWideTargetCategories (server/budget/actions.ts) holds the hidden, hidden-group and saved-template exclusions; setZero, setMonthWideAverage (3/6/12) and copyPreviousMonth (via its id set) all use it."}
+}

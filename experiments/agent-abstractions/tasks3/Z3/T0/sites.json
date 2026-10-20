@@ -1,0 +1,46 @@
+{
+  "zone": "Z3",
+  "source": "docs/study2-variants.md (paths relative to packages/loot-core/src); R form = the frozen R variant (tag rf-frozen)",
+  "logic": "Linking a bank-sync provider account (upgrade vs insert, transfer payee, initial sync, sync event)",
+  "decision": "the link sequence after the bank lookup: upgrade the local account (throw if missing) or insert a new account and its transfer payee; initial syncAccount; handleSyncResponse; sync-event",
+  "sites": [
+    {
+      "id": "gocardless",
+      "file": "server/accounts/app.ts",
+      "function": "linkGoCardlessAccount",
+      "decides": "full link sequence; inserts mask and the provider's official_name"
+    },
+    {
+      "id": "simplefin",
+      "file": "server/accounts/app.ts",
+      "function": "linkSimpleFinAccount",
+      "decides": "full link sequence; official_name = name, no mask"
+    },
+    {
+      "id": "pluggyai",
+      "file": "server/accounts/app.ts",
+      "function": "linkPluggyAiAccount",
+      "decides": "full link sequence; passes the budget file id to the initial sync"
+    },
+    {
+      "id": "akahu",
+      "file": "server/accounts/app.ts",
+      "function": "linkAkahuAccount",
+      "decides": "full link sequence; sync-event reports only 'transactions'"
+    },
+    {
+      "id": "enablebanking",
+      "file": "server/accounts/app.ts",
+      "function": "linkEnableBankingAccount",
+      "decides": "full link sequence; an unreachable id == null check after the upgrade/insert branch"
+    }
+  ],
+  "not_a_copy": "each provider's bank lookup (its own bank key) stays provider-specific in F too",
+  "preserved_inconsistencies": [
+    "only Pluggy.ai sends the file id (hidden test: pluggyai-file-id)",
+    "GoCardless stores mask and official name, the others name as official name and no mask (hidden test: gocardless-mask-official-name)",
+    "Akahu reports only transactions as changed (hidden test: akahu-changed-tables)",
+    "the insert key set per provider (excluded: z3-insert-key-set, unobservable)"
+  ],
+  "f_reference": "F: linkBankSyncAccount({ bank, syncSource, newAccount, upgradingId, offBudget, startingDate, startingBalance, fileId, changedTables }), module-private in server/accounts/app.ts"
+}

@@ -1,0 +1,167 @@
+{
+  "zone": "Z4",
+  "author": "author-agent:Z4",
+  "date": "2026-10-08",
+  "rf_frozen_checked": "a337c72d34c431ffab0c386bcb63a1d4792fca2a (tag object) -> 162d65bcd5189d0d7e3a96fff323e549de54e12a; tag existed before anything under tasks2/Z4 was written",
+  "role": "test author only: statements, hidden tests, consumers.json, chain.json, sanity.json. No implementation or reference patch was written; the expected values come from the statements, worked out by hand from calendars, and are validated only when the implementer's references pass (plan Task 2).",
+  "design": {
+    "chain": [
+      "T1 (rule): daily schedules with weekend handling skip weekend occurrences instead of moving them (fixes duplicate Fridays/Mondays and next dates before the start).",
+      "T2 (consumer): new handler schedule/get-dates-in-range { config, start, end } -> days, following the schedule date rules (weekend moves, T1 skips), judged by the final day.",
+      "T3 (rule): optional holidays: YYYY-MM-DD[] in the recurring configuration, treated like weekend days when weekend handling is on (moved to the nearest free day in the configured direction, skipped for daily).",
+      "T4 (build): holidays entries may be MM-DD, meaning that day every year; full dates still work, mixed lists allowed."
+    ],
+    "why_decision_level": "In R the weekend arithmetic (date + mode) is already shared by every copy (study2-variants.md honesty item 2), so a change to the arithmetic alone would reach every copy in both conditions and could not show a missed copy. T1 and T3 need information the arithmetic does not receive (the frequency; the holiday list), so each site that decides whether and how the rule applies has to change. This holds in F as well: F's callers map their own fields onto the helper's rule object, so a new input has to be mapped at each caller there too. This is a property of the frozen variants, recorded here, not tuned for either condition.",
+    "statements": "Behaviour only, written as a maintainer would phrase the request. They name the new handler and the new configuration field (public interface the tests need) but no file, function, location or number of places; rule steps say only that the rule must hold wherever the app works out a schedule's dates.",
+    "consumers": "next-date (schedule/create, then the stored next date), upcoming-dates (schedule/get-upcoming-dates), budget-template (budget/dry-run-category-template on a schedule template), dates-in-range (the T2 handler, from T2 on). The template's two copies are one consumer; its T1/T3 tests use months that make a tree with only one of the two copies updated fail, and avoid months where the next-date site would change the template's count.",
+    "tests": "Through public handlers on a real (test) database; nothing mocked (no network boundary in this zone). Dates are fixed; 'today' is set with MockDate where a handler reads it. Imports exist in both R and F; no test names a helper of F or a copy of R. Upcoming-date assertions on daily schedules check a prefix plus no weekend/holiday day and no repeated day, so both readings of 'next N dates' (N after skipping, or skipping within the first N) pass."
+  },
+  "leak_check": "Statements grepped for function/file names, paths and copy counts: none. Hidden tests grepped for applyWeekendRule, WeekendRule, getDateWithSkippedWeekend, getNextDate, getUpcomingDates, #shared/schedules, schedule-template: none.",
+  "sanity": "sanity.json: all 13 consumer tests fail individually on untouched R and F (T1/T3/T4 on the assertion of the new behaviour; T2 and the dates-in-range tests of T3/T4 because the handler does not exist yet).",
+  "adjudication": {
+    "date": "2026-10-08",
+    "by": "adjudicator agent (not author, not implementer)",
+    "record": "adjudication.md",
+    "sanity": "sanity_check.json (aa chain sanity)",
+    "rounds": 0,
+    "changes": [],
+    "steps_kept": [
+      "T1",
+      "T2",
+      "T3",
+      "T4"
+    ],
+    "dropped": [],
+    "implementer_audit": "transcript not available to the adjudicator; reference patches scanned for hidden-test content (chains.reference_leaks): none"
+  },
+  "implementer": "implementer-agent-blind:Z4",
+  "implementer_audit": "orchestrator transcript audit 2026-10-08: clean — docs/audits/2026-10-08-blind-implementers.md",
+  "references_blind": {
+    "date": "2026-10-08",
+    "reason": "spec amendment 6: the first implementers read author material, so the references were not written from the statement only (spec section 3).",
+    "implementer": "implementer-agent-blind:Z4",
+    "inputs": "only the de-hinted statements (tasks2/<Z>/T*/statement.md at afb4d8e, copied out of the repo) and scratch copies of work/variants/R and F (git archive of HEAD = rf-frozen trees, fresh git repo with one baseline commit). No tasks2/ author file, no hidden tests, no spec/plan/variants doc in the work dir.",
+    "independence_audit": {
+      "by": "orchestration audit agent (not author, not implementer)",
+      "transcript": "not readable by this auditor; the transcript audit is the orchestrator's",
+      "work_dir_checks": [
+        "statements byte-identical to afb4d8e:tasks2/<Z>/T*/statement.md (unchanged at HEAD)",
+        "R and F baseline trees identical to the frozen variant trees (R 77602e7e, F 5c46975b)",
+        "each tree's history = baseline + 4 step commits; no test file in any commit",
+        "no file under blind2/<Z>/ (excluding node_modules) with a hidden-test file name; no mention of tasks2, hidden/, consumers.json or adjudication",
+        "the 62 hidden-test describe/it titles of >=12 chars: none in patches, scratch or statements (only 'Enable Banking', an upstream product name already in the baseline)",
+        "line overlap of hidden tests (minus upstream test lines) with scratch tests and added patch lines: Z3 scratch shares two error messages quoted verbatim in the Z3 T1/T3 statements and one idiomatic db.first<db.DbBank>('SELECT * FROM banks WHERE id = ?' line (upstream link.test.ts uses the same query form); patches: none",
+        "each installed patch equals that step's commit diff in the implementer's tree"
+      ],
+      "reference_leaks": "aa chain sanity (chains.reference_leaks): see sanity_check.json"
+    },
+    "patch_sha256_16_old_to_new": {
+      "T1.F": {
+        "old": "0223bfefbb791a78",
+        "new": "e081d1e5f2acf277"
+      },
+      "T1.R": {
+        "old": "509eca91132aa16a",
+        "new": "991e6877f7c21d3b"
+      },
+      "T2.F": {
+        "old": "3cfa3f69b57744c6",
+        "new": "b2fe83d82226fdd5"
+      },
+      "T2.R": {
+        "old": "73634ed65eec4bf8",
+        "new": "c1ef3e330e2067f0"
+      },
+      "T3.F": {
+        "old": "f76ec181bec50b13",
+        "new": "8b289f5f450d62f3"
+      },
+      "T3.R": {
+        "old": "aa576f2d6e1e746d",
+        "new": "25fccc893dcd7e0a"
+      },
+      "T4.F": {
+        "old": "dd1bc3f9d668bf89",
+        "new": "e2c69c75cd1ff59f"
+      },
+      "T4.R": {
+        "old": "3ae0cc2b3706b024",
+        "new": "fcd3805c6fc6dca9"
+      }
+    },
+    "patch_form": "git diff of that step only (abbreviated index lines), from the variant root"
+  },
+  "references_superseded": {
+    "implementer": "implementer-agent:Z4",
+    "exposure": "self-reported: read tasks2/Z4/chain.json and provenance.json once at the start (consumer lists, zone files, chain design).",
+    "status": "replaced by the blind references on 2026-10-08; old patches remain in git history (commit before this one)",
+    "implementation": {
+      "date": "2026-10-08",
+      "inputs_read": "tasks2/Z4/T1-T4/statement.md; also tasks2/Z4/chain.json and tasks2/Z4/provenance.json (read once at the start; they hold no tests or expected values). Never opened: tasks2/Z4/T*/hidden, T*/consumers.json, sanity.json, or any other zone's tasks.",
+      "method": "APFS clone copies of work/variants/R and work/variants/F outside the repo; the 4 steps implemented in sequence on each copy (each step on top of the previous one); reference.<V>.patch = that step's diff only. Hidden tests were never run by the implementer.",
+      "R_shape": "Kept R's per-site style: each site (next date, upcoming dates, both template copies, and the T2 handler) decides inline whether the daily skip applies; the shared weekend arithmetic getDateWithSkippedWeekend gains a holidays argument (T3) and a shared isWeekendOrHoliday predicate backs the skip checks, so T4 (MM-DD) changes only that predicate.",
+      "F_shape": "WeekendRule gains frequency (T1) and holidays (T3); applyWeekendRule/applyWeekendRuleToDay return null for an occurrence the rule drops (daily schedules); each caller maps its own fields onto the rule, the T2 handler calls applyWeekendRule.",
+      "shared_by_both": "The parsed schedule data (rule-utils parseRecurDate) carries frequency (T1) and holidays (T3); RecurConfig gains holidays?: string[] (T3). Existing weekend moves are reproduced exactly by stepping day by day (Sat/Sun after -> Monday, before -> Friday).",
+      "interpretations": [
+        "upcoming dates on a daily schedule return `count` dates after skipping (reads up to count*7 occurrences).",
+        "getNextDate on a daily schedule with weekend handling looks up to 7 occurrences ahead for a kept one; for a finished schedule it falls back to the last kept occurrence (as before for the last occurrence); null if none.",
+        "schedule/get-dates-in-range reads occurrences from start-(7+holidays) to end+(7+holidays) days, applies the rule, keeps final days within [start, end], dedupes and sorts; start > end returns [].",
+        "Budget template: dropped occurrences are not counted; the loop stops on the base date when the occurrence is dropped."
+      ],
+      "verification": "On each step for both R and F: implementer scratch tests through schedule/create, schedule/get-upcoming-dates, schedule/get-dates-in-range and runSchedule (not committed, not in patches) pass at that step and fail for later steps; yarn typecheck green; oxfmt clean; related suites green; full loot-core node suite on the final T4 trees: 1258 passed, 2 skipped, on both R and F. Patches applied in sequence to the install commit reproduce the final trees; T1 patches git apply --check cleanly on work/variants/{R,F}."
+    },
+    "moved_here": "2026-10-08 (spec amendment 2026-10-08, item 9, before any pilot run): the block(s) 'implementation' described the superseded implementer and its references; moved here from the top level so that the top level describes only the blind references."
+  },
+  "adjudication_blind": {
+    "date": "2026-10-08",
+    "by": "orchestration audit agent (not author, not implementer)",
+    "record": "adjudication.md (section 'Blind references')",
+    "sanity": "sanity_check.json (aa chain sanity, blind references)",
+    "rounds": 0,
+    "max_rounds": 1,
+    "changes": [],
+    "steps_kept": [
+      "T1",
+      "T2",
+      "T3",
+      "T4"
+    ],
+    "dropped": [],
+    "per_step": {
+      "T1": {
+        "kind": "rule",
+        "consumers": 3,
+        "consumer_tests": 3,
+        "untouched_fail_individually": "R and F",
+        "reference_cumulative_lint_typecheck": "pass R and F"
+      },
+      "T2": {
+        "kind": "consumer",
+        "consumers": 1,
+        "consumer_tests": 2,
+        "untouched_fail_individually": "R and F",
+        "reference_cumulative_lint_typecheck": "pass R and F"
+      },
+      "T3": {
+        "kind": "rule",
+        "consumers": 4,
+        "consumer_tests": 4,
+        "untouched_fail_individually": "R and F",
+        "reference_cumulative_lint_typecheck": "pass R and F"
+      },
+      "T4": {
+        "kind": "build",
+        "consumers": 4,
+        "consumer_tests": 4,
+        "untouched_fail_individually": "R and F",
+        "reference_cumulative_lint_typecheck": "pass R and F"
+      }
+    }
+  },
+  "consumer_merge": {
+    "date": "2026-10-08",
+    "record": "spec amendment 2026-10-08, item 8 (before any pilot run)",
+    "change": "budget-template merged into next-date at T1, T3 and T4 for coverage (consumers.json, chain.json); design.consumers above describes the author's original split, superseded by this merge.",
+    "mutant_check": "tasks2/Z4/mutant_check.json (re-run on the blind references)"
+  }
+}

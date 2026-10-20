@@ -1,0 +1,13 @@
+{
+  "id": "d9164f0d64",
+  "reuse": {"score": 4, "why": "Builds on the existing getDateWithSkippedWeekend and introduces one shared isNonWorkingDay that all paths call, rather than re-implementing the holiday check per site."},
+  "duplication": {"score": 3, "why": "Adds no new copies, but threads holidays separately through every pre-existing copy of the skip/move dispatch (getNextDate, getDatesInRange, getUpcomingDates' two branches, schedule-template's two ternaries) instead of consolidating them."},
+  "placement": {"score": 5, "why": "The holiday/weekend definition and the moving loop live in shared/schedules.ts; servers only pass the config field."},
+  "scope": {"score": 5, "why": "Only the holidays field, its parsing, the shared predicate and its threading through the date paths."},
+  "maintainability": {"score": 3, "why": "The non-working-day rule is in one place, but adding the parameter required touching six call sites, and the search pads (3 + holidays.length) are ad-hoc; the next rule change will again need edits across the copies."},
+  "bypasses_abstraction": {"value": false, "where": "Every weekend/holiday check goes through isNonWorkingDay or getDateWithSkippedWeekend"},
+  "duplicated_blocks": 0,
+  "would_merge": "yes",
+  "disguised_duplication": {"value": false, "where": "None introduced; the pre-existing parallel dispatches are only extended"},
+  "one_place": {"value": true, "where": "isNonWorkingDay and getDateWithSkippedWeekend in shared/schedules.ts decide holiday treatment for getNextDate, getDatesInRange, getUpcomingDates and schedule-template"}
+}

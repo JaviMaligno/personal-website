@@ -1,0 +1,11 @@
+{"id":"72ee449b23",
+"reuse":{"score":4,"why":"Puts the daily rule into the existing getDateWithSkippedWeekend (via a new frequency argument) and updates all three of its callers, but the template adds its own resolveSkippedWeekend wrapper instead of a shared one."},
+"duplication":{"score":3,"why":"Each caller still carries its own `skipWeekend ? getDateWithSkippedWeekend(...) : date` dispatch plus its own way of dropping null occurrences (a for-loop in getNextDate, filter/slice in getUpcomingDates, a nullable loop in schedule-template), and resolveSkippedWeekend is a third copy of that dispatch."},
+"placement":{"score":4,"why":"The frequency rule sits in shared/schedules.ts with the weekend helper, but the enable-flag-plus-null wrapper lives privately in budget/schedule-template.ts rather than next to it."},
+"scope":{"score":4,"why":"Changes track the request, with some incidental renaming (date to occurrence, dates to occurrences) and a release note."},
+"maintainability":{"score":3,"why":"A nullable result from the shared helper forces every caller to re-implement over-fetching and skipping, with a magic lookahead constant and a template loop whose termination now depends on two nullable variables."},
+"bypasses_abstraction":{"value":false,"where":"All callers still use getDateWithSkippedWeekend for the weekend decision."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"resolveSkippedWeekend in budget/schedule-template.ts repackages the same skipWeekend-gated call that getNextDate (shared/schedules.ts) and getUpcomingDates (server/schedules/app.ts) inline, and the null-skipping iteration is reshaped differently at each of the three sites."},
+"one_place":{"value":true,"where":"The daily-skip rule itself is the `frequency === 'daily'` branch in getDateWithSkippedWeekend (shared/schedules.ts), used by getNextDate, getUpcomingDates and the budget schedule template; only the enable dispatch and null handling are repeated per caller."}}

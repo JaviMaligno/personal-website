@@ -1,0 +1,116 @@
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+index 96d394d..586347d 100644
+--- a/packages/loot-core/src/server/api-models.test.ts
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -37,9 +37,10 @@ describe('scheduleModel', () => {
+ 
+   it.each([
+     [12000, 12000],
+-    [{ num1: 10100, num2: 20000 }, 20000],
+-    [{ num1: 20000, num2: 10100 }, 20000],
++    [{ num1: 10100, num2: 20000 }, 10100],
++    [{ num1: 20000, num2: 10100 }, 10100],
+     [{ num1: -10100, num2: -20000 }, -20000],
++    [{ num1: -3000, num2: 5000 }, -3000],
+   ])('derives expectedAmount for %j', (amount, expectedAmount) => {
+     expect(scheduleModel.toExternal(makeSchedule(amount)).expectedAmount).toBe(
+       expectedAmount,
+@@ -48,7 +49,7 @@ describe('scheduleModel', () => {
+ 
+   it.each([
+     [-10000, -10750],
+-    [10000, 10750],
++    [10000, 9250],
+     [-1234, -1327],
+   ])('derives worst case for approximate amount %i', (amount, expected) => {
+     expect(
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 331abb9..d6b1768 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -256,13 +256,9 @@ export const scheduleModel = {
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amountOp === 'isapprox'
+-              ? schedule._amount +
+-                Math.sign(schedule._amount || 1) *
+-                  getApproxNumberThreshold(schedule._amount)
++              ? schedule._amount - getApproxNumberThreshold(schedule._amount)
+               : schedule._amount
+-            : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
+-              ? schedule._amount.num1
+-              : schedule._amount.num2,
++            : Math.min(schedule._amount.num1, schedule._amount.num2),
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+     };
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index b5b72c5..19474b6 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -95,15 +95,13 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // Ranged ("is between") amounts use their rounded midpoint; approximate
+-  // amounts use the tolerance endpoint furthest from zero for planning.
++  // Ranged and approximate amounts use their lowest allowed value for planning.
+   const amount =
+     typeof amountValue === 'number'
+       ? (schedule._amountOp ?? conditions.amount?.op) === 'isapprox'
+-        ? amountValue +
+-          Math.sign(amountValue || 1) * getApproxNumberThreshold(amountValue)
++        ? amountValue - getApproxNumberThreshold(amountValue)
+         : amountValue
+-      : Math.round((amountValue.num1 + amountValue.num2) / 2);
++      : Math.min(amountValue.num1, amountValue.num2);
+ 
+   return {
+     id: schedule.id,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 4b55820..1bd791c 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -109,7 +109,7 @@ describe('schedules', () => {
+   describe('computeSchedulePreviewTransactions', () => {
+     it.each([
+       [-10000, -10750],
+-      [10000, 10750],
++      [10000, 9250],
+       [-1234, -1327],
+     ])('uses the approximate amount tolerance for %i', (amount, expected) => {
+       const schedule: ScheduleEntity = {
+@@ -140,9 +140,10 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+-      [{ num1: 10100, num2: 20000 }, 20000],
+-      [{ num1: 20000, num2: 10100 }, 20000],
+-    ])('uses the ranged amount furthest from zero: %o', (amount, expected) => {
++      [{ num1: 10100, num2: 20000 }, 10100],
++      [{ num1: 20000, num2: 10100 }, 10100],
++      [{ num1: -3000, num2: 5000 }, -3000],
++    ])('uses the lowest ranged amount: %o', (amount, expected) => {
+       const schedule: ScheduleEntity = {
+         id: 'sched-range',
+         rule: 'rule-1',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 0365b96..8d45cae 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -504,13 +504,9 @@ export function computeSchedulePreviewTransactions(
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amountOp === 'isapprox'
+-              ? schedule._amount +
+-                Math.sign(schedule._amount || 1) *
+-                  getApproxNumberThreshold(schedule._amount)
++              ? schedule._amount - getApproxNumberThreshold(schedule._amount)
+               : schedule._amount
+-            : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
+-              ? schedule._amount.num1
+-              : schedule._amount.num2;
++            : Math.min(schedule._amount.num1, schedule._amount.num2);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

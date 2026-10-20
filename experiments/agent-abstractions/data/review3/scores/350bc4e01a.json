@@ -1,0 +1,12 @@
+{"id": "350bc4e01a",
+ "reuse": {"score": 3, "why": "Puts one link guard in accounts/link.ts used by every provider and reuses linkSimpleFinAccount's body for Fintegra, but does so by bending the SimpleFin function, copies Akahu's downloader and re-writes unlinkAccount's reset."},
+ "duplication": {"score": 2, "why": "Six near-identical inline guard-then-link wrappers at method registration, a condensed copy of downloadAkahuTransactions for Fintegra and a copy of unlinkAccount's eight-field reset."},
+ "placement": {"score": 2, "why": "The link rules are enforced in app.method registration lambdas rather than in the link functions, so calling a link function directly skips them, and Fintegra's linking lives inside linkSimpleFinAccount."},
+ "scope": {"score": 4, "why": "Edits stay within the four requested behaviours, though the SimpleFin handler's signature is widened for an unrelated provider."},
+ "maintainability": {"score": 2, "why": "A maintainer must know that the SimpleFin handler also serves Fintegra via syncSource/bankId (now also accepted through the simplefin-accounts-link request) and that guards live only in registration wrappers."},
+ "bypasses_abstraction": {"value": true, "where": "accounts/app.ts: linkFintegraAccount and the other link functions are only guarded in the app.method wrappers, and ensureAccountNotLinked re-implements unlinkAccount's reset instead of sharing it."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "downloadFintegraTransactions in sync.ts is downloadAkahuTransactions condensed (no logging, 'error' branch dropped); the six registration wrappers in app.ts repeat the same guard call with only the provider string and id path changed."},
+ "abstraction_drift": {"value": true, "parameters_added": 3, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "linkSimpleFinAccount gained syncSource and bankId (with a bankId ?? orgDomain ?? orgId fallback) so Fintegra can reuse it, and the new ensureAccountNotLinked gained replaceExistingLink; all registered link methods call the guard, but only through per-method wrappers."}
+}

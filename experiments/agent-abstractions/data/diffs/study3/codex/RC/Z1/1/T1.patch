@@ -1,0 +1,179 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 57b5cfa..7c26b17 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -75,6 +75,7 @@ type BudgetData = {
+   group_hidden: 1 | 0;
+   category: string;
+   amount: number;
++  goal_def: string | null;
+ };
+ 
+ function getBudgetData<T extends BudgetTable>(
+@@ -86,10 +87,10 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      >
++      > & { goal_def: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -229,7 +230,6 @@ export async function copyPreviousMonth({
+   const budgetData = await getBudgetData(table, prevMonth.toString());
+   const categories = categoriesForMonthBudgetAction(
+     budgetData,
+-    'copy-previous-month',
+     isTrackingBudget(),
+   );
+ 
+@@ -262,12 +262,14 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden & { goal_def: string | null }>(
++    `SELECT c.*, g.hidden AS group_hidden
++     FROM categories c
++     LEFT JOIN category_groups g ON c.cat_group = g.id
++     WHERE c.tombstone = 0`,
+   );
+   const writableCategories = categoriesForMonthBudgetAction(
+     categories,
+-    'set-zero',
+     isTrackingBudget(),
+   );
+ 
+@@ -283,7 +285,7 @@ export async function set3MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden & { goal_def: string | null }>(
+     `
+   SELECT c.*, g.hidden AS group_hidden
+   FROM categories c
+@@ -293,7 +295,6 @@ export async function set3MonthAvg({
+   );
+   const writableCategories = categoriesForMonthBudgetAction(
+     categories,
+-    'set-average',
+     isTrackingBudget(),
+   );
+ 
+@@ -317,7 +318,7 @@ export async function set12MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden & { goal_def: string | null }>(
+     `
+   SELECT c.*, g.hidden AS group_hidden
+   FROM categories c
+@@ -327,7 +328,6 @@ export async function set12MonthAvg({
+   );
+   const writableCategories = categoriesForMonthBudgetAction(
+     categories,
+-    'set-average',
+     isTrackingBudget(),
+   );
+ 
+@@ -343,7 +343,7 @@ export async function set6MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden & { goal_def: string | null }>(
+     `
+   SELECT c.*, g.hidden AS group_hidden
+   FROM categories c
+@@ -353,7 +353,6 @@ export async function set6MonthAvg({
+   );
+   const writableCategories = categoriesForMonthBudgetAction(
+     categories,
+-    'set-average',
+     isTrackingBudget(),
+   );
+ 
+diff --git a/packages/loot-core/src/server/budget/month-budget-categories.test.ts b/packages/loot-core/src/server/budget/month-budget-categories.test.ts
+new file mode 100644
+index 0000000..dea6143
+--- /dev/null
++++ b/packages/loot-core/src/server/budget/month-budget-categories.test.ts
+@@ -0,0 +1,27 @@
++import { describe, expect, it } from 'vitest';
++
++import { categoriesForMonthBudgetAction } from './month-budget-categories';
++
++describe('categoriesForMonthBudgetAction', () => {
++  it('skips hidden categories, hidden groups, and categories with saved templates', () => {
++    const categories = [
++      { id: 'visible', is_income: 0 as const, hidden: 0 as const, group_hidden: 0 as const, goal_def: null },
++      { id: 'hidden', is_income: 0 as const, hidden: 1 as const, group_hidden: 0 as const, goal_def: null },
++      { id: 'hidden-group', is_income: 0 as const, hidden: 0 as const, group_hidden: 1 as const, goal_def: null },
++      { id: 'templated', is_income: 0 as const, hidden: 0 as const, group_hidden: 0 as const, goal_def: '[]' },
++    ];
++
++    expect(categoriesForMonthBudgetAction(categories, false).map(c => c.id)).toEqual([
++      'visible',
++    ]);
++  });
++
++  it('keeps income categories eligible only in tracking budgets', () => {
++    const categories = [
++      { id: 'income', is_income: 1 as const, hidden: 0 as const, group_hidden: 0 as const, goal_def: null },
++    ];
++
++    expect(categoriesForMonthBudgetAction(categories, false)).toEqual([]);
++    expect(categoriesForMonthBudgetAction(categories, true)).toEqual(categories);
++  });
++});
+diff --git a/packages/loot-core/src/server/budget/month-budget-categories.ts b/packages/loot-core/src/server/budget/month-budget-categories.ts
+index ffe2d30..e97a046 100644
+--- a/packages/loot-core/src/server/budget/month-budget-categories.ts
++++ b/packages/loot-core/src/server/budget/month-budget-categories.ts
+@@ -1,19 +1,17 @@
+-type BudgetAction = 'copy-previous-month' | 'set-zero' | 'set-average';
+-
+ type CategoryBudgetFields = {
+   is_income: 0 | 1;
+   hidden?: 0 | 1;
+   group_hidden?: 0 | 1;
++  goal_def?: string | null;
+ };
+ 
+ /**
+  * Shared rules for which categories a month-wide budget action writes.
+- * The actions intentionally have different hidden-category behavior: copy
+- * and averages omit hidden categories, while set-zero includes them.
++ * Month-wide actions leave hidden categories and categories with saved
++ * templates untouched.
+  */
+ export function categoriesForMonthBudgetAction<T extends CategoryBudgetFields>(
+   categories: T[],
+-  action: BudgetAction,
+   isTrackingBudget: boolean,
+ ): T[] {
+   return categories.filter(category => {
+@@ -21,11 +19,11 @@ export function categoriesForMonthBudgetAction<T extends CategoryBudgetFields>(
+       return false;
+     }
+ 
+-    if (action === 'set-zero') {
+-      return true;
+-    }
+-
+-    return category.hidden === 0 && category.group_hidden === 0;
++    return (
++      category.hidden === 0 &&
++      category.group_hidden === 0 &&
++      !category.goal_def
++    );
+   });
+ }
+ 

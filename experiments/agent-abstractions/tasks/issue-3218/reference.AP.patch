@@ -1,0 +1,112 @@
+diff --git a/packages/loot-core/src/server/accounts/sync.ts b/packages/loot-core/src/server/accounts/sync.ts
+index 5c0f65f..4a7be5c 100644
+--- a/packages/loot-core/src/server/accounts/sync.ts
++++ b/packages/loot-core/src/server/accounts/sync.ts
+@@ -96,13 +96,72 @@ async function getAccountOldestTransaction(id): Promise<TransactionEntity> {
+   ).data?.[0];
+ }
+ 
++/**
++ * Whether an account has no transactions of its own: it is empty, or
++ * everything it holds (up to today) is a transfer leg whose other side lives
++ * in another account and that was not imported into this account. Bank sync
++ * treats such an account like a brand-new one (it gets a Starting Balance).
++ * `oldestDate` is the date of the oldest of those transfer legs, if any.
++ */
++async function getAccountOwnHistory(
++  id: AccountEntity['id'],
++): Promise<{ isNew: boolean; oldestDate: string | null }> {
++  const { data: rows } = await aqlQuery(
++    q('transactions')
++      .filter({
++        account: id,
++        date: { $lte: monthUtils.currentDay() },
++      })
++      .select(['id', 'date', 'transfer_id', 'imported_id'])
++      .options({ splits: 'all' }),
++  );
++
++  if (!rows || rows.length === 0) {
++    return { isNew: true, oldestDate: null };
++  }
++
++  if (rows.some(row => row.transfer_id == null || row.imported_id != null)) {
++    return { isNew: false, oldestDate: null };
++  }
++
++  const { data: partners } = await aqlQuery(
++    q('transactions')
++      .filter({ id: { $oneof: rows.map(row => row.transfer_id) } })
++      .select(['id', 'account'])
++      .options({ splits: 'all' }),
++  );
++  const partnerAccounts = new Map<string, string>(
++    (partners || []).map(partner => [partner.id, partner.account]),
++  );
++
++  const onlyIncomingTransfers = rows.every(row => {
++    const partnerAccount = partnerAccounts.get(row.transfer_id);
++    return partnerAccount != null && partnerAccount !== id;
++  });
++  if (!onlyIncomingTransfers) {
++    return { isNew: false, oldestDate: null };
++  }
++
++  const oldestDate: string | null = rows.reduce(
++    (oldest: string | null, row) =>
++      oldest == null || row.date < oldest ? row.date : oldest,
++    null,
++  );
++  return { isNew: true, oldestDate };
++}
++
+ async function getAccountSyncStartDate(id) {
+   // Many GoCardless integrations do not support getting more than 90 days
+   // worth of data, so make that the earliest possible limit.
+   // 89 days ago until today inclusive is 90 days.
+   const dates = [monthUtils.subDays(monthUtils.currentDay(), 89)];
+ 
+-  const oldestTransaction = await getAccountOldestTransaction(id);
++  // An account without history of its own is synced like a new account, so
++  // transfer legs other accounts put into it do not narrow the window.
++  const { isNew } = await getAccountOwnHistory(id);
++  const oldestTransaction = isNew
++    ? null
++    : await getAccountOldestTransaction(id);
+ 
+   if (oldestTransaction) dates.push(oldestTransaction.date);
+ 
+@@ -1190,6 +1249,13 @@ async function processBankSyncDownload(
+       startingBalanceDate = monthUtils.currentDay();
+     }
+ 
++    // Transfer legs other accounts already put into this account must not
++    // predate its Starting Balance.
++    const { oldestDate: oldestExistingDate } = await getAccountOwnHistory(id);
++    if (oldestExistingDate != null && oldestExistingDate < startingBalanceDate) {
++      startingBalanceDate = oldestExistingDate;
++    }
++
+     const payee = await getStartingBalancePayee();
+ 
+     return runMutator(async () => {
+@@ -1253,8 +1319,7 @@ export async function syncAccount(
+ 
+   const syncStartDate =
+     customStartingDate ?? (await getAccountSyncStartDate(id));
+-  const oldestTransaction = await getAccountOldestTransaction(id);
+-  const newAccount = oldestTransaction == null;
++  const { isNew: newAccount } = await getAccountOwnHistory(id);
+ 
+   let download;
+   if (acctRow.account_sync_source === 'simpleFin') {
+@@ -1340,8 +1405,7 @@ export async function simpleFinBatchSync(
+     }
+ 
+     const acctRow = await db.select('accounts', account.id);
+-    const oldestTransaction = await getAccountOldestTransaction(account.id);
+-    const newAccount = oldestTransaction == null;
++    const { isNew: newAccount } = await getAccountOwnHistory(account.id);
+ 
+     if (download.error_code) {
+       promises.push(

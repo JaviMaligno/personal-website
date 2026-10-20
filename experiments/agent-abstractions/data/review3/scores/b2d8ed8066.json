@@ -1,0 +1,11 @@
+{"id":"b2d8ed8066",
+"reuse":{"score":3,"why":"Extends getDateWithSkippedWeekend and adds isHoliday/isNonWorkingDay, but the new server code spells out 'isWeekend || isHoliday' inline instead of calling its own isNonWorkingDay, and schedule-template.ts is not given holidays."},
+"duplication":{"score":2,"why":"The daily-skip decision is written three times (getNextDate loop, getUpcomingDates flatMap, getDatesInRange flatMap), each with its own skipWeekend/daily branching around getDateWithSkippedWeekend."},
+"placement":{"score":3,"why":"The day predicates sit in shared/schedules.ts, but how an occurrence is adjusted or dropped is decided separately in shared getNextDate and in two server handlers."},
+"scope":{"score":4,"why":"Edits serve the four steps (including passing holidays through parseRecurDate), with no unrelated changes."},
+"maintainability":{"score":2,"why":"Three diverging copies of the adjust-or-skip rule (one with a 366-step loop, holidays taken from dateCond.value or schedule.data) plus a template path that ignores holidays make future rule changes error-prone."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates and getDatesInRange inline d.isWeekend || isHoliday instead of isNonWorkingDay and re-implement the daily skip; server/budget/schedule-template.ts calls getDateWithSkippedWeekend without holidays or daily skip"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"the adjust-or-skip-daily rule appears as a retry loop in getNextDate and as two differently shaped flatMaps (early-return order differs) in getUpcomingDates and getDatesInRange"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":3,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains a holidays parameter; getNextDate gains isDaily branches (skip loop, early null return, exclusion from the shared move); getUpcomingDates, getDatesInRange and schedule-template.ts bypass or re-implement the rule"}}

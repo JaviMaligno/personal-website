@@ -1,0 +1,90 @@
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index bfde45f..fb19df6 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -251,7 +251,12 @@ export const scheduleModel = {
+       payee: schedule._payee,
+       account: schedule._account,
+       amount: schedule._amount,
+-      expectedAmount: getScheduledAmount(schedule._amount),
++      expectedAmount: getScheduledAmount(
++        schedule._amount,
++        false,
++        'roundedMidpoint',
++        schedule._amountOp,
++      ),
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
+     };
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 0ecd7da..09c6852 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -103,7 +103,12 @@ export function normalizeSchedule(
+     _conditions: schedule._conditions ?? [],
+     _payee: schedule._payee ?? conditions.payee?.value ?? null,
+     _account: accountId,
+-    _amount: getScheduledAmount(amountValue),
++    _amount: getScheduledAmount(
++      amountValue,
++      false,
++      'roundedMidpoint',
++      conditions.amount?.op,
++    ),
+     _date: dateValue,
+   };
+ }
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index d4cd5e5..17530b0 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -57,6 +57,25 @@ describe('schedules', () => {
+       expect(getScheduledAmount(-12500)).toBe(-12500);
+       expect(getScheduledAmount(null)).toBe(0);
+     });
++
++    it.each([
++      [-10000, -10750],
++      [10000, 10750],
++      [-1234, -1327],
++      [1234, 1327],
++      [1, 1],
++    ])('uses the tolerance end furthest from zero for %i', (amount, expected) => {
++      expect(getScheduledAmount(amount, false, 'roundedMidpoint', 'isapprox')).toBe(
++        expected,
++      );
++    });
++
++    it('keeps approximate schedule posting amounts nominal when inverted', () => {
++      expect(getScheduledAmount(-10000, true)).toBe(10000);
++      expect(getScheduledAmount(-10000, true, 'roundedMidpoint', 'isapprox')).toBe(
++        10750,
++      );
++    });
+   });
+ 
+   describe('getStatus', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index ba1fb18..adcc279 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -384,13 +384,18 @@ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number } | null,
+   inverse: boolean = false,
+   rangeRounding: 'roundedMidpoint' | 'halfOfRoundedSum' = 'roundedMidpoint',
++  amountOp?: string,
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+   if (amount == null) return 0;
+ 
+   if (typeof amount === 'number') {
+-    return inverse ? -amount : amount;
++    const expectedAmount =
++      amountOp === 'isapprox'
++        ? amount + Math.sign(amount) * Math.round(Math.abs(amount) * 0.075)
++        : amount;
++    return inverse ? -expectedAmount : expectedAmount;
+   }
+   const rangedAmount =
+     rangeRounding === 'halfOfRoundedSum'

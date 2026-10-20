@@ -1,0 +1,44 @@
+{
+ "id": "00cf832d50",
+ "reuse": {
+  "score": 3,
+  "why": "All providers reuse the new linking guards and existing bank lookup and sync helpers, but Fintegra copies orchestration and takeover copies local unlinking."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The change adds duplicate account-link orchestration, transaction-download plumbing, and the account fields cleared by unlinking."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Server operations follow existing account modules, but the Fintegra type belongs outside simplefin.ts and local detachment should be shared with unlinkAccount."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on the four requested linking and provider changes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized guards help maintenance, but a validation-named helper now mutates accounts and duplicated provider workflows create additional maintenance points."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "ensureAccountIsNotLinked duplicates unlinkAccount's local detachment operation to avoid its provider cleanup instead of extracting a shared local-detachment definition."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "linkFintegraAccount and downloadFintegraTransactions compact and reshape existing provider workflows while retaining their duplicated logic."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 0,
+  "where": "ensureAccountIsNotLinked gains replaceExistingLink and a takeover branch that changes it from a guard into a mutating operation; all six linking handlers still use the shared guards."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 33.9
+ }
+}

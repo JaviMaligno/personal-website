@@ -1,0 +1,76 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index cba5395..c4c39fa 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -744,6 +744,54 @@ describe('schedules', () => {
+ 
+       expect(getNextDateAfter(dateCond, '2020-12-06')).toBe('2020-12-14');
+     });
++
++    it('skips a month-day holiday in every year', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-23',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-25'],
++        },
++      };
++
++      expect(getNextDateAfter(dateCond, '2020-12-24')).toBe('2020-12-28');
++    });
++
++    it('applies a month-day holiday to a later year', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2026-12-23',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-25'],
++        },
++      };
++
++      expect(getNextDateAfter(dateCond, '2026-12-24')).toBe('2026-12-28');
++    });
++
++    it('mixes month-day and full-date holidays in one list', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-23',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-25', '2020-12-28'],
++        },
++      };
++
++      expect(getNextDateAfter(dateCond, '2020-12-24')).toBe('2020-12-29');
++    });
+   });
+ 
+   describe('shared presets', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index b02d561..3d6b176 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -294,7 +294,11 @@ export function isNonWorkingDay(
+   date: Date,
+   holidays: readonly string[] = [],
+ ): boolean {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  if (d.isWeekend(date)) {
++    return true;
++  }
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
+ }
+ 
+ // Any seven consecutive days hold five weekdays, and at most holidays.length

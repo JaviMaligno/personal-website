@@ -1,0 +1,94 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 6dee0e1..af91cd0 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -207,6 +207,7 @@ describe('month-wide budget actions', () => {
+       is_income: 1,
+     });
+     await db.insertCategoryGroup({ id: 'group', name: 'Group', is_income: 0 });
++    await db.insertCategoryGroup({ id: 'fixed-group', name: 'Fixed', is_income: 0 });
+     await db.insertCategoryGroup({
+       id: 'hidden-group',
+       name: 'Hidden group',
+@@ -218,6 +219,8 @@ describe('month-wide budget actions', () => {
+       ['hidden', 'group'],
+       ['group-hidden', 'hidden-group'],
+       ['templated', 'group'],
++      ['fixed', 'fixed-group'],
++      ['category-note', 'group'],
+     ]) {
+       await db.insertCategory({
+         id,
+@@ -233,6 +236,8 @@ describe('month-wide budget actions', () => {
+       goal_def: JSON.stringify([{ type: 'monthly', amount: 500 }]),
+       template_settings: { source: 'ui' },
+     });
++    await db.insert('notes', { id: 'fixed-group', note: 'Rent #fixed costs' });
++    await db.insert('notes', { id: 'category-note', note: '#fixed' });
+     await sheet.loadSpreadsheet(db);
+     await budget.createBudget(['2024-01']);
+ 
+@@ -243,6 +248,8 @@ describe('month-wide budget actions', () => {
+     expect(await getSheetValue('budget202401', 'budget-hidden')).toBe(500);
+     expect(await getSheetValue('budget202401', 'budget-group-hidden')).toBe(500);
+     expect(await getSheetValue('budget202401', 'budget-templated')).toBe(500);
++    expect(await getSheetValue('budget202401', 'budget-fixed')).toBe(500);
++    expect(await getSheetValue('budget202401', 'budget-category-note')).toBe(0);
+   });
+ 
+   it('budgets the previous month net spending and received income', async () => {
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index d809cca..2e0f01f 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -72,6 +72,7 @@ type BudgetData = {
+   category: string;
+   amount: number;
+   template_source: string;
++  group_fixed: 1 | 0;
+ };
+ 
+ function getBulkBudgetCategories(): Promise<db.DbViewCategoryWithGroupHidden[]> {
+@@ -79,7 +80,9 @@ function getBulkBudgetCategories(): Promise<db.DbViewCategoryWithGroupHidden[]>
+     SELECT c.*
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++      AND COALESCE(n.note, '') NOT LIKE '%#fixed%'
+       AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'
+   `);
+ }
+@@ -91,10 +94,12 @@ function getBudgetData<T extends BudgetTable>(
+   return db.all<BudgetData>(
+     `
+     SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden,
++           COALESCE(n.note, '') LIKE '%#fixed%' AS group_fixed,
+            COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') AS template_source
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -238,6 +243,9 @@ export async function copyPreviousMonth({
+       if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
+         return;
+       }
++      if (prevBudget.group_fixed) {
++        return;
++      }
+       if (prevBudget.template_source === 'ui') {
+         return;
+       }
+@@ -271,7 +279,9 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await db.all<db.DbViewCategory>(
+     `SELECT c.* FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
++     LEFT JOIN notes n ON n.id = g.id
+      WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++       AND COALESCE(n.note, '') NOT LIKE '%#fixed%'
+        AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'`,
+   );
+ 

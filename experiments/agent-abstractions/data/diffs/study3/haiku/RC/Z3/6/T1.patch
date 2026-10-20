@@ -1,0 +1,214 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index f1ddb82..b448452 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -196,6 +196,12 @@ async function linkBankSyncAccount({
+   syncFileId,
+   eventTables,
+ }: LinkBankSyncAccountParams) {
++  await link.assertBankAccountNotLinkedElsewhere({
++    accountSyncSource,
++    providerAccountId: newAccount.account_id,
++    accountId: upgradingId,
++  });
++
+   const bank = await link.findOrCreateBank(institution, bankId);
+ 
+   let id: string;
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index 4d5667b..eaac09d 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -1,13 +1,141 @@
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ 
+-import { findOrCreateBank } from './link';
++import { assertBankAccountNotLinkedElsewhere, findOrCreateBank } from './link';
+ 
+ beforeEach(async () => {
+   await global.emptyDatabase()();
+   await loadMappings();
+ });
+ 
++async function insertAccount(fields: {
++  id: string;
++  account_id: string;
++  account_sync_source: 'simpleFin' | 'goCardless';
++  closed?: 1 | 0;
++  tombstone?: 1 | 0;
++}) {
++  await db.insertWithUUID('accounts', {
++    name: fields.id,
++    offbudget: 0,
++    closed: fields.closed ?? 0,
++    tombstone: fields.tombstone ?? 0,
++    sort_order: 0,
++    ...fields,
++  });
++}
++
++describe('assertBankAccountNotLinkedElsewhere', () => {
++  it('refuses a bank account already linked to another account', async () => {
++    await insertAccount({
++      id: 'acct-1',
++      account_id: 'ext-1',
++      account_sync_source: 'simpleFin',
++    });
++
++    await expect(
++      assertBankAccountNotLinkedElsewhere({
++        accountSyncSource: 'simpleFin',
++        providerAccountId: 'ext-1',
++        accountId: undefined,
++      }),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++  });
++
++  it('allows re-linking into the account that already holds the link', async () => {
++    await insertAccount({
++      id: 'acct-1',
++      account_id: 'ext-1',
++      account_sync_source: 'simpleFin',
++    });
++
++    await expect(
++      assertBankAccountNotLinkedElsewhere({
++        accountSyncSource: 'simpleFin',
++        providerAccountId: 'ext-1',
++        accountId: 'acct-1',
++      }),
++    ).resolves.toBeUndefined();
++  });
++
++  it('refuses linking into a different account when another account holds the link', async () => {
++    await insertAccount({
++      id: 'acct-1',
++      account_id: 'ext-1',
++      account_sync_source: 'simpleFin',
++    });
++    await insertAccount({
++      id: 'acct-2',
++      account_id: 'ext-2',
++      account_sync_source: 'simpleFin',
++    });
++
++    await expect(
++      assertBankAccountNotLinkedElsewhere({
++        accountSyncSource: 'simpleFin',
++        providerAccountId: 'ext-1',
++        accountId: 'acct-2',
++      }),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++  });
++
++  it('still counts closed accounts as holding the link', async () => {
++    await insertAccount({
++      id: 'acct-1',
++      account_id: 'ext-1',
++      account_sync_source: 'simpleFin',
++      closed: 1,
++    });
++
++    await expect(
++      assertBankAccountNotLinkedElsewhere({
++        accountSyncSource: 'simpleFin',
++        providerAccountId: 'ext-1',
++        accountId: undefined,
++      }),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++  });
++
++  it('ignores deleted accounts', async () => {
++    await insertAccount({
++      id: 'acct-1',
++      account_id: 'ext-1',
++      account_sync_source: 'simpleFin',
++      tombstone: 1,
++    });
++
++    await expect(
++      assertBankAccountNotLinkedElsewhere({
++        accountSyncSource: 'simpleFin',
++        providerAccountId: 'ext-1',
++        accountId: undefined,
++      }),
++    ).resolves.toBeUndefined();
++  });
++
++  it('treats the same provider account id under a different provider as a different bank account', async () => {
++    await insertAccount({
++      id: 'acct-1',
++      account_id: 'ext-1',
++      account_sync_source: 'simpleFin',
++    });
++
++    await expect(
++      assertBankAccountNotLinkedElsewhere({
++        accountSyncSource: 'goCardless',
++        providerAccountId: 'ext-1',
++        accountId: undefined,
++      }),
++    ).resolves.toBeUndefined();
++  });
++});
++
+ async function getBanks() {
+   return await db.all<db.DbBank>(
+     'SELECT id, bank_id, name FROM banks ORDER BY name',
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index e0eee27..a00c8f7 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -2,6 +2,7 @@
+ import { v4 as uuidv4 } from 'uuid';
+ 
+ import * as db from '#server/db';
++import type { AccountSyncSource } from '#types/models';
+ 
+ export type Institution = string | { name?: string | null };
+ 
+@@ -12,6 +13,26 @@ function getInstitutionName(institution: Institution | null | undefined) {
+   return institution?.name ?? null;
+ }
+ 
++export async function assertBankAccountNotLinkedElsewhere({
++  accountSyncSource,
++  providerAccountId,
++  accountId,
++}: {
++  accountSyncSource: AccountSyncSource;
++  providerAccountId: string;
++  accountId: db.DbAccount['id'] | undefined;
++}) {
++  const existing = await db.first<Pick<db.DbAccount, 'id'>>(
++    `SELECT id FROM accounts
++     WHERE account_sync_source = ? AND account_id = ? AND id IS NOT ? AND tombstone = 0`,
++    [accountSyncSource, providerAccountId, accountId ?? null],
++  );
++
++  if (existing) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ /**
+  * Finds the bank record for a bank-sync connection, creating one if needed.
+  *
+diff --git a/upcoming-release-notes/prevent-duplicate-bank-account-links.md b/upcoming-release-notes/prevent-duplicate-bank-account-links.md
+new file mode 100644
+index 0000000..ad733c6
+--- /dev/null
++++ b/upcoming-release-notes/prevent-duplicate-bank-account-links.md
+@@ -0,0 +1,5 @@
++---
++category: Bugfixes
++---
++
++Prevent a bank account from being linked to more than one local account.

@@ -1,0 +1,12 @@
+{"id":"5dc27d46ae",
+"reuse":{"score":3,"why":"Adds a shared skipsWeekendOccurrences predicate and keeps getDateWithSkippedWeekend for the move case, but the skip behaviour itself is written outside the existing weekend helpers."},
+"duplication":{"score":3,"why":"The 'over-fetch occurrences, drop weekend days' logic is implemented twice, in getNextDate (take 7, find) and getUpcomingDates (take count*7, filter/slice)."},
+"placement":{"score":3,"why":"The predicate sits in shared/schedules.ts, but getUpcomingDates in the server app now carries its own weekend-skipping branch instead of delegating to the shared weekend rule."},
+"scope":{"score":5,"why":"Changes are limited to the daily-skip rule, the frequency passed into RSchedule data, and tests."},
+"maintainability":{"score":3,"why":"Two separate skip implementations and schedule-template's inverted `noSkipWeekend` flag (computed from the predicate) make the rule easy to change in one place and miss in another."},
+"bypasses_abstraction":{"value":true,"where":"schedules/app.ts getUpcomingDates filters `!d.isWeekend(date)` itself rather than going through getNextDate/getDateWithSkippedWeekend, the tree's weekend-rule helpers."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The weekend-drop in getUpcomingDates (filter + slice over count*7) reshapes the one in getNextDate (find over DAILY_OCCURRENCES_PER_WEEK)."},
+"one_place":{"value":false,"where":"Whether the rule applies is in skipsWeekendOccurrences, but applying it (skipping weekend occurrences) is done separately in shared getNextDate and server getUpcomingDates, with schedule-template steering it via the noSkipWeekend argument."}
+}

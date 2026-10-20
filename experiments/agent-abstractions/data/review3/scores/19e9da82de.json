@@ -1,0 +1,11 @@
+{"id":"19e9da82de",
+"reuse":{"score":5,"why":"All four steps go through the existing getDateWithSkippedWeekend, which every caller (getNextDate, getUpcomingDates, the new getDatesInRange, schedule-template) uses for daily skipping, holidays and MM-DD holidays."},
+"duplication":{"score":4,"why":"Weekend/holiday rules are defined once (isHoliday, isWeekendOrHoliday) and schedule-template's two copies collapse into one closure; only the 'how many occurrences to look ahead' sizing is restated three different ways."},
+"placement":{"score":5,"why":"Date rules live in shared/schedules.ts, the new handler sits in schedules/app.ts next to get-upcoming-dates, and the config type gains the field."},
+"scope":{"score":4,"why":"Focused on the four requests; the schedule-template rewrite into getAdjustedDate is a justified consolidation of code it had to touch."},
+"maintainability":{"score":4,"why":"One function owns the date adjustment with clear helpers, though returning null for daily skips and the ad hoc look-ahead windows (searchWindow, count*7, shiftDays) are things a maintainer must keep in sync."},
+"bypasses_abstraction":{"value":false,"where":"Every adjusted-date path calls getDateWithSkippedWeekend; none re-tests weekends or holidays itself."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Look-ahead sizing for runs of weekend/holiday days appears as getWeekendSearchWindow in shared/schedules.ts, count * 7 + holidays * 7 in getUpcomingDates and 2 * (holidays + 1) shiftDays in getDatesInRange."},
+"abstraction_drift":{"value":false,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":0,"where":"getDateWithSkippedWeekend gains frequency and holidays parameters and a daily -> null branch; all call sites route through it, so the growth reflects real variation rather than drift."}}

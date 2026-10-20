@@ -1,0 +1,74 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..b378f8f 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -465,6 +465,26 @@ describe('schedules', () => {
+   });
+ 
+   describe('getNextDate', () => {
++    it.each(['before', 'after'] as const)(
++      'skips daily weekend occurrences when weekend mode is %s',
++      weekendSolveMode => {
++        const dateCond = {
++          op: 'isapprox',
++          value: {
++            start: '2020-12-05',
++            frequency: 'daily',
++            interval: 1,
++            skipWeekend: true,
++            weekendSolveMode,
++          },
++        };
++
++        expect(getNextDate(dateCond, new Date('2020-12-05T00:00:00'))).toBe(
++          '2020-12-07',
++        );
++      },
++    );
++
+     it('returns last occurrence for a recurring schedule with an end date in the past', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..4bd77ed 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -293,17 +293,37 @@ export function getNextDate(
+   if (value.type === 'date') {
+     return value.date;
+   } else if (value.type === 'recur') {
++    const isDailySchedule = dateCond.value.frequency === 'daily';
++    const skipDailyWeekend =
++      value.schedule.data.skipWeekend && isDailySchedule && !noSkipWeekend;
++
+     let dates = value.schedule.occurrences({ start, take: 1 }).toArray();
+ 
++    // Daily schedules skip weekend occurrences instead of shifting them. At
++    // most seven successive daily occurrences are needed to find a weekday;
++    // the bound also handles intervals that land on weekends indefinitely.
++    for (let attempt = 0; skipDailyWeekend && attempt < 7; attempt++) {
++      if (dates.length === 0 || !d.isWeekend(dates[0].date)) break;
++      dates = value.schedule
++        .occurrences({ start: d.addDays(dates[0].date, 1), take: 1 })
++        .toArray();
++    }
++
+     if (dates.length === 0) {
+       // Could be a schedule with limited occurrences, so we try to
+       // find the last occurrence
+       dates = value.schedule.occurrences({ reverse: true, take: 1 }).toArray();
++      for (let attempt = 0; skipDailyWeekend && attempt < 7; attempt++) {
++        if (dates.length === 0 || !d.isWeekend(dates[0].date)) break;
++        dates = value.schedule
++          .occurrences({ end: d.subDays(dates[0].date, 1), reverse: true, take: 1 })
++          .toArray();
++      }
+     }
+ 
+     if (dates.length > 0) {
+       let date = dates[0].date;
+-      if (value.schedule.data.skipWeekend && !noSkipWeekend) {
++      if (value.schedule.data.skipWeekend && !noSkipWeekend && !isDailySchedule) {
+         date = getDateWithSkippedWeekend(
+           date,
+           value.schedule.data.weekendSolve,

@@ -1,0 +1,45 @@
+{
+ "id": "ff20745035",
+ "reuse": {
+  "score": 3,
+  "why": "Reuses recurrence conversion and weekend adjustment helpers, but repeats daily skipping decisions instead of sharing the occurrence policy."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The daily skip-versus-shift decision appears independently in getNextDate, getUpcomingDates, and getDatesInRange."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Holiday matching belongs in shared/schedules.ts, but server handlers also own recurrence policy that should live in that shared layer."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on schedule occurrence handling, the range endpoint, configuration propagation, and related tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate several policy implementations, separate iteration strategies, and unexplained limits of 14 and 366."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "getUpcomingDates and getDatesInRange implement occurrence policy outside getNextDate; schedule-template.ts retains two raw-date paths that disable getNextDate adjustment and apply shifting themselves."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The same daily skip-versus-shift policy is reshaped as an advancing loop in getNextDate and nullable mappings returning Dates or day strings in the two server handlers."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 4,
+  "where": "getDateWithSkippedWeekend gains holidays; getNextDate gains daily-specific empty-result recovery and daily dispatch; two server handlers and two budget adjustment sites independently apply occurrence policy."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 34.7
+ }
+}

@@ -1,0 +1,12 @@
+{"id":"fd5d59c62c",
+"reuse":{"score":4,"why":"Extends the existing recurConfigToRSchedule and getDateWithSkippedWeekend and adds shared holiday predicates in shared/schedules.ts, but getDatesInRange re-assembles the occurrence pipeline of getUpcomingDates instead of sharing it."},
+"duplication":{"score":3,"why":"The take-extra/filter(isSkippedDailyOccurrence)/slice pattern is repeated in getNextDate (twice), getUpcomingDates and getDatesInRange, and getDatesInRange copies getUpcomingDates' RSchedule/skipWeekend-ternary/breadcrumb scaffold."},
+"placement":{"score":4,"why":"Holiday rules live in shared/schedules.ts next to the weekend logic and the handler sits in server/schedules/app.ts; the daily skip rule is however split between the rrule builder (weekends) and post-filters at each consumer (holidays)."},
+"scope":{"score":5,"why":"All edits serve the four steps (daily skip, range handler, holidays, yearly holidays) plus tests and a release note."},
+"maintainability":{"score":3,"why":"The daily-skip rule now has two mechanisms (byDayOfWeek in the rrule and a per-consumer holiday filter with a holidays.length lookahead heuristic), and each consumer must remember to apply the filter, which is fragile to own."},
+"bypasses_abstraction":{"value":true,"where":"getDatesInRange in server/schedules/app.ts decides `shiftsWeekend = config.skipWeekend && config.frequency !== 'daily'` itself instead of relying on getDateWithSkippedWeekend/the shared skip predicates like getUpcomingDates does."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getDatesInRange reshapes getUpcomingDates' occurrence chain (renamed condition shiftsWeekend, range bounds instead of take) and the extra-take/filter/slice holiday pattern is repeated inline in getNextDate, getUpcomingDates and getDatesInRange rather than shared."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":1,"where":"getDateWithSkippedWeekend gains a `holidays` parameter; recurConfigToRSchedule gains a daily skipWeekend branch; getDatesInRange computes its own daily/non-daily shiftsWeekend switch around the helper."}
+}

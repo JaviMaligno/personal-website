@@ -1,0 +1,12 @@
+{"id":"fcf9033ff2",
+"reuse":{"score":1,"why":"Ignores the existing getScheduledAmount helper and the existing getApproxNumberThreshold (re-inlining `Math.round(Math.abs(x) * 0.075)` twice) and leaves the helper itself at the old midpoint rule."},
+"duplication":{"score":1,"why":"The same worst-case expression (approx tolerance plus Math.min of the range) is written twice, in computeSchedulePreviewTransactions and in scheduleModel.toExternal, on top of the existing midpoint copies it leaves in place."},
+"placement":{"score":2,"why":"Amount-planning logic is put inside the API model mapper and inline in the preview loop rather than in the shared schedule amount helper where the tree keeps that rule."},
+"scope":{"score":3,"why":"Edits are limited to the touched files, but the rule change only reaches two of the many paths that apply it (posting, forecast, budget template, UI balances still use the midpoint)."},
+"maintainability":{"score":1,"why":"The expected-amount rule now exists in several divergent versions (new worst case in two inline copies, midpoint in getScheduledAmount and four other inline copies), so the next rule change must be hunted across the tree."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts computeSchedulePreviewTransactions and server/api-models.ts scheduleModel.toExternal compute the amount inline instead of using/updating getScheduledAmount; the tolerance bypasses getApproxNumberThreshold."},
+"duplicated_blocks":2,
+"would_merge":"no",
+"disguised_duplication":{"value":true,"where":"The api-models.ts expectedAmount expression is the preview expression reshaped (different variable names, explicit num1/num2 undefined check) and both restate getApproxNumberThreshold as `Math.round(Math.abs(amount) * 0.075)`."},
+"abstraction_drift":{"value":true,"parameters_added":0,"special_case_branches":0,"bypassing_call_sites":2,"where":"No shared helper is extended; the two changed sites (preview in shared/schedules.ts, API mapper in api-models.ts) re-implement the rule inline, while getScheduledAmount and the forecast, schedules/app and schedule-template copies keep the old midpoint."}
+}

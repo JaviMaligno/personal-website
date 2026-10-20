@@ -1,0 +1,45 @@
+{
+ "id": "89e32bbdba",
+ "reuse": {
+  "score": 4,
+  "why": "Fintegra reuses findOrCreateBank, linkBankSyncAccount and the existing import pipeline, although local unlink cleanup is copied rather than extracted for reuse."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The change duplicates the Akahu transaction downloader, account-list request, unlink field reset and linked-account selection predicate."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Link policy and database operations live in accounts/link.ts, orchestration remains in accounts/app.ts, and provider downloads remain in accounts/sync.ts."
+ },
+ "scope": {
+  "score": 4,
+  "why": "Most edits support the requested linking rules and Fintegra integration, but the additional account-list endpoint and schedules import reorder exceed the stated requirements."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared linking orchestration limits provider divergence, but copied transport and unlink logic plus duplicated holder predicates create avoidable maintenance points."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "Fintegra uses the existing bank lookup and linking abstractions; unlinkAccount includes remote cleanup, so it is not directly suitable for local link replacement."
+ },
+ "duplicated_blocks": 4,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "accounts/link.ts repeats the holder-selection query using first/upgradingId versus all/keepId, and downloadFintegraTransactions reshapes downloadAkahuTransactions with renamed provider details and simplified result variables."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 0,
+  "where": "replaceExistingLink adds one shared option, an early return in assertBankAccountNotLinked and conditional release in linkBankSyncAccount; the assertion also acquires closed-target validation despite its narrower name, while all six providers use the shared policy."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 44.5
+ }
+}

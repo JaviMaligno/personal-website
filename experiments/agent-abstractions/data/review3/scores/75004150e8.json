@@ -1,0 +1,7 @@
+{"id":"75004150e8",
+"completeness":{"per_site":{"forecast":"full","rule-action-sync":"partial","post-transaction":"partial","preview":"partial","budget-template":"none"},
+"left_out":{"budget-template":"missed"},
+"sites_full":1,"sites_partial":3,"sites_total":5,"value":0.5,
+"why":"Forecast passes its (already non-null) value to the new getScheduleAmount; the three server/shared sites still keep their own `== null ? 0 :` branch around the call although the decision includes the missing case and the existing getScheduledAmount decides it; the budget template is untouched and its rounding variant is not carried as an explicit option (no sign the omission was deliberate)."},
+"interface":{"score":2,"why":"Adds getScheduleAmount next to the existing exported getScheduledAmount, which already handles number, range and missing amounts; the new one omits the missing case, forcing callers to keep their own null check, and the template's rounding inconsistency is not made explicit."},
+"disguised_duplication":{"value":true,"where":"shared/schedules.ts getScheduleAmount re-implements the existing getScheduledAmount (number vs rounded midpoint) under a near-identical name instead of reusing it."}}

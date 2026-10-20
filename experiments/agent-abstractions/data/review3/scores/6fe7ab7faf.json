@@ -1,0 +1,12 @@
+{"id":"6fe7ab7faf",
+"reuse":{"score":4,"why":"Holidays are threaded into the existing WeekendRule/applyWeekendRule/getDateWithSkippedWeekend and the new handler reuses recurConfigToRSchedule and applyWeekendRule."},
+"duplication":{"score":2,"why":"The daily-skip rule is re-decided at every caller: getUpcomingDates, getDatesInRange and schedule-template each compute skipsWeekendOccurrences, filter weekend/holiday days themselves and pass skipWeekend && !skipsWeekendDays, while getNextDate has its own branch."},
+"placement":{"score":3,"why":"Weekend/holiday shifting lives in shared/schedules.ts, but the daily-skip decision sits outside the WeekendRule abstraction in the server callers."},
+"scope":{"score":5,"why":"All edits serve weekend skipping, the date-range handler and holidays."},
+"maintainability":{"score":3,"why":"A maintainer must remember to repeat the skipsWeekendOccurrences filter plus the masked skipWeekend flag at every new caller, and schedule-template's flipped noSkipWeekend is hard to follow."},
+"bypasses_abstraction":{"value":true,"where":"schedules/app.ts getUpcomingDates and getDatesInRange and budget/schedule-template.ts implement the daily weekend/holiday skip around applyWeekendRule instead of inside the WeekendRule"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"the 'skip if daily and isWeekendOrHoliday, else applyWeekendRule with skipWeekend && !skipsWeekendDays' logic is repeated in reshaped forms (filter chain, for-loop continue, flag masking, getNextWeekdayOccurrence)"},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":3,"where":"WeekendRule and getDateWithSkippedWeekend gain holidays; getNextDate gains a daily special-case branch; getUpcomingDates, getDatesInRange and schedule-template re-implement the daily skip"}
+}

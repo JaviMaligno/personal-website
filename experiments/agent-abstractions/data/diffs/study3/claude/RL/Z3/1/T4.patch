@@ -1,0 +1,72 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 5657c68..f8cfdd2 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -52,6 +52,7 @@ type LinkAccountBaseParams = {
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
++  replaceExistingLink?: boolean;
+ };
+ 
+ export type AccountHandlers = {
+@@ -176,6 +177,7 @@ async function assertBankAccountNotLinked(
+   provider: string,
+   providerAccountId: string,
+   upgradingId?: string,
++  replaceExistingLink = false,
+ ) {
+   const holder = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+@@ -183,9 +185,13 @@ async function assertBankAccountNotLinked(
+        AND id IS NOT ?`,
+     [provider, providerAccountId, upgradingId ?? null],
+   );
+-  if (holder) {
++  if (!holder) {
++    return;
++  }
++  if (!replaceExistingLink) {
+     throw new Error('This bank account is already linked to another account.');
+   }
++  return holder.id;
+ }
+ 
+ async function linkGoCardlessAccount({
+@@ -243,6 +249,7 @@ async function linkExternalAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+   fileId,
+   syncedTables = ['transactions', 'accounts'],
+ }: LinkAccountBaseParams & {
+@@ -275,7 +282,27 @@ async function linkExternalAccount({
+     }
+   }
+ 
+-  await assertBankAccountNotLinked(provider, accountId, upgradingId);
++  const previousHolderId = await assertBankAccountNotLinked(
++    provider,
++    accountId,
++    upgradingId,
++    replaceExistingLink,
++  );
++
++  // The bank connection stays in use by the new link, so only the local
++  // account is unlinked; nothing is sent to the provider.
++  if (previousHolderId) {
++    await db.updateAccount({
++      id: previousHolderId,
++      account_id: null,
++      bank: null,
++      balance_current: null,
++      balance_available: null,
++      balance_limit: null,
++      account_sync_source: null,
++      bank_sync_status: null,
++    });
++  }
+ 
+   const bank = await link.findOrCreateBank(institution, bankKey);
+ 

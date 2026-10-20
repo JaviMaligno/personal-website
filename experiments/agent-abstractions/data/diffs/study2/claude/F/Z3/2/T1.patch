@@ -1,0 +1,90 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 5a12ca5..3ecbe0f 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -170,6 +170,24 @@ async function getAccountProperties({ id }: { id: AccountEntity['id'] }) {
+   };
+ }
+ 
++// Refuses to link a provider account that another (non-deleted) local account
++// already holds. Must run before any write.
++async function assertNotLinkedElsewhere(
++  syncSource: AccountSyncSource,
++  providerAccountId: string,
++  upgradingId?: string,
++) {
++  const existing = await db.first<Pick<db.DbAccount, 'id'>>(
++    `SELECT id FROM accounts
++     WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?
++       AND id IS NOT ?`,
++    [syncSource, providerAccountId, upgradingId ?? null],
++  );
++  if (existing) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ // Links a bank-sync provider account once its bank row exists: upgrade the
+ // local account `upgradingId` to sync with the provider, or create a new
+ // account (with its transfer payee); then run the initial sync and tell the
+@@ -266,6 +284,8 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
++  await assertNotLinkedElsewhere('goCardless', account.account_id, upgradingId);
++
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+   return linkBankSyncAccount({
+@@ -300,6 +320,12 @@ async function linkSimpleFinAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await assertNotLinkedElsewhere(
++    'simpleFin',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+@@ -338,6 +364,12 @@ async function linkPluggyAiAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await assertNotLinkedElsewhere(
++    'pluggyai',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+@@ -372,6 +404,12 @@ async function linkAkahuAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await assertNotLinkedElsewhere(
++    'akahu',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+@@ -413,6 +451,12 @@ async function linkEnableBankingAccount({
+   // account-level identifier (account_id) rather than institution-level
+   // IDs. This creates one bank entry per Enable Banking account, unlike
+   // GoCardless (requisitionId) or SimpleFin/PluggyAi (orgDomain/orgId).
++  await assertNotLinkedElsewhere(
++    'enableBanking',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.account_id,

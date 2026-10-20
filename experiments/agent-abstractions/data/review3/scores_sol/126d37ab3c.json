@@ -1,0 +1,44 @@
+{
+ "id": "126d37ab3c",
+ "reuse": {
+  "score": 3,
+  "why": "Most actions share getEditableCategories and existing budget primitives, but copyPreviousMonth independently implements the shared eligibility policy."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Category queries are consolidated, but the hidden-category and saved-template predicates remain duplicated between SQL and JavaScript."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Selection policy and budget operations remain in the budget actions module, with handler registration using the established application layer."
+ },
+ "scope": {
+  "score": 5,
+  "why": "Changes are confined to the requested month-wide actions, their handler registration, and relevant tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The shared selection helper improves ownership, but maintaining parallel eligibility implementations for copying and other actions invites policy drift."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/server/budget/actions.ts: copyPreviousMonth bypasses getEditableCategories and applies hidden, template, and fixed-group exclusions locally."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "packages/loot-core/src/server/budget/actions.ts: getEditableCategoryFilter expresses hidden and saved-template exclusions in SQL, while copyPreviousMonth and hasSavedTemplates reshape those decisions into JavaScript."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "packages/loot-core/src/server/budget/actions.ts: the shared selection helpers gain includeHidden and its conditional SQL branch, while copyPreviousMonth independently maintains the evolving eligibility policy."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 25.9
+ }
+}

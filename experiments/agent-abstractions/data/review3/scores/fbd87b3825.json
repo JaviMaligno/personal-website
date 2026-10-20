@@ -1,0 +1,11 @@
+{"id":"fbd87b3825",
+"reuse":{"score":2,"why":"Re-writes the tolerance formula Math.round(Math.abs(amount) * 0.075) inline instead of calling the existing getApproxNumberThreshold in shared/rules.ts that the matching code uses."},
+"duplication":{"score":2,"why":"The 7.5% tolerance is now defined twice (rules.ts and schedules.ts), so matching and planning can drift apart."},
+"placement":{"score":4,"why":"Extending getExpectedScheduleAmount in shared/schedules.ts is the right layer, with an optional op parameter."},
+"scope":{"score":4,"why":"Focused on the amount rule, the preview caller and tests."},
+"maintainability":{"score":2,"why":"Only the preview path passes the op; forecast-schedules.ts, schedules/app.ts (action sync and post-transaction) still call without it, so the 'shared' rule is silently partial and the optional parameter makes forgetting it easy."},
+"bypasses_abstraction":{"value":true,"where":"getExpectedScheduleAmount in shared/schedules.ts re-implements getApproxNumberThreshold (shared/rules.ts) instead of calling it."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The tolerance formula is copied nearly verbatim from getApproxNumberThreshold, not disguised."},
+"one_place":{"value":false,"where":"The rule is in getExpectedScheduleAmount, but only computeSchedulePreviewTransactions passes amountOp; forecast-schedules.ts:97 and schedules/app.ts:156/590 still get the exact value for approximate amounts."}}

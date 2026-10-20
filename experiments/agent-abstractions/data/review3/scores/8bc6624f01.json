@@ -1,0 +1,10 @@
+{"id":"8bc6624f01",
+"reuse":{"score":2,"why":"Instead of extracting the local-state part of unlinkAccount into a shared helper, it copies unlinkAccount's account-clearing update into the link guard."},
+"duplication":{"score":2,"why":"The eight-field db.updateAccount that resets an account to 'unlinked' is duplicated verbatim from unlinkAccount, so what 'unlinked' means now lives in two places."},
+"placement":{"score":3,"why":"The flag is threaded through the shared ensureBankAccountIsNotLinked, which keeps it to one place, but a function named and used as a guard now also mutates another account."},
+"scope":{"score":4,"why":"Production change is focused, but the test diff includes reformatting churn of the existing closed-account test."},
+"maintainability":{"score":3,"why":"A maintainer must keep two copies of the unlink field reset in sync and would not expect a side effect from an 'ensure…IsNotLinked' check."},
+"bypasses_abstraction":{"value":true,"where":"ensureBankAccountIsNotLinked in packages/loot-core/src/server/accounts/app.ts re-implements unlinkAccount's local reset instead of sharing it (e.g. splitting unlinkAccount into a local-reset helper and the provider cleanup)."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied update is literal, with a comment acknowledging unlinkAccount, not disguised."}}

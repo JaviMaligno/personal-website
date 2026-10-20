@@ -1,0 +1,89 @@
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.test.ts b/packages/loot-core/src/server/forecast/forecast-schedules.test.ts
+index 375f373..3f727a9 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.test.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.test.ts
+@@ -6,8 +6,9 @@ describe('normalizeSchedule', () => {
+   it.each([
+     [-10100, -20000, -20000],
+     [-20000, -10100, -20000],
+-    [10100, 20000, 20000],
+-    [20000, 10100, 20000],
++    [10100, 20000, 10100],
++    [20000, 10100, 10100],
++    [-3000, 5000, -3000],
+   ])('uses the worst-case ranged amount %i to %i', (num1, num2, expected) => {
+     const schedule = normalizeSchedule({
+       id: 'schedule',
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index db01149..81707f0 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -93,12 +93,12 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged amount uses the endpoint furthest from zero for worst-case
+-  // planning, regardless of the order in which the range was entered.
++  // A ranged amount uses its lowest endpoint for conservative planning,
++  // regardless of the order in which the range was entered.
+   const amount =
+     typeof amountValue === 'number'
+       ? amountValue
+-      : Math.abs(amountValue.num1) >= Math.abs(amountValue.num2)
++      : amountValue.num1 <= amountValue.num2
+         ? amountValue.num1
+         : amountValue.num2;
+ 
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 35410a3..ffe0f63 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -110,8 +110,9 @@ describe('schedules', () => {
+     it.each([
+       [-10100, -20000, -20000],
+       [-20000, -10100, -20000],
+-      [10100, 20000, 20000],
+-      [20000, 10100, 20000],
++      [10100, 20000, 10100],
++      [20000, 10100, 10100],
++      [-3000, 5000, -3000],
+     ])('uses the worst-case ranged amount %i to %i', (num1, num2, expected) => {
+       const schedule: ScheduleEntity = {
+         id: 'ranged', next_date: '2024-01-01', rule: 'rule-1',
+@@ -127,9 +128,9 @@ describe('schedules', () => {
+ 
+     it.each([
+       [-10000, -10750],
+-      [10000, 10750],
++      [10000, 9250],
+       [-1234, -1327],
+-      [1234, 1327],
++      [1234, 1141],
+     ])('uses the worst-case approximate amount %i', (amount, expected) => {
+       const schedule: ScheduleEntity = {
+         id: 'approximate', next_date: '2024-01-01', rule: 'rule-1',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 29540fc..ffa9be2 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -497,17 +497,16 @@ export function computeSchedulePreviewTransactions(
+       }
+ 
+       // A missing amount previews as 0; ranged and approximate amounts use
+-      // the value furthest from zero so previews plan for the worst case.
++      // the lowest allowed value so previews plan conservatively.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amountOp === 'isapprox'
+               ? schedule._amount +
+-                Math.sign(schedule._amount) *
+-                  Math.round(Math.abs(schedule._amount) * 0.075)
++                -Math.round(Math.abs(schedule._amount) * 0.075)
+               : schedule._amount
+-            : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
++            : schedule._amount.num1 <= schedule._amount.num2
+               ? schedule._amount.num1
+               : schedule._amount.num2;
+ 

@@ -1,0 +1,12 @@
+{"id":"aae99ada71",
+"reuse":{"score":4,"why":"Builds getExpectedAmount on the existing getWorstCaseAmount and getApproxNumberThreshold, and routes getScheduledAmount and every server site through it. The server sites still keep their own null-to-0 ternary, even though getScheduledAmount already handles that case."},
+"duplication":{"score":4,"why":"The approximate rule is written once, and the four inline ranged/number dispatches are removed. The null-to-0 check stays at three sites alongside getScheduledAmount's own null handling."},
+"placement":{"score":5,"why":"The rule lives in shared/schedules.ts next to getWorstCaseAmount, where the tree keeps schedule amount rules."},
+"scope":{"score":4,"why":"Focused on the amount rule. The api-models import move and the _amountOp addition to the forecast raw type are small side edits."},
+"maintainability":{"score":3,"why":"There are now two overlapping entry points (getScheduledAmount and getExpectedAmount). The op parameter is optional and comes after a boolean (`getScheduledAmount(x, false, op)`), so the desktop-client callers of getScheduledAmount (Balance, schedules tables) silently skip the approximate rule."},
+"bypasses_abstraction":{"value":false,"where":"Server sites call the new shared getExpectedAmount, and getScheduledAmount delegates to it. The remaining inconsistency is client callers not passing op, which is not a bypass of the helper."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No duplicated logic is introduced; the inline dispatches are replaced by the shared function."},
+"one_place":{"value":true,"where":"shared/schedules.ts getExpectedAmount, used by preview, forecast, posting, action sync, budget templates and the API (via getScheduledAmount). Client getScheduledAmount callers do not pass op, so they do not apply the approximate rule."}
+}

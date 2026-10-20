@@ -1,0 +1,11 @@
+{"id":"dba801a34c",
+"reuse":{"score":3,"why":"Extends the existing getDateWithSkippedWeekend with a holidays argument and adds isWeekendOrHoliday, but server/schedules/app.ts re-implements the weekend-or-holiday test inline instead of using a shared predicate."},
+"duplication":{"score":2,"why":"The isWeekend || holidays.includes(dayFromDate) check appears in isWeekendOrHoliday and three more times in app.ts (getUpcomingDates filter and two branches of getDatesInRange, the second redundant with the first)."},
+"placement":{"score":3,"why":"The core adjustment lives correctly in shared/schedules.ts, but the holiday predicate is kept private there, pushing copies into the server layer."},
+"scope":{"score":3,"why":"Restructures getUpcomingDates so daily schedules now skip weekend occurrences instead of moving them, a behaviour change beyond adding holidays, and adds an unreachable branch in getDatesInRange."},
+"maintainability":{"score":2,"why":"The holiday rule is spread across a private helper and inline copies, holidays must be threaded by each caller (schedule-template.ts was not updated), and getNextDate's take heuristic is ad hoc."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates and getDatesInRange test weekend/holiday inline instead of a shared isWeekendOrHoliday; server/budget/schedule-template.ts still calls getDateWithSkippedWeekend without holidays."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getUpcomingDates reshapes the daily-skip rule into a negated filter predicate, and getDatesInRange repeats the holiday check in a second if; both restate isWeekendOrHoliday from shared/schedules.ts."},
+"one_place":{"value":false,"where":"The rule is defined in isWeekendOrHoliday/getDateWithSkippedWeekend (shared/schedules.ts) but re-stated inline in server/schedules/app.ts, and holidays only apply where callers pass them; schedule-template.ts createScheduleList calls getDateWithSkippedWeekend without holidays."}}

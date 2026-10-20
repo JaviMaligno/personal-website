@@ -1,0 +1,12 @@
+{"id": "49b8d5b9b7",
+"reuse": {"score": 4, "why": "All six link handlers delegate to one linkBankSyncAccount and unlinkAccount's clearing is extracted and reused for the takeover, but the Fintegra transaction download and account listing copy the Akahu functions instead of sharing them."},
+"duplication": {"score": 3, "why": "The five linking copies collapse into one definition, but downloadFintegraTransactions and fintegraAccounts are near-verbatim copies of downloadAkahuTransactions and akahuAccounts."},
+"placement": {"score": 4, "why": "Linking stays in accounts/app.ts next to the handlers, provider download in sync.ts and URL in server-config.ts, matching where the tree puts each concern."},
+"scope": {"score": 3, "why": "Adds an unrequested `fintegra-accounts` listing handler on top of the server-side link and sync work the steps asked for."},
+"maintainability": {"score": 4, "why": "The shared link function holds all the link rules (duplicate, closed, replace) in one place with variation passed as data; the copied provider download/listing functions are the remaining burden."},
+"bypasses_abstraction": {"value": false, "where": "Every *-accounts-link handler goes through linkBankSyncAccount; the takeover reuses clearAccountLink shared with unlinkAccount."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "downloadFintegraTransactions (sync.ts) and fintegraAccounts (app.ts) are plain, visible copies of the Akahu versions, not disguised."},
+"abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "linkBankSyncAccount in accounts/app.ts gained replaceExistingLink for step 4; the duplicate-link and closed-account checks are general rules applied to every provider, and syncEventTables/fileId carry pre-existing per-provider variation explicitly."}
+}

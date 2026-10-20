@@ -1,0 +1,56 @@
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index abb7c11..f047664 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -117,6 +117,27 @@ describe('ensureAccountNotLinked', () => {
+     ).resolves.toBeUndefined();
+   });
+ 
++  it('rejects linking or re-linking a closed account', async () => {
++    await db.insertAccount({
++      id: 'closed',
++      name: 'Closed',
++      closed: 1,
++      account_id: 'provider-account',
++      account_sync_source: 'simpleFin',
++    });
++
++    await expect(
++      ensureAccountNotLinked('simpleFin', 'new-provider-account', 'closed'),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++    await expect(
++      ensureAccountNotLinked('simpleFin', 'provider-account', 'closed'),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  });
++
+   it('ignores deleted accounts and links from other providers', async () => {
+     await db.insertAccount({
+       id: 'deleted',
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 4cf21a4..0d05e65 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -10,6 +10,19 @@ export async function ensureAccountNotLinked(
+   providerAccountId: string,
+   upgradingId?: string,
+ ): Promise<void> {
++  if (upgradingId) {
++    const account = await db.first<{ closed: number }>(
++      'SELECT closed FROM accounts WHERE id = ?',
++      [upgradingId],
++    );
++
++    if (account?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const existingAccount = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+      WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0

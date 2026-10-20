@@ -1,0 +1,12 @@
+{"id": "e44b4364fc",
+ "reuse": {"score": 5, "why": "Fintegra links through a new shared linkProviderAccount (which keeps calling assertBankAccountNotLinked, findOrCreateBank, syncAccount and handleSyncResponse) and downloads through a shared downloadProviderTransactions also used by Pluggy.ai and Akahu."},
+ "duplication": {"score": 5, "why": "Instead of adding a sixth copy of the link body and a third copy of the downloader, it collapses the five existing link copies and two download copies into single definitions with thin per-provider wrappers."},
+ "placement": {"score": 5, "why": "Link logic stays in accounts/app.ts, download logic in accounts/sync.ts and the base path in server-config.ts, as the tree organises providers."},
+ "scope": {"score": 3, "why": "The consolidation rewrites every existing provider's link and Pluggy/Akahu download paths, well beyond adding Fintegra, which widens the review surface of a feature change."},
+ "maintainability": {"score": 4, "why": "One link function and one downloader make future providers trivial; the institution override, the newAccountFields escape hatch for GoCardless and the cast on institution are slightly awkward."},
+ "bypasses_abstraction": {"value": false, "where": "All link handlers go through linkProviderAccount and assertBankAccountNotLinked; Fintegra download goes through downloadProviderTransactions."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "Duplicated provider bodies are removed and shared, not reshaped."},
+ "t2_reuse": "helper"
+}

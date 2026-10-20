@@ -1,0 +1,12 @@
+{"id":"23beed9ea2",
+"reuse":{"score":4,"why":"Uses the existing extractTagsFromText for the #fixed tag and the existing getCategoryAverage and setNMonthAvg, and the new last-month action is built on the shared selection and sign helpers. hasSavedTemplates parses goal_def on its own rather than going through any goal-template helper."},
+"duplication":{"score":4,"why":"Which categories get filled is decided once (shouldFillCategory) and the sign flip once (averageToBudgetAmount). The group-notes join is written in two SQL queries (getBudgetData and getAllCategoriesWithGroupHidden), and setZero filters inline while the average actions call getCategoriesForAverage."},
+"placement":{"score":5,"why":"The selection rule, its predicates and the amount conversion live in budget/actions.ts next to the actions that use them, and the new method is registered in budget/app.ts like its siblings."},
+"scope":{"score":4,"why":"Changes stay within the month-wide actions and the new method. The let-to-const tidy in setNMonthAvg is incidental, and the tests cover only the #fixed rule."},
+"maintainability":{"score":4,"why":"A future change to which categories are filled or how the sign is chosen is made once. The requireGroup option keeps the averages' old no-group exclusion explicit, though a maintainer may not see why it exists."},
+"bypasses_abstraction":{"value":false,"where":"copyPreviousMonth, setZero, setLastMonthSpending and the 3/6/12-month averages all decide through shouldFillCategory; setNMonthAvg and the averages share averageToBudgetAmount."},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"The only repeat is the notes LEFT JOIN in two category queries that load differently shaped rows; it is visible, not disguised."},
+"abstraction_drift":{"value":false,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":0,"where":"shouldFillCategory takes requireGroup (keeps the averages' old group-join inconsistency) and includeHiddenCategories (the requested option); the requireGroup check is its one special-case branch. Every action uses the helper."}
+}

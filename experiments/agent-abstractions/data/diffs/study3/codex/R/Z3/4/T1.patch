@@ -1,0 +1,164 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 1ca2951..ae1838b 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -181,6 +181,11 @@ async function linkGoCardlessAccount({
+   account: SyncServerGoCardlessAccount;
+ }) {
+   let id;
++  await link.ensureAccountNotLinked(
++    'goCardless',
++    account.account_id,
++    upgradingId,
++  );
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+   if (upgradingId) {
+@@ -249,6 +254,12 @@ async function linkSimpleFinAccount({
+ }) {
+   let id;
+ 
++  await link.ensureAccountNotLinked(
++    'simpleFin',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+@@ -327,6 +338,12 @@ async function linkPluggyAiAccount({
+   let id;
+   const fileId = getPrefs()?.cloudFileId;
+ 
++  await link.ensureAccountNotLinked(
++    'pluggyai',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+@@ -405,6 +422,12 @@ async function linkAkahuAccount({
+ }) {
+   let id;
+ 
++  await link.ensureAccountNotLinked(
++    'akahu',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const institution = {
+     name: externalAccount.institution ?? null,
+   };
+@@ -479,6 +502,12 @@ async function linkEnableBankingAccount({
+ }) {
+   let id: string | undefined;
+ 
++  await link.ensureAccountNotLinked(
++    'enableBanking',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index 4d5667b..2489d6d 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -1,7 +1,7 @@
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ 
+-import { findOrCreateBank } from './link';
++import { ensureAccountNotLinked, findOrCreateBank } from './link';
+ 
+ beforeEach(async () => {
+   await global.emptyDatabase()();
+@@ -87,3 +87,53 @@ describe('findOrCreateBank', () => {
+     expect(await getBanks()).toHaveLength(1);
+   });
+ });
++
++describe('ensureAccountNotLinked', () => {
++  async function insertLinkedAccount({
++    id,
++    provider = 'simpleFin',
++    accountId = 'external-1',
++    tombstone = 0,
++    closed = 0,
++  }: {
++    id: string;
++    provider?: string;
++    accountId?: string;
++    tombstone?: number;
++    closed?: number;
++  }) {
++    db.runQuery(
++      `INSERT INTO accounts
++       (id, name, offbudget, closed, tombstone, sort_order, account_id, account_sync_source)
++       VALUES (?, '', 0, ?, ?, 0, ?, ?)`,
++      [id, closed, tombstone, accountId, provider],
++    );
++  }
++
++  it('rejects an account already linked through the same provider', async () => {
++    await insertLinkedAccount({ id: 'existing' });
++
++    await expect(
++      ensureAccountNotLinked('simpleFin', 'external-1'),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++  });
++
++  it('allows relinking the account that already holds the link', async () => {
++    await insertLinkedAccount({ id: 'existing', closed: 1 });
++
++    await expect(
++      ensureAccountNotLinked('simpleFin', 'external-1', 'existing'),
++    ).resolves.toBeUndefined();
++  });
++
++  it('ignores deleted accounts and links under another provider', async () => {
++    await insertLinkedAccount({ id: 'deleted', tombstone: 1 });
++    await insertLinkedAccount({ id: 'other-provider', provider: 'goCardless' });
++
++    await expect(
++      ensureAccountNotLinked('simpleFin', 'external-1'),
++    ).resolves.toBeUndefined();
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 19f9163..08a3a73 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -3,6 +3,24 @@ import { v4 as uuidv4 } from 'uuid';
+ 
+ import * as db from '#server/db';
+ 
++export async function ensureAccountNotLinked(
++  provider: string,
++  accountId: string,
++  exceptAccountId?: string,
++) {
++  const existing = await db.first<{ id: string }>(
++    `SELECT id FROM accounts
++     WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0
++       AND (? IS NULL OR id != ?)
++     LIMIT 1`,
++    [provider, accountId, exceptAccountId ?? null, exceptAccountId ?? null],
++  );
++
++  if (existing) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ type Institution = string | { name?: string | null };
+ 
+ function getInstitutionName(institution: Institution | null | undefined) {

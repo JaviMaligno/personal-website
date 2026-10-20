@@ -1,0 +1,57 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 87d74f2..86cc42e 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -218,12 +218,16 @@ function setCarryover(
+ type BulkBudgetCategory = Pick<db.DbCategory, 'id' | 'is_income' | 'hidden'> & {
+   goal_def: db.DbCategory['goal_def'] | null;
+   group_hidden: db.DbCategoryGroup['hidden'] | null;
++  group_note: string | null;
+ };
+ 
++const FIXED_TAG = /(^|[^\w#])#fixed(?![\w-])/i;
++
+ // The categories a bulk budget action (copy last month, set to zero, set to an
+ // N-month average) writes. Income categories take part only in tracking
+ // budgets. Hidden categories, categories in hidden groups and categories with
+-// saved budget templates are always skipped.
++// saved budget templates are always skipped, as are categories in a group whose
++// notes contain the `#fixed` tag.
+ // `skipMissingGroup` also skips a category whose group row does not exist: the
+ // average actions have always done so, copy last month has not.
+ async function getBulkBudgetCategories({
+@@ -233,9 +237,11 @@ async function getBulkBudgetCategories({
+ }): Promise<BulkBudgetCategory[]> {
+   const categories = await db.all<BulkBudgetCategory>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++    n.note AS group_note
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -251,6 +257,9 @@ async function getBulkBudgetCategories({
+     if (hasSavedTemplates(cat.goal_def)) {
+       return false;
+     }
++    if (cat.group_note && FIXED_TAG.test(cat.group_note)) {
++      return false;
++    }
+     return !(skipMissingGroup && cat.group_hidden == null);
+   });
+ }
+diff --git a/upcoming-release-notes/skip-fixed-groups-bulk-budget.md b/upcoming-release-notes/skip-fixed-groups-bulk-budget.md
+new file mode 100644
+index 0000000..8dcea2f
+--- /dev/null
++++ b/upcoming-release-notes/skip-fixed-groups-bulk-budget.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Skip categories in groups tagged `#fixed` in the group notes when running month-wide budget actions

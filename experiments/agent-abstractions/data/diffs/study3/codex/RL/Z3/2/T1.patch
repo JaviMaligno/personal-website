@@ -1,0 +1,216 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index a13a142..4db6710 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -15,6 +15,7 @@ vi.mock('./sync', async () => ({
+ 
+ const simpleFinBatchSyncHandler = app.handlers['simplefin-batch-sync'];
+ const accountsBankSyncHandler = app.handlers['accounts-bank-sync'];
++const simpleFinLinkHandler = app.handlers['simplefin-accounts-link'];
+ 
+ function insertBank(bank: { id: string; bank_id: string; name: string }) {
+   db.runQuery(
+@@ -303,6 +304,104 @@ describe('accountsBankSync', () => {
+   });
+ });
+ 
++describe('simpleFin account linking', () => {
++  async function insertLinkedSimpleFinAccount(id: string, tombstone = 0) {
++    insertBank({
++      id: `bank-${id}`,
++      bank_id: 'simplefin-org',
++      name: 'SimpleFin',
++    });
++    await db.insertAccount({
++      id,
++      name: 'Existing',
++      bank: `bank-${id}`,
++      account_id: 'external-1',
++      account_sync_source: 'simpleFin',
++    });
++    if (tombstone) {
++      await db.update('accounts', { id, tombstone });
++    }
++  }
++
++  const externalAccount = {
++    account_id: 'external-1',
++    name: 'Checking',
++    balance: 0,
++    orgDomain: 'simplefin-org',
++    institution: 'SimpleFin',
++  };
++
++  it('refuses to link an account already linked to another local account without side effects', async () => {
++    await insertLinkedSimpleFinAccount('existing');
++    const accountBefore = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['existing'],
++    );
++    const bankCountBefore = await db.first<{ count: number }>(
++      'SELECT count(*) as count FROM banks',
++    );
++    const payeeCountBefore = await db.first<{ count: number }>(
++      'SELECT count(*) as count FROM payees',
++    );
++
++    await expect(simpleFinLinkHandler({ externalAccount })).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    expect(
++      await db.first<{ count: number }>(
++        'SELECT count(*) as count FROM accounts',
++      ),
++    ).toEqual({ count: 1 });
++    expect(
++      await db.first<{ count: number }>('SELECT count(*) as count FROM banks'),
++    ).toEqual(bankCountBefore);
++    expect(
++      await db.first<{ count: number }>('SELECT count(*) as count FROM payees'),
++    ).toEqual(payeeCountBefore);
++    expect(
++      await db.first<db.DbAccount>('SELECT * FROM accounts WHERE id = ?', [
++        'existing',
++      ]),
++    ).toEqual(accountBefore);
++  });
++
++  it('allows relinking into the account that already holds the link', async () => {
++    await insertLinkedSimpleFinAccount('existing');
++    vi.mocked(bankSync.syncAccount).mockResolvedValue({
++      added: [],
++      updated: [],
++      updatedPreview: [],
++    });
++
++    await expect(
++      simpleFinLinkHandler({ externalAccount, upgradingId: 'existing' }),
++    ).resolves.toBe('ok');
++    expect(bankSync.syncAccount).toHaveBeenCalledTimes(1);
++  });
++
++  it('does not treat deleted or differently provided accounts as holding the link', async () => {
++    await insertLinkedSimpleFinAccount('deleted', 1);
++    insertBank({ id: 'other-bank', bank_id: 'other', name: 'Other' });
++    await db.insertAccount({
++      id: 'different-provider',
++      name: 'Other provider',
++      bank: 'other-bank',
++      account_id: 'external-1',
++      account_sync_source: 'akahu',
++    });
++    vi.mocked(bankSync.syncAccount).mockResolvedValue({
++      added: [],
++      updated: [],
++      updatedPreview: [],
++    });
++
++    await expect(simpleFinLinkHandler({ externalAccount })).resolves.toBe('ok');
++    expect(bankSync.syncAccount).toHaveBeenCalledTimes(1);
++  });
++});
++
+ describe('bank sync handlers must not nest mutators', () => {
+   it('does not register the sync handlers as mutating methods', () => {
+     expect(isMutating(app.handlers['accounts-bank-sync'])).toBe(false);
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 1ca2951..0d5b1a1 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -52,6 +52,27 @@ type LinkAccountBaseParams = {
+   startingBalance?: number;
+ };
+ 
++const DUPLICATE_BANK_ACCOUNT_ERROR =
++  'This bank account is already linked to another account.';
++
++async function ensureBankAccountNotLinked(
++  provider: NonNullable<AccountEntity['account_sync_source']>,
++  accountId: string,
++  upgradingId?: string,
++) {
++  const existing = await db.first<{ id: string }>(
++    `SELECT id FROM accounts
++     WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0
++       AND (? IS NULL OR id != ?)
++     LIMIT 1`,
++    [provider, accountId, upgradingId ?? null, upgradingId ?? null],
++  );
++
++  if (existing) {
++    throw new Error(DUPLICATE_BANK_ACCOUNT_ERROR);
++  }
++}
++
+ export type AccountHandlers = {
+   'account-update': typeof updateAccount;
+   'accounts-get': typeof getAccounts;
+@@ -1786,11 +1807,61 @@ app.method('account-update', mutator(undoable(updateAccount)));
+ app.method('accounts-get', getAccounts);
+ app.method('account-balance', getAccountBalance);
+ app.method('account-properties', getAccountProperties);
+-app.method('gocardless-accounts-link', linkGoCardlessAccount);
+-app.method('simplefin-accounts-link', linkSimpleFinAccount);
+-app.method('pluggyai-accounts-link', linkPluggyAiAccount);
+-app.method('akahu-accounts-link', linkAkahuAccount);
+-app.method('enablebanking-accounts-link', linkEnableBankingAccount);
++app.method(
++  'gocardless-accounts-link',
++  async (params: Parameters<typeof linkGoCardlessAccount>[0]) => {
++    await ensureBankAccountNotLinked(
++      'goCardless',
++      params.account.account_id,
++      params.upgradingId,
++    );
++    return linkGoCardlessAccount(params);
++  },
++);
++app.method(
++  'simplefin-accounts-link',
++  async (params: Parameters<typeof linkSimpleFinAccount>[0]) => {
++    await ensureBankAccountNotLinked(
++      'simpleFin',
++      params.externalAccount.account_id,
++      params.upgradingId,
++    );
++    return linkSimpleFinAccount(params);
++  },
++);
++app.method(
++  'pluggyai-accounts-link',
++  async (params: Parameters<typeof linkPluggyAiAccount>[0]) => {
++    await ensureBankAccountNotLinked(
++      'pluggyai',
++      params.externalAccount.account_id,
++      params.upgradingId,
++    );
++    return linkPluggyAiAccount(params);
++  },
++);
++app.method(
++  'akahu-accounts-link',
++  async (params: Parameters<typeof linkAkahuAccount>[0]) => {
++    await ensureBankAccountNotLinked(
++      'akahu',
++      params.externalAccount.account_id,
++      params.upgradingId,
++    );
++    return linkAkahuAccount(params);
++  },
++);
++app.method(
++  'enablebanking-accounts-link',
++  async (params: Parameters<typeof linkEnableBankingAccount>[0]) => {
++    await ensureBankAccountNotLinked(
++      'enableBanking',
++      params.externalAccount.account_id,
++      params.upgradingId,
++    );
++    return linkEnableBankingAccount(params);
++  },
++);
+ app.method('account-create', mutator(undoable(createAccount)));
+ app.method('account-close', mutator(closeAccount));
+ app.method('account-reopen', mutator(undoable(reopenAccount)));

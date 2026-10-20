@@ -1,0 +1,14 @@
+{
+  "id": "5772e5228f",
+  "completeness": {
+    "per_site": {"forecast": "none", "rule-action-sync": "full", "post-transaction": "full", "preview": "full", "budget-template": "partial"},
+    "left_out": {"forecast": "missed"},
+    "sites_full": 3,
+    "sites_partial": 1,
+    "sites_total": 5,
+    "value": 0.7,
+    "why": "The two schedules/app.ts sites and the preview call the existing getScheduledAmount with the raw value; the budget template calls only the new getRangeMidpoint and keeps its own op === 'isbetween' dispatch; normalizeSchedule in forecast-schedules.ts still has its inline Math.round midpoint and was not touched."
+  },
+  "interface": {"score": 3, "why": "Reusing getScheduledAmount(amount) is the right interface, but the extra getRangeMidpoint export splits the decision so the template keeps its own dispatch, and the template's rounding difference is dropped implicitly (relying on integer inputs) instead of being made explicit."},
+  "disguised_duplication": {"value": false, "where": "No reshaped copy is introduced; the remaining duplication is the untouched inline ternary in forecast-schedules.ts normalizeSchedule, which is left as it was rather than disguised."}
+}

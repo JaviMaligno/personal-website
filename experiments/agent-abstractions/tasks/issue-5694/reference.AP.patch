@@ -1,0 +1,389 @@
+diff --git a/packages/loot-core/src/server/transactions/index.ts b/packages/loot-core/src/server/transactions/index.ts
+index cbaf2c8..45c819b 100644
+--- a/packages/loot-core/src/server/transactions/index.ts
++++ b/packages/loot-core/src/server/transactions/index.ts
+@@ -188,6 +188,18 @@ export async function batchUpdateTransactions({
+ 
+       await Promise.all(allDeleted.map(t => transfer.onDelete(t)));
+     });
++
++    // Splits whose lines all transfer to one account are mirrored there as
++    // one split. This reads what the step above wrote, so it runs after it.
++    const batchIds = new Set([...addedIds, ...updatedIds]);
++    const splitUpdates = await transfer.reconcileSplitTransfers([
++      ...addedIds,
++      ...updatedIds,
++      ...deletedIds,
++    ]);
++    transfersUpdated.push(
++      ...splitUpdates.filter(update => batchIds.has(update.id)),
++    );
+   }
+ 
+   if (learnCategories) {
+diff --git a/packages/loot-core/src/server/transactions/transfer.ts b/packages/loot-core/src/server/transactions/transfer.ts
+index 3e10a87..43c526e 100644
+--- a/packages/loot-core/src/server/transactions/transfer.ts
++++ b/packages/loot-core/src/server/transactions/transfer.ts
+@@ -1,6 +1,7 @@
+ // @ts-strict-ignore
+ import * as db from '#server/db';
+ import { cents, transactions } from '#server/domain';
++import type { Cents } from '#server/domain';
+ 
+ import { runRules } from './transaction-rules';
+ 
+@@ -22,6 +23,47 @@ async function getTransferredAccount(transaction) {
+   return null;
+ }
+ 
++// Reads a transaction, dead or alive, with its fields in schema form
++async function getRow(id: string | null | undefined) {
++  if (!id) {
++    return null;
++  }
++  const rows = await db.selectWithSchema(
++    'transactions',
++    'SELECT * FROM v_transactions_internal WHERE id = ?',
++    [id],
++  );
++  return rows[0] || null;
++}
++
++// The alive lines of a split transaction
++async function getLines(parentId: string) {
++  return db.selectWithSchema(
++    'transactions',
++    `SELECT * FROM v_transactions_internal
++       WHERE parent_id = ? AND is_child = 1 AND IFNULL(tombstone, 0) = 0`,
++    [parentId],
++  );
++}
++
++// Two splits are mirrored when their parents are linked as the two
++// sides of a transfer. `line` and `counterpart` are lines of splits.
++async function isMirroredLine(line, counterpart) {
++  if (!line.parent_id || !counterpart.parent_id) {
++    return false;
++  }
++  const [parent, otherParent] = await Promise.all([
++    getRow(line.parent_id),
++    getRow(counterpart.parent_id),
++  ]);
++  return Boolean(
++    parent &&
++    otherParent &&
++    (parent.transfer_id === otherParent.id ||
++      otherParent.transfer_id === parent.id),
++  );
++}
++
+ async function clearCategory(transaction, transferAcct) {
+   const { offbudget: fromOffBudget } = await db.first<
+     Pick<db.DbAccount, 'offbudget'>
+@@ -105,7 +147,10 @@ export async function removeTransfer(transaction) {
+   // (in & out) transfer transactions at the same time -
+   // transfer transaction will not be found.
+   if (transferTrans) {
+-    if (transferTrans.is_child) {
++    if (
++      transferTrans.is_child &&
++      !(await isMirroredLine(transaction, transferTrans))
++    ) {
+       // If it's a child transaction, we don't delete it because that
+       // would invalidate the whole split transaction. Instead of turn
+       // it into a normal transaction
+@@ -115,6 +160,13 @@ export async function removeTransfer(transaction) {
+         payee: null,
+       });
+     } else {
++      // A line of a mirrored split only exists because of this transfer,
++      // and a mirrored split goes away together with all of its lines
++      if (transferTrans.is_parent) {
++        for (const line of await getLines(transferTrans.id)) {
++          await transactions.deleteTransaction({ id: line.id });
++        }
++      }
+       await transactions.deleteTransaction({ id: transaction.transfer_id });
+     }
+   }
+@@ -163,6 +215,12 @@ export async function onUpdate(transaction) {
+   const transferredAccount = await getTransferredAccount(transaction);
+ 
+   if (transaction.is_parent) {
++    // A split linked to its mirrored split is kept in step by
++    // `reconcileSplitTransfers`
++    const counterpart = await getRow(transaction.transfer_id);
++    if (counterpart?.is_parent && !counterpart.tombstone) {
++      return;
++    }
+     return removeTransfer(transaction);
+   }
+ 
+@@ -178,3 +236,266 @@ export async function onUpdate(transaction) {
+     return updateTransfer(transaction, transferredAccount);
+   }
+ }
++
++function sumAmounts(rows): Cents {
++  return cents.sum(rows.map(t => cents.fromInteger(t.amount || 0)));
++}
++
++// Writes only the fields that differ from `row`, and returns the patch
++async function setFields(row, fields) {
++  const patch = Object.fromEntries(
++    Object.entries(fields).filter(([key, value]) => row[key] !== value),
++  );
++  if (Object.keys(patch).length === 0) {
++    return null;
++  }
++  await transactions.updateTransaction({ id: row.id, ...patch });
++  Object.assign(row, patch);
++  return { id: row.id, ...patch };
++}
++
++// The account that every line of the split transfers to, if there is
++// exactly one such account and every line is a linked transfer
++async function mirroredAccount(parent, lines) {
++  if (lines.length === 0) {
++    return null;
++  }
++  let target = null;
++  for (const line of lines) {
++    if (!line.transfer_id || line.account !== parent.account) {
++      return null;
++    }
++    const account = await getTransferredAccount(line);
++    if (!account || account === parent.account) {
++      return null;
++    }
++    if (target && target !== account) {
++      return null;
++    }
++    target = account;
++  }
++  return target;
++}
++
++// Deletes an alive split that has lost all of its lines, or keeps its
++// total equal to the sum of the lines it still has
++async function tidySplit(parentId: string) {
++  const parent = await getRow(parentId);
++  if (!parent || parent.tombstone || !parent.is_parent) {
++    return;
++  }
++  const lines = await getLines(parent.id);
++  if (lines.length === 0) {
++    await transactions.deleteTransaction({ id: parent.id });
++  } else {
++    await setFields(parent, { amount: sumAmounts(lines) });
++  }
++}
++
++// Makes `mirror` (created when missing) the split in `target` whose lines
++// are the counterparts of the lines of `source`, and links both parents
++async function syncMirror(source, lines, target, mirror, patches) {
++  const counterparts = (
++    await Promise.all(lines.map(line => getRow(line.transfer_id)))
++  ).filter(t => t && !t.tombstone && !t.is_parent);
++
++  if (!mirror) {
++    // Adopt a split that already holds exactly these counterparts
++    const parentIds = new Set(counterparts.map(t => t.parent_id));
++    const [parentId] = [...parentIds];
++    if (
++      parentId &&
++      parentIds.size === 1 &&
++      counterparts.length === lines.length
++    ) {
++      const candidate = await getRow(parentId);
++      if (
++        candidate &&
++        !candidate.tombstone &&
++        candidate.account === target &&
++        !candidate.transfer_id &&
++        (await getLines(candidate.id)).length === counterparts.length
++      ) {
++        mirror = candidate;
++      }
++    }
++  }
++
++  if (!mirror) {
++    const fromPayee = await getPayee(source.account);
++    const sourceTarget = await getTransferredAccount(source);
++    const id = await transactions.createTransaction({
++      account: target,
++      amount: sumAmounts(counterparts),
++      payee: sourceTarget === target && fromPayee ? fromPayee.id : null,
++      date: source.date,
++      notes: source.notes || null,
++      is_parent: true,
++      transfer_id: source.id,
++      cleared: false,
++    });
++    mirror = await getRow(id);
++  }
++
++  const oldParents = new Set<string>();
++  for (const counterpart of counterparts) {
++    if (counterpart.parent_id !== mirror.id || !counterpart.is_child) {
++      if (counterpart.parent_id) {
++        oldParents.add(counterpart.parent_id);
++      }
++      await transactions.updateTransaction({
++        id: counterpart.id,
++        parent_id: mirror.id,
++        is_child: true,
++      });
++    }
++  }
++
++  const mirrorLines = await getLines(mirror.id);
++  const mirrorPatch = await setFields(mirror, {
++    account: target,
++    amount: sumAmounts(mirrorLines),
++    is_parent: true,
++    transfer_id: source.id,
++  });
++  const sourcePatch = await setFields(source, {
++    amount: sumAmounts(lines),
++    transfer_id: mirror.id,
++  });
++  patches.push(...[mirrorPatch, sourcePatch].filter(Boolean));
++
++  for (const parentId of oldParents) {
++    if (parentId !== mirror.id && parentId !== source.id) {
++      await tidySplit(parentId);
++    }
++  }
++}
++
++// Two linked splits that no longer mirror each other: unlink them. A side
++// with lines that moved to other accounts was generated as a mirror, so its
++// lines become ordinary transfers and its parent goes away.
++async function dissolveMirror(split, lines, other, otherLines, patches) {
++  const linesMoved = (parent, parentLines) =>
++    parentLines.some(line => line.account !== parent.account);
++
++  for (const parent of [split, other]) {
++    const patch = await setFields(parent, { transfer_id: null });
++    if (patch) {
++      patches.push(patch);
++    }
++  }
++
++  for (const [parent, parentLines] of [
++    [split, lines],
++    [other, otherLines],
++  ]) {
++    if (linesMoved(parent, parentLines)) {
++      for (const line of parentLines) {
++        await transactions.updateTransaction({
++          id: line.id,
++          parent_id: null,
++          is_child: false,
++        });
++      }
++      await transactions.deleteTransaction({ id: parent.id });
++    } else {
++      await tidySplit(parent.id);
++    }
++  }
++}
++
++async function reconcileSplit(id: string, done: Set<string>, patches) {
++  done.add(id);
++  const row = await getRow(id);
++  if (!row) {
++    return;
++  }
++  const partner = await getRow(row.transfer_id);
++
++  if (row.tombstone || !row.is_parent) {
++    // A deleted split leaves no lines behind
++    if (row.tombstone && row.is_parent) {
++      for (const line of await getLines(row.id)) {
++        await transactions.deleteTransaction({ id: line.id });
++      }
++    }
++    // A split that was deleted or turned back into a single transaction
++    // takes its mirrored split with it, or turns it back too
++    if (partner && partner.is_parent && partner.transfer_id === row.id) {
++      done.add(partner.id);
++      for (const line of await getLines(partner.id)) {
++        await transactions.deleteTransaction({ id: line.id });
++      }
++      if (row.tombstone) {
++        if (!partner.tombstone) {
++          await transactions.deleteTransaction({ id: partner.id });
++        }
++      } else if (!partner.tombstone) {
++        await setFields(partner, { is_parent: false, amount: cents.neg(cents.fromInteger(row.amount)) });
++      }
++    }
++    return;
++  }
++
++  const lines = await getLines(row.id);
++  const target = await mirroredAccount(row, lines);
++  const mirror =
++    partner && partner.is_parent && !partner.tombstone ? partner : null;
++
++  if (mirror) {
++    done.add(mirror.id);
++    if (target) {
++      return syncMirror(row, lines, target, mirror, patches);
++    }
++    const mirrorLines = await getLines(mirror.id);
++    const mirrorTarget = await mirroredAccount(mirror, mirrorLines);
++    if (mirrorTarget) {
++      return syncMirror(mirror, mirrorLines, mirrorTarget, row, patches);
++    }
++    return dissolveMirror(row, lines, mirror, mirrorLines, patches);
++  }
++
++  if (target && !partner) {
++    return syncMirror(row, lines, target, null, patches);
++  }
++}
++
++// When every line of a split transfers to the same account, the other
++// account gets one split for the full amount whose lines mirror these
++// lines, instead of one loose transaction per line. Runs after the
++// per-transaction transfer logic, on the transactions of a batch.
++export async function reconcileSplitTransfers(ids: string[]) {
++  const candidates = new Set<string>();
++  for (const id of new Set(ids)) {
++    const row = await getRow(id);
++    if (!row) {
++      continue;
++    }
++    if (row.is_parent) {
++      candidates.add(row.id);
++    }
++    if (row.parent_id) {
++      candidates.add(row.parent_id);
++    }
++    if (row.transfer_id) {
++      if (!row.is_parent && !row.parent_id) {
++        candidates.add(row.id);
++      }
++      const counterpart = await getRow(row.transfer_id);
++      if (counterpart?.is_parent) {
++        candidates.add(counterpart.id);
++      } else if (counterpart?.parent_id) {
++        candidates.add(counterpart.parent_id);
++      }
++    }
++  }
++
++  const done = new Set<string>();
++  const patches = [];
++  for (const id of candidates) {
++    if (!done.has(id)) {
++      await reconcileSplit(id, done, patches);
++    }
++  }
++  return patches;
++}

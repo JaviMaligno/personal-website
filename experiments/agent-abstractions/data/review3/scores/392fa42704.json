@@ -1,0 +1,12 @@
+{"id":"392fa42704",
+"reuse":{"score":3,"why":"Extends the existing shouldWriteMonthBudget predicate and getBudgetData query, but leaves setZero and the three average actions each issuing their own category query instead of sharing one selection."},
+"duplication":{"score":2,"why":"The same categories/category_groups join is now written four times (setZero plus three identical average queries, each with the same inline type intersection) rather than factored once."},
+"placement":{"score":4,"why":"The rule stays in the budget actions module's shared predicate and the data comes from the same module's queries, consistent with the tree's layering."},
+"scope":{"score":3,"why":"Core change is focused, but the test edit renames unrelated variables in the copyUntilYearEnd setup (hiddenCategory/hiddenGroup bound to non-hidden rows and never used)."},
+"maintainability":{"score":2,"why":"The predicate depends on each site's query supplying group_hidden and goal_def; the average queries select only c.* and drop their g.hidden filter, so the hidden-group part of the rule silently depends on per-site SQL that is easy to get wrong, as here."},
+"bypasses_abstraction":{"value":false,"where":"All month-wide actions go through shouldWriteMonthBudget; no existing abstraction is bypassed."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated category queries in set3MonthAvg/set6MonthAvg/set12MonthAvg are verbatim, not disguised."},
+"one_place":{"value":true,"where":"shouldWriteMonthBudget in packages/loot-core/src/server/budget/actions.ts holds the hidden/group-hidden/template rule for all month-wide actions; caveat: the average actions' queries do not select group_hidden, so that input is not supplied consistently."}
+}

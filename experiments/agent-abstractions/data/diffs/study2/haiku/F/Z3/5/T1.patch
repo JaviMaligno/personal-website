@@ -1,0 +1,208 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index a13a142..cd5abeb 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -339,3 +339,105 @@ describe('bank sync handlers must not nest mutators', () => {
+     expect(result.errors).toEqual([]);
+   });
+ });
++
++describe('simplefin-accounts-link', () => {
++  const linkSimpleFin = app.handlers['simplefin-accounts-link'];
++  const externalAccount = {
++    account_id: 'sfin-acct-1',
++    name: 'Checking',
++    balance: 100,
++    institution: 'Bank',
++    orgDomain: 'bank.example',
++    orgId: 'org-1',
++  };
++
++  beforeEach(() => {
++    vi.mocked(bankSync.syncAccount).mockResolvedValue({
++      added: [],
++      updated: [],
++      updatedPreview: [],
++    });
++  });
++
++  async function insertLinkedAccount(
++    fields: Partial<{
++      id: string;
++      account_id: string;
++      account_sync_source: 'simpleFin' | 'goCardless';
++      tombstone: 0 | 1;
++      closed: 0 | 1;
++    }> = {},
++  ) {
++    await db.insertAccount({
++      id: 'holder',
++      name: 'Existing',
++      account_id: 'sfin-acct-1',
++      account_sync_source: 'simpleFin',
++      ...fields,
++    });
++  }
++
++  it('refuses to link a bank account already linked to another account', async () => {
++    await insertLinkedAccount();
++    const accountsBefore = await db.all('SELECT id FROM accounts');
++    const payeesBefore = await db.all('SELECT id FROM payees');
++    const banksBefore = await db.all('SELECT id FROM banks');
++
++    await expect(linkSimpleFin({ externalAccount })).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++
++    expect(await db.all('SELECT id FROM accounts')).toEqual(accountsBefore);
++    expect(await db.all('SELECT id FROM payees')).toEqual(payeesBefore);
++    expect(await db.all('SELECT id FROM banks')).toEqual(banksBefore);
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('refuses to move a bank account into another existing account', async () => {
++    await insertLinkedAccount();
++    await db.insertAccount({ id: 'other', name: 'Other' });
++
++    await expect(
++      linkSimpleFin({ externalAccount, upgradingId: 'other' }),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++
++    const other = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['other'],
++    );
++    expect(other!.account_id).toBeNull();
++    expect(other!.account_sync_source).toBeNull();
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('still refuses when the holder is closed', async () => {
++    await insertLinkedAccount({ closed: 1 });
++
++    await expect(linkSimpleFin({ externalAccount })).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++  });
++
++  it('allows linking when the holder is deleted', async () => {
++    await insertLinkedAccount({ tombstone: 1 });
++
++    await expect(linkSimpleFin({ externalAccount })).resolves.toBe('ok');
++  });
++
++  it('allows linking when the same account id belongs to another provider', async () => {
++    await insertLinkedAccount({ account_sync_source: 'goCardless' });
++
++    await expect(linkSimpleFin({ externalAccount })).resolves.toBe('ok');
++  });
++
++  it('allows re-linking into the account that already holds the bank account', async () => {
++    await insertLinkedAccount();
++
++    await expect(
++      linkSimpleFin({ externalAccount, upgradingId: 'holder' }),
++    ).resolves.toBe('ok');
++    expect(bankSync.syncAccount).toHaveBeenCalledTimes(1);
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 5a12ca5..82f00fa 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -255,6 +255,28 @@ async function linkBankSyncAccount({
+   return 'ok';
+ }
+ 
++// Two local accounts linked to the same bank account would both import every
++// transaction from that feed, so refuse unless the holder is the account being
++// re-linked.
++async function assertBankAccountNotLinked({
++  syncSource,
++  accountId,
++  upgradingId,
++}: {
++  syncSource: AccountSyncSource;
++  accountId: string;
++  upgradingId?: AccountEntity['id'];
++}) {
++  const holder = await db.first<Pick<db.DbAccount, 'id'>>(
++    'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id != ?',
++    [syncSource, accountId, upgradingId ?? ''],
++  );
++
++  if (holder) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ async function linkGoCardlessAccount({
+   requisitionId,
+   account,
+@@ -266,6 +288,12 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
++  await assertBankAccountNotLinked({
++    syncSource: 'goCardless',
++    accountId: account.account_id,
++    upgradingId,
++  });
++
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+   return linkBankSyncAccount({
+@@ -293,6 +321,12 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
++  await assertBankAccountNotLinked({
++    syncSource: 'simpleFin',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+@@ -329,6 +363,12 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
++  await assertBankAccountNotLinked({
++    syncSource: 'pluggyai',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const fileId = getPrefs()?.cloudFileId;
+ 
+   const institution = {
+@@ -368,6 +408,12 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
++  await assertBankAccountNotLinked({
++    syncSource: 'akahu',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const institution = {
+     name: externalAccount.institution ?? null,
+   };
+@@ -402,6 +448,12 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
++  await assertBankAccountNotLinked({
++    syncSource: 'enableBanking',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an

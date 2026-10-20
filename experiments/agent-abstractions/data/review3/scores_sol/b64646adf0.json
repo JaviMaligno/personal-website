@@ -1,0 +1,45 @@
+{
+ "id": "b64646adf0",
+ "reuse": {
+  "score": 4,
+  "why": "Fintegra reuses findOrCreateBank and linkBankSyncAccount, although its downloader and replacement unlink logic copy existing implementations."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The change duplicates Akahu's downloader, unlinkAccount's local field reset, and the holder-selection query across validation and replacement."
+ },
+ "placement": {
+  "score": 4,
+  "why": "The changes follow the existing account, sync, configuration, and model layers, but local unlink state should be shared with unlinkAccount."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits address the four requested steps, with minimal client compatibility changes and relevant tests and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared linking and validation keep provider behavior consistent, but duplicated download, holder-selection, and unlink logic create multiple maintenance points."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "app.ts: linkBankSyncAccount reproduces unlinkAccount's local state reset rather than extracting a shared local unlink operation that excludes provider cleanup."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "app.ts: assertBankAccountNotLinked and linkBankSyncAccount express the same holder-selection predicate through db.first and db.all respectively."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 2,
+  "special_case_branches": 4,
+  "bypassing_call_sites": 0,
+  "where": "app.ts: replaceExistingLink is threaded into both shared helpers; assertBankAccountNotLinked adds target-present, target-closed, and conflicting-holder branches, while linkBankSyncAccount adds replacement handling; all six provider link handlers use both helpers."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 42.2
+ }
+}

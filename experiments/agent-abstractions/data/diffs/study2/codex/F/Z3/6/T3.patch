@@ -1,0 +1,113 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index 1839059..56fcfb2 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -361,6 +361,84 @@ describe('accountsBankSync', () => {
+ });
+ 
+ describe('simpleFinAccountsLink', () => {
++  it('rejects linking into a closed account without changing anything', async () => {
++    await db.insertAccount({
++      id: 'closed',
++      name: 'Closed checking',
++      closed: 1,
++    });
++    const send = vi.spyOn(connection, 'send');
++    send.mockClear();
++
++    await expect(
++      simpleFinAccountsLinkHandler({
++        externalAccount: {
++          account_id: 'external-1',
++          name: 'Checking',
++          balance: 100,
++          institution: 'SimpleFin',
++          orgId: 'sfin-bank',
++        },
++        upgradingId: 'closed',
++      }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(
++      await db.first('SELECT * FROM accounts WHERE id = ?', ['closed']),
++    ).toMatchObject({ name: 'Closed checking', closed: 1 });
++    expect(await db.first('SELECT id FROM accounts WHERE id != ?', ['closed']))
++      .toBeNull();
++    expect(await db.first('SELECT id FROM banks')).toBeNull();
++    expect(await db.first('SELECT id FROM payees')).toBeNull();
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    expect(send).not.toHaveBeenCalled();
++  });
++
++  it('rejects relinking a closed account that already has the bank link', async () => {
++    insertBank({ id: 'bank1', bank_id: 'sfin-bank', name: 'SimpleFin' });
++    await db.insertAccount({
++      id: 'closed',
++      name: 'Closed checking',
++      bank: 'bank1',
++      account_id: 'external-1',
++      account_sync_source: 'simpleFin',
++      closed: 1,
++    });
++    const send = vi.spyOn(connection, 'send');
++    send.mockClear();
++
++    await expect(
++      simpleFinAccountsLinkHandler({
++        externalAccount: {
++          account_id: 'external-1',
++          name: 'Checking',
++          balance: 100,
++          institution: 'SimpleFin',
++          orgId: 'sfin-bank',
++        },
++        upgradingId: 'closed',
++      }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(
++      await db.first('SELECT * FROM accounts WHERE id = ?', ['closed']),
++    ).toMatchObject({
++      name: 'Closed checking',
++      account_id: 'external-1',
++      account_sync_source: 'simpleFin',
++      closed: 1,
++    });
++    expect(await db.first('SELECT id FROM accounts WHERE id != ?', ['closed']))
++      .toBeNull();
++    expect(await db.first('SELECT id FROM payees')).toBeNull();
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    expect(send).not.toHaveBeenCalled();
++  });
++
+   it('rejects a bank account already linked to another local account without changes', async () => {
+     insertBank({ id: 'bank1', bank_id: 'sfin-bank', name: 'SimpleFin' });
+     await db.insertAccount({
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 5662ba5..f83e298 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -59,6 +59,19 @@ async function assertBankAccountIsNotLinked(
+   accountId: string,
+   upgradingId?: AccountEntity['id'],
+ ) {
++  if (upgradingId) {
++    const account = await db.first<{ closed: number }>(
++      'SELECT closed FROM accounts WHERE id = ?',
++      [upgradingId],
++    );
++
++    if (account?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const existing = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+      WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0

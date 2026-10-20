@@ -1,0 +1,44 @@
+{
+ "id": "0b0da8a7cc",
+ "reuse": {
+  "score": 2,
+  "why": "The change reuses getApproxNumberThreshold but bypasses the existing getScheduledAmount abstraction in all three changed consumers."
+ },
+ "duplication": {
+  "score": 1,
+  "why": "API serialization, forecast normalization, and transaction previews each independently implement the same amount-selection policy."
+ },
+ "placement": {
+  "score": 2,
+  "why": "Schedule amount policy belongs in shared/schedules.ts alongside getScheduledAmount, rather than being independently embedded in API serialization and forecast normalization."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits concern schedule amount expectations, their API exposure, or directly related tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Future policy changes require coordinating three implementations while the existing shared abstraction and its consumers remain separate."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "scheduleModel.toExternal, normalizeSchedule, and computeSchedulePreviewTransactions implement amount selection locally instead of extending and calling shared/schedules.ts:getScheduledAmount."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "normalizeSchedule reshapes the same numeric/approximate/range dispatch found in API serialization and previews through amountValue and an operator fallback, without sharing the policy."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 0,
+  "special_case_branches": 0,
+  "bypassing_call_sites": 3,
+  "where": "The existing getScheduledAmount helper remains unchanged while API serialization, forecast normalization, and preview generation independently implement the evolving policy."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 28.0
+ }
+}

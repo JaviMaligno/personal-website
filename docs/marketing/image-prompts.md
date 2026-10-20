@@ -1753,3 +1753,47 @@ Refine this generated blog hero image for "It Used to Be Someone Else's Problem"
 Change only these details: Replace the named tools "node", "vite", and "python" on the orphaned-process cards with generic labels "server", "watcher", and "worker". Remove the small emblem icons in the terminal panes. Remove the decorative mug, books, notebook, pens, and plants, restoring a simple uncluttered desk plane and quiet graphite backdrop in their places. Give the remaining scene a crisp refined technical editorial bitmap illustration finish with controlled geometric forms, fine linework, subtle surface texture, and restrained dimensional shading.
 No people, logos, brand names, watermarks, article title, purple gradient blobs, or bokeh. Keep all remaining short text accurate and readable; do not add text or objects.
 ```
+# Ask the agent to refactor — 2026-10-18
+
+- Article: `src/content/blog/en/ask-the-agent-to-refactor.md`
+- Image: `public/blog/ask-the-agent-to-refactor.png`
+- Generator: built-in image_gen; resized to 1020x510 with `sips`.
+
+```text
+Create a 1020x510 blog hero image, wide 2:1 composition, for the technical article "Ask the agent to refactor. Writing the rule isn't enough".
+
+Style: refined technical editorial illustration, crisp bitmap art with fine linework, controlled geometric forms, subtle surface texture and restrained dimensional shading. Dark but not monochrome; high contrast; balanced teal, amber, graphite and off-white accents, with red used only for a small lint warning. Professional AI/developer blog aesthetic.
+
+Scene: show a codebase as a working refactoring system. Four overlapping code editor file panes occupy the left and centre of the composition. Each contains a highlighted small block of the same range-amount logic, surrounded by a few plausible generic code lines. Three copies look nearly identical, using "return (min + max) / 2;". The fourth pane is partly hidden behind the others, with its exposed tab labeled "schedule-template.ts" and the differently written line "Math.round(num1 + num2) / 2" visible through the search lens. Make this fourth copy a clear visual discovery, not an omitted loose end.
+
+Represent the coding agent through a compact search control labeled "agent search", a precise magnifying lens and a translucent teal search beam sweeping across all four files; no person, robot or mascot. Amber outlines identify every discovered logic block, including the partly hidden fourth. Four clear thin routed arrows, one from each copy, converge into a single prominent shared function box on the right, labeled "shared/range.ts", with "getRangedAmount()" legible inside. The arrows must visibly enter that one shared module. Communicate collecting scattered logic into one definition, with search as the central action.
+
+On the far left, integrate a smaller secondary lint checker panel labeled "jscpd", with a red flag labeled "duplicate" and a small amber sticky marker reading "ignore" overlapping its corner. Near the shared module, add a compact three-item checklist: "find copies", "extract", "test", with tidy teal check marks. Use short readable monospace labels and sparse code; text supports the illustration rather than dominating it.
+
+Clean geometric composition with a strong left-to-right flow, distinct but coherent zones, a quiet graphite background, generous separation between connectors, and all important elements comfortably inside the frame. Keep the partly hidden fourth file and the shared function readable at hero size.
+
+No logos, no brand names, no people, no article title overlay, no text-heavy poster, no watermarks. No purple gradient blobs, no bokeh, no glossy 3D render look.
+```
+
+
+## Ask the agent to refactor. Writing the rule isn't enough
+
+- **Article:** `src/content/blog/en/ask-the-agent-to-refactor.md`
+- **Image:** `public/blog/ask-the-agent-to-refactor.png`
+- **Generated:** 2026-10-18 (Codex `image_gen`)
+
+```text
+Create a 1020x510 blog hero image, wide 2:1 composition, for the technical article "Ask the agent to refactor. Writing the rule isn't enough".
+
+Style: refined technical editorial illustration, crisp bitmap art with fine linework, controlled geometric forms, subtle surface texture and restrained dimensional shading. Dark but not monochrome; high contrast; balanced teal, amber, graphite and off-white accents, with red used only for a small lint warning. Professional AI/developer blog aesthetic.
+
+Scene: show a codebase as a working refactoring system. Four overlapping code editor file panes occupy the left and centre of the composition. Each contains a highlighted small block of the same range-amount logic, surrounded by a few plausible generic code lines. Three copies look nearly identical, using "return (min + max) / 2;". The fourth pane is partly hidden behind the others, with its exposed tab labeled "schedule-template.ts" and the differently written line "Math.round(num1 + num2) / 2" visible through the search lens. Make this fourth copy a clear visual discovery, not an omitted loose end.
+
+Represent the coding agent through a compact search control labeled "agent search", a precise magnifying lens and a translucent teal search beam sweeping across all four files; no person, robot or mascot. Amber outlines identify every discovered logic block, including the partly hidden fourth. Four clear thin routed arrows, one from each copy, converge into a single prominent shared function box on the right, labeled "shared/range.ts", with "getRangedAmount()" legible inside. The arrows must visibly enter that one shared module. Communicate collecting scattered logic into one definition, with search as the central action.
+
+On the far left, integrate a smaller secondary lint checker panel labeled "jscpd", with a red flag labeled "duplicate" and a small amber sticky marker reading "ignore" overlapping its corner. Near the shared module, add a compact three-item checklist: "find copies", "extract", "test", with tidy teal check marks. Use short readable monospace labels and sparse code; text supports the illustration rather than dominating it.
+
+Clean geometric composition with a strong left-to-right flow, distinct but coherent zones, a quiet graphite background, generous separation between connectors, and all important elements comfortably inside the frame. Keep the partly hidden fourth file and the shared function readable at hero size.
+
+No logos, no brand names, no people, no article title overlay, no text-heavy poster, no watermarks. No purple gradient blobs, no bokeh, no glossy 3D render look.
+```

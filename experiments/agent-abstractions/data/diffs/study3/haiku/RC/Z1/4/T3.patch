@@ -1,0 +1,159 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index cf6a7d1..16f41e4 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -9,7 +9,9 @@ import {
+   copyUntilYearEnd,
+   coverOverbudgeted,
+   getSheetValue,
++  set12MonthAvg,
+   set3MonthAvg,
++  set6MonthAvg,
+   setBudget,
+   setCategoryCarryover,
+   setLastMonthSpending,
+@@ -251,6 +253,23 @@ describe('month-wide budget actions', () => {
+       id: 'template-cat',
+       goal_def: JSON.stringify([{ name: 'template', type: 'fixed' }]),
+     });
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed group',
++      is_income: 0,
++    });
++    await db.insert('notes', { id: 'fixed-group', note: 'Rent #fixed' });
++    await db.insertCategory({
++      id: 'fixed-group-cat',
++      name: 'fixed-group-cat',
++      cat_group: 'fixed-group',
++    });
++    await db.insertCategory({
++      id: 'cat-with-fixed-note',
++      name: 'cat-with-fixed-note',
++      cat_group: 'group1',
++    });
++    await db.insert('notes', { id: 'cat-with-fixed-note', note: '#fixed' });
+ 
+     await sheet.loadSpreadsheet(db);
+     await budget.createBudget(['2024-02', '2024-03', '2024-04']);
+@@ -267,6 +286,8 @@ describe('month-wide budget actions', () => {
+       'hidden-cat',
+       'cat-in-hidden-group',
+       'template-cat',
++      'fixed-group-cat',
++      'cat-with-fixed-note',
+     ]) {
+       await setBudget({ category, month: '2024-03', amount: 500 });
+       await setBudget({ category, month: '2024-04', amount: 1000 });
+@@ -336,6 +357,34 @@ describe('month-wide budget actions', () => {
+       1000,
+     );
+   });
++
++  it.each([
++    ['setZero', () => setZero({ month: '2024-04' })],
++    ['copyPreviousMonth', () => copyPreviousMonth({ month: '2024-04' })],
++    ['setLastMonthSpending', () => setLastMonthSpending({ month: '2024-04' })],
++    ['set3MonthAvg', () => set3MonthAvg({ month: '2024-04' })],
++    ['set6MonthAvg', () => set6MonthAvg({ month: '2024-04' })],
++    ['set12MonthAvg', () => set12MonthAvg({ month: '2024-04' })],
++  ])('%s leaves categories in a #fixed group untouched', async (_, run) => {
++    await run();
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-fixed-group-cat')).toBe(
++      1000,
++    );
++  });
++
++  it('ignores #fixed in a category note when deciding what month-wide actions touch', async () => {
++    await setZero({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(
++      await getSheetValue('budget202404', 'budget-cat-with-fixed-note'),
++    ).toBe(0);
++    expect(await getSheetValue('budget202404', 'budget-fixed-group-cat')).toBe(
++      1000,
++    );
++  });
+ });
+ 
+ describe('coverOverbudgeted', () => {
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index d7172ff..3211bb2 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -70,6 +71,7 @@ type BudgetData = {
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
+   goal_def: string | null;
++  group_notes: string | null;
+   category: string;
+   amount: number;
+ };
+@@ -83,13 +85,14 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      > & { goal_def: string | null }
++      > & { goal_def: string | null; group_notes: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden, gn.note AS group_notes
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes gn ON gn.id = c.cat_group
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -214,13 +217,15 @@ function setCarryover(
+   });
+ }
+ 
+-// Which categories a month-wide action writes. Hidden categories and categories
+-// with saved templates are left alone, since templates own their budget.
++// Which categories a month-wide action writes. Hidden categories, categories
++// with saved templates, and categories in a #fixed group are left alone, since
++// templates and fixed costs own their budget.
+ type MonthFillCategory = {
+   is_income: number;
+   hidden: number | null;
+   group_hidden: number | null;
+   goal_def: string | null;
++  group_notes: string | null;
+ };
+ 
+ type MonthFillRules = {
+@@ -248,6 +253,9 @@ function isMonthFillCategory(
+   if (category.goal_def != null) {
+     return false;
+   }
++  if (extractTagsFromText(category.group_notes ?? '').includes('fixed')) {
++    return false;
++  }
+   const isHiddenFlag = (flag: number | null) =>
+     rules.unknownVisibilityIsHidden ? flag !== 0 : flag === 1;
+   return !isHiddenFlag(category.hidden) && !isHiddenFlag(category.group_hidden);
+@@ -257,9 +265,10 @@ async function getMonthFillCategories(
+   rules: MonthFillRules,
+ ): Promise<Array<{ id: string } & MonthFillCategory>> {
+   const categories = await db.all<{ id: string } & MonthFillCategory>(`
+-    SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden, gn.note AS group_notes
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes gn ON gn.id = c.cat_group
+     WHERE c.tombstone = 0
+   `);
+   return categories.filter(cat => isMonthFillCategory(cat, rules));

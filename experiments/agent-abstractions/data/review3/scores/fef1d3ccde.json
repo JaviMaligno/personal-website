@@ -1,0 +1,12 @@
+{
+  "id": "fef1d3ccde",
+  "reuse": {"score": 3, "why": "Builds on the existing guardBankAccountLink and turns the assert into a lookup, but copies unlinkAccount's field-clearing update instead of extracting and sharing it."},
+  "duplication": {"score": 3, "why": "The eight-field db.updateAccount that defines the unlinked state is pasted from unlinkAccount, so the two unlink paths can drift."},
+  "placement": {"score": 4, "why": "The replace decision sits in the shared link guard that already enforces the closed-account and duplicate-link rules, so every provider gets it; doing a data write inside a guard wrapper is slightly surprising."},
+  "scope": {"score": 5, "why": "Only the flag, the guard logic and focused tests change."},
+  "maintainability": {"score": 3, "why": "Small and covers all providers, but the copied unlink state means a future change to what 'unlinked' means must be made in two places."},
+  "bypasses_abstraction": {"value": true, "where": "accounts/app.ts guardBankAccountLink re-implements the unlink state update inline instead of reusing the logic in unlinkAccount (e.g. via an extracted local-unlink helper)."},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "The copied db.updateAccount block is an open, verbatim copy of unlinkAccount's, not reshaped."}
+}

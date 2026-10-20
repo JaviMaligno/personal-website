@@ -1,0 +1,11 @@
+{"id":"21f1af193b",
+"reuse":{"score":4,"why":"Extends the existing isMonthWideCategory predicate and the existing category queries rather than adding a parallel filter, though the template check is hand-written SQL instead of building on goal-template's getTemplates reader."},
+"duplication":{"score":4,"why":"The template condition is one shared SQL fragment and one predicate, but setZero gets its own category query that nearly repeats getAverageCategories (only the join differs)."},
+"placement":{"score":5,"why":"The month-wide category rule stays in budget/actions.ts next to the predicate and queries that feed every month-wide action."},
+"scope":{"score":5,"why":"Only the month-wide predicate, its feeding queries and corresponding tests change; single-category actions are untouched."},
+"maintainability":{"score":4,"why":"The rule now reads in one predicate fed by one SQL fragment; the small cost is that each query must remember to select the fragment and setZero's query is another copy."},
+"bypasses_abstraction":{"value":false,"where":"All month-wide actions (copyPreviousMonth, setZero, set3/6/12MonthAvg) go through isMonthWideCategory."},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"setZero's new SELECT in actions.ts is an openly near-identical copy of getAverageCategories' query (LEFT vs INNER JOIN), not disguised."},
+"one_place":{"value":true,"where":"isMonthWideCategory in budget/actions.ts plus the HAS_BUDGET_TEMPLATE_SQL fragment selected by every query that feeds it; the includeHidden option is removed so all actions apply the same rule."}}

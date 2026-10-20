@@ -1,0 +1,92 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 590a466..6f42ef4 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -654,30 +654,41 @@ describe('schedules', () => {
+       expect(getScheduledAmount(null)).toBe(0);
+     });
+ 
+-    test('expects the end of a ranged amount furthest from zero', () => {
++    test('expects money going out at the end furthest from zero', () => {
+       expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
+     });
+ 
+-    test('inverts the worst-case amount of a ranged amount', () => {
++    test('expects money coming in at the end closest to zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    });
++
++    test('expects a ranged amount spanning zero at its negative end', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++      expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
++    });
++
++    test('inverts the expected amount of a ranged amount', () => {
+       expect(getScheduledAmount({ num1: -10100, num2: -20000 }, true)).toBe(
+         20000,
+       );
+     });
+ 
+-    test('expects the end of an approximate amount furthest from zero', () => {
++    test('expects money going out approximately at the end furthest from zero', () => {
+       expect(getScheduledAmount(-10000, false, 'isapprox')).toBe(-10750);
+-      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
+       expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
+     });
+ 
++    test('expects money coming in approximately at the lower end', () => {
++      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(9250);
++    });
++
+     test('keeps a single amount as is', () => {
+       expect(getScheduledAmount(-10000, false, 'is')).toBe(-10000);
+     });
+ 
+-    test('inverts the worst-case amount of an approximate amount', () => {
++    test('inverts the expected amount of an approximate amount', () => {
+       expect(getScheduledAmount(-10000, true, 'isapprox')).toBe(10750);
+     });
+   });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 9cdd1e3..e823585 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -354,10 +354,6 @@ export function getDateWithSkippedWeekend(
+   return date;
+ }
+ 
+-function getWorstCaseAmount(range: { num1: number; num2: number }): number {
+-  return Math.abs(range.num1) >= Math.abs(range.num2) ? range.num1 : range.num2;
+-}
+-
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number } | null,
+   inverse: boolean = false,
+@@ -369,9 +365,9 @@ export function getScheduledAmount(
+ 
+   let value: number;
+   if (typeof amount !== 'number') {
+-    value = getWorstCaseAmount(amount);
++    value = Math.min(amount.num1, amount.num2);
+   } else if (op === 'isapprox') {
+-    value = amount + Math.sign(amount) * getApproxNumberThreshold(amount);
++    value = amount - getApproxNumberThreshold(amount);
+   } else {
+     value = amount;
+   }
+diff --git a/upcoming-release-notes/worst-case-least-money-in.md b/upcoming-release-notes/worst-case-least-money-in.md
+new file mode 100644
+index 0000000..ac13de4
+--- /dev/null
++++ b/upcoming-release-notes/worst-case-least-money-in.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Expect ranged and approximate schedule amounts at the lowest amount they allow, so money coming in is planned at the end closest to zero

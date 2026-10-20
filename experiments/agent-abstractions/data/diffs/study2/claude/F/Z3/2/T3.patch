@@ -1,0 +1,86 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index a13a142..30fc2cc 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -339,3 +339,49 @@ describe('bank sync handlers must not nest mutators', () => {
+     expect(result.errors).toEqual([]);
+   });
+ });
++
++describe('simplefin-accounts-link', () => {
++  const linkHandler = app.handlers['simplefin-accounts-link'];
++  const externalAccount = {
++    account_id: 'ext-1',
++    name: 'Checking',
++    institution: 'Bank',
++    orgDomain: 'bank.example',
++    orgId: 'org1',
++    balance: 0,
++  };
++
++  it.each([false, true])(
++    'refuses to link a closed account (already linked: %s)',
++    async alreadyLinked => {
++      insertBank({ id: 'bank1', bank_id: 'sfin-bank', name: 'SimpleFin' });
++      await db.insertAccount({
++        id: 'acct1',
++        name: 'Checking',
++        closed: 1,
++        ...(alreadyLinked && {
++          bank: 'bank1',
++          account_id: 'ext-1',
++          account_sync_source: 'simpleFin',
++        }),
++      });
++      const before = await db.first('SELECT * FROM accounts WHERE id = ?', [
++        'acct1',
++      ]);
++
++      await expect(
++        runMutator(() =>
++          linkHandler({ externalAccount, upgradingId: 'acct1' } as never),
++        ),
++      ).rejects.toThrow(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++
++      expect(
++        await db.first('SELECT * FROM accounts WHERE id = ?', ['acct1']),
++      ).toEqual(before);
++      expect((await db.all('SELECT id FROM banks')).length).toBe(1);
++      expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    },
++  );
++});
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 6b44050..bd961ee 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -172,13 +172,25 @@ async function getAccountProperties({ id }: { id: AccountEntity['id'] }) {
+   };
+ }
+ 
+-// Refuses to link a provider account that another (non-deleted) local account
+-// already holds. Must run before any write.
++// Refuses to link into a closed local account, or to link a provider account
++// that another (non-deleted) local account already holds. Must run before any write.
+ async function assertNotLinkedElsewhere(
+   syncSource: AccountSyncSource,
+   providerAccountId: string,
+   upgradingId?: string,
+ ) {
++  if (upgradingId) {
++    const upgrading = await db.first<Pick<db.DbAccount, 'closed'>>(
++      'SELECT closed FROM accounts WHERE id = ? AND tombstone = 0',
++      [upgradingId],
++    );
++    if (upgrading?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const existing = await db.first<Pick<db.DbAccount, 'id'>>(
+     `SELECT id FROM accounts
+      WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?

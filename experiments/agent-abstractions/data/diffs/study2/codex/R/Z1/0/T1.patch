@@ -1,0 +1,119 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index cea172c..812ea70 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -184,6 +184,32 @@ describe('set budget average', () => {
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(600);
+   });
+ 
++  it('leaves hidden and template managed categories unchanged in bulk averages', async () => {
++    await db.insertCategory({
++      id: 'hidden-cat',
++      name: 'Hidden',
++      cat_group: 'group1',
++      is_income: 0,
++      hidden: 1,
++    });
++    await db.insertCategory({
++      id: 'template-cat',
++      name: 'Template',
++      cat_group: 'group1',
++      is_income: 0,
++      goal_def: JSON.stringify([{ directive: 'template', amount: 100 }]),
++    });
++    await sheet.loadSpreadsheet(db);
++    await setBudget({ category: 'hidden-cat', month: '2024-04', amount: 111 });
++    await setBudget({ category: 'template-cat', month: '2024-04', amount: 222 });
++
++    await set3MonthAvg({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-hidden-cat')).toBe(111);
++    expect(await getSheetValue('budget202404', 'budget-template-cat')).toBe(222);
++  });
++
+   it('sets a bulk 3 month average from the first activity month', async () => {
+     await setBudget({ category: 'cat1', month: '2023-12', amount: 1000 });
+ 
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..0abbd34 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -69,6 +69,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  goal_def: unknown;
+   category: string;
+   amount: number;
+ };
+@@ -79,13 +80,12 @@ function getBudgetData<T extends BudgetTable>(
+ ): Promise<BudgetData[]> {
+   return db.all<
+     (db.DbReflectBudget | db.DbZeroBudget) &
+-      Pick<
+-        db.DbViewCategoryWithGroupHidden,
+-        'is_income' | 'hidden' | 'group_hidden'
+-      >
++      Pick<db.DbViewCategoryWithGroupHidden, 'is_income' | 'hidden' | 'group_hidden'> & {
++        goal_def: unknown;
++      }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden, c.goal_def
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -229,7 +229,11 @@ export async function copyPreviousMonth({
+       if (prevBudget.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+-      if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
++      if (
++        prevBudget.hidden === 1 ||
++        prevBudget.group_hidden === 1 ||
++        prevBudget.goal_def != null
++      ) {
+         return;
+       }
+       void setBudget({
+@@ -260,7 +264,13 @@ export async function copySinglePreviousMonth({
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
++    `
++    SELECT c.*
++    FROM categories c
++    LEFT JOIN category_groups g ON c.cat_group = g.id
++    WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++      AND c.goal_def IS NULL
++    `,
+   );
+ 
+   await batchMessages(async () => {
+@@ -284,6 +294,7 @@ export async function set3MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND c.goal_def IS NULL
+   `,
+   );
+ 
+@@ -319,6 +330,7 @@ export async function set12MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND c.goal_def IS NULL
+   `,
+   );
+ 
+@@ -343,6 +355,7 @@ export async function set6MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    AND c.goal_def IS NULL
+   `,
+   );
+ 

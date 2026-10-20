@@ -1,0 +1,12 @@
+{"id":"6751564d2c",
+"reuse":{"score":3,"why":"Reuses findOrCreateBank, syncAccount, handleSyncResponse, getServer/post and one shared link guard across all providers, but the takeover rewrites unlinkAccount's field reset instead of sharing it, and Fintegra linking/downloading are fresh copies of the Akahu code."},
+"duplication":{"score":2,"why":"linkFintegraAccount is a near-verbatim copy of linkAkahuAccount, downloadFintegraTransactions copies downloadAkahuTransactions, the Fintegra starting-balance branch is identical to the Akahu branch, and the unlink column reset is copied from unlinkAccount."},
+"placement":{"score":4,"why":"Guards sit beside the link handlers in accounts/app.ts, the download and balance logic in sync.ts, the URL in server-config and the type in types/models, matching the tree's layering."},
+"scope":{"score":4,"why":"Edits are confined to the four requested behaviours and their tests; nothing unrelated is touched."},
+"maintainability":{"score":3,"why":"The link rules are centralised, but a check-named helper (ensureBankAccountIsNotLinked) now also unlinks another account behind a boolean flag, and adding Fintegra grows the per-provider copy surface by three more blocks."},
+"bypasses_abstraction":{"value":true,"where":"ensureBankAccountIsNotLinked in server/accounts/app.ts clears account_id/bank/balances/sync_source/status with its own db.updateAccount instead of sharing the reset that unlinkAccount ('account-unlink') already performs."},
+"duplicated_blocks":4,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copies (linkFintegraAccount vs linkAkahuAccount, downloadFintegraTransactions vs downloadAkahuTransactions, the fintegra balance branch in processBankSyncDownload, the unlink reset) are open, near-verbatim copies rather than disguised ones."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"ensureBankAccountIsNotLinked gained the replaceExistingLink parameter and a branch that unlinks the holding account inside what was a pure guard; all six provider link functions, Fintegra included, still call it."}
+}

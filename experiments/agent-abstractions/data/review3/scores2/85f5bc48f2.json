@@ -1,0 +1,12 @@
+{"id": "85f5bc48f2",
+ "reuse": {"score": 4, "why": "Builds on the existing getDateWithSkippedWeekend, getNextDate and getNextDateAfter; schedule-template now walks occurrences with getNextDate/getNextDateAfter instead of its own weekend loop, and the new range handler reuses recurConfigToRSchedule."},
+ "duplication": {"score": 4, "why": "Removes the twice-written weekend ternary from schedule-template, but the `skipWeekend ? getDateWithSkippedWeekend(...) : date` decision is still written twice: as resolveDate inside getNextDate and as a local applyWeekendRule in schedules/app.ts."},
+ "placement": {"score": 4, "why": "The weekend/holiday rule, its search-window bounds and the holiday matcher live in shared/schedules.ts; the enable-flag wrapper is placed privately in server/schedules/app.ts rather than beside the rule it wraps."},
+ "scope": {"score": 5, "why": "All edits serve the four steps (daily skip, range handler, holidays, yearly holidays) plus tests and a release note."},
+ "maintainability": {"score": 4, "why": "One function decides moving, skipping (null for daily) and holiday matching, so later rule changes land once; the heuristic search windows (7 or 2 days times 1 + number of holidays) are opaque bounds callers must remember to apply."},
+ "bypasses_abstraction": {"value": false, "where": "Every weekend adjustment (getNextDate, getUpcomingDates, getDatesInRange, schedule-template via getNextDate) goes through getDateWithSkippedWeekend."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "The enable-flag wrapper exists twice under different names: `resolveDate` in shared/schedules.ts getNextDate and `applyWeekendRule` in server/schedules/app.ts, both `skipWeekend ? getDateWithSkippedWeekend(date, mode, frequency, holidays) : date`."},
+ "abstraction_drift": {"value": false, "parameters_added": 2, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "getDateWithSkippedWeekend gains frequency and holidays parameters and a `frequency === 'daily'` branch returning null; these encode the requested rules, and all callers route through it, though the enable-flag check stays at two wrapper sites."}
+}

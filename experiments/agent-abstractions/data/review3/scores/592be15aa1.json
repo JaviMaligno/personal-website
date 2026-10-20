@@ -1,0 +1,12 @@
+{"id": "592be15aa1",
+"reuse": {"score": 3, "why": "Reuses the date helpers and the schedule's occurrence iterator, but writes the daily-skip rule inline in getNextDate instead of extending the existing weekend helper getDateWithSkippedWeekend."},
+"duplication": {"score": 3, "why": "Adds a second weekend/occurrence-requery path (pre-check from Monday plus a skip loop) inside getNextDate, overlapping with the existing occurrence lookup, and leaves the old move-logic copies in app.ts and schedule-template.ts unchanged."},
+"placement": {"score": 3, "why": "Lives in shared/schedules.ts which is the right module, but inside getNextDate rather than in the weekend rule helper used by the other consumers."},
+"scope": {"score": 5, "why": "Only touches getNextDate for the requested rule; no unrelated edits."},
+"maintainability": {"score": 2, "why": "The daily-skip rule now exists only in one of three code paths that apply weekend handling (getUpcomingDates and the schedule budget template still move daily weekend occurrences), with an ad-hoc 7-attempt loop and a special Monday pre-query."},
+"bypasses_abstraction": {"value": true, "where": "shared/schedules.ts getNextDate: daily branch replaces the call to getDateWithSkippedWeekend with its own inline loop instead of changing the helper that app.ts getUpcomingDates and budget/schedule-template.ts also use"},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "No reshaped copy; the new loop is new logic, not a disguised copy of existing code."},
+"one_place": {"value": false, "where": "Rule changed only inside getNextDate (shared/schedules.ts); server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts still call getDateWithSkippedWeekend directly and keep moving daily weekend dates."}
+}

@@ -1,0 +1,155 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index b81f4f0..ae1a519 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -411,6 +411,47 @@ describe('linking a bank account that is already linked', () => {
+     );
+   });
+ 
++  it('refuses to link into a closed account and leaves it unchanged', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'target', name: 'Target', accountId: null },
++    ]);
++    await db.update('accounts', { id: 'target', closed: 1 });
++    const before = await getAccounts();
++
++    await expect(linkSimpleFin({ upgradingId: 'target' })).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(await getAccounts()).toEqual(before);
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('refuses to re-link a closed account that holds the link', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'holder', name: 'Holder', accountId: 'ext-1' },
++    ]);
++    await db.update('accounts', { id: 'holder', closed: 1 });
++    const before = await getAccounts();
++
++    await expect(linkSimpleFin({ upgradingId: 'holder' })).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(await getAccounts()).toEqual(before);
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('allows linking into an account once it is reopened', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'target', name: 'Target', accountId: null },
++    ]);
++    await db.update('accounts', { id: 'target', closed: 1 });
++    await db.update('accounts', { id: 'target', closed: 0 });
++
++    await expect(linkSimpleFin({ upgradingId: 'target' })).resolves.toBe('ok');
++    expect(bankSync.syncAccount).toHaveBeenCalled();
++  });
++
+   it('allows linking when the holding account is deleted', async () => {
+     await setupSimpleFinAccounts([
+       { id: 'holder', name: 'Holder', accountId: 'ext-1' },
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 4d40a50..7741f17 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -182,7 +182,7 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
+-  await link.assertBankAccountNotLinked({
++  await link.assertBankAccountCanBeLinked({
+     provider: 'goCardless',
+     accountId: account.account_id,
+     upgradingId,
+@@ -255,7 +255,7 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
+-  await link.assertBankAccountNotLinked({
++  await link.assertBankAccountCanBeLinked({
+     provider: 'simpleFin',
+     accountId: externalAccount.account_id,
+     upgradingId,
+@@ -338,7 +338,7 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
+-  await link.assertBankAccountNotLinked({
++  await link.assertBankAccountCanBeLinked({
+     provider: 'pluggyai',
+     accountId: externalAccount.account_id,
+     upgradingId,
+@@ -423,7 +423,7 @@ async function linkFintegraAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerFintegraAccount;
+ }) {
+-  await link.assertBankAccountNotLinked({
++  await link.assertBankAccountCanBeLinked({
+     provider: 'fintegra',
+     accountId: externalAccount.account_id,
+     upgradingId,
+@@ -500,7 +500,7 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
+-  await link.assertBankAccountNotLinked({
++  await link.assertBankAccountCanBeLinked({
+     provider: 'akahu',
+     accountId: externalAccount.account_id,
+     upgradingId,
+@@ -580,7 +580,7 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
+-  await link.assertBankAccountNotLinked({
++  await link.assertBankAccountCanBeLinked({
+     provider: 'enableBanking',
+     accountId: externalAccount.account_id,
+     upgradingId,
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 7f52ecb..f52e203 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -6,7 +6,7 @@ import type { AccountEntity } from '#types/models';
+ 
+ type Institution = string | { name?: string | null };
+ 
+-export async function assertBankAccountNotLinked({
++export async function assertBankAccountCanBeLinked({
+   provider,
+   accountId,
+   upgradingId,
+@@ -15,6 +15,19 @@ export async function assertBankAccountNotLinked({
+   accountId: string;
+   upgradingId?: AccountEntity['id'];
+ }) {
++  if (upgradingId) {
++    const upgradingAccount = await db.first<Pick<db.DbAccount, 'closed'>>(
++      'SELECT closed FROM accounts WHERE id = ?',
++      [upgradingId],
++    );
++
++    if (upgradingAccount?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const linked = await db.first<Pick<db.DbAccount, 'id'>>(
+     'SELECT id FROM accounts WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0 AND id IS NOT ?',
+     [provider, accountId, upgradingId ?? null],
+diff --git a/upcoming-release-notes/refuse-linking-closed-account.md b/upcoming-release-notes/refuse-linking-closed-account.md
+new file mode 100644
+index 0000000..2f16e30
+--- /dev/null
++++ b/upcoming-release-notes/refuse-linking-closed-account.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Refuse to link a bank account into a closed account, which previously left the account closed while it received bank transactions

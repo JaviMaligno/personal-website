@@ -1,0 +1,12 @@
+{"id": "cac8131347",
+ "reuse": {"score": 3, "why": "The six provider link handlers now share linkBankSyncAccount, but taking over a link re-writes unlinkAccount's field-clearing update instead of reusing it, and Fintegra's download function is a copy of the Akahu one rather than a shared helper."},
+ "duplication": {"score": 2, "why": "downloadFintegraTransactions duplicates downloadAkahuTransactions almost line for line, the unlink field reset duplicates unlinkAccount's db.updateAccount block, and every provider wrapper repeats an assertBankAccountNotLinked call that linkBankSyncAccount makes again."},
+ "placement": {"score": 4, "why": "Link logic stays in server/accounts/app.ts, the download in sync.ts and the endpoint in server-config.ts, matching where the tree keeps each provider concern."},
+ "scope": {"score": 4, "why": "Changes cover the refactor, the duplicate-link and closed-account rules, Fintegra and the replace flag, without unrelated edits."},
+ "maintainability": {"score": 3, "why": "The shared link function is a real improvement, but the validation now runs twice per request from seven places and the unlink and download copies mean future changes to those rules must be made in two places."},
+ "bypasses_abstraction": {"value": true, "where": "server/accounts/app.ts: linkBankSyncAccount clears the previous holder's fields with its own db.updateAccount instead of the existing unlinkAccount logic; each link<Provider>Account calls assertBankAccountNotLinked itself before delegating to the shared function."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The copies (downloadFintegraTransactions vs downloadAkahuTransactions in sync.ts; the field reset vs unlinkAccount in app.ts; the repeated pre-check calls) are near-verbatim, not reshaped."},
+ "abstraction_drift": {"value": true, "parameters_added": 2, "special_case_branches": 1, "bypassing_call_sites": 6, "where": "linkBankSyncAccount gained replaceExistingLink (plus the closed-account check folded into assertBankAccountNotLinked's upgradingId argument) and a previous-holder unlink loop; all six provider wrappers (goCardless, simpleFin, pluggyai, akahu, fintegra, enableBanking) run assertBankAccountNotLinked themselves before calling the shared function."}
+}

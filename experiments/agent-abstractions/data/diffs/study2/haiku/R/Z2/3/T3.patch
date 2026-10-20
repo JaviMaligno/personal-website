@@ -1,0 +1,128 @@
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index d609a19..131b7ab 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -931,7 +931,11 @@ handlers['api/schedules-get'] = async function () {
+   const schedules = data as ScheduleEntity[];
+   return schedules.map(schedule => ({
+     ...scheduleModel.toExternal(schedule),
+-    expectedAmount: getScheduledAmount(schedule._amount),
++    expectedAmount: getScheduledAmount(
++      schedule._amount,
++      false,
++      schedule._amountOp,
++    ),
+   }));
+ };
+ 
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 6d3b410..1c0e13a 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -94,7 +94,7 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  const amount = getScheduledAmount(amountValue);
++  const amount = getScheduledAmount(amountValue, false, conditions.amount?.op);
+ 
+   return {
+     id: schedule.id,
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 5582155..f51220d 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -151,7 +151,7 @@ function updateActions(
+ 
+   // Mirrors how `_amount` resolves so the action stays consistent with the
+   // amount the schedule actually posts.
+-  const amount = getScheduledAmount(amountCond.value);
++  const amount = getScheduledAmount(amountCond.value, false, amountCond.op);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -584,7 +584,11 @@ async function postTransactionForSchedule({
+     return;
+   }
+ 
+-  const amount = getScheduledAmount(schedule._amount);
++  const amount = getScheduledAmount(
++    schedule._amount,
++    false,
++    schedule._amountOp,
++  );
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 2139db2..590a466 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -666,5 +666,19 @@ describe('schedules', () => {
+         20000,
+       );
+     });
++
++    test('expects the end of an approximate amount furthest from zero', () => {
++      expect(getScheduledAmount(-10000, false, 'isapprox')).toBe(-10750);
++      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
++      expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
++    });
++
++    test('keeps a single amount as is', () => {
++      expect(getScheduledAmount(-10000, false, 'is')).toBe(-10000);
++    });
++
++    test('inverts the worst-case amount of an approximate amount', () => {
++      expect(getScheduledAmount(-10000, true, 'isapprox')).toBe(10750);
++    });
+   });
+ });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 475289b..9cdd1e3 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -7,6 +7,7 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import { q } from './query';
++import { getApproxNumberThreshold } from './rules';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+@@ -360,13 +361,20 @@ function getWorstCaseAmount(range: { num1: number; num2: number }): number {
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number } | null,
+   inverse: boolean = false,
++  op?: string,
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+   if (amount == null) return 0;
+ 
+-  const value =
+-    typeof amount === 'number' ? amount : getWorstCaseAmount(amount);
++  let value: number;
++  if (typeof amount !== 'number') {
++    value = getWorstCaseAmount(amount);
++  } else if (op === 'isapprox') {
++    value = amount + Math.sign(amount) * getApproxNumberThreshold(amount);
++  } else {
++    value = amount;
++  }
+   return inverse ? -value : value;
+ }
+ 
+@@ -498,7 +506,11 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      const amount = getScheduledAmount(schedule._amount);
++      const amount = getScheduledAmount(
++        schedule._amount,
++        false,
++        schedule._amountOp,
++      );
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

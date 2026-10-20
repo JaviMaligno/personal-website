@@ -1,0 +1,12 @@
+{"id":"db51c74f9b",
+"reuse":{"score":3,"why":"Keeps getDateWithSkippedWeekend for non-daily schedules, but puts the new daily rule as an inline loop in getNextDate rather than in the shared weekend-adjustment helper the other call sites use."},
+"duplication":{"score":4,"why":"No copied logic is added; the new loop is written once."},
+"placement":{"score":3,"why":"The rule sits in shared/schedules.ts, but inside getNextDate only, while getUpcomingDates (server/schedules/app.ts) and schedule-template.ts apply weekend handling through their own skipWeekend ? getDateWithSkippedWeekend(...) code and still move daily weekend occurrences."},
+"scope":{"score":5,"why":"Only getNextDate and its tests change."},
+"maintainability":{"score":3,"why":"The daily-vs-other decision now differs between getNextDate and the other weekend-handling paths, and the 7-attempt loop with magic bound is buried in a branch; a maintainer has to know to replicate it elsewhere."},
+"bypasses_abstraction":{"value":false,"where":"Non-daily schedules still go through getDateWithSkippedWeekend; the daily branch is new logic rather than a bypass of an existing helper."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No duplicated logic introduced."},
+"one_place":{"value":false,"where":"Only getNextDate in shared/schedules.ts applies the daily skip; getUpcomingDates in server/schedules/app.ts and createScheduleList in server/budget/schedule-template.ts still call getDateWithSkippedWeekend for every frequency."}
+}

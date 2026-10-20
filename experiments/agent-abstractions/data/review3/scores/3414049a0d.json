@@ -1,0 +1,12 @@
+{"id": "3414049a0d",
+"reuse": {"score": 2, "why": "Extends the shared getScheduledAmount, but re-implements the 7.5% tolerance (Math.round(Math.abs(x)*0.075)) instead of calling the existing getApproxNumberThreshold in shared/rules.ts."},
+"duplication": {"score": 2, "why": "The tolerance formula is a second copy of getApproxNumberThreshold, and the per-site missing/number/range dispatch is kept at three call sites."},
+"placement": {"score": 4, "why": "The rule is added to the shared amount helper in shared/schedules.ts, which is the right layer."},
+"scope": {"score": 4, "why": "Focused on the amount rule; only a minor unrelated reformat of the range ternary."},
+"maintainability": {"score": 2, "why": "The op is threaded as a stringly-typed positional third argument with an odd 'isbetween' default, and sites that test typeof number before calling the helper never reach the approx branch, so the rule is split between helper and call sites."},
+"bypasses_abstraction": {"value": true, "where": "shared/schedules.ts getScheduledAmount re-derives the tolerance instead of using getApproxNumberThreshold (shared/rules.ts); app.ts updateActions/postTransactionForSchedule and computeSchedulePreviewTransactions short-circuit numeric amounts before the helper."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "The tolerance computation in getScheduledAmount is getApproxNumberThreshold inlined under a new local name ('tolerance')."},
+"one_place": {"value": false, "where": "The approx rule lives in getScheduledAmount, but app.ts (two sites) and computeSchedulePreviewTransactions keep their own typeof-number branch that bypasses it, and desktop-client callers (Balance, SchedulesTable, mobile list) do not pass the op."}
+}

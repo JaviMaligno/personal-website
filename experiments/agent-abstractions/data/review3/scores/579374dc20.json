@@ -1,0 +1,12 @@
+{"id":"579374dc20",
+"reuse":{"score":3,"why":"It adds a shared isDailyWeekendSkipping predicate and reuses getDateWithSkippedWeekend. But there is no single 'apply weekend rule' function: each site calls the predicate and then decides skip versus move itself."},
+"duplication":{"score":2,"why":"getUpcomingDates has its own capped weekday-scan loop that duplicates the new firstWeekdayOccurrence, and schedule-template keeps two copies of the `skipWeekend && !skipsWeekendDays ? getDateWithSkippedWeekend(...) : base` ternary."},
+"placement":{"score":3,"why":"The predicate and scan sit in shared/schedules.ts as they should, but the skip-versus-move policy is re-decided in server/schedules/app.ts and budget/schedule-template.ts. The template reads the predicate input from a different shape (`dateConditions.value.schedule?.data`) than the other sites."},
+"scope":{"score":5,"why":"The change is limited to the weekend handling paths, the frequency passthrough in parseRecurDate, tests and a release note."},
+"maintainability":{"score":2,"why":"The daily-skip rule now lives in three places with separate scan caps (MAX_WEEKEND_SCAN versus count*7+1000) and per-site branching. A future change to weekend handling has to update every site consistently."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates writes its own weekday filter loop instead of using the shared scan, and budget/schedule-template.ts wraps getNextDate/getDateWithSkippedWeekend in its own skip-versus-move ternaries."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The weekday-filtering loop with a scan cap in getUpcomingDates (server/schedules/app.ts) is firstWeekdayOccurrence from shared/schedules.ts reshaped to collect `count` dates."},
+"one_place":{"value":false,"where":"Only the 'is it daily with weekend handling' predicate is shared (isDailyWeekendSkipping). Whether to skip or move is decided separately in shared getNextDate, server/schedules/app.ts getUpcomingDates and the two ternaries in budget/schedule-template.ts."}
+}

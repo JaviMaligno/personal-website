@@ -1,0 +1,11 @@
+{"id":"26e8e9f57a",
+"reuse":{"score":4,"why":"Builds on the existing WeekendRule/applyWeekendRule/getDateWithSkippedWeekend chain and RSchedule/recurConfigToRSchedule, extending them for holidays and adding one shared getRecurOccurrences used by getNextDate, getUpcomingDates and the new range handler."},
+"duplication":{"score":3,"why":"The config-to-WeekendRule mapping (including the frequency==='daily' derivation) is written twice (getWeekendRule in app.ts and inline in getNextDate) and a third, incomplete time in schedule-template.ts without the daily flag; getNextDate also queries occurrences twice."},
+"placement":{"score":4,"why":"Weekend/holiday/daily logic lives in shared/schedules.ts next to the existing weekend helpers and the handler in server/schedules/app.ts alongside get-upcoming-dates; only the WeekendRule builder sits privately in app.ts instead of shared."},
+"scope":{"score":4,"why":"Changes stay on schedules, weekend rule, types and the template/rule-utils field plumbing needed for the four steps; tests added accordingly."},
+"maintainability":{"score":3,"why":"getRecurOccurrences is a reasonable single entry point, but the daily rule leaks into getNextDate as `skipWeekend && (isDaily || !noSkipWeekend)`, the candidate/window sizing heuristics scale with holiday count, and three call sites hand-build the rule differently."},
+"bypasses_abstraction":{"value":false,"where":"All paths route date adjustment through applyWeekendRule/getRecurOccurrences; schedule-template still uses applyWeekendRuleToDay as before (its rule lacks the daily flag but daily skipping happens inside getNextDate)."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The WeekendRule mapping repeated in app.ts getWeekendRule and shared getNextDate is plain repetition over differently named source fields, not a disguised copy."},
+"abstraction_drift":{"value":true,"parameters_added":3,"special_case_branches":2,"bypassing_call_sites":1,"where":"WeekendRule gains `daily` and `holidays`, getDateWithSkippedWeekend gains `holidays`; special cases: daily drop branch in getRecurOccurrences (with holiday-scaled take) and the `isDaily || !noSkipWeekend` override in getNextDate; schedule-template.ts builds its own weekend rule without `daily`, relying on getNextDate instead of the shared mapping."}}

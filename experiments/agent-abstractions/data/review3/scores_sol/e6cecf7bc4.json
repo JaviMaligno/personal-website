@@ -1,0 +1,45 @@
+{
+ "id": "e6cecf7bc4",
+ "reuse": {
+  "score": 3,
+  "why": "Reuses recurrence conversion and weekend adjustment helpers, but implements daily skip policy independently in getNextDate and both server handlers."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Daily skip-versus-move dispatch appears in three places, and bounded occurrence searching is repeated between firstWeekdayOccurrence and getUpcomingDates."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Holiday matching belongs in shared/schedules.ts, but server handlers also own recurrence policy that should live alongside it."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits support the requested scheduling changes, their tests, or release notes."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate multiple policy implementations and search-limit formulas, while new interfaces leave config untyped despite the existing RecurConfig type."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "server/schedules/app.ts: getUpcomingDates and getDatesInRange enumerate occurrences and independently implement the daily handling policy also implemented by shared/schedules.ts:getNextDate."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The daily skip policy is reshaped across getNextDate's firstWeekdayOccurrence call, getUpcomingDates' accumulation loop, and getDatesInRange's nested dispatch rather than shared."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 2,
+  "where": "getDateWithSkippedWeekend gains holidays; getNextDate gains a daily-specific branch; getUpcomingDates and getDatesInRange separately implement that policy instead of using a shared definition."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 33.2
+ }
+}

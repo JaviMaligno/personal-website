@@ -1,0 +1,798 @@
+diff --git a/packages/desktop-client/e2e/budget.mobile.test.ts b/packages/desktop-client/e2e/budget.mobile.test.ts
+index e2430a2ed..6fc24fb7e 100644
+--- a/packages/desktop-client/e2e/budget.mobile.test.ts
++++ b/packages/desktop-client/e2e/budget.mobile.test.ts
+@@ -46,90 +46,36 @@ const setToYearlyAverage = async (
+   await budgetMenuModal.close();
+ };
+ 
+-function getAverageStartMonth(month: string) {
+-  const previousMonth = monthUtils.prevMonth(month);
+-
+-  if (previousMonth >= monthUtils.currentMonth()) {
+-    return monthUtils.prevMonth(monthUtils.currentMonth());
+-  }
+-
+-  return previousMonth;
+-}
+-
+-async function getAverageMonthAmounts(
++async function setBudgetAverage(
+   budgetPage: MobileBudgetPage,
+   categoryName: string,
+   numberOfMonths: number,
++  setBudgetAverageFn: (
++    budgetPage: MobileBudgetPage,
++    categoryName: string,
++    numberOfMonths: number,
++  ) => Promise<void>,
+ ) {
+-  const averageStartMonth = getAverageStartMonth(
+-    await budgetPage.getSelectedMonth(),
+-  );
+-  const amounts: number[] = [];
+-  let selectedMonth = await budgetPage.getSelectedMonth();
+-  let navigatedMonths = 0;
+-
+-  while (selectedMonth > averageStartMonth) {
+-    selectedMonth = await budgetPage.goToPreviousMonth();
+-    navigatedMonths++;
+-  }
++  let totalSpent = 0;
+ 
+   for (let i = 0; i < numberOfMonths; i++) {
++    await budgetPage.goToPreviousMonth();
+     const spentButton = await budgetPage.getButtonForSpent(categoryName);
+     const spent = await spentButton.textContent();
+-
+     if (!spent) {
+-      throw new Error('Failed to get average month amounts');
++      throw new Error('Failed to get spent amount');
+     }
+-
+-    amounts.push(currencyToAmount(spent) ?? 0);
+-
+-    if (i < numberOfMonths - 1) {
+-      selectedMonth = await budgetPage.goToPreviousMonth();
+-      navigatedMonths++;
+-    }
+-  }
+-
+-  for (let i = 0; i < navigatedMonths; i++) {
+-    await budgetPage.goToNextMonth();
++    totalSpent += currencyToAmount(spent) ?? 0;
+   }
+ 
+-  return amounts;
+-}
+-
+-function getAverageSpent(amounts: number[]) {
+-  let oldestActivityIndex = -1;
++  // Calculate average amount
++  const averageSpent = totalSpent / numberOfMonths;
+ 
+-  for (let i = 0; i < amounts.length; i++) {
+-    if (amounts[i] !== 0) {
+-      oldestActivityIndex = i;
+-    }
++  // Go back to the current month
++  for (let i = 0; i < numberOfMonths; i++) {
++    await budgetPage.goToNextMonth();
+   }
+ 
+-  const averageMonths =
+-    oldestActivityIndex === -1
+-      ? amounts
+-      : amounts.slice(0, oldestActivityIndex + 1);
+-  const totalSpent = averageMonths.reduce((sum, spentAmount) => {
+-    return sum + spentAmount;
+-  }, 0);
+-
+-  return Math.round((totalSpent / averageMonths.length) * 100) / 100;
+-}
+-
+-async function setBudgetAverage(
+-  budgetPage: MobileBudgetPage,
+-  categoryName: string,
+-  numberOfMonths: number,
+-  setBudgetAverageFn: (
+-    budgetPage: MobileBudgetPage,
+-    categoryName: string,
+-    numberOfMonths: number,
+-  ) => Promise<void>,
+-) {
+-  const averageSpent = getAverageSpent(
+-    await getAverageMonthAmounts(budgetPage, categoryName, numberOfMonths),
+-  );
+-
+   await setBudgetAverageFn(budgetPage, categoryName, numberOfMonths);
+ 
+   return averageSpent;
+diff --git a/packages/desktop-client/src/components/budget/goals/editor/HistoricalAutomationReadOnly.tsx b/packages/desktop-client/src/components/budget/goals/editor/HistoricalAutomationReadOnly.tsx
+index 5d97c5604..5ef4f3bfc 100644
+--- a/packages/desktop-client/src/components/budget/goals/editor/HistoricalAutomationReadOnly.tsx
++++ b/packages/desktop-client/src/components/budget/goals/editor/HistoricalAutomationReadOnly.tsx
+@@ -24,8 +24,7 @@ export const HistoricalAutomationReadOnly = ({
+ 
+   const base = (
+     <Trans count={template.numMonths}>
+-      Budget the average of the last {{ count: template.numMonths }} complete
+-      months
++      Budget the average of the last {{ count: template.numMonths }} months
+     </Trans>
+   );
+ 
+diff --git a/packages/docs/blog/2026-07-02-release-26-7-0.md b/packages/docs/blog/2026-07-02-release-26-7-0.md
+index a9bed17b8..9eb5bc5a1 100644
+--- a/packages/docs/blog/2026-07-02-release-26-7-0.md
++++ b/packages/docs/blog/2026-07-02-release-26-7-0.md
+@@ -65,7 +65,6 @@ This release adds a new experimental bank sync provider, releases the CLI as sta
+ - [#8162](https://github.com/actualbudget/actual/pull/8162) [AI] feat(budget analysis report): Add Balance & Category selector — thanks @tabedzki
+ - [#8116](https://github.com/actualbudget/actual/pull/8116) Use Akahu transaction description as fallback payee name — thanks @tim-smart
+ - [#8115](https://github.com/actualbudget/actual/pull/8115) Refresh Akahu account if stale — thanks @tim-smart
+-- [#8114](https://github.com/actualbudget/actual/pull/8114) Budget averages now exclude incomplete months — thanks @tim-smart
+ - [#8170](https://github.com/actualbudget/actual/pull/8170) Show the bank sync error banner on the accounts even if the error occurred on a different device — thanks @matt-fidd
+ - [#8140](https://github.com/actualbudget/actual/pull/8140) Improved budget loading speed for long-running budgets with many years of data — thanks @MatissJanis
+ - [#8222](https://github.com/actualbudget/actual/pull/8222) Use ± symbol for 'between' amount schedules and improve tooltip wording. — thanks @tjmills-dev
+diff --git a/packages/docs/docs/experimental/budget-automation.md b/packages/docs/docs/experimental/budget-automation.md
+index d3832ef1e..417a14972 100644
+--- a/packages/docs/docs/experimental/budget-automation.md
++++ b/packages/docs/docs/experimental/budget-automation.md
+@@ -169,7 +169,7 @@ Choose a mode (A) and the number of months back (B). This is another automation
+ **Modes:**
+ 
+ - **Copy a previous month.** This will copy the **budget** from a previous month.
+-- **Average of previous months.** This will average the **spending** from the previous number of months you choose. The average is calculated from completed months only, to ensure the amount accurately reflects actual spending behavior.
++- **Average of previous months.** This will average the **spending** from the previous number of months you choose.
+ 
+ ### % of Income {#percentage}
+ 
+diff --git a/packages/docs/docs/experimental/goal-templates.md b/packages/docs/docs/experimental/goal-templates.md
+index 6d47885ef..4f9013ccd 100644
+--- a/packages/docs/docs/experimental/goal-templates.md
++++ b/packages/docs/docs/experimental/goal-templates.md
+@@ -426,14 +426,12 @@ Below is a table of the variations of the Schedule template.
+ 
+ This template allows you to budget based on the average amount spent over a number of months, adding flexibility beyond the menu built-ins (3 months, 6 months).
+ 
+-The average amount spent is calculated from completed months only. This will mean averages for future months will use the same value as the current month, to ensure the average accurately reflects actual spending behavior.
+-
+ You can also adjust the budgeted amount from the average by a percentage or by a fixed whole number. This functionality may be useful when you want to budget an average, but bump it up or down a bit to account for inflation or to slowly wean off a category you'd like to spend less on. (See also [adjustments](#adjustments))
+ 
+-| Syntax                                                                      | Description                                                                                                                                                                                   |
+-| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+-| `#template average {number} months`                                         | Budget the average amount spent over the last `{number}` complete months. Can set the number to any number > 0. Matches the existing option on the budget page but with flexible month ranges |
+-| `#template average {number} months [{increase/decrease} {number\|number%}]` | Budget the average amount spent over a period, with an adjustment                                                                                                                             |
++| Syntax                                                                      | Description                                                                                                                                                                          |
++| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
++| `#template average {number} months`                                         | Budget the average amount spent over the last `{number}` months. Can set the number to any number > 0. Matches the existing option on the budget page but with flexible month ranges |
++| `#template average {number} months [{increase/decrease} {number\|number%}]` | Budget the average amount spent over a period, with an adjustment                                                                                                                    |
+ 
+ #### Examples
+ 
+diff --git a/packages/docs/docs/releases.md b/packages/docs/docs/releases.md
+index 28bb4788e..b687a71a9 100644
+--- a/packages/docs/docs/releases.md
++++ b/packages/docs/docs/releases.md
+@@ -409,7 +409,6 @@ This release adds a new experimental bank sync provider, releases the CLI as sta
+ - [#8162](https://github.com/actualbudget/actual/pull/8162) [AI] feat(budget analysis report): Add Balance & Category selector — thanks @tabedzki
+ - [#8116](https://github.com/actualbudget/actual/pull/8116) Use Akahu transaction description as fallback payee name — thanks @tim-smart
+ - [#8115](https://github.com/actualbudget/actual/pull/8115) Refresh Akahu account if stale — thanks @tim-smart
+-- [#8114](https://github.com/actualbudget/actual/pull/8114) Budget averages now exclude incomplete months — thanks @tim-smart
+ - [#8170](https://github.com/actualbudget/actual/pull/8170) Show the bank sync error banner on the accounts even if the error occurred on a different device — thanks @matt-fidd
+ - [#8140](https://github.com/actualbudget/actual/pull/8140) Improved budget loading speed for long-running budgets with many years of data — thanks @MatissJanis
+ - [#8222](https://github.com/actualbudget/actual/pull/8222) Use ± symbol for 'between' amount schedules and improve tooltip wording. — thanks @tjmills-dev
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 06e6148dd..ccbaf52a0 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -9,10 +9,8 @@ import {
+   copyUntilYearEnd,
+   coverOverbudgeted,
+   getSheetValue,
+-  set3MonthAvg,
+   setBudget,
+   setCategoryCarryover,
+-  setNMonthAvg,
+ } from './actions';
+ import * as budget from './base';
+ 
+@@ -132,69 +130,6 @@ describe('copyUntilYearEnd', () => {
+   });
+ });
+ 
+-describe('set budget average', () => {
+-  let originalCurrentMonth: string | null;
+-
+-  beforeEach(async () => {
+-    await global.emptyDatabase()();
+-    originalCurrentMonth = global.currentMonth;
+-    global.currentMonth = '2024-02';
+-    await setupAverageDatabase();
+-  });
+-
+-  afterEach(async () => {
+-    global.currentMonth = originalCurrentMonth;
+-    await global.emptyDatabase()();
+-  });
+-
+-  it('sets a single category average from complete months', async () => {
+-    await setNMonthAvg({ month: '2024-04', N: 3, category: 'cat1' });
+-    await sheet.waitOnSpreadsheet();
+-
+-    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(600);
+-  });
+-
+-  it('sets a single category average from the first activity month', async () => {
+-    await setBudget({ category: 'cat1', month: '2023-12', amount: 1000 });
+-
+-    await setNMonthAvg({ month: '2024-04', N: 3, category: 'cat1' });
+-    await sheet.waitOnSpreadsheet();
+-
+-    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(600);
+-  });
+-
+-  it('rounds a single category average to an integer amount', async () => {
+-    await dbWrite.insertTransaction({
+-      date: '2023-12-20',
+-      amount: -100,
+-      account: 'account1',
+-      category: 'cat1',
+-    });
+-    await sheet.waitOnSpreadsheet();
+-
+-    await setNMonthAvg({ month: '2024-04', N: 3, category: 'cat1' });
+-    await sheet.waitOnSpreadsheet();
+-
+-    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(633);
+-  });
+-
+-  it('sets a bulk 3 month average from complete months', async () => {
+-    await set3MonthAvg({ month: '2024-04' });
+-    await sheet.waitOnSpreadsheet();
+-
+-    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(600);
+-  });
+-
+-  it('sets a bulk 3 month average from the first activity month', async () => {
+-    await setBudget({ category: 'cat1', month: '2023-12', amount: 1000 });
+-
+-    await set3MonthAvg({ month: '2024-04' });
+-    await sheet.waitOnSpreadsheet();
+-
+-    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(600);
+-  });
+-});
+-
+ describe('coverOverbudgeted', () => {
+   beforeEach(global.emptyDatabase());
+   afterEach(global.emptyDatabase());
+@@ -247,11 +182,7 @@ async function prepareDatabase() {
+     is_income: 1,
+   });
+ 
+-  await dbWrite.insertCategoryGroup({
+-    id: 'group1',
+-    name: 'group1',
+-    is_income: 0,
+-  });
++  await dbWrite.insertCategoryGroup({ id: 'group1', name: 'group1', is_income: 0 });
+   await dbWrite.insertCategory({
+     id: 'cat1',
+     name: 'cat1',
+@@ -285,67 +216,3 @@ async function prepareDatabase() {
+   });
+   await sheet.waitOnSpreadsheet();
+ }
+-
+-async function setupAverageDatabase() {
+-  await dbWrite.insertAccount({ id: 'account1', name: 'Account 1' });
+-
+-  await dbWrite.insertCategoryGroup({
+-    id: 'income-group',
+-    name: 'Income',
+-    is_income: 1,
+-  });
+-  await dbWrite.insertCategoryGroup({
+-    id: 'group1',
+-    name: 'group1',
+-    is_income: 0,
+-  });
+-  await dbWrite.insertCategory({
+-    id: 'cat1',
+-    name: 'cat1',
+-    cat_group: 'group1',
+-    is_income: 0,
+-  });
+-
+-  await sheet.loadSpreadsheet(db);
+-  await budget.createBudget([
+-    '2023-11',
+-    '2023-12',
+-    '2024-01',
+-    '2024-02',
+-    '2024-03',
+-    '2024-04',
+-  ]);
+-
+-  await dbWrite.insertTransaction({
+-    date: '2023-11-15',
+-    amount: -300,
+-    account: 'account1',
+-    category: 'cat1',
+-  });
+-  await dbWrite.insertTransaction({
+-    date: '2023-12-15',
+-    amount: -600,
+-    account: 'account1',
+-    category: 'cat1',
+-  });
+-  await dbWrite.insertTransaction({
+-    date: '2024-01-15',
+-    amount: -900,
+-    account: 'account1',
+-    category: 'cat1',
+-  });
+-  await dbWrite.insertTransaction({
+-    date: '2024-02-15',
+-    amount: -3000,
+-    account: 'account1',
+-    category: 'cat1',
+-  });
+-  await dbWrite.insertTransaction({
+-    date: '2024-03-15',
+-    amount: -1200,
+-    account: 'account1',
+-    category: 'cat1',
+-  });
+-
+-  await sheet.waitOnSpreadsheet();
+-}
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 417182404..2490c585f 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -64,11 +64,6 @@ function dbMonth(month: string): number {
+   return parseInt(month.replace('-', ''));
+ }
+ 
+-function monthFromDbMonth(month: number): string {
+-  const monthString = String(month).padStart(6, '0');
+-  return `${monthString.slice(0, 4)}-${monthString.slice(4)}`;
+-}
+-
+ // TODO: complete list of fields.
+ type BudgetData = {
+   is_income: 1 | 0;
+@@ -233,17 +228,30 @@ export async function set3MonthAvg({
+   `,
+   );
+ 
++  const prevMonth1 = monthUtils.prevMonth(month);
++  const prevMonth2 = monthUtils.prevMonth(prevMonth1);
++  const prevMonth3 = monthUtils.prevMonth(prevMonth2);
++
+   await batchMessages(async () => {
+     for (const cat of categories) {
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+ 
+-      let avg = await getCategoryAverage({
+-        month,
+-        maxMonths: 3,
+-        categoryId: cat.id,
+-      });
++      const spent1 = await getSheetValue(
++        monthUtils.sheetForMonth(prevMonth1),
++        'sum-amount-' + cat.id,
++      );
++      const spent2 = await getSheetValue(
++        monthUtils.sheetForMonth(prevMonth2),
++        'sum-amount-' + cat.id,
++      );
++      const spent3 = await getSheetValue(
++        monthUtils.sheetForMonth(prevMonth3),
++        'sum-amount-' + cat.id,
++      );
++
++      let avg = Math.round((spent1 + spent2 + spent3) / 3);
+ 
+       if (cat.is_income === 0) {
+         avg *= -1;
+@@ -316,117 +324,24 @@ export async function setNMonthAvg({
+     [category],
+   );
+ 
+-  let avg = await getCategoryAverage({
+-    month,
+-    maxMonths: N,
+-    categoryId: category,
+-  });
+-
+-  await batchMessages(async () => {
+-    if (categoryFromDb.is_income === 0) {
+-      avg *= -1;
+-    }
+-
+-    void setBudget({ category, month, amount: avg });
+-  });
+-}
+-
+-export async function getCategoryAverage({
+-  month,
+-  maxMonths,
+-  categoryId,
+-}: {
+-  month: string;
+-  maxMonths: number;
+-  categoryId: string;
+-}): Promise<number> {
+-  const months = await getAverageMonths({
+-    month,
+-    maxMonths,
+-    categoryId,
+-  });
+-  if (months.length === 0) {
+-    return 0;
+-  }
+-
++  let prevMonth = monthUtils.prevMonth(month);
+   let sumAmount = 0;
+-  for (const prevMonth of months) {
++  for (let l = 0; l < N; l++) {
+     sumAmount += await getSheetValue(
+       monthUtils.sheetForMonth(prevMonth),
+-      'sum-amount-' + categoryId,
++      'sum-amount-' + category,
+     );
+-  }
+-  return Math.round(sumAmount / months.length);
+-}
+-
+-async function getAverageMonths({
+-  month,
+-  maxMonths,
+-  categoryId,
+-}: {
+-  month: string;
+-  maxMonths: number;
+-  categoryId: string;
+-}): Promise<string[]> {
+-  const firstMonth = getAverageStartMonth(month);
+-  const firstActivityMonth = await getFirstActivityMonth({
+-    categoryId,
+-    endMonth: firstMonth,
+-  });
+-  const months: string[] = [];
+-  let prevMonth = firstMonth;
+-
+-  for (let l = 0; l < maxMonths; l++) {
+-    if (firstActivityMonth != null && prevMonth < firstActivityMonth) {
+-      break;
+-    }
+-
+-    months.push(prevMonth);
+     prevMonth = monthUtils.prevMonth(prevMonth);
+   }
++  await batchMessages(async () => {
++    let avg = Math.round(sumAmount / N);
+ 
+-  return months;
+-}
+-
+-function getAverageStartMonth(month: string): string {
+-  const prevMonth = monthUtils.prevMonth(month);
+-
+-  if (prevMonth >= monthUtils.currentMonth()) {
+-    return monthUtils.prevMonth(monthUtils.currentMonth());
+-  }
+-
+-  return prevMonth;
+-}
+-
+-async function getFirstActivityMonth({
+-  categoryId,
+-  endMonth,
+-}: {
+-  categoryId: string;
+-  endMonth: string;
+-}): Promise<string | null> {
+-  const table = getBudgetTable();
+-  const endDbMonth = dbMonth(endMonth);
+-  const firstActivity = await db.first<{ month: number | null }>(
+-    `SELECT MIN(month) AS month
+-       FROM (
+-         SELECT month
+-           FROM ${table}
+-          WHERE category = ? AND month <= ?
+-         UNION ALL
+-         SELECT CAST(t.date / 100 AS INTEGER) AS month
+-           FROM v_transactions_internal_alive t
+-           LEFT JOIN accounts a ON a.id = t.account
+-          WHERE t.category = ?
+-            AND CAST(t.date / 100 AS INTEGER) <= ?
+-            AND a.offbudget = 0
+-       )`,
+-    [categoryId, endDbMonth, categoryId, endDbMonth],
+-  );
++    if (categoryFromDb.is_income === 0) {
++      avg *= -1;
++    }
+ 
+-  return firstActivity?.month == null
+-    ? null
+-    : monthFromDbMonth(firstActivity.month);
++    void setBudget({ category, month, amount: avg });
++  });
+ }
+ 
+ export async function holdForNextMonth({
+diff --git a/packages/loot-core/src/server/budget/category-template-context.test.ts b/packages/loot-core/src/server/budget/category-template-context.test.ts
+index 83e7a507f..54897042d 100644
+--- a/packages/loot-core/src/server/budget/category-template-context.test.ts
++++ b/packages/loot-core/src/server/budget/category-template-context.test.ts
+@@ -14,7 +14,6 @@ import * as statements from './statements';
+ 
+ // Mock getSheetValue and getCategories
+ vi.mock('./actions', () => ({
+-  getCategoryAverage: vi.fn(),
+   getSheetValue: vi.fn(),
+   getSheetBoolean: vi.fn(),
+   isTrackingBudget: vi.fn(),
+@@ -637,11 +636,8 @@ describe('CategoryTemplateContext', () => {
+ 
+   describe('runAverage', () => {
+     let instance: TestCategoryTemplateContext;
+-    let originalCurrentMonth: string | null;
+ 
+     beforeEach(() => {
+-      originalCurrentMonth = global.currentMonth;
+-      global.currentMonth = '2024-02';
+       const category: CategoryEntity = {
+         id: 'test',
+         name: 'Test Category',
+@@ -652,10 +648,6 @@ describe('CategoryTemplateContext', () => {
+       vi.clearAllMocks();
+     });
+ 
+-    afterEach(() => {
+-      global.currentMonth = originalCurrentMonth;
+-    });
+-
+     it('should calculate average of 3 months', async () => {
+       const template: Template = {
+         type: 'average',
+@@ -664,18 +656,16 @@ describe('CategoryTemplateContext', () => {
+         priority: 1,
+       };
+ 
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-200);
++      vi.mocked(actions.getSheetValue)
++        .mockResolvedValueOnce(-100) // Dec 2023
++        .mockResolvedValueOnce(-200) // Nov 2023
++        .mockResolvedValueOnce(-300); // Oct 2023
+ 
+       const result = await CategoryTemplateContext.runAverage(
+         template,
+         instance,
+       );
+       expect(result).toBe(200); // Average of -100, -200, -300
+-      expect(actions.getCategoryAverage).toHaveBeenCalledWith({
+-        month: '2024-01',
+-        maxMonths: 3,
+-        categoryId: 'test',
+-      });
+     });
+ 
+     it('should handle zero amounts', async () => {
+@@ -686,7 +676,10 @@ describe('CategoryTemplateContext', () => {
+         priority: 1,
+       };
+ 
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-100);
++      vi.mocked(actions.getSheetValue)
++        .mockResolvedValueOnce(0)
++        .mockResolvedValueOnce(0)
++        .mockResolvedValueOnce(-300);
+ 
+       const result = await CategoryTemplateContext.runAverage(
+         template,
+@@ -703,7 +696,10 @@ describe('CategoryTemplateContext', () => {
+         priority: 1,
+       };
+ 
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-(200 / 3));
++      vi.mocked(actions.getSheetValue)
++        .mockResolvedValueOnce(-100)
++        .mockResolvedValueOnce(200)
++        .mockResolvedValueOnce(-300);
+ 
+       const result = await CategoryTemplateContext.runAverage(
+         template,
+@@ -712,29 +708,6 @@ describe('CategoryTemplateContext', () => {
+       expect(result).toBe(67); // Average of -100, 200, -300
+     });
+ 
+-    it('should use the shared average helper with the template range', async () => {
+-      const template: Template = {
+-        type: 'average',
+-        numMonths: 3,
+-        directive: 'template',
+-        priority: 1,
+-      };
+-
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-150);
+-
+-      const result = await CategoryTemplateContext.runAverage(
+-        template,
+-        instance,
+-      );
+-
+-      expect(result).toBe(150);
+-      expect(actions.getCategoryAverage).toHaveBeenCalledWith({
+-        month: '2024-01',
+-        maxMonths: 3,
+-        categoryId: 'test',
+-      });
+-    });
+-
+     it('should handle positive percent adjustments', async () => {
+       const template: Template = {
+         type: 'average',
+@@ -745,7 +718,10 @@ describe('CategoryTemplateContext', () => {
+         adjustmentType: 'percent',
+       };
+ 
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-100);
++      vi.mocked(actions.getSheetValue)
++        .mockResolvedValueOnce(-100)
++        .mockResolvedValueOnce(-100)
++        .mockResolvedValueOnce(-100);
+ 
+       const result = await CategoryTemplateContext.runAverage(
+         template,
+@@ -764,7 +740,10 @@ describe('CategoryTemplateContext', () => {
+         adjustmentType: 'percent',
+       };
+ 
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-100);
++      vi.mocked(actions.getSheetValue)
++        .mockResolvedValueOnce(-100)
++        .mockResolvedValueOnce(-100)
++        .mockResolvedValueOnce(-100);
+ 
+       const result = await CategoryTemplateContext.runAverage(
+         template,
+@@ -782,7 +761,10 @@ describe('CategoryTemplateContext', () => {
+         adjustmentType: 'percent',
+       };
+ 
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-100);
++      vi.mocked(actions.getSheetValue)
++        .mockResolvedValueOnce(-100)
++        .mockResolvedValueOnce(-100)
++        .mockResolvedValueOnce(-100);
+ 
+       const result = await CategoryTemplateContext.runAverage(
+         template,
+@@ -791,36 +773,6 @@ describe('CategoryTemplateContext', () => {
+       expect(result).toBe(100);
+     });
+ 
+-    it('should skip the current month and future months', async () => {
+-      global.currentMonth = '2024-01';
+-      instance = new TestCategoryTemplateContext(
+-        [],
+-        instance.category,
+-        '2024-03',
+-        0,
+-        0,
+-      );
+-      const template: Template = {
+-        type: 'average',
+-        numMonths: 3,
+-        directive: 'template',
+-        priority: 1,
+-      };
+-
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-200);
+-
+-      const result = await CategoryTemplateContext.runAverage(
+-        template,
+-        instance,
+-      );
+-      expect(result).toBe(200);
+-      expect(actions.getCategoryAverage).toHaveBeenCalledWith({
+-        month: '2024-03',
+-        maxMonths: 3,
+-        categoryId: 'test',
+-      });
+-    });
+-
+     it('should handle zero amount adjustments', async () => {
+       const template: Template = {
+         type: 'average',
+@@ -831,7 +783,10 @@ describe('CategoryTemplateContext', () => {
+         adjustmentType: 'fixed',
+       };
+ 
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-100);
++      vi.mocked(actions.getSheetValue)
++        .mockResolvedValueOnce(-100)
++        .mockResolvedValueOnce(-100)
++        .mockResolvedValueOnce(-100);
+ 
+       const result = await CategoryTemplateContext.runAverage(
+         template,
+@@ -850,7 +805,10 @@ describe('CategoryTemplateContext', () => {
+         adjustmentType: 'fixed',
+       };
+ 
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-10000);
++      vi.mocked(actions.getSheetValue)
++        .mockResolvedValueOnce(-10000)
++        .mockResolvedValueOnce(-10000)
++        .mockResolvedValueOnce(-10000);
+ 
+       const result = await CategoryTemplateContext.runAverage(
+         template,
+@@ -869,7 +827,10 @@ describe('CategoryTemplateContext', () => {
+         adjustmentType: 'fixed',
+       };
+ 
+-      vi.mocked(actions.getCategoryAverage).mockResolvedValue(-10000);
++      vi.mocked(actions.getSheetValue)
++        .mockResolvedValueOnce(-10000)
++        .mockResolvedValueOnce(-10000)
++        .mockResolvedValueOnce(-10000);
+ 
+       const result = await CategoryTemplateContext.runAverage(
+         template,
+diff --git a/packages/loot-core/src/server/budget/category-template-context.ts b/packages/loot-core/src/server/budget/category-template-context.ts
+index 609f46dbf..1a9bcdb2a 100644
+--- a/packages/loot-core/src/server/budget/category-template-context.ts
++++ b/packages/loot-core/src/server/budget/category-template-context.ts
+@@ -21,12 +21,7 @@ import type {
+   Template,
+ } from '#types/models/templates';
+ 
+-import {
+-  getCategoryAverage,
+-  getSheetBoolean,
+-  getSheetValue,
+-  isTrackingBudget,
+-} from './actions';
++import { getSheetBoolean, getSheetValue, isTrackingBudget } from './actions';
+ import { runSchedule } from './schedule-template';
+ import { getActiveSchedules } from './statements';
+ 
+@@ -872,16 +867,20 @@ export class CategoryTemplateContext {
+     template: AverageTemplate,
+     templateContext: CategoryTemplateContext,
+   ): Promise<number> {
+-    let average = await getCategoryAverage({
+-      month: templateContext.month,
+-      maxMonths: template.numMonths,
+-      categoryId: templateContext.category.id,
+-    });
+-    // negate as sheet value is cost ie negative
+-    if (average < 0) {
+-      average *= -1;
++    let sum = 0;
++    for (let i = 1; i <= template.numMonths; i++) {
++      const sheetName = monthUtils.sheetForMonth(
++        monthUtils.subMonths(templateContext.month, i),
++      );
++      sum += await getSheetValue(
++        sheetName,
++        `sum-amount-${templateContext.category.id}`,
++      );
+     }
+ 
++    // negate as sheet value is cost ie negative
++    let average = -(sum / template.numMonths);
++
+     if (template.adjustment !== undefined && template.adjustmentType) {
+       switch (template.adjustmentType) {
+         case 'percent': {

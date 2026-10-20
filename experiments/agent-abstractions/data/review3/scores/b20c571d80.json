@@ -1,0 +1,12 @@
+{"id":"b20c571d80",
+"reuse":{"score":3,"why":"Reuses linkSimpleFinAccount, downloadAkahuTransactions and findOrCreateBank for Fintegra, but by bending them (a provider flag that overwrites the sync source after insert, server/provider overrides on an Akahu-named function) and the guard wrapper ignores its own assertAccountNotLinked helper."},
+"duplication":{"score":2,"why":"withBankAccountGuard re-implements assertAccountNotLinked's check and error inline, and copies unlinkAccount's account-field reset block (account_id, bank, balances, sync source, status) instead of sharing it."},
+"placement":{"score":3,"why":"Lookup and closed-account checks sit in link.ts, but the guard/takeover logic is a wrapper in app.ts registration, and the new provider is added as an ad-hoc union in AccountSyncSource rather than in the SYNC_PROVIDERS list that defines providers."},
+"scope":{"score":4,"why":"All edits serve the four steps (single link, Fintegra, closed accounts, takeover); no unrelated changes beyond widening the DbAccount sync-source type."},
+"maintainability":{"score":2,"why":"Fintegra is a SimpleFin link that writes 'simpleFin' then patches it to 'fintegra', and syncs through downloadAkahuTransactions with overridden server and label, so a change to either provider silently affects Fintegra; the unlink field list now lives in two places."},
+"bypasses_abstraction":{"value":true,"where":"accounts/app.ts withBankAccountGuard clears the link with a hand-written db.updateAccount instead of the unlink logic and repeats assertAccountNotLinked inline; types/models/account.ts adds 'fintegra' outside SYNC_PROVIDERS in bank-sync.ts."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The unlink field reset in withBankAccountGuard is a reshaped copy of unlinkAccount's db.updateAccount block, and the already-linked check is re-expressed via findLinkedAccount plus an inline throw duplicating assertAccountNotLinked."},
+"abstraction_drift":{"value":true,"parameters_added":4,"special_case_branches":1,"bypassing_call_sites":2,"where":"linkSimpleFinAccount gains a provider parameter with an if (provider === 'fintegra') overwrite branch; downloadAkahuTransactions gains server and provider parameters; LinkAccountBaseParams gains replaceExistingLink; withBankAccountGuard bypasses assertAccountNotLinked and unlinkAccount."}
+}

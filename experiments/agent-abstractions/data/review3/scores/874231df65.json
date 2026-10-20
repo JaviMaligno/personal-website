@@ -1,0 +1,12 @@
+{"id":"874231df65",
+"reuse":{"score":4,"why":"Extends the existing getDateWithSkippedWeekend, RSchedule and recurConfigToRSchedule rather than writing new date machinery; the new handler reuses the getUpcomingDates pattern."},
+"duplication":{"score":2,"why":"The 'if skipWeekend then getDateWithSkippedWeekend(..., frequency, holidays)' gate is written three times (getOccurrenceDay in schedule-template, applyWeekendSkip in app.ts, inline in getNextDate), the occurrence-take margin formula is repeated in getNextDate and getUpcomingDates, and getDatesInRange copies getUpcomingDates' skeleton."},
+"placement":{"score":4,"why":"Weekend/holiday rule lives in shared/schedules.ts and the handler in server/schedules/app.ts as the tree does; only the per-module gate wrappers are scattered."},
+"scope":{"score":4,"why":"Changes stay within schedules, the budget template consumer and the type, plus the needed rule-utils data passthrough."},
+"maintainability":{"score":3,"why":"The core rule is in one function, but the skipWeekend gate and look-ahead margins are copied with different magic numbers across call sites, so future rule changes need edits in several places."},
+"bypasses_abstraction":{"value":false,"where":"All consumers still go through getDateWithSkippedWeekend; none bypasses it."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getOccurrenceDay (budget/schedule-template.ts) and applyWeekendSkip (server/schedules/app.ts) are the same skipWeekend gate under different names and signatures, also inlined in getNextDate (shared/schedules.ts)."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":0,"where":"getDateWithSkippedWeekend gains frequency and holidays parameters and a 'frequency === daily -> null' branch; callers each wrap it in their own skipWeekend gate rather than bypassing it."}
+}

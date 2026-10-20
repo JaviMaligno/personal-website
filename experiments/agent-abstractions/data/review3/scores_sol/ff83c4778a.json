@@ -1,0 +1,45 @@
+{
+ "id": "ff83c4778a",
+ "reuse": {
+  "score": 4,
+  "why": "Fintegra reuses findOrCreateBank and linkBankSyncAccount, although replacement linking copies the local cleanup performed by unlinkAccount."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "The diff repeats validation orchestration across six handlers, duplicates unlinkAccount's cleanup block, and adds another structurally equivalent transaction downloader."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider adapters, configuration and types follow existing layers, but validation orchestration and local unlink cleanup could be consolidated within the account-linking layer."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits directly support the requested linking rules, replacement option and Fintegra integration."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared linking remains intact, but repeated guard sequences and separate cleanup definitions create additional places maintainers must keep aligned."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "All provider handlers use linkBankSyncAccount and findOrCreateBank; unlinkAccount includes provider-side effects and offers no reusable local-only cleanup operation."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "sync.ts: downloadFintegraTransactions repeats downloadEnableBankingTransactions' authentication, request, error handling and response mapping with a different endpoint and reshaped object construction."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 0,
+  "where": "app.ts: ensureBankAccountIsNotLinked gains replaceExistingLink and a replacement branch that mutates another account, expanding a validation helper into a cleanup operation; all six linking handlers still use the shared helpers."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 45.4
+ }
+}

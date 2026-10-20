@@ -1,0 +1,153 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index e271034..e7d5df9 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -138,6 +138,86 @@ describe('simpleFin account linking', () => {
+     expect(bankSync.syncAccount).not.toHaveBeenCalled();
+   });
+ 
++  it('replaces the old local link when requested without removing the bank connection', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'acct1', name: 'Old checking', accountId: 'external-1' },
++    ]);
++    vi.mocked(bankSync.syncAccount).mockResolvedValue({
++      added: [],
++      updated: [],
++      updatedPreview: [],
++    });
++    const oldAccountBefore = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['acct1'],
++    );
++
++    await expect(
++      simpleFinAccountsLinkHandler({
++        replaceExistingLink: true,
++        externalAccount: {
++          account_id: 'external-1',
++          balance: 0,
++          institution: 'SimpleFin',
++          orgDomain: 'simplefin.test',
++          name: 'New checking',
++        },
++      }),
++    ).resolves.toBe('ok');
++
++    const oldAccount = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['acct1'],
++    );
++    expect(oldAccount).toMatchObject({
++      id: 'acct1',
++      account_id: null,
++      bank: null,
++      account_sync_source: null,
++      closed: oldAccountBefore?.closed,
++    });
++    expect(oldAccount?.tombstone).toBe(0);
++    expect(
++      await db.first('SELECT id FROM accounts WHERE account_id = ?', [
++        'external-1',
++      ]),
++    ).not.toBeNull();
++    expect(bankSync.syncAccount).toHaveBeenCalledOnce();
++    expect(connection.send).not.toHaveBeenCalledWith(
++      'remove-account',
++      expect.anything(),
++    );
++  });
++
++  it('still rejects replacing a link into a closed local account', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'acct1', name: 'Existing link', accountId: 'external-1' },
++    ]);
++    await db.insertAccount({ id: 'acct2', name: 'Closed', closed: 1 });
++
++    await expect(
++      simpleFinAccountsLinkHandler({
++        upgradingId: 'acct2',
++        replaceExistingLink: true,
++        externalAccount: {
++          account_id: 'external-1',
++          balance: 0,
++          name: 'Checking',
++        },
++      }),
++    ).rejects.toMatchObject({
++      type: 'APIError',
++      message:
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    });
++    expect(
++      await db.first<db.DbAccount>('SELECT * FROM accounts WHERE id = ?', [
++        'acct1',
++      ]),
++    ).toMatchObject({ account_id: 'external-1', account_sync_source: 'simpleFin' });
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
+   it('allows re-linking the account that already holds the bank link', async () => {
+     await setupSimpleFinAccounts([
+       { id: 'acct1', name: 'Checking', accountId: 'external-1' },
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index c3dada0..d83802f 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -51,13 +51,14 @@ type LinkAccountBaseParams = {
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
++  replaceExistingLink?: boolean;
+ };
+ 
+-async function assertBankAccountNotLinked(
++async function getLinkedBankAccount(
+   provider: string,
+   accountId: string,
+   upgradingId?: string,
+-) {
++): Promise<string | undefined> {
+   const existingAccount = await db.first<{ id: string }>(
+     `SELECT id FROM accounts
+      WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?
+@@ -66,9 +67,7 @@ async function assertBankAccountNotLinked(
+     [provider, accountId, upgradingId ?? null, upgradingId ?? null],
+   );
+ 
+-  if (existingAccount) {
+-    throw APIError('This bank account is already linked to another account.');
+-  }
++  return existingAccount?.id;
+ }
+ 
+ async function finishBankAccountLink(
+@@ -121,11 +120,28 @@ function guardBankAccountLink<TParams extends LinkAccountBaseParams, TResult>(
+       }
+     }
+ 
+-    await assertBankAccountNotLinked(
++    const existingAccountId = await getLinkedBankAccount(
+       provider,
+       getAccountId(params),
+       params.upgradingId,
+     );
++    if (existingAccountId && !params.replaceExistingLink) {
++      throw APIError('This bank account is already linked to another account.');
++    }
++    if (existingAccountId) {
++      // The bank connection remains in use by the new link, so clear the old
++      // local association without asking the provider to remove it.
++      await db.updateAccount({
++        id: existingAccountId,
++        account_id: null,
++        bank: null,
++        balance_current: null,
++        balance_available: null,
++        balance_limit: null,
++        account_sync_source: null,
++        bank_sync_status: null,
++      });
++    }
+     return handler(params);
+   };
+ }

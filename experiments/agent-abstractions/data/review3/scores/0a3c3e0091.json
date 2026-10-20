@@ -1,0 +1,11 @@
+{"id":"0a3c3e0091",
+"reuse":{"score":3,"why":"Extends the existing getDateWithSkippedWeekend and adds isNonBusinessDay, but keeps that predicate private so getDatesInRange re-implements the holiday check inline."},
+"duplication":{"score":3,"why":"The off-day test (`isWeekend || holidays.includes(dayFromDate(date))`) exists both in isNonBusinessDay and inline in getDatesInRange's daily-skip branch."},
+"placement":{"score":4,"why":"Holiday handling sits in shared/schedules.ts next to the weekend rule; the server handler duplicate is the only misplaced piece."},
+"scope":{"score":5,"why":"Only the weekend/holiday path, config type and tests are touched."},
+"maintainability":{"score":3,"why":"The holiday rule is threaded by hand to each caller and the two schedule-template.ts calls to getDateWithSkippedWeekend were not given holidays, so the rule silently diverges there."},
+"bypasses_abstraction":{"value":true,"where":"getDatesInRange (server/schedules/app.ts) checks `d.isWeekend(date) || config.holidays?.includes(...)` itself instead of using the shared non-business-day predicate."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The inline holiday check in getDatesInRange is a plain, recognisable copy of isNonBusinessDay."},
+"one_place":{"value":false,"where":"Rule lives in getDateWithSkippedWeekend/isNonBusinessDay, but getDatesInRange re-decides holidays inline and schedule-template.ts's two getDateWithSkippedWeekend calls do not receive holidays."}}

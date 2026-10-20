@@ -1,0 +1,830 @@
+{
+  "snapshot_date": "2026-10-06",
+  "base": "9732a446 (2026-10-04)",
+  "source": "batch5 workflow agent 'issue-harvest' (session af2c17cf3143c36d6): `gh issue list -R actualbudget/actual --state open --limit 400`, 166 open issues; 26 shortlisted and ranked by how badly a wrong but test-passing fix could break an invariant",
+  "harvest_status": "done: 166 open issues harvested; 26 shortlisted (ranked by how badly a wrong but test-passing fix could break an invariant); git status in agent-abstractions was clean; base work/actual-base = 9732a4463 (2026-10-04)",
+  "harvest_exclusions": "Source: gh issue list for actualbudget/actual, open issues (166 total). Each candidate was checked with `gh pr list --search <n> --state all` and with `<n> in:body` for open PRs.\n\nEXCLUDED because an open PR implements the fix:\n- #9104: API update/delete not awaited, PR #9097\n- #8775: schedule service shutdown race, PR #8791\n- #5020: CSV decimal parsing, PR #9100; it is also client parsing\n- #6513, #6030, #3820: goal-template schedule math, all covered by the open 'Schedule forecast smoothing' PR #8862\n- #9090: wording, PR #9092\n\nEXCLUDED as already fixed in base (9732a4463, 2026-10-04):\n- #6644: PR #8824 merged 2026-08-30\n- #7996 and #4981: advanceSchedulesService in base already loops over missed occurrences\n- #5922: likely fixed by the merged PR #6082\n\nEXCLUDED as UI/client-side or not about writes/money:\n- #5413, #6073, #9040, #8799, #8972, #7419, #5640, #4381, #3204, #3797, #3803, #2219 (export, read-only)\n- #5616: AQL join, read-only\n- #8009-like vague issues were kept only where a server cause is identifiable\n\nEXCLUDED as bank-sync network or desktop: provider issues, OpenID, electron.\n\nVerified in base code: #5012 (api.ts transaction-update), #6738 (runTransfers=false default in api/transactions-add), #4280 and #4805 (matchTransactions queries DB only; fuzzy set includes children), #8857 (name.trim()), #3759 (only getIsSetterRules checked), #8009 (p.learn_categories = 1 filter), #6244 (postTransactionForSchedule has only {id, today}).\n\nNeed a reproduction check on untouched base before authoring: #8855 (createNewPayees already filters unused payees), #8558, #6682 (client part possible), #6948 (server vs client), #1827 (intended behaviour debatable).\n\nOverlapping pairs; select at most one of each: 4805/6737, 1957/5612.\n\nNothing was modified in the repo.",
+  "authoring": "the workflow authored ranks 1-22 (author agent, then a separate implementer agent per kept task); ranks 23-26 were not authored",
+  "public_prs_method": "2026-10-06: `gh pr list -R actualbudget/actual --search \"<issue>\" --state all` (related_prs, raw: includes PRs that only mention the number in passing) + cross-referenced PRs from the issue timeline + keyword searches; public_fix_prs = PRs that close the issue or propose a code fix for it, merged or not (spec 6 item 5, amendment 2026-10-06)",
+  "implementer_audit": {
+    "date": "2026-10-06",
+    "by": "orchestrator",
+    "scope": "all 20 implementer transcripts of batch5",
+    "github_access": "none in any of the 20",
+    "hidden_tests_read": "19 of 20 never read the hidden tests",
+    "exceptions": {
+      "issue-6244": "orchestrator audit 2026-10-06: EXPOSED. The implementer copied the hidden test from the `aa issues check` sanity output and ran it; no GitHub access. The reference is being regenerated blind (implementer-agent-blind:issue-6244, batch6); until then the current references must not be used.",
+      "issue-8494": "orchestrator audit 2026-10-06: no GitHub access; never read the hidden tests. The '(#8494)' comment in reference.A.patch came from the orchestrator prompt ('IMPLEMENTER for task issue-8494 (issue #8494)'), not from the tests."
+    }
+  },
+  "eligibility_rule": "orchestrator decision 2026-10-06 applying spec 4.2 literally (Javier may override): eligible iff reference.A.patch changes a function containing a protected call (aa.tasks.has_protected_call); ineligible -> dropped invariant_not_at_stake. Values in tasks/<id>/task.json and the ledger (`aa issues eligibility`).",
+  "counts": {
+    "harvested": 26,
+    "authored": 20,
+    "author_dropped": 2,
+    "not_authored": 4,
+    "dropped_after_authoring": {
+      "invariant_not_at_stake": 8,
+      "needs_migration": 1
+    },
+    "eligible": 11
+  },
+  "issues": [
+    {
+      "number": 1331,
+      "url": "https://github.com/actualbudget/actual/issues/1331",
+      "title": "Transactions not merged when applying rules to existing transactions (transfer double-count)",
+      "harvest_rank": 1,
+      "size": "M",
+      "harvest_why": "MONEY+CRDT: applying a rule that turns payees into transfer payees on two existing opposite transactions creates new transfer legs instead of linking the existing ones, so A=-50 and B=+50 instead of -25/+25. The fix is in server/transactions/transfer.ts plus the rule-apply/batch-update path (transactions/index.ts batchUpdateTransactions with runTransfers). It writes transfer_id and tombstones on the transactions table. A sloppy fix can leave orphan legs or one-sided transfer_id.",
+      "related_prs": [
+        3309,
+        3381,
+        3483,
+        4248,
+        4643,
+        5293,
+        6413,
+        6701,
+        6880
+      ],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-1331",
+      "author": "author-agent:issue-1331",
+      "implementer": "implementer-agent:issue-1331",
+      "author_session": "ab2fe724d31ab348f",
+      "implementer_session": "a0b5a6976ac417d09",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 1,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 6738,
+      "url": "https://github.com/actualbudget/actual/issues/6738",
+      "title": "API transactions-add: a rule that sets a transfer payee creates no counterpart leg",
+      "harvest_rank": 2,
+      "size": "S",
+      "harvest_why": "MONEY+CRDT: in api.ts, 'api/transactions-add' defaults to runTransfers=false. After runRules in accounts/sync.ts addTransactions sets a transfer payee, no leg is inserted, so account B's balance never changes. The fix touches transfer creation (transfer.ts) and the API defaults. A wrong fix can create duplicate legs or a leg without a back-link transfer_id.",
+      "related_prs": [],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-6738",
+      "author": "author-agent:issue-6738",
+      "implementer": "implementer-agent:issue-6738",
+      "author_session": "a3d54f857b7fcd402",
+      "implementer_session": "af2639df4d48d8f84",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 1,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 5694,
+      "url": "https://github.com/actualbudget/actual/issues/5694",
+      "title": "Splitting a transaction that is a transfer to an off-budget account produces unmatched duplicate legs",
+      "harvest_rank": 3,
+      "size": "M",
+      "harvest_why": "MONEY+CRDT: in server/transactions/transfer.ts, how split children and the parent carry the transfer payee to an off-budget account, which sometimes adds an extra +3000 to the off-budget ledger. The fix writes transfer_id, parent/child rows and tombstones, and the sum of the children must still equal the parent.",
+      "related_prs": [],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-5694",
+      "author": "author-agent:issue-5694",
+      "implementer": "implementer-agent:issue-5694",
+      "author_session": "ade22a1933f5898c7",
+      "implementer_session": "a71f2f2033685dd49",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 7,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 5012,
+      "url": "https://github.com/actualbudget/actual/issues/5012",
+      "title": "API updateTransaction on a sub-transaction clears its category and amount",
+      "harvest_rank": 4,
+      "size": "S",
+      "harvest_why": "MONEY: in api.ts 'api/transaction-update', a grouped query filtered by child id, then ungroupTransactions and the shared updateTransaction, rebuild the split wrong and zero the child amount and category. The fix keeps split integrity (sum of children = parent) in synced transactions writes. Earlier PRs #8132 and #9059 were closed, not merged.",
+      "related_prs": [
+        5147,
+        8132,
+        8133,
+        9059
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 8132,
+          "why": "closes #5012",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "fix(api): preserve sub-transaction fields when partially updating via API"
+        },
+        {
+          "pr": 9059,
+          "why": "closes #5012",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "[AI] Preserve split transaction fields during partial API updates"
+        }
+      ],
+      "public_fix_pr": true,
+      "related_note": "7242 / 8467 (merged, in base) fixed other updateTransaction split bugs; hidden tests still fail on base",
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-5012",
+      "author": "author-agent:issue-5012",
+      "implementer": "implementer-agent:issue-5012",
+      "author_session": "a89ee870df32aaefb",
+      "implementer_session": "a2fc3529e2d616843",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 1,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 8074,
+      "url": "https://github.com/actualbudget/actual/issues/8074",
+      "title": "Split rule 'fixed amount + remainder' adds the fixed part to the total (100 -> 85 + 185)",
+      "harvest_rank": 5,
+      "size": "M",
+      "harvest_why": "MONEY: split-action arithmetic in server/rules/rule.ts (set-split-amount remainder/fixed-percent), run through runRules on bank-sync and import adds. The fix changes the amounts on the parent and child transactions written. A wrong fix can still break parent amount = sum of children in other split modes.",
+      "related_prs": [],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "authored": false,
+      "outcome": "author_dropped",
+      "author": "author-agent:issue-8074",
+      "author_session": "a0c4d7c50a713a8e0",
+      "reason": "I couldn't turn this into a fair loot-core behavioural test, so I dropped it. I wrote no files under tasks/issue-8074/. Engine arithmetic is already correct; the likely cause is the desktop-client amount input sign; a loot-core fix would need new semantics the issue does not establish."
+    },
+    {
+      "number": 4280,
+      "url": "https://github.com/actualbudget/actual/issues/4280",
+      "title": "importTransactions does not dedupe identical imported_id within one call",
+      "harvest_rank": 6,
+      "size": "S",
+      "harvest_why": "CRDT/MONEY: matchTransactions in accounts/sync.ts only looks up imported_id in the DB, so two rows in the same batch with the same imported_id are both inserted and the balance doubles. The fix is batch-internal dedup in reconcileTransactions. A naive fix can drop distinct rows or break the preview/updatedPreview counts.",
+      "related_prs": [
+        4302,
+        5448,
+        5451,
+        6866,
+        8393
+      ],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "related_note": "6926 (merged 2026-02-10, 'Duplicate reimport fix in ui and API', in base) touches reimport; the hidden tests still fail on base",
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-4280",
+      "author": "author-agent:issue-4280",
+      "implementer": "implementer-agent:issue-4280",
+      "author_session": "a1a8e19496b3daf4b",
+      "implementer_session": "a9457aed0a9429078",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 1,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 4805,
+      "url": "https://github.com/actualbudget/actual/issues/4805",
+      "title": "Import fuzzy-matches a new transaction against a child of an existing split",
+      "harvest_rank": 7,
+      "size": "S",
+      "harvest_why": "MONEY+CRDT: the fuzzy query on v_transactions in accounts/sync.ts matchTransactions includes split children. Merging into a child overwrites imported_id/payee/notes on that child and the new money is lost. exactMatchedParentIds only guards bank-sync accounts. The fix limits the candidate set, and a wrong fix can stop legitimate parent matches. #6737 is the same root cause.",
+      "related_prs": [
+        5939
+      ],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "related_note": "8909 (merged 2026-09-09, 'Reserve children of matched bank splits', in base) touches the same matching code; the hidden tests still fail on base, so it is not a fix of this task",
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-4805",
+      "author": "author-agent:issue-4805",
+      "implementer": "implementer-agent:issue-4805",
+      "author_session": "af7215c261164af91",
+      "implementer_session": "a976079c6d862a8b3",
+      "final": {
+        "status": "dropped",
+        "dropped": "invariant_not_at_stake",
+        "eligible": false,
+        "protected_hits_A": 0,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 8464,
+      "url": "https://github.com/actualbudget/actual/issues/8464",
+      "title": "File import silently merges a genuinely new same-amount transaction (preview/import divergence)",
+      "harvest_rank": 8,
+      "size": "M",
+      "harvest_why": "MONEY+CRDT: the greedy hasMatched matching in accounts/sync.ts runs once for the preview (isPreview) and again for the import with different inputs, so a row shown as new is merged into an existing one and its amount never lands. The fix makes reconcileTransactions deterministic and honors forceAddTransaction/ignored. Closed PR #8468 only.",
+      "related_prs": [
+        8039,
+        8468
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 8468,
+          "why": "closes #8464",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "[WIP] [AI] Fix file import silently merging transactions the preview showed as new (#8464)"
+        }
+      ],
+      "public_fix_pr": true,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-8464",
+      "author": "author-agent:issue-8464",
+      "implementer": "implementer-agent:issue-8464",
+      "author_session": "a3c3201ca8efcf026",
+      "implementer_session": "a2c52446eef1b38b7",
+      "final": {
+        "status": "dropped",
+        "dropped": "invariant_not_at_stake",
+        "eligible": false,
+        "protected_hits_A": 0,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 6244,
+      "url": "https://github.com/actualbudget/actual/issues/6244",
+      "title": "Posting a later upcoming occurrence of a schedule always posts the first upcoming date",
+      "harvest_rank": 9,
+      "size": "S",
+      "harvest_why": "CRDT+MONEY: postTransactionForSchedule in server/schedules/app.ts only accepts {id, today} and always uses next_date. The fix adds a target-date path and must advance or keep schedules.next_date consistently without double-posting. Writes go to transactions and schedules. Closed PR #7544 only.",
+      "related_prs": [
+        7544,
+        8606
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 7544,
+          "why": "WIP fix of the same bug (posting a later upcoming occurrence uses the wrong date); found by the search, no closing reference",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "[WIP] Post scheduled future transactions with correct date"
+        }
+      ],
+      "public_fix_pr": true,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-6244",
+      "author": "author-agent:issue-6244",
+      "implementer": "implementer-agent:issue-6244",
+      "author_session": "abcffe1d96f25307c",
+      "implementer_session": "abd781e5ba773adc5",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 1,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 1957,
+      "url": "https://github.com/actualbudget/actual/issues/1957",
+      "title": "Posting a scheduled transaction early and then redating it makes the schedule reappear (also #5612)",
+      "harvest_rank": 10,
+      "size": "M",
+      "harvest_why": "CRDT: the schedule's next_date / hasTransactionForSchedule bookkeeping in server/schedules/app.ts (getHasTransactionsQuery date window, the paid-status advance) is not updated when a linked transaction moves before its window, so it shows as due again and invites a duplicate post. Writes go to schedules (next_date) and transactions.schedule. PR #7807 was closed.",
+      "related_prs": [
+        4433,
+        7612,
+        7807
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 4433,
+          "why": "closes #1957",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "[WIP] Allow early payment of scheduled transactions"
+        },
+        {
+          "pr": 7807,
+          "why": "closes #1957 (with #1062, #3759)",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "Fix issues #3759, #1062, #1957 in loot-core"
+        }
+      ],
+      "public_fix_pr": true,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-1957",
+      "author": "author-agent:issue-1957",
+      "implementer": "implementer-agent:issue-1957",
+      "author_session": "a871a6b6502df1b41",
+      "implementer_session": "a6a00f7e9a7623bda",
+      "final": {
+        "status": "dropped",
+        "dropped": "invariant_not_at_stake",
+        "eligible": false,
+        "protected_hits_A": 0,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 1062,
+      "url": "https://github.com/actualbudget/actual/issues/1062",
+      "title": "Monthly schedules on the 29th/30th/31st skip short months",
+      "harvest_rank": 11,
+      "size": "M",
+      "harvest_why": "CRDT+MONEY: the recurrence expansion in loot-core shared/schedules.ts (rrule config) and server/schedules/app.ts setNextDate / advanceRecurringScheduleFromNextDate write schedules.next_date. Auto-posted transactions get skipped (a missing money flow). A wrong clamp can double-post or drift days. PRs #7156 and #7807 were closed.",
+      "related_prs": [
+        3583,
+        3752,
+        4041,
+        5570,
+        5762,
+        6545,
+        7070,
+        7156,
+        7807
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 7156,
+          "why": "closes #1062",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "Bug/1062 scheduled transactions now handle the 29th, 30th, and 31st"
+        },
+        {
+          "pr": 7807,
+          "why": "closes #1062 (with #1957, #3759)",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "Fix issues #3759, #1062, #1957 in loot-core"
+        }
+      ],
+      "public_fix_pr": true,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-1062",
+      "author": "author-agent:issue-1062",
+      "implementer": "implementer-agent:issue-1062",
+      "author_session": "a7b0bc4f836d7d6d3",
+      "implementer_session": "abdc2301c88e07d20",
+      "final": {
+        "status": "dropped",
+        "dropped": "invariant_not_at_stake",
+        "eligible": false,
+        "protected_hits_A": 0,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 8494,
+      "url": "https://github.com/actualbudget/actual/issues/8494",
+      "title": "Weekly 'Cover schedule' automation under-budgets the next month when the current month has spending",
+      "harvest_rank": 12,
+      "size": "M",
+      "harvest_why": "MONEY: the goal-template / schedule-template math in server/budget/schedule-template.ts and goal-template.ts uses the current balance when budgeting a future month. The fix writes budget amounts (zero_budgets/reflect_budgets via budget actions). Off-by-occurrence or cent-rounding errors pass weak tests.",
+      "related_prs": [],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "related_note": "8824 (merged 2026-08-30, schedule template underfunding, in base) is a different bug in the same file; open PR 8862 (schedule forecast smoothing) touches it too",
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-8494",
+      "author": "author-agent:issue-8494",
+      "implementer": "implementer-agent:issue-8494",
+      "author_session": "adbd328a08273800a",
+      "implementer_session": "a99e95b5b62530248",
+      "final": {
+        "status": "dropped",
+        "dropped": "invariant_not_at_stake",
+        "eligible": false,
+        "protected_hits_A": 0,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 8856,
+      "url": "https://github.com/actualbudget/actual/issues/8856",
+      "title": "Category with group=null is dropped by getCategories and crashes updateCategory",
+      "harvest_rank": 13,
+      "size": "S",
+      "harvest_why": "CRDT: getCategories in server/budget/app.ts flattens the categories through their groups, so an orphaned category can't be listed, updated or deleted, while name uniqueness still blocks recreating it. The fix writes categories.cat_group and must not orphan or duplicate rows. Closed PR #8936 only.",
+      "related_prs": [
+        8936
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 8936,
+          "why": "fix guided by the maintainer comment in #8856 ('Relates to #8856')",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "[WIP] [AI] Reject an empty group in updateCategory instead of orphaning the category"
+        }
+      ],
+      "public_fix_pr": true,
+      "related_note": "8936 says #8857 has its own PR (#8869)",
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-8856",
+      "author": "author-agent:issue-8856",
+      "implementer": "implementer-agent:issue-8856",
+      "author_session": "add1ac6362445fcee",
+      "implementer_session": "a1fb45f848d07f678",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 1,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 8857,
+      "url": "https://github.com/actualbudget/actual/issues/8857",
+      "title": "api.updateCategory throws on any partial update that omits name",
+      "harvest_rank": 14,
+      "size": "S",
+      "harvest_why": "CRDT: updateCategory in server/budget/app.ts calls category.name.trim() unconditionally. The partial-update fix must write only the changed fields to the synced categories table and must not blank the name or flip is_income/hidden. Small, but a wrong fix can overwrite unrelated columns. Closed PR #8936 only.",
+      "related_prs": [
+        8485,
+        8869,
+        8936
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 8869,
+          "why": "fix of #8857 ('do not trim a category name a partial update omits'); not returned by the number search, found through the body of PR #8936",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "[WIP] [AI] Do not trim or upper-case a category name that a partial update omits"
+        }
+      ],
+      "public_fix_pr": true,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-8857",
+      "author": "author-agent:issue-8857",
+      "implementer": "implementer-agent:issue-8857",
+      "author_session": "a8beac1d3a241759e",
+      "implementer_session": "a35b57b91ff7d615d",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 4,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 1827,
+      "url": "https://github.com/actualbudget/actual/issues/1827",
+      "title": "Re-import by imported_id ignores amount changes (cleared handling inconsistent)",
+      "harvest_rank": 15,
+      "size": "S",
+      "harvest_why": "MONEY+CRDT: the updates object in accounts/sync.ts reconcileTransactions never carries amount and merges cleared with ||. The fix changes which fields of an existing synced transaction an import overwrites. It must respect reconciled locks and split parents/children sums. The intended behaviour is debatable, so the hidden test needs a clear statement.",
+      "related_prs": [
+        3708,
+        5754,
+        7253
+      ],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "related_note": "6926 (merged 2026-02-10, in base) touches reimport; the hidden tests still fail on base",
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-1827",
+      "author": "author-agent:issue-1827",
+      "implementer": "implementer-agent:issue-1827",
+      "author_session": "abbecece803701b2e",
+      "implementer_session": "a823b7fe1bbc8cb30",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 1,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 8855,
+      "url": "https://github.com/actualbudget/actual/issues/8855",
+      "title": "importTransactions creates payees even when the row matches an existing transaction by imported_id",
+      "harvest_rank": 16,
+      "size": "S",
+      "harvest_why": "CRDT: payeesToCreate / createNewPayees in accounts/sync.ts (normalizeTransactions plus runRules) insert payee rows that end up tombstoned or unused. The fix touches synced payees writes. The author must first confirm it reproduces on base (the issue is labeled needs-info, and createNewPayees already filters by use).",
+      "related_prs": [],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-8855",
+      "author": "author-agent:issue-8855",
+      "implementer": "implementer-agent:issue-8855",
+      "author_session": "a950a278b7d50df3f",
+      "implementer_session": "aa70016874d9dd1f8",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 2,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 3759,
+      "url": "https://github.com/actualbudget/actual/issues/3759",
+      "title": "Category learning creates a redundant 'payee is X' rule when a 'payee oneOf [..X..]' rule already sets that category",
+      "harvest_rank": 17,
+      "size": "S",
+      "harvest_why": "CRDT: updateCategoryRules in server/transactions/transaction-rules.ts only checks getIsSetterRules, not oneOf setters. The fix changes which rules rows are inserted or updated. A wrong fix can mutate the user's oneOf rule, for example by removing X from its list. PR #7807 was closed.",
+      "related_prs": [
+        4154,
+        4697,
+        5147,
+        7807
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 7807,
+          "why": "closes #3759 (with #1062, #1957)",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "Fix issues #3759, #1062, #1957 in loot-core"
+        }
+      ],
+      "public_fix_pr": true,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-3759",
+      "author": "author-agent:issue-3759",
+      "implementer": "implementer-agent:issue-3759",
+      "author_session": "ae690d86526fce0b3",
+      "implementer_session": "ad2b3afe3ecd7517d",
+      "final": {
+        "status": "dropped",
+        "dropped": "invariant_not_at_stake",
+        "eligible": false,
+        "protected_hits_A": 0,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 8009,
+      "url": "https://github.com/actualbudget/actual/issues/8009",
+      "title": "Category learning never fires for payees whose learn_categories is NULL",
+      "harvest_rank": 18,
+      "size": "S",
+      "harvest_why": "CRDT: the SQL filter p.learn_categories = 1 in updateCategoryRules (transaction-rules.ts) leaves out NULL-flag payees. The fix decides the default and writes rules (and possibly payees). The repro is vague, so the author must turn it into a NULL-flag scenario. Closed PR #8038 tried exactly this.",
+      "related_prs": [
+        8038
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 8038,
+          "why": "closes #8009",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "[WIP] fix(category-learning): treat NULL learn_categories as enabled (default)"
+        }
+      ],
+      "public_fix_pr": true,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-8009",
+      "author": "author-agent:issue-8009",
+      "implementer": "implementer-agent:issue-8009",
+      "author_session": "a822cede25b0d70e5",
+      "implementer_session": "ac56db86e70aec755",
+      "final": {
+        "status": "dropped",
+        "dropped": "invariant_not_at_stake",
+        "eligible": false,
+        "protected_hits_A": 0,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 6682,
+      "url": "https://github.com/actualbudget/actual/issues/6682",
+      "title": "Posting a schedule made from a split with several payees gives every child the parent's payee",
+      "harvest_rank": 19,
+      "size": "M",
+      "harvest_why": "MONEY+CRDT: the server rule/split actions behind schedule posting (rules/rule.ts split actions, postTransactionForSchedule plus runRules) do not set a payee per split. The fix writes child transactions and rule actions. Part of the natural fix may sit in the client (convert-to-schedule), so this needs checking.",
+      "related_prs": [],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "authored": false,
+      "outcome": "author_dropped",
+      "author": "author-agent:issue-6682",
+      "author_session": "a8f56098c4961b00c",
+      "reason": "The natural fix for this issue is entirely in the client, not in packages/loot-core, so loot-core tests cannot express it fairly. I ran a probe on the untouched A variant (since deleted). It created a schedule through 'schedule/create', added per-split rule actions through 'rule-update' (set-split-amount plus `set payee` with options.splitIndex 1 and 2), started the schedules services and posted with 'schedule/post-transaction'. The server already gives each child the payee from its split action: child -2000 got payee p2 and child -3000 got payee p3. So the rule split actions, execActions and postTransactionForSchedule plus runRules already handle per-split payees. The bug is in packages/desktop-client/src/util/schedule-actions.ts. There, createSingleTimeScheduleFromTransaction (convert-to-schedule) writes split actions only for amount, category and notes, never for each split's payee. The fix is to add a `set payee` action per split in that client util. Hidden tests must be loot-core test files (validate_layout), and any server-level test would pass on the untouched variants. A test that fails today would have to check the client's rule-building, which goes against the task's MONEY+CRDT/loot-core purpose. Side observation (not this issue): the posted parent transaction ends up with a null payee (description) even though the schedule's payee condition is set. That might be a separate server-side task if someone files it. No task directory was created. The probe file was removed from work/variants/A, and other agents' untracked files in A and AP were left alone. Natural fix is client-only (desktop-client schedule-actions.ts); loot-core already applies per-split payees."
+    },
+    {
+      "number": 8558,
+      "url": "https://github.com/actualbudget/actual/issues/8558",
+      "title": "Daily non-auto schedules never show missed or due occurrences",
+      "harvest_rank": 20,
+      "size": "M",
+      "harvest_why": "CRDT: the date-window logic for 'is approx' daily schedules in getStatus / getHasTransactionsQuery (shared/schedules.ts, server/schedules/app.ts) marks the schedule as paid. Fixing it changes when next_date advances and when auto-post creates transactions, so a wrong fix double-posts.",
+      "related_prs": [
+        868,
+        3708
+      ],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-8558",
+      "author": "author-agent:issue-8558",
+      "implementer": "implementer-agent:issue-8558",
+      "author_session": "ac95f3d12952cdb35",
+      "implementer_session": "a42124ee91715c548",
+      "final": {
+        "status": "dropped",
+        "dropped": "invariant_not_at_stake",
+        "eligible": false,
+        "protected_hits_A": 0,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 3218,
+      "url": "https://github.com/actualbudget/actual/issues/3218",
+      "title": "Starting balance is not created when an account already holds only transfer legs from other accounts",
+      "harvest_rank": 21,
+      "size": "M",
+      "harvest_why": "MONEY: the starting-balance condition in accounts/sync.ts syncAccount / processBankSyncDownload checks whether the account is empty. Can be tested headlessly with the existing mocked bank-sync fixtures (no network). The fix inserts a starting-balance transaction, and a wrong fix duplicates it on resync.",
+      "related_prs": [
+        5147,
+        7352
+      ],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-3218",
+      "author": "author-agent:issue-3218",
+      "implementer": "implementer-agent:issue-3218",
+      "author_session": "a147e1c52ac83a23a",
+      "implementer_session": "af13b204e03625bbe",
+      "final": {
+        "status": "ok",
+        "dropped": null,
+        "eligible": true,
+        "protected_hits_A": 1,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 5296,
+      "url": "https://github.com/actualbudget/actual/issues/5296",
+      "title": "Schedules should carry note and category onto the posted transaction",
+      "harvest_rank": 22,
+      "size": "M",
+      "harvest_why": "CRDT+MONEY: a feature that adds note/category to the schedule rule's actions in server/schedules/app.ts (create/update schedule rule) and postTransactionForSchedule. Writes go to rules, schedules and transactions. Upper end of M, and the spec needs tightening.",
+      "related_prs": [
+        5414
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 5414,
+          "why": "merged 2025-09-17, partial (already in base)",
+          "state": "MERGED",
+          "merged_at": "2025-09-17T03:12:31Z",
+          "title": "Schedules with the same amount and date are now handled properly"
+        }
+      ],
+      "public_fix_pr": true,
+      "authored": true,
+      "outcome": "authored",
+      "task_id": "issue-5296",
+      "author": "author-agent:issue-5296",
+      "implementer": "implementer-agent:issue-5296",
+      "author_session": "a2ef575c49c4f4aba",
+      "implementer_session": "a58d63f576a965ae4",
+      "final": {
+        "status": "dropped",
+        "dropped": "needs_migration",
+        "eligible": false,
+        "protected_hits_A": 0,
+        "sanity": "ok"
+      }
+    },
+    {
+      "number": 6737,
+      "url": "https://github.com/actualbudget/actual/issues/6737",
+      "title": "Import matches an incoming transaction to the child of a previous split (variant of #4805)",
+      "harvest_rank": 23,
+      "size": "S",
+      "harvest_why": "MONEY+CRDT: same fuzzy-candidate set in accounts/sync.ts matchTransactions as #4805, but with a non-bank-sync file import. Keep it only as a spare, or merge it with #4805, because the fixes overlap. Open PR #9005 touches candidate order, not split children.",
+      "related_prs": [
+        7103,
+        9005
+      ],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "related_note": "open PR 9005 reorders bank-sync fuzzy candidates (fixes a sibling bug, #9001); not a fix of the split-child matching",
+      "authored": false,
+      "outcome": "not_authored",
+      "reason": "not authored: the workflow authored the top 22 of the 26 ranked candidates (pipeline over harvest.issues.slice(0, 22)); ranks 23-26 were spares; also overlaps #4805 (authored), so at most one of the pair"
+    },
+    {
+      "number": 6948,
+      "url": "https://github.com/actualbudget/actual/issues/6948",
+      "title": "Renaming the default 'Main' dashboard creates an extra dashboard on another device",
+      "harvest_rank": 24,
+      "size": "S",
+      "harvest_why": "CRDT: the default dashboard page appears to be created per device (server/dashboard/app.ts dashboard-rename/insert on dashboard_pages), so a synced rename ends up as two pages. Whether the natural fix is in the server (a deterministic default page) or the client must be checked before authoring.",
+      "related_prs": [
+        7103
+      ],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "authored": false,
+      "outcome": "not_authored",
+      "reason": "not authored: the workflow authored the top 22 of the 26 ranked candidates (pipeline over harvest.issues.slice(0, 22)); ranks 23-26 were spares; also needed a server-vs-client check before authoring"
+    },
+    {
+      "number": 6317,
+      "url": "https://github.com/actualbudget/actual/issues/6317",
+      "title": "Rule condition 'matches' with an invalid regex (e.g. trailing backslash) breaks rule handling",
+      "harvest_rank": 25,
+      "size": "S",
+      "harvest_why": "CRDT (weak): rule validation in server/rules (condition parsing) and transaction-rules.ts rule create/update. Writes go to the rules table, and an unvalidated rule can crash runRules for every later import. Several PRs were closed (#8004, #8509, #8766), none open.",
+      "related_prs": [
+        6481,
+        8004,
+        8509,
+        8766
+      ],
+      "public_fix_prs": [
+        {
+          "pr": 8004,
+          "why": "closes #6317",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "[AI] Validate invalid regex rule conditions"
+        },
+        {
+          "pr": 8509,
+          "why": "WIP fix of the same crash",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "[WIP] [AI] Fix crash when typing invalid regex in rule matches condition"
+        },
+        {
+          "pr": 8766,
+          "why": "closes #6317",
+          "state": "CLOSED",
+          "merged_at": null,
+          "title": "[AI] Validate regular expressions in rule conditions"
+        }
+      ],
+      "public_fix_pr": true,
+      "authored": false,
+      "outcome": "not_authored",
+      "reason": "not authored: the workflow authored the top 22 of the 26 ranked candidates (pipeline over harvest.issues.slice(0, 22)); ranks 23-26 were spares; weak invariant (rule validation), several closed fix PRs"
+    },
+    {
+      "number": 5612,
+      "url": "https://github.com/actualbudget/actual/issues/5612",
+      "title": "Posting a scheduled transaction early and editing its date duplicates it as Upcoming (duplicate of #1957)",
+      "harvest_rank": 26,
+      "size": "M",
+      "harvest_why": "CRDT: same schedules next_date / linked-transaction window as #1957 in server/schedules/app.ts. Kept as an alternate repro. Do NOT select both 1957 and 5612.",
+      "related_prs": [],
+      "public_fix_prs": [],
+      "public_fix_pr": false,
+      "authored": false,
+      "outcome": "not_authored",
+      "reason": "not authored: the workflow authored the top 22 of the 26 ranked candidates (pipeline over harvest.issues.slice(0, 22)); ranks 23-26 were spares; also a duplicate of #1957 (authored), so at most one of the pair"
+    }
+  ]
+}

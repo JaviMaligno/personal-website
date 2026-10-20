@@ -1,0 +1,91 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 10a6d2a..9c462aa 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -418,6 +418,63 @@ export async function set6MonthAvg({
+   });
+ }
+ 
++// Net activity of every category in `month` (on-budget accounts only, as the
++// budget's `sum-amount` cells count it), keyed by category id. Spending is
++// negative, income positive. Categories without activity are absent.
++async function getActivityByCategory(
++  month: string,
++): Promise<Map<string, number>> {
++  const rows = await db.all<{ category: string; amount: number | null }>(
++    `
++    SELECT t.category AS category, SUM(t.amount) AS amount
++    FROM v_transactions_internal_alive t
++    LEFT JOIN accounts a ON a.id = t.account
++    WHERE t.category IS NOT NULL
++      AND CAST(t.date / 100 AS INTEGER) = ?
++      AND a.offbudget = 0
++    GROUP BY t.category
++  `,
++    [dbMonth(month)],
++  );
++  return new Map(rows.map(row => [row.category, row.amount || 0]));
++}
++
++// Budgets every category with what it spent in the previous calendar month
++// (income categories, when filled, with what they received).
++export async function setLastMonthSpending({
++  month,
++}: {
++  month: string;
++}): Promise<void> {
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++    `
++  SELECT c.*
++  FROM categories c
++  LEFT JOIN category_groups g ON c.cat_group = g.id
++  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  `,
++  );
++  const untouched = await getCategoriesUntouchedByBulkActions();
++  const activity = await getActivityByCategory(monthUtils.prevMonth(month));
++
++  await batchMessages(async () => {
++    for (const cat of categories) {
++      if (cat.is_income === 1 && !isTrackingBudget()) {
++        continue;
++      }
++      if (untouched.has(cat.id)) {
++        continue;
++      }
++      const amount = activity.get(cat.id) ?? 0;
++      void setBudget({
++        category: cat.id,
++        month,
++        amount: cat.is_income === 0 ? -amount : amount,
++      });
++    }
++  });
++}
++
+ export async function setNMonthAvg({
+   month,
+   N,
+diff --git a/packages/loot-core/src/server/budget/app.ts b/packages/loot-core/src/server/budget/app.ts
+index b61f24c..5b7fa17 100644
+--- a/packages/loot-core/src/server/budget/app.ts
++++ b/packages/loot-core/src/server/budget/app.ts
+@@ -30,6 +30,7 @@ export type BudgetHandlers = {
+   'budget/set-6month-avg': typeof actions.set6MonthAvg;
+   'budget/set-12month-avg': typeof actions.set12MonthAvg;
+   'budget/set-n-month-avg': typeof actions.setNMonthAvg;
++  'budget/set-last-month-spending': typeof actions.setLastMonthSpending;
+   'budget/check-templates': typeof goalActions.runCheckTemplates;
+   'budget/apply-goal-template': typeof goalActions.applyTemplate;
+   'budget/apply-multiple-templates': typeof goalActions.applyMultipleCategoryTemplates;
+@@ -85,6 +86,10 @@ app.method('budget/set-3month-avg', mutator(undoable(actions.set3MonthAvg)));
+ app.method('budget/set-6month-avg', mutator(undoable(actions.set6MonthAvg)));
+ app.method('budget/set-12month-avg', mutator(undoable(actions.set12MonthAvg)));
+ app.method('budget/set-n-month-avg', mutator(undoable(actions.setNMonthAvg)));
++app.method(
++  'budget/set-last-month-spending',
++  mutator(undoable(actions.setLastMonthSpending)),
++);
+ app.method(
+   'budget/check-templates',
+   mutator(undoable(goalActions.runCheckTemplates)),

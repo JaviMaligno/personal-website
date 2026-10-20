@@ -1,0 +1,108 @@
+{
+  "zone": "Z3",
+  "logic": "Linking a bank-sync provider account (upgrade vs insert, transfer payee, initial sync, sync event)",
+  "zone_files": {
+    "R": [
+      "server/accounts/app.ts"
+    ],
+    "F": [
+      "server/accounts/app.ts"
+    ]
+  },
+  "consumer_sites": {
+    "R": {
+      "gocardless": "server/accounts/app.ts linkGoCardlessAccount",
+      "simplefin": "server/accounts/app.ts linkSimpleFinAccount",
+      "pluggyai": "server/accounts/app.ts linkPluggyAiAccount",
+      "akahu": "server/accounts/app.ts linkAkahuAccount",
+      "enablebanking": "server/accounts/app.ts linkEnableBankingAccount",
+      "fintegra": "added by the agent in T2"
+    },
+    "F": {
+      "gocardless": "server/accounts/app.ts linkGoCardlessAccount -> linkBankSyncAccount",
+      "simplefin": "server/accounts/app.ts linkSimpleFinAccount -> linkBankSyncAccount",
+      "pluggyai": "server/accounts/app.ts linkPluggyAiAccount -> linkBankSyncAccount",
+      "akahu": "server/accounts/app.ts linkAkahuAccount -> linkBankSyncAccount",
+      "enablebanking": "server/accounts/app.ts linkEnableBankingAccount -> linkBankSyncAccount",
+      "fintegra": "added by the agent in T2"
+    }
+  },
+  "f_comment_fact": {
+    "fact": "F's linkBankSyncAccount comment: PluggyAI alone passes fileId, Akahu reports only transactions as changed.",
+    "basis": "Not one of the facts the independent review counts as stated only in F: both quirks are visibly different lines at the R copies (review: small asymmetry). PluggyAI is linked in the T1, T3 and T4 tests, but no assertion depends on its fileId; the T2 new-provider test expects the default tables (transactions, accounts), which four of the five R copies show. Tagged false at every step.",
+    "rule": "Per step, depends_on_f_comment_fact is true when the step's hidden tests depend on a fact stated only in F's doc comments (docs/study2-refactor-review-independent.md, 'Do F's doc comments give F an unfair advantage?'); decided by reading the hidden tests, before any pilot run (spec amendment 2026-10-08, item 10).",
+    "decided": "2026-10-08"
+  },
+  "steps": [
+    {
+      "id": "T1",
+      "kind": "rule",
+      "depends_on_f_comment_fact": false,
+      "consumers": [
+        "gocardless",
+        "simplefin",
+        "pluggyai",
+        "akahu",
+        "enablebanking"
+      ]
+    },
+    {
+      "id": "T2",
+      "kind": "consumer",
+      "depends_on_f_comment_fact": false,
+      "consumers": [
+        "fintegra"
+      ]
+    },
+    {
+      "id": "T3",
+      "kind": "rule",
+      "depends_on_f_comment_fact": false,
+      "consumers": [
+        "gocardless",
+        "simplefin",
+        "pluggyai",
+        "akahu",
+        "enablebanking",
+        "fintegra"
+      ]
+    },
+    {
+      "id": "T4",
+      "kind": "build",
+      "depends_on_f_comment_fact": false,
+      "consumers": [
+        "gocardless",
+        "simplefin",
+        "pluggyai",
+        "akahu",
+        "enablebanking",
+        "fintegra"
+      ]
+    }
+  ],
+  "t2_reuse": {
+    "helpers": {
+      "F": [
+        "linkBankSyncAccount"
+      ],
+      "R": [
+        "linkGoCardlessAccount",
+        "linkSimpleFinAccount",
+        "linkPluggyAiAccount",
+        "linkAkahuAccount",
+        "linkEnableBankingAccount"
+      ]
+    },
+    "markers": [
+      "insertPayee\\s*\\(",
+      "transfer_acct",
+      "'sync-event'",
+      "Account with ID .* not found"
+    ]
+  },
+  "notes": [
+    "The 'fintegra' consumer of T3 and T4 is the handler the agent adds in T2: if T2 did not add it, its T3/T4 tests fail as well, so T3 coverage k/6 and missed_copy can reflect a carried T2 failure rather than a missed copy. Analyses that want the pure rule-step measure can restrict T3 to the five pre-existing consumers.",
+    "Hidden tests mock only `post` (#server/post, the sync-server boundary); #platform/server/asyncStorage and #platform/server/connection are already mocked by the repo's test setup and are only configured (user token) or observed (sync-event)."
+  ]
+}

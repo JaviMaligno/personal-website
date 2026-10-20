@@ -1,0 +1,12 @@
+{"id":"054a3d6d31",
+"reuse":{"score":4,"why":"Puts the daily-skip logic into shared/schedules.ts helpers used by getNextDate and getUpcomingDates, and makes the budget template rely on getNextDate instead of its own weekend adjustment; getUpcomingDates still keeps its own move-weekend mapping instead of a shared resolver."},
+"duplication":{"score":4,"why":"Removes the template's two copies of the weekend adjustment, but the 'daily skip vs move' dispatch is written twice, in getNextDate and in getUpcomingDates."},
+"placement":{"score":4,"why":"The rule lives in shared/schedules.ts with the other recurrence helpers and frequency is carried on the rschedule data built in rule-utils; the shared module now also takes a type from #server/util/rschedule."},
+"scope":{"score":4,"why":"The template loop rewrite is needed to route it through getNextDate and stays on topic; otherwise the change is limited to the weekend rule and tests."},
+"maintainability":{"score":4,"why":"Named helpers with a documented search window are easy to follow, but two entry points each branch on isDailyWeekendSkip and the non-daily move logic is still applied separately in each, so a future rule change touches both."},
+"bypasses_abstraction":{"value":false,"where":"Both occurrence paths call the new shared helpers; getUpcomingDates' own getDateWithSkippedWeekend mapping is pre-existing rather than a new bypass."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated part is an explicit branch on the shared predicate in getNextDate and getUpcomingDates, not reshaped copied logic."},
+"one_place":{"value":false,"where":"The predicate isDailyWeekendSkip and getWeekdayOccurrences are shared, but the decision skip-vs-move is taken separately in getNextDate (shared/schedules.ts) and getUpcomingDates (server/schedules/app.ts), each with its own fallback to getDateWithSkippedWeekend."}
+}

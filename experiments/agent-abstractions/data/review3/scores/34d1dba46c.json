@@ -1,0 +1,13 @@
+{
+  "id": "34d1dba46c",
+  "reuse": {"score": 4, "why": "Replaces three identical inline category queries with one new helper and reuses the existing getBudgetData/setBudget flow, though copyPreviousMonth does not use the new helper."},
+  "duplication": {"score": 3, "why": "Removes the triplicated SQL, but the hidden/group-hidden/template exclusion rule now exists twice: as SQL in getBulkBudgetCategories and as JS checks in copyPreviousMonth."},
+  "placement": {"score": 4, "why": "The selection helper lives in actions.ts next to the month-wide actions that use it, matching where the tree keeps this logic."},
+  "scope": {"score": 4, "why": "Focused on the month-wide actions; only a minor unrelated reformatting of the Pick type in getBudgetData."},
+  "maintainability": {"score": 3, "why": "A maintainer changing the exclusion rule must remember to update both the SQL helper and copyPreviousMonth's inline predicate."},
+  "bypasses_abstraction": {"value": true, "where": "copyPreviousMonth applies its own inline hidden/group_hidden/goal_def checks instead of the new getBulkBudgetCategories selection."},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "The exclusion rule is re-expressed as JS conditions in copyPreviousMonth (hidden === 1 || group_hidden === 1; goal_def != null) mirroring the SQL WHERE clause in getBulkBudgetCategories."},
+  "one_place": {"value": false, "where": "Rule defined in getBulkBudgetCategories (setZero, set3/6/12MonthAvg) and separately in copyPreviousMonth's forEach checks in packages/loot-core/src/server/budget/actions.ts."}
+}

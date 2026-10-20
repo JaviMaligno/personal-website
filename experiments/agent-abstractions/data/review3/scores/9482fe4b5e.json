@@ -1,0 +1,12 @@
+{"id": "9482fe4b5e",
+ "reuse": {"score": 4, "why": "Uses the existing db.first query helper and AccountSyncSource type; the tree has no shared link function to hook into, so a new guard is the natural reuse point."},
+ "duplication": {"score": 4, "why": "The rule is written once in assertBankAccountNotLinked; the five link functions only repeat a short call with their provider and account id, which mirrors the already-duplicated link copies rather than adding new logic."},
+ "placement": {"score": 4, "why": "The guard sits in server/accounts/app.ts beside the link handlers it protects, before any bank lookup or write; a db-layer query function would be marginally cleaner but nothing similar exists."},
+ "scope": {"score": 5, "why": "Only adds the guard, its five call sites and focused tests."},
+ "maintainability": {"score": 4, "why": "A single guard with the full 'what counts as linked' rule in one query is easy to own; a sixth provider must remember to call it because the link sequence itself is still copied per provider."},
+ "bypasses_abstraction": {"value": false, "where": "All five link handlers call the new guard; no existing abstraction is routed around."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "No logic is duplicated; the per-provider additions are calls to one guard."},
+ "one_place": {"value": true, "where": "assertBankAccountNotLinked in server/accounts/app.ts holds the rule (same provider, same account id, not tombstoned, not the upgrading account) and is called by all five link handlers (goCardless, simpleFin, pluggyai, akahu, enableBanking)."}
+}

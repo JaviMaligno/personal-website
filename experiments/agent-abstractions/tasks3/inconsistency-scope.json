@@ -1,0 +1,33 @@
+{
+  "description": "Study-3 pilot blocking item 9: which of a zone's T0 inconsistency tests (tasks3/<zone>/T0/hidden, ids from consumers.json) still describe required behaviour after each chain step T1-T4. A test is superseded at a step when that step's statement (tasks2/<zone>/T<k>/statement.md), or an earlier step's, legitimately redefines the behaviour it asserts; it is then not run on that step's post tree. The others run on every T1-T4 post tree in every arm (inconsistencies_unified_step). Decided by reading the statements and the tests, before any T1-T4 behaviour check was run; checked against the chains' reference trees by `aa chain scope-sanity` (tasks3/<zone>/T0/scope_sanity.json).",
+  "decided": "2026-10-12",
+  "zones": {
+    "Z1": {
+      "setzero-writes-hidden": {
+        "superseded_at": ["T1", "T2", "T3", "T4"],
+        "reason": "The test asserts that setting a month's budgets to zero writes hidden categories and categories in hidden groups while copying last month leaves them alone. T1's statement makes every month-wide action leave hidden categories and categories in hidden groups untouched, so after T1 set-zero must skip them too and the asserted difference is required to disappear. T2 adds an action over the same categories, T3 adds the #fixed exclusion and T4 adds an opt-in flag whose default ('absent or false') keeps T1's behaviour, so the test stays superseded through T4."
+      }
+    },
+    "Z2": {
+      "template-half-of-rounded-sum": {
+        "superseded_at": ["T1", "T2", "T3", "T4"],
+        "reason": "The test asserts that a schedule template with a percent adjustment uses half of the rounded sum of a range (16556) while posting the schedule uses the rounded midpoint (-15050). T1's statement replaces the midpoint for every ranged schedule (posting and the budget template are both T1 consumers in tasks2/Z2/chain.json) by the end of the range furthest from zero, so no midpoint rounding is left to differ. T3 extends the rule to approximate amounts and T4 changes it to the lowest value allowed; neither brings a midpoint back, and tasks2/Z2/chain.json's f_comment_fact basis already records that from T1 on no consumer resolves a range to its midpoint."
+      }
+    },
+    "Z3": {
+      "pluggyai-file-id": {
+        "superseded_at": [],
+        "reason": "Only Pluggy.ai sends the budget file id (X-Actual-File-Id) to the sync server when linking. T1 adds a refusal for a bank account already linked elsewhere (the test links one fresh account per provider), T2 adds Fintegra with the other providers' headers (X-ACTUAL-TOKEN) and says nothing about the file id, T3 refuses closed accounts, T4 adds an opt-in replaceExistingLink flag ('Without it ... exactly as today'). No statement changes which provider sends the file id."
+      },
+      "gocardless-mask-official-name": {
+        "superseded_at": [],
+        "reason": "GoCardless stores the account mask and the provider's official name, the other four providers the name as official name and no mask. T2's Fintegra rule ('name and official name are both the Fintegra account name') concerns only the new provider, which the test does not link; T1, T3 and T4 do not touch the stored account fields of a first link."
+      },
+      "akahu-changed-tables": {
+        "superseded_at": [],
+        "reason": "Akahu tells the client that only transactions changed after the first sync, the other providers transactions and accounts. T2 requires Fintegra to notify transactions and accounts (the default), which the test does not link; no statement changes Akahu's or the four other providers' notification. A T1-T4 consolidation that sends ['transactions', 'accounts'] for Akahu (pilot: haiku RL Z3 T2) unifies this inconsistency."
+      }
+    },
+    "Z4": {}
+  }
+}

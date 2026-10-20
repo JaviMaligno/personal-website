@@ -1,0 +1,66 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 006ad0c..05e080a 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -90,7 +90,10 @@ function getBudgetData<T extends BudgetTable>(
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
++      AND (n.note IS NULL OR n.note NOT LIKE '%#fixed%')
++      AND (n.note IS NULL OR n.note NOT LIKE '%#fixed%')
+   `,
+     [month],
+   );
+@@ -270,7 +273,8 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+     `SELECT c.*, g.hidden AS group_hidden
+      FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
+-     WHERE c.tombstone = 0`,
++     LEFT JOIN notes n ON n.id = g.id
++     WHERE c.tombstone = 0 AND (n.note IS NULL OR n.note NOT LIKE '%#fixed%')`,
+   );
+ 
+   await batchMessages(async () => {
+@@ -296,7 +300,9 @@ export async function setLastMonthSpending({
+     `SELECT c.*
+      FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
+-     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL`,
++     LEFT JOIN notes n ON n.id = g.id
++     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL
++       AND (n.note IS NULL OR n.note NOT LIKE '%#fixed%')`,
+   );
+ 
+   await batchMessages(async () => {
+@@ -328,7 +334,9 @@ export async function set3MonthAvg({
+     SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++     LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL
++       AND (n.note IS NULL OR n.note NOT LIKE '%#fixed%')
+   `,
+   );
+ 
+@@ -363,7 +371,9 @@ export async function set12MonthAvg({
+   SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++     LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL
++       AND (n.note IS NULL OR n.note NOT LIKE '%#fixed%')
+   `,
+   );
+ 
+@@ -387,7 +397,9 @@ export async function set6MonthAvg({
+   SELECT c.*
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++     LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0 AND c.goal_def IS NULL
++       AND (n.note IS NULL OR n.note NOT LIKE '%#fixed%')
+   `,
+   );
+ 

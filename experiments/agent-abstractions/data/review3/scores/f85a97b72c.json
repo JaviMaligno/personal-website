@@ -1,0 +1,12 @@
+{"id": "f85a97b72c",
+ "reuse": {"score": 4, "why": "Keeps routing setZero, the average actions and copyPreviousMonth through the existing isMonthFillCategory/getMonthFillCategories, and drops the now-unneeded 'all' scope, but the template rule is added beside the predicate instead of inside it."},
+ "duplication": {"score": 3, "why": "The `templatedIds.has(...)` exclusion is applied separately in getMonthFillCategories and in copyPreviousMonth, each with its own extra getTemplatedCategoryIds query, rather than once in the shared predicate."},
+ "placement": {"score": 4, "why": "Everything stays in budget/actions.ts next to the month-fill helpers, but the saved-template check lives outside isMonthFillCategory, the function that decides month-fill eligibility."},
+ "scope": {"score": 5, "why": "Only the month-fill selection plus tests are touched."},
+ "maintainability": {"score": 3, "why": "Eligibility is now split between a predicate and a separate id-set lookup that each caller must remember to apply, and the second query could have been a goal_def column in the existing selects."},
+ "bypasses_abstraction": {"value": true, "where": "copyPreviousMonth and getMonthFillCategories in packages/loot-core/src/server/budget/actions.ts add the template exclusion around isMonthFillCategory rather than within it."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The repeated template check is visible as two identical `templatedIds.has` conditions, not disguised."},
+ "one_place": {"value": false, "where": "Hidden/group-hidden is decided in isMonthFillCategory, but the saved-template exclusion is applied separately in getMonthFillCategories and copyPreviousMonth."}
+}

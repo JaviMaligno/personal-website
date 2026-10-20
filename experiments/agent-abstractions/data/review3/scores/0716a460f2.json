@@ -1,0 +1,5 @@
+{"id":"0716a460f2",
+"completeness":{"per_site":{"gocardless":"full","simplefin":"full","pluggyai":"full","akahu":"full","enablebanking":"full"},"left_out":{},"sites_full":5,"sites_partial":0,"sites_total":5,"value":1.0,"why":"All five provider handlers keep only their own bank lookup and call linkBankSyncAccount for the whole sequence (upgrade or insert with transfer payee, initial sync, handleSyncResponse, sync-event); the Pluggy file id and the Akahu event tables are passed as explicit arguments."},
+"interface":{"score":3,"why":"fileId and eventTables are explicit parameters for real variations, but the GoCardless mask/official_name difference is not explicit: the helper infers it from whether the passed account object carries mask/official_name (official_name ?? name), so it depends on provider types happening to lack those fields; eventTables is also required at every call even though four of five pass the same value."},
+"disguised_duplication":{"value":false,"where":"The five link sequences are removed in favour of linkBankSyncAccount; the small repeated institution object is part of the provider-specific bank lookup, not the shared logic."}
+}

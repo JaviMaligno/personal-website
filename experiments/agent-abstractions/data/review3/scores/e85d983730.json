@@ -1,0 +1,11 @@
+{"id":"e85d983730",
+"reuse":{"score":5,"why":"Extends the existing shared link guard used by every provider link function and extracts the unlink field-clearing from unlinkAccount into clearAccountBankLink, so both unlink paths share it."},
+"duplication":{"score":4,"why":"No logic is copied; the only overlap is the new 'account not found' check in the guard, which repeats the per-provider not-found check that runs later."},
+"placement":{"score":4,"why":"The replace rule sits in the shared link guard in accounts/app.ts next to the unlink helper; a guard that now also mutates (renamed claimBankAccountLink) mixes validation with a side effect, but stays in the right module."},
+"scope":{"score":4,"why":"Focused on the flag, plus a small extra behaviour change (throwing early when upgradingId is not found) that is needed so the holder is not unlinked before a failing link."},
+"maintainability":{"score":4,"why":"One flag threaded through the base params into one guard and one shared unlink helper is easy to own; the unlink happens before the link itself without a transaction, which a maintainer may want revisited."},
+"bypasses_abstraction":{"value":false,"where":"Uses the shared guard and the extracted clearAccountBankLink rather than going around unlinkAccount's logic."},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"The early not-found check duplicates the later per-provider check openly; nothing is reshaped to hide a copy."}
+}

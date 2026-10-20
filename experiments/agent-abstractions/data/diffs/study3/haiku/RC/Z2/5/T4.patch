@@ -1,0 +1,86 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index b0ab20e..3e738b9 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -655,25 +655,37 @@ describe('schedules', () => {
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+     });
+ 
+-    it('uses the end of a positive range furthest from zero', () => {
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    it('uses the end of a positive range closest to zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
+     });
+ 
+-    it('negates the worst-case amount when inverse is set', () => {
++    it('uses the negative end of a range spanning zero', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++      expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
++    });
++
++    it('negates the expected amount when inverse is set', () => {
+       expect(getScheduledAmount({ num1: -10100, num2: -20000 }, true)).toBe(
+         20000,
+       );
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 }, true)).toBe(
++        -10100,
++      );
+     });
+ 
+-    it('expects an approximate amount at the end of its tolerance furthest from zero', () => {
++    it('expects an outgoing approximate amount at the end of its tolerance furthest from zero', () => {
+       expect(getScheduledAmount(-10000, false, 'isapprox')).toBe(-10750);
+-      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
+       expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
+     });
+ 
+-    it('negates the worst-case approximate amount when inverse is set', () => {
++    it('expects an incoming approximate amount at the end of its tolerance closest to zero', () => {
++      expect(getScheduledAmount(10000, false, 'isapprox')).toBe(9250);
++    });
++
++    it('negates the expected approximate amount when inverse is set', () => {
+       expect(getScheduledAmount(-10000, true, 'isapprox')).toBe(10750);
++      expect(getScheduledAmount(10000, true, 'isapprox')).toBe(-9250);
+     });
+ 
+     it('leaves exact amounts unchanged', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 08c0fe2..7e1221f 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -364,15 +364,14 @@ export function getScheduledAmount(
+   if (amount == null) return 0;
+ 
+   if (typeof amount === 'number') {
+-    const worstCase =
++    const lowest =
+       amountOp === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
++        ? amount - getApproxNumberThreshold(amount)
+         : amount;
+-    return inverse ? -worstCase : worstCase;
++    return inverse ? -lowest : lowest;
+   }
+-  const worstCase =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
+-  return inverse ? -worstCase : worstCase;
++  const lowest = Math.min(amount.num1, amount.num2);
++  return inverse ? -lowest : lowest;
+ }
+ 
+ export function getUpcomingDays(
+diff --git a/upcoming-release-notes/schedule-worst-case-lowest-amount.md b/upcoming-release-notes/schedule-worst-case-lowest-amount.md
+new file mode 100644
+index 0000000..d0d3ab2
+--- /dev/null
++++ b/upcoming-release-notes/schedule-worst-case-lowest-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Plan ranged and approximate schedule amounts at the lowest amount they allow, so incoming money such as a salary is no longer expected at its highest value

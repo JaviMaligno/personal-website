@@ -1,0 +1,12 @@
+{"id": "71e2afcc7b",
+ "reuse": {"score": 3, "why": "Reuses d.isWeekend and the existing getDateWithSkippedWeekend path, but does not extend getDateWithSkippedWeekend or getNextDate into a shared weekend-rule definition; getUpcomingDates re-implements the daily skip instead of going through getNextDate."},
+ "duplication": {"score": 2, "why": "The 'skipWeekend && frequency === daily' predicate, the widened take and the isWeekend filter are written separately in shared/schedules.ts getNextDate and server/schedules/app.ts getUpcomingDates."},
+ "placement": {"score": 3, "why": "Storing frequency in the rschedule data in parseRecurDate is sensible, but the rule is spread across a shared util and a server handler rather than living next to getDateWithSkippedWeekend."},
+ "scope": {"score": 5, "why": "Only the files needed for the daily-weekend rule are touched."},
+ "maintainability": {"score": 2, "why": "The weekend rule now exists in two hand-written variants, and the schedule-template budget path (which calls getNextDate with noSkipWeekend and moves weekends itself) was not updated, so the rule is inconsistent across paths."},
+ "bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getUpcomingDates filters weekend occurrences inline instead of using a shared weekend-rule function; server/budget/schedule-template.ts still applies getDateWithSkippedWeekend directly to daily schedules."},
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "skipsDailyWeekends predicate + take-widening + isWeekend filter appear in getNextDate (as a firstWeekday closure, take 7) and in getUpcomingDates (inline filter, take count*7), reshaped rather than shared."},
+ "one_place": {"value": false, "where": "The daily-skip rule is implemented separately in shared/schedules.ts getNextDate and server/schedules/app.ts getUpcomingDates, and server/budget/schedule-template.ts still moves weekend dates of daily schedules via getDateWithSkippedWeekend."}
+}

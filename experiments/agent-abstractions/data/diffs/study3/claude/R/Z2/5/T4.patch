@@ -1,0 +1,78 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 3d01394..b3e1605 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -647,11 +647,13 @@ describe('schedules', () => {
+ });
+ 
+ describe('getScheduledAmount', () => {
+-  it('uses the end of a range furthest from zero, in either order', () => {
++  it('uses the lowest end of a range, in either order', () => {
+     expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+     expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-    expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-    expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++    expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++    expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+   });
+ 
+   it('keeps single amounts and inverts when asked', () => {
+@@ -663,9 +665,9 @@ describe('getScheduledAmount', () => {
+ });
+ 
+ describe('getExpectedAmount', () => {
+-  it('plans approximate amounts at the end of the tolerance furthest from zero', () => {
++  it('plans approximate amounts at the lowest end of the tolerance', () => {
+     expect(getExpectedAmount(-10000, 'isapprox')).toBe(-10750);
+-    expect(getExpectedAmount(10000, 'isapprox')).toBe(10750);
++    expect(getExpectedAmount(10000, 'isapprox')).toBe(9250);
+     expect(getExpectedAmount(-1234, 'isapprox')).toBe(-1327);
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 7e54d96..5fe1ff9 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -354,14 +354,14 @@ export function getDateWithSkippedWeekend(
+   return date;
+ }
+ 
+-// A ranged ("is between") amount is planned at the end furthest from zero.
++// A ranged ("is between") amount is planned at its lowest value: the end
++// furthest from zero for money out, the end closest to zero for money in.
+ export function getRangeAmount(range: { num1: number; num2: number }): number {
+-  return Math.abs(range.num1) >= Math.abs(range.num2) ? range.num1 : range.num2;
++  return Math.min(range.num1, range.num2);
+ }
+ 
+-// The amount a schedule is planned at: a ranged amount at its end furthest
+-// from zero, an approximate amount at the end of its tolerance furthest from
+-// zero, anything else as is. A missing amount is 0.
++// The amount a schedule is planned at: a ranged or approximate amount at the
++// lowest value it allows, anything else as is. A missing amount is 0.
+ export function getExpectedAmount(
+   amount: number | { num1: number; num2: number } | null | undefined,
+   op?: string | null,
+@@ -370,7 +370,7 @@ export function getExpectedAmount(
+   if (typeof amount !== 'number') return getRangeAmount(amount);
+   if (op === 'isapprox') {
+     const tolerance = getApproxNumberThreshold(amount);
+-    return amount < 0 ? amount - tolerance : amount + tolerance;
++    return amount - tolerance;
+   }
+   return amount;
+ }
+diff --git a/upcoming-release-notes/worst-case-lowest-amount.md b/upcoming-release-notes/worst-case-lowest-amount.md
+new file mode 100644
+index 0000000..4337b84
+--- /dev/null
++++ b/upcoming-release-notes/worst-case-lowest-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Plan ranged and approximate schedule amounts at the lowest value they allow, so incoming money uses its smallest end.

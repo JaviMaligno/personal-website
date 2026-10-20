@@ -1,0 +1,12 @@
+{"id":"e442b3cad6",
+"reuse":{"score":3,"why":"Adds a shared isDailyWeekendSkip predicate and lookahead constant and keeps using getDateWithSkippedWeekend for the move, but each caller still assembles the skip-or-move decision itself."},
+"duplication":{"score":3,"why":"The 'over-fetch, drop weekend dailies, otherwise move' sequence is written twice (getNextDate with find, getUpcomingDates with filter/slice), and schedule-template keeps its own skipWeekend ? move : raw ternaries alongside the new flag."},
+"placement":{"score":3,"why":"The predicate sits in shared/schedules.ts, but the actual drop-vs-move rule is spread across shared/schedules.ts, schedules/app.ts and budget/schedule-template.ts instead of one shared function."},
+"scope":{"score":5,"why":"Only the weekend rule, its call sites, tests and a release note."},
+"maintainability":{"score":2,"why":"Correctness depends on coordinated pieces at three sites (a negated noSkipWeekend flag passed into getNextDate in schedule-template, a filter-then-move in getUpcomingDates, a find-then-conditional-move in getNextDate), so a future rule change has to be made consistently in all of them."},
+"bypasses_abstraction":{"value":false,"where":"Sites still use getNextDate/getDateWithSkippedWeekend and the new isDailyWeekendSkip; no existing abstraction is skipped."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The weekend-drop step is restated as `.find(o => !skipDailyWeekend || !d.isWeekend(o))` in shared/schedules.ts getNextDate and as `.filter(date => !skipDailyWeekend || !d.isWeekend(date))` plus lookahead in schedules/app.ts getUpcomingDates, reshaped rather than shared."},
+"one_place":{"value":false,"where":"Only the 'is this a daily weekend skip' predicate is shared (isDailyWeekendSkip); dropping vs moving is decided separately in getNextDate (shared/schedules.ts), getUpcomingDates (server/schedules/app.ts) and createScheduleList (budget/schedule-template.ts, via its own skipWeekend ternary and negated flag)."}
+}

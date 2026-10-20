@@ -1,0 +1,128 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..f9edc7a 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -69,6 +69,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  goal_def?: string | null;
+   category: string;
+   amount: number;
+ };
+@@ -82,10 +83,10 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      >
++      > & { goal_def?: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -213,6 +214,33 @@ function setCarryover(
+   });
+ }
+ 
++// A category is managed by templates if any template has been saved for it
++function hasSavedTemplates(goalDef?: string | null): boolean {
++  if (!goalDef) return false;
++  try {
++    const parsed = JSON.parse(goalDef);
++    return Array.isArray(parsed) ? parsed.length > 0 : parsed != null;
++  } catch {
++    return true;
++  }
++}
++
++// Categories that month-wide actions may write to: not hidden, not in a
++// hidden group, and not managed by saved templates
++async function getFillableCategories() {
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { goal_def?: string | null }
++  >(
++    `
++  SELECT c.*
++  FROM categories c
++  LEFT JOIN category_groups g ON c.cat_group = g.id
++  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  `,
++  );
++  return categories.filter(cat => !hasSavedTemplates(cat.goal_def));
++}
++
+ // Actions
+ 
+ export async function copyPreviousMonth({
+@@ -232,6 +260,9 @@ export async function copyPreviousMonth({
+       if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
+         return;
+       }
++      if (hasSavedTemplates(prevBudget.goal_def)) {
++        return;
++      }
+       void setBudget({
+         category: prevBudget.category,
+         month,
+@@ -259,9 +290,7 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
+-  );
++  const categories = await getFillableCategories();
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+@@ -278,14 +307,7 @@ export async function set3MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getFillableCategories();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -313,14 +335,7 @@ export async function set12MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getFillableCategories();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -337,14 +352,7 @@ export async function set6MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getFillableCategories();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {

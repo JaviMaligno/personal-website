@@ -1,0 +1,199 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index eda841c..4f1fc91 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -5,6 +5,7 @@ import * as db from '#server/db';
+ import * as sheet from '#server/sheet';
+ 
+ import {
++  copyPreviousMonth,
+   copyUntilYearEnd,
+   coverOverbudgeted,
+   getSheetValue,
+@@ -13,6 +14,7 @@ import {
+   setCategoryCarryover,
+   setLastMonthSpending,
+   setNMonthAvg,
++  setZero,
+ } from './actions';
+ import * as budget from './base';
+ 
+@@ -204,6 +206,37 @@ describe('set budget average', () => {
+   });
+ });
+ 
++describe('fixed-cost groups', () => {
++  beforeEach(async () => {
++    await global.emptyDatabase()();
++    await setupAverageDatabase();
++    await db.insertCategoryGroup({ id: 'g2', name: 'g2', is_income: 0 });
++    await db.insertCategory({ id: 'cat2', name: 'cat2', cat_group: 'g2' });
++    await db.runQuery(
++      "INSERT INTO notes (id, note) VALUES ('g2', 'Rent etc #fixed'), ('cat1', '#fixed')",
++    );
++    await setBudget({ category: 'cat1', month: '2024-04', amount: 500 });
++    await setBudget({ category: 'cat2', month: '2024-04', amount: 700 });
++    await sheet.waitOnSpreadsheet();
++  });
++
++  afterEach(async () => {
++    await global.emptyDatabase()();
++  });
++
++  it('leaves categories of #fixed groups untouched', async () => {
++    await setZero({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
++    expect(await getSheetValue('budget202404', 'budget-cat2')).toBe(700);
++
++    await set3MonthAvg({ month: '2024-04' });
++    await copyPreviousMonth({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++    expect(await getSheetValue('budget202404', 'budget-cat2')).toBe(700);
++  });
++});
++
+ describe('coverOverbudgeted', () => {
+   beforeEach(global.emptyDatabase());
+   afterEach(global.emptyDatabase());
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index bcdb137..cbe7492 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -224,6 +224,20 @@ async function getCategoriesWithSavedTemplates(): Promise<Set<string>> {
+   return new Set(rows.map(r => r.id));
+ }
+ 
++// Groups tagged `#fixed` in their own notes hold fixed costs that month-wide
++// actions must leave alone. Tags in category notes are ignored.
++const FIXED_TAG = /(^|[^\w#])#fixed(?![\w-])/i;
++
++async function getCategoriesInFixedGroups(): Promise<Set<string>> {
++  const rows = await db.all<{ id: string; note: string }>(
++    `SELECT c.id, n.note
++     FROM categories c
++     JOIN notes n ON n.id = c.cat_group
++     WHERE c.tombstone = 0 AND n.note LIKE '%#fixed%'`,
++  );
++  return new Set(rows.filter(r => FIXED_TAG.test(r.note)).map(r => r.id));
++}
++
+ // Actions
+ 
+ export async function copyPreviousMonth({
+@@ -235,6 +249,7 @@ export async function copyPreviousMonth({
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
+   const templated = await getCategoriesWithSavedTemplates();
++  const fixed = await getCategoriesInFixedGroups();
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+@@ -244,7 +259,10 @@ export async function copyPreviousMonth({
+       if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
+         return;
+       }
+-      if (templated.has(prevBudget.category)) {
++      if (
++        templated.has(prevBudget.category) ||
++        fixed.has(prevBudget.category)
++      ) {
+         return;
+       }
+       void setBudget({
+@@ -282,11 +300,16 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+     AND ${NO_SAVED_TEMPLATE}`,
+   );
+ 
++  const fixed = await getCategoriesInFixedGroups();
++
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
++      if (fixed.has(cat.id)) {
++        return;
++      }
+       void setBudget({ category: cat.id, month, amount: 0 });
+     });
+   });
+@@ -307,11 +330,16 @@ export async function set3MonthAvg({
+   `,
+   );
+ 
++  const fixed = await getCategoriesInFixedGroups();
++
+   await batchMessages(async () => {
+     for (const cat of categories) {
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
++      if (fixed.has(cat.id)) {
++        continue;
++      }
+ 
+       let avg = await getCategoryAverage({
+         month,
+@@ -344,11 +372,15 @@ export async function setLastMonthSpending({
+   `,
+   );
+ 
++  const fixed = await getCategoriesInFixedGroups();
+   const amounts: { id: string; amount: number }[] = [];
+   for (const cat of categories) {
+     if (cat.is_income === 1 && !isTrackingBudget()) {
+       continue;
+     }
++    if (fixed.has(cat.id)) {
++      continue;
++    }
+     const sum = await getSheetValue(prevSheet, 'sum-amount-' + cat.id);
+     amounts.push({
+       id: cat.id,
+@@ -378,11 +410,16 @@ export async function set12MonthAvg({
+   `,
+   );
+ 
++  const fixed = await getCategoriesInFixedGroups();
++
+   await batchMessages(async () => {
+     for (const cat of categories) {
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
++      if (fixed.has(cat.id)) {
++        continue;
++      }
+       void setNMonthAvg({ month, N: 12, category: cat.id });
+     }
+   });
+@@ -403,11 +440,16 @@ export async function set6MonthAvg({
+   `,
+   );
+ 
++  const fixed = await getCategoriesInFixedGroups();
++
+   await batchMessages(async () => {
+     for (const cat of categories) {
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
++      if (fixed.has(cat.id)) {
++        continue;
++      }
+       void setNMonthAvg({ month, N: 6, category: cat.id });
+     }
+   });
+diff --git a/upcoming-release-notes/skip-fixed-groups-month-actions.md b/upcoming-release-notes/skip-fixed-groups-month-actions.md
+new file mode 100644
+index 0000000..95ef86b
+--- /dev/null
++++ b/upcoming-release-notes/skip-fixed-groups-month-actions.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Month-wide budget actions now skip categories in groups whose notes contain the `#fixed` tag

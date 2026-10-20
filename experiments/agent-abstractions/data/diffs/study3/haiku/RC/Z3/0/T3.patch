@@ -1,0 +1,128 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index 9002a0b..878bd9d 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -429,6 +429,76 @@ describe('linking a bank account', () => {
+     expect(bankSync.syncAccount).toHaveBeenCalled();
+   });
+ 
++  it('refuses linking into a closed account and leaves everything unchanged', async () => {
++    await db.insertAccount({
++      id: 'closed-target',
++      name: 'Old Savings',
++      closed: 1,
++    });
++
++    await expect(
++      simpleFinLinkHandler({
++        upgradingId: 'closed-target',
++        externalAccount: externalSimpleFinAccount('ext-1'),
++      }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    const target = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['closed-target'],
++    );
++    expect(target!.account_id).toBeNull();
++    expect(target!.bank).toBeNull();
++    expect(target!.account_sync_source).toBeNull();
++    const banks = await db.all<db.DbBank>('SELECT * FROM banks');
++    expect(banks).toHaveLength(0);
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('refuses re-linking the closed account that holds the bank account', async () => {
++    await db.insertAccount({
++      id: 'closed-linked',
++      name: 'Old Checking',
++      closed: 1,
++      account_id: 'ext-1',
++      account_sync_source: 'simpleFin',
++    });
++
++    await expect(
++      simpleFinLinkHandler({
++        upgradingId: 'closed-linked',
++        externalAccount: externalSimpleFinAccount('ext-1'),
++      }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('allows linking into an account once it is reopened', async () => {
++    await db.insertAccount({
++      id: 'reopened',
++      name: 'Savings',
++      closed: 1,
++    });
++    await db.update('accounts', { id: 'reopened', closed: 0 });
++
++    await simpleFinLinkHandler({
++      upgradingId: 'reopened',
++      externalAccount: externalSimpleFinAccount('ext-1'),
++    });
++
++    const account = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['reopened'],
++    );
++    expect(account!.account_id).toBe('ext-1');
++    expect(bankSync.syncAccount).toHaveBeenCalled();
++  });
++
+   it('allows re-linking into the account that already holds the bank account', async () => {
+     await db.insertAccount({
+       id: 'linked',
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 6985bb9..0ae838b 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -196,6 +196,24 @@ async function linkBankSyncAccount({
+   fileId,
+   syncEventTables,
+ }: LinkBankSyncAccountParams) {
++  let accRow: db.DbAccount | null = null;
++  if (upgradingId) {
++    accRow = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      [upgradingId],
++    );
++
++    if (!accRow) {
++      throw new Error(`Account with ID ${upgradingId} not found.`);
++    }
++
++    if (accRow.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const linkedAccount = await db.first<Pick<db.DbAccount, 'id'>>(
+     'SELECT id FROM accounts WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0 AND id IS NOT ?',
+     [accountSyncSource, externalAccountId, upgradingId ?? null],
+@@ -207,16 +225,7 @@ async function linkBankSyncAccount({
+   const bank = await link.findOrCreateBank(institution, bankId);
+ 
+   let id: string;
+-  if (upgradingId) {
+-    const accRow = await db.first<db.DbAccount>(
+-      'SELECT * FROM accounts WHERE id = ?',
+-      [upgradingId],
+-    );
+-
+-    if (!accRow) {
+-      throw new Error(`Account with ID ${upgradingId} not found.`);
+-    }
+-
++  if (accRow) {
+     id = accRow.id;
+     await db.update('accounts', {
+       id,

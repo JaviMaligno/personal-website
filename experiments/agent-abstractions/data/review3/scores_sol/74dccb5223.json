@@ -1,0 +1,45 @@
+{
+ "id": "74dccb5223",
+ "reuse": {
+  "score": 4,
+  "why": "The API and existing schedule consumers share the amount calculation and reuse getApproxNumberThreshold, but several callers retain missing-amount dispatch outside the shared definition."
+ },
+ "duplication": {
+  "score": 4,
+  "why": "Range and approximate calculations are centralized, although three callers repeat the missing-amount fallback already provided by getScheduledAmount."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Schedule amount policy belongs in shared/schedules, tolerance remains in shared/rules, and API serialization stays in api-models."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on expected schedule amounts, their consumers, supporting tests, and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The shared calculation improves ownership, but overlapping helpers with different null handling, an optional operator omitted by existing consumers, and stale policy comments make the contract harder to maintain."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "updateActions and postTransactionForSchedule in server/schedules/app.ts, plus computeSchedulePreviewTransactions in shared/schedules.ts, retain local missing-amount dispatch instead of using getScheduledAmount's complete fallback."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The remaining missing-amount checks are explicit; range and approximate arithmetic are shared rather than reshaped into copies."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 3,
+  "where": "getScheduledAmount gains an optional op parameter and delegates to getExpectedAmount, which adds an isapprox branch; three callers bypass the wrapper's missing-amount handling with local guards."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 46.7
+ }
+}

@@ -1,0 +1,68 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 86a0fd6..59735e7 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -47,6 +47,22 @@ describe('schedules', () => {
+       expect(getScheduledAmount(-123)).toBe(-123);
+       expect(getScheduledAmount(null)).toBe(0);
+     });
++
++    it.each([
++      [-10000, -10750],
++      [10000, 10750],
++      [-1234, -1327],
++    ])('uses the approximate amount tolerance for %i', (amount, expected) => {
++      expect(
++        getScheduledAmount(amount, false, 'roundedMidpoint', 'isapprox'),
++      ).toBe(expected);
++    });
++
++    it('does not adjust exact amounts', () => {
++      expect(getScheduledAmount(10000, false, 'roundedMidpoint', 'is')).toBe(
++        10000,
++      );
++    });
+   });
+ 
+   describe('getStatus', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index cbebe16..6ea9950 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -379,16 +379,22 @@ export function applyWeekendRuleToDay(
+ 
+ // The amount a schedule is expected to post. For a ranged ("is between") amount,
+ // use the endpoint furthest from zero so planning covers the worst case.
++// For an approximate amount, use the end of its tolerance furthest from zero.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+   rangeRounding: 'roundedMidpoint' | 'halfOfRoundedSum' = 'roundedMidpoint',
++  amountOp?: string,
+ ): number {
+   // this check is temporary, and required at the moment as a schedule rule
+   // allows the amount condition to be deleted which causes a crash
+   if (amount == null) return 0;
+ 
+   if (typeof amount === 'number') {
++    if (amountOp === 'isapprox') {
++      const tolerance = Math.round(Math.abs(amount) * 0.075);
++      amount += amount < 0 ? -tolerance : tolerance;
++    }
+     return inverse ? -amount : amount;
+   }
+   const expectedAmount =
+@@ -528,7 +534,12 @@ export function computeSchedulePreviewTransactions(
+         id: 'preview/' + schedule.id + `/${date}`,
+         payee: schedule._payee,
+         account: schedule._account,
+-        amount: getScheduledAmount(schedule._amount),
++        amount: getScheduledAmount(
++          schedule._amount,
++          false,
++          'roundedMidpoint',
++          schedule._amountOp,
++        ),
+         date,
+         schedule: schedule.id,
+         forceUpcoming:

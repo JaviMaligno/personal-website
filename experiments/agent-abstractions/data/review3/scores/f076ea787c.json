@@ -1,0 +1,11 @@
+{"id":"f076ea787c",
+"reuse":{"score":3,"why":"Adds a shared skipsWeekendOccurrences predicate and reuses getNextDate/getDateWithSkippedWeekend, but no single shared function applies the full skip-or-move rule, so each site wires it up itself."},
+"duplication":{"score":3,"why":"The 'filter weekend days if daily, else move with getDateWithSkippedWeekend' logic is written separately in getNextDate, getUpcomingDates and the schedule-template loop, along with the WEEKDAY_LOOKAHEAD over-fetch."},
+"placement":{"score":4,"why":"The predicate and lookahead constant live in shared/schedules where the weekend rules live, though the application of the rule is spread into server/schedules/app.ts and budget/schedule-template.ts."},
+"scope":{"score":5,"why":"Changes are limited to the weekend rule's call sites, the frequency passthrough, tests, docs and a release note."},
+"maintainability":{"score":3,"why":"A future change to weekend handling must be mirrored across three hand-rolled skip/move implementations with subtly different shapes (one site relies on getNextDate's noSkipWeekend flag being inverted)."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Skip-or-move logic reshaped three ways: .find(!isWeekend) + ternary in shared/schedules.ts getNextDate, .filter(!isWeekend).slice + ternary in server/schedules/app.ts getUpcomingDates, getEffectiveDate closure in budget/schedule-template.ts createScheduleList."},
+"one_place":{"value":false,"where":"Only the 'is daily with skipWeekend' predicate is shared (skipsWeekendOccurrences); the skip-vs-move application is reimplemented in getNextDate, getUpcomingDates and schedule-template.ts."}}

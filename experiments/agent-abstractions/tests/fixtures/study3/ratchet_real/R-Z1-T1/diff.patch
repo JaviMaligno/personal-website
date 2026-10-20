@@ -1,0 +1,54 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..7f725d2 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -71,0 +72 @@ type BudgetData = {
++  goal_def?: string | null;
+@@ -85 +86 @@ function getBudgetData<T extends BudgetTable>(
+-      >
++      > & { goal_def?: string | null }
+@@ -88 +89 @@ function getBudgetData<T extends BudgetTable>(
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+@@ -108,0 +110,5 @@ function getAllMonths(startMonth: string): string[] {
++// Saved templates are stored in `goal_def`; an empty list counts as none.
++function hasSavedTemplates(goalDef: string | null | undefined): boolean {
++  return goalDef != null && goalDef !== '' && goalDef.trim() !== '[]';
++}
++
+@@ -234,0 +241,3 @@ export async function copyPreviousMonth({
++      if (hasSavedTemplates(prevBudget.goal_def)) {
++        return;
++      }
+@@ -262,2 +271,7 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++    `
++  SELECT c.*
++  FROM categories c
++  LEFT JOIN category_groups g ON c.cat_group = g.id
++  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  `,
+@@ -270,0 +285,3 @@ export async function setZero({ month }: { month: string }): Promise<void> {
++      if (hasSavedTemplates(cat.goal_def)) {
++        return;
++      }
+@@ -294,0 +312,3 @@ export async function set3MonthAvg({
++      if (hasSavedTemplates(cat.goal_def)) {
++        continue;
++      }
+@@ -329,0 +350,3 @@ export async function set12MonthAvg({
++      if (hasSavedTemplates(cat.goal_def)) {
++        continue;
++      }
+@@ -353,0 +377,3 @@ export async function set6MonthAvg({
++      if (hasSavedTemplates(cat.goal_def)) {
++        continue;
++      }
+diff --git a/packages/loot-core/src/server/db/types/index.ts b/packages/loot-core/src/server/db/types/index.ts
+index ee0000a..fdb45b8 100644
+--- a/packages/loot-core/src/server/db/types/index.ts
++++ b/packages/loot-core/src/server/db/types/index.ts
+@@ -343,0 +344 @@ export type DbViewCategoryWithGroupHidden = {
++  goal_def?: DbCategory['goal_def'];

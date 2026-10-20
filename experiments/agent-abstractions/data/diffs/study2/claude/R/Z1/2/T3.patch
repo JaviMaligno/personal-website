@@ -1,0 +1,189 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 2f43c65..cfe9f9c 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -76,12 +76,27 @@ function hasSavedTemplates(goalDef?: string | null): boolean {
+   }
+ }
+ 
++const FIXED_GROUP_TAG = /(^|\s)#fixed(?![\w-])/;
++
++// Month-wide actions leave categories with saved templates and categories in
++// groups tagged `#fixed` (in the group's notes) untouched.
++function isSkippedCategory(cat: {
++  goal_def?: string | null;
++  group_notes?: string | null;
++}): boolean {
++  return (
++    hasSavedTemplates(cat.goal_def) ||
++    FIXED_GROUP_TAG.test(cat.group_notes ?? '')
++  );
++}
++
+ // TODO: complete list of fields.
+ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
+   goal_def?: string | null;
++  group_notes?: string | null;
+   category: string;
+   amount: number;
+ };
+@@ -95,13 +110,15 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden' | 'goal_def'
+-      >
++      > & { group_notes: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++      n.note AS group_notes
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -245,7 +262,7 @@ export async function copyPreviousMonth({
+       if (
+         prevBudget.hidden === 1 ||
+         prevBudget.group_hidden === 1 ||
+-        hasSavedTemplates(prevBudget.goal_def)
++        isSkippedCategory(prevBudget)
+       ) {
+         return;
+       }
+@@ -276,11 +293,14 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { group_notes: string | null }
++  >(
+     `
+-  SELECT c.*
++  SELECT c.*, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+@@ -290,7 +310,7 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+-      if (hasSavedTemplates(cat.goal_def)) {
++      if (isSkippedCategory(cat)) {
+         return;
+       }
+       void setBudget({ category: cat.id, month, amount: 0 });
+@@ -303,11 +323,14 @@ export async function set3MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { group_notes: string | null }
++  >(
+     `
+-  SELECT c.*
++  SELECT c.*, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+@@ -317,7 +340,7 @@ export async function set3MonthAvg({
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+-      if (hasSavedTemplates(cat.goal_def)) {
++      if (isSkippedCategory(cat)) {
+         continue;
+       }
+ 
+@@ -341,11 +364,14 @@ export async function setLastMonthSpending({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { group_notes: string | null }
++  >(
+     `
+-  SELECT c.*
++  SELECT c.*, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+@@ -356,7 +382,7 @@ export async function setLastMonthSpending({
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+-      if (hasSavedTemplates(cat.goal_def)) {
++      if (isSkippedCategory(cat)) {
+         continue;
+       }
+ 
+@@ -374,11 +400,14 @@ export async function set12MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { group_notes: string | null }
++  >(
+     `
+-  SELECT c.*
++  SELECT c.*, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+@@ -388,7 +417,7 @@ export async function set12MonthAvg({
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+-      if (hasSavedTemplates(cat.goal_def)) {
++      if (isSkippedCategory(cat)) {
+         continue;
+       }
+       void setNMonthAvg({ month, N: 12, category: cat.id });
+@@ -401,11 +430,14 @@ export async function set6MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { group_notes: string | null }
++  >(
+     `
+-  SELECT c.*
++  SELECT c.*, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+   `,
+   );
+@@ -415,7 +447,7 @@ export async function set6MonthAvg({
+       if (cat.is_income === 1 && !isTrackingBudget()) {
+         continue;
+       }
+-      if (hasSavedTemplates(cat.goal_def)) {
++      if (isSkippedCategory(cat)) {
+         continue;
+       }
+       void setNMonthAvg({ month, N: 6, category: cat.id });

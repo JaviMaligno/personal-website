@@ -1,0 +1,12 @@
+{"id":"8f468199ea",
+"reuse":{"score":1,"why":"The tree already exports getScheduledAmount in shared/schedules.ts (null to 0, number as-is, range at the end furthest from zero), used by forecast and schedules/app, but the diff writes its own getExpectedScheduleAmount instead of calling it."},
+"duplication":{"score":2,"why":"getExpectedScheduleAmount duplicates the whole getScheduledAmount decision, with a different tie-break (> instead of >=) that can already drift."},
+"placement":{"score":3,"why":"Mapping the field in scheduleModel.toExternal is the right layer, but the amount rule itself belongs in shared/schedules.ts, not a private helper in api-models.ts."},
+"scope":{"score":5,"why":"Only the API model, its type and a focused test are changed."},
+"maintainability":{"score":2,"why":"A second private copy of the expected-amount rule means a future rule change (e.g. worst case for income) will silently miss the API."},
+"bypasses_abstraction":{"value":true,"where":"packages/loot-core/src/server/api-models.ts getExpectedScheduleAmount re-implements getScheduledAmount from #shared/schedules."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getExpectedScheduleAmount in api-models.ts: getScheduledAmount's null/number/range logic renamed, with the checks reordered and the comparison flipped (num1 > num2 instead of >=)."},
+"t2_reuse":"reimplements"
+}

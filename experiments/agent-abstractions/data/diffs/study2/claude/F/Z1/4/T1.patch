@@ -1,0 +1,115 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index f33e2f1..b0b9adf 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -85,7 +85,7 @@ function getBudgetData<T extends BudgetTable>(
+       >
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+@@ -215,26 +215,39 @@ function setCarryover(
+ 
+ // Bulk actions
+ 
+-type BulkBudgetCategory = Pick<db.DbCategory, 'id' | 'is_income' | 'hidden'> & {
++type BulkBudgetCategory = Pick<
++  db.DbCategory,
++  'id' | 'is_income' | 'hidden' | 'goal_def'
++> & {
+   group_hidden: db.DbCategoryGroup['hidden'] | null;
+ };
+ 
++function hasSavedTemplates(goalDef: string | null | undefined): boolean {
++  if (!goalDef) {
++    return false;
++  }
++  try {
++    const parsed = JSON.parse(goalDef);
++    return Array.isArray(parsed) && parsed.length > 0;
++  } catch {
++    return false;
++  }
++}
++
+ // The categories a bulk budget action (copy last month, set to zero, set to an
+ // N-month average) writes. Income categories take part only in tracking
+-// budgets. Hidden categories and categories in hidden groups are
+-// skipped unless `includeHidden` (set to zero writes every category).
++// budgets. Hidden categories, categories in hidden groups and categories with
++// saved budget templates are skipped.
+ // `skipMissingGroup` also skips a category whose group row does not exist: the
+ // average actions have always done so, copy last month has not.
+ async function getBulkBudgetCategories({
+-  includeHidden,
+   skipMissingGroup,
+ }: {
+-  includeHidden: boolean;
+   skipMissingGroup: boolean;
+ }): Promise<BulkBudgetCategory[]> {
+   const categories = await db.all<BulkBudgetCategory>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden
++  SELECT c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   WHERE c.tombstone = 0
+@@ -246,12 +259,12 @@ async function getBulkBudgetCategories({
+     if (cat.is_income === 1 && !tracking) {
+       return false;
+     }
+-    if (includeHidden) {
+-      return true;
+-    }
+     if (cat.hidden === 1 || cat.group_hidden === 1) {
+       return false;
+     }
++    if (hasSavedTemplates(cat.goal_def)) {
++      return false;
++    }
+     return !(skipMissingGroup && cat.group_hidden == null);
+   });
+ }
+@@ -278,7 +291,6 @@ export async function copyPreviousMonth({
+   const targets = new Set(
+     (
+       await getBulkBudgetCategories({
+-        includeHidden: false,
+         skipMissingGroup: false,
+       })
+     ).map(cat => cat.id),
+@@ -317,7 +329,6 @@ export async function copySinglePreviousMonth({
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+-    includeHidden: true,
+     skipMissingGroup: false,
+   });
+ 
+@@ -334,7 +345,6 @@ export async function set3MonthAvg({
+   month: string;
+ }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+-    includeHidden: false,
+     skipMissingGroup: true,
+   });
+ 
+@@ -361,7 +371,6 @@ export async function set12MonthAvg({
+   month: string;
+ }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+-    includeHidden: false,
+     skipMissingGroup: true,
+   });
+ 
+@@ -378,7 +387,6 @@ export async function set6MonthAvg({
+   month: string;
+ }): Promise<void> {
+   const categories = await getBulkBudgetCategories({
+-    includeHidden: false,
+     skipMissingGroup: true,
+   });
+ 

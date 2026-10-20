@@ -1,0 +1,12 @@
+{"id":"7c1c9a7d7d",
+"reuse":{"score":4,"why":"Adds a shared isDailyWeekendSkip predicate and search-limit constant in shared/schedules.ts, used by getNextDate, getUpcomingDates and schedule-template, which keeps using getNextDate and getDateWithSkippedWeekend."},
+"duplication":{"score":4,"why":"The decision is shared; only the 'drop weekend dates' filter is written twice (getNextDate and getUpcomingDates)."},
+"placement":{"score":4,"why":"The predicate lives with the other schedule date logic in shared/schedules.ts; getUpcomingDates still applies the filtering itself in the server layer."},
+"scope":{"score":5,"why":"Only the weekend paths, the frequency in schedule data and focused tests change."},
+"maintainability":{"score":4,"why":"A named predicate and constant make the rule discoverable; schedule-template's `!isDailyWeekendSkipped` as the noSkipWeekend argument is a slightly indirect way to opt in."},
+"bypasses_abstraction":{"value":false,"where":"All paths decide via isDailyWeekendSkip; getUpcomingDates filters occurrences itself rather than through getNextDate, which matches the pre-existing structure."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The weekend filter in getUpcomingDates mirrors the find() in getNextDate but is a one-line filter over a shared predicate, not a reshaped copy of a block."},
+"one_place":{"value":true,"where":"isDailyWeekendSkip in shared/schedules.ts decides the rule for getNextDate, getUpcomingDates (server/schedules/app.ts) and createScheduleList (server/budget/schedule-template.ts); the weekday filter itself is applied in two places."}
+}

@@ -1,0 +1,93 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index c87012d..4b6ec3f 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -599,6 +599,70 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2020, 11, 7))).toBe('2020-12-14');
+     });
+ 
++    it('skips a holiday given as month and day in every year', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-07',
++          frequency: 'weekly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'before',
++          holidays: ['12-07'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 7))).toBe('2020-12-04');
++    });
++
++    it('skips a month and day holiday in a later year', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2021-12-07',
++          frequency: 'weekly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'before',
++          holidays: ['12-07'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2021, 11, 7))).toBe('2021-12-06');
++    });
++
++    it('mixes month and day holidays with full date holidays', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-07',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-07', '2020-12-08'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 7))).toBe('2020-12-09');
++    });
++
++    it('does not treat a full date holiday as a recurring one', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2021-12-07',
++          frequency: 'weekly',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'before',
++          holidays: ['2020-12-07'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2021, 11, 7))).toBe('2021-12-07');
++    });
++
+     it('ignores holidays when weekend handling is off', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 5df52e0..974b177 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -294,7 +294,12 @@ export function isWeekendOrHoliday(
+   date: Date,
+   holidays: readonly string[] = [],
+ ): boolean {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  if (d.isWeekend(date)) {
++    return true;
++  }
++  const day = monthUtils.dayFromDate(date);
++  const monthDay = day.slice(5);
++  return holidays.includes(day) || holidays.includes(monthDay);
+ }
+ 
+ export function skipsWeekendOccurrences(config: {

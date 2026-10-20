@@ -1,0 +1,11 @@
+{"id":"aefb1ff530",
+"reuse":{"score":4,"why":"Introduces getMonthWideCategories for setZero and the averages and reuses setNMonthAvg for the per-category average, but copyPreviousMonth keeps its own getBudgetData path."},
+"duplication":{"score":3,"why":"The three copied average actions collapse into one, but the exclusion rule is still written twice: the template filter in both getBudgetData and getMonthWideCategories SQL, and the hidden filter in SQL for some actions and in JS for copyPreviousMonth."},
+"placement":{"score":4,"why":"Selection stays in server/budget/actions.ts; the template exclusion is pushed into the generic-sounding getBudgetData query rather than kept with the month-wide selection."},
+"scope":{"score":4,"why":"Consolidating set3/6/12MonthAvg onto setNMonthAvg goes a little beyond the request, though it is in the touched code and removes copies."},
+"maintainability":{"score":3,"why":"A future change to which categories month-wide actions skip has to be made in two SQL queries and one JS check that can drift apart."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth does not use getMonthWideCategories; it relies on a goal_def filter added to getBudgetData plus its own hidden/group_hidden check."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The exclusion rule is split across getMonthWideCategories (SQL hidden + goal_def), getBudgetData (SQL goal_def) and copyPreviousMonth (JS hidden check)."},
+"one_place":{"value":false,"where":"Template exclusion is in two SQL queries (getMonthWideCategories, getBudgetData) and hidden exclusion in getMonthWideCategories SQL and copyPreviousMonth JS."}}

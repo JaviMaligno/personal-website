@@ -1,0 +1,12 @@
+{"id":"597a4eea3c",
+"reuse":{"score":3,"why":"Extends the existing shared getScheduleAmount and threads the op through its callers, but re-derives the 7.5% tolerance inline instead of calling getApproxNumberThreshold from shared/rules.ts, which defines the matching tolerance."},
+"duplication":{"score":3,"why":"`Math.round(Math.abs(amount) * 0.075)` copies getApproxNumberThreshold, so the tolerance used for planning and for matching can now drift apart."},
+"placement":{"score":5,"why":"The rule lives in shared/schedules.ts getScheduleAmount, and callers only pass their own op field."},
+"scope":{"score":5,"why":"Only the helper, its four callers, the raw type and a test change."},
+"maintainability":{"score":4,"why":"One optional op parameter is a clean extension; the duplicated tolerance constant is the one thing a maintainer would have to keep in sync."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getScheduleAmount computes the approx tolerance itself instead of using getApproxNumberThreshold (shared/rules.ts)."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The tolerance expression is copied verbatim from getApproxNumberThreshold, not disguised."},
+"one_place":{"value":true,"where":"shared/schedules.ts getScheduleAmount(amount, op), used by api-models.ts, forecast-schedules.ts, schedules/app.ts (updateActions, postTransactionForSchedule) and computeSchedulePreviewTransactions; the budget template and client getScheduledAmount never used the worst-case rule in this tree."}
+}

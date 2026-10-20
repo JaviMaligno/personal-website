@@ -1,0 +1,12 @@
+{"id":"dd74c121ab",
+"reuse":{"score":4,"why":"Holiday moving is threaded through the existing applyWeekendRule/applyWeekendRuleToDay/getDateWithSkippedWeekend chain, but the schedule-template site reads holidays from a schedule.data path instead of the config field its siblings use."},
+"duplication":{"score":3,"why":"The move rule is written once, but the daily-skip half is added by repeating 'exdates: getHolidayExdates(config)' at all four hand-built RSchedule constructions instead of in one schedule factory."},
+"placement":{"score":4,"why":"Holiday logic sits in shared/schedules.ts next to the weekend rule; the recurrence-building knowledge (which exdates to add) is still spread over server modules."},
+"scope":{"score":5,"why":"Only the holiday feature, its type field and tests are touched."},
+"maintainability":{"score":3,"why":"Any new RSchedule construction must remember to add holiday exdates, and the inconsistent holidays lookup in schedule-template shows how easily a site drifts."},
+"bypasses_abstraction":{"value":false,"where":"Callers use applyWeekendRule/applyWeekendRuleToDay; no site re-implements the move."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated RSchedule-with-exdates construction is copied openly, not reshaped."},
+"one_place":{"value":false,"where":"Moving lands in getDateWithSkippedWeekend, but skipping depends on each of four RSchedule constructions (rule-utils, app.ts x2, find-schedules) passing getHolidayExdates, and schedule-template.ts feeds holidays from dateConditions.value.schedule?.data?.holidays rather than the config field."}
+}

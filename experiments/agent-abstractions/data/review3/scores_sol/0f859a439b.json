@@ -1,0 +1,44 @@
+{
+ "id": "0f859a439b",
+ "reuse": {
+  "score": 3,
+  "why": "The API, forecast, and posting paths reuse getScheduledAmount, but approximate tolerance arithmetic duplicates the existing getApproxNumberThreshold helper."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Several midpoint implementations are consolidated, but preview amount dispatch remains independent and tolerance calculation is duplicated."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Expected-amount policy belongs in shared/schedules.ts, with API field mapping appropriately kept in scheduleModel.toExternal."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on schedule expected amounts, their consumers, and associated tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralization improves ownership, but the remaining preview implementation, duplicated tolerance policy, and optional string operator leave multiple ways for consumers to drift."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "getScheduledAmount calculates tolerance directly instead of calling shared/rules.ts:getApproxNumberThreshold; computeSchedulePreviewTransactions retains local amount calculation instead of using getScheduledAmount."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The duplicated tolerance arithmetic and retained preview dispatch are explicit rather than renamed or reshaped to conceal duplication."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "getScheduledAmount gains optional amountOp and an isapprox branch, while computeSchedulePreviewTransactions retains its independent amount dispatch; existing planning calls in Balance.tsx also omit the newly required operator context."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 33.6
+ }
+}

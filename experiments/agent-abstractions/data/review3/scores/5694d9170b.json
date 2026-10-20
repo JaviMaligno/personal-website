@@ -1,0 +1,12 @@
+{"id":"5694d9170b",
+"reuse":{"score":3,"why":"Fintegra linking reuses the tree's shared linkBankSyncAccount and findOrCreateBank, but the guard is called from each provider instead of inside linkBankSyncAccount, the holder reset copies unlinkAccount's update, and the Fintegra download copies the Akahu one."},
+"duplication":{"score":2,"why":"downloadFintegraTransactions is a verbatim copy of downloadAkahuTransactions, the clearing db.updateAccount in linkBankSyncAccount repeats unlinkAccount's, and the same five-line assert-and-pass-replacedIds block is repeated in all six provider functions."},
+"placement":{"score":3,"why":"The new guard is inserted between linkBankSyncAccount and its doc comment, so the comment now describes the wrong function; the rules belong in the shared linkBankSyncAccount the tree already routes every provider through, rather than split between a per-provider pre-call and a replacedIds parameter."},
+"scope":{"score":4,"why":"All edits serve the four steps; the client edits are the minimum the provider type forces, though the models index export is placed out of alphabetical order."},
+"maintainability":{"score":3,"why":"Splitting the link rules between assertBankAccountNotLinked (which returns ids despite its name) and linkBankSyncAccount (which now unlinks other accounts via replacedIds) means each new provider must remember both steps."},
+"bypasses_abstraction":{"value":true,"where":"linkBankSyncAccount in accounts/app.ts resets replaced holders with its own db.updateAccount instead of sharing the local part of unlinkAccount; the guard runs in each provider instead of in the shared linkBankSyncAccount."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied download function and clearing block are literal copies; the per-provider guard calls are plain repetition."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":0,"where":"assertBankAccountNotLinked gains replaceExistingLink and turns from a check into a function returning ids to replace; the shared linkBankSyncAccount gains a replacedIds parameter and a loop that unlinks other accounts before linking."}
+}

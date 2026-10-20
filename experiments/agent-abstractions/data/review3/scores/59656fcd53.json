@@ -1,0 +1,12 @@
+{"id": "59656fcd53",
+ "reuse": {"score": 5, "why": "Extends the existing getDateWithSkippedWeekend and findWeekdayOccurrence helpers instead of adding parallel holiday logic, and every weekend site in the tree now uses them."},
+ "duplication": {"score": 4, "why": "A single isNonWorkingDay predicate replaces the scattered d.isWeekend checks; the pre-existing daily-skip vs. shift dispatch in getUpcomingDates/getDatesInRange/getNextDate is still repeated, but the diff adds no new copy."},
+ "placement": {"score": 5, "why": "The predicate and the shift live in shared/schedules.ts; the type gains the optional field in models/schedule.ts and parseRecurDate carries it, matching the tree's layering."},
+ "scope": {"score": 5, "why": "Touches only the type, the recur parser, the shared date helpers and their callers."},
+ "maintainability": {"score": 4, "why": "One definition of a non-working day is easy to own, though holidays is threaded by hand through every call and the search margins grow by holidays.length as a heuristic."},
+ "bypasses_abstraction": {"value": false, "where": "all weekend checks in app.ts and schedule-template.ts now go through isNonWorkingDay/getDateWithSkippedWeekend"},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "none; the inline isWeekend checks were replaced by the shared predicate"},
+ "one_place": {"value": true, "where": "isNonWorkingDay and getDateWithSkippedWeekend in packages/loot-core/src/shared/schedules.ts, used by getNextDate, findWeekdayOccurrence, getUpcomingDates, getDatesInRange and schedule-template"}
+}

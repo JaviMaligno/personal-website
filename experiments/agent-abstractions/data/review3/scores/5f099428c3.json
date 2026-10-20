@@ -1,0 +1,12 @@
+{"id": "5f099428c3",
+"reuse": {"score": 3, "why": "Reuses findOrCreateBank, syncAccount, handleSyncResponse, post/BankSyncError and introduces one shared guard for all link handlers, but re-types unlinkAccount's field reset instead of sharing it and adds Fintegra by copying instead of factoring the near-identical link/download functions."},
+"duplication": {"score": 2, "why": "linkFintegraAccount is a near-verbatim copy of linkSimpleFinAccount, downloadFintegraTransactions copies downloadAkahuTransactions, and the detach loop copies unlinkAccount's updateAccount block."},
+"placement": {"score": 4, "why": "Guard lives in accounts/app.ts next to the link handlers, download function in sync.ts, server URL in server-config.ts and type in types/models, matching the tree's layering."},
+"scope": {"score": 4, "why": "Changes are confined to the four requested behaviours plus release notes; the guard folding the closed-account rule and unlinking into one function is the only stretch."},
+"maintainability": {"score": 3, "why": "A single guard called by every link handler is good, but a function named assert... that also mutates (unlinks previous holders) and checks closed state is surprising, and a sixth copied provider function grows the copy burden."},
+"bypasses_abstraction": {"value": false, "where": "All link handlers route through assertBankAccountNotLinked; the detach loop re-implements unlinkAccount's reset (unlinkAccount is a handler with GoCardless side effects, so not directly callable), counted as duplication rather than bypass."},
+"duplicated_blocks": 3,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "The copies (linkFintegraAccount vs linkSimpleFinAccount, downloadFintegraTransactions vs downloadAkahuTransactions, detach reset vs unlinkAccount) are plain, recognisable copies, not reshaped."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 0, "where": "assertBankAccountNotLinked in accounts/app.ts: step 4 adds replaceExistingLink and the detach loop (side effects inside an assert), step 3 adds the closed-account branch plus an odd '!target && existing.length > 0' not-found branch; all six link handlers call it."}
+}

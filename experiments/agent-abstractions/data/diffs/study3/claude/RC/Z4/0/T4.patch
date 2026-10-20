@@ -1,0 +1,90 @@
+diff --git a/packages/loot-core/src/shared/schedules-holidays.test.ts b/packages/loot-core/src/shared/schedules-holidays.test.ts
+index e5b7ade..cd8c050 100644
+--- a/packages/loot-core/src/shared/schedules-holidays.test.ts
++++ b/packages/loot-core/src/shared/schedules-holidays.test.ts
+@@ -37,3 +37,24 @@ it('treats holidays like weekend days', () => {
+     ),
+   ).toBe('2024-01-02');
+ });
++
++it('supports yearly MM-DD holidays alongside full dates', () => {
++  const mk = (from: string, holidays: string[]) =>
++    getNextDate(
++      {
++        op: 'is',
++        value: {
++          frequency: 'daily',
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          start: '2024-01-01',
++          holidays,
++        },
++      },
++      new Date(from),
++    );
++  expect(mk('2025-12-25', ['12-25'])).toBe('2025-12-26');
++  expect(mk('2030-12-25', ['12-25'])).toBe('2030-12-26');
++  expect(mk('2024-12-25', ['2024-12-25', '07-04'])).toBe('2024-12-26');
++  expect(mk('2025-12-25', ['2024-12-25'])).toBe('2025-12-25');
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index e3c56a8..1b52788 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -381,7 +381,11 @@ export function applyWeekendRuleToDay(
+ }
+ 
+ function isOffDay(date: Date, holidays: Set<string> | null) {
+-  return d.isWeekend(date) || !!holidays?.has(monthUtils.dayFromDate(date));
++  if (d.isWeekend(date)) return true;
++  if (!holidays) return false;
++  const day = monthUtils.dayFromDate(date);
++  // Entries are either a full YYYY-MM-DD date or a yearly MM-DD
++  return holidays.has(day) || holidays.has(day.slice(5));
+ }
+ 
+ export function getDateWithSkippedWeekend(
+@@ -410,9 +414,28 @@ export function getMaxWeekendShift(holidays?: string[]): number {
+ // Dates a daily schedule must skip: its holidays (when weekend handling is on).
+ export function recurConfigToExdates(config): Date[] {
+   if (!config.skipWeekend || config.frequency !== 'daily') return [];
+-  return (config.holidays || []).map(h =>
+-    d.setHours(monthUtils.parseDate(h), 12),
+-  );
++  const startYear = Number(String(config.start ?? '').slice(0, 4));
++  const thisYear = new Date().getFullYear();
++  const firstYear = Math.min(startYear || thisYear - 10, thisYear - 10);
++  const lastYear = thisYear + 50;
++
++  const exdates: Date[] = [];
++  for (const h of config.holidays || []) {
++    if (/^\d{2}-\d{2}$/.test(h)) {
++      const month = Number(h.slice(0, 2));
++      const day = Number(h.slice(3));
++      for (let year = firstYear; year <= lastYear; year++) {
++        const date = new Date(year, month - 1, day, 12);
++        // Skip days that don't exist that year (e.g. 02-29)
++        if (date.getMonth() === month - 1 && date.getDate() === day) {
++          exdates.push(date);
++        }
++      }
++    } else {
++      exdates.push(d.setHours(monthUtils.parseDate(h), 12));
++    }
++  }
++  return exdates;
+ }
+ 
+ export function getScheduledAmount(
+diff --git a/upcoming-release-notes/yearly-holidays.md b/upcoming-release-notes/yearly-holidays.md
+new file mode 100644
+index 0000000..f70901b
+--- /dev/null
++++ b/upcoming-release-notes/yearly-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow schedule holidays to be entered as `MM-DD` to repeat every year

@@ -1,0 +1,12 @@
+{"id": "87ff7fa8ad",
+ "reuse": {"score": 4, "why": "Uses the existing db.first, APIError and LinkAccountFields types in a single new helper, but does not hook into the shared linkAccountAndSync that every provider already funnels through."},
+ "duplication": {"score": 3, "why": "The rule is defined once, but the guard call is pasted into all five provider link functions, each restating the account_id and sync-source literal it passes again to linkAccountAndSync a few lines later."},
+ "placement": {"score": 4, "why": "The helper sits in server/accounts/app.ts next to linkAccountAndSync; calling it per provider is defensible because findOrCreateBank runs before the shared function, though a restructure could keep it in one layer."},
+ "scope": {"score": 5, "why": "Only the guard, its five calls and focused tests."},
+ "maintainability": {"score": 4, "why": "One clear query decides what counts as linked, but a sixth provider must remember to add the guard and keep its sync-source literal in step."},
+ "bypasses_abstraction": {"value": false, "where": "All link paths still go through linkAccountAndSync; the new check is a sibling helper called before it in each provider function"},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The five guard calls are plain repeated call sites of one helper, not reshaped copies of logic"},
+ "one_place": {"value": true, "where": "assertBankAccountNotLinked in server/accounts/app.ts holds the rule; linkGoCardlessAccount, linkSimpleFinAccount, linkPluggyAiAccount, linkAkahuAccount and linkEnableBankingAccount all call it (rather than linkAccountAndSync calling it once)"}
+}

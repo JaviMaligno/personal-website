@@ -1,0 +1,11 @@
+{"id":"52d60cfcbe",
+"reuse":{"score":3,"why":"Reuses getDateWithSkippedWeekend, recurConfigToRSchedule and a new shared isSkippedDay, but the daily-skip rule is not put into a shared function and the schedule-template.ts callers of getDateWithSkippedWeekend are not updated to pass holidays or the daily rule."},
+"duplication":{"score":2,"why":"The 'daily and skipped day -> drop, else move' decision and the occurrence-padding arithmetic (holidays.length + 3 / + 8) are written separately in getNextDate, getUpcomingDates and getDatesInRange, and getDatesInRange largely copies getUpcomingDates' map/filter pipeline."},
+"placement":{"score":4,"why":"Day classification and moving live in shared/schedules.ts where the weekend helper already was, and the new handler sits with getUpcomingDates in server/schedules/app.ts, but the per-frequency rule ends up in each caller rather than the shared layer."},
+"scope":{"score":5,"why":"Edits are confined to the schedule date logic, the new handler, the RecurConfig type and tests."},
+"maintainability":{"score":2,"why":"A future change to the weekend/holiday rule has to be made in three hand-rolled pipelines plus the untouched schedule-template.ts path, and magic padding constants are inconsistent between them."},
+"bypasses_abstraction":{"value":true,"where":"server/budget/schedule-template.ts still calls getDateWithSkippedWeekend without holidays or the daily-skip rule; getNextDate/getUpcomingDates/getDatesInRange each decide daily skipping inline instead of through one shared function"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"the daily-skip/move decision appears reshaped in getNextDate (skipDailyWeekend + find), getUpcomingDates (map returning null) and getDatesInRange (inverted condition order), each with different padding constants"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":5,"where":"getDateWithSkippedWeekend gains a holidays parameter; the daily special case is re-implemented outside it in getNextDate, getUpcomingDates and getDatesInRange, and the two schedule-template.ts calls bypass the holiday/daily rules"}}

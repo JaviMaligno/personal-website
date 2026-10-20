@@ -1,0 +1,11 @@
+{"id":"79f0944ebd",
+"reuse":{"score":3,"why":"Fintegra linking goes through the existing linkBankSyncAccount and findOrCreateBank, and the guard is one shared function, but the holder release re-codes unlinkAccount's field clearing and the download function copies downloadAkahuTransactions."},
+"duplication":{"score":2,"why":"downloadFintegraTransactions is a near-verbatim copy of downloadAkahuTransactions, and the replacedAccountIds loop in linkBankSyncAccount repeats the db.updateAccount block from unlinkAccount."},
+"placement":{"score":4,"why":"Guard and release live in accounts/app.ts next to the link helper, download in sync.ts and the base path in server-config.ts, matching the tree's layering."},
+"scope":{"score":4,"why":"All edits serve the four steps; the 'fintegra' sync source is bolted onto AccountSyncSource as a literal instead of the provider list."},
+"maintainability":{"score":3,"why":"The guard is centralised, but two copies (unlink fields, provider download) and a sync-source type that bypasses SYNC_PROVIDERS will drift."},
+"bypasses_abstraction":{"value":true,"where":"types/models/account.ts adds 'fintegra' to AccountSyncSource directly instead of to SYNC_PROVIDERS/BankSyncProviders; linkBankSyncAccount clears holders with its own db.updateAccount instead of sharing unlinkAccount's local-unlink logic."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":""},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":2,"where":"assertNotLinkedElsewhere takes a replaceExistingLink flag and linkBankSyncAccount a replacedAccountIds list; processBankSyncDownload gains a fintegra case in the akahu branch; the holder release in linkBankSyncAccount and the AccountSyncSource literal bypass existing unlink logic and the provider list."}}

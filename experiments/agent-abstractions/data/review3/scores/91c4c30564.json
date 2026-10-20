@@ -1,0 +1,12 @@
+{"id": "91c4c30564",
+"reuse": {"score": 4, "why": "Merges the three average actions' queries into getBulkEditableCategories, reads group notes from the existing notes table and reuses getSheetValue/setBudget/batchMessages; copyPreviousMonth keeps its own path over getBudgetData."},
+"duplication": {"score": 3, "why": "Removes the copied category queries, but the exclusion rule is still written twice: as SQL in getBulkEditableCategories and as JS (hasSavedTemplates, the hidden check, fixedGroupIds) in copyPreviousMonth."},
+"placement": {"score": 5, "why": "The selection, #fixed detection and template predicate sit beside getBudgetData in budget/actions.ts, and the new method is registered in budget/app.ts like its siblings."},
+"scope": {"score": 5, "why": "Only the month-wide actions, their shared selection, the new handler, tests and release notes change."},
+"maintainability": {"score": 4, "why": "A single selection function with one explicit includeHiddenCategories parameter serves five actions; the remaining JS copy of the rule in copyPreviousMonth is the one place that can drift."},
+"bypasses_abstraction": {"value": true, "where": "copyPreviousMonth applies hidden/template/#fixed rules itself on getBudgetData rows instead of using getBulkEditableCategories."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "The saved-template rule appears as SQL `c.goal_def IS NULL OR c.goal_def IN ('', '[]')` and as the JS hasSavedTemplates helper used only by copyPreviousMonth; the hidden rule is likewise a SQL fragment and a JS condition."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getBulkEditableCategories gains includeHiddenCategories and a conditional hidden filter (step 4, the requested variation); copyPreviousMonth re-implements the selection in JS across steps 1, 3 and 4."}
+}

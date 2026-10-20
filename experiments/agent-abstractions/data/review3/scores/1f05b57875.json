@@ -1,0 +1,12 @@
+{"id":"1f05b57875",
+"reuse":{"score":4,"why":"Threads holidays through the existing getDateWithSkippedWeekend that all moving call sites already use, but the daily-skip paths test holidays inline instead of through a shared predicate."},
+"duplication":{"score":3,"why":"The 'weekend or holiday' test is written three times: inside getDateWithSkippedWeekend, in getNextDate's daily loop and in getDatesInRange's daily check."},
+"placement":{"score":4,"why":"The moving rule stays in shared/schedules.ts and the type in models/schedule.ts; the daily-skip duplication in server/schedules/app.ts is pre-existing layering, extended rather than fixed."},
+"scope":{"score":5,"why":"Only the weekend-handling call sites, the recurrence data, the type and tests are touched."},
+"maintainability":{"score":3,"why":"Correctly covers every path, but a future change to what counts as a non-business day must be made in three inline expressions; the loop bound 7 + holidays.length is an ad-hoc heuristic."},
+"bypasses_abstraction":{"value":false,"where":"all date-moving call sites go through getDateWithSkippedWeekend; the daily-skip checks had no shared predicate to use"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"the inline weekend-or-holiday checks in shared/schedules.ts getNextDate and server/schedules/app.ts getDatesInRange are open repetitions, not disguised"},
+"one_place":{"value":false,"where":"The holiday-as-weekend rule is decided in getDateWithSkippedWeekend (shared/schedules.ts) and again inline in getNextDate's daily loop and getDatesInRange (server/schedules/app.ts)"}
+}

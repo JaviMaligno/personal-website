@@ -1,0 +1,11 @@
+{"id":"409fac7216",
+"reuse":{"score":3,"why":"Reuses RSchedule, recurConfigToRSchedule, getDateWithSkippedWeekend and dayFromDate, but no shared function decides the drop-vs-move weekend rule, so it re-derives it as getUpcomingDates, getNextDate and schedule-template already do."},
+"duplication":{"score":2,"why":"The daily-drops / otherwise-move weekend decision (skipWeekend && frequency === 'daily', isWeekend skip, else getDateWithSkippedWeekend) is a fourth copy of logic already in getUpcomingDates, shared/schedules getNextDate and budget schedule-template."},
+"placement":{"score":4,"why":"Handler sits next to getUpcomingDates in server/schedules/app.ts and is registered the same way, matching the tree's layering, though the weekend rule would belong in shared/schedules.ts."},
+"scope":{"score":5,"why":"Only the handler, its type registration, tests and a release note."},
+"maintainability":{"score":3,"why":"Readable and small, but a change to the weekend rule now has to be made in four places, and the 3-day padding is an implicit coupling to how far getDateWithSkippedWeekend can move a date."},
+"bypasses_abstraction":{"value":false,"where":"Uses getDateWithSkippedWeekend for moving; no existing abstraction covers the full drop/move decision to bypass."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getDatesInRange in server/schedules/app.ts: the drop/move branching from getUpcomingDates is reshaped into a single loop with a `drops` flag instead of being extracted and shared."},
+"t2_reuse":"copy"}

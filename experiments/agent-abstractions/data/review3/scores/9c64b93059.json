@@ -1,0 +1,11 @@
+{"id":"9c64b93059",
+"reuse":{"score":5,"why":"Collapses the five copied per-provider link bodies into linkBankSyncAccount, reuses link.findOrCreateBank, extracts clearAccountBankLink from unlinkAccount for the take-over, and folds Pluggy/Akahu/Fintegra downloads into one function."},
+"duplication":{"score":5,"why":"Fintegra is added as a thin adapter on shared code; the existing copies are removed rather than extended."},
+"placement":{"score":4,"why":"Linking stays in accounts/app.ts and downloading in sync.ts, but the duplicate-link guard is applied as a wrapper at app.method registration, so the internal link functions are unguarded if called directly."},
+"scope":{"score":3,"why":"The consolidation goes well beyond the requests and changes details along the way (Akahu now notifies the accounts table too, GoCardless institution coercion, mask/official_name fallbacks)."},
+"maintainability":{"score":4,"why":"One link path and one guard make each rule a single edit; the split between registration-time guard and in-handler closed check is a little surprising."},
+"bypasses_abstraction":{"value":false,"where":"All link handlers route through withBankAccountLinkGuard and linkBankSyncAccount; unlinkAccount and take-over share clearAccountBankLink."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The old per-provider bodies are deleted, not reshaped; providers differ only by arguments."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":0,"where":"linkBankSyncAccount takes an optional fileId only for Pluggy and has official_name/mask fallbacks for GoCardless; processBankSyncDownload gets an 'akahu || fintegra' branch; no call site bypasses the helpers."}}

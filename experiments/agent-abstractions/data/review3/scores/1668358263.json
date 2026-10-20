@@ -1,0 +1,11 @@
+{"id":"1668358263",
+"reuse":{"score":2,"why":"Fintegra linking reuses linkBankSyncAccount, but the replace path re-implements unlinkAccount's field-clearing update instead of sharing it, and downloadFintegraTransactions is a copy of downloadAkahuTransactions rather than a parameterised download."},
+"duplication":{"score":2,"why":"Duplicates the unlink field set from unlinkAccount, the holder SELECT (in assertBankAccountNotLinked and releaseExistingLinks), the closed-account check (in the assert helper and again in linkBankSyncAccount) and the whole Akahu download function."},
+"placement":{"score":3,"why":"Server pieces sit in the right modules (sync.ts, server-config, types), but the link preconditions are split between a provider-level assert that also checks closed state and the shared linkBankSyncAccount, which re-checks closed and performs the unlink."},
+"scope":{"score":4,"why":"Covers the four steps; the client edits are minimal type-satisfying additions, though one step-4 behaviour lacks its own release note while the rest have them."},
+"maintainability":{"score":2,"why":"Same rules live in two places each (closed check, holder query, unlink fields) and assertBankAccountNotLinked now mixes three concerns behind a misleading name, so future rule changes can easily diverge."},
+"bypasses_abstraction":{"value":true,"where":"releaseExistingLinks in linkBankSyncAccount (server/accounts/app.ts) writes its own db.updateAccount clearing block instead of going through the unlink logic in unlinkAccount."},
+"duplicated_blocks":4,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"releaseExistingLinks reshapes unlinkAccount's clearing update into a loop, and the closed-account check is split across assertBankAccountNotLinked and linkBankSyncAccount under a shared error constant rather than one definition."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":3,"bypassing_call_sites":2,"where":"replaceExistingLink added to assertBankAccountNotLinked and linkBankSyncAccount; special-case branches for the flag in the assert, the early return in releaseExistingLinks and a second closed check inside linkBankSyncAccount; releaseExistingLinks re-implements unlinkAccount's clearing and downloadFintegraTransactions copies downloadAkahuTransactions."}}

@@ -1,0 +1,114 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index cb0f75c..ec1d442 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -547,6 +547,55 @@ describe('schedules', () => {
+       expect(getNextDate(dateCond, new Date(2020, 11, 8))).toBe('2020-12-09');
+     });
+ 
++    it('skips a month-day holiday in every year for a daily schedule', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2021-12-07',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-08'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2021, 11, 7))).toBe('2021-12-07');
++      expect(getNextDate(dateCond, new Date(2021, 11, 8))).toBe('2021-12-09');
++    });
++
++    it('does not skip a full-date holiday in other years', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2021-12-07',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['2020-12-08'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2021, 11, 8))).toBe('2021-12-08');
++    });
++
++    it('moves a weekend occurrence past a month-day holiday', () => {
++      const dateCond = {
++        op: 'isapprox',
++        value: {
++          start: '2020-12-05',
++          frequency: 'monthly',
++          patterns: [{ type: 'day', value: 5 }],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++          holidays: ['12-07'],
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 1))).toBe('2020-12-08');
++    });
++
+     it('moves a weekend occurrence past a holiday on the following Monday', () => {
+       const dateCond = {
+         op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 1889d54..9c6d77b 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -261,16 +261,29 @@ export function recurConfigToRSchedule(config) {
+   }
+ }
+ 
++const RECURRING_HOLIDAY_PATTERN = /^\d{2}-\d{2}$/;
++
+ function getHolidayExrules(config: RecurConfig): ScheduleRuleOptions[] {
+   if (!config.skipWeekend || config.frequency !== 'daily') {
+     return [];
+   }
+-  return (config.holidays ?? []).map(holiday => ({
+-    start: monthUtils.parseDate(holiday),
+-    frequency: 'DAILY',
+-    count: 1,
+-    byHourOfDay: [12],
+-  }));
++  return (config.holidays ?? []).map(holiday => {
++    if (RECURRING_HOLIDAY_PATTERN.test(holiday)) {
++      return {
++        start: monthUtils.parseDate(`${config.start.slice(0, 4)}-01-01`),
++        frequency: 'YEARLY',
++        byMonthOfYear: [Number(holiday.slice(0, 2))],
++        byDayOfMonth: [Number(holiday.slice(3))],
++        byHourOfDay: [12],
++      };
++    }
++    return {
++      start: monthUtils.parseDate(holiday),
++      frequency: 'DAILY',
++      count: 1,
++      byHourOfDay: [12],
++    };
++  });
+ }
+ 
+ export function createRecurSchedule(config: RecurConfig) {
+@@ -377,8 +390,11 @@ export function getDateWithSkippedWeekend(
+   holidays: readonly string[] = [],
+ ) {
+   const holidaySet = new Set(holidays);
+-  const isSkippedDay = (day: Date) =>
+-    d.isWeekend(day) || holidaySet.has(monthUtils.dayFromDate(day));
++  const isHoliday = (day: Date) => {
++    const dayString = monthUtils.dayFromDate(day);
++    return holidaySet.has(dayString) || holidaySet.has(dayString.slice(5));
++  };
++  const isSkippedDay = (day: Date) => d.isWeekend(day) || isHoliday(day);
+ 
+   if (!isSkippedDay(date)) {
+     return date;

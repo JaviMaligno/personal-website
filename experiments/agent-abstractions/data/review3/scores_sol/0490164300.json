@@ -1,0 +1,44 @@
+{
+ "id": "0490164300",
+ "reuse": {
+  "score": 3,
+  "why": "All providers share the new link guard and reuse bank lookup and sync processing, but Fintegra copies existing linking and downloading workflows and takeover repeats unlink state clearing."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The diff adds three substantial duplicate blocks: the provider linking workflow, transaction downloader, and local unlink field reset."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider handlers, transport, configuration, and types follow existing layers, although an assertion-named helper now also performs account mutations."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The changes stay focused on the four requested linking and provider capabilities, including minimal client updates for the expanded provider type."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized link checks simplify future rule changes, but copied provider workflows and mutation hidden inside an assertion increase maintenance costs."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "assertBankAccountNotLinked repeats unlinkAccount's local field reset; extracting that reset would allow takeover and ordinary unlinking to share it while retaining separate provider cleanup."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The Fintegra workflows and unlink reset are direct copies with provider substitutions rather than duplication concealed through restructuring."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 3,
+  "bypassing_call_sites": 0,
+  "where": "assertBankAccountNotLinked gains replaceExistingLink, closed-target rejection, replacement dispatch, and replacement-specific target validation, expanding from an assertion into a mutating takeover operation; all six linking handlers still call it."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 28.5
+ }
+}

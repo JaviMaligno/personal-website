@@ -1,0 +1,119 @@
+diff --git a/packages/docs/docs/api/types.jsx b/packages/docs/docs/api/types.jsx
+index 0a4b1b7..1986d6b 100644
+--- a/packages/docs/docs/api/types.jsx
++++ b/packages/docs/docs/api/types.jsx
+@@ -315,6 +315,17 @@ export const objects = {
+         </span>
+       ),
+     },
++    {
++      name: 'expectedAmount',
++      type: 'number',
++      description: (
++        <span>
++          Read-only. The single amount the schedule is expected to post, in the
++          same integer units as <code>amount</code>. For a range, this is the
++          end furthest from zero; for no amount, it is 0.
++        </span>
++      ),
++    },
+     {
+       name: 'date',
+       type: 'date | RecurConfig',
+diff --git a/packages/loot-core/src/server/api-models.test.ts b/packages/loot-core/src/server/api-models.test.ts
+new file mode 100644
+index 0000000..e783896
+--- /dev/null
++++ b/packages/loot-core/src/server/api-models.test.ts
+@@ -0,0 +1,48 @@
++import type { ScheduleEntity } from '#types/models';
++
++import { scheduleModel } from './api-models';
++
++function makeSchedule(amount: ScheduleEntity['_amount']): ScheduleEntity {
++  return {
++    id: 'schedule-1',
++    name: 'Test',
++    rule: 'rule-1',
++    next_date: '2026-01-01',
++    completed: false,
++    posts_transaction: false,
++    tombstone: false,
++    _payee: 'payee-1',
++    _account: 'account-1',
++    _amount: amount,
++    _amountOp: 'isbetween',
++    _date: '2026-01-01',
++    _conditions: [],
++    _actions: [],
++  };
++}
++
++describe('scheduleModel.toExternal', () => {
++  it('uses the single amount as expectedAmount', () => {
++    const result = scheduleModel.toExternal(makeSchedule(-5000));
++
++    expect(result.amount).toBe(-5000);
++    expect(result.expectedAmount).toBe(-5000);
++  });
++
++  it('uses the end of a range furthest from zero as expectedAmount', () => {
++    const result = scheduleModel.toExternal(
++      makeSchedule({ num1: -10100, num2: -20000 }),
++    );
++
++    expect(result.amount).toEqual({ num1: -10100, num2: -20000 });
++    expect(result.expectedAmount).toBe(-20000);
++  });
++
++  it('gives 0 as expectedAmount when there is no amount', () => {
++    const result = scheduleModel.toExternal(
++      makeSchedule(undefined as unknown as number),
++    );
++
++    expect(result.expectedAmount).toBe(0);
++  });
++});
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..0f6ed6f 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -1,3 +1,4 @@
++import { getScheduledAmount } from '#shared/schedules';
+ import type { Budget } from '#types/budget';
+ import type {
+   AccountEntity,
+@@ -238,7 +239,9 @@ export type APIScheduleEntity = Pick<
+ };
+ 
+ export const scheduleModel = {
+-  toExternal(schedule: ScheduleEntity): APIScheduleEntity {
++  toExternal(
++    schedule: ScheduleEntity,
++  ): APIScheduleEntity & { expectedAmount: number } {
+     return {
+       id: schedule.id,
+       name: schedule.name,
+@@ -251,6 +254,7 @@ export const scheduleModel = {
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
++      expectedAmount: getScheduledAmount(schedule._amount),
+     };
+   },
+   //just an update
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 679a8c9..be7b134 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -303,7 +303,9 @@ export type ApiHandlers = {
+ 
+   'api/schedule-delete': (id: string) => Promise<void>;
+ 
+-  'api/schedules-get': () => Promise<APIScheduleEntity[]>;
++  'api/schedules-get': () => Promise<
++    (APIScheduleEntity & { expectedAmount: number })[]
++  >;
+   'api/get-id-by-name': (arg: {
+     type: string;
+     name: string;

@@ -1,0 +1,12 @@
+{"id":"e758854fe0",
+"reuse":{"score":4,"why":"Extends the shared getScheduleAmount and replaces api-models' private copy with it, but computes the 7.5% tolerance inline instead of calling the existing getApproxNumberThreshold from shared/rules."},
+"duplication":{"score":4,"why":"Removes the duplicated getExpectedScheduleAmount in api-models.ts; the only new duplication is the tolerance formula already defined by getApproxNumberThreshold."},
+"placement":{"score":5,"why":"The rule lives in shared/schedules.ts getScheduleAmount, which preview, forecast, action sync, posting and now the API model all use."},
+"scope":{"score":4,"why":"Focused on the amount rule and its callers; the call-site comments that still describe only ranged amounts were left stale."},
+"maintainability":{"score":4,"why":"Single shared function with an op parameter is easy to own; the inline tolerance can drift from the matching tolerance in shared/rules."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getScheduleAmount: `Math.round(Math.abs(amount) * 0.075)` instead of getApproxNumberThreshold from shared/rules.ts."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The getApproxNumberThreshold formula is restated inline in getScheduleAmount under the name `tolerance`."},
+"one_place":{"value":true,"where":"shared/schedules.ts getScheduleAmount(amount, amountOp), called by computeSchedulePreviewTransactions, normalizeSchedule, updateActions, postTransactionForSchedule and scheduleModel.toExternal."}
+}

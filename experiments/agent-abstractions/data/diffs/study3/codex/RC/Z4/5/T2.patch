@@ -1,0 +1,120 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 84d9707..6dfd940 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -28,6 +28,48 @@ beforeEach(async () => {
+ });
+ 
+ describe('schedule app', () => {
++  describe('get dates in range', () => {
++    const getDates = schedulesApp.handlers['schedule/get-dates-in-range'];
++
++    it('filters by the adjusted date and skips daily weekend occurrences', async () => {
++      const config = {
++        start: '2024-06-01', // Saturday
++        frequency: 'weekly',
++        patterns: [{ type: 'SA', value: 1 }],
++        skipWeekend: true,
++        weekendSolveMode: 'after',
++      };
++
++      await expect(
++        getDates({ config, start: '2024-06-03', end: '2024-06-03' }),
++      ).resolves.toEqual(['2024-06-03']);
++      await expect(
++        getDates({
++          config: { ...config, frequency: 'daily' },
++          start: '2024-06-01',
++          end: '2024-06-03',
++        }),
++      ).resolves.toEqual(['2024-06-03']);
++    });
++
++    it('includes occurrences shifted into the range and excludes shifted out', async () => {
++      const config = {
++        start: '2024-06-01', // Saturday
++        frequency: 'weekly',
++        patterns: [{ type: 'SA', value: 1 }],
++        skipWeekend: true,
++        weekendSolveMode: 'before',
++      };
++
++      await expect(
++        getDates({ config, start: '2024-05-31', end: '2024-05-31' }),
++      ).resolves.toEqual(['2024-05-31']);
++      await expect(
++        getDates({ config, start: '2024-06-01', end: '2024-06-01' }),
++      ).resolves.toEqual([]);
++    });
++  });
++
+   describe('utility', () => {
+     it('conditions are updated when they exist', () => {
+       const conds = [
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 25ca1f3..b989281 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -525,6 +525,46 @@ async function getUpcomingDates({ config, count }) {
+   }
+ }
+ 
++async function getDatesInRange({ config, start, end }) {
++  const rules = recurConfigToRSchedule(config);
++
++  try {
++    const schedule = new RSchedule({ rrules: rules });
++    // Weekend adjustment can move an occurrence by at most two calendar days.
++    const occurrences = schedule
++      .occurrences({
++        start: d.subDays(d.startOfDay(new Date(`${start}T12:00:00`)), 2),
++        end: d.addDays(d.startOfDay(new Date(`${end}T12:00:00`)), 2),
++      })
++      .toArray();
++    const days = new Set<string>();
++
++    for (const occurrence of occurrences) {
++      const isDaily = config.frequency === 'daily';
++      if (isDaily && config.skipWeekend === true && d.isWeekend(occurrence.date)) {
++        continue;
++      }
++
++      const date = isDaily
++        ? occurrence.date
++        : getDateWithSkippedWeekend(
++            occurrence.date,
++            config.weekendSolveMode,
++            config.skipWeekend === true,
++          );
++      const day = dayFromDate(date);
++      if (day >= start && day <= end) {
++        days.add(day);
++      }
++    }
++
++    return [...days].sort();
++  } catch (err) {
++    captureBreadcrumb(config);
++    throw err;
++  }
++}
++
+ // Services
+ 
+ function onRuleUpdate(rule) {
+@@ -837,6 +877,7 @@ export type SchedulesHandlers = {
+   'schedule/force-run-service': typeof advanceSchedulesService;
+   'schedule/discover': typeof discoverSchedules;
+   'schedule/get-upcoming-dates': typeof getUpcomingDates;
++  'schedule/get-dates-in-range': typeof getDatesInRange;
+ };
+ 
+ // Expose functions to the client
+@@ -857,6 +898,7 @@ app.method(
+ );
+ app.method('schedule/discover', discoverSchedules);
+ app.method('schedule/get-upcoming-dates', getUpcomingDates);
++app.method('schedule/get-dates-in-range', getDatesInRange);
+ 
+ app.service(trackJSONPaths);
+ 

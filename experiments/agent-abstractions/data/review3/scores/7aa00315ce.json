@@ -1,0 +1,12 @@
+{"id": "7aa00315ce",
+"reuse": {"score": 4, "why": "Extends the existing shared getDateWithSkippedWeekend with a holidays parameter and threads it through every existing caller instead of adding a parallel path."},
+"duplication": {"score": 3, "why": "The rule is not copied, but the occurrence lookahead for holidays is computed separately and differently in three places (getNextDate `+2*len`, getUpcomingDates `+2*len`, getDatesInRange `3*len` margin)."},
+"placement": {"score": 5, "why": "Day classification and shifting live in shared/schedules.ts, the field in RecurConfig and parseRecurDate, and callers only pass the config through."},
+"scope": {"score": 5, "why": "All edits implement holiday handling, plus focused tests."},
+"maintainability": {"score": 4, "why": "isNonWorkingDay and the stepping loop make the rule clear and single-sourced; the ad hoc per-caller margin formulas are the weak spot."},
+"bypasses_abstraction": {"value": false, "where": "All three weekend-adjustment paths (getNextDate, schedules/app.ts applyWeekendSkip, schedule-template getOccurrenceDay) call getDateWithSkippedWeekend."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "The rule is shared; the margin computations in getUpcomingDates/getDatesInRange/getNextDate are separate heuristics, not disguised copies of the rule."},
+"one_place": {"value": true, "where": "packages/loot-core/src/shared/schedules.ts getDateWithSkippedWeekend (with isNonWorkingDay) decides holiday/weekend moves and daily skips for every caller."}
+}

@@ -1,0 +1,101 @@
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 6657f87..fb7b66d 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -7,6 +7,7 @@ import * as monthUtils from '#shared/months';
+ import { q } from '#shared/query';
+ import {
+   extractScheduleConds,
++  getExpectedScheduleAmount,
+   getNextDate,
+   indexPostedScheduleTransactions,
+   isScheduleOccurrencePosted,
+@@ -93,11 +94,7 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged ("is between") amount is scheduled at its rounded midpoint.
+-  const amount =
+-    typeof amountValue === 'number'
+-      ? amountValue
+-      : Math.round((amountValue.num1 + amountValue.num2) / 2);
++  const amount = getExpectedScheduleAmount(amountValue);
+ 
+   return {
+     id: schedule.id,
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index b82b437..1aca50a 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -28,6 +28,7 @@ import {
+   DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
++  getExpectedScheduleAmount,
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
+@@ -153,12 +154,7 @@ function updateActions(
+   // the amount the schedule actually posts. A ranged ("is between") amount
+   // is scheduled at its rounded midpoint.
+   const amountValue = amountCond.value;
+-  const amount =
+-    amountValue == null
+-      ? 0
+-      : typeof amountValue === 'number'
+-        ? amountValue
+-        : Math.round((amountValue.num1 + amountValue.num2) / 2);
++  const amount = getExpectedScheduleAmount(amountValue);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -593,12 +589,7 @@ async function postTransactionForSchedule({
+ 
+   // A missing amount (deleted condition) posts 0; a ranged ("is between")
+   // amount posts its rounded midpoint.
+-  const amount =
+-    schedule._amount == null
+-      ? 0
+-      : typeof schedule._amount === 'number'
+-        ? schedule._amount
+-        : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++  const amount = getExpectedScheduleAmount(schedule._amount);
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..9adbf1c 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -10,6 +10,17 @@ import { q } from './query';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
++/** Resolve a schedule amount condition to the amount used for a single occurrence. */
++export function getExpectedScheduleAmount(
++  amount: number | { num1: number; num2: number } | null | undefined,
++): number {
++  return amount == null
++    ? 0
++    : typeof amount === 'number'
++      ? amount
++      : Math.round((amount.num1 + amount.num2) / 2);
++}
++
+ // Preset token values used by UI selects. Keep labels in the UI (i18n) but
+ // centralize the canonical preset tokens so all components share the same set.
+ export const UPCOMING_LENGTH_PRESET_VALUES = [
+@@ -498,12 +509,7 @@ export function computeSchedulePreviewTransactions(
+ 
+       // A missing amount previews as 0; a ranged ("is between") amount as its
+       // rounded midpoint.
+-      const amount =
+-        schedule._amount == null
+-          ? 0
+-          : typeof schedule._amount === 'number'
+-            ? schedule._amount
+-            : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++      const amount = getExpectedScheduleAmount(schedule._amount);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

@@ -1,0 +1,14 @@
+{
+  "id": "34f88b79d5",
+  "completeness": {
+    "per_site": {"next-date": "full", "upcoming-dates": "full", "template-first": "partial", "template-following": "partial"},
+    "left_out": {},
+    "sites_full": 2,
+    "sites_partial": 2,
+    "sites_total": 4,
+    "value": 0.75,
+    "why": "getNextDate and getUpcomingDates pass their raw flag and mode to applyWeekendRule (getNextDate folds in its own noSkipWeekend option, a variation only it has); the schedule-template closure still wraps the call in its own skipWeekend ? ... : baseDate ternary, so the enable decision is still taken there for both template sites."
+  },
+  "interface": {"score": 4, "why": "applyWeekendRule(date, skipWeekend, solveMode) parameterises exactly the enable flag and mode, with each caller mapping its own field name (weekendSolve vs weekendSolveMode) and noSkipWeekend kept at getNextDate, but the template keeps a redundant outer check that blurs where the rule lives."},
+  "disguised_duplication": {"value": true, "where": "server/budget/schedule-template.ts getShiftedDate keeps the dateConditions.value.skipWeekend ternary that applyWeekendRule already applies, reshaped into a local closure"}
+}

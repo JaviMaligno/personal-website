@@ -1,0 +1,76 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..c28b541 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -107,6 +107,38 @@ describe('schedules', () => {
+   });
+ 
+   describe('computeSchedulePreviewTransactions', () => {
++    it.each([
++      [-10000, -10750],
++      [10000, 10750],
++      [-1234, -1327],
++    ])('uses the approximate amount worst case for %i', (amount, expected) => {
++      const schedule: ScheduleEntity = {
++        id: 'approx-schedule',
++        rule: 'rule-1',
++        next_date: '2021-05-15',
++        completed: false,
++        posts_transaction: false,
++        tombstone: false,
++        _payee: 'payee-1',
++        _account: 'acct-1',
++        _amount: amount,
++        _amountOp: 'isapprox',
++        _date: '2021-05-15',
++        _conditions: [
++          { field: 'date', op: 'is', value: '2021-05-15' },
++        ],
++        _actions: [],
++      };
++
++      const result = computeSchedulePreviewTransactions(
++        [schedule],
++        new Map([['approx-schedule', 'upcoming']]),
++        '7',
++      );
++
++      expect(result[0].amount).toBe(expected);
++    });
++
+     describe('forceUpcoming flag', () => {
+       function makeSchedule(
+         overrides: Partial<ScheduleEntity> &
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 884edd6..fe0fa8b 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -7,6 +7,7 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import { q } from './query';
++import { getApproxNumberThreshold } from './rules';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+@@ -496,13 +497,17 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // A missing amount previews as 0; a ranged amount uses the endpoint
+-      // furthest from zero to plan for the worst case.
++      // A missing amount previews as 0; ranges and approximate amounts use
++      // the value furthest from zero to plan for the worst case.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+-            ? schedule._amount
++            ? schedule._amountOp === 'isapprox'
++              ? schedule._amount +
++                Math.sign(schedule._amount) *
++                  getApproxNumberThreshold(schedule._amount)
++              : schedule._amount
+             : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
+               ? schedule._amount.num1
+               : schedule._amount.num2;

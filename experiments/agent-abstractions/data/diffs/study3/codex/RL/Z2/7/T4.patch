@@ -1,0 +1,44 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 4e380e8..80f10f9 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -26,13 +26,14 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000, undefined],
+       [{ num1: -20000, num2: -10100 }, -20000, undefined],
+-      [{ num1: 10100, num2: 20000 }, 20000, undefined],
++      [{ num1: 10100, num2: 20000 }, 10100, undefined],
++      [{ num1: -3000, num2: 5000 }, -3000, undefined],
+       [12345, 12345, undefined],
+       [-10000, -10750, 'isapprox'],
+-      [10000, 10750, 'isapprox'],
++      [10000, 9250, 'isapprox'],
+       [-1234, -1327, 'isapprox'],
+       [0, 0, 'isapprox'],
+-    ] as const)('uses the furthest endpoint from zero', (amount, expected, op) => {
++    ] as const)('uses the lowest allowed amount', (amount, expected, op) => {
+       expect(getScheduledAmount(amount, false, op)).toBe(expected);
+     });
+   });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index de93037..a276716 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -365,15 +365,12 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     if (op === 'isapprox') {
+       const tolerance = Math.round(Math.abs(amount) * 0.075);
+-      const expectedAmount = amount + Math.sign(amount) * tolerance;
++      const expectedAmount = amount - tolerance;
+       return inverse ? -expectedAmount : expectedAmount;
+     }
+     return inverse ? -amount : amount;
+   }
+-  const expectedAmount =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2)
+-      ? amount.num1
+-      : amount.num2;
++  const expectedAmount = Math.min(amount.num1, amount.num2);
+   return inverse ? -expectedAmount : expectedAmount;
+ }
+ 

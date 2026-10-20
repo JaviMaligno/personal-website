@@ -1,0 +1,12 @@
+{"id": "b6cf85cfbc",
+ "reuse": {"score": 3, "why": "Two small shared guards are called from every link handler, but the takeover rewrites unlinkAccount's field reset and Fintegra re-creates the per-provider link and download bodies instead of sharing them."},
+ "duplication": {"score": 2, "why": "linkFintegraAccount repeats the Akahu/SimpleFin link body, downloadFintegraTransactions repeats the Akahu download, and the replace branch repeats unlinkAccount's db.updateAccount block."},
+ "placement": {"score": 4, "why": "Guards live beside the link handlers in accounts/app.ts, the download in sync.ts and the URL in server-config.ts, following the tree's layout."},
+ "scope": {"score": 4, "why": "The change sticks to linking, Fintegra and tests for the new rules; nothing unrelated is touched."},
+ "maintainability": {"score": 3, "why": "Separate open-account and not-linked guards are easy to follow, but a mutating 'ensure…' helper and another hand-copied provider pair add upkeep."},
+ "bypasses_abstraction": {"value": true, "where": "ensureBankAccountIsNotLinked in accounts/app.ts clears the previous holder with its own db.updateAccount instead of reusing unlinkAccount's unlink step"},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "downloadFintegraTransactions and linkFintegraAccount are compacted/reformatted versions of the Akahu download and link functions (destructured response, one-line guards) rather than shared code"},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "ensureBankAccountIsNotLinked gains a replaceExistingLink flag and a detach branch; the closed rule is a separate helper and every link handler calls both"}
+}

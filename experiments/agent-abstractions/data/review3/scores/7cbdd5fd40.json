@@ -1,0 +1,12 @@
+{"id":"7cbdd5fd40",
+"reuse":{"score":3,"why":"Consolidates the three category-list actions onto a new shared query and reuses the tree's existing SQL predicate for saved templates, but copyPreviousMonth does not use that selection and gets a separate JS parser for the same template rule."},
+"duplication":{"score":3,"why":"Removes the triplicated category query and merges the 6/12-month loops, but the 'saved template' rule now exists twice (SQL json_extract in getBulkBudgetCategories and hasSavedTemplate in JS) and the hidden rule is still decided separately in copyPreviousMonth."},
+"placement":{"score":4,"why":"The selection and skip helpers live in budget/actions.ts beside the actions that use them, which matches the tree's layering."},
+"scope":{"score":4,"why":"Focused on month-wide actions; the set6/set12 merge into setBulkNMonthAvg is a small related refactor."},
+"maintainability":{"score":3,"why":"Most actions now share one selection, but a maintainer changing the exclusion rule must remember to update both the SQL selection and copyPreviousMonth's JS checks."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth in budget/actions.ts keeps its own hidden/group_hidden check and adds hasSavedTemplate instead of using getBulkBudgetCategories"},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"hasSavedTemplate (JSON.parse + source === 'ui') re-expresses the SQL COALESCE(json_extract(template_settings,'$.source'),'notes') != 'ui' predicate of getBulkBudgetCategories in JS"},
+"one_place":{"value":false,"where":"Rule decided in getBulkBudgetCategories SQL for setZero/set3/6/12MonthAvg, and separately in copyPreviousMonth via its own hidden check plus hasSavedTemplate"}
+}

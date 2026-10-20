@@ -1,0 +1,10 @@
+{"id":"a118b65d3c",
+"reuse":{"score":3,"why":"The flag is threaded cleanly through the single linkBankSyncAccount definition, but releasing the old account re-writes the local-unlink field reset instead of extracting it from unlinkAccount into a shared helper."},
+"duplication":{"score":2,"why":"The db.updateAccount block clearing account_id/bank/balances/sync source/status is a verbatim copy of the one inside unlinkAccount, so the meaning of 'unlinked' now lives in two places."},
+"placement":{"score":4,"why":"The takeover logic sits in the shared linkBankSyncAccount where the existing-link refusal already lives; provider wrappers only forward the flag."},
+"scope":{"score":5,"why":"Only the flag plumbing, the takeover in the shared link function, and a release note."},
+"maintainability":{"score":3,"why":"Readable, but if unlinkAccount's reset gains a field the takeover path silently diverges; a small clearLocalLink helper used by both would be expected."},
+"bypasses_abstraction":{"value":true,"where":"accounts/app.ts linkBankSyncAccount: resets the holder account with its own db.updateAccount copy instead of a shared local-unlink step from unlinkAccount"},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"the copied unlink field reset is a literal copy, not disguised"}}

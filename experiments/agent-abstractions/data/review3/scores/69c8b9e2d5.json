@@ -1,0 +1,12 @@
+{"id": "69c8b9e2d5",
+ "reuse": {"score": 4, "why": "Consolidates the copied selection and sign logic into shouldFillCategory/getFillCategories/averageToBudgetAmount and reuses getSheetValue and getCategoryAverage, but the #fixed check uses a private regex instead of the tree's #shared/tags helpers (extractTagsFromText)."},
+ "duplication": {"score": 4, "why": "Removes the four copied category queries and the repeated sign flips; what remains is the repeated `includeHiddenCategories ? 'include' : …` mapping in each action and a second tag grammar."},
+ "placement": {"score": 5, "why": "The selection rules and helpers live in budget/actions.ts next to the actions, and the new method is registered in budget/app.ts with its siblings."},
+ "scope": {"score": 5, "why": "All edits serve the five steps; tests and release notes accompany them."},
+ "maintainability": {"score": 4, "why": "One documented selection definition with an explicit hidden-rule parameter (preserving the skip vs skip-unless-visible difference) is easy to own; the private tag regex and the defensive JSON parse in hasSavedTemplates are minor liabilities."},
+ "bypasses_abstraction": {"value": true, "where": "budget/actions.ts isFixedGroup parses tags with its own regex instead of #shared/tags extractTagsFromText."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "isFixedGroup's `/(^|\\s)#fixed(?![\\w-])/` restates the tag-boundary rule of extractTagsFromText/makeTagAqlRegex with different boundaries."},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "shouldFillCategory/getFillCategories take a hiddenRule mode that names the preserved inconsistency and the opt-in include; the template and #fixed rules apply uniformly; every month-wide action (copyPreviousMonth, setZero, set3/6/12MonthAvg, setLastMonthSpending) uses them."}
+}

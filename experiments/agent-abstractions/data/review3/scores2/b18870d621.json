@@ -1,0 +1,12 @@
+{"id": "b18870d621",
+"reuse": {"score": 5, "why": "Every consumer (preview, posting, action sync, forecast, budget template, client lists and balance, and the API) goes through the existing getScheduledAmount, and the approximate tolerance reuses getApproxNumberThreshold from shared/rules."},
+"duplication": {"score": 5, "why": "The five inline midpoint copies are deleted and the range/approx rule exists once in getScheduledAmount."},
+"placement": {"score": 4, "why": "The rule sits in shared/schedules.ts where both client and server read it; expectedAmount is attached in the api/schedules-get handler with its own list type rather than in scheduleModel.toExternal, which is acceptable but splits the external shape across two files."},
+"scope": {"score": 4, "why": "Focused on the expected-amount rule and its consumers; the step 1 release note still describes the superseded 'furthest from zero' rule for income."},
+"maintainability": {"score": 4, "why": "One function owns the rule across all four steps; callers pass a positional false for inverse just to reach the op argument, which is clumsy but clear."},
+"bypasses_abstraction": {"value": false, "where": "No call site computes the expected amount itself; all call getScheduledAmount."},
+"duplicated_blocks": 0,
+"would_merge": "yes",
+"disguised_duplication": {"value": false, "where": "No duplicated logic; removed copies are replaced by calls."},
+"abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "getScheduledAmount gains an op parameter and an isapprox branch (the rule step 3 asks for), and its amount type widens to accept null; every call site passes its op and none re-implements the rule."}
+}

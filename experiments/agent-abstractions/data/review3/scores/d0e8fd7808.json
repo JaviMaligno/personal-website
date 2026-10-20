@@ -1,0 +1,10 @@
+{"id":"d0e8fd7808",
+"reuse":{"score":3,"why":"Correctly extends the existing assertBankAccountNotLinked guard every linker already calls, but writes the unlink field reset inline instead of sharing it with unlinkAccount."},
+"duplication":{"score":3,"why":"The eight-field db.updateAccount reset is a verbatim copy of the one in unlinkAccount, and the flag is threaded by hand through six near-identical linkers."},
+"placement":{"score":3,"why":"The take-over mutation is placed inside a function named assert..., so a check now writes to the database before the link itself runs."},
+"scope":{"score":5,"why":"Only the flag, its threading and the guard change."},
+"maintainability":{"score":3,"why":"Works through one guard, but an 'assert' that unlinks accounts is surprising and the unlink definition now lives in two places that can drift."},
+"bypasses_abstraction":{"value":true,"where":"assertBankAccountNotLinked: re-does unlinkAccount's local field reset with its own db.updateAccount instead of using a shared unlink helper."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied reset in assertBankAccountNotLinked is verbatim, not disguised."}}

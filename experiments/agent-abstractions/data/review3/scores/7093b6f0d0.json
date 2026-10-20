@@ -1,0 +1,11 @@
+{"id":"7093b6f0d0",
+"reuse":{"score":3,"why":"Threads the flag through the existing ensureBankAccountIsNotLinked guard used by all six providers, but copies unlinkAccount's field-clearing update instead of extracting the local-unlink step from unlinkAccount and calling it."},
+"duplication":{"score":3,"why":"The eight-field db.updateAccount that clears the link is a verbatim copy of the block in unlinkAccount."},
+"placement":{"score":3,"why":"A function named and used as a precondition check (ensureBankAccountIsNotLinked) now performs a write, hiding the takeover side effect inside a guard."},
+"scope":{"score":5,"why":"Only the flag plumbing, the takeover and a test."},
+"maintainability":{"score":3,"why":"One branch handles takeover for all providers, but the duplicated unlink fields can drift from unlinkAccount and the mutating 'ensure' is surprising to callers."},
+"bypasses_abstraction":{"value":true,"where":"ensureBankAccountIsNotLinked in server/accounts/app.ts re-does unlinkAccount's local link clearing instead of sharing it."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied update is verbatim, not disguised."}
+}

@@ -1,0 +1,125 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index 961fa8b..d6860af 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -189,6 +189,44 @@ describe('simpleFin account linking', () => {
+     expect(bankSync.syncAccount).toHaveBeenCalledOnce();
+   });
+ 
++  it.each([
++    ['linking a closed account', false],
++    ['relinking a closed account that already has the bank link', true],
++  ])('refuses %s without changing anything', async (_description, linked) => {
++    insertBank({ id: 'bank1', bank_id: 'sfin-bank', name: 'SimpleFin' });
++    await db.insertAccount({
++      id: 'closed',
++      name: 'Closed account',
++      bank: linked ? 'bank1' : null,
++      account_id: linked ? 'external-account' : null,
++      account_sync_source: linked ? 'simpleFin' : null,
++      closed: 1,
++    });
++    const accountBefore = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['closed'],
++    );
++    const banksBefore = await db.all('SELECT * FROM banks');
++
++    await expect(
++      simpleFinAccountsLinkHandler({
++        externalAccount,
++        upgradingId: 'closed',
++      }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    expect(
++      await db.first<db.DbAccount>('SELECT * FROM accounts WHERE id = ?', [
++        'closed',
++      ]),
++    ).toEqual(accountBefore);
++    expect(await db.all('SELECT * FROM banks')).toEqual(banksBefore);
++    expect(await db.all('SELECT id FROM payees')).toHaveLength(0);
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
+   it('ignores deleted links and links from other providers', async () => {
+     insertBank({ id: 'bank1', bank_id: 'sfin-bank', name: 'SimpleFin' });
+     await db.insertAccount({
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index dd2b776..2168e03 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -71,6 +71,23 @@ async function ensureBankAccountIsNotLinked(
+   }
+ }
+ 
++async function ensureAccountIsOpenForLinking(accountId?: AccountEntity['id']) {
++  if (!accountId) {
++    return;
++  }
++
++  const account = await db.first<Pick<db.DbAccount, 'closed'>>(
++    'SELECT closed FROM accounts WHERE id = ?',
++    [accountId],
++  );
++
++  if (account?.closed === 1) {
++    throw new Error(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  }
++}
++
+ export type AccountHandlers = {
+   'account-update': typeof updateAccount;
+   'accounts-get': typeof getAccounts;
+@@ -200,6 +217,7 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
++  await ensureAccountIsOpenForLinking(upgradingId);
+   await ensureBankAccountIsNotLinked(
+     'goCardless',
+     account.account_id,
+@@ -272,6 +290,7 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
++  await ensureAccountIsOpenForLinking(upgradingId);
+   await ensureBankAccountIsNotLinked(
+     'simpleFin',
+     externalAccount.account_id,
+@@ -354,6 +373,7 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
++  await ensureAccountIsOpenForLinking(upgradingId);
+   await ensureBankAccountIsNotLinked(
+     'pluggyai',
+     externalAccount.account_id,
+@@ -438,6 +458,7 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
++  await ensureAccountIsOpenForLinking(upgradingId);
+   await ensureBankAccountIsNotLinked(
+     'akahu',
+     externalAccount.account_id,
+@@ -517,6 +538,7 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
++  await ensureAccountIsOpenForLinking(upgradingId);
+   await ensureBankAccountIsNotLinked(
+     'enableBanking',
+     externalAccount.account_id,
+@@ -605,6 +627,7 @@ async function linkFintegraAccount({
+   startingDate,
+   startingBalance,
+ }: LinkAccountBaseParams & { externalAccount: SyncServerFintegraAccount }) {
++  await ensureAccountIsOpenForLinking(upgradingId);
+   await ensureBankAccountIsNotLinked(
+     'fintegra',
+     externalAccount.account_id,

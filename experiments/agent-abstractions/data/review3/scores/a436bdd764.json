@@ -1,0 +1,12 @@
+{"id": "a436bdd764",
+"reuse": {"score": 3, "why": "Introduces a shared getCategoriesForBulkAction for setZero, the average actions and the new setLastMonthSpending, but copyPreviousMonth re-implements the exclusions over its own query, and the #fixed match ignores the tree's tag-delimiting conventions (shared/tags.ts) with a loose LIKE '%#fixed%'."},
+"duplication": {"score": 3, "why": "The #fixed LIKE expression is written twice (getBudgetData and the bulk-action query), and the hidden/fixed/template rules exist both as SQL in the helper and as JS checks in copyPreviousMonth."},
+"placement": {"score": 4, "why": "Selection logic sits in budget/actions.ts beside the actions and the new method is registered in budget/app.ts like its siblings; the rule is split between a SQL helper and an in-loop filter."},
+"scope": {"score": 4, "why": "Changes stay within the month-wide actions, their registration and tests, with a few long unformatted test lines."},
+"maintainability": {"score": 3, "why": "Most actions share one selection, but copyPreviousMonth keeps a parallel copy of the rules and does not accept includeHiddenCategories, so future exclusion changes must be made in two places."},
+"bypasses_abstraction": {"value": true, "where": "copyPreviousMonth filters hidden, group_hidden, group_fixed and goal_def itself from getBudgetData rows instead of using getCategoriesForBulkAction, and never gets the includeHiddenCategories option."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "The exclusion rules are re-expressed in copyPreviousMonth as JS checks on extra columns (group_fixed CASE, goal_def) added to getBudgetData, which reshapes the SQL rules in getCategoriesForBulkAction rather than sharing them."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 1, "where": "getCategoriesForBulkAction gains includeHiddenCategories (step 4); copyPreviousMonth bypasses it with its own filter in the loop over getBudgetData."}
+}

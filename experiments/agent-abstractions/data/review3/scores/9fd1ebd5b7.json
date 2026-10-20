@@ -1,0 +1,12 @@
+{"id":"9fd1ebd5b7",
+"reuse":{"score":2,"why":"It reuses extractTagsFromText for tag parsing, but ignores the existing notes table where group notes are stored (NotesButton id=group.id) and adds a new category_groups.notes column instead."},
+"duplication":{"score":2,"why":"The group_notes join and the `if (isFixedGroup(cat.group_notes)) continue` check are pasted into six actions on top of their already-copied category queries."},
+"placement":{"score":2,"why":"A schema migration and a new DbCategoryGroup field are introduced for data the tree already keeps in the notes table, so the rule reads from a parallel store no UI writes."},
+"scope":{"score":2,"why":"Adds a migration and type change the request does not need, and includes unrelated whitespace edits to init.sql (banks and category_groups)."},
+"maintainability":{"score":1,"why":"Two sources of truth for group notes, a column nobody populates, and the rule repeated in six actions make this hard to own."},
+"bypasses_abstraction":{"value":true,"where":"budget/actions.ts reads g.notes from a new category_groups.notes column (migration 1789000000000) instead of the existing notes table keyed by group id."},
+"duplicated_blocks":6,
+"would_merge":"no",
+"disguised_duplication":{"value":false,"where":"The added check and join are repeated verbatim in each action rather than reshaped."},
+"one_place":{"value":true,"where":"isFixedGroup in budget/actions.ts is the single predicate, called by copyPreviousMonth, setZero, setLastMonthSpending and set3/6/12MonthAvg, though each action still fetches group_notes and applies the skip itself."}
+}

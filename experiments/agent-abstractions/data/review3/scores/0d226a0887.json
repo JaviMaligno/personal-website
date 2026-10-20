@@ -1,0 +1,12 @@
+{"id": "0d226a0887",
+ "reuse": {"score": 3, "why": "Adds two shared helpers (getProtectedCategoryIds, hiddenFilter) and reuses getSheetValue/batchMessages/undoable, but does not build one category-selection function the actions share, and the template parsing ignores goal-template.ts's own reading of goal_def."},
+ "duplication": {"score": 2, "why": "The income-or-protected skip condition is repeated in all six actions, the new action copies setZero's v_categories query verbatim, and copyPreviousMonth re-expresses the hidden rule in JS instead of the new hiddenFilter."},
+ "placement": {"score": 4, "why": "All logic stays in budget/actions.ts and the new method is registered in budget/app.ts like its siblings, though SQL fragments are string-spliced into each action."},
+ "scope": {"score": 4, "why": "Changes stay on the month-wide actions; setZero gains a hidden filter it did not have before, which is in line with step 1 but changes its query shape."},
+ "maintainability": {"score": 2, "why": "The 'which categories does a month-wide action fill' rule is spread over a SQL fragment helper, a protected-id set and per-site conditionals, so each future rule must be added in six places."},
+ "bypasses_abstraction": {"value": true, "where": "copyPreviousMonth applies the hidden/includeHiddenCategories rule itself on prevBudget.hidden/group_hidden instead of going through hiddenFilter; every action keeps its own is_income/isTrackingBudget check."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "The hidden rule exists both as the SQL hiddenFilter fragment and as a JS condition in copyPreviousMonth; the skip condition is repeated with reshaped forms (if/return vs continue, isTracking local) across setZero, setLastMonthSpending and the averages."},
+ "abstraction_drift": {"value": true, "parameters_added": 2, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "hiddenFilter(includeHidden, strictGroup) grows an include flag and a strictGroup special case for the averages' group rule; copyPreviousMonth bypasses it with its own hidden check, and the income/protected checks remain inline at every call site."}
+}

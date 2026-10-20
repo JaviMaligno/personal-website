@@ -1,0 +1,12 @@
+{"id":"eeeb883b03",
+"reuse":{"score":3,"why":"The existing getDateWithSkippedWeekend is extended and reused for the move rule at all three sites, but the new daily-skip and holiday-skip rule is not put in it and is re-expressed by hand in getNextDate, getUpcomingDates and getDatesInRange."},
+"duplication":{"score":2,"why":"The predicate `!isWeekend(date) && !isHoliday(date, holidays)` for daily skipping, plus the over-fetch-then-filter logic, is written three times with different look-ahead sizes (7+holidays, count*2+holidays, ±holidays+2 days), and getNextDate repeats it for the reverse fallback."},
+"placement":{"score":3,"why":"isHoliday and the moving loop sit correctly in shared/schedules.ts, but the daily-schedule rule lives in the server handlers and in getNextDate instead of in the shared weekend definition, and schedule-template never applies it."},
+"scope":{"score":4,"why":"Edits stay on the schedule date path, types and tests, with only the parseRecurDate pass-through of holidays outside it, which the feature needs."},
+"maintainability":{"score":2,"why":"A future change to the weekend/holiday rule for daily schedules has to be made in three places with different heuristics, and the budget-template path already disagrees with them because it never skips daily weekend occurrences."},
+"bypasses_abstraction":{"value":true,"where":"app.ts getUpcomingDates and getDatesInRange (isDaily branch skips getDateWithSkippedWeekend and filters on its own), shared/schedules.ts getNextDate daily filter."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Daily-skip filtering is restated in getNextDate (take 7+holidays, plus the reverse fallback), getUpcomingDates (take count*2+holidays then slice) and getDatesInRange (window padded by holidays+2 days, isDaily branch); same rule in a different shape each time."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":0,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains skipWeekend and holidays params; the daily-skip rule bypasses it in getNextDate, getUpcomingDates and getDatesInRange, and schedule-template.ts does not apply it at all."}
+}

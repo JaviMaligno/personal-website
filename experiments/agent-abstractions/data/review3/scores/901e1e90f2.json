@@ -1,0 +1,12 @@
+{"id": "901e1e90f2",
+"reuse": {"score": 5, "why": "Extends the tree's single applyWeekendRule/getDateWithSkippedWeekend definition with holidays and replaces every bare d.isWeekend check with the new shared isNonWorkingDay."},
+"duplication": {"score": 4, "why": "The non-working-day predicate and the shift loop are defined once; the pre-existing per-site daily-skip branches remain, each now with its own holidays-length look-ahead padding."},
+"placement": {"score": 5, "why": "The rule stays in shared/schedules.ts; server code (schedules app, budget schedule-template, rule-utils) only forwards config.holidays."},
+"scope": {"score": 5, "why": "Only the weekend rule, its callers, the recur parser and the type change."},
+"maintainability": {"score": 4, "why": "Clear single definition of the rule; small costs are the repeated `holidays.length` padding heuristics at three sites and a garbled comment ('by by')."},
+"bypasses_abstraction": {"value": false, "where": "All weekend handling goes through applyWeekendRule or isNonWorkingDay, including both schedule-template calls."},
+"duplicated_blocks": 0,
+"would_merge": "yes",
+"disguised_duplication": {"value": false, "where": "None; the predicate is shared and the shift loop lives only in getDateWithSkippedWeekend."},
+"one_place": {"value": true, "where": "isNonWorkingDay and applyWeekendRule in shared/schedules.ts, used by getNextDate, server/schedules/app.ts (upcoming dates, getDatesInRange) and budget/schedule-template.ts."}
+}

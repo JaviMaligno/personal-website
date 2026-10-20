@@ -1,0 +1,12 @@
+{"id": "b399f76078",
+ "reuse": {"score": 4, "why": "Extends the existing shouldWriteMonthBudget predicate, reuses averageToBudgetAmount for the new action's sign and extractTagsFromText for the #fixed tag, but each action still builds its own category query."},
+ "duplication": {"score": 2, "why": "The same notes join and saved-template SQL expression is pasted into five separate queries (getBudgetData, setZero, setLastMonthSpending, set3/6/12MonthAvg) instead of one shared month-action category query."},
+ "placement": {"score": 4, "why": "Selection rules live in month-action.ts and actions stay in actions.ts as the tree organises them; the data the rules need is fetched ad hoc per action."},
+ "scope": {"score": 4, "why": "Changes stay within the four requested behaviours; the reformatting of existing queries is incidental to adding columns."},
+ "maintainability": {"score": 3, "why": "The decision is centralised in one predicate, but any change to how template or group-note data is fetched must be repeated in five SQL strings."},
+ "bypasses_abstraction": {"value": false, "where": "Every month-wide action calls shouldWriteMonthBudget; the hidden filter was removed from the averages' SQL so it is decided only in the predicate."},
+ "duplicated_blocks": 5,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The repeated SQL fragment in actions.ts is an overt copy with only whitespace differences, not a reshaped one."},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "shouldWriteMonthBudget lost its per-action discriminator and gained only the includeHiddenCategories flag plus general rule conditions (template, #fixed); all six month-wide actions call it, although each feeds it from its own duplicated query."}
+}

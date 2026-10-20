@@ -1,0 +1,11 @@
+{"id":"0b447615c7",
+"reuse":{"score":4,"why":"Puts the guard in the existing shared linkBankSyncAccount that every provider-specific link function delegates to, though it issues its own account lookup instead of hoisting the accRow fetch that the function already does for upgradingId."},
+"duplication":{"score":4,"why":"No copied logic; the only redundancy is reading the same accounts row twice (closed check, then SELECT * for the update)."},
+"placement":{"score":5,"why":"The check sits at the top of the shared link routine, before the duplicate-link check and any write, which is where the tree validates link requests."},
+"scope":{"score":5,"why":"Only the guard and three targeted tests."},
+"maintainability":{"score":4,"why":"Simple and covers all providers; merging the two lookups of the upgrading account would be slightly cleaner."},
+"bypasses_abstraction":{"value":false,"where":"Uses linkBankSyncAccount, the single entry all link providers share."},
+"duplicated_blocks":0,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"None."},
+"one_place":{"value":true,"where":"linkBankSyncAccount in server/accounts/app.ts, used by the GoCardless, SimpleFin, Pluggy, Akahu, Enable Banking and Fintegra link handlers."}}

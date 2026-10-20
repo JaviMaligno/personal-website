@@ -1,0 +1,112 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 1ca2951..7eceded 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -27,6 +27,7 @@ import type { ImportTransactionsOpts } from '#types/api-handlers';
+ import type {
+   AccountEntity,
+   AccountGroupEntity,
++  AccountSyncSource,
+   BankSyncProviderStatus,
+   BankSyncStatus,
+   CategoryEntity,
+@@ -52,6 +53,33 @@ type LinkAccountBaseParams = {
+   startingBalance?: number;
+ };
+ 
++// Refuses to link the bank account `accountId` of provider `syncSource` when
++// another local account already holds it. An account holds the link when it is
++// not deleted (closed accounts still hold it) and has that provider and
++// provider account id. `upgradingId` (the account receiving the link) never
++// counts, so re-linking an account to its own bank account keeps working.
++// Runs before anything is written, so a refused link changes nothing.
++async function checkBankAccountNotLinkedElsewhere({
++  syncSource,
++  accountId,
++  upgradingId,
++}: {
++  syncSource: AccountSyncSource;
++  accountId: string;
++  upgradingId?: AccountEntity['id'];
++}) {
++  const holder = await db.first<Pick<db.DbAccount, 'id'>>(
++    `SELECT id FROM accounts
++       WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?
++         AND id != ?`,
++    [syncSource, accountId, upgradingId ?? ''],
++  );
++
++  if (holder) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ export type AccountHandlers = {
+   'account-update': typeof updateAccount;
+   'accounts-get': typeof getAccounts;
+@@ -181,6 +209,13 @@ async function linkGoCardlessAccount({
+   account: SyncServerGoCardlessAccount;
+ }) {
+   let id;
++
++  await checkBankAccountNotLinkedElsewhere({
++    syncSource: 'goCardless',
++    accountId: account.account_id,
++    upgradingId,
++  });
++
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+   if (upgradingId) {
+@@ -256,6 +291,12 @@ async function linkSimpleFinAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await checkBankAccountNotLinkedElsewhere({
++    syncSource: 'simpleFin',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+@@ -334,6 +375,12 @@ async function linkPluggyAiAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await checkBankAccountNotLinkedElsewhere({
++    syncSource: 'pluggyai',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+@@ -409,6 +456,12 @@ async function linkAkahuAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await checkBankAccountNotLinkedElsewhere({
++    syncSource: 'akahu',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const bank = await link.findOrCreateBank(
+     institution,
+     externalAccount.orgDomain ?? externalAccount.orgId,
+@@ -486,6 +539,12 @@ async function linkEnableBankingAccount({
+     name: externalAccount.institution ?? null,
+   };
+ 
++  await checkBankAccountNotLinkedElsewhere({
++    syncSource: 'enableBanking',
++    accountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   // Enable Banking uses a session-per-account model, so we use the
+   // account-level identifier (account_id) rather than institution-level
+   // IDs. This creates one bank entry per Enable Banking account, unlike

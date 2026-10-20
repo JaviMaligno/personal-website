@@ -1,0 +1,122 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 71daf01..0ae9168 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -213,6 +213,36 @@ function setCarryover(
+   });
+ }
+ 
++// Categories that month-wide actions may write to: not hidden, not in a
++// hidden group, and without any saved budget template.
++function hasSavedTemplates(goalDef: string | null | undefined): boolean {
++  if (!goalDef) {
++    return false;
++  }
++  try {
++    const parsed = JSON.parse(goalDef);
++    return Array.isArray(parsed) ? parsed.length > 0 : parsed != null;
++  } catch {
++    return true;
++  }
++}
++
++async function getBulkEditableCategories(): Promise<
++  db.DbViewCategoryWithGroupHidden[]
++> {
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { goal_def?: string | null }
++  >(
++    `
++  SELECT c.*
++  FROM categories c
++  LEFT JOIN category_groups g ON c.cat_group = g.id
++  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  `,
++  );
++  return categories.filter(c => !hasSavedTemplates(c.goal_def));
++}
++
+ // Actions
+ 
+ export async function copyPreviousMonth({
+@@ -223,13 +253,20 @@ export async function copyPreviousMonth({
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
++  const editableIds = new Set(
++    (await getBulkEditableCategories()).map(c => c.id),
++  );
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+       if (prevBudget.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+-      if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
++      if (
++        prevBudget.hidden === 1 ||
++        prevBudget.group_hidden === 1 ||
++        !editableIds.has(prevBudget.category)
++      ) {
+         return;
+       }
+       void setBudget({
+@@ -259,9 +296,7 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategory>(
+-    'SELECT * FROM v_categories WHERE tombstone = 0',
+-  );
++  const categories = await getBulkEditableCategories();
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+@@ -278,14 +313,7 @@ export async function set3MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getBulkEditableCategories();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -313,14 +341,7 @@ export async function set12MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getBulkEditableCategories();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -337,14 +358,7 @@ export async function set6MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `
+-  SELECT c.*
+-  FROM categories c
+-  LEFT JOIN category_groups g ON c.cat_group = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+-  `,
+-  );
++  const categories = await getBulkEditableCategories();
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {

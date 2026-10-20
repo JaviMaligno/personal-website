@@ -1,0 +1,71 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 0909b1f..412b9a7 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -661,9 +661,14 @@ describe('schedules', () => {
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+     });
+ 
+-    it('plans a ranged income at the end furthest from zero', () => {
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    it('plans a ranged income at the end closest to zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    });
++
++    it('plans a range spanning zero at its negative end', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++      expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+     });
+ 
+     it('plans an approximate expense at the end of its tolerance furthest from zero', () => {
+@@ -671,8 +676,8 @@ describe('schedules', () => {
+       expect(getScheduledAmount(-1234, 'isapprox')).toBe(-1327);
+     });
+ 
+-    it('plans an approximate income at the end of its tolerance furthest from zero', () => {
+-      expect(getScheduledAmount(10000, 'isapprox')).toBe(10750);
++    it('plans an approximate income at the end of its tolerance closest to zero', () => {
++      expect(getScheduledAmount(10000, 'isapprox')).toBe(9250);
+     });
+ 
+     it('plans a single amount unchanged', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 5ed2426..721e780 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -363,19 +363,14 @@ export function getScheduledAmount(
+   // allows the amount condition to be deleted which causes a crash
+   if (amount == null) return 0;
+ 
+-  // Plan for the worst case: ranged and approximate amounts post at the end
+-  // furthest from zero.
++  // Plan for the lowest value the amount allows, so that money going out is
++  // planned at its largest outflow and money coming in at its smallest inflow.
+   let planned: number;
+   if (typeof amount === 'number') {
+     planned =
+-      op === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
+-        : amount;
++      op === 'isapprox' ? amount - getApproxNumberThreshold(amount) : amount;
+   } else {
+-    planned =
+-      Math.abs(amount.num1) >= Math.abs(amount.num2)
+-        ? amount.num1
+-        : amount.num2;
++    planned = Math.min(amount.num1, amount.num2);
+   }
+   return inverse ? -planned : planned;
+ }
+diff --git a/upcoming-release-notes/approximate-amount-worst-case.md b/upcoming-release-notes/approximate-amount-worst-case.md
+index e0454d1..0e1f218 100644
+--- a/upcoming-release-notes/approximate-amount-worst-case.md
++++ b/upcoming-release-notes/approximate-amount-worst-case.md
+@@ -3,4 +3,4 @@ category: Enhancements
+ authors: [agent]
+ ---
+ 
+-Plan approximate schedule amounts at the end of their tolerance furthest from zero, matching ranged amounts
++Plan ranged and approximate schedule amounts at the lowest value they allow, so money coming in is planned at its smallest value

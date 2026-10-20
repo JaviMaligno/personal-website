@@ -1,0 +1,11 @@
+{"id":"80cbffd836",
+"reuse":{"score":3,"why":"Puts the link guards in link.ts and has every provider call them, and reuses findOrCreateBank/syncAccount/handleSyncResponse, but the takeover re-writes unlinkAccount's local unlink update instead of sharing it, and Fintegra linking copies the per-provider body rather than factoring it."},
+"duplication":{"score":2,"why":"prepareAccountLink repeats assertAccountNotLinked's SELECT verbatim, its takeover update copies unlinkAccount's field reset, linkFintegraAccount is a copy of linkAkahuAccount, and the assertAccountIsOpen+prepareAccountLink pair is pasted into six link functions."},
+"placement":{"score":4,"why":"Link rules sit in accounts/link.ts beside findOrCreateBank, the handler in accounts/app.ts, the download in sync.ts and the URL in server-config.ts, matching where the tree puts each provider piece."},
+"scope":{"score":4,"why":"All edits serve the four steps; minor drift such as Fintegra notifying 'accounts' as well while siblings send only 'transactions' is in-request."},
+"maintainability":{"score":3,"why":"The guards are centralised and called uniformly, but two copies of the 'who holds this link' query and of the local unlink reset will drift, and the providers' link bodies keep multiplying."},
+"bypasses_abstraction":{"value":true,"where":"link.ts prepareAccountLink resets account_id/bank/balances/sync fields itself instead of reusing the local part of unlinkAccount in accounts/app.ts"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"the duplicated query, unlink reset and Fintegra link body are verbatim copies, not reshaped"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"link.ts prepareAccountLink gained replaceExistingLink with a takeover branch that duplicates assertAccountNotLinked's query; all six provider link functions call the helpers"}}

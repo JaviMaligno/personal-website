@@ -1,0 +1,11 @@
+{"id":"4eb204e10b",
+"reuse":{"score":3,"why":"The flag is threaded through the existing assertBankAccountNotLinked guard, but the 'unlink account' field reset is pasted in again instead of being shared with unlinkAccount."},
+"duplication":{"score":2,"why":"The db.updateAccount block that clears account_id/bank/balances/sync source/status is a verbatim copy of the one in unlinkAccount."},
+"placement":{"score":3,"why":"Detaching the previous holder happens inside a function named and used as an assertion, so a guard now writes data, and it does so before the new link is attempted."},
+"scope":{"score":5,"why":"The change is limited to the flag, the guard, its six call sites and a release note."},
+"maintainability":{"score":3,"why":"Workable, but the unlink semantics now live in two copies that can drift (the request explicitly says 'as the unlink action leaves an account'), and the mutating assert is misleading."},
+"bypasses_abstraction":{"value":true,"where":"server/accounts/app.ts assertBankAccountNotLinked re-implements unlinkAccount's local reset (db.updateAccount with null link fields) instead of extracting and calling a shared helper."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied unlink update is verbatim, not disguised."}
+}

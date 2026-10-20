@@ -1,0 +1,12 @@
+{"id": "31f52fb14d",
+ "reuse": {"score": 4, "why": "Reuses getApproxNumberThreshold from shared/rules and getRangeAmount, and folds getScheduledAmount onto the new helper, but adds a second exported amount function next to getScheduledAmount, which already decided the missing/number/range cases."},
+ "duplication": {"score": 4, "why": "Removes four inline missing/number/range ternaries in favour of one helper; the remaining overlap is two exported functions (getPlannedAmount and getScheduledAmount) answering nearly the same question."},
+ "placement": {"score": 5, "why": "The rule lives in shared/schedules.ts beside getRangeAmount and getScheduledAmount, where the tree keeps schedule amount logic."},
+ "scope": {"score": 5, "why": "Touches only the amount call sites, a focused test and a release note."},
+ "maintainability": {"score": 4, "why": "Single definition of the planned amount, but op is appended as a third positional parameter after the boolean inverse, forcing callers to pass a bare `false`, and some getScheduledAmount callers silently omit op."},
+ "bypasses_abstraction": {"value": false, "where": "Previously inline sites (schedules/app.ts, forecast-schedules.ts, schedule-template.ts, computeSchedulePreviewTransactions) now call getPlannedAmount; getScheduledAmount delegates to it."},
+ "duplicated_blocks": 0,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "No logic is copied; getScheduledAmount wraps getPlannedAmount rather than re-implementing it."},
+ "one_place": {"value": true, "where": "getPlannedAmount in packages/loot-core/src/shared/schedules.ts holds the range and approx worst-case rules; getScheduledAmount and all server planning sites use it (display-only getScheduledAmount callers that omit op are not routed the op)."}
+}

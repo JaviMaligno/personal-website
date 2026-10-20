@@ -1,0 +1,157 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index b92716e..de287bf 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -433,6 +433,53 @@ describe('linking a bank account', () => {
+     expect(bankSync.syncAccount).toHaveBeenCalled();
+   });
+ 
++  it('refuses linking into a closed account and leaves it unchanged', async () => {
++    await db.insertAccount({ id: 'acct2', name: 'Savings' });
++    await db.update('accounts', { id: 'acct2', closed: 1 });
++    const before = await countAccounts();
++
++    await expect(
++      simpleFinLinkHandler({ externalAccount, upgradingId: 'acct2' }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++
++    const acct2 = await db.first<db.DbAccount>(
++      'SELECT * FROM accounts WHERE id = ?',
++      ['acct2'],
++    );
++    expect(acct2!.closed).toBe(1);
++    expect(acct2!.account_id).toBeNull();
++    expect(acct2!.account_sync_source).toBeNull();
++    expect(await countAccounts()).toBe(before);
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('refuses re-linking when the account that holds the link is closed', async () => {
++    await setupSimpleFinAccounts([
++      { id: 'acct1', name: 'Checking', accountId: 'ext-1' },
++    ]);
++    await db.update('accounts', { id: 'acct1', closed: 1 });
++
++    await expect(
++      simpleFinLinkHandler({ externalAccount, upgradingId: 'acct1' }),
++    ).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++  });
++
++  it('allows linking into an account once it is reopened', async () => {
++    await db.insertAccount({ id: 'acct2', name: 'Savings' });
++    await db.update('accounts', { id: 'acct2', closed: 1 });
++    await db.update('accounts', { id: 'acct2', closed: 0 });
++
++    await expect(
++      simpleFinLinkHandler({ externalAccount, upgradingId: 'acct2' }),
++    ).resolves.toBe('ok');
++    expect(bankSync.syncAccount).toHaveBeenCalled();
++  });
++
+   it('allows the same account id under a different provider', async () => {
+     insertBank({ id: 'bank2', bank_id: 'gc-bank', name: 'GoCardless' });
+     await db.insertAccount({
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 5467ac5..b43ee90 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -172,7 +172,7 @@ async function getAccountProperties({ id }: { id: AccountEntity['id'] }) {
+   };
+ }
+ 
+-async function assertBankAccountNotLinked({
++async function assertCanLinkBankAccount({
+   provider,
+   accountId,
+   upgradingId,
+@@ -181,6 +181,19 @@ async function assertBankAccountNotLinked({
+   accountId: string;
+   upgradingId?: AccountEntity['id'];
+ }) {
++  if (upgradingId) {
++    const closedAccount = await db.first<Pick<db.DbAccount, 'id'>>(
++      'SELECT id FROM accounts WHERE id = ? AND closed = 1 AND tombstone = 0',
++      [upgradingId],
++    );
++
++    if (closedAccount) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   const holder = await db.first<Pick<db.DbAccount, 'id'>>(
+     'SELECT id FROM accounts WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0 AND id IS NOT ?',
+     [provider, accountId, upgradingId ?? null],
+@@ -203,7 +216,7 @@ async function linkGoCardlessAccount({
+   account: SyncServerGoCardlessAccount;
+ }) {
+   let id;
+-  await assertBankAccountNotLinked({
++  await assertCanLinkBankAccount({
+     provider: 'goCardless',
+     accountId: account.account_id,
+     upgradingId,
+@@ -275,7 +288,7 @@ async function linkSimpleFinAccount({
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
+   let id;
+-  await assertBankAccountNotLinked({
++  await assertCanLinkBankAccount({
+     provider: 'simpleFin',
+     accountId: externalAccount.account_id,
+     upgradingId,
+@@ -358,7 +371,7 @@ async function linkPluggyAiAccount({
+ }) {
+   let id;
+   const fileId = getPrefs()?.cloudFileId;
+-  await assertBankAccountNotLinked({
++  await assertCanLinkBankAccount({
+     provider: 'pluggyai',
+     accountId: externalAccount.account_id,
+     upgradingId,
+@@ -441,7 +454,7 @@ async function linkAkahuAccount({
+   externalAccount: SyncServerAkahuAccount;
+ }) {
+   let id;
+-  await assertBankAccountNotLinked({
++  await assertCanLinkBankAccount({
+     provider: 'akahu',
+     accountId: externalAccount.account_id,
+     upgradingId,
+@@ -529,7 +542,7 @@ async function linkBankSyncAccount({
+   startingBalance,
+ }: LinkBankSyncAccountParams) {
+   let id;
+-  await assertBankAccountNotLinked({
++  await assertCanLinkBankAccount({
+     provider,
+     accountId: externalAccount.account_id,
+     upgradingId,
+@@ -617,7 +630,7 @@ async function linkEnableBankingAccount({
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
+   let id: string | undefined;
+-  await assertBankAccountNotLinked({
++  await assertCanLinkBankAccount({
+     provider: 'enableBanking',
+     accountId: externalAccount.account_id,
+     upgradingId,
+diff --git a/upcoming-release-notes/refuse-closed-account-bank-link.md b/upcoming-release-notes/refuse-closed-account-bank-link.md
+new file mode 100644
+index 0000000..b9ce491
+--- /dev/null
++++ b/upcoming-release-notes/refuse-closed-account-bank-link.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Prevent linking a bank account into a closed account, which left the account receiving transactions while hidden

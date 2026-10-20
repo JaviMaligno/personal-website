@@ -1,0 +1,11 @@
+{"id":"132eec0395",
+"reuse":{"score":3,"why":"Fintegra reuses the SimpleFIN link path and the Akahu download is generalised into downloadProviderTransactions, but taking over a link rewrites unlinkAccount's field reset inline instead of sharing it."},
+"duplication":{"score":2,"why":"Six near-identical per-provider assert*AccountIsNotLinked closures and six near-identical app.method lambdas, the closed-account check called in each link function and again inside the duplicate-link assertion, and a copy of unlinkAccount's db.updateAccount field list."},
+"placement":{"score":3,"why":"Link preconditions sit in accounts/app.ts at registration and the download helper in sync.ts, which fits the tree, but Fintegra is folded into a function still named linkSimpleFinAccount and the closed check is split between the registration lambdas' helper and each link body."},
+"scope":{"score":4,"why":"Edits stay on the four requested behaviours plus tests; the Akahu download refactor is in service of the Fintegra step."},
+"maintainability":{"score":2,"why":"The provider-specific wrapper boilerplate grows by two edits per new provider, linkSimpleFinAccount now carries a source parameter and an orgDomain type-guard for another provider, and the closed rule is checked in two places by design."},
+"bypasses_abstraction":{"value":true,"where":"assertBankAccountIsNotLinked unlinks the previous holder with its own db.updateAccount field reset instead of the existing unlinkAccount logic (accounts/app.ts)."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The six assert<Provider>AccountIsNotLinked closures and six app.method lambdas repeat the same call with only the provider/field renamed instead of one wrapper taking the provider; the unlink field reset is copied from unlinkAccount."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":1,"where":"assertBankAccountIsNotLinked gains replaceExistingLink with a replace branch that also re-runs the closed check; linkSimpleFinAccount gains a `source` parameter and an `'orgDomain' in externalAccount` special case for Fintegra; the replace branch bypasses unlinkAccount."}}

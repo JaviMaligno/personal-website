@@ -1,0 +1,107 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 7cb159e..3b36b73 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -616,6 +616,70 @@ describe('schedules', () => {
+ 
+         expect(getNextDate(dateCond, new Date(2020, 11, 7))).toBe('2020-12-14');
+       });
++
++      it('treats an MM-DD holiday as that day in every year', () => {
++        const dateCond = {
++          op: 'is',
++          value: {
++            start: '2020-12-09',
++            frequency: 'weekly',
++            patterns: [],
++            skipWeekend: true,
++            weekendSolveMode: 'after',
++            holidays: ['12-09'],
++          },
++        };
++
++        expect(getNextDate(dateCond, new Date(2020, 11, 1))).toBe('2020-12-10');
++      });
++
++      it('applies an MM-DD holiday in a later year', () => {
++        const dateCond = {
++          op: 'is',
++          value: {
++            start: '2021-12-09',
++            frequency: 'weekly',
++            patterns: [],
++            skipWeekend: true,
++            weekendSolveMode: 'after',
++            holidays: ['12-09'],
++          },
++        };
++
++        expect(getNextDate(dateCond, new Date(2021, 11, 1))).toBe('2021-12-10');
++      });
++
++      it('does not apply an MM-DD holiday to other months', () => {
++        const dateCond = {
++          op: 'is',
++          value: {
++            start: '2020-11-09',
++            frequency: 'weekly',
++            patterns: [],
++            skipWeekend: true,
++            weekendSolveMode: 'after',
++            holidays: ['12-09'],
++          },
++        };
++
++        expect(getNextDate(dateCond, new Date(2020, 10, 1))).toBe('2020-11-09');
++      });
++
++      it('mixes MM-DD and YYYY-MM-DD holidays in one list', () => {
++        const dateCond = {
++          op: 'is',
++          value: {
++            start: '2020-12-07',
++            frequency: 'daily',
++            patterns: [],
++            skipWeekend: true,
++            weekendSolveMode: 'after',
++            holidays: ['12-07', '2020-12-08'],
++          },
++        };
++
++        expect(getNextDate(dateCond, new Date(2020, 11, 7))).toBe('2020-12-09');
++      });
+     });
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 8c929cd..3356720 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -354,8 +354,14 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+   return null;
+ }
+ 
++// Holiday entries are either 'YYYY-MM-DD' (that day only) or 'MM-DD' (every year).
++function isHoliday(date: Date, holidays: string[]) {
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
++}
++
+ function isNonBusinessDay(date: Date, holidays: string[]) {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  return d.isWeekend(date) || isHoliday(date, holidays);
+ }
+ 
+ export function getDateWithSkippedWeekend(
+diff --git a/upcoming-release-notes/yearly-schedule-holidays.md b/upcoming-release-notes/yearly-schedule-holidays.md
+new file mode 100644
+index 0000000..171e3d0
+--- /dev/null
++++ b/upcoming-release-notes/yearly-schedule-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Schedule holidays can be entered as `MM-DD` to repeat every year

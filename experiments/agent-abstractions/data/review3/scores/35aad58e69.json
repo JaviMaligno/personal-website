@@ -1,0 +1,12 @@
+{"id": "35aad58e69",
+ "reuse": {"score": 4, "why": "Reuses the shared extractTagsFromText tag parser and folds the five copied category queries into one helper, though copyPreviousMonth's existing getBudgetData filter is not reused or aligned."},
+ "duplication": {"score": 4, "why": "Removes five copies of the month-wide category query in favour of getMonthWideBudgetCategories; the separate exclusion logic in copyPreviousMonth stays as a second, now-diverging copy of the rule."},
+ "placement": {"score": 4, "why": "The selection helper sits in budget/actions.ts next to its callers; the tag check is done in JS after a SQL join, which is reasonable given tags are parsed by a shared TS function."},
+ "scope": {"score": 4, "why": "Core change is focused, but the test file carries unrelated import reordering and prettier reflows of existing tests."},
+ "maintainability": {"score": 4, "why": "One named selection function for most month-wide actions is easy to own; the miss on copyPreviousMonth leaves one month-wide action outside the rule."},
+ "bypasses_abstraction": {"value": false, "where": "Uses the existing extractTagsFromText from #shared/tags instead of hand-parsing '#fixed'."},
+ "duplicated_blocks": 0,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "Duplicated queries were actually consolidated, not reshaped."},
+ "one_place": {"value": false, "where": "The #fixed rule lives in getMonthWideBudgetCategories used by setZero, setLastMonthSpending, set3/6/12MonthAvg, but copyPreviousMonth still decides exclusions itself via getBudgetData + its own hidden/goal_def checks and does not apply the fixed-group rule."}
+}

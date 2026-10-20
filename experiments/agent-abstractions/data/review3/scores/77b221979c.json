@@ -1,0 +1,11 @@
+{"id": "77b221979c",
+ "reuse": {"score": 3, "why": "Extends getDateWithSkippedWeekend with holidays and reuses recurConfigToRSchedule/RSchedule, but app.ts inlines `d.isWeekend(date) || isHoliday(...)` instead of reusing isSkippedDay, and the new range handler re-does the per-occurrence adjustment rather than sharing getUpcomingDates' mapping."},
+ "duplication": {"score": 2, "why": "The 'daily: skip, otherwise move' decision is written three times (getNextDate, getUpcomingDates, getDatesInRange), and the weekend-or-holiday test is repeated inline twice next to the private isSkippedDay."},
+ "placement": {"score": 3, "why": "Holiday matching and the move loop sit correctly in shared/schedules.ts, but the daily-skip rule, which is schedule date policy, is decided at each caller in server/schedules/app.ts rather than in the shared module."},
+ "scope": {"score": 5, "why": "Changes are limited to the date rules, the new handler, the RecurConfig field and tests."},
+ "maintainability": {"score": 2, "why": "A future change to the daily or holiday rule must be made in three call sites, and schedule-template.ts still calls getDateWithSkippedWeekend without holidays or the daily rule, so paths already disagree."},
+ "bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getUpcomingDates and getDatesInRange re-implement isSkippedDay inline and decide the daily rule themselves instead of a shared adjust-occurrence function; server/budget/schedule-template.ts left on the old getDateWithSkippedWeekend call"},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "the daily-skip/move mapping appears as a nested ternary in getUpcomingDates, an if-chain in getDatesInRange and an occurrence loop in getNextDate; isSkippedDay's body is inlined as `d.isWeekend(date) || isHoliday(...)` in app.ts"},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 3, "where": "shared/schedules.ts getDateWithSkippedWeekend gains a holidays parameter; the daily special case lives outside it at getNextDate, getUpcomingDates and getDatesInRange; getUpcomingDates/getDatesInRange inline isSkippedDay and schedule-template.ts bypasses the new rules"}}

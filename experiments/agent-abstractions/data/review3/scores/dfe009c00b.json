@@ -1,0 +1,12 @@
+{"id":"dfe009c00b",
+"reuse":{"score":5,"why":"Every inline midpoint copy (forecast normaliser, updateActions, postTransactionForSchedule, preview transactions, schedule template) is replaced by a call to the existing shared getScheduledAmount, and the approximate tolerance comes from the existing getApproxNumberThreshold."},
+"duplication":{"score":5,"why":"It removes five duplicated copies of the expected-amount rule, leaving one definition."},
+"placement":{"score":5,"why":"The rule lives in shared/schedules.ts and is consumed by the server, API model and client layers through imports."},
+"scope":{"score":4,"why":"The edits all serve the expected-amount rule and API field. The UI display sites that also call the helper are left without the operator, which is reasonable but uneven."},
+"maintainability":{"score":4,"why":"There is one small, well-tested definition, but adding the operator after the boolean `inverse` forces `getScheduledAmount(x, false, op)` with a bare positional false at every call site."},
+"bypasses_abstraction":{"value":false,"where":"After the change no site re-implements the amount rule. All go through getScheduledAmount."},
+"duplicated_blocks":0,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"None. The copies are removed."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"getScheduledAmount in packages/loot-core/src/shared/schedules.ts gains an `op` parameter and an isapprox branch, which is the real variation the steps ask for. No call site re-implements it, though SchedulesTable, the mobile list and useScheduleEdit call it without the operator."}
+}

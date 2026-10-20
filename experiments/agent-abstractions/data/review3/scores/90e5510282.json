@@ -1,0 +1,13 @@
+{
+  "id": "90e5510282",
+  "reuse": {"score": 4, "why": "Extends the existing shared getDateWithSkippedWeekend with a holidays parameter and threads it through every caller, but schedules/app.ts does not reuse the new isNonWorkingDay predicate."},
+  "duplication": {"score": 3, "why": "The 'weekend or holiday' test is written as isNonWorkingDay in shared/schedules.ts and again inline twice in schedules/app.ts (getUpcomingDates and getDatesInRange)."},
+  "placement": {"score": 4, "why": "Date adjustment stays in shared/schedules.ts where the weekend rule lives, but isNonWorkingDay is kept private so the server layer re-derives it."},
+  "scope": {"score": 4, "why": "Focused on holidays; the small adjustWeekend closure in schedule-template.ts is a reasonable local tidy-up of a duplicated ternary."},
+  "maintainability": {"score": 3, "why": "Changing what counts as a non-working day requires editing the shared predicate plus two inline copies in app.ts and the conditional in getNextDate."},
+  "bypasses_abstraction": {"value": true, "where": "packages/loot-core/src/server/schedules/app.ts getUpcomingDates and getDatesInRange inline d.isWeekend(...) || config.holidays?.includes(...) instead of a shared isNonWorkingDay."},
+  "duplicated_blocks": 2,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "The isNonWorkingDay logic is reshaped as inline boolean expressions in schedules/app.ts and as a holidays ? isNonWorkingDay : isWeekend conditional in getNextDate."},
+  "one_place": {"value": false, "where": "Date moving is centralised in getDateWithSkippedWeekend, but the daily-skip rule for holidays is decided separately in getNextDate (shared/schedules.ts) and twice in server/schedules/app.ts."}
+}

@@ -1,0 +1,13 @@
+{
+  "id": "84bdd01d98",
+  "reuse": {"score": 3, "why": "Introduces a shared category selection (getBulkBudgetCategories + shouldSkipBulkCategory) used by setZero, the averages and the new last-month action, and reuses getCategoryAverage/getSheetValue, but copyPreviousMonth does not use it and setBulkNMonthAvg re-inlines the sign/average logic of the existing setNMonthAvg instead of calling it."},
+  "duplication": {"score": 2, "why": "The saved-template rule exists twice (SQL json_extract in getBulkBudgetCategories and a JS JSON-parse hasSavedTemplate in copyPreviousMonth), the hidden rule twice (SQL and copyPreviousMonth's inline check), and the average-and-negate logic is copied from setNMonthAvg into setBulkNMonthAvg."},
+  "placement": {"score": 4, "why": "All logic stays in server/budget/actions.ts with the method registered in app.ts, as the tree does for the other month-wide actions; the exclusion rules are split between SQL and JS helpers, which is acceptable but scattered."},
+  "scope": {"score": 4, "why": "Changes are confined to the month-wide actions, the new handler and tests; collapsing the three average actions into setBulkNMonthAvg is a reasonable related refactor."},
+  "maintainability": {"score": 3, "why": "Most actions share one selection, but copyPreviousMonth keeps its own parallel exclusion chain that ignores includeHiddenCategories, so the next exclusion rule must be added in two differently shaped places."},
+  "bypasses_abstraction": {"value": true, "where": "actions.ts copyPreviousMonth: applies hidden/template/fixed exclusions inline on getBudgetData rows instead of using getBulkBudgetCategories/shouldSkipBulkCategory, and does not accept includeHiddenCategories."},
+  "duplicated_blocks": 2,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "hasSavedTemplate (JS JSON parse of template_settings.source === 'ui') reshapes the SQL `COALESCE(json_extract(c.template_settings,'$.source'),'notes') != 'ui'` filter of getBulkBudgetCategories; copyPreviousMonth's hidden/group_hidden check mirrors the SQL hidden filter; setBulkNMonthAvg re-inlines setNMonthAvg's average-and-negate."},
+  "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 1, "where": "getBulkBudgetCategories gains includeHiddenCategories (spec-driven); copyPreviousMonth bypasses the shared selection and re-implements all exclusions inline."}
+}

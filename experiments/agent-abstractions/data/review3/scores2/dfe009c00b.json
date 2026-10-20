@@ -1,0 +1,13 @@
+{
+  "id": "dfe009c00b",
+  "reuse": {"score": 5, "why": "Extends the existing getScheduledAmount and routes every server/shared site (updateActions, postTransactionForSchedule, preview, forecast, schedule-template, API model) through it, reusing getApproxNumberThreshold for the tolerance."},
+  "duplication": {"score": 5, "why": "Removes five copies of the null/number/range midpoint dispatch in favour of the single helper and adds none."},
+  "placement": {"score": 5, "why": "The rule lives in shared/schedules.ts, the API field is derived in api-models.ts scheduleModel.toExternal, and the list type change is in api-handlers types."},
+  "scope": {"score": 4, "why": "Focused on amount resolution and the API field; the Balance.tsx touch is related but leaves the other client callers inconsistent."},
+  "maintainability": {"score": 4, "why": "One definition of the expected amount; the positional boolean-then-op signature (getScheduledAmount(x, false, op)) is awkward, and client callers that omit op silently skip the approximate rule."},
+  "bypasses_abstraction": {"value": false, "where": "All amount resolution goes through getScheduledAmount; SchedulesTable, SchedulesListItem, MobileSchedulesPage and useScheduleEdit call it without op rather than bypassing it."},
+  "duplicated_blocks": 0,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "None; the inline copies were removed, not reshaped."},
+  "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 0, "where": "shared/schedules.ts getScheduledAmount gains an optional op parameter and an isapprox branch; desktop-client callers other than Balance.tsx do not pass op, so the rule depends on each caller remembering it."}
+}

@@ -1,0 +1,45 @@
+{
+ "id": "cf2125a28d",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses recurrence conversion and weekend adjustment helpers, but getDatesInRange implements daily occurrence filtering separately from the shared helpers."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The range handler duplicates daily exclusion logic and the conditional weekend adjustment dispatch already implemented elsewhere."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Most scheduling policy remains in shared/schedules.ts, but the range handler also owns exclusion policy and adjustment-specific search margins."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits support the requested scheduling rules, range endpoint, configuration propagation, or associated tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The holiday predicate provides a useful shared definition, but separate occurrence-processing paths require maintainers to coordinate future policy changes across modules."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "server/schedules/app.ts:getDatesInRange filters daily occurrences with d.isWeekend directly instead of sharing the weekend-and-holiday exclusion definition used by getWeekdayOccurrences."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "getDatesInRange reshapes existing occurrence filtering and conditional adjustment into an imperative loop, retaining parallel policy implementations rather than sharing them."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "getDateWithSkippedWeekend gains a holidays parameter, getNextDate gains a daily-skipping branch, and getDatesInRange independently implements daily exclusion instead of using the shared exclusion policy."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 51.1
+ }
+}

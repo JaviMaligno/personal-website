@@ -1,0 +1,59 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 809df5f..25f46a6 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -33,9 +33,14 @@ describe('schedules', () => {
+       [{ num1: 10100, num2: 20000 }, 20000],
+       [{ num1: 20000, num2: 10100 }, 20000],
+       [123, 123],
++      [-10000, -10750, 'isapprox'],
++      [10000, 10750, 'isapprox'],
++      [-1234, -1327, 'isapprox'],
++      [1234, 1327, 'isapprox'],
++      [-1234, -1234, 'is'],
+       [null, 0],
+-    ])('resolves %j to %d', (value, expected) => {
+-      expect(getExpectedScheduleAmount(value)).toBe(expected);
++    ])('resolves %j to %d', (value, expected, amountOp?: string) => {
++      expect(getExpectedScheduleAmount(value, amountOp)).toBe(expected);
+     });
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 0a11383..f76b7d8 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -12,12 +12,17 @@ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+ export function getExpectedScheduleAmount(
+   amount: number | { num1: number; num2: number } | null | undefined,
++  amountOp?: string,
+ ): number {
+   if (amount == null) {
+     return 0;
+   }
+ 
+   if (typeof amount === 'number') {
++    if (amountOp === 'isapprox') {
++      const tolerance = Math.round(Math.abs(amount) * 0.075);
++      return amount + Math.sign(amount) * tolerance;
++    }
+     return amount;
+   }
+ 
+@@ -512,9 +517,12 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // Missing amounts preview as 0; ranged amounts use the endpoint furthest
+-      // from zero so the schedule plans for the worst case.
+-      const amount = getExpectedScheduleAmount(schedule._amount);
++      // Missing amounts preview as 0; ranged and approximate amounts use the
++      // endpoint furthest from zero so the schedule plans for the worst case.
++      const amount = getExpectedScheduleAmount(
++        schedule._amount,
++        schedule._amountOp,
++      );
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

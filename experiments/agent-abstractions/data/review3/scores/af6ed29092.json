@@ -1,0 +1,11 @@
+{"id": "af6ed29092",
+"reuse": {"score": 3, "why": "Builds on the existing pre-link guard and shared linkBankSyncAccount, but writes its own unlink field-clearing instead of extracting and sharing the one in unlinkAccount."},
+"duplication": {"score": 3, "why": "releaseAccountLinks repeats unlinkAccount's db.updateAccount block field for field, and the release call is written twice in linkBankSyncAccount's two branches; the flag/ids plumbing is repeated in all six linkers."},
+"placement": {"score": 4, "why": "Detection stays in the pre-link guard and the release happens in the shared link sequence in accounts/app.ts, which fits the layering, though the guard named assertBankAccountNotLinked now returns ids to release, blurring check and action."},
+"scope": {"score": 5, "why": "Only the flag, its plumbing and the release; no unrelated edits."},
+"maintainability": {"score": 3, "why": "A future change to what 'unlinked' means must be made in both unlinkAccount and releaseAccountLinks, and the assert-that-returns-ids naming plus threading two values through six linkers is awkward to own."},
+"bypasses_abstraction": {"value": true, "where": "releaseAccountLinks in accounts/app.ts re-implements the local unlink of unlinkAccount (same db.updateAccount fields) instead of sharing it."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "releaseAccountLinks copies unlinkAccount's field-clearing db.updateAccount under a new name and wrapped in a loop, presented as a separate 'release' concept rather than shared with unlinkAccount."}
+}

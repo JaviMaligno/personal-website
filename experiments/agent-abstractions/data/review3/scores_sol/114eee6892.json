@@ -1,0 +1,44 @@
+{
+ "id": "114eee6892",
+ "reuse": {
+  "score": 4,
+  "why": "The API and forecast reuse getScheduledAmount, and approximate amounts reuse getApproxNumberThreshold, but budget templates retain their own amount dispatch."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Budget templates duplicate the shared helper's selection between ranged, approximate, and single amounts."
+ },
+ "placement": {
+  "score": 4,
+  "why": "The arithmetic belongs in shared/schedules, but the budget layer still owns part of the shared amount-selection policy."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The changes are confined to schedule amount planning, API exposure, associated tests, and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The shared arithmetic is straightforward, but duplicated dispatch and an optional untyped operator make consistent adoption harder to maintain."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/server/budget/schedule-template.ts selects getRangeWorstCase or getApproxWorstCase locally instead of delegating amount selection to getScheduledAmount."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The operator-based nested ternary in schedule-template.ts reshapes the amount-selection logic implemented through type dispatch and an approximate-operator check in getScheduledAmount."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "getScheduledAmount gains optional op?: string and an isapprox branch; schedule-template.ts independently dispatches to the lower-level helpers."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 26.6
+ }
+}

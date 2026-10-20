@@ -1,0 +1,11 @@
+{"id":"46572cb0de",
+"reuse":{"score":2,"why":"The tree already decides a schedule's expected amount (missing gives 0, number gives itself, range gives the end furthest from zero) inline in computeSchedulePreviewTransactions in shared/schedules.ts; the diff writes the rule again in api-models instead of extracting that into a shared helper and calling it."},
+"duplication":{"score":2,"why":"The missing/number/furthest-from-zero ternary is a second copy of the preview logic, with a different tie rule (> instead of >=)."},
+"placement":{"score":3,"why":"Exposing the field in scheduleModel.toExternal is the right API layer, but the amount rule is a schedule-domain decision that belongs in shared/schedules.ts beside getScheduledAmount and the preview code."},
+"scope":{"score":4,"why":"Limited to the API model, its handler type and a test; the new type also changes the return type of toExternal for every caller, not only the list."},
+"maintainability":{"score":3,"why":"Simple to read, but the API and the previews now each hold their own copy of the rule, and they already disagree on ties."},
+"bypasses_abstraction":{"value":false,"where":"No exported helper for the furthest-from-zero amount exists to bypass; the existing rule is inline in computeSchedulePreviewTransactions."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"api-models.ts scheduleModel.toExternal: the preview's nested ternary is reshaped (a ?? 0 default, then > instead of >=) rather than shared."},
+"t2_reuse":"copy"}

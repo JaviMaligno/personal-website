@@ -1,0 +1,187 @@
+diff --git a/packages/docs/docs/api/types.jsx b/packages/docs/docs/api/types.jsx
+index 0a4b1b7..7d78c9b 100644
+--- a/packages/docs/docs/api/types.jsx
++++ b/packages/docs/docs/api/types.jsx
+@@ -315,6 +315,18 @@ export const objects = {
+         </span>
+       ),
+     },
++    {
++      name: 'expectedAmount',
++      type: 'number',
++      description: (
++        <span>
++          Read-only, returned by <code>getSchedules</code>. The single amount
++          the schedule is expected to post, in the same units as{' '}
++          <code>amount</code>. For a range, this is the end furthest from zero;
++          0 if the schedule has no amount.
++        </span>
++      ),
++    },
+     {
+       name: 'date',
+       type: 'date | RecurConfig',
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..66856c4 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -237,6 +237,10 @@ export type APIScheduleEntity = Pick<
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
+ };
+ 
++export type APIScheduleListEntity = APIScheduleEntity & {
++  expectedAmount: number; // Amount Actual expects the schedule to post; ranges resolve to the end furthest from zero
++};
++
+ export const scheduleModel = {
+   toExternal(schedule: ScheduleEntity): APIScheduleEntity {
+     return {
+diff --git a/packages/loot-core/src/server/api.test.ts b/packages/loot-core/src/server/api.test.ts
+index 32f6ed6..d6d5780 100644
+--- a/packages/loot-core/src/server/api.test.ts
++++ b/packages/loot-core/src/server/api.test.ts
+@@ -1,6 +1,8 @@
+ import * as db from '#server/db';
++import { loadMappings } from '#server/db/mappings';
+ import * as sheet from '#server/sheet';
+ import { getBankSyncError } from '#shared/errors';
++import type { RuleConditionEntity } from '#types/models';
+ import type { ServerHandlers } from '#types/server-handlers';
+ 
+ import { app as accountGroupsApp } from './account-groups/app';
+@@ -8,6 +10,8 @@ import { app as accountsApp } from './accounts/app';
+ import { installAPI } from './api';
+ import { createBudget } from './budget/base';
+ import * as prefs from './prefs';
++import { createSchedule, app as schedulesApp } from './schedules/app';
++import { loadRules, resetState } from './transactions/transaction-rules';
+ 
+ vi.mock('#shared/errors', () => ({
+   getBankSyncError: vi.fn(error => `Bank sync error: ${error}`),
+@@ -249,4 +253,69 @@ describe('API handlers', () => {
+       expect(handlers['rule-update']).toHaveBeenCalledWith(internalRule);
+     });
+   });
++
++  describe('api/schedules-get', () => {
++    beforeEach(global.emptyDatabase());
++
++    beforeEach(async () => {
++      await prefs.loadPrefs();
++      await loadMappings();
++      await loadRules();
++    });
++
++    afterEach(async () => {
++      await schedulesApp.stopServices();
++      resetState();
++    });
++
++    async function createTestSchedule(
++      name: string,
++      amountCondition: RuleConditionEntity[],
++    ) {
++      const payeeId = await db.insertPayee({ name: `${name} payee` });
++      const id = await createSchedule({
++        schedule: { name, posts_transaction: false },
++        conditions: [
++          { op: 'is', field: 'payee', value: payeeId },
++          { op: 'is', field: 'date', value: '2026-01-15' },
++          ...amountCondition,
++        ],
++      });
++      return id;
++    }
++
++    it('returns the amount as entered and the expected amount for each schedule', async () => {
++      const singleId = await createTestSchedule('Single', [
++        { op: 'is', field: 'amount', value: -5000 },
++      ]);
++      const rangeId = await createTestSchedule('Range', [
++        {
++          op: 'isbetween',
++          field: 'amount',
++          value: { num1: -10100, num2: -20000 },
++        },
++      ]);
++      const noAmountId = await createTestSchedule('No amount', []);
++
++      await loadRules();
++      schedulesApp.startServices();
++
++      const schedules = await handlers['api/schedules-get']();
++      const byId = Object.fromEntries(schedules.map(s => [s.id, s]));
++
++      expect(byId[singleId]).toMatchObject({
++        name: 'Single',
++        amount: -5000,
++        amountOp: 'is',
++        expectedAmount: -5000,
++      });
++      expect(byId[rangeId]).toMatchObject({
++        name: 'Range',
++        amount: { num1: -10100, num2: -20000 },
++        amountOp: 'isbetween',
++        expectedAmount: -20000,
++      });
++      expect(byId[noAmountId].expectedAmount).toBe(0);
++    });
++  });
+ });
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index dd819a0..d609a19 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -11,6 +11,7 @@ import {
+ } from '#shared/errors';
+ import * as monthUtils from '#shared/months';
+ import { q } from '#shared/query';
++import { getScheduledAmount } from '#shared/schedules';
+ import {
+   deleteTransaction,
+   ungroupTransactions,
+@@ -928,7 +929,10 @@ handlers['api/schedules-get'] = async function () {
+   checkFileOpen();
+   const { data } = await aqlQuery(q('schedules').select('*'));
+   const schedules = data as ScheduleEntity[];
+-  return schedules.map(schedule => scheduleModel.toExternal(schedule));
++  return schedules.map(schedule => ({
++    ...scheduleModel.toExternal(schedule),
++    expectedAmount: getScheduledAmount(schedule._amount),
++  }));
+ };
+ 
+ handlers['api/schedule-create'] = withMutation(async function (
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 679a8c9..47c2f8d 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -10,6 +10,7 @@ import type {
+   APIPayeeEntity,
+   APIRuleEntity,
+   APIScheduleEntity,
++  APIScheduleListEntity,
+   APITagEntity,
+ } from '#server/api-models';
+ import type { BudgetFileHandlers } from '#server/budgetfiles/app';
+@@ -303,7 +304,7 @@ export type ApiHandlers = {
+ 
+   'api/schedule-delete': (id: string) => Promise<void>;
+ 
+-  'api/schedules-get': () => Promise<APIScheduleEntity[]>;
++  'api/schedules-get': () => Promise<APIScheduleListEntity[]>;
+   'api/get-id-by-name': (arg: {
+     type: string;
+     name: string;
+diff --git a/upcoming-release-notes/schedule-expected-amount-api.md b/upcoming-release-notes/schedule-expected-amount-api.md
+new file mode 100644
+index 0000000..cb6a427
+--- /dev/null
++++ b/upcoming-release-notes/schedule-expected-amount-api.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [claude]
++---
++
++Add `expectedAmount` to schedules returned by the API's `getSchedules`

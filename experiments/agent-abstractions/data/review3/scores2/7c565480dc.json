@@ -1,0 +1,12 @@
+{"id": "7c565480dc",
+"reuse": {"score": 1, "why": "Ignores the existing notes table (server/notes/app.ts, where group notes are saved by id) and the #shared/tags helpers, adding a new category_groups.notes column and a hand-written SQL regex instead."},
+"duplication": {"score": 4, "why": "The tag condition is written once, inside the shared getMonthActionCategories query, with no copied logic."},
+"placement": {"score": 2, "why": "The filter sits in the right selection helper, but the data it reads is placed in a new schema column via a migration, a different layer from where the tree keeps notes."},
+"scope": {"score": 2, "why": "A database migration and a DbCategoryGroup type change are added for a behaviour that only needed to read existing notes."},
+"maintainability": {"score": 1, "why": "Introduces a parallel storage for group notes that the notes UI never writes to, and leaves copyPreviousMonth applying the old exclusions on its own."},
+"bypasses_abstraction": {"value": true, "where": "migrations/1791838388703_add_category_group_notes.sql and getMonthActionCategories read category_groups.notes instead of the notes table used by notes-get/notes-save."},
+"duplicated_blocks": 0,
+"would_merge": "no",
+"disguised_duplication": {"value": false, "where": "No duplicated logic; the problem is a parallel data source rather than copied code."},
+"one_place": {"value": false, "where": "The #fixed rule is added only to getMonthActionCategories; copyPreviousMonth keeps its own inline hidden/income checks from getBudgetData and never applies it."}
+}

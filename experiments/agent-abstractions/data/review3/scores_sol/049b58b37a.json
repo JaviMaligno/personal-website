@@ -1,0 +1,44 @@
+{
+ "id": "049b58b37a",
+ "reuse": {
+  "score": 3,
+  "why": "All providers share the new link guard and existing bank lookup and import helpers, but Fintegra copies the linking and download workflows and replacement copies the local unlink reset."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The diff adds three substantial duplicated blocks: the provider linking workflow, transaction downloader, and account link-field reset."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider handling stays in the established account and sync modules, but an assertion helper now also performs account mutations."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits remain focused on the requested linking rules and Fintegra support, including the client mappings required by the expanded provider type."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized linking rules help maintenance, but duplicated provider workflows and a mutating assertion obscure responsibilities and create multiple places to update shared behavior."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "app.ts: assertBankAccountNotLinked duplicates the local reset owned by unlinkAccount; extracting that reset would allow replacement to reuse it without triggering provider disconnection."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The Fintegra workflows and account reset are direct, recognizable copies rather than duplication hidden through restructuring."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 0,
+  "where": "app.ts: assertBankAccountNotLinked gains replaceExistingLink and branches for closed-target validation and replacement, evolving from a duplicate-link assertion into validation plus unlink mutation; all six linking handlers still call it."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 27.9
+ }
+}

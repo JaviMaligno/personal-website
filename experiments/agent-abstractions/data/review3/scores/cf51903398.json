@@ -1,0 +1,11 @@
+{"id": "cf51903398",
+ "reuse": {"score": 4, "why": "Extends the existing shared getDateWithSkippedWeekend and adds one shared isNonWorkingDay predicate that every weekend site now calls, rather than re-implementing the check per site."},
+ "duplication": {"score": 3, "why": "Adds no new copied block, but threads holidays through four pre-existing copies of the 'skipWeekend ? (daily ? skip : move) : date' decision (getNextDate, schedule-template, getUpcomingDates, getDatesInRange) instead of consolidating them, so each copy had to be edited in parallel."},
+ "placement": {"score": 5, "why": "The non-working-day rule and the date-moving loop live in shared/schedules.ts next to the existing weekend helper; the type change sits in the model type and the serialisation in rule-utils."},
+ "scope": {"score": 4, "why": "Focused on holidays; widening getDatesInRange's look-around window from 2 to an unexplained 14 days is related but a magic number."},
+ "maintainability": {"score": 3, "why": "The predicate is clean, but getDateWithSkippedWeekend's unknown-mode branch is contorted, the 14-day window is unexplained, and future weekend-rule changes still require touching four sites that each pass holidays by hand."},
+ "bypasses_abstraction": {"value": false, "where": ""},
+ "duplicated_blocks": 0,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": ""},
+ "one_place": {"value": true, "where": "What counts as a non-working day lives in isNonWorkingDay and the moving rule in getDateWithSkippedWeekend (shared/schedules.ts); getNextDate, schedule-template, getUpcomingDates and getDatesInRange all call them, though each still decides locally when to apply them and passes holidays itself."}}

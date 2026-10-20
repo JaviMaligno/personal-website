@@ -1,0 +1,12 @@
+{"id":"1ac76b87a6",
+"reuse":{"score":4,"why":"All rule changes go into the existing getScheduledAmount and the approximate tolerance reuses getApproxNumberThreshold from shared/rules; the API field calls the same helper."},
+"duplication":{"score":4,"why":"No copied amount logic; the only repetition is the positional 'false' inverse argument and the operator threaded by hand at each caller."},
+"placement":{"score":5,"why":"The expected-amount rule stays in shared/schedules.ts; callers in api-models, forecast, schedule-template, schedules/app and Balance only pass their data."},
+"scope":{"score":3,"why":"Carries unrelated import reordering in server/schedules/app.ts and four release notes, two of which describe superseded rules (midpoint-to-furthest-from-zero) that contradict the final behaviour."},
+"maintainability":{"score":3,"why":"The new optional amountOp is passed at some callers but not others (shared/schedules.ts preview, SchedulesTable, MobileSchedulesPage, SchedulesListItem, useScheduleEdit), so approximate amounts are planned differently depending on the screen, and the boolean-then-string positional signature is easy to misuse."},
+"bypasses_abstraction":{"value":false,"where":"Every amount site still goes through getScheduledAmount; none re-implements it."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No duplicated logic introduced."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"shared/schedules.ts getScheduledAmount: the rangeRounding option was replaced by an optional amountOp parameter with an 'isapprox' branch; several existing callers (shared preview at line ~534, SchedulesTable x2, MobileSchedulesPage, SchedulesListItem, useScheduleEdit x2) were left without the operator, so the helper's behaviour now depends on whether each caller remembered to pass it."}
+}

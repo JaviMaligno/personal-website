@@ -1,0 +1,13 @@
+{
+  "id": "89bebfd545",
+  "reuse": {"score": 3, "why": "Reuses EDITABLE_CATEGORY_FILTER and folds the copied category queries into getEditableCategories, but writes its own FIXED_TAG regex instead of the tree's extractTagsFromText from shared/tags, which already defines how tags are parsed from notes (escaping with ##, delimiters)."},
+  "duplication": {"score": 4, "why": "Removes five copies of the category query; the only new repetition is copyPreviousMonth applying the fixed-group check itself, following the tree's existing split between the SQL filter and copyPreviousMonth's row checks."},
+  "placement": {"score": 5, "why": "The fixed-group lookup sits in budget/actions.ts next to EDITABLE_CATEGORY_FILTER and hasSavedTemplates, where the tree keeps the month-wide selection rules."},
+  "scope": {"score": 5, "why": "Only the month-wide selection, the budget-row query column and focused tests change."},
+  "maintainability": {"score": 4, "why": "One function decides which groups are fixed and one function supplies categories to five actions, though the selection rule is still split across an SQL fragment, a JS filter and copyPreviousMonth's own checks, and the ad-hoc tag regex can drift from the app's tag semantics."},
+  "bypasses_abstraction": {"value": true, "where": "FIXED_TAG regex in budget/actions.ts re-implements tag detection instead of using extractTagsFromText from #shared/tags."},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "FIXED_TAG /(^|\\s)#fixed(?![\\w-])/ is a reshaped version of the tag parsing in shared/tags.ts extractTagsFromText, with different delimiter rules."},
+  "one_place": {"value": true, "where": "getFixedGroupIds in budget/actions.ts is the single definition of a #fixed group, used by getEditableCategories (setZero, set3/6/12MonthAvg, setLastMonthSpending) and by copyPreviousMonth."}
+}

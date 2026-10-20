@@ -1,0 +1,12 @@
+{"id":"f9ceeefb23",
+"reuse":{"score":3,"why":"It extends the existing getBulkBudgetCategories and getBudgetData queries, but does not use getBulkBudgetCategories as the place to exclude categories, which is what it already does for hidden and goal categories."},
+"duplication":{"score":2,"why":"The same `if (isFixedGroup(...)) skip` guard is pasted into six action loops and the notes join is added to two queries."},
+"placement":{"score":3,"why":"The predicate sits in budget/actions.ts next to the selection queries, but the exclusion is applied in each action instead of in the shared category selection that already filters the other excluded categories."},
+"scope":{"score":5,"why":"Only the budget action module and one test are touched."},
+"maintainability":{"score":3,"why":"Readable, but a new month-wide action must remember to add the guard, and the rule is applied in six places."},
+"bypasses_abstraction":{"value":true,"where":"budget/actions.ts: getBulkBudgetCategories already decides which categories bulk actions touch (WHERE hidden/goal_def), yet the fixed-group exclusion is done in each caller loop (setZero, setLastMonthSpending, set3/6/12MonthAvg) instead."},
+"duplicated_blocks":6,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated guard is a literal copy in each loop, not reshaped."},
+"one_place":{"value":false,"where":"The #fixed test is one function (isFixedGroup), but deciding to skip is repeated in copyPreviousMonth, setZero, setLastMonthSpending, set3MonthAvg, set6MonthAvg and set12MonthAvg; the tag lookup join is added separately to getBulkBudgetCategories and getBudgetData."}
+}

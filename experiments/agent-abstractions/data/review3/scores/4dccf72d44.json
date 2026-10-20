@@ -1,0 +1,12 @@
+{"id":"4dccf72d44",
+"reuse":{"score":5,"why":"Builds every step on the existing shared getScheduledAmount and reuses getApproxNumberThreshold, routing the API's expectedAmount and all server/client consumers through it."},
+"duplication":{"score":5,"why":"Removes five inline midpoint copies (forecast, updateActions, postTransactionForSchedule, preview, schedule-template) in favour of the one helper; no new duplication."},
+"placement":{"score":5,"why":"The planning rule lives in shared/schedules.ts; api-models only maps the field and callers forward their operator."},
+"scope":{"score":4,"why":"Edits serve the four steps; switching the client list/balance displays to the operator-aware amount is a consequence of the shared rule rather than a stray change, and three release notes are slightly redundant."},
+"maintainability":{"score":4,"why":"One helper owns missing/single/range/approx; inserting op positionally before the existing inverse flag makes boolean-at-position-3 calls easy to misuse, and useScheduleEdit calls still omit the op."},
+"bypasses_abstraction":{"value":false,"where":"All amount resolution goes through getScheduledAmount after the change."},
+"duplicated_blocks":0,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"Duplicates were removed, not reshaped."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"getScheduledAmount gains an op parameter (ahead of inverse) and an isapprox branch in getPlannedAmount; the step-4 rule change is a one-line edit inside the helper, and no call site re-implements it."}
+}

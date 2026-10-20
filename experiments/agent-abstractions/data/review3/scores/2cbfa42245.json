@@ -1,0 +1,11 @@
+{"id":"2cbfa42245",
+"reuse":{"score":3,"why":"Works inside the existing getNextDate, but the daily rule is bolted on there rather than in getDateWithSkippedWeekend or a shared adjust function that the other weekend-handling callers already use."},
+"duplication":{"score":4,"why":"No copied blocks; the skipWeekend && !noSkipWeekend condition is now evaluated twice in getNextDate."},
+"placement":{"score":4,"why":"The change sits in shared/schedules.ts where weekend logic lives, though it reads schedule.data.frequency which parseRecurDate in rules/rule-utils.ts does not populate."},
+"scope":{"score":5,"why":"Only getNextDate and its tests change."},
+"maintainability":{"score":2,"why":"Magic numbers (subDays(start, 1), take 7) and an extra special-case flag inside getNextDate, a dependency on data the schedule object never carries, and other callers left on the old move rule make it fragile."},
+"bypasses_abstraction":{"value":false,"where":"Existing callers keep using getDateWithSkippedWeekend; the diff adds no new bypass, it just does not route them through the new rule."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No duplicated logic."},
+"one_place":{"value":false,"where":"The daily-skip rule is only in shared/schedules.ts getNextDate; server/schedules/app.ts getUpcomingDates and budget/schedule-template.ts createScheduleList still call getDateWithSkippedWeekend and move daily weekend occurrences."}}

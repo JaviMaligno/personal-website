@@ -1,0 +1,98 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 1ca2951..4dbde37 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -169,6 +169,20 @@ async function getAccountProperties({ id }: { id: AccountEntity['id'] }) {
+   };
+ }
+ 
++async function assertNotLinkedElsewhere(
++  syncSource: string,
++  providerAccountId: string,
++  upgradingId?: AccountEntity['id'],
++) {
++  const existing = await db.all<{ id: string }>(
++    'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?',
++    [syncSource, providerAccountId],
++  );
++  if (existing.some(row => row.id !== upgradingId)) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ async function linkGoCardlessAccount({
+   requisitionId,
+   account,
+@@ -181,6 +195,8 @@ async function linkGoCardlessAccount({
+   account: SyncServerGoCardlessAccount;
+ }) {
+   let id;
++  await assertNotLinkedElsewhere('goCardless', account.account_id, upgradingId);
++
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+   if (upgradingId) {
+@@ -249,6 +265,12 @@ async function linkSimpleFinAccount({
+ }) {
+   let id;
+ 
++  await assertNotLinkedElsewhere(
++    'simpleFin',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+@@ -327,6 +349,12 @@ async function linkPluggyAiAccount({
+   let id;
+   const fileId = getPrefs()?.cloudFileId;
+ 
++  await assertNotLinkedElsewhere(
++    'pluggyai',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+@@ -405,6 +433,12 @@ async function linkAkahuAccount({
+ }) {
+   let id;
+ 
++  await assertNotLinkedElsewhere(
++    'akahu',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const institution = {
+     name: externalAccount.institution ?? null,
+   };
+@@ -479,6 +513,12 @@ async function linkEnableBankingAccount({
+ }) {
+   let id: string | undefined;
+ 
++  await assertNotLinkedElsewhere(
++    'enableBanking',
++    externalAccount.account_id,
++    upgradingId,
++  );
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+diff --git a/upcoming-release-notes/prevent-duplicate-bank-link.md b/upcoming-release-notes/prevent-duplicate-bank-link.md
+new file mode 100644
+index 0000000..1c0fcb0
+--- /dev/null
++++ b/upcoming-release-notes/prevent-duplicate-bank-link.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Prevent linking a bank account that is already linked to another account

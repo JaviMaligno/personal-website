@@ -1,0 +1,112 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index 2d215de..54e5ef6 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -81,6 +81,31 @@ describe('bulk budget actions', () => {
+       cat_group: 'hidden-group',
+       is_income: 0,
+     });
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'cat-in-fixed-group',
++      name: 'in fixed group',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'cat-with-fixed-note',
++      name: 'with fixed note',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    db.runQuery(`INSERT INTO notes (id, note) VALUES (?, ?)`, [
++      'fixed-group',
++      'Rent and loans #fixed',
++    ]);
++    db.runQuery(`INSERT INTO notes (id, note) VALUES (?, ?)`, [
++      'cat-with-fixed-note',
++      '#fixed',
++    ]);
+     db.runQuery(`UPDATE categories SET goal_def = ? WHERE id = ?`, [
+       JSON.stringify([
+         { type: 'simple', monthly: 500, directive: 'template', priority: 1 },
+@@ -120,6 +145,31 @@ describe('bulk budget actions', () => {
+     ).toBe(200);
+   });
+ 
++  it('setZero leaves categories in #fixed groups unchanged, but ignores #fixed in category notes', async () => {
++    await setupDatabase();
++    await setBudget({
++      category: 'cat-in-fixed-group',
++      month: '2024-02',
++      amount: 150,
++    });
++    await setBudget({
++      category: 'cat-with-fixed-note',
++      month: '2024-02',
++      amount: 200,
++    });
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-02' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(
++      await getSheetValue('budget202402', 'budget-cat-in-fixed-group'),
++    ).toBe(150);
++    expect(
++      await getSheetValue('budget202402', 'budget-cat-with-fixed-note'),
++    ).toBe(0);
++  });
++
+   it('copyPreviousMonth leaves templated, hidden and hidden-group categories unchanged', async () => {
+     await setupDatabase();
+     await setBudgets('2024-01', 100);
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 93cc025..47c976c 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -217,12 +217,16 @@ function setCarryover(
+ 
+ type BulkBudgetCategory = Pick<db.DbCategory, 'id' | 'is_income' | 'hidden'> & {
+   group_hidden: db.DbCategoryGroup['hidden'] | null;
++  group_note: string | null;
+ };
+ 
++const FIXED_GROUP_TAG = /#fixed(?![\w-])/i;
++
+ // The categories a bulk budget action (copy last month, set to zero, set to an
+ // N-month average) writes. Income categories take part only in tracking
+ // budgets. Hidden categories, categories in hidden groups, and categories with
+-// saved budget templates are skipped. `skipMissingGroup` also skips a category
++// saved budget templates, and categories in a group whose notes contain
++// `#fixed`, are skipped. `skipMissingGroup` also skips a category
+ // whose group row does not exist: the average actions have always done so,
+ // copy last month and set to zero have not.
+ async function getBulkBudgetCategories({
+@@ -232,9 +236,10 @@ async function getBulkBudgetCategories({
+ }): Promise<BulkBudgetCategory[]> {
+   const categories = await db.all<BulkBudgetCategory>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden
++  SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden, n.note AS group_note
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.goal_def IS NULL
+   `,
+   );
+@@ -247,6 +252,9 @@ async function getBulkBudgetCategories({
+     if (cat.hidden === 1 || cat.group_hidden === 1) {
+       return false;
+     }
++    if (cat.group_note && FIXED_GROUP_TAG.test(cat.group_note)) {
++      return false;
++    }
+     return !(skipMissingGroup && cat.group_hidden == null);
+   });
+ }

@@ -1,0 +1,1345 @@
+You are reviewing task statements for a coding benchmark. For each task below you get
+(1) the STATEMENT an agent will receive (it will NOT see the diff or the tests), and
+(2) the original commit DIFF (source + the hidden tests that will grade the agent).
+
+For each task answer, strictly:
+TASK <id>
+SOLVABLE: yes|no — could a competent engineer, given the repo before the commit and the statement alone, write code that passes the hidden tests? List every hidden-test expectation the statement does not make derivable (names, signatures, exact numbers, call arguments, edge cases).
+LEAK: yes|no — does the statement reveal the implementation (how to code it: specific internal functions/queries/APIs to call, code structure, file locations) beyond the behaviour and the public interface the tests require? Quote the leaking phrases.
+FIX: concrete minimal edits to the statement (or "none").
+
+
+================ TASK 9788bb123a
+---- STATEMENT
+# Show progress while importing a YNAB budget
+
+Importing a YNAB4 or nYNAB (YNAB 5) budget can take minutes on a large budget, and
+the import dialog only shows a spinner. The server imports in stages (accounts,
+categories, payees, ..., budgets) but tells the client nothing about how far along
+it is. Make the server report progress and let the import dialogs show it.
+
+## Required behaviour
+
+### 1. Progress events
+
+During an import the server sends the client a server event named
+`import-progress` (add it to the typed server events) whose payload is
+
+```ts
+{
+  step: ImportStep;        // the stage being imported, see below
+  current: number;         // items imported so far in this step
+  total: number;           // items expected in this step (0 when it has no count)
+  overallCurrent: number;  // items imported so far across every step
+  overallTotal: number;    // sum of every step's total
+  batch?: { amount: number; account: string }; // see "named batches"
+}
+```
+
+with `ImportStep` one of `'accounts' | 'categories' | 'payees' | 'payee-locations' |
+'tags' | 'transactions' | 'scheduled-transactions' | 'budgets' | 'finishing'`.
+
+### 2. A shared step runner
+
+Add a module `progress` next to the budget importers (in the same directory as the
+YNAB4 and YNAB5 importers) exporting
+
+```ts
+type ImportTick = (count?: number, account?: string) => void;
+runImportSteps(steps: { step: ImportStep; total: number;
+                        run: (tick: ImportTick) => Promise<unknown> }[]): Promise<void>
+```
+
+It runs the steps in order. `overallTotal` is the sum of all step totals. For each
+step:
+
+- it first sends an event with `current: 0` for that step;
+- `run` receives a `tick(count = 1, account?)` callback that adds `count` to both
+  `current` and `overallCurrent`. A tick **with** an account name ("named batch")
+  always sends an event immediately, with `batch: { amount: count, account }`. A
+  tick without an account sends an event only if at least 100 ms have passed since
+  the last event sent (by the system clock, `Date.now()`), so huge imports do not
+  flood the client;
+- when `run` resolves, the step is snapped to its total (totals are estimates):
+  `overallCurrent` grows by `max(0, total - current)` (never decreases), `current`
+  becomes `total`, and an event is sent.
+
+After the last step it sends a final event
+`{ step: 'finishing', current: 0, total: 0, overallCurrent: overallTotal, overallTotal }`.
+Events without a batch have no `batch` value (undefined).
+
+Example (clock not advancing): steps `accounts` (total 2, ticks twice) and
+`transactions` (total 10, one `tick(10)`) send exactly: accounts 0/2 (overall
+0/12), accounts 2/2 (2/12), transactions 0/10 (2/12), transactions 10/10 (12/12),
+finishing 0/0 (12/12). A step with total 5 that only ticks once still ends at 5/5
+(overall 5/5) just before `finishing`. A step with ticks `(10, 'Checking')` and
+`(20, 'Savings')` sends batches `undefined, {10, Checking}, {20, Savings},
+undefined, undefined`.
+
+### 3. Both importers report through it
+
+The YNAB4 and YNAB5 imports run their stages through `runImportSteps`, each stage
+ticking once per item it creates (transactions tick once per account batch with
+the number of transactions and the account's name). Step totals count the live
+(not deleted) items of the export.
+
+For YNAB5 scheduled transactions, the importer function
+`importScheduledTransactions(data, entityIdMap, flagNameConflicts, tick)` must be
+exported from the YNAB5 importer module and tick **once per scheduled
+transaction, only once that schedule is fully imported**: for a schedule whose
+category or splits are applied afterwards by updating its rule, the tick happens
+only after that rule update has completed; if creating a schedule fails, the error
+propagates and no tick happens for it.
+
+### 4. Client
+
+The YNAB4 and YNAB5 import dialogs subscribe to `import-progress` before starting
+the import and show the current stage, a progress bar for the overall progress and,
+for named batches, which account was just imported; the dialog cannot be dismissed
+while an import is running.
+
+---- DIFF (source + hidden tests: packages/loot-core/src/server/importers/progress.test.ts, packages/loot-core/src/server/importers/ynab5.test.ts)
+diff --git a/packages/desktop-client/src/components/modals/manager/ImportProgress.tsx b/packages/desktop-client/src/components/modals/manager/ImportProgress.tsx
+new file mode 100644
+index 000000000..333583a90
+--- /dev/null
++++ b/packages/desktop-client/src/components/modals/manager/ImportProgress.tsx
+@@ -0,0 +1,113 @@
++import { useEffect, useState } from 'react';
++import { ProgressBar } from 'react-aria-components';
++import { useTranslation } from 'react-i18next';
++
++import { styles } from '@actual-app/components/styles';
++import { Text } from '@actual-app/components/text';
++import { theme } from '@actual-app/components/theme';
++import { View } from '@actual-app/components/view';
++import { listen } from '@actual-app/core/platform/client/connection';
++import type {
++  ImportStep,
++  ServerEvents,
++} from '@actual-app/core/types/server-events';
++import { css } from '@emotion/css';
++
++/**
++ * Shows which stage a budget import is on and how far along it is. Renders
++ * nothing until the import reports its first step.
++ */
++export function ImportProgress() {
++  const { t } = useTranslation();
++  const [progress, setProgress] = useState<
++    ServerEvents['import-progress'] | null
++  >(null);
++
++  useEffect(() => listen('import-progress', setProgress), []);
++
++  if (!progress) {
++    return null;
++  }
++
++  const { step, current, total, overallCurrent, overallTotal, batch } =
++    progress;
++  const percentage = overallTotal ? (overallCurrent / overallTotal) * 100 : 0;
++  const stepProgress = total > 0 ? ` (${current}/${total})` : '';
++
++  return (
++    <View
++      style={{
++        alignItems: 'center',
++        alignSelf: 'stretch',
++        gap: 10,
++        marginTop: 20,
++      }}
++    >
++      <Text style={styles.tnum}>
++        {getStepText(t, step, stepProgress, batch)}
++      </Text>
++      <ProgressBar
++        value={percentage}
++        aria-label={t('Import progress')}
++        style={{ width: '100%' }}
++      >
++        <View
++          className={css({
++            height: 6,
++            borderRadius: 3,
++            backgroundColor: theme.pillBackground,
++            overflow: 'hidden',
++          })}
++        >
++          <View
++            className={css({
++              height: '100%',
++              width: `${percentage}%`,
++              backgroundColor: theme.pageTextPositive,
++              transition: 'width 150ms ease-out',
++            })}
++          />
++        </View>
++      </ProgressBar>
++    </View>
++  );
++}
++
++function getStepText(
++  t: ReturnType<typeof useTranslation>['t'],
++  step: ImportStep,
++  progress: string,
++  batch?: { amount: number; account: string },
++): string {
++  switch (step) {
++    case 'accounts':
++      return t('Importing accounts{{progress}}...', { progress });
++    case 'categories':
++      return t('Importing categories{{progress}}...', { progress });
++    case 'payees':
++      return t('Importing payees{{progress}}...', { progress });
++    case 'payee-locations':
++      return t('Importing payee locations{{progress}}...', { progress });
++    case 'tags':
++      return t('Importing tags{{progress}}...', { progress });
++    case 'transactions':
++      // Transactions go in one batch per account, so the tick reports an
++      // account that has already landed rather than one in flight.
++      return batch
++        ? t('Imported {{count}} transactions for {{account}}{{progress}}...', {
++            count: batch.amount,
++            account: batch.account,
++            progress,
++          })
++        : t('Importing transactions{{progress}}...', { progress });
++    case 'scheduled-transactions':
++      return t('Importing scheduled transactions{{progress}}...', { progress });
++    case 'budgets':
++      // The count is months, not individual budgeted amounts.
++      return t('Importing monthly budgets{{progress}}...', { progress });
++    // The union is exhaustive above; `default` is here for the lint rule.
++    case 'finishing':
++    default:
++      return t('Setting up...');
++  }
++}
+diff --git a/packages/desktop-client/src/components/modals/manager/ImportYNAB4Modal.tsx b/packages/desktop-client/src/components/modals/manager/ImportYNAB4Modal.tsx
+index c794df356..76b2bd95d 100644
+--- a/packages/desktop-client/src/components/modals/manager/ImportYNAB4Modal.tsx
++++ b/packages/desktop-client/src/components/modals/manager/ImportYNAB4Modal.tsx
+@@ -9,10 +9,11 @@ import { styles } from '@actual-app/components/styles';
+ import { theme } from '@actual-app/components/theme';
+ import { View } from '@actual-app/components/view';
+ 
+ import { importBudget } from '#budgetfiles/budgetfilesSlice';
+ import { Modal, ModalCloseButton, ModalHeader } from '#components/common/Modal';
++import { ImportProgress } from '#components/modals/manager/ImportProgress';
+ import { useNavigate } from '#hooks/useNavigate';
+ import { useDispatch } from '#redux';
+ 
+ function getErrorMessage(error: string): string {
+   switch (error) {
+@@ -48,16 +49,22 @@ export function ImportYNAB4Modal() {
+       }
+     }
+   }
+ 
+   return (
+-    <Modal name="import-ynab4" containerProps={{ style: { width: 400 } }}>
++    <Modal
++      name="import-ynab4"
++      isDismissable={!importing}
++      containerProps={{ style: { width: 400 } }}
++    >
+       {({ state }) => (
+         <>
+           <ModalHeader
+             title={t('Import from YNAB4')}
+-            rightContent={<ModalCloseButton onPress={() => state.close()} />}
++            rightContent={
++              !importing && <ModalCloseButton onPress={() => state.close()} />
++            }
+           />
+           <View style={{ ...styles.smallText, lineHeight: 1.5, marginTop: 20 }}>
+             {error && (
+               <Block style={{ color: theme.errorText, marginBottom: 15 }}>
+                 {getErrorMessage(error)}
+@@ -80,20 +87,22 @@ export function ImportYNAB4Modal() {
+                   right-click the folder and select "Compress". On Windows,
+                   right-click and select "Send to &rarr; Compressed (zipped)
+                   folder". Upload the zipped folder for importing.
+                 </Trans>
+               </Paragraph>
+-              <View>
+-                <ButtonWithLoading
+-                  variant="primary"
+-                  autoFocus
+-                  isLoading={importing}
+-                  onPress={onImport}
+-                >
+-                  <Trans>Select zip file...</Trans>
+-                </ButtonWithLoading>
+-              </View>
++              {!importing && (
++                <View>
++                  <ButtonWithLoading
++                    variant="primary"
++                    autoFocus
++                    onPress={onImport}
++                  >
++                    <Trans>Select zip file...</Trans>
++                  </ButtonWithLoading>
++                </View>
++              )}
++              <ImportProgress />
+             </View>
+           </View>
+         </>
+       )}
+     </Modal>
+diff --git a/packages/desktop-client/src/components/modals/manager/ImportYNAB5Modal.tsx b/packages/desktop-client/src/components/modals/manager/ImportYNAB5Modal.tsx
+index 87a43da7d..0bdf3d1d9 100644
+--- a/packages/desktop-client/src/components/modals/manager/ImportYNAB5Modal.tsx
++++ b/packages/desktop-client/src/components/modals/manager/ImportYNAB5Modal.tsx
+@@ -10,10 +10,11 @@ import { theme } from '@actual-app/components/theme';
+ import { View } from '@actual-app/components/view';
+ 
+ import { importBudget } from '#budgetfiles/budgetfilesSlice';
+ import { Link } from '#components/common/Link';
+ import { Modal, ModalCloseButton, ModalHeader } from '#components/common/Modal';
++import { ImportProgress } from '#components/modals/manager/ImportProgress';
+ import { useNavigate } from '#hooks/useNavigate';
+ import { useDispatch } from '#redux';
+ 
+ export function ImportYNAB5Modal() {
+   const { t } = useTranslation();
+@@ -58,16 +59,22 @@ export function ImportYNAB5Modal() {
+       }
+     }
+   }
+ 
+   return (
+-    <Modal name="import-ynab5" containerProps={{ style: { width: 400 } }}>
++    <Modal
++      name="import-ynab5"
++      isDismissable={!importing}
++      containerProps={{ style: { width: 400 } }}
++    >
+       {({ state }) => (
+         <>
+           <ModalHeader
+             title={t('Import from nYNAB')}
+-            rightContent={<ModalCloseButton onPress={() => state.close()} />}
++            rightContent={
++              !importing && <ModalCloseButton onPress={() => state.close()} />
++            }
+           />
+           <View style={{ ...styles.smallText, lineHeight: 1.5, marginTop: 20 }}>
+             {error && (
+               <Block style={{ color: theme.errorText, marginBottom: 15 }}>
+                 {getErrorMessage(error)}
+@@ -99,20 +106,22 @@ export function ImportYNAB5Modal() {
+                   will import it. Budgets may not match up exactly because
+                   things work slightly differently, but you should be able to
+                   fix up any problems.
+                 </Trans>
+               </Paragraph>
+-              <View>
+-                <ButtonWithLoading
+-                  variant="primary"
+-                  autoFocus
+-                  isLoading={importing}
+-                  onPress={onImport}
+-                >
+-                  <Trans>Select file...</Trans>
+-                </ButtonWithLoading>
+-              </View>
++              {!importing && (
++                <View>
++                  <ButtonWithLoading
++                    variant="primary"
++                    autoFocus
++                    onPress={onImport}
++                  >
++                    <Trans>Select file...</Trans>
++                  </ButtonWithLoading>
++                </View>
++              )}
++              <ImportProgress />
+             </View>
+           </View>
+         </>
+       )}
+     </Modal>
+diff --git a/packages/loot-core/src/server/importers/progress.test.ts b/packages/loot-core/src/server/importers/progress.test.ts
+new file mode 100644
+index 000000000..b71e9312e
+--- /dev/null
++++ b/packages/loot-core/src/server/importers/progress.test.ts
+@@ -0,0 +1,126 @@
++import * as connection from '#platform/server/connection';
++import type { ServerEvents } from '#types/server-events';
++
++import { runImportSteps } from './progress';
++
++vi.mock('#platform/server/connection', () => ({ send: vi.fn() }));
++
++function sentProgress() {
++  return vi
++    .mocked(connection.send)
++    .mock.calls.map(
++      ([, payload]) => payload as ServerEvents['import-progress'],
++    );
++}
++
++describe('runImportSteps', () => {
++  beforeEach(() => {
++    vi.mocked(connection.send).mockClear();
++    // Pin the clock so the throttle can't emit an extra event under a slow run.
++    vi.spyOn(Date, 'now').mockReturnValue(0);
++  });
++
++  afterEach(() => {
++    vi.restoreAllMocks();
++  });
++
++  it('reports per-step and overall counts as items are imported', async () => {
++    const ran: string[] = [];
++
++    await runImportSteps([
++      {
++        step: 'accounts',
++        total: 2,
++        run: async tick => {
++          ran.push('accounts');
++          tick();
++          tick();
++        },
++      },
++      {
++        step: 'transactions',
++        total: 10,
++        run: async tick => {
++          ran.push('transactions');
++          tick(10);
++        },
++      },
++    ]);
++
++    expect(ran).toEqual(['accounts', 'transactions']);
++    expect(sentProgress()).toEqual([
++      {
++        step: 'accounts',
++        current: 0,
++        total: 2,
++        overallCurrent: 0,
++        overallTotal: 12,
++      },
++      {
++        step: 'accounts',
++        current: 2,
++        total: 2,
++        overallCurrent: 2,
++        overallTotal: 12,
++      },
++      {
++        step: 'transactions',
++        current: 0,
++        total: 10,
++        overallCurrent: 2,
++        overallTotal: 12,
++      },
++      {
++        step: 'transactions',
++        current: 10,
++        total: 10,
++        overallCurrent: 12,
++        overallTotal: 12,
++      },
++      {
++        step: 'finishing',
++        current: 0,
++        total: 0,
++        overallCurrent: 12,
++        overallTotal: 12,
++      },
++    ]);
++  });
++
++  it('reports a named batch immediately, without waiting out the throttle', async () => {
++    await runImportSteps([
++      {
++        step: 'transactions',
++        total: 30,
++        run: async tick => {
++          tick(10, 'Checking');
++          tick(20, 'Savings');
++        },
++      },
++    ]);
++
++    expect(sentProgress().map(payload => payload.batch)).toEqual([
++      undefined,
++      { amount: 10, account: 'Checking' },
++      { amount: 20, account: 'Savings' },
++      undefined,
++      undefined,
++    ]);
++  });
++
++  it('snaps a step to its total when the estimate was off', async () => {
++    // The step only imports 1 of the 5 items it estimated, but progress still
++    // has to end up complete.
++    await runImportSteps([
++      { step: 'payees', total: 5, run: async tick => tick() },
++    ]);
++
++    expect(sentProgress().at(-2)).toEqual({
++      step: 'payees',
++      current: 5,
++      total: 5,
++      overallCurrent: 5,
++      overallTotal: 5,
++    });
++  });
++});
+diff --git a/packages/loot-core/src/server/importers/progress.ts b/packages/loot-core/src/server/importers/progress.ts
+new file mode 100644
+index 000000000..b37f432b3
+--- /dev/null
++++ b/packages/loot-core/src/server/importers/progress.ts
+@@ -0,0 +1,81 @@
++import * as connection from '#platform/server/connection';
++import { logger } from '#platform/server/log';
++import type { ImportStep } from '#types/server-events';
++
++/**
++ * Reports that `count` more items of the current step have been imported.
++ * Steps that import a batch at a time can name the account it belonged to, so
++ * the client can say which one it just finished.
++ */
++export type ImportTick = (count?: number, account?: string) => void;
++
++type ImportStepDefinition = {
++  step: ImportStep;
++  /**
++   * How many items this step expects to import. Only used to show progress, so
++   * an estimate is fine — the step is snapped to its total once it finishes.
++   */
++  total: number;
++  run: (tick: ImportTick) => Promise<unknown>;
++};
++
++// Importing tens of thousands of items would otherwise flood the client with
++// an event per item.
++const MIN_EVENT_INTERVAL_MS = 100;
++
++/**
++ * Runs each import step in order, reporting progress to the client so it can
++ * show which stage the import is on and how far along it is.
++ */
++export async function runImportSteps(steps: ImportStepDefinition[]) {
++  const overallTotal = steps.reduce((sum, { total }) => sum + total, 0);
++  let overallCurrent = 0;
++  let lastSentAt = 0;
++
++  for (const { step, total, run } of steps) {
++    logger.log(`Importing ${step}...`);
++    let current = 0;
++
++    const emit = (batch?: { amount: number; account: string }) => {
++      lastSentAt = Date.now();
++      connection.send('import-progress', {
++        step,
++        current,
++        total,
++        overallCurrent,
++        overallTotal,
++        batch,
++      });
++    };
++
++    emit();
++
++    await run((count = 1, account) => {
++      current += count;
++      overallCurrent += count;
++      // Always report a named batch: they are rare, and the account name is
++      // the whole point of the message.
++      if (account !== undefined) {
++        emit({ amount: count, account });
++      } else if (Date.now() - lastSentAt >= MIN_EVENT_INTERVAL_MS) {
++        emit();
++      }
++    });
++
++    // Totals are estimated up front, so snap the step up to its total instead
++    // of leaving the bar short. Never snap back: an overshooting estimate must
++    // not make the overall bar run backwards.
++    overallCurrent += Math.max(0, total - current);
++    current = total;
++    emit();
++  }
++
++  logger.log('Setting up...');
++  connection.send('import-progress', {
++    step: 'finishing',
++    current: 0,
++    total: 0,
++    overallCurrent: overallTotal,
++    overallTotal,
++  });
++}
+diff --git a/packages/loot-core/src/server/importers/ynab4.ts b/packages/loot-core/src/server/importers/ynab4.ts
+index f8dbdf278..9809d4053 100644
+--- a/packages/loot-core/src/server/importers/ynab4.ts
++++ b/packages/loot-core/src/server/importers/ynab4.ts
+@@ -5,17 +5,20 @@ import { logger } from '#platform/server/log';
+ import { send } from '#server/main-app';
+ import { safeUnzip } from '#server/util/zip';
+ import * as monthUtils from '#shared/months';
+ import { amountToInteger, groupBy, sortByKey } from '#shared/util';
+ 
++import { runImportSteps } from './progress';
++import type { ImportTick } from './progress';
+ import type * as YNAB4 from './ynab4-types';
+ 
+ // Importer
+ 
+ async function importAccounts(
+   data: YNAB4.YFull,
+   entityIdMap: Map<string, string>,
++  tick: ImportTick,
+ ) {
+   const accounts = sortByKey(data.accounts, 'sortableIndex');
+ 
+   return Promise.all(
+     accounts.map(async account => {
+@@ -26,18 +29,20 @@ async function importAccounts(
+             offbudget: account.onBudget ? false : true,
+             closed: account.hidden ? true : false,
+           },
+         });
+         entityIdMap.set(account.entityId, id);
++        tick();
+       }
+     }),
+   );
+ }
+ 
+ async function importCategories(
+   data: YNAB4.YFull,
+   entityIdMap: Map<string, string>,
++  tick: ImportTick,
+ ) {
+   const masterCategories = sortByKey(data.masterCategories, 'sortableIndex');
+ 
+   await Promise.all(
+     masterCategories.map(async masterCategory => {
+@@ -52,10 +57,11 @@ async function importCategories(
+             name: masterCategory.name,
+             is_income: false,
+           },
+         });
+         entityIdMap.set(masterCategory.entityId, id);
++        tick();
+         if (masterCategory.note) {
+           void send('notes-save', {
+             id,
+             note: masterCategory.note,
+           });
+@@ -93,10 +99,11 @@ async function importCategories(
+                   name: categoryName,
+                   group_id: entityIdMap.get(category.masterCategoryId),
+                 },
+               });
+               entityIdMap.set(category.entityId, id);
++              tick();
+               if (category.note) {
+                 void send('notes-save', {
+                   id,
+                   note: category.note,
+                 });
+@@ -110,10 +117,11 @@ async function importCategories(
+ }
+ 
+ async function importPayees(
+   data: YNAB4.YFull,
+   entityIdMap: Map<string, string>,
++  tick: ImportTick,
+ ) {
+   for (const payee of data.payees) {
+     if (!payee.isTombstone) {
+       const id = await send('api/payee-create', {
+         payee: {
+@@ -123,17 +131,19 @@ async function importPayees(
+       });
+ 
+       // TODO: import payee rules
+ 
+       entityIdMap.set(payee.entityId, id);
++      tick();
+     }
+   }
+ }
+ 
+ async function importTransactions(
+   data: YNAB4.YFull,
+   entityIdMap: Map<string, string>,
++  tick: ImportTick,
+ ) {
+   const categories = await send('api/categories-get');
+   const incomeCategoryId: string = categories.find(
+     cat => cat.name === 'Income',
+   ).id;
+@@ -246,10 +256,15 @@ async function importTransactions(
+         accountId: entityIdMap.get(accountId),
+         transactions: toImport,
+         learnCategories: true,
+         runTransfers: false,
+       });
++      tick(
++        toImport.length,
++        data.accounts.find(account => account.entityId === accountId)
++          ?.accountName,
++      );
+     }),
+   );
+ }
+ 
+ function fillInBudgets(
+@@ -283,10 +298,11 @@ function fillInBudgets(
+ }
+ 
+ async function importBudgets(
+   data: YNAB4.YFull,
+   entityIdMap: Map<string, string>,
++  tick: ImportTick,
+ ) {
+   const budgets = sortByKey(data.monthlyBudgets, 'month');
+ 
+   await send('api/batch-budget-start');
+   try {
+@@ -324,10 +340,11 @@ async function importBudgets(
+               flag: true,
+             });
+           }
+         }),
+       );
++      tick();
+     }
+   } finally {
+     await send('api/batch-budget-end');
+   }
+ }
+@@ -375,26 +392,42 @@ function findLatestDevice(
+ }
+ 
+ export async function doImport(data: YNAB4.YFull) {
+   const entityIdMap = new Map<string, string>();
+ 
+-  logger.log('Importing Accounts...');
+-  await importAccounts(data, entityIdMap);
+-
+-  logger.log('Importing Categories...');
+-  await importCategories(data, entityIdMap);
+-
+-  logger.log('Importing Payees...');
+-  await importPayees(data, entityIdMap);
+-
+-  logger.log('Importing Transactions...');
+-  await importTransactions(data, entityIdMap);
+-
+-  logger.log('Importing Budgets...');
+-  await importBudgets(data, entityIdMap);
+-
+-  logger.log('Setting up...');
++  await runImportSteps([
++    {
++      step: 'accounts',
++      total: countLive(data.accounts),
++      run: tick => importAccounts(data, entityIdMap, tick),
++    },
++    {
++      step: 'categories',
++      total:
++        countLive(data.masterCategories) +
++        data.masterCategories.reduce(
++          (count, group) => count + countLive(group.subCategories ?? []),
++          0,
++        ),
++      run: tick => importCategories(data, entityIdMap, tick),
++    },
++    {
++      step: 'payees',
++      total: countLive(data.payees),
++      run: tick => importPayees(data, entityIdMap, tick),
++    },
++    {
++      step: 'transactions',
++      total: data.transactions.length,
++      run: tick => importTransactions(data, entityIdMap, tick),
++    },
++    {
++      step: 'budgets',
++      total: data.monthlyBudgets.length,
++      run: tick => importBudgets(data, entityIdMap, tick),
++    },
++  ]);
+ }
+ 
+ export function getBudgetName(filepath) {
+   let unixFilepath = filepath.replace(/\\/g, '/');
+ 
+@@ -474,5 +507,9 @@ export function parseFile(buffer: Buffer): YNAB4.YFull {
+     return JSON.parse(contents);
+   } catch {
+     throw new Error('Error parsing Budget.yfull file');
+   }
+ }
++
++function countLive(entities: { isTombstone?: boolean }[]) {
++  return entities.filter(entity => !entity.isTombstone).length;
++}
+diff --git a/packages/loot-core/src/server/importers/ynab5.test.ts b/packages/loot-core/src/server/importers/ynab5.test.ts
+index 8867982b1..050af5f2d 100644
+--- a/packages/loot-core/src/server/importers/ynab5.test.ts
++++ b/packages/loot-core/src/server/importers/ynab5.test.ts
+@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
+ import { send } from '#server/main-app';
+ 
+ import {
+   getBudgetName,
+   importPayees,
++  importScheduledTransactions,
+   importTransactions,
+   parseFile,
+ } from './ynab5';
+ import type { Payee, Transaction } from './ynab5-types';
+ 
+@@ -167,10 +168,94 @@ describe('importTransactions', () => {
+     expect(outImported.transfer_id).toBe(inImported.id);
+     expect(inImported.transfer_id).toBe(outImported.id);
+   });
+ });
+ 
++describe('importScheduledTransactions', () => {
++  function makeScheduledTransaction() {
++    return {
++      id: 'scheduled-1',
++      account_id: 'ynab-account-1',
++      payee_id: 'ynab-payee-1',
++      category_id: 'ynab-category-1',
++      amount: -1000,
++      memo: '',
++      frequency: 'never',
++      date_next: '2026-02-01',
++      date_first: '2026-02-01',
++      deleted: false,
++    };
++  }
++
++  const entityIdMap = new Map<string, string>([
++    ['ynab-account-1', 'actual-account-1'],
++    ['ynab-payee-1', 'actual-payee-1'],
++    ['ynab-category-1', 'actual-category-1'],
++  ]);
++
++  it('advances progress after its category rule update completes', async () => {
++    const tick = vi.fn();
++    const rule = {
++      id: 'rule-1',
++      stage: null,
++      conditions_op: 'and',
++      conditions: '[]',
++      actions: '[]',
++    };
++    let queryCount = 0;
++
++    vi.mocked(send).mockImplementation(async name => {
++      if (name === 'api/payees-get') return [];
++      if (name === 'api/schedule-create') return 'schedule-1';
++      if (name === 'api/query') {
++        queryCount += 1;
++        return queryCount === 1 ? { data: 'rule-1' } : { data: [rule] };
++      }
++      if (name === 'api/rule-update') {
++        expect(tick).not.toHaveBeenCalled();
++        return null;
++      }
++      throw new Error(`Unexpected send call: ${name}`);
++    });
++
++    await importScheduledTransactions(
++      {
++        scheduled_transactions: [makeScheduledTransaction()],
++        scheduled_subtransactions: [],
++      } as unknown as Parameters<typeof importScheduledTransactions>[0],
++      entityIdMap,
++      new Set(),
++      tick,
++    );
++
++    expect(tick).toHaveBeenCalledOnce();
++  });
++
++  it('does not advance progress when schedule creation fails', async () => {
++    const tick = vi.fn();
++    vi.mocked(send).mockImplementation(async name => {
++      if (name === 'api/payees-get') return [];
++      if (name === 'api/schedule-create') throw new Error('create failed');
++      throw new Error(`Unexpected send call: ${name}`);
++    });
++
++    await expect(
++      importScheduledTransactions(
++        {
++          scheduled_transactions: [makeScheduledTransaction()],
++          scheduled_subtransactions: [],
++        } as unknown as Parameters<typeof importScheduledTransactions>[0],
++        entityIdMap,
++        new Set(),
++        tick,
++      ),
++    ).rejects.toThrow('create failed');
++
++    expect(tick).not.toHaveBeenCalled();
++  });
++});
++
+ describe('ynab5 parseFile', () => {
+   it('unwraps the legacy `budget` wrapper', () => {
+     const data = parseFile(
+       toBuffer({ data: { budget: { name: 'Legacy', accounts: [] } } }),
+     );
+diff --git a/packages/loot-core/src/server/importers/ynab5.ts b/packages/loot-core/src/server/importers/ynab5.ts
+index 2db585b13..6f8ab84d0 100644
+--- a/packages/loot-core/src/server/importers/ynab5.ts
++++ b/packages/loot-core/src/server/importers/ynab5.ts
+@@ -7,10 +7,12 @@ import { ruleModel } from '#server/transactions/transaction-rules';
+ import * as monthUtils from '#shared/months';
+ import { q } from '#shared/query';
+ import { groupBy, sortByKey } from '#shared/util';
+ import type { RecurConfig, RecurPattern, RuleEntity } from '#types/models';
+ 
++import { runImportSteps } from './progress';
++import type { ImportTick } from './progress';
+ import type {
+   Budget,
+   Payee,
+   ScheduledSubtransaction,
+   ScheduledTransaction,
+@@ -265,11 +267,15 @@ function buildRuleUpdate(
+     conditions: rule.conditions,
+     actions,
+   };
+ }
+ 
+-function importAccounts(data: Budget, entityIdMap: Map<string, string>) {
++function importAccounts(
++  data: Budget,
++  entityIdMap: Map<string, string>,
++  tick: ImportTick,
++) {
+   return Promise.all(
+     data.accounts.map(async account => {
+       if (!account.deleted) {
+         const id = await send('api/account-create', {
+           account: {
+@@ -277,18 +283,20 @@ function importAccounts(data: Budget, entityIdMap: Map<string, string>) {
+             offbudget: account.on_budget ? false : true,
+             closed: account.closed,
+           },
+         });
+         entityIdMap.set(account.id, id);
++        tick();
+       }
+     }),
+   );
+ }
+ 
+ async function importCategories(
+   data: Budget,
+   entityIdMap: Map<string, string>,
++  tick: ImportTick,
+ ) {
+   // Hidden categories are put in its own group by YNAB,
+   // so it's already handled.
+ 
+   const categories = await send('api/categories-get');
+@@ -388,10 +396,11 @@ async function importCategories(
+           is_income: false,
+           hidden: group.hidden,
+         });
+         groupId = createdGroup.id;
+         entityIdMap.set(group.id, groupId);
++        tick();
+         if (group.note) {
+           void send('notes-save', {
+             id: groupId,
+             note: group.note,
+           });
+@@ -429,10 +438,11 @@ async function importCategories(
+                 name: cat.name,
+                 group_id: groupId,
+                 hidden: cat.hidden,
+               });
+               entityIdMap.set(cat.id, createdCategory.id);
++              tick();
+               if (cat.note) {
+                 void send('notes-save', {
+                   id: createdCategory.id,
+                   note: cat.note,
+                 });
+@@ -443,26 +453,32 @@ async function importCategories(
+       }
+     }
+   }
+ }
+ 
+-export function importPayees(data: Budget, entityIdMap: Map<string, string>) {
++export function importPayees(
++  data: Budget,
++  entityIdMap: Map<string, string>,
++  tick?: ImportTick,
++) {
+   return Promise.all(
+     data.payees.map(async payee => {
+       if (!payee.deleted && !payee.transfer_account_id) {
+         const id = await send('api/payee-create', {
+           payee: { name: payee.name },
+         });
+         entityIdMap.set(payee.id, id);
++        tick?.();
+       }
+     }),
+   );
+ }
+ 
+ async function importPayeeLocations(
+   data: Budget,
+   entityIdMap: Map<string, string>,
++  tick: ImportTick,
+ ) {
+   // If no payee locations data provided, skip import
+   if (!data?.payee_locations) {
+     logger.log('No payee locations data provided, skipping...');
+     return;
+@@ -499,10 +515,11 @@ async function importPayeeLocations(
+       await send('payee-location-create', {
+         payeeId: actualPayeeId,
+         latitude,
+         longitude,
+       });
++      tick();
+     } catch (error) {
+       const errorMessage =
+         error instanceof Error
+           ? error.message
+           : String(error ?? 'Unknown error');
+@@ -511,14 +528,11 @@ async function importPayeeLocations(
+       );
+     }
+   }
+ }
+ 
+-async function importFlagsAsTags(
+-  data: Budget,
+-  flagNameConflicts: Set<string>,
+-): Promise<void> {
++function getTagsToCreate(data: Budget, flagNameConflicts: Set<string>) {
+   const tagsToCreate = new Map<string, string | null>();
+   const flaggedTransactions = getFlaggedTransactions(data);
+ 
+   for (const transaction of flaggedTransactions) {
+     if (transaction.deleted) {
+@@ -547,29 +561,37 @@ async function importFlagsAsTags(
+     if (!tagsToCreate.has(mappedName)) {
+       tagsToCreate.set(mappedName, tagColor);
+     }
+   }
+ 
+-  if (tagsToCreate.size === 0) {
+-    return;
+-  }
++  return tagsToCreate;
++}
++
++async function importFlagsAsTags(
++  data: Budget,
++  flagNameConflicts: Set<string>,
++  tick: ImportTick,
++): Promise<void> {
++  const tagsToCreate = getTagsToCreate(data, flagNameConflicts);
+ 
+   await Promise.all(
+     [...tagsToCreate.entries()].map(async ([tag, color]) => {
+       await send('tags-create', {
+         tag,
+         color,
+         description: 'Imported from YNAB',
+       });
++      tick();
+     }),
+   );
+ }
+ 
+ export async function importTransactions(
+   data: Budget,
+   entityIdMap: Map<string, string>,
+   flagNameConflicts: Set<string>,
++  tick?: ImportTick,
+ ) {
+   const payees = await send('api/payees-get');
+   const categories = await send('api/categories-get');
+   const incomeCatId = findIdByName(categories, 'Income');
+   const startingBalanceCatId = findIdByName(categories, 'Starting Balances'); //better way to do it?
+@@ -837,18 +859,23 @@ export async function importTransactions(
+         accountId: entityIdMap.get(accountId),
+         transactions: toImport,
+         learnCategories: true,
+         runTransfers: false,
+       });
++      tick?.(
++        toImport.length,
++        data.accounts.find(account => account.id === accountId)?.name,
++      );
+     }),
+   );
+ }
+ 
+-async function importScheduledTransactions(
++export async function importScheduledTransactions(
+   data: Budget,
+   entityIdMap: Map<string, string>,
+   flagNameConflicts: Set<string>,
++  tick: ImportTick,
+ ) {
+   const scheduledTransactions = data.scheduled_transactions;
+   const scheduledSubtransactionsGrouped = groupBy(
+     data.scheduled_subtransactions,
+     'scheduled_transaction_id',
+@@ -863,10 +890,11 @@ async function importScheduledTransactions(
+     .map(payee => [payee.transfer_acct, payee] as [string, Payee]);
+   const payeeTransferAcctHashMap = new Map<string, Payee>(payeesByTransferAcct);
+   const scheduleCategoryMap = new Map<string, string>();
+   const scheduleSplitsMap = new Map<string, ScheduledSubtransaction[]>();
+   const schedulePayeeMap = new Map<string, string>();
++  const deferredTicks = new Map<string, ImportTick>();
+ 
+   async function createScheduleWithUniqueName(params: {
+     name: string;
+     posts_transaction: boolean;
+     payee: string;
+@@ -980,22 +1008,29 @@ async function importScheduledTransactions(
+         .get(scheduled.id)
+         ?.filter(subtransaction => !subtransaction.deleted) || [];
+ 
+     if (scheduledSubtransactions.length > 0) {
+       scheduleSplitsMap.set(scheduleId, scheduledSubtransactions);
++      deferredTicks.set(scheduleId, tick);
+     } else if (!scheduled.transfer_account_id && scheduled.category_id) {
+       const mappedCategoryId = entityIdMap.get(scheduled.category_id);
+       if (mappedCategoryId) {
+         scheduleCategoryMap.set(scheduleId, mappedCategoryId);
++        deferredTicks.set(scheduleId, tick);
+       }
+     }
++
++    if (!deferredTicks.has(scheduleId)) {
++      tick();
++    }
+   }
+ 
+   if (scheduleCategoryMap.size > 0 || scheduleSplitsMap.size > 0) {
+     for (const [scheduleId, categoryId] of scheduleCategoryMap.entries()) {
+       const rule = await getRuleForSchedule(scheduleId);
+       if (!rule) {
++        deferredTicks.get(scheduleId)?.();
+         continue;
+       }
+ 
+       const actions = rule.actions ? [...rule.actions] : [];
+       actions.push({
+@@ -1005,15 +1040,17 @@ async function importScheduledTransactions(
+       });
+ 
+       await send('api/rule-update', {
+         rule: buildRuleUpdate(rule, actions),
+       });
++      deferredTicks.get(scheduleId)?.();
+     }
+ 
+     for (const [scheduleId, subtransactions] of scheduleSplitsMap.entries()) {
+       const rule = await getRuleForSchedule(scheduleId);
+       if (!rule) {
++        deferredTicks.get(scheduleId)?.();
+         continue;
+       }
+ 
+       const actions = rule.actions ? [...rule.actions] : [];
+       const parentPayeeId = schedulePayeeMap.get(scheduleId);
+@@ -1084,15 +1121,20 @@ async function importScheduledTransactions(
+       });
+ 
+       await send('api/rule-update', {
+         rule: buildRuleUpdate(rule, actions),
+       });
++      deferredTicks.get(scheduleId)?.();
+     }
+   }
+ }
+ 
+-async function importBudgets(data: Budget, entityIdMap: Map<string, string>) {
++async function importBudgets(
++  data: Budget,
++  entityIdMap: Map<string, string>,
++  tick: ImportTick,
++) {
+   // There should be info in the docs to deal with
+   // no credit card category and how YNAB and Actual
+   // handle differently the amount To be Budgeted
+   // i.e. Actual considers the cc debt while YNAB doesn't
+   //
+@@ -1133,10 +1175,11 @@ async function importBudgets(data: Budget, entityIdMap: Map<string, string>) {
+             categoryId: catId,
+             amount,
+           });
+         }),
+       );
++      tick();
+     }
+   } finally {
+     await send('api/batch-budget-end');
+   }
+ }
+@@ -1163,31 +1206,56 @@ export function getBudgetName(_filepath: string, data: Budget) {
+ 
+ export async function doImport(data: Budget) {
+   const entityIdMap = new Map<string, string>();
+   const flagNameConflicts = getFlagNameConflicts(data);
+ 
+-  logger.log('Importing Accounts...');
+-  await importAccounts(data, entityIdMap);
+-
+-  logger.log('Importing Categories...');
+-  await importCategories(data, entityIdMap);
+-
+-  logger.log('Importing Payees...');
+-  await importPayees(data, entityIdMap);
+-
+-  logger.log('Importing Payee Locations...');
+-  await importPayeeLocations(data, entityIdMap);
+-
+-  logger.log('Importing Tags...');
+-  await importFlagsAsTags(data, flagNameConflicts);
+-
+-  logger.log('Importing Transactions...');
+-  await importTransactions(data, entityIdMap, flagNameConflicts);
+-
+-  logger.log('Importing Scheduled Transactions...');
+-  await importScheduledTransactions(data, entityIdMap, flagNameConflicts);
+-
+-  logger.log('Importing Budgets...');
+-  await importBudgets(data, entityIdMap);
++  await runImportSteps([
++    {
++      step: 'accounts',
++      total: countLive(data.accounts),
++      run: tick => importAccounts(data, entityIdMap, tick),
++    },
++    {
++      step: 'categories',
++      total: countLive(data.category_groups) + countLive(data.categories),
++      run: tick => importCategories(data, entityIdMap, tick),
++    },
++    {
++      step: 'payees',
++      total: data.payees.filter(
++        payee => !payee.deleted && !payee.transfer_account_id,
++      ).length,
++      run: tick => importPayees(data, entityIdMap, tick),
++    },
++    {
++      step: 'payee-locations',
++      total: countLive(data.payee_locations ?? []),
++      run: tick => importPayeeLocations(data, entityIdMap, tick),
++    },
++    {
++      step: 'tags',
++      total: getTagsToCreate(data, flagNameConflicts).size,
++      run: tick => importFlagsAsTags(data, flagNameConflicts, tick),
++    },
++    {
++      step: 'transactions',
++      total: data.transactions.length,
++      run: tick =>
++        importTransactions(data, entityIdMap, flagNameConflicts, tick),
++    },
++    {
++      step: 'scheduled-transactions',
++      total: data.scheduled_transactions.length,
++      run: tick =>
++        importScheduledTransactions(data, entityIdMap, flagNameConflicts, tick),
++    },
++    {
++      step: 'budgets',
++      total: data.months.length,
++      run: tick => importBudgets(data, entityIdMap, tick),
++    },
++  ]);
++}
+ 
+-  logger.log('Setting up...');
++function countLive(entities: { deleted?: boolean }[]) {
++  return entities.filter(entity => !entity.deleted).length;
+ }
+diff --git a/packages/loot-core/src/types/server-events.ts b/packages/loot-core/src/types/server-events.ts
+index b80534606..1a5d94e39 100644
+--- a/packages/loot-core/src/types/server-events.ts
++++ b/packages/loot-core/src/types/server-events.ts
+@@ -69,10 +69,36 @@ type IndexeddbQuotaErrorEvent = undefined;
+ type OrphanedPayeesEvent = {
+   orphanedIds: string[];
+   updatedPayeeIds: string[];
+ };
+ 
++export type ImportStep =
++  | 'accounts'
++  | 'categories'
++  | 'payees'
++  | 'payee-locations'
++  | 'tags'
++  | 'transactions'
++  | 'scheduled-transactions'
++  | 'budgets'
++  | 'finishing';
++
++type ImportProgressEvent = {
++  step: ImportStep;
++  /** Items imported so far in this step. `total` is 0 when it has no count. */
++  current: number;
++  total: number;
++  /** Items imported so far across every step, for an overall progress bar. */
++  overallCurrent: number;
++  overallTotal: number;
++  /**
++   * The batch that was just imported, when a step works in batches rather than
++   * one item at a time.
++   */
++  batch?: { amount: number; account: string };
++};
++
+ type PrefsUpdatedEvent = undefined;
+ type SchedulesOfflineEvent = undefined;
+ type ServerErrorEvent = undefined;
+ type ShowBudgetsEvent = undefined;
+ type StartImportEvent = { budgetName: string };
+@@ -83,10 +109,11 @@ export type ServerEvents = {
+   'backups-updated': BackupUpdatedEvent;
+   'cells-changed': CellsChangedEvent;
+   'fallback-write-error': FallbackWriteErrorEvent;
+   'finish-import': FinishImportEvent;
+   'finish-load': FinishLoadEvent;
++  'import-progress': ImportProgressEvent;
+   'indexeddb-quota-error': IndexeddbQuotaErrorEvent;
+   'orphaned-payees': OrphanedPayeesEvent;
+   'prefs-updated': PrefsUpdatedEvent;
+   'schedules-offline': SchedulesOfflineEvent;
+   'server-error': ServerErrorEvent;
+

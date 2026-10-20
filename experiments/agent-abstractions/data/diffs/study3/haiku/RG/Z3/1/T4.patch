@@ -1,0 +1,328 @@
+diff --git a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+index 1f03c21..93d2e03 100644
+--- a/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
++++ b/packages/loot-core/src/server/accounts/app-bank-sync.test.ts
+@@ -553,6 +553,120 @@ describe('linking a bank account that is already linked', () => {
+       }),
+     ).resolves.toBe('ok');
+   });
++
++  describe('with replaceExistingLink', () => {
++    async function getAccount(id: string) {
++      return db.first<{
++        account_id: string | null;
++        bank: string | null;
++        account_sync_source: string | null;
++        closed: number;
++        tombstone: number;
++      }>(
++        'SELECT account_id, bank, account_sync_source, closed, tombstone FROM accounts WHERE id = ?',
++        [id],
++      );
++    }
++
++    it('links into a new account and unlinks the account that held the bank account', async () => {
++      await setupSimpleFinAccounts([
++        { id: 'acct1', name: 'Checking', accountId: 'ext-1' },
++      ]);
++
++      await expect(
++        linkSimpleFinAccount({
++          externalAccount: simpleFinAccount('ext-1'),
++          replaceExistingLink: true,
++        }),
++      ).resolves.toBe('ok');
++
++      expect(await getAccount('acct1')).toEqual({
++        account_id: null,
++        bank: null,
++        account_sync_source: null,
++        closed: 0,
++        tombstone: 0,
++      });
++      const newAccount = await db.first<{ id: string }>(
++        'SELECT id FROM accounts WHERE account_id = ? AND tombstone = 0 AND id != ?',
++        ['ext-1', 'acct1'],
++      );
++      expect(newAccount).toBeTruthy();
++      expect(bankSync.syncAccount).toHaveBeenCalledTimes(1);
++    });
++
++    it('links into the chosen existing account and unlinks the holder', async () => {
++      await setupSimpleFinAccounts([
++        { id: 'acct1', name: 'Checking', accountId: 'ext-1' },
++        { id: 'acct2', name: 'Savings', accountId: 'ext-2' },
++      ]);
++
++      await expect(
++        linkSimpleFinAccount({
++          externalAccount: simpleFinAccount('ext-1'),
++          upgradingId: 'acct2',
++          replaceExistingLink: true,
++        }),
++      ).resolves.toBe('ok');
++
++      expect((await getAccount('acct1'))!.account_id).toBeNull();
++      expect((await getAccount('acct2'))!.account_id).toBe('ext-1');
++    });
++
++    it('keeps a closed holding account closed', async () => {
++      await setupSimpleFinAccounts([
++        { id: 'acct1', name: 'Checking', accountId: 'ext-1' },
++      ]);
++      db.runQuery('UPDATE accounts SET closed = 1 WHERE id = ?', ['acct1']);
++
++      await expect(
++        linkSimpleFinAccount({
++          externalAccount: simpleFinAccount('ext-1'),
++          replaceExistingLink: true,
++        }),
++      ).resolves.toBe('ok');
++
++      expect(await getAccount('acct1')).toEqual({
++        account_id: null,
++        bank: null,
++        account_sync_source: null,
++        closed: 1,
++        tombstone: 0,
++      });
++    });
++
++    it('links normally when no other account holds the bank account', async () => {
++      await expect(
++        linkSimpleFinAccount({
++          externalAccount: simpleFinAccount('ext-1'),
++          replaceExistingLink: true,
++        }),
++      ).resolves.toBe('ok');
++      expect(bankSync.syncAccount).toHaveBeenCalledTimes(1);
++    });
++
++    it('still refuses to link into a closed account and changes nothing', async () => {
++      await setupSimpleFinAccounts([
++        { id: 'acct1', name: 'Checking', accountId: 'ext-1' },
++      ]);
++      await db.insertAccount({ id: 'acct2', name: 'Savings' });
++      db.runQuery('UPDATE accounts SET closed = 1 WHERE id = ?', ['acct2']);
++
++      await expect(
++        linkSimpleFinAccount({
++          externalAccount: simpleFinAccount('ext-1'),
++          upgradingId: 'acct2',
++          replaceExistingLink: true,
++        }),
++      ).rejects.toThrow(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++
++      expect((await getAccount('acct1'))!.account_id).toBe('ext-1');
++      expect((await getAccount('acct2'))!.account_id).toBeNull();
++      expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    });
++  });
+ });
+ 
+ describe('bank sync handlers must not nest mutators', () => {
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 8a9a374..7117db7 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -49,6 +49,7 @@ import * as bankSync from './sync';
+ // Shared base type for link account parameters
+ type LinkAccountBaseParams = {
+   upgradingId?: AccountEntity['id'];
++  replaceExistingLink?: boolean;
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
+@@ -95,21 +96,36 @@ export type AccountHandlers = {
+   'account-unlink': typeof unlinkAccount;
+ };
+ 
+-async function assertCanLinkBankAccount({
++async function clearBankLink(id: AccountEntity['id']) {
++  await db.updateAccount({
++    id,
++    account_id: null,
++    bank: null,
++    balance_current: null,
++    balance_available: null,
++    balance_limit: null,
++    account_sync_source: null,
++    bank_sync_status: null,
++  });
++}
++
++async function prepareBankAccountLink({
+   provider,
+   accountId,
+   upgradingId,
++  replaceExistingLink = false,
+ }: {
+   provider: AccountSyncSource;
+   accountId: string;
+   upgradingId?: AccountEntity['id'];
++  replaceExistingLink?: boolean;
+ }) {
+   const holder = await db.first<Pick<db.DbAccount, 'id'>>(
+     'SELECT id FROM accounts WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0 AND id IS NOT ?',
+     [provider, accountId, upgradingId ?? null],
+   );
+ 
+-  if (holder) {
++  if (holder && !replaceExistingLink) {
+     throw new Error('This bank account is already linked to another account.');
+   }
+ 
+@@ -125,6 +141,12 @@ async function assertCanLinkBankAccount({
+       );
+     }
+   }
++
++  // The bank connection is reused by the new link, so the holder is detached
++  // locally only; no provider-side removal happens here.
++  if (holder) {
++    await clearBankLink(holder.id);
++  }
+ }
+ 
+ async function updateAccount({
+@@ -208,6 +230,7 @@ async function linkGoCardlessAccount({
+   requisitionId,
+   account,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+@@ -215,10 +238,11 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
+-  await assertCanLinkBankAccount({
++  await prepareBankAccountLink({
+     provider: 'goCardless',
+     accountId: account.account_id,
+     upgradingId,
++    replaceExistingLink,
+   });
+ 
+   let id;
+@@ -282,16 +306,18 @@ async function linkGoCardlessAccount({
+ async function linkSimpleFinAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
+-  await assertCanLinkBankAccount({
++  await prepareBankAccountLink({
+     provider: 'simpleFin',
+     accountId: externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   });
+ 
+   let id;
+@@ -365,16 +391,18 @@ async function linkSimpleFinAccount({
+ async function linkPluggyAiAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
+-  await assertCanLinkBankAccount({
++  await prepareBankAccountLink({
+     provider: 'pluggyai',
+     accountId: externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   });
+ 
+   let id;
+@@ -450,16 +478,18 @@ async function linkPluggyAiAccount({
+ async function linkFintegraAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerFintegraAccount;
+ }) {
+-  await assertCanLinkBankAccount({
++  await prepareBankAccountLink({
+     provider: 'fintegra',
+     accountId: externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   });
+ 
+   let id;
+@@ -527,16 +557,18 @@ async function linkFintegraAccount({
+ async function linkAkahuAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
+-  await assertCanLinkBankAccount({
++  await prepareBankAccountLink({
+     provider: 'akahu',
+     accountId: externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   });
+ 
+   let id;
+@@ -607,16 +639,18 @@ async function linkAkahuAccount({
+ async function linkEnableBankingAccount({
+   externalAccount,
+   upgradingId,
++  replaceExistingLink,
+   offBudget = false,
+   startingDate,
+   startingBalance,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
+-  await assertCanLinkBankAccount({
++  await prepareBankAccountLink({
+     provider: 'enableBanking',
+     accountId: externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   });
+ 
+   let id: string | undefined;
+@@ -1860,16 +1894,7 @@ async function unlinkAccount({ id }: { id: AccountEntity['id'] }) {
+ 
+   const isGoCardless = accRow.account_sync_source === 'goCardless';
+ 
+-  await db.updateAccount({
+-    id,
+-    account_id: null,
+-    bank: null,
+-    balance_current: null,
+-    balance_available: null,
+-    balance_limit: null,
+-    account_sync_source: null,
+-    bank_sync_status: null,
+-  });
++  await clearBankLink(id);
+ 
+   if (isGoCardless === false) {
+     return;

@@ -1,0 +1,49 @@
+diff --git a/packages/api/methods.test.ts b/packages/api/methods.test.ts
+index 3aa5929..4f2ccb6 100644
+--- a/packages/api/methods.test.ts
++++ b/packages/api/methods.test.ts
+@@ -1142,6 +1142,7 @@ test('Schedules: successfully complete schedules operations', async () => {
+         posts_transaction: true,
+         //       amount: -5000,
+         amountOp: 'is',
++        expectedAmount: 0,
+         date: {
+           frequency: 'monthly',
+           interval: 1,
+@@ -1157,6 +1158,7 @@ test('Schedules: successfully complete schedules operations', async () => {
+         posts_transaction: false,
+         amount: 4000,
+         amountOp: 'is',
++        expectedAmount: 4000,
+         date: '2025-06-13',
+       }),
+     ]),
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..43116df 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -12,6 +12,8 @@ import type {
+ } from '#types/models';
+ 
+ import type { RemoteFile } from './cloud-storage';
++import { getScheduledAmount } from '#shared/schedules';
++
+ import * as models from './models';
+ 
+ export type APIAccountEntity = Pick<AccountEntity, 'id' | 'name'> & {
+@@ -235,6 +237,7 @@ export type APIScheduleEntity = Pick<
+   amount?: ScheduleEntity['_amount']; // Provide only 1 number except if the Amount
+   amountOp: AmountOPType; // 'is' | 'isapprox' | 'isbetween'
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
++  expectedAmount?: number; // Amount the schedule is expected to post. Read-only, not to be supplied
+ };
+ 
+ export const scheduleModel = {
+@@ -251,6 +254,7 @@ export const scheduleModel = {
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
+       date: schedule._date,
++      expectedAmount: getScheduledAmount(schedule._amount),
+     };
+   },
+   //just an update

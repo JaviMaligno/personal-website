@@ -1,0 +1,249 @@
+diff --git a/packages/desktop-client/src/hooks/useSchedules.ts b/packages/desktop-client/src/hooks/useSchedules.ts
+index 73348f8..174777f 100644
+--- a/packages/desktop-client/src/hooks/useSchedules.ts
++++ b/packages/desktop-client/src/hooks/useSchedules.ts
+@@ -4,6 +4,7 @@ import { q } from '@actual-app/core/shared/query';
+ import type { ObjectExpression, Query } from '@actual-app/core/shared/query';
+ import {
+   getHasTransactionsQuery,
++  getSchedulesWithTransactions,
+   getStatus,
+ } from '@actual-app/core/shared/schedules';
+ import type { ScheduleStatuses } from '@actual-app/core/shared/schedules';
+@@ -33,7 +34,7 @@ function loadStatuses(
+ ) {
+   return liveQuery<TransactionEntity>(getHasTransactionsQuery(schedules), {
+     onData: data => {
+-      const hasTrans = new Set(data.filter(Boolean).map(row => row.schedule));
++      const hasTrans = getSchedulesWithTransactions(schedules, data);
+ 
+       const scheduleStatuses = new Map(
+         schedules.map(s => [
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index de582a9..30b0570 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -32,6 +32,7 @@ import {
+   getNextDate,
+   getNextDateAfter,
+   getScheduledAmount,
++  getSchedulesWithTransactions,
+   getStatus,
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+@@ -622,7 +623,7 @@ async function hasTransactionForSchedule(
+ ): Promise<boolean> {
+   const { data } = await aqlQuery(getHasTransactionsQuery([schedule]));
+ 
+-  return data.filter(Boolean).some(row => row.schedule === schedule.id);
++  return getSchedulesWithTransactions([schedule], data).has(schedule.id);
+ }
+ 
+ function isRecurringSchedule(schedule: ScheduleEntity): boolean {
+@@ -674,9 +675,7 @@ export async function advanceSchedulesService(syncSuccess) {
+   const { data: hasTransData } = await aqlQuery(
+     getHasTransactionsQuery(schedules),
+   );
+-  const hasTrans = new Set(
+-    hasTransData.filter(Boolean).map(row => row.schedule),
+-  );
++  const hasTrans = getSchedulesWithTransactions(schedules, hasTransData);
+ 
+   const failedToPost = [];
+   let didPost = false;
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index b83cb4b..425652d 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -151,19 +151,103 @@ export function isScheduleOccurrencePosted({
+   );
+ }
+ 
++function getScheduleDateCond(schedule: ScheduleOccurrenceMatchInput) {
++  return schedule._conditions?.find(c => c.field === 'date') ?? null;
++}
++
++function isRecurringDateCond(dateCond): boolean {
++  if (!dateCond) {
++    return false;
++  }
++  try {
++    return (
++      new Condition(dateCond.op, 'date', dateCond.value, null).getValue()
++        ?.type === 'recur'
++    );
++  } catch {
++    return false;
++  }
++}
++
++/**
++ * Returns up to `count` distinct occurrence dates of a recurring date
++ * condition that fall strictly before `occurrenceDate`, most recent first.
++ * Weekend skipping is applied the same way as for `next_date`. Returns an
++ * empty list for non-recurring conditions or when there is no earlier
++ * occurrence (e.g. `occurrenceDate` is the schedule's first occurrence).
++ */
++export function getPreviousOccurrenceDates(
++  dateCond,
++  occurrenceDate: string,
++  count: number,
++): string[] {
++  if (!dateCond || !occurrenceDate || count <= 0) {
++    return [];
++  }
++
++  let value;
++  try {
++    value = new Condition(dateCond.op, 'date', dateCond.value, null).getValue();
++  } catch {
++    return [];
++  }
++  if (value?.type !== 'recur') {
++    return [];
++  }
++
++  const skipWeekend = value.schedule.data.skipWeekend;
++  // Base occurrences are at 12:00, so ending at the start of the occurrence
++  // day excludes the occurrence itself.
++  const end = d.startOfDay(monthUtils.parseDate(occurrenceDate));
++
++  const result: string[] = [];
++  for (const occurrence of value.schedule.occurrences({
++    end,
++    reverse: true,
++  })) {
++    let date = occurrence.date;
++    if (skipWeekend) {
++      date = getDateWithSkippedWeekend(date, value.schedule.data.weekendSolve);
++    }
++    const day = monthUtils.dayFromDate(date);
++    if (day < occurrenceDate && !result.includes(day)) {
++      result.push(day);
++      if (result.length >= count) {
++        break;
++      }
++    }
++  }
++  return result;
++}
++
+ /**
+- * Builds a query to check if each schedule already has a matching transaction.
++ * Builds a query returning the transactions linked to each schedule that may
++ * count as the payment of its current occurrence (`next_date`). Use
++ * `getSchedulesWithTransactions` to interpret the rows.
+  *
+- * The date lower-bound varies:
+- * - `dateCond.op === 'is'` (one-time or recurring): exact `next_date`, no lookback.
+- * - `posts_transaction` (auto-posted recurring): exact `next_date`, since
+- *   auto-posted dates are always precise. A lookback here would cause
+- *   yesterday's transaction to falsely match today's occurrence.
+- * - Otherwise (manual recurring with `isapprox`, etc.): 2-day lookback to catch
+- *   early payments.
++ * For one-time schedules the lower bound is the occurrence-match start date
++ * (see `getScheduleOccurrenceMatchStartDate`). For recurring schedules the
++ * rows go back to just after the occurrence two steps before `next_date`, so
++ * that a payment made (or redated) earlier than the due date can still be told
++ * apart from the payment of the previous occurrence.
+  */
+ export function getHasTransactionsQuery(schedules) {
+   const filters = schedules.map(schedule => {
++    const dateCond = getScheduleDateCond(schedule);
++    if (isRecurringDateCond(dateCond)) {
++      const previous = getPreviousOccurrenceDates(
++        dateCond,
++        schedule.next_date,
++        2,
++      );
++      return {
++        $and:
++          previous.length === 2
++            ? { schedule: schedule.id, date: { $gt: previous[1] } }
++            : { schedule: schedule.id },
++      };
++    }
++
+     return {
+       $and: {
+         schedule: schedule.id,
+@@ -192,6 +276,79 @@ export function getHasTransactionsQuery(schedules) {
+   return query.filter({ $or: filters });
+ }
+ 
++/**
++ * Decides, from the rows returned by `getHasTransactionsQuery`, which schedules
++ * have their current occurrence (`next_date`) paid.
++ *
++ * A linked transaction dated on or after the occurrence-match start date
++ * always counts. For recurring schedules, a linked transaction dated earlier
++ * than that (but after the previous occurrence) also counts — e.g. an
++ * occurrence that was posted early and then redated — unless it is better
++ * explained as a late payment of the previous occurrence, i.e. the previous
++ * occurrence has no payment of its own. A schedule's first occurrence has no
++ * previous occurrence, so any earlier linked transaction counts for it.
++ */
++export function getSchedulesWithTransactions(
++  schedules: readonly (ScheduleOccurrenceMatchInput & {
++    id: string;
++    next_date: string;
++  })[],
++  rows: readonly (PostedScheduleTransaction | null | undefined)[],
++): Set<string> {
++  const bySchedule = indexPostedScheduleTransactions(rows.filter(Boolean));
++  const paid = new Set<string>();
++
++  for (const schedule of schedules) {
++    const transactions = bySchedule.get(schedule.id);
++    if (!transactions || transactions.length === 0) {
++      continue;
++    }
++
++    const matchStartDate = getScheduleOccurrenceMatchStartDate(
++      schedule,
++      schedule.next_date,
++    );
++    if (transactions.some(tx => tx.date >= matchStartDate)) {
++      paid.add(schedule.id);
++      continue;
++    }
++
++    const dateCond = getScheduleDateCond(schedule);
++    if (!isRecurringDateCond(dateCond)) {
++      continue;
++    }
++
++    const [previous, beforePrevious] = getPreviousOccurrenceDates(
++      dateCond,
++      schedule.next_date,
++      2,
++    );
++    if (previous == null) {
++      // First occurrence: every linked transaction belongs to it.
++      paid.add(schedule.id);
++      continue;
++    }
++
++    const early = transactions.filter(
++      tx => tx.date > previous && tx.date < matchStartDate,
++    );
++    if (early.length === 0) {
++      continue;
++    }
++
++    const previousHasPayment = transactions.some(
++      tx =>
++        tx.date <= previous &&
++        (beforePrevious == null || tx.date > beforePrevious),
++    );
++    if (previousHasPayment || early.length >= 2) {
++      paid.add(schedule.id);
++    }
++  }
++
++  return paid;
++}
++
+ type ScheduleRuleOptions = IRuleOptions & {
+   frequency: string;
+   interval?: number;

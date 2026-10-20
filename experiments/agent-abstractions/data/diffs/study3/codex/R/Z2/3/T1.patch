@@ -1,0 +1,102 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 5b9f191..3791a35 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -61,8 +61,10 @@ async function createScheduleList(
+       extractScheduleConds(conditions);
+     let scheduleAmount =
+       amountCondition.op === 'isbetween'
+-        ? Math.round(amountCondition.value.num1 + amountCondition.value.num2) /
+-          2
++        ? Math.abs(amountCondition.value.num1) >=
++          Math.abs(amountCondition.value.num2)
++          ? amountCondition.value.num1
++          : amountCondition.value.num2
+         : amountCondition.value;
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/forecast/app.test.ts b/packages/loot-core/src/server/forecast/app.test.ts
+index 49a346f..f154ac4 100644
+--- a/packages/loot-core/src/server/forecast/app.test.ts
++++ b/packages/loot-core/src/server/forecast/app.test.ts
+@@ -13,7 +13,10 @@ import { loadRules, updateRule } from '#server/transactions/transaction-rules';
+ import type { RuleConditionEntity } from '#types/models';
+ 
+ import { generateForecast } from './app';
+-import { FORECAST_UNASSIGNED_ACCOUNT_ID } from './forecast-schedules';
++import {
++  FORECAST_UNASSIGNED_ACCOUNT_ID,
++  normalizeSchedule,
++} from './forecast-schedules';
+ 
+ const { emptyDatabase } = global as typeof globalThis & {
+   emptyDatabase: () => () => Promise<void>;
+@@ -22,6 +25,24 @@ const createSchedule = createScheduleBase as (args: {
+   conditions: RuleConditionEntity[];
+ }) => Promise<string>;
+ 
++describe('normalizeSchedule', () => {
++  it.each([
++    [{ num1: -10100, num2: -20000 }, -20000],
++    [{ num1: -20000, num2: -10100 }, -20000],
++    [{ num1: 10100, num2: 20000 }, 20000],
++  ])('uses the ranged amount furthest from zero', (range, expected) => {
++    const schedule = normalizeSchedule({
++      id: 'schedule',
++      name: 'Variable',
++      next_date: '2024-01-01',
++      _amount: range,
++      _date: '2024-01-01',
++    });
++
++    expect(schedule?._amount).toBe(expected);
++  });
++});
++
+ async function createForecastWithPostedMonthlySchedule({
+   txId,
+   txDate,
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 6657f87..84db828 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -93,11 +93,13 @@ export function normalizeSchedule(
+     return null;
+   }
+ 
+-  // A ranged ("is between") amount is scheduled at its rounded midpoint.
++  // Plan for the endpoint furthest from zero for ranged amounts.
+   const amount =
+     typeof amountValue === 'number'
+       ? amountValue
+-      : Math.round((amountValue.num1 + amountValue.num2) / 2);
++      : Math.abs(amountValue.num1) >= Math.abs(amountValue.num2)
++        ? amountValue.num1
++        : amountValue.num2;
+ 
+   return {
+     id: schedule.id,
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..884edd6 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -496,14 +496,16 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // A missing amount previews as 0; a ranged ("is between") amount as its
+-      // rounded midpoint.
++      // A missing amount previews as 0; a ranged amount uses the endpoint
++      // furthest from zero to plan for the worst case.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amount
+-            : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++            : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
++              ? schedule._amount.num1
++              : schedule._amount.num2;
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

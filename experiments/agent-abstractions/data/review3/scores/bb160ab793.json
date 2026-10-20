@@ -1,0 +1,12 @@
+{"id": "bb160ab793",
+"reuse": {"score": 4, "why": "Extends the existing getDateWithSkippedWeekend/getDateWithWeekendRule pair and threads holidays through every existing caller instead of adding parallel logic."},
+"duplication": {"score": 3, "why": "The 'holidays ? new Set(holidays) : undefined' conversion is repeated in getNextDate, getDatesInRange, getUpcomingDates and getDateWithSkippedWeekend, and the three daily-skip loops each keep their own branch (now calling the shared predicate)."},
+"placement": {"score": 5, "why": "The weekend/holiday rule lives in shared/schedules.ts beside the existing weekend helpers; the type field is added to RecurConfig and parseRecurDate."},
+"scope": {"score": 5, "why": "Every edit serves holiday handling; tests are focused."},
+"maintainability": {"score": 4, "why": "One predicate (isWeekendOrHoliday) decides non-business days for both moving and skipping, but its Set parameter versus the array parameter of getDateWithSkippedWeekend makes callers convert in several places."},
+"bypasses_abstraction": {"value": false, "where": "All weekend checks (app.ts daily skips, getNextDate weekday search, the move helper) now go through isWeekendOrHoliday."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "The repeated array-to-Set conversion is visible boilerplate, not reshaped logic."},
+"one_place": {"value": true, "where": "isWeekendOrHoliday in shared/schedules.ts is used by getDateWithSkippedWeekend and by every daily-skip path (getNextDate, getDatesInRange, getUpcomingDates); schedule-template.ts passes holidays to getDateWithWeekendRule."}
+}

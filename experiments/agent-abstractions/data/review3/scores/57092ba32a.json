@@ -1,0 +1,13 @@
+{
+  "id": "57092ba32a",
+  "reuse": {"score": 4, "why": "All link rules go through the existing linkBankSyncAccount, Fintegra linking is a thin wrapper like the other providers, and the unlink field-clearing is extracted into clearAccountLink and reused by unlinkAccount; the Fintegra download and accounts functions copy Akahu's instead of sharing a helper."},
+  "duplication": {"score": 3, "why": "downloadFintegraTransactions and fintegraAccounts are near-verbatim copies of the Akahu functions, differing only in the server URL and log text, though that per-provider copying is the tree's existing pattern."},
+  "placement": {"score": 5, "why": "Duplicate-link, closed-account and replace rules live in the shared linkBankSyncAccount, provider download in sync.ts, server URL in server-config and types in types/models, matching the tree's layering."},
+  "scope": {"score": 4, "why": "Changes are confined to what the four steps need; the extra fintegra-accounts listing handler is a small, related addition."},
+  "maintainability": {"score": 4, "why": "Linking rules are in one place and the unlink state is shared; the only debt is another copied per-provider download/accounts function."},
+  "bypasses_abstraction": {"value": false, "where": "Fintegra links via linkBankSyncAccount and replaced links are cleared via the new shared clearAccountLink also used by unlinkAccount."},
+  "duplicated_blocks": 2,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "The Akahu-to-Fintegra copies are open copies (same structure, renamed URL/log), not reshaped; the unlink update was shared rather than copied."},
+  "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "linkBankSyncAccount gains replaceExistingLink; the duplicate and closed-account checks are general rules applied to all providers, and no caller bypasses it. Fintegra is added to existing provider dispatches in syncAccount/processBankSyncDownload."}
+}

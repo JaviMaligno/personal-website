@@ -1,0 +1,65 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index f9b627f..823f9d9 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -130,10 +130,11 @@ describe('schedules', () => {
+       it.each([
+         [-10100, -20000, -20000],
+         [-20000, -10100, -20000],
+-        [10100, 20000, 20000],
+-        [20000, 10100, 20000],
++        [10100, 20000, 10100],
++        [20000, 10100, 10100],
++        [-3000, 5000, -3000],
+       ])(
+-        'uses the ranged amount furthest from zero for %i and %i',
++        'uses the lowest ranged amount for %i and %i',
+         (num1, num2, expected) => {
+           const schedule = makeSchedule({
+             id: 'sched-range',
+@@ -154,13 +155,13 @@ describe('schedules', () => {
+       );
+ 
+       it.each([
+-        [-10000, -10750],
+-        [10000, 10750],
+-        [-1234, -1327],
+-        [1234, 1327],
++        [-10000, -9250],
++        [10000, 9250],
++        [-1234, -1141],
++        [1234, 1141],
+         [0, 0],
+       ])(
+-        'uses the approximate amount tolerance furthest from zero for %i',
++        'uses the lowest amount allowed by the approximate tolerance for %i',
+         (amount, expected) => {
+           const schedule = makeSchedule({
+             id: 'sched-approx',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 1adde7f..a050dda 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -497,19 +497,17 @@ export function computeSchedulePreviewTransactions(
+       }
+ 
+       // A missing amount previews as 0; ranged and approximate amounts preview
+-      // at the end furthest from zero so variable expenses are planned safely.
++      // at the lowest value they allow, for both income and expenses.
+       const amount =
+         schedule._amount == null
+           ? 0
+           : typeof schedule._amount === 'number'
+             ? schedule._amountOp === 'isapprox'
+-              ? schedule._amount +
++              ? schedule._amount -
+                 Math.sign(schedule._amount) *
+                   Math.round(Math.abs(schedule._amount) * 0.075)
+               : schedule._amount
+-            : Math.abs(schedule._amount.num1) >= Math.abs(schedule._amount.num2)
+-              ? schedule._amount.num1
+-              : schedule._amount.num2;
++            : Math.min(schedule._amount.num1, schedule._amount.num2);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

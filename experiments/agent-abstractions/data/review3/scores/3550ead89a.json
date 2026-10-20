@@ -1,0 +1,12 @@
+{"id":"3550ead89a",
+"reuse":{"score":2,"why":"Adds a new category_groups.notes column via migration instead of using the existing notes table where group notes live, ignores shared/tags extractTagsFromText, and setMonthAvg re-implements setNMonthAvg's per-category average logic instead of calling it."},
+"duplication":{"score":2,"why":"The #fixed and saved-template conditions are written in the visibleUntemplatedCategory fragment, again in getVisibleUntemplatedCategories' WHERE, again as a CASE in getBudgetData, and once more in JS in copyPreviousMonth."},
+"placement":{"score":2,"why":"A schema migration and API model change are added for a budget-action rule, and the eligibility rule is split between SQL helpers and inline JS in copyPreviousMonth."},
+"scope":{"score":2,"why":"Introduces a database migration, new DB/entity/API fields and restructures the average actions beyond what the requests need."},
+"maintainability":{"score":2,"why":"Redundant overlapping filters, a parallel notes store and a copy of the eligibility rule in copyPreviousMonth make the rule hard to change consistently."},
+"bypasses_abstraction":{"value":true,"where":"new category_groups.notes column bypasses the notes table and tag parser; copyPreviousMonth re-decides eligibility in JS instead of using getVisibleUntemplatedCategories; setMonthAvg bypasses setNMonthAvg"},
+"duplicated_blocks":4,
+"would_merge":"no",
+"disguised_duplication":{"value":true,"where":"the #fixed/saved-template rule appears as a SQL fragment constant, an inline WHERE, a CASE column and a JS condition; setMonthAvg reshapes setNMonthAvg's average-and-sign logic"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":1,"where":"getVisibleUntemplatedCategories takes includeHiddenCategories and switches between two filter strings; copyPreviousMonth applies its own JS version of the eligibility rule with the hidden flag"}
+}

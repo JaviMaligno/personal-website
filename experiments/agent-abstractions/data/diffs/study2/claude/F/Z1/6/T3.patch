@@ -1,0 +1,53 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 63b2739..be1a148 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -218,8 +218,15 @@ function setCarryover(
+ type BulkBudgetCategory = Pick<db.DbCategory, 'id' | 'is_income' | 'hidden'> & {
+   group_hidden: db.DbCategoryGroup['hidden'] | null;
+   goal_def: string | null;
++  group_note: string | null;
+ };
+ 
++const FIXED_TAG = /(?<![\w#])#fixed(?![\w-])/;
++
++function hasFixedTag(note: string | null): boolean {
++  return note != null && FIXED_TAG.test(note);
++}
++
+ function hasSavedTemplates(goalDef: string | null): boolean {
+   if (!goalDef) {
+     return false;
+@@ -235,7 +242,8 @@ function hasSavedTemplates(goalDef: string | null): boolean {
+ // The categories a bulk budget action (copy last month, set to zero, set to an
+ // N-month average) writes. Income categories take part only in tracking
+ // budgets. Hidden categories, categories in hidden groups and categories with
+-// saved budget templates are skipped.
++// saved budget templates are skipped, as are categories in a group whose
++// notes contain the tag `#fixed`.
+ // `skipMissingGroup` also skips a category whose group row does not exist: the
+ // average actions have always done so, copy last month has not.
+ async function getBulkBudgetCategories({
+@@ -245,9 +253,11 @@ async function getBulkBudgetCategories({
+ }): Promise<BulkBudgetCategory[]> {
+   const categories = await db.all<BulkBudgetCategory>(
+     `
+-  SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden, c.goal_def
++  SELECT c.id, c.is_income, c.hidden, g.hidden AS group_hidden, c.goal_def,
++    n.note AS group_note
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -263,6 +273,9 @@ async function getBulkBudgetCategories({
+     if (hasSavedTemplates(cat.goal_def)) {
+       return false;
+     }
++    if (hasFixedTag(cat.group_note)) {
++      return false;
++    }
+     return !(skipMissingGroup && cat.group_hidden == null);
+   });
+ }

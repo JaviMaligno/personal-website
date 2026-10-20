@@ -1,0 +1,133 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 46d1b4d..9ed7182 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -233,8 +233,13 @@ function isFixedGroup(notes: string | null | undefined): boolean {
+ 
+ // Actions
+ 
++type MonthWideArgs = {
++  month: string;
++  includeHiddenCategories?: boolean;
++};
++
+ // Income categories are only filled by month-wide actions in tracking budgets.
+-async function getMonthWideCategories() {
++async function getMonthWideCategories(includeHiddenCategories = false) {
+   const categories = await db.all<
+     db.DbViewCategoryWithGroupHidden & { group_notes: string | null }
+   >(
+@@ -243,7 +248,8 @@ async function getMonthWideCategories() {
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   LEFT JOIN notes n ON n.id = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0
++    ${includeHiddenCategories ? '' : 'AND c.hidden = 0 AND g.hidden = 0'}
+     AND ${NO_TEMPLATE_SQL}
+   `,
+   );
+@@ -255,9 +261,8 @@ async function getMonthWideCategories() {
+ 
+ export async function copyPreviousMonth({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories,
++}: MonthWideArgs): Promise<void> {
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
+@@ -267,7 +272,10 @@ export async function copyPreviousMonth({
+       if (prevBudget.is_income === 1 && !isTrackingBudget()) {
+         return;
+       }
+-      if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
++      if (
++        !includeHiddenCategories &&
++        (prevBudget.hidden === 1 || prevBudget.group_hidden === 1)
++      ) {
+         return;
+       }
+       if (hasSavedTemplates(prevBudget.goal_def)) {
+@@ -302,8 +310,11 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await getMonthWideCategories();
++export async function setZero({
++  month,
++  includeHiddenCategories,
++}: MonthWideArgs): Promise<void> {
++  const categories = await getMonthWideCategories(includeHiddenCategories);
+ 
+   await batchMessages(async () => {
+     categories.forEach(cat => {
+@@ -314,10 +325,9 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function set3MonthAvg({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
+-  const categories = await getMonthWideCategories();
++  includeHiddenCategories,
++}: MonthWideArgs): Promise<void> {
++  const categories = await getMonthWideCategories(includeHiddenCategories);
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -338,10 +348,9 @@ export async function set3MonthAvg({
+ 
+ export async function setLastMonthSpending({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
+-  const categories = await getMonthWideCategories();
++  includeHiddenCategories,
++}: MonthWideArgs): Promise<void> {
++  const categories = await getMonthWideCategories(includeHiddenCategories);
+   const sheetName = monthUtils.sheetForMonth(monthUtils.prevMonth(month));
+   const activity = await Promise.all(
+     categories.map(cat => getSheetValue(sheetName, 'sum-amount-' + cat.id)),
+@@ -355,8 +364,12 @@ export async function setLastMonthSpending({
+   });
+ }
+ 
+-async function setAllNMonthAvg(month: string, N: number): Promise<void> {
+-  const categories = await getMonthWideCategories();
++async function setAllNMonthAvg(
++  month: string,
++  N: number,
++  includeHiddenCategories?: boolean,
++): Promise<void> {
++  const categories = await getMonthWideCategories(includeHiddenCategories);
+ 
+   await batchMessages(async () => {
+     for (const cat of categories) {
+@@ -365,12 +378,18 @@ async function setAllNMonthAvg(month: string, N: number): Promise<void> {
+   });
+ }
+ 
+-export function set12MonthAvg({ month }: { month: string }): Promise<void> {
+-  return setAllNMonthAvg(month, 12);
++export function set12MonthAvg({
++  month,
++  includeHiddenCategories,
++}: MonthWideArgs): Promise<void> {
++  return setAllNMonthAvg(month, 12, includeHiddenCategories);
+ }
+ 
+-export function set6MonthAvg({ month }: { month: string }): Promise<void> {
+-  return setAllNMonthAvg(month, 6);
++export function set6MonthAvg({
++  month,
++  includeHiddenCategories,
++}: MonthWideArgs): Promise<void> {
++  return setAllNMonthAvg(month, 6, includeHiddenCategories);
+ }
+ 
+ export async function setNMonthAvg({

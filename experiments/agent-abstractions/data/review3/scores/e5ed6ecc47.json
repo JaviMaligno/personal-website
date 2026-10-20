@@ -1,0 +1,11 @@
+{"id":"e5ed6ecc47",
+"reuse":{"score":4,"why":"Replaces the five server-side midpoint copies with one shared getExpectedAmount, reuses getApproxNumberThreshold from shared/rules, and keeps the existing getScheduledAmount by delegating to it; the API handler calls the older wrapper instead of the new helper."},
+"duplication":{"score":4,"why":"All inline midpoint expressions are gone; what remains is two overlapping shared entry points (getScheduledAmount and getExpectedAmount) for the same rule."},
+"placement":{"score":5,"why":"The expected-amount rule lives in shared/schedules.ts and every server layer (app, forecast, budget template, preview, API) calls it."},
+"scope":{"score":4,"why":"Focused on the amount rule and the API field; three release notes and a now-stale 'furthest from zero' comment in computeSchedulePreviewTransactions are minor noise."},
+"maintainability":{"score":4,"why":"One definition decides missing/range/approx/single; a maintainer must still know that getScheduledAmount needs the op to apply the approximate rule, which the client callers do not pass."},
+"bypasses_abstraction":{"value":false,"where":"Every server amount site calls getExpectedAmount (or getScheduledAmount, which delegates to it)."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copies were removed, not reshaped."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":1,"bypassing_call_sites":0,"where":"shared/schedules.ts: getScheduledAmount gains an optional op parameter that only api/schedules-get passes (client callers keep the old call), getExpectedAmount takes op for an isapprox branch; forecast-schedules passes _amountOp ?? conditions.amount?.op as its own fallback."}}

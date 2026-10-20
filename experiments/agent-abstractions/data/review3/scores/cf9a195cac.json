@@ -1,0 +1,12 @@
+{"id":"cf9a195cac",
+"reuse":{"score":4,"why":"Uses findOrCreateBank, syncAccount, handleSyncResponse and getServer, and extracts clearAccountBankLink so the takeover and unlinkAccount share one reset; but the Fintegra link/download are written by copying the Akahu ones rather than sharing them."},
+"duplication":{"score":3,"why":"linkFintegraAccount is a near-verbatim copy of linkAkahuAccount and downloadFintegraTransactions a copy of downloadAkahuTransactions, following the tree's per-provider copy pattern; the link guard itself is shared."},
+"placement":{"score":4,"why":"Provider plumbing lands in server-config, sync.ts and accounts/app.ts as for other providers; the closed-account check is folded into a helper named for the duplicate-link rule."},
+"scope":{"score":5,"why":"All edits serve the four steps: duplicate-link guard, Fintegra provider, closed-account refusal and takeover flag."},
+"maintainability":{"score":4,"why":"One guard called at the top of every link function and a shared unlink reset are easy to own, though the guard's name hides the closed-account rule and the new provider adds another copy to keep in sync."},
+"bypasses_abstraction":{"value":false,"where":"none; every provider link function calls assertBankAccountNotLinked and unlinkAccount uses clearAccountBankLink"},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"the Fintegra link and download copies are plain copies of the Akahu ones, not disguised"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"assertBankAccountNotLinked gains replaceExistingLink and absorbs an unrelated closed-account branch for upgradingId"}
+}

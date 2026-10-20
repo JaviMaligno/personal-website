@@ -1,0 +1,85 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 46332b6..974c3f7 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -646,18 +646,21 @@ describe('schedules', () => {
+ });
+ 
+ describe('getScheduledAmount', () => {
+-  it('uses the end of a range furthest from zero', () => {
++  it('uses the lowest end of a range', () => {
+     expect(getScheduledAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+     expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-    expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-    expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++    expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++    expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+   });
+ 
+-  it('uses the end of the tolerance furthest from zero for approximate amounts', () => {
++  it('uses the lowest end of the tolerance for approximate amounts', () => {
+     expect(getScheduledAmount(-10000, false, 'isapprox')).toBe(-10750);
+-    expect(getScheduledAmount(10000, false, 'isapprox')).toBe(10750);
++    expect(getScheduledAmount(10000, false, 'isapprox')).toBe(9250);
+     expect(getScheduledAmount(-1234, false, 'isapprox')).toBe(-1327);
+-    expect(getScheduledAmount(-10000, true, 'isapprox')).toBe(10750);
++    expect(getScheduledAmount(-10000, true, 'isapprox')).toBe(9250);
++    expect(getScheduledAmount(10000, true, 'isapprox')).toBe(-10750);
+     expect(getScheduledAmount(-10000, false, 'is')).toBe(-10000);
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 0dfc823..0711ed3 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -378,9 +378,10 @@ export function applyWeekendRuleToDay(
+     : day;
+ }
+ 
+-// The amount a schedule is expected to post. A ranged ("is between") amount is
+-// planned for the worst case: the end of the range furthest from zero. The same
+-// goes for an approximate amount: the end of its tolerance furthest from zero.
++// The amount a schedule is expected to post. A ranged ("is between") or
++// approximate amount is planned for the worst case: the lowest value it allows.
++// That is the end furthest from zero for money going out, and the end closest
++// to zero for money coming in.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -390,16 +391,14 @@ export function getScheduledAmount(
+   // allows the amount condition to be deleted which causes a crash
+   if (amount == null) return 0;
+ 
++  const apply = (value: number) => (inverse ? -value : value);
++
+   if (typeof amount === 'number') {
+-    const worst =
+-      op === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
+-        : amount;
+-    return inverse ? -worst : worst;
++    if (op !== 'isapprox') return apply(amount);
++    const threshold = getApproxNumberThreshold(amount);
++    return Math.min(apply(amount - threshold), apply(amount + threshold));
+   }
+-  const furthest =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
+-  return inverse ? -furthest : furthest;
++  return Math.min(apply(amount.num1), apply(amount.num2));
+ }
+ 
+ export function getUpcomingDays(
+diff --git a/upcoming-release-notes/schedule-lowest-amount.md b/upcoming-release-notes/schedule-lowest-amount.md
+new file mode 100644
+index 0000000..1aeba42
+--- /dev/null
++++ b/upcoming-release-notes/schedule-lowest-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Expect ranged and approximate schedule amounts at the lowest value they allow, so incoming money is planned at its minimum

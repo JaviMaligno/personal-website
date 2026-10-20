@@ -1,0 +1,45 @@
+{
+ "id": "5859c8b262",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses recurrence conversion and weekend adjustment helpers, but the range handler independently implements daily skipping and holiday classification."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Daily skip-versus-move dispatch and non-business-day classification are repeated between the shared scheduling module and the range handler."
+ },
+ "placement": {
+  "score": 3,
+  "why": "The handler registration and configuration type are appropriately placed, but recurrence policy belongs alongside the shared scheduling helpers rather than inside the server handler."
+ },
+ "scope": {
+  "score": 5,
+  "why": "All edits directly support the requested scheduling rules, range endpoint, configuration field, and associated tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate multiple policy implementations and a separate fixed adjustment window when extending business-day handling."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "getDatesInRange in server/schedules/app.ts independently classifies daily non-business days instead of sharing isNonBusinessDay from shared/schedules.ts."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The range handler reshapes getNextDate's daily skipping into flatMap filtering and rewrites isNonBusinessDay's classification as an inline weekend/holiday expression."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "getDateWithSkippedWeekend gains a holidays parameter, getNextDate gains a daily-frequency branch, and getDatesInRange separately implements daily business-day policy."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 46.4
+ }
+}

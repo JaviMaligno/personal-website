@@ -1,0 +1,12 @@
+{"id":"b341e05939",
+"reuse":{"score":3,"why":"Extends the shared getDateWithSkippedWeekend and adds a shared isWeekendOrHoliday, but the new range handler and getUpcomingDates re-run RSchedule occurrences and re-decide skip-vs-move themselves instead of going through one shared 'final day of an occurrence' function."},
+"duplication":{"score":2,"why":"The daily-skip versus move decision (skipWeekend && frequency === 'daily') is re-derived in getNextDate, getUpcomingDates, getDatesInRange and schedule-template, each with its own loop or flag plumbing."},
+"placement":{"score":3,"why":"Holiday/weekend predicates sit in shared/schedules.ts as they should, but the daily rule leaks into server/budget/schedule-template.ts (isDaily/movesWeekend, inverted noSkipWeekend) and into two server handlers."},
+"scope":{"score":4,"why":"Edits are all on the requested features (daily skip, range handler, holidays, MM-DD) plus tests and release notes; the rule-utils data change is needed plumbing."},
+"maintainability":{"score":2,"why":"getNextDate grows lookahead constants and fallback branches, and the same rule lives in four places, so the next weekend/holiday change must be made consistently in each."},
+"bypasses_abstraction":{"value":true,"where":"app.ts getUpcomingDates daily branch and getDatesInRange iterate occurrences and apply skip/move directly instead of using getNextDate/a shared occurrence-adjust helper; schedule-template.ts passes !isDaily to noSkipWeekend and re-applies weekend moving itself."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"Skip-or-move logic reshaped three times: getNextDate's pick()/take lookahead, getUpcomingDates' examined-capped loop, getDatesInRange's moves/skips flags; schedule-template's adjustWeekend closure is the old inline ternary renamed."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":3,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gains holidays param; getNextDate gains daily-only take/pick and two fallback branches; getUpcomingDates, getDatesInRange and schedule-template re-implement the daily/move choice outside the helper."}
+}

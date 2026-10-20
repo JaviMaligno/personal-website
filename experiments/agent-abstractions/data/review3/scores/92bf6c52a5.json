@@ -1,0 +1,10 @@
+{"id":"92bf6c52a5",
+"reuse":{"score":3,"why":"Routes the flag through the shared assertBankAccountNotLinked used by every provider, but copies unlinkAccount's local field-clearing instead of pulling it into a helper both can call."},
+"duplication":{"score":2,"why":"The db.updateAccount block that clears account_id, bank, balances, sync source and sync status is copied word for word from unlinkAccount, so the definition of an unlinked account now lives in two places."},
+"placement":{"score":3,"why":"Threading the flag through the one shared pre-link check is the right layer, but a function named assert...NotLinked now mutates another account, and does so before the new link is written."},
+"scope":{"score":4,"why":"Changes are limited to the flag, its plumbing through the six provider link functions and tests; the only unrelated edit is a blank import line in the test."},
+"maintainability":{"score":3,"why":"Readable and consistent across providers, but the misnamed side-effecting assert and the copied unlink field list will drift if unlinking ever clears more fields."},
+"bypasses_abstraction":{"value":true,"where":"assertBankAccountNotLinked in accounts/app.ts clears the old account with its own db.updateAccount instead of reusing unlinkAccount's local-clear step (the comment says it avoids the provider cleanup, but no local-only part is extracted)."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied db.updateAccount field list is a verbatim copy of unlinkAccount's, not disguised."}}

@@ -1,0 +1,90 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 165c350..15cc187 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -657,14 +657,14 @@ describe('schedules', () => {
+       expect(getScheduledAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+     });
+ 
+-    it('expects a positive range at the end furthest from zero', () => {
+-      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    it('expects a positive range at the end closest to zero', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduledAmount({ num1: 20000, num2: 10100 })).toBe(10100);
+     });
+ 
+-    it('expects a range spanning zero at the end with the larger magnitude', () => {
+-      expect(getScheduledAmount({ num1: -5000, num2: 12000 })).toBe(12000);
+-      expect(getScheduledAmount({ num1: 12000, num2: -5000 })).toBe(12000);
++    it('expects a range spanning zero at its negative end', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++      expect(getScheduledAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+     });
+ 
+     it('expects a negative approximate amount at the end of its tolerance furthest from zero', () => {
+@@ -672,8 +672,8 @@ describe('schedules', () => {
+       expect(getScheduledAmount(-1234, 'isapprox')).toBe(-1327);
+     });
+ 
+-    it('expects a positive approximate amount at the end of its tolerance furthest from zero', () => {
+-      expect(getScheduledAmount(10000, 'isapprox')).toBe(10750);
++    it('expects a positive approximate amount at the end of its tolerance closest to zero', () => {
++      expect(getScheduledAmount(10000, 'isapprox')).toBe(9250);
+     });
+ 
+     it('expects a zero approximate amount at zero', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index c7c7cef..0130b99 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -378,10 +378,10 @@ export function applyWeekendRuleToDay(
+     : day;
+ }
+ 
+-// The amount a schedule is expected to post. A ranged ("is between") amount is
+-// expected at the end of the range furthest from zero, and an approximate
+-// ("is approximately") amount at the end of its tolerance furthest from zero,
+-// so variable bills are planned for their worst case.
++// The amount a schedule is expected to post: the lowest value it allows, so
++// planning never assumes more money in or more money out than the schedule can
++// produce. A ranged ("is between") amount is expected at its lower end, and an
++// approximate ("is approximately") amount at the bottom of its tolerance.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   op: string = 'is',
+@@ -393,21 +393,14 @@ export function getScheduledAmount(
+ 
+   let expected: number;
+   if (typeof amount === 'number') {
+-    expected = op === 'isapprox' ? getApproxWorstCase(amount) : amount;
+-  } else {
+     expected =
+-      Math.abs(amount.num1) >= Math.abs(amount.num2)
+-        ? amount.num1
+-        : amount.num2;
++      op === 'isapprox' ? amount - getApproxNumberThreshold(amount) : amount;
++  } else {
++    expected = Math.min(amount.num1, amount.num2);
+   }
+   return inverse ? -expected : expected;
+ }
+ 
+-function getApproxWorstCase(amount: number): number {
+-  const threshold = getApproxNumberThreshold(amount);
+-  return amount < 0 ? amount - threshold : amount + threshold;
+-}
+-
+ export function getUpcomingDays(
+   upcomingLength = DEFAULT_UPCOMING_SCHEDULE_DAYS,
+   today = monthUtils.currentDay(), // for testability
+diff --git a/upcoming-release-notes/approximate-amount-worst-case.md b/upcoming-release-notes/approximate-amount-worst-case.md
+index 7c2862d..6ae116e 100644
+--- a/upcoming-release-notes/approximate-amount-worst-case.md
++++ b/upcoming-release-notes/approximate-amount-worst-case.md
+@@ -3,4 +3,4 @@ category: Enhancements
+ authors: [agent]
+ ---
+ 
+-Plan approximate schedule amounts for the end of their tolerance furthest from zero, matching the worst-case rule already used for ranged amounts
++Plan ranged and approximate schedule amounts at the lowest value they allow, so money coming in is planned at its low end and money going out at its high end

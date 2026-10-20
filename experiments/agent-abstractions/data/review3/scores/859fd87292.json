@@ -1,0 +1,12 @@
+{"id":"859fd87292",
+"reuse":{"score":3,"why":"Adds a shared isDailyWeekendSkip predicate and uses it in the server sites, but getNextDate, which defines it alongside, re-inlines the same skipWeekend && frequency === 'daily' test twice instead of calling it."},
+"duplication":{"score":3,"why":"The daily-skip condition is written inline twice in getNextDate and evaluated twice per date in getUpcomingDates, and each site keeps its own skip-vs-move branching around getDateWithSkippedWeekend."},
+"placement":{"score":4,"why":"The predicate and the skip search sit in shared/schedules.ts with the other weekend helpers; server modules import them as before."},
+"scope":{"score":5,"why":"Touches only the three weekend-rule sites, the recur data passed through rule-utils, tests and a release note."},
+"maintainability":{"score":3,"why":"Behaviour is understandable, but schedule-template's `moveWeekend || !skipWeekend` argument to noSkipWeekend is convoluted and the weekend policy is still spread across three call sites with different shapes."},
+"bypasses_abstraction":{"value":true,"where":"getNextDate in packages/loot-core/src/shared/schedules.ts tests value.schedule.data.frequency === 'daily' inline (twice) rather than using the isDailyWeekendSkip helper the same diff exports."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated daily-skip conditions are plain restatements, not disguised copies."},
+"one_place":{"value":false,"where":"The new rule is split: isDailyWeekendSkip (shared/schedules.ts) for getUpcomingDates and schedule-template, inline conditions in getNextDate, and each site still decides whether to move with its own ternary around getDateWithSkippedWeekend."}
+}

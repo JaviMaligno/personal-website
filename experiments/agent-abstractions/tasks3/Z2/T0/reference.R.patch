@@ -1,0 +1,141 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 5b9f191..8dada37 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -10,6 +10,7 @@ import {
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
+   getNextDate,
++  getRangedScheduleAmount,
+ } from '#shared/schedules';
+ import { amountToInteger } from '#shared/util';
+ import type { CategoryEntity, TransactionEntity } from '#types/models';
+@@ -61,8 +62,7 @@ async function createScheduleList(
+       extractScheduleConds(conditions);
+     let scheduleAmount =
+       amountCondition.op === 'isbetween'
+-        ? Math.round(amountCondition.value.num1 + amountCondition.value.num2) /
+-          2
++        ? getRangedScheduleAmount(amountCondition.value, 'half')
+         : amountCondition.value;
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+diff --git a/packages/loot-core/src/server/forecast/forecast-schedules.ts b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+index 6657f87..342a5d4 100644
+--- a/packages/loot-core/src/server/forecast/forecast-schedules.ts
++++ b/packages/loot-core/src/server/forecast/forecast-schedules.ts
+@@ -8,6 +8,7 @@ import { q } from '#shared/query';
+ import {
+   extractScheduleConds,
+   getNextDate,
++  getScheduledAmount,
+   indexPostedScheduleTransactions,
+   isScheduleOccurrencePosted,
+ } from '#shared/schedules';
+@@ -94,10 +95,7 @@ export function normalizeSchedule(
+   }
+ 
+   // A ranged ("is between") amount is scheduled at its rounded midpoint.
+-  const amount =
+-    typeof amountValue === 'number'
+-      ? amountValue
+-      : Math.round((amountValue.num1 + amountValue.num2) / 2);
++  const amount = getScheduledAmount(amountValue);
+ 
+   return {
+     id: schedule.id,
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index b82b437..2ee4a2e 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -31,6 +31,7 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
++  getScheduledAmount,
+   getStatus,
+   recurConfigToRSchedule,
+ } from '#shared/schedules';
+@@ -153,12 +154,7 @@ function updateActions(
+   // the amount the schedule actually posts. A ranged ("is between") amount
+   // is scheduled at its rounded midpoint.
+   const amountValue = amountCond.value;
+-  const amount =
+-    amountValue == null
+-      ? 0
+-      : typeof amountValue === 'number'
+-        ? amountValue
+-        : Math.round((amountValue.num1 + amountValue.num2) / 2);
++  const amount = getScheduledAmount(amountValue);
+ 
+   let changed = false;
+   const updated = actions.map(action => {
+@@ -593,12 +589,7 @@ async function postTransactionForSchedule({
+ 
+   // A missing amount (deleted condition) posts 0; a ranged ("is between")
+   // amount posts its rounded midpoint.
+-  const amount =
+-    schedule._amount == null
+-      ? 0
+-      : typeof schedule._amount === 'number'
+-        ? schedule._amount
+-        : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++  const amount = getScheduledAmount(schedule._amount);
+ 
+   const transaction = {
+     payee: schedule._payee,
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..8babd27 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -353,6 +353,25 @@ export function getDateWithSkippedWeekend(
+   return date;
+ }
+ 
++/**
++ * The single amount a ranged ("is between") schedule amount is expected to
++ * come to: the midpoint of its two bounds.
++ *
++ * - `'rounded'` (default): the midpoint rounded to a whole amount, which is
++ *   what schedules post, preview and forecast.
++ * - `'half'`: only the sum of the bounds is rounded before halving, so an odd
++ *   sum keeps its half unit. Budget schedule templates use this form.
++ */
++export function getRangedScheduleAmount(
++  range: { num1: number; num2: number },
++  mode: 'rounded' | 'half' = 'rounded',
++): number {
++  if (mode === 'half') {
++    return Math.round(range.num1 + range.num2) / 2;
++  }
++  return Math.round((range.num1 + range.num2) / 2);
++}
++
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -364,8 +383,8 @@ export function getScheduledAmount(
+   if (typeof amount === 'number') {
+     return inverse ? -amount : amount;
+   }
+-  const avg = (amount.num1 + amount.num2) / 2;
+-  return inverse ? -Math.round(avg) : Math.round(avg);
++  const midpoint = getRangedScheduleAmount(amount);
++  return inverse ? -midpoint : midpoint;
+ }
+ 
+ export function getUpcomingDays(
+@@ -498,12 +517,7 @@ export function computeSchedulePreviewTransactions(
+ 
+       // A missing amount previews as 0; a ranged ("is between") amount as its
+       // rounded midpoint.
+-      const amount =
+-        schedule._amount == null
+-          ? 0
+-          : typeof schedule._amount === 'number'
+-            ? schedule._amount
+-            : Math.round((schedule._amount.num1 + schedule._amount.num2) / 2);
++      const amount = getScheduledAmount(schedule._amount);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

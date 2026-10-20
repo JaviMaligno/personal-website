@@ -1,0 +1,12 @@
+{"id": "2ca44c093c",
+ "reuse": {"score": 3, "why": "Adds a shared getWorstCaseAmount and makes getScheduledAmount use it, but the forecast, posting, updateActions, preview and template sites keep calling only the range part instead of the existing getScheduledAmount that already handles missing, single and ranged amounts."},
+ "duplication": {"score": 3, "why": "The midpoint copies are replaced by one helper, yet the `null ? 0 : number ? value : range(...)` dispatch that getScheduledAmount already implements stays repeated at five call sites."},
+ "placement": {"score": 5, "why": "The range rule lives in shared/schedules.ts beside getScheduledAmount, where the tree keeps schedule amount logic."},
+ "scope": {"score": 5, "why": "Only the range rule, its call sites, comments, a test and a release note."},
+ "maintainability": {"score": 4, "why": "The rule is one small named function every path uses, though future changes to how single or missing amounts are planned would still need edits at each site's own dispatch."},
+ "bypasses_abstraction": {"value": true, "where": "forecast-schedules.ts normalizeSchedule, schedules/app.ts updateActions and postTransactionForSchedule, computeSchedulePreviewTransactions and schedule-template.ts dispatch on the amount shape themselves instead of calling getScheduledAmount."},
+ "duplicated_blocks": 0,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The per-site dispatches predate the change; the diff adds no new copies."},
+ "one_place": {"value": true, "where": "getWorstCaseAmount in packages/loot-core/src/shared/schedules.ts decides the ranged amount for getScheduledAmount and every server-side path (preview, posting, action sync, forecast, templates)."}
+}

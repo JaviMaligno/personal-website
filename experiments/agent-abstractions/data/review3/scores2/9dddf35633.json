@@ -1,0 +1,12 @@
+{"id":"9dddf35633",
+"reuse":{"score":3,"why":"Introduces getBulkBudgetCategories and the averages, setZero and the new setLastMonthSpending use it, but copyPreviousMonth keeps its own inline exclusion checks and setLastMonthSpending re-writes the income guard and sign flip used by the averages."},
+"duplication":{"score":2,"why":"The exclusion rule (hidden / hidden group / saved template / #fixed group) exists twice, in getBulkBudgetCategories (SQL plus tag filter) and as field checks in copyPreviousMonth, and the income guard and expense sign inversion are copied again in setLastMonthSpending."},
+"placement":{"score":4,"why":"The shared selection lives in budget/actions.ts beside the actions and the new method is registered in budget/app.ts like its siblings; the rule is split between SQL and a JS post-filter."},
+"scope":{"score":4,"why":"Stays within the budget actions and their registration and tests, with some unformatted reflowing of the getBudgetData type."},
+"maintainability":{"score":3,"why":"Most actions now share one selection, but copyPreviousMonth must be kept in sync by hand and already diverges by ignoring includeHiddenCategories, so a future rule change is easy to miss there."},
+"bypasses_abstraction":{"value":true,"where":"server/budget/actions.ts copyPreviousMonth applies hidden, group-hidden, #fixed and goal_def checks inline over getBudgetData instead of using getBulkBudgetCategories, and does not accept includeHiddenCategories."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"copyPreviousMonth re-expresses getBulkBudgetCategories' exclusion rule as per-row JS checks (hidden/group_hidden, extractTagsFromText(group_notes), goal_def != null); setLastMonthSpending reshapes the sign inversion as a ternary."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":1,"where":"getBulkBudgetCategories gains the includeHiddenCategories parameter, implemented as a `? OR (c.hidden = 0 AND g.hidden = 0)` toggle in its SQL; copyPreviousMonth bypasses the helper and re-implements the rule."}
+}

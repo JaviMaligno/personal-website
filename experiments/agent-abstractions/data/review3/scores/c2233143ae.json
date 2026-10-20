@@ -1,0 +1,11 @@
+{"id":"c2233143ae",
+"reuse":{"score":3,"why":"getNextDate gets the new daily rule, but getUpcomingDates writes its own skip-weekdays branch instead of going through a shared occurrence-adjustment helper, and schedule-template recomputes the daily condition itself."},
+"duplication":{"score":2,"why":"The 'skipWeekend && daily' rule and the filter-out-weekends lookahead are written separately in shared getNextDate, server getUpcomingDates and the budget schedule-template, each with its own lookahead limit."},
+"placement":{"score":3,"why":"The rule belongs in shared/schedules.ts next to getDateWithSkippedWeekend, but parts of it are also placed in the server handler and the budget template."},
+"scope":{"score":5,"why":"Touches only the weekend-handling paths plus a test and release note; the rule-utils frequency field is needed for the shared check."},
+"maintainability":{"score":2,"why":"Three independent copies of the daily rule must stay in sync, and schedule-template passes a variable named moveWeekends into getNextDate's noSkipWeekend parameter, which is hard to follow."},
+"bypasses_abstraction":{"value":true,"where":"server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts createScheduleList decide the daily weekend rule themselves instead of through getNextDate/shared helper."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"getUpcomingDates' filter(!isWeekend).slice(count) branch with count*7+14 lookahead re-states getNextDate's find(isWeekday) with DAILY_LOOKAHEAD; schedule-template's moveWeekends expression restates the same frequency condition."},
+"one_place":{"value":false,"where":"Daily-skip rule lives in shared/schedules.ts getNextDate, server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts (moveWeekends)."}}

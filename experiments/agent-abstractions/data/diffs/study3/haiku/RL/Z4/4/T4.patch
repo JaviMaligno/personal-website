@@ -1,0 +1,57 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 67ed26a..db008c4 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -618,6 +618,23 @@ describe('schedules', () => {
+         expect(getNextDate(dateCond, new Date(2020, 11, 9))).toBe('2020-12-09');
+       });
+ 
++      it('moves an occurrence on a recurring `MM-DD` holiday in any year', () => {
++        const dateCond = weekly({
++          start: '2021-12-08',
++          holidays: ['12-08'],
++        });
++
++        expect(getNextDate(dateCond, new Date(2021, 11, 8))).toBe('2021-12-09');
++      });
++
++      it('applies `YYYY-MM-DD` and `MM-DD` holidays together', () => {
++        const dateCond = weekly({
++          holidays: ['2020-12-09', '12-10'],
++        });
++
++        expect(getNextDate(dateCond, new Date(2020, 11, 9))).toBe('2020-12-11');
++      });
++
+       it('skips daily occurrences that fall on a holiday', () => {
+         const dateCond = {
+           op: 'isapprox',
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 9f3ad3d..b921eca 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -291,7 +291,11 @@ export function isNonWorkingDay(
+   date: Date,
+   holidays: readonly string[] = [],
+ ): boolean {
+-  return d.isWeekend(date) || holidays.includes(monthUtils.dayFromDate(date));
++  return (
++    d.isWeekend(date) ||
++    holidays.includes(monthUtils.dayFromDate(date)) ||
++    holidays.includes(d.format(date, 'MM-dd'))
++  );
+ }
+ 
+ const WEEKDAY_SEARCH_LIMIT = 14;
+diff --git a/upcoming-release-notes/recurring-holidays.md b/upcoming-release-notes/recurring-holidays.md
+new file mode 100644
+index 0000000..25b64e9
+--- /dev/null
++++ b/upcoming-release-notes/recurring-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Schedule holidays can be entered as `MM-DD` to repeat every year, alongside full `YYYY-MM-DD` dates

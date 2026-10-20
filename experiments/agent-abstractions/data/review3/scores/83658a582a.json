@@ -1,0 +1,12 @@
+{"id": "83658a582a",
+"reuse": {"score": 3, "why": "All month-wide actions keep going through the existing shouldFillCategory/getFillCategories selection and the new action reuses averageToBudgetAmount, but the #fixed test hand-rolls a tag regex instead of using the shared extractTagsFromText in shared/tags.ts."},
+"duplication": {"score": 3, "why": "The `includeHiddenCategories ? 'include' : <default>` mapping is repeated in five actions and the group-notes join is added to both getBudgetData and getFillCategories; setLastMonthSpending repeats the per-category loop shape of the n-month average actions."},
+"placement": {"score": 5, "why": "The template and #fixed exclusions sit inside the single fill-selection predicate in budget/actions.ts, and the new handler is registered next to its siblings in budget/app.ts."},
+"scope": {"score": 5, "why": "Changes are limited to the month-wide action selection, the new action, its registration, tests and release notes."},
+"maintainability": {"score": 3, "why": "The exclusion rules are centralised, but how the opt-in flag maps to each action's hidden rule is decided at every call site, and a private tag parser can drift from the app's own tag syntax."},
+"bypasses_abstraction": {"value": true, "where": "isFixedGroup in server/budget/actions.ts parses `#fixed` with its own regex instead of shared/tags.ts extractTagsFromText."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "isFixedGroup's /(^|\\s)#fixed(?![\\w-])/ re-expresses the tag extraction already defined in extractTagsFromText with a different shape and slightly different boundary rules."},
+"abstraction_drift": {"value": true, "parameters_added": 0, "special_case_branches": 2, "bypassing_call_sites": 0, "where": "shouldFillCategory gains template and #fixed branches (rule additions, kept inside the shared helper); the includeHiddenCategories flag is not given to the helper, so copyPreviousMonth, setZero, set3MonthAvg, set6MonthAvg, set12MonthAvg and setLastMonthSpending each compute their own hiddenRule ternary."}
+}

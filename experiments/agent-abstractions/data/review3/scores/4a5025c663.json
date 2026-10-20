@@ -1,0 +1,11 @@
+{"id": "4a5025c663",
+ "reuse": {"score": 3, "why": "Most sites go through the existing getScheduledAmount and getApproxNumberThreshold, but schedule-template.ts calls the split range/approx helpers with its own op dispatch instead of the shared getScheduledAmount."},
+ "duplication": {"score": 3, "why": "The isbetween/isapprox/plain dispatch now exists twice: inside getScheduledAmount and again inline in schedule-template.ts."},
+ "placement": {"score": 4, "why": "The rule helpers sit in shared/schedules.ts and the API type in api-models.ts, as the tree does, but one consumer keeps rule dispatch in the budget layer."},
+ "scope": {"score": 4, "why": "Focused on the requested steps, though it leaves stale 'rounded midpoint' and 'furthest from zero' comments and contradictory release notes behind."},
+ "maintainability": {"score": 3, "why": "The optional op parameter is passed at some sites and silently omitted at others (the preview in shared/schedules.ts, Balance.tsx), so approximate amounts get different answers by path, and the dispatch is duplicated in the template."},
+ "bypasses_abstraction": {"value": true, "where": "server/budget/schedule-template.ts createScheduleList dispatches on amountCondition.op itself instead of calling getScheduledAmount(value, false, op)."},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "schedule-template.ts repeats getScheduledAmount's op dispatch, reshaped as a nested ternary over the split getRangedAmountWorstCase/getApproxAmountWorstCase helpers."},
+ "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 1, "where": "getScheduledAmount gained an optional op parameter; schedule-template.ts bypasses it with its own dispatch; computeSchedulePreviewTransactions (shared/schedules.ts) and Balance.tsx still call it without op, so the approximate rule is not applied there."}}

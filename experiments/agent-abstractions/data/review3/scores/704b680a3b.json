@@ -1,0 +1,13 @@
+{
+  "id": "704b680a3b",
+  "reuse": {"score": 3, "why": "Reuses RSchedule, recurConfigToRSchedule and the shared getDateWithWeekendRule, but writes its own 'daily skips, others move' weekend branching instead of extracting the identical decision already in getUpcomingDates (and getNextDate/schedule-template)."},
+  "duplication": {"score": 3, "why": "The daily-skip vs weekend-move dispatch is a fourth copy of a decision already inlined in getUpcomingDates in the same file, shared/schedules getNextDate and budget/schedule-template."},
+  "placement": {"score": 4, "why": "The handler sits in server/schedules/app.ts next to getUpcomingDates and is registered like its siblings; the per-occurrence weekend decision would better live in shared/schedules.ts next to getDateWithWeekendRule."},
+  "scope": {"score": 5, "why": "Only adds the handler, its type registration and a focused test."},
+  "maintainability": {"score": 3, "why": "Readable and correctly windowed, but any future change to the weekend rule must be repeated in yet another hand-written branch; config is untyped."},
+  "bypasses_abstraction": {"value": false, "where": "Calls the existing getDateWithWeekendRule; there is no shared helper for the daily-skip decision to bypass."},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "app.ts getDatesInRange: the `skipWeekend && daily ? skip isWeekend : getDateWithWeekendRule(...)` logic of getUpcomingDates is reshaped into a nested if inside the occurrence loop rather than shared."},
+  "t2_reuse": "reimplements"
+}

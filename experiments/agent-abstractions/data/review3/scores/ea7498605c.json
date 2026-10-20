@@ -1,0 +1,12 @@
+{"id":"ea7498605c",
+"reuse":{"score":4,"why":"Linking goes through the shared linkBankSyncAccount like every other provider, and the balance step reuses the Akahu branch, but the download is a fresh copy of downloadAkahuTransactions instead of a shared request helper."},
+"duplication":{"score":3,"why":"downloadFintegraTransactions is a near line-for-line copy of downloadAkahuTransactions (token, post, error mapping, response shaping), which grows the existing per-provider duplication."},
+"placement":{"score":4,"why":"Each piece sits where its siblings live (link in accounts/app.ts, download and dispatch in sync.ts, URL in server-config, account type in types/models), but 'fintegra' is not added to SYNC_PROVIDERS in types/models/bank-sync.ts, the list that defines the sync sources."},
+"scope":{"score":5,"why":"Server-side only, exactly the pieces the request lists, plus tests."},
+"maintainability":{"score":3,"why":"It follows the established pattern so it is easy to read, but it adds another copy of the transaction download and another string branch in two if-chains, and leaves the provider registry out of step."},
+"bypasses_abstraction":{"value":true,"where":"The provider registry SYNC_PROVIDERS/BankSyncProviders in types/models/bank-sync.ts is not extended, so 'fintegra' is used as a sync source outside the declared provider list."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"downloadFintegraTransactions in server/accounts/sync.ts is a plain copy of downloadAkahuTransactions, renamed but not reshaped."},
+"t2_reuse":"helper"
+}

@@ -1,0 +1,11 @@
+{"id":"5877f3061c",
+"reuse":{"score":2,"why":"Copies the eight-field 'clear the link' update out of unlinkAccount instead of extracting it into a shared helper that both the unlink action and the takeover could call."},
+"duplication":{"score":2,"why":"The db.updateAccount block clearing account_id/bank/balances/sync source/status is a verbatim copy of the one in unlinkAccount, so the definition of an unlinked account now lives in two places."},
+"placement":{"score":2,"why":"A state-changing unlink is put inside ensureBankAccountIsNotLinked, a validation guard whose name says it only checks, and it runs before the rest of the link work rather than as an explicit step of the link flow."},
+"scope":{"score":4,"why":"Mostly focused on the flag and its threading through the six providers; it also reformats an unrelated test query."},
+"maintainability":{"score":2,"why":"A boolean that turns a guard into a mutator, plus a copied unlink block that will drift from unlinkAccount, would surprise a maintainer."},
+"bypasses_abstraction":{"value":true,"where":"accounts/app.ts ensureBankAccountIsNotLinked clears the old account's link with its own db.updateAccount instead of going through the unlink logic in unlinkAccount (or a helper extracted from it)."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied unlink update is verbatim, not disguised."}
+}

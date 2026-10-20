@@ -1,0 +1,95 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 5a12ca5..6fa5529 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -177,6 +177,25 @@ async function getAccountProperties({ id }: { id: AccountEntity['id'] }) {
+ // `newAccount` is the set of account columns written on creation (only
+ // `account_id` is written on upgrade). `fileId` is passed to the initial sync
+ // only by PluggyAI; Akahu reports only `transactions` as changed.
++async function assertBankAccountNotLinked({
++  syncSource,
++  externalAccountId,
++  upgradingId,
++}: {
++  syncSource: AccountSyncSource;
++  externalAccountId: string;
++  upgradingId?: string | undefined;
++}) {
++  const existing = await db.all<{ id: string }>(
++    'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?',
++    [syncSource, externalAccountId],
++  );
++
++  if (existing.some(row => row.id !== upgradingId)) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ async function linkBankSyncAccount({
+   bank,
+   syncSource,
+@@ -266,6 +285,12 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
++  await assertBankAccountNotLinked({
++    syncSource: 'goCardless',
++    externalAccountId: account.account_id,
++    upgradingId,
++  });
++
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+   return linkBankSyncAccount({
+@@ -293,6 +318,12 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
++  await assertBankAccountNotLinked({
++    syncSource: 'simpleFin',
++    externalAccountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+@@ -329,6 +360,12 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
++  await assertBankAccountNotLinked({
++    syncSource: 'pluggyai',
++    externalAccountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const fileId = getPrefs()?.cloudFileId;
+ 
+   const institution = {
+@@ -368,6 +405,12 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
++  await assertBankAccountNotLinked({
++    syncSource: 'akahu',
++    externalAccountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const institution = {
+     name: externalAccount.institution ?? null,
+   };
+@@ -402,6 +445,12 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
++  await assertBankAccountNotLinked({
++    syncSource: 'enableBanking',
++    externalAccountId: externalAccount.account_id,
++    upgradingId,
++  });
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an

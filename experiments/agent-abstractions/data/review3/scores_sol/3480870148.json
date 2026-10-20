@@ -1,0 +1,45 @@
+{
+ "id": "3480870148",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses spreadsheet, averaging, batching and undo helpers, but introduces separate group-note storage and leaves existing actions outside its shared bulk-action abstractions."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Average actions share their selection and execution, but copyPreviousMonth duplicates eligibility rules, setZero retains its own income guard, and setBulkAverage repeats setNMonthAvg's amount calculation."
+ },
+ "placement": {
+  "score": 2,
+  "why": "Budget orchestration belongs in actions.ts, but adding category_groups.notes bypasses the existing notes table and notes service used for group notes."
+ },
+ "scope": {
+  "score": 4,
+  "why": "The edits address the requested budget actions and supporting persistence, although the parallel group-note schema is unnecessary given the existing storage."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "The shared helpers improve the average actions, but fragmented eligibility policies and two group-note representations leave maintainers with competing definitions to update."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "getBulkBudgetCategories reads a new category_groups.notes field instead of existing group notes in the notes table; copyPreviousMonth bypasses shared bulk selection, and setZero bypasses shared eligibility and execution."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "actions.ts expresses hidden/template eligibility both as SQL in getBulkBudgetCategories and as has_templates plus local guards in copyPreviousMonth, while setBulkAverage reshapes setNMonthAvg's averaging and sign conversion into a callback."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 2,
+  "where": "includeHiddenCategories adds one selection parameter and a conditional hidden-filter bypass; copyPreviousMonth retains independent selection and eligibility, while setZero retains its own income guard and write loop outside setBulkBudgets."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 56.4
+ }
+}

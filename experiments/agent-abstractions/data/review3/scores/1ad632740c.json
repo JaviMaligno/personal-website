@@ -1,0 +1,12 @@
+{"id":"1ad632740c",
+"reuse":{"score":4,"why":"All provider link handlers, including the new Fintegra one, go through one linkBankSyncAccount, the link checks live in link.ts and unlinkAccount's reset is extracted and reused, but Fintegra's transaction download does not reuse the Akahu downloader it copies."},
+"duplication":{"score":3,"why":"The link flow is deduplicated well, yet downloadFintegraTransactions is a near-verbatim copy of downloadAkahuTransactions and the Fintegra starting-balance branch repeats the Akahu reduce."},
+"placement":{"score":5,"why":"Linking rules (holder lookup, not-linked assertion) sit in accounts/link.ts beside findOrCreateBank, orchestration in app.ts and downloads in sync.ts, matching the tree's layering."},
+"scope":{"score":4,"why":"Changes stay on linking and the Fintegra provider; the client edits are the minimal ones needed for the provider list types, plus release notes."},
+"maintainability":{"score":4,"why":"A single parameterised link routine with explicit preserved variations (eventTables, syncFileId, bankId) is easy to own; the copied downloader is the main weak spot."},
+"bypasses_abstraction":{"value":false,"where":"Every *-accounts-link handler delegates to linkBankSyncAccount; replace-link reuses clearAccountBankLink, the same reset unlinkAccount uses."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"downloadFintegraTransactions in sync.ts is an open copy of downloadAkahuTransactions, and the fintegra balance branch in processBankSyncDownload is a visible copy of the akahu one; neither is disguised."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":0,"where":"linkBankSyncAccount gained replaceExistingLink (with its replace-vs-assert branch) and a general closed-account check; all six provider handlers keep calling it, with no provider-specific branches inside."}
+}

@@ -1,0 +1,100 @@
+diff --git a/packages/api/methods.ts b/packages/api/methods.ts
+index df42679b4878420160d694fdcdc14d4eeb1b2d00..f5bcf354be7ecbbadcb355ccad0a9a3f98a76115 100644
+--- a/packages/api/methods.ts
++++ b/packages/api/methods.ts
+@@ -213,6 +213,12 @@ export function deleteTransaction(id: TransactionEntity['id']) {
+   return send('api/transaction-delete', { id });
+ }
+ 
++export function mergeTransactions(
++  ids: [TransactionEntity['id'], TransactionEntity['id']],
++) {
++  return send('api/transactions-merge', { ids });
++}
++
+ export function getAccounts() {
+   return send('api/accounts-get');
+ }
+diff --git a/packages/docs/docs/api/reference.md b/packages/docs/docs/api/reference.md
+index c4a47167f4d0140a5d570a382557c163774e2c06..a116a296b2a5ea0a2a447eea399df5bfb57496fc 100644
+--- a/packages/docs/docs/api/reference.md
++++ b/packages/docs/docs/api/reference.md
+@@ -20,7 +20,8 @@ import APIList from './APIList';
+ "importTransactions",
+ "getTransactions",
+ "updateTransaction",
+-"deleteTransaction"
++"deleteTransaction",
++"mergeTransactions"
+ ]} />
+ 
+ <APIList title="Accounts" sections={[
+@@ -314,6 +315,21 @@ Update fields of a transaction. `fields` can specify any field described in [`Tr
+ 
+ Delete a transaction.
+ 
++#### `mergeTransactions`
++
++<Method name="mergeTransactions" args={[{ name: 'ids', type: 'id[]' }]} returns="Promise<id>" />
++
++Merge exactly two distinct transactions from the same account into one. Returns the id of the surviving transaction; the other one is deleted.
++
++The order of the ids does not decide which transaction survives:
++
++- an imported transaction is kept over a manually entered one
++- otherwise, the transaction with the earlier date is kept
++
++The surviving transaction keeps its own field values and fills in any empty ones from the deleted transaction. It is marked cleared if either transaction was.
++
++The merge fails if you pass the same id twice, or if the two transactions are in different accounts, have different amounts, or are transfers to different accounts.
++
+ #### Examples
+ 
+ ```js
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index 168099aa0e3e990297c983ac511f27d77405f9a7..dd819a00a34085715e0165730c273568e02be228 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -613,6 +613,11 @@ handlers['api/transaction-delete'] = withMutation(async function ({ id }) {
+   return handlers['transactions-batch-update'](diff)['deleted'];
+ });
+ 
++handlers['api/transactions-merge'] = withMutation(async function ({ ids }) {
++  checkFileOpen();
++  return handlers['transactions-merge'](ids.map(id => ({ id })));
++});
++
+ handlers['api/accounts-get'] = async function () {
+   checkFileOpen();
+   const accounts: AccountEntity[] = await handlers['accounts-get']();
+diff --git a/packages/loot-core/src/server/transactions/merge.ts b/packages/loot-core/src/server/transactions/merge.ts
+index 8a706e3bd75127a084bfa36184d9614908701313..e42c2e0d01a6012d81c235d45bc5c13e95fd04f6 100644
+--- a/packages/loot-core/src/server/transactions/merge.ts
++++ b/packages/loot-core/src/server/transactions/merge.ts
+@@ -15,9 +15,9 @@ export async function mergeTransactions(
+ ): Promise<TransactionEntity['id']> {
+   // make sure all values have ids
+   const txIds = transactions?.map(x => x?.id).filter(Boolean) || [];
+-  if (txIds.length !== 2) {
++  if (txIds.length !== 2 || new Set(txIds).size !== 2) {
+     throw new Error(
+-      'Merging is only possible with 2 transactions, but found ' +
++      'Merging is only possible with 2 distinct transactions, but found ' +
+         JSON.stringify(transactions),
+     );
+   }
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 2b89b3e2929a7c033f6b1ae453fd59339a1f6365..679a8c97b3471e1139b9d917aa020bae9b8693ff 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -134,6 +134,10 @@ export type ApiHandlers = {
+     id: TransactionEntity['id'];
+   }) => Promise<Awaited<ReturnType<typeof batchUpdateTransactions>>['deleted']>;
+ 
++  'api/transactions-merge': (arg: {
++    ids: [TransactionEntity['id'], TransactionEntity['id']];
++  }) => Promise<TransactionEntity['id']>;
++
+   'api/sync': () => Promise<void>;
+ 
+   'api/bank-sync': (arg?: {

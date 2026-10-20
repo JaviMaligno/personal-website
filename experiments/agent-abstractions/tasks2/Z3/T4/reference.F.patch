@@ -1,0 +1,163 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 3e72d37..22f688b 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -52,6 +52,9 @@ type LinkAccountBaseParams = {
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
++  // Take the bank account over from another local account that holds it,
++  // unlinking that account, instead of refusing the link.
++  replaceExistingLink?: boolean;
+ };
+ 
+ export type AccountHandlers = {
+@@ -174,7 +177,8 @@ async function getAccountProperties({ id }: { id: AccountEntity['id'] }) {
+ 
+ // Links a bank-sync provider account: refuse the link when the local account
+ // `upgradingId` is closed or another local account already holds the bank
+-// account; otherwise find or create its bank row (`findOrCreateBank`),
++// account (unless `replaceExistingLink`, which unlinks those accounts
++// instead); otherwise find or create its bank row (`findOrCreateBank`),
+ // upgrade `upgradingId` to sync with the provider or create a new account
+ // (with its transfer payee), then run the initial sync and tell the client
+ // what changed.
+@@ -195,6 +199,7 @@ async function linkBankSyncAccount({
+   offBudget,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+   fileId,
+   changedTables = ['transactions', 'accounts'],
+ }: LinkAccountBaseParams & {
+@@ -228,17 +233,32 @@ async function linkBankSyncAccount({
+     }
+   }
+ 
+-  const holder = await db.first<Pick<db.DbAccount, 'id'>>(
++  const holders = await db.all<Pick<db.DbAccount, 'id'>>(
+     `SELECT id FROM accounts
+        WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?
+          AND id != ?`,
+     [syncSource, newAccount.account_id, upgradingId ?? ''],
+   );
+ 
+-  if (holder) {
++  if (holders.length > 0 && !replaceExistingLink) {
+     throw new Error('This bank account is already linked to another account.');
+   }
+ 
++  // Unlink the previous holders the way "unlink account" does, but without
++  // telling the bank-sync provider: the connection stays in use by this link.
++  for (const holder of holders) {
++    await db.updateAccount({
++      id: holder.id,
++      account_id: null,
++      bank: null,
++      balance_current: null,
++      balance_available: null,
++      balance_limit: null,
++      account_sync_source: null,
++      bank_sync_status: null,
++    });
++  }
++
+   const bank = await findOrCreateBank();
+   let id: string;
+ 
+@@ -293,6 +313,7 @@ async function linkGoCardlessAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+@@ -311,6 +332,7 @@ async function linkGoCardlessAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+   });
+ }
+ 
+@@ -320,6 +342,7 @@ async function linkSimpleFinAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
+@@ -346,6 +369,7 @@ async function linkSimpleFinAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+   });
+ }
+ 
+@@ -355,6 +379,7 @@ async function linkPluggyAiAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
+@@ -383,6 +408,7 @@ async function linkPluggyAiAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+     fileId,
+   });
+ }
+@@ -393,6 +419,7 @@ async function linkAkahuAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
+@@ -416,6 +443,7 @@ async function linkAkahuAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+     changedTables: ['transactions'],
+   });
+ }
+@@ -426,6 +454,7 @@ async function linkEnableBankingAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
+@@ -453,6 +482,7 @@ async function linkEnableBankingAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+   });
+ }
+ 
+@@ -462,6 +492,7 @@ async function linkFintegraAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerFintegraAccount;
+ }) {
+@@ -482,6 +513,7 @@ async function linkFintegraAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+   });
+ }
+ 

@@ -1,0 +1,12 @@
+{"id":"d22b8ad529",
+"reuse":{"score":3,"why":"Introduces a shared getBulkBudgetCategories for setZero and the averages, but setBulkAverage re-implements setNMonthAvg's average-and-sign logic instead of calling it, and copyPreviousMonth keeps its own JS checks."},
+"duplication":{"score":3,"why":"Removes the three copies of the category query, but the exclusion rule is now expressed both in SQL (getBulkBudgetCategories) and in JS (copyPreviousMonth with has_templates), and the average/sign inversion is copied from setNMonthAvg into setBulkAverage."},
+"placement":{"score":4,"why":"Selection lives in budget/actions.ts next to getBudgetData, where the tree keeps category selection for these actions."},
+"scope":{"score":3,"why":"Beyond the rule change it restructures set3/6/12MonthAvg into a new setBulkAverage, changing how 6/12-month averages are executed, which the request did not ask for."},
+"maintainability":{"score":3,"why":"Two parallel definitions of 'which categories a month-wide action skips' (SQL helper and copyPreviousMonth's JS condition) must be kept in sync, though the averages are now simpler to follow."},
+"bypasses_abstraction":{"value":true,"where":"actions.ts setBulkAverage computes the average and sign inline instead of using setNMonthAvg; copyPreviousMonth does not use getBulkBudgetCategories' rule."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The template exclusion appears as `c.goal_def IS NULL` in getBulkBudgetCategories and again as a derived `has_templates` column checked in JS in copyPreviousMonth; setBulkAverage reshapes setNMonthAvg's body with renamed variables (amount for avg)."},
+"one_place":{"value":false,"where":"Hidden/template exclusion is in getBulkBudgetCategories SQL for setZero and averages, and separately in copyPreviousMonth's JS condition over getBudgetData rows."}
+}

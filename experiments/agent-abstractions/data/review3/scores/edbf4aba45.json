@@ -1,0 +1,12 @@
+{"id": "edbf4aba45",
+ "reuse": {"score": 4, "why": "Puts the new rule into the existing getScheduledAmount and calls it from three sites, but only for the range branch while the helper already handles missing and numeric amounts."},
+ "duplication": {"score": 3, "why": "The missing/number/range ternary is kept at updateActions, postTransactionForSchedule and computeSchedulePreviewTransactions, duplicating the dispatch getScheduledAmount already does."},
+ "placement": {"score": 4, "why": "The rule change lands in shared/schedules.ts getScheduledAmount, where the tree keeps it."},
+ "scope": {"score": 5, "why": "Small, focused diff: the helper, three call sites, comments and a test."},
+ "maintainability": {"score": 3, "why": "The rule is defined once, but forecast-schedules.ts normalizeSchedule and schedule-template.ts still compute their own midpoint, so planning paths disagree and a maintainer must hunt for copies."},
+ "bypasses_abstraction": {"value": true, "where": "server/forecast/forecast-schedules.ts normalizeSchedule and server/budget/schedule-template.ts createScheduleList keep their own midpoint copy instead of calling getScheduledAmount; the three updated sites keep their own null/number dispatch around it."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The retained ternaries are the original code with only the range branch replaced; nothing is renamed or reshaped."},
+ "one_place": {"value": false, "where": "getScheduledAmount holds the new rule, but forecast-schedules.ts normalizeSchedule and schedule-template.ts createScheduleList still apply the old rounded-midpoint rule on their own."}
+}

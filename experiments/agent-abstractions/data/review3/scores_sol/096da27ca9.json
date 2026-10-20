@@ -1,0 +1,44 @@
+{
+ "id": "096da27ca9",
+ "reuse": {
+  "score": 3,
+  "why": "Reuses getApproxNumberThreshold and shares range selection, but introduces getPlannedAmount alongside getScheduledAmount instead of consolidating expected-amount calculation."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Several inline calculations are removed, but missing, numeric and ranged amount dispatch remains duplicated across the two shared amount helpers."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Schedule amount policy belongs in shared/schedules, tolerance calculation stays in shared/rules, and API serialization stays in api-models."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The changes are focused on schedule amount planning, API exposure, accompanying tests and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Maintainers must distinguish two overlapping amount helpers, with posting and planning using one while API expectedAmount and existing consumers use the other."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "scheduleModel.toExternal calls getScheduledAmount without the operator, bypassing the operator-aware getPlannedAmount used by posting, forecasting, budgeting and previews."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "getPlannedAmount reshapes getScheduledAmount's missing/number/range dispatch under a new name; extracting getRangeAmount shares endpoint selection but leaves the surrounding decision duplicated."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "The new getPlannedAmount introduces an optional op parameter and an isapprox branch, while the packet's new API expectedAmount consumer remains on getScheduledAmount rather than the operator-aware definition."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 33.5
+ }
+}

@@ -1,0 +1,8 @@
+{"id":"13daf58157",
+"completeness":{"per_site":{"copy-previous-month":"full","set-zero":"full","set-3month-avg":"partial","set-6month-avg":"partial","set-12month-avg":"partial","set-n-month-avg-sign":"full"},
+"left_out":{},
+"sites_full":3,"sites_partial":3,"sites_total":6,"value":0.75,
+"why":"copyPreviousMonth and setZero hand the income and hidden rules to shouldWriteMonthBudget, with setZero's hidden inclusion selected by the explicit 'zero' action; both sign inversions go through averageToBudgetAmount. The three average actions call the shared function with 'average' but their unchanged SQL still filters `c.hidden = 0 AND g.hidden = 0`, so the hidden rule is still decided at those sites (twice), which makes them partial."},
+"interface":{"score":4,"why":"shouldWriteMonthBudget takes the row, an action name that makes setZero's hidden inclusion an explicit preserved variation, and the tracking-budget flag; keying the variation on caller identity instead of a direct includeHidden option is a little indirect, and the missing-group difference stays implicit in the averages' SQL rather than being named."},
+"disguised_duplication":{"value":false,"where":"The hidden filter remains, unchanged and visible, in the three average queries in addition to the shared function; it is left in place rather than renamed or reshaped."}
+}

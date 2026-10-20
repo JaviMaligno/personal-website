@@ -1,0 +1,12 @@
+{"id": "7fdbe2d30f",
+"reuse": {"score": 4, "why": "Every step goes through the tree's existing shouldFillCategory / getMonthFillCategories selection and reuses averageToBudgetAmount, getSheetValue and the undoable mutator registration; only the saved-template check parses goal_def locally."},
+"duplication": {"score": 4, "why": "The rules are written once in shouldFillCategory, but the goal_def column and the group-notes JOIN are added to both category queries (getBudgetData and getMonthFillCategories), and the includeHiddenCategories-to-mode ternary is repeated in six actions."},
+"placement": {"score": 4, "why": "The exclusion rules sit in the month-fill selection in budget/actions.ts and the new action is registered beside its siblings; the new helpers are inserted between shouldFillCategory and its doc comment, detaching the comment."},
+"scope": {"score": 5, "why": "Changes match the four steps (rules, new action, #fixed groups, the flag) plus release notes."},
+"maintainability": {"score": 4, "why": "A future exclusion is a single branch in shouldFillCategory; the per-action flag mapping and the two parallel SQL queries are the remaining places that must be kept in step."},
+"bypasses_abstraction": {"value": false, "where": "copyPreviousMonth uses shouldFillCategory and every other month-wide action, including the new setLastMonthSpending, uses getMonthFillCategories."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": false, "where": "The only repetition (the goal_def/notes JOIN in getBudgetData and getMonthFillCategories, and the includeHiddenCategories ternaries) is open, not disguised."},
+"abstraction_drift": {"value": false, "parameters_added": 0, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "shouldFillCategory gains the template and #fixed rules as general conditions (no caller-specific branches) and the include-hidden flag reuses the existing hiddenMode parameter; each action maps its flag to a mode at the call site rather than bypassing the selection."}
+}

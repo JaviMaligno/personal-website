@@ -1,0 +1,11 @@
+{"id":"ed17ddc628",
+"reuse":{"score":4,"why":"Builds one shared selection (getMonthWideCategories) and iteration helper (forEachMonthWideCategory) that all month-wide actions use, and reuses setNMonthAvg/getCategoryAverage/getSheetValue; the saved-template test is its own goal_def IS NULL condition rather than the template-source fragment used elsewhere in budget/."},
+"duplication":{"score":4,"why":"Removes the four copied category queries and loops; the only repeat is copyPreviousMonth re-checking `is_income === 1 && !isTrackingBudget()` that forEachMonthWideCategory already applies."},
+"placement":{"score":5,"why":"Selection, iteration and the new action live in budget/actions.ts and the handler is registered in budget/app.ts next to the other month-wide methods."},
+"scope":{"score":5,"why":"All edits serve the four steps (exclusions, new action, #fixed, includeHiddenCategories) plus tests; the removed getBudgetData became unused."},
+"maintainability":{"score":4,"why":"One definition decides which categories month-wide actions touch and one flag covers the hidden opt-in, so later rules are a single edit; copyPreviousMonth's separate loop is the one place a maintainer must keep in sync."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth in budget/actions.ts uses getMonthWideCategories but not forEachMonthWideCategory, re-implementing the income/tracking-budget skip."},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":"The income skip repeated in copyPreviousMonth is an open repeat of the same condition, not reshaped."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":1,"where":"getMonthWideCategories gains the includeHidden parameter and the `? = 1 OR (c.hidden = 0 AND g.hidden = 0)` branch for step 4 (a legitimate requested variation); copyPreviousMonth bypasses forEachMonthWideCategory and repeats its income rule."}}

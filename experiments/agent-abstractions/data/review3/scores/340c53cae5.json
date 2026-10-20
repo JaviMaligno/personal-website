@@ -1,0 +1,11 @@
+{"id":"340c53cae5",
+"reuse":{"score":3,"why":"Keeps calling getDateWithSkippedWeekend for non-daily schedules but adds the daily-skip rule as ad-hoc logic inside getNextDate rather than as a shared weekend predicate the other weekend-handling callers could use."},
+"duplication":{"score":4,"why":"No copied block; the skipWeekend && !noSkipWeekend condition is just re-evaluated in a nested if next to the new skipDailyWeekend flag."},
+"placement":{"score":3,"why":"Living in shared/schedules.ts is right, but the rule is buried in getNextDate only, mixing dateCond.value.frequency with value.schedule.data.skipWeekend, instead of next to getDateWithSkippedWeekend where weekend policy is defined."},
+"scope":{"score":5,"why":"Only getNextDate and its tests change."},
+"maintainability":{"score":2,"why":"A magic take=4 window, a start-date guard and a nested if (!skipDailyWeekend) inside if (skipWeekend) make the function harder to follow, and the rule is not available to getUpcomingDates or schedule-template, which keep moving daily weekend occurrences."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":""},
+"one_place":{"value":false,"where":"The daily-skip rule exists only inline in shared/schedules.ts getNextDate; server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts still apply getDateWithSkippedWeekend to daily schedules unchanged"}}

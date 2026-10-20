@@ -1,0 +1,10 @@
+{"id":"f3f1515968",
+"reuse":{"score":3,"why":"Puts the flag into the shared assertBankAccountNotLinked guard that every provider's link already calls, but copies unlinkAccount's detach update instead of factoring it into a helper both share."},
+"duplication":{"score":3,"why":"The eight-field db.updateAccount detach block is copied verbatim from unlinkAccount, so 'what an unlinked account looks like' is now defined twice."},
+"placement":{"score":3,"why":"The takeover lives in the shared guard, but a function named assert... now mutates another account as a side effect, mixing validation with the unlink operation."},
+"scope":{"score":4,"why":"Focused on the flag and its plumbing through the six link functions, plus an unrequested 'account not found' check in the guard."},
+"maintainability":{"score":3,"why":"One place decides the takeover, but a side-effecting assert and a copied unlink state will drift if the unlink action changes."},
+"bypasses_abstraction":{"value":true,"where":"assertBankAccountNotLinked in packages/loot-core/src/server/accounts/app.ts re-implements unlinkAccount's local detach (db.updateAccount with account_id/bank/balances/sync source/status nulled) instead of sharing it."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The detach block is an open, verbatim copy of unlinkAccount's update, not disguised."}}

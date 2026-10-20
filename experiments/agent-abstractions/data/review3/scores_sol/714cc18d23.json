@@ -1,0 +1,45 @@
+{
+ "id": "714cc18d23",
+ "reuse": {
+  "score": 2,
+  "why": "The preview reuses getApproxNumberThreshold, but all four changed amount consumers bypass the existing getScheduledAmount abstraction instead of evolving it."
+ },
+ "duplication": {
+  "score": 1,
+  "why": "Amount normalization is independently implemented in the API model, budget template, forecast normalization, and preview generation."
+ },
+ "placement": {
+  "score": 2,
+  "why": "The shared schedule amount policy is scattered across serialization and consumer modules despite shared/schedules.ts already housing getScheduledAmount."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits remain focused on expected schedule amounts, their API representation, and associated tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Successive policy changes update only one of several independent implementations, leaving maintainers multiple competing definitions to discover and synchronize."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "scheduleModel.toExternal, createScheduleList, normalizeSchedule, and computeSchedulePreviewTransactions implement amount resolution locally rather than extending and calling shared/schedules.ts:getScheduledAmount."
+ },
+ "duplicated_blocks": 4,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The same amount-resolution decision appears under _amount, amountValue, and amountCondition.value, with type-based versus operator-based dispatch and differently shaped endpoint comparisons."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 0,
+  "special_case_branches": 0,
+  "bypassing_call_sites": 4,
+  "where": "The four changed consumers retain independent amount policies while getScheduledAmount remains unchanged; later approximate and lowest-value rules are embedded only in computeSchedulePreviewTransactions."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 43.2
+ }
+}

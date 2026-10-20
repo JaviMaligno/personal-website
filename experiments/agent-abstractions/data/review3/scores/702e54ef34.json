@@ -1,0 +1,12 @@
+{"id": "702e54ef34",
+ "reuse": {"score": 3, "why": "Reuses getRangeAmount and the existing getApproxNumberThreshold tolerance, but adds a new getPlannedAmount instead of extending the existing getScheduledAmount that the API model and client already use."},
+ "duplication": {"score": 2, "why": "getPlannedAmount re-implements getScheduledAmount's missing/number/range dispatch, leaving two parallel amount functions that now disagree for approximate amounts."},
+ "placement": {"score": 4, "why": "The new rule sits in shared/schedules.ts beside the other schedule amount helpers, and server call sites import it from there."},
+ "scope": {"score": 5, "why": "Only the amount call sites, the helper, the raw-schedule type and tests change."},
+ "maintainability": {"score": 2, "why": "Two near-identical exported functions answer 'what does this schedule post' with different results, and forecast-schedules picks the op with an ad hoc _amount==null expression, so a maintainer must know which to use where."},
+ "bypasses_abstraction": {"value": true, "where": "getPlannedAmount in packages/loot-core/src/shared/schedules.ts is created alongside getScheduledAmount instead of extending it; api-models.ts expectedAmount and desktop-client Balance.tsx/SchedulesTable.tsx keep using getScheduledAmount without the approximate rule"},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "getPlannedAmount (shared/schedules.ts) repeats getScheduledAmount's null/number/range branching under a new name with an extra isapprox branch."},
+ "one_place": {"value": false, "where": "The approximate rule lives only in getPlannedAmount (server preview, schedules app, forecast, template); getScheduledAmount, still used for the API's expectedAmount (api-models.ts) and client balances/lists, does not apply it."}
+}

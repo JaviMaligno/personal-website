@@ -1,0 +1,96 @@
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index a4cf04d..46d1b4d 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -69,6 +70,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  group_notes?: string | null;
+   goal_def?: string | null;
+   category: string;
+   amount: number;
+@@ -83,13 +85,15 @@ function getBudgetData<T extends BudgetTable>(
+       Pick<
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+-      > & { goal_def: string | null }
++      > & { goal_def: string | null; group_notes: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++      n.note AS group_notes
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -222,22 +226,31 @@ function hasSavedTemplates(goalDef: string | null | undefined): boolean {
+   return goalDef != null && !['', '[]', 'null'].includes(goalDef);
+ }
+ 
++// Groups tagged `#fixed` in their notes are skipped by month-wide actions.
++function isFixedGroup(notes: string | null | undefined): boolean {
++  return extractTagsFromText(notes ?? '').includes('fixed');
++}
++
+ // Actions
+ 
+ // Income categories are only filled by month-wide actions in tracking budgets.
+ async function getMonthWideCategories() {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { group_notes: string | null }
++  >(
+     `
+-  SELECT c.*
++  SELECT c.*, n.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
+     AND ${NO_TEMPLATE_SQL}
+   `,
+   );
++  const eligible = categories.filter(cat => !isFixedGroup(cat.group_notes));
+   return isTrackingBudget()
+-    ? categories
+-    : categories.filter(cat => cat.is_income !== 1);
++    ? eligible
++    : eligible.filter(cat => cat.is_income !== 1);
+ }
+ 
+ export async function copyPreviousMonth({
+@@ -260,6 +273,9 @@ export async function copyPreviousMonth({
+       if (hasSavedTemplates(prevBudget.goal_def)) {
+         return;
+       }
++      if (isFixedGroup(prevBudget.group_notes)) {
++        return;
++      }
+       void setBudget({
+         category: prevBudget.category,
+         month,
+diff --git a/upcoming-release-notes/skip-fixed-groups-month-actions.md b/upcoming-release-notes/skip-fixed-groups-month-actions.md
+new file mode 100644
+index 0000000..fbd8a1c
+--- /dev/null
++++ b/upcoming-release-notes/skip-fixed-groups-month-actions.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Month-wide budget actions now skip categories in groups whose notes contain the `#fixed` tag.

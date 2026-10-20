@@ -1,0 +1,12 @@
+{"id":"4cfa2415c1",
+"reuse":{"score":3,"why":"It extends the shared getDateWithWeekendRule with a holidays parameter, but that function now has its own day-stepping loop instead of reusing getDateWithSkippedWeekend. getDateStringWithWeekendRule and the server schedule helpers are not given the new parameter."},
+"duplication":{"score":3,"why":"The 'weekend or holiday' test is written twice in schedules.ts (the daily skip in getNextDate and the loop in getDateWithWeekendRule), and the weekend shift is re-implemented next to the unchanged getDateWithSkippedWeekend."},
+"placement":{"score":4,"why":"The rule sits in shared/schedules.ts and the type in RecurConfig, which is the right layer. But holidays are read through an inline type cast inside getNextDate's loop instead of through the typed config."},
+"scope":{"score":5,"why":"Only the date helpers, the RecurConfig type and tests are touched."},
+"maintainability":{"score":2,"why":"The holiday rule applies only in getNextDate. getUpcomingDates, getDatesInRange (with its own daily weekend skip) and the template's getDateStringWithWeekendRule still decide weekends without holidays, so schedule dates disagree depending on the path. There is also an awkward cast."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getDateWithWeekendRule now loops itself instead of calling getDateWithSkippedWeekend. server/schedules/app.ts getUpcomingDates/getDatesInRange and budget/schedule-template.ts (getDateStringWithWeekendRule) keep deciding without holidays."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The weekend-or-holiday shift loop in getDateWithWeekendRule re-implements getDateWithSkippedWeekend's weekend move in a different shape, and leaves the original in place."},
+"one_place":{"value":false,"where":"Holidays are honoured only through getNextDate -> getDateWithWeekendRule. server/schedules/app.ts getUpcomingDates and getDatesInRange (daily skip `isDaily && config.skipWeekend && d.isWeekend`) and getDateStringWithWeekendRule in schedule-template.ts do not pass or check holidays."}
+}

@@ -1,0 +1,11 @@
+{"id":"4c78bdb6e8",
+"reuse":{"score":3,"why":"Uses getNextDate and getDateWithWeekendRule where they existed, but the new skip rule is not added to the shared weekend helper; getUpcomingDates writes its own weekday-filter loop instead of reusing the one added to getNextDate."},
+"duplication":{"score":2,"why":"The 'skipWeekend && frequency === daily' decision appears in getNextDate, getUpcomingDates and schedule-template, and the weekday-search loop exists twice (findWeekdayOccurrence and the getUpcomingDates loop)."},
+"placement":{"score":3,"why":"The core rule sits in shared/schedules.ts, but schedule-template and schedules/app re-decide it locally instead of delegating to a shared weekend function."},
+"scope":{"score":4,"why":"Changes are about the requested rule; the parseRecurDate frequency plumbing is needed, and the schedule-template block is reshaped more than necessary."},
+"maintainability":{"score":2,"why":"Three independently maintained encodings of 'daily skips weekends', plus an isDaily flag that inverts getNextDate's noSkipWeekend argument, make future weekend changes error-prone."},
+"bypasses_abstraction":{"value":true,"where":"schedules/app.ts getUpcomingDates iterates occurrences and filters d.isWeekend itself, and schedule-template.ts computes isDaily and conditions getDateWithWeekendRule, instead of going through getDateWithWeekendRule/getNextDate as the single weekend rule."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The weekday-search loop in getUpcomingDates (schedules/app.ts) is a reshaped copy of findWeekdayOccurrence in shared/schedules.ts (collect-N vs first-match), and the daily predicate is respelled as isDaily in schedule-template.ts."},
+"one_place":{"value":false,"where":"The daily skip rule is decided separately in getNextDate (shared/schedules.ts), getUpcomingDates (server/schedules/app.ts) and createScheduleList (budget/schedule-template.ts); getDateWithWeekendRule, the existing shared weekend definition, is unchanged."}}

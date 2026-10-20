@@ -1,0 +1,54 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..406d835 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -643,3 +643,21 @@ describe('schedules', () => {
+     });
+   });
+ });
++
++describe('daily schedules with skipWeekend', () => {
++  it.each(['before', 'after'])('skips weekend days (%s)', mode => {
++    const cond = {
++      op: 'is',
++      field: 'date',
++      value: {
++        start: '2024-06-01',
++        frequency: 'daily',
++        endMode: 'never',
++        skipWeekend: true,
++        weekendSolveMode: mode,
++      },
++    };
++    expect(getNextDate(cond, new Date(2024, 5, 1))).toBe('2024-06-03');
++    expect(getNextDate(cond, new Date(2024, 5, 8))).toBe('2024-06-10');
++  });
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..21da703 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -224,7 +224,10 @@ export function recurConfigToRSchedule(config) {
+ 
+   switch (config.frequency) {
+     case 'daily':
+-      // Nothing to do
++      // Weekend occurrences of daily schedules are skipped, not moved
++      if (config.skipWeekend) {
++        return [{ ...base, byDayOfWeek: ['MO', 'TU', 'WE', 'TH', 'FR'] }];
++      }
+       return [base];
+     case 'weekly':
+       // Nothing to do
+diff --git a/upcoming-release-notes/skip-weekends-daily-schedules.md b/upcoming-release-notes/skip-weekends-daily-schedules.md
+new file mode 100644
+index 0000000..f50ce7a
+--- /dev/null
++++ b/upcoming-release-notes/skip-weekends-daily-schedules.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [agent]
++---
++
++Daily schedules with weekend handling on now skip Saturday and Sunday occurrences instead of moving them

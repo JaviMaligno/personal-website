@@ -1,0 +1,82 @@
+diff --git a/packages/loot-core/src/server/budget/schedule-template.ts b/packages/loot-core/src/server/budget/schedule-template.ts
+index 5b9f191..aa3fc3f 100644
+--- a/packages/loot-core/src/server/budget/schedule-template.ts
++++ b/packages/loot-core/src/server/budget/schedule-template.ts
+@@ -9,6 +9,7 @@ import * as monthUtils from '#shared/months';
+ import {
+   extractScheduleConds,
+   getDateWithSkippedWeekend,
++  getExpectedAmount,
+   getNextDate,
+ } from '#shared/schedules';
+ import { amountToInteger } from '#shared/util';
+@@ -61,8 +62,7 @@ async function createScheduleList(
+       extractScheduleConds(conditions);
+     let scheduleAmount =
+       amountCondition.op === 'isbetween'
+-        ? Math.round(amountCondition.value.num1 + amountCondition.value.num2) /
+-          2
++        ? getExpectedAmount(amountCondition.value)
+         : amountCondition.value;
+     // Apply adjustment percentage if specified
+     if (template.adjustment !== undefined && template.adjustmentType) {
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..668e87b 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -5,6 +5,7 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ import * as monthUtils from './months';
+ import {
+   computeSchedulePreviewTransactions,
++  getExpectedAmount,
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
+@@ -643,3 +644,12 @@ describe('schedules', () => {
+     });
+   });
+ });
++
++describe('getExpectedAmount', () => {
++  it('uses the end of a range furthest from zero', () => {
++    expect(getExpectedAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
++    expect(getExpectedAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
++    expect(getExpectedAmount({ num1: 10100, num2: 20000 })).toBe(20000);
++    expect(getExpectedAmount(5000)).toBe(5000);
++  });
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index f4eb770..2142839 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -354,14 +354,16 @@ export function getDateWithSkippedWeekend(
+ }
+ 
+ // The single amount a schedule amount is expected to come to: a plain number
+-// as-is, a ranged ("is between") amount as its rounded midpoint.
++// as-is, a ranged ("is between") amount as the end furthest from zero.
+ export function getExpectedAmount(
+   amount: number | { num1: number; num2: number },
+ ): number {
+   if (typeof amount === 'number') {
+     return amount;
+   }
+-  return Math.round((amount.num1 + amount.num2) / 2);
++  return Math.abs(amount.num1) >= Math.abs(amount.num2)
++    ? amount.num1
++    : amount.num2;
+ }
+ 
+ export function getScheduledAmount(
+diff --git a/upcoming-release-notes/plan-variable-schedules-worst-case.md b/upcoming-release-notes/plan-variable-schedules-worst-case.md
+new file mode 100644
+index 0000000..3ff01b0
+--- /dev/null
++++ b/upcoming-release-notes/plan-variable-schedules-worst-case.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Variable ("is between") schedules are now expected at the end of the range furthest from zero instead of the midpoint

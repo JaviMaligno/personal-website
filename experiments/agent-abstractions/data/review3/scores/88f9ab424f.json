@@ -1,0 +1,12 @@
+{"id": "88f9ab424f",
+"reuse": {"score": 4, "why": "Merges the three identical category queries of the average actions into one getBudgetableCategories and reuses getBudgetData's existing hidden columns in copyPreviousMonth; there was no existing template predicate to reuse."},
+"duplication": {"score": 3, "why": "Removes three query copies, but the exclusion rule (hidden, group hidden, saved template) is written twice: as SQL in getBudgetableCategories and as a JS condition in copyPreviousMonth."},
+"placement": {"score": 4, "why": "The selection lives in budget/actions.ts beside getBudgetData, where the month-wide actions and their category queries already are."},
+"scope": {"score": 5, "why": "Only the month-wide actions, the shared query and a focused test change."},
+"maintainability": {"score": 3, "why": "A future change to which categories month-wide actions skip must be made in two different forms (SQL WHERE and a JS if), and the copy test only covers the averages."},
+"bypasses_abstraction": {"value": true, "where": "copyPreviousMonth applies the rule with its own inline condition on getBudgetData rows instead of the new getBudgetableCategories selection."},
+"duplicated_blocks": 1,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "The template test appears as `c.goal_def IS NULL OR c.goal_def = '[]'` in getBudgetableCategories and as its negation `goal_def != null && goal_def !== '[]'` in copyPreviousMonth, alongside a second hidden/group-hidden check."},
+"one_place": {"value": false, "where": "setZero and the 3/6/12-month averages use getBudgetableCategories, but copyPreviousMonth decides the same rule separately in JS."}
+}

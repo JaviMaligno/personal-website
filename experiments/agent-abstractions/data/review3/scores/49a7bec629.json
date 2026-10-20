@@ -1,0 +1,12 @@
+{"id":"49a7bec629",
+"reuse":{"score":5,"why":"Changes the rule inside the existing exported getScheduledAmount and routes the forecast, updateActions, postTransactionForSchedule, preview and schedule-template sites through it instead of their own midpoint math."},
+"duplication":{"score":4,"why":"Five inline copies of the midpoint/missing-amount logic are removed; schedule-template still keeps its own `op === 'isbetween' ? helper : value` dispatch around the call, a remnant of the old copy."},
+"placement":{"score":5,"why":"The rule stays in shared/schedules.ts, the module that already owned it, and the server callers just pass their raw amount."},
+"scope":{"score":5,"why":"Only the rule, its callers, a test block and a release note."},
+"maintainability":{"score":4,"why":"A single definition now decides the planned amount for almost every site, but schedule-template's outer ternary means a future change to non-range handling would not reach it, and the helper's parameter type was not widened to the null/undefined it now officially handles."},
+"bypasses_abstraction":{"value":false,"where":"Every site calls getScheduledAmount; schedule-template only wraps it in its own isbetween check"},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"Copies were deleted; the leftover isbetween ternary in schedule-template.ts is an unremoved remnant, not a reshaped copy"},
+"one_place":{"value":false,"where":"The range rule lives in getScheduledAmount and all other sites use it fully, but server/budget/schedule-template.ts still decides itself whether to apply it (`amountCondition.op === 'isbetween' ? getScheduledAmount(value) : value`), so the missing/number/range dispatch is not entirely in the shared definition"}
+}

@@ -1,0 +1,222 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 84d9707..3376bdc 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -1206,3 +1206,127 @@ describe('schedule app', () => {
+     });
+   });
+ });
++
++describe('schedule/get-dates-in-range', () => {
++  const getDatesInRange = (config, start: string, end: string) =>
++    schedulesApp.handlers['schedule/get-dates-in-range']({
++      config,
++      start,
++      end,
++    });
++
++  const monthlyOn15 = {
++    start: '2024-01-15',
++    frequency: 'monthly',
++    interval: 1,
++    patterns: [{ type: 'day', value: 15 }],
++    endMode: 'never',
++    skipWeekend: false,
++    weekendSolveMode: 'after',
++  };
++
++  it('lists the occurrences inside the period, both ends included', async () => {
++    expect(
++      await getDatesInRange(monthlyOn15, '2024-01-15', '2024-03-15'),
++    ).toEqual(['2024-01-15', '2024-02-15', '2024-03-15']);
++  });
++
++  it('returns nothing for a period without occurrences', async () => {
++    expect(
++      await getDatesInRange(monthlyOn15, '2024-01-16', '2024-02-14'),
++    ).toEqual([]);
++  });
++
++  it('does not list occurrences before the schedule starts', async () => {
++    expect(
++      await getDatesInRange(monthlyOn15, '2023-11-01', '2023-12-31'),
++    ).toEqual([]);
++  });
++
++  it('moves a Saturday occurrence to the Friday before', async () => {
++    const config = {
++      ...monthlyOn15,
++      skipWeekend: true,
++      weekendSolveMode: 'before',
++    };
++    expect(await getDatesInRange(config, '2024-06-01', '2024-06-30')).toEqual([
++      '2024-06-14',
++    ]);
++  });
++
++  it('moves a Saturday occurrence to the Monday after', async () => {
++    const config = {
++      ...monthlyOn15,
++      skipWeekend: true,
++      weekendSolveMode: 'after',
++    };
++    expect(await getDatesInRange(config, '2024-06-01', '2024-06-30')).toEqual([
++      '2024-06-17',
++    ]);
++  });
++
++  it('decides membership by the adjusted day, not the original one', async () => {
++    const before = {
++      ...monthlyOn15,
++      skipWeekend: true,
++      weekendSolveMode: 'before',
++    };
++    expect(await getDatesInRange(before, '2024-06-15', '2024-06-30')).toEqual(
++      [],
++    );
++
++    const after = {
++      ...monthlyOn15,
++      skipWeekend: true,
++      weekendSolveMode: 'after',
++    };
++    expect(await getDatesInRange(after, '2024-06-17', '2024-06-17')).toEqual([
++      '2024-06-17',
++    ]);
++    expect(await getDatesInRange(after, '2024-06-15', '2024-06-16')).toEqual(
++      [],
++    );
++  });
++
++  it('skips weekend occurrences of daily schedules', async () => {
++    const config = {
++      start: '2024-01-01',
++      frequency: 'daily',
++      interval: 1,
++      endMode: 'never',
++      skipWeekend: true,
++      weekendSolveMode: 'after',
++    };
++    expect(await getDatesInRange(config, '2024-01-05', '2024-01-10')).toEqual([
++      '2024-01-05',
++      '2024-01-08',
++      '2024-01-09',
++      '2024-01-10',
++    ]);
++  });
++
++  it('stops at the end date of the schedule', async () => {
++    const config = {
++      ...monthlyOn15,
++      endMode: 'on_date',
++      endDate: '2024-02-14',
++    };
++    expect(await getDatesInRange(config, '2024-01-01', '2024-03-31')).toEqual([
++      '2024-01-15',
++    ]);
++  });
++
++  it('lists each day once when patterns produce the same occurrence', async () => {
++    const config = {
++      ...monthlyOn15,
++      patterns: [
++        { type: 'day', value: 15 },
++        { type: 'day', value: 15 },
++      ],
++    };
++    expect(await getDatesInRange(config, '2024-01-01', '2024-02-29')).toEqual([
++      '2024-01-15',
++      '2024-02-15',
++    ]);
++  });
++});
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index dee78c6..decc302 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -22,7 +22,7 @@ import {
+ } from '#server/transactions/transaction-rules';
+ import { undoable } from '#server/undo';
+ import { RSchedule } from '#server/util/rschedule';
+-import { currentDay, dayFromDate } from '#shared/months';
++import { currentDay, dayFromDate, parseDate } from '#shared/months';
+ import { q } from '#shared/query';
+ import {
+   DEFAULT_UPCOMING_SCHEDULE_DAYS,
+@@ -503,6 +503,13 @@ function discoverSchedules() {
+   return findSchedules();
+ }
+ 
++function getOccurrenceDay(config, date: Date): string | null {
++  const solved = config.skipWeekend
++    ? getDateWithSkippedWeekend(date, config.frequency, config.weekendSolveMode)
++    : date;
++  return solved ? dayFromDate(solved) : null;
++}
++
+ async function getUpcomingDates({ config, count }) {
+   const rules = recurConfigToRSchedule(config);
+ 
+@@ -515,18 +522,35 @@ async function getUpcomingDates({ config, count }) {
+         take: count * WEEKDAY_LOOKAHEAD,
+       })
+       .toArray()
+-      .map(occurrence =>
+-        config.skipWeekend
+-          ? getDateWithSkippedWeekend(
+-              occurrence.date,
+-              config.frequency,
+-              config.weekendSolveMode,
+-            )
+-          : occurrence.date,
+-      )
++      .map(occurrence => getOccurrenceDay(config, occurrence.date))
+       .filter(Boolean)
+-      .slice(0, count)
+-      .map(date => dayFromDate(date));
++      .slice(0, count);
++  } catch (err) {
++    captureBreadcrumb(config);
++    throw err;
++  }
++}
++
++const MAX_WEEKEND_SHIFT_DAYS = 2;
++
++async function getDatesInRange({ config, start, end }) {
++  const rules = recurConfigToRSchedule(config);
++
++  try {
++    const schedule = new RSchedule({ rrules: rules });
++
++    const days = schedule
++      .occurrences({
++        start: d.startOfDay(
++          d.subDays(parseDate(start), MAX_WEEKEND_SHIFT_DAYS),
++        ),
++        end: d.endOfDay(d.addDays(parseDate(end), MAX_WEEKEND_SHIFT_DAYS)),
++      })
++      .toArray()
++      .map(occurrence => getOccurrenceDay(config, occurrence.date))
++      .filter(day => day != null && day >= start && day <= end);
++
++    return [...new Set(days)].sort();
+   } catch (err) {
+     captureBreadcrumb(config);
+     throw err;
+@@ -845,6 +869,7 @@ export type SchedulesHandlers = {
+   'schedule/force-run-service': typeof advanceSchedulesService;
+   'schedule/discover': typeof discoverSchedules;
+   'schedule/get-upcoming-dates': typeof getUpcomingDates;
++  'schedule/get-dates-in-range': typeof getDatesInRange;
+ };
+ 
+ // Expose functions to the client
+@@ -865,6 +890,7 @@ app.method(
+ );
+ app.method('schedule/discover', discoverSchedules);
+ app.method('schedule/get-upcoming-dates', getUpcomingDates);
++app.method('schedule/get-dates-in-range', getDatesInRange);
+ 
+ app.service(trackJSONPaths);
+ 

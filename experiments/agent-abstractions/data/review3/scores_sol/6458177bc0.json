@@ -1,0 +1,45 @@
+{
+ "id": "6458177bc0",
+ "reuse": {
+  "score": 3,
+  "why": "Reuses budget writes, spreadsheet reads, batching and undo wrappers, but setBulkNMonthAvg duplicates setNMonthAvg and copyPreviousMonth bypasses the new shared eligibility helpers."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Consolidates the three bulk average actions, but retains duplicated category eligibility rules and average calculation, sign conversion and budget writing."
+ },
+ "placement": {
+  "score": 5,
+  "why": "Budget policy and calculations remain in budget/actions.ts, with handler registration and undo integration in budget/app.ts."
+ },
+ "scope": {
+  "score": 5,
+  "why": "Changes are confined to the requested month-wide actions, their registration and relevant tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The shared bulk helpers improve ownership, but separate eligibility implementations and duplicated average orchestration leave multiple places to update."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "packages/loot-core/src/server/budget/actions.ts: copyPreviousMonth independently applies eligibility instead of sharing getBulkBudgetCategories/shouldBudgetCategory, while setBulkNMonthAvg reproduces setNMonthAvg orchestration."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "packages/loot-core/src/server/budget/actions.ts: eligibility appears as SQL predicates plus filtering in getBulkBudgetCategories and as imperative guards in copyPreviousMonth; setBulkNMonthAvg reshapes setNMonthAvg's calculation/sign/write sequence into a loop."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 0,
+  "bypassing_call_sites": 2,
+  "where": "packages/loot-core/src/server/budget/actions.ts: includeHiddenCategories extends the shared bulk selector, but copyPreviousMonth maintains parallel eligibility rules and setBulkNMonthAvg bypasses the existing setNMonthAvg action."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 39.3
+ }
+}

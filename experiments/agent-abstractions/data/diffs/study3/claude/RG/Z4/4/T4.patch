@@ -1,0 +1,71 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 1fa1c1a..a09cf03 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -13,6 +13,7 @@ import {
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+   isCustomUpcomingLength,
++  isNonWorkingDay,
+   isScheduleOccurrencePosted,
+   UPCOMING_LENGTH_PRESET_LABELS,
+   UPCOMING_LENGTH_PRESET_OPTIONS,
+@@ -667,3 +668,13 @@ describe('daily schedules with weekend handling', () => {
+     },
+   );
+ });
++
++describe('isNonWorkingDay holidays', () => {
++  it('treats MM-DD entries as recurring and YYYY-MM-DD as one-off', () => {
++    const holidays = ['12-25', '2026-07-01'];
++    expect(isNonWorkingDay(new Date(2025, 11, 25), holidays)).toBe(true);
++    expect(isNonWorkingDay(new Date(2026, 11, 25), holidays)).toBe(true);
++    expect(isNonWorkingDay(new Date(2026, 6, 1), holidays)).toBe(true);
++    expect(isNonWorkingDay(new Date(2027, 6, 1), holidays)).toBe(false);
++  });
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index b9bf6eb..e88e9f9 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -364,10 +364,12 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+ }
+ 
+ export function isNonWorkingDay(date: Date, holidays?: string[]): boolean {
+-  return (
+-    d.isWeekend(date) ||
+-    (holidays != null && holidays.includes(monthUtils.dayFromDate(date)))
+-  );
++  if (d.isWeekend(date)) return true;
++  if (holidays == null) return false;
++
++  // `MM-DD` entries recur every year; `YYYY-MM-DD` entries are one-off.
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
+ }
+ 
+ export function getDateWithSkippedWeekend(
+diff --git a/packages/loot-core/src/types/models/schedule.ts b/packages/loot-core/src/types/models/schedule.ts
+index f40cf1c..d99a88e 100644
+--- a/packages/loot-core/src/types/models/schedule.ts
++++ b/packages/loot-core/src/types/models/schedule.ts
+@@ -17,6 +17,7 @@ export type RecurConfig = {
+   endOccurrences?: number;
+   endDate?: string;
+   weekendSolveMode?: 'before' | 'after';
++  /** `YYYY-MM-DD` for a single day, or `MM-DD` for that day every year */
+   holidays?: string[];
+ };
+ 
+diff --git a/upcoming-release-notes/recurring-holidays.md b/upcoming-release-notes/recurring-holidays.md
+new file mode 100644
+index 0000000..f70901b
+--- /dev/null
++++ b/upcoming-release-notes/recurring-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow schedule holidays to be entered as `MM-DD` to repeat every year

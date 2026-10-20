@@ -1,0 +1,44 @@
+{
+ "id": "c72123372c",
+ "reuse": {
+  "score": 2,
+  "why": "Several consumers share the new helper, but it duplicates getScheduledAmount and getApproxNumberThreshold while the API implements its own resolution."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "Amount dispatch, approximate tolerance calculation, and API expected-amount resolution duplicate logic available elsewhere in the tree or diff."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Shared schedule logic belongs in shared/schedules.ts, but the API adapter also owns a competing definition of that domain rule."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on schedule expected amounts, their consumers, and related tests."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Competing amount helpers, duplicated tolerance policy, and inconsistent operator propagation leave maintainers multiple definitions to coordinate."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "getExpectedScheduleAmount duplicates existing getScheduledAmount dispatch and bypasses getApproxNumberThreshold; scheduleModel.toExternal bypasses the new shared resolver."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "getExpectedScheduleAmount reshapes the existing getScheduledAmount dispatch under a new name, while scheduleModel.toExternal expresses the same resolution decision as a nested ternary."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 1,
+  "where": "The shared resolver gains optional amountOp and an isapprox branch, while scheduleModel.toExternal retains independent resolution and forecast normalization calls the helper without propagating the operator."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 41.8
+ }
+}

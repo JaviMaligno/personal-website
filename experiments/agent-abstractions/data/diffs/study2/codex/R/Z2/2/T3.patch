@@ -1,0 +1,44 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index c21d622..350c423 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -33,6 +33,12 @@ describe('schedules', () => {
+     it('preserves a single amount', () => {
+       expect(getScheduleAmount(-12345)).toBe(-12345);
+     });
++
++    it('uses the approximate endpoint furthest from zero', () => {
++      expect(getScheduleAmount(-10000, 'isapprox')).toBe(-10750);
++      expect(getScheduleAmount(10000, 'isapprox')).toBe(10750);
++      expect(getScheduleAmount(-1234, 'isapprox')).toBe(-1327);
++    });
+   });
+ 
+   const today = new Date(2017, 0, 1); // Global date when testing is set to 2017-01-01 per monthUtils.currentDay()
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 667e080..3048732 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -13,8 +13,13 @@ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ /** Resolve a ranged schedule amount to the endpoint with the greatest magnitude. */
+ export function getScheduleAmount(
+   amount: number | { num1: number; num2: number },
++  amountOp?: string,
+ ) {
+   if (typeof amount === 'number') {
++    if (amountOp === 'isapprox') {
++      const tolerance = Math.round(Math.abs(amount) * 0.075);
++      return amount + Math.sign(amount) * tolerance;
++    }
+     return amount;
+   }
+   return Math.abs(amount.num1) >= Math.abs(amount.num2)
+@@ -512,7 +517,7 @@ export function computeSchedulePreviewTransactions(
+       const amount =
+         schedule._amount == null
+           ? 0
+-          : getScheduleAmount(schedule._amount);
++          : getScheduleAmount(schedule._amount, schedule._amountOp);
+ 
+       return dates.map(date => ({
+         id: 'preview/' + schedule.id + `/${date}`,

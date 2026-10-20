@@ -1,0 +1,12 @@
+{"id":"a2904d8eac",
+"reuse":{"score":3,"why":"Extracts clearAccountBankLink and reuses it from unlinkAccount and the takeover path, and reuses findOrCreateBank/syncAccount/the Akahu balance branch, but Fintegra's link and download functions are new copies of existing provider bodies."},
+"duplication":{"score":2,"why":"linkFintegraAccount copies the upgrade-or-insert/sync/notify body of the other link handlers, downloadFintegraTransactions copies downloadAkahuTransactions, and the assert-then-unlink preamble is pasted into all six handlers."},
+"placement":{"score":4,"why":"Guards and unlink helpers live in accounts/app.ts next to the handlers and unlinkAccount, download in sync.ts, config and types in their usual modules."},
+"scope":{"score":4,"why":"Changes and the sizeable test suite all trace to the four steps."},
+"maintainability":{"score":3,"why":"The check is a clean function returning holder ids and the local unlink is shared with unlinkAccount, but the six-way handler copy grows and each handler must remember to call both the check and unlinkReplacedAccounts."},
+"bypasses_abstraction":{"value":false,"where":"All handlers call assertBankAccountCanBeLinked, and the takeover reuses clearAccountBankLink shared with unlinkAccount."},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The Fintegra link/download bodies and the per-handler preamble are open copies (the download only swaps let for const), not disguised."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":0,"where":"assertBankAccountCanBeLinked in packages/loot-core/src/server/accounts/app.ts gains replaceExistingLink plus a closed-target branch and a replace-allowed branch over steps 3-4; no handler bypasses it."}
+}

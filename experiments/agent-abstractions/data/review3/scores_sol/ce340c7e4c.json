@@ -1,0 +1,45 @@
+{
+ "id": "ce340c7e4c",
+ "reuse": {
+  "score": 3,
+  "why": "All six month-wide actions reuse getFillableCategories and existing tag and mutation helpers, but setLastMonthSpending reimplements spending totals instead of reading existing sum-amount sheet cells through getSheetValue."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "The shared selector removes repeated category queries, but the new action duplicates transaction aggregation from base.ts and repeats the income eligibility guard."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Category selection and action registration fit the existing budget modules, although transaction aggregation already belongs to the sheet computation in base.ts."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits address the four requested changes and their release notes without unrelated modifications."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized exclusions simplify future changes, but independently maintained spending queries and distributed income eligibility checks leave multiple definitions to keep aligned."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "actions.ts:setLastMonthSpending directly aggregates transactions instead of using getSheetValue for the sum-amount cells defined in budget/base.ts and consumed by getCategoryAverage."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "setLastMonthSpending reshapes base.ts:getSumAmountsByMonth into a single-month grouped query and category-keyed map while retaining the same transaction summation and account filtering."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 0,
+  "where": "getFillableCategories gains the requested includeHiddenCategories parameter and one conditional SQL branch; all six month-wide actions continue through that selector."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 62.1
+ }
+}

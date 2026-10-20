@@ -1,0 +1,42 @@
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 578e4f2..5282ddd 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -374,16 +374,18 @@ export type OccurrenceRule = {
+ };
+ 
+ // With weekend handling on, a holiday is treated exactly like a weekend day.
++// A holiday is either one day (YYYY-MM-DD) or a day in every year (MM-DD).
+ export function isBlockedDay(date: Date, rule: OccurrenceRule): boolean {
+   if (d.isWeekend(date)) {
+     return true;
+   }
+   const holidays = rule.holidays;
+-  return (
+-    holidays != null &&
+-    holidays.length > 0 &&
+-    holidays.includes(monthUtils.dayFromDate(date))
+-  );
++  if (holidays == null || holidays.length === 0) {
++    return false;
++  }
++  const day = monthUtils.dayFromDate(date);
++  const monthDay = day.slice(5);
++  return holidays.some(holiday => holiday === day || holiday === monthDay);
+ }
+ 
+ // With weekend handling on, daily schedules drop their occurrences on weekend
+diff --git a/packages/loot-core/src/types/models/schedule.ts b/packages/loot-core/src/types/models/schedule.ts
+index cd82df4..921fd01 100644
+--- a/packages/loot-core/src/types/models/schedule.ts
++++ b/packages/loot-core/src/types/models/schedule.ts
+@@ -17,7 +17,8 @@ export type RecurConfig = {
+   endOccurrences?: number;
+   endDate?: string;
+   weekendSolveMode?: 'before' | 'after';
+-  // Days (YYYY-MM-DD) treated like weekend days when `skipWeekend` is on.
++  // Days treated like weekend days when `skipWeekend` is on: one day
++  // (YYYY-MM-DD) or that day in every year (MM-DD).
+   holidays?: string[];
+ };
+ 

@@ -1,0 +1,60 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 350c423..c45635d 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -23,20 +23,21 @@ import type { ScheduleStatuses } from './schedules';
+ 
+ describe('schedules', () => {
+   describe('getScheduleAmount', () => {
+-    it('uses the ranged endpoint furthest from zero regardless of input order', () => {
++    it('uses the lowest ranged endpoint regardless of input order', () => {
+       expect(getScheduleAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+       expect(getScheduleAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-      expect(getScheduleAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-      expect(getScheduleAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++      expect(getScheduleAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++      expect(getScheduleAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++      expect(getScheduleAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
+     });
+ 
+     it('preserves a single amount', () => {
+       expect(getScheduleAmount(-12345)).toBe(-12345);
+     });
+ 
+-    it('uses the approximate endpoint furthest from zero', () => {
++    it('uses the lowest approximate amount', () => {
+       expect(getScheduleAmount(-10000, 'isapprox')).toBe(-10750);
+-      expect(getScheduleAmount(10000, 'isapprox')).toBe(10750);
++      expect(getScheduleAmount(10000, 'isapprox')).toBe(9250);
+       expect(getScheduleAmount(-1234, 'isapprox')).toBe(-1327);
+     });
+   });
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 3048732..ad95d67 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -10,7 +10,7 @@ import { q } from './query';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+-/** Resolve a ranged schedule amount to the endpoint with the greatest magnitude. */
++/** Resolve a ranged schedule amount to the lowest value it allows. */
+ export function getScheduleAmount(
+   amount: number | { num1: number; num2: number },
+   amountOp?: string,
+@@ -18,13 +18,11 @@ export function getScheduleAmount(
+   if (typeof amount === 'number') {
+     if (amountOp === 'isapprox') {
+       const tolerance = Math.round(Math.abs(amount) * 0.075);
+-      return amount + Math.sign(amount) * tolerance;
++      return amount - tolerance;
+     }
+     return amount;
+   }
+-  return Math.abs(amount.num1) >= Math.abs(amount.num2)
+-    ? amount.num1
+-    : amount.num2;
++  return Math.min(amount.num1, amount.num2);
+ }
+ 
+ // Preset token values used by UI selects. Keep labels in the UI (i18n) but

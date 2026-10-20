@@ -1,0 +1,8 @@
+{"id":"13daf58157",
+"completeness":{"per_site":{"copy-previous-month":"full","set-zero":"full","set-3month-avg":"partial","set-6month-avg":"partial","set-12month-avg":"partial","set-n-month-avg-sign":"full"},
+"left_out":{},
+"sites_full":3,"sites_partial":3,"sites_total":6,"value":0.75,
+"why":"copyPreviousMonth and setZero take the whole selection from shouldWriteMonthBudget, setZero picking its hidden-inclusive variation with the explicit 'zero' action; setNMonthAvg takes the sign from averageToBudgetAmount. The three averages call the shared selection (and set3MonthAvg the shared sign), but their own SQL still filters c.hidden = 0 AND g.hidden = 0, so the hidden rule is still decided at each of those sites (twice), which makes them partial."},
+"interface":{"score":4,"why":"shouldWriteMonthBudget takes the category, an explicit action selector that makes the preserved setZero inconsistency visible, and the tracking-budget flag; averageToBudgetAmount takes only the amount and is_income. The selector names actions ('copy-previous' vs 'average' behave the same) rather than the real variation (include hidden or not), and MonthActionCategory restates BudgetData's fields."},
+"disguised_duplication":{"value":false,"where":"No logic is reshaped into a disguised copy; the hidden filter left in the three identical average SQL queries in actions.ts is pre-existing duplication that the diff leaves in place rather than disguises."}
+}

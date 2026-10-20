@@ -1,0 +1,11 @@
+{"id": "c549b6af07",
+ "reuse": {"score": 3, "why": "It hooks into the existing ensureAccountNotLinked guard that every provider link function already calls, but copies unlinkAccount's local-clear update instead of extracting it into something both share."},
+ "duplication": {"score": 3, "why": "The eight-field db.updateAccount block that clears an account's link state is copied verbatim from unlinkAccount in app.ts into link.ts."},
+ "placement": {"score": 3, "why": "The takeover lives in link.ts beside the other link rules, but a function named ensureAccountNotLinked now mutates another account, so a check-style guard hides a side effect."},
+ "scope": {"score": 5, "why": "Only the flag plumbing through the six provider link functions, the guard and one test change."},
+ "maintainability": {"score": 3, "why": "If the definition of 'unlinked' changes, both unlinkAccount and the copy in ensureAccountNotLinked must change, and the misleading guard name makes the takeover easy to miss."},
+ "bypasses_abstraction": {"value": true, "where": "link.ts ensureAccountNotLinked re-writes the local unlink update from app.ts unlinkAccount instead of sharing a local-unlink helper with it"},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The copied updateAccount block is a verbatim copy, not a reshaped one."}
+}

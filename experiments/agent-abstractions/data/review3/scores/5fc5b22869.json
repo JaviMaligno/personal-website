@@ -1,0 +1,10 @@
+{"id":"5fc5b22869",
+"reuse":{"score":4,"why":"Threads the flag through the existing getBudgetActionCategories for setZero, setLastMonthSpending and the average actions, but copyPreviousMonth keeps its own inline hidden check instead of using the shared selection."},
+"duplication":{"score":3,"why":"The flag-gated hidden rule is now written twice, once as SQL `? OR (c.hidden = 0 AND ...)` in getBudgetActionCategories and once as `!includeHiddenCategories && (hidden || group_hidden)` in copyPreviousMonth."},
+"placement":{"score":4,"why":"The variation is a parameter of the shared category selection in budget/actions.ts, which is the right layer; only copyPreviousMonth decides it elsewhere."},
+"scope":{"score":3,"why":"Most of the test diff is prettier reformatting of pre-existing tests unrelated to the feature."},
+"maintainability":{"score":3,"why":"A single boolean parameter is reasonable, but the hidden rule still lives in two shapes, so the next rule change must again be made in both."},
+"bypasses_abstraction":{"value":true,"where":"copyPreviousMonth (actions.ts) applies the new includeHiddenCategories rule inline over getBudgetData rows instead of through getBudgetActionCategories."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The same flag-gated hidden/group-hidden rule appears as a SQL predicate in getBudgetActionCategories and as a TS condition in copyPreviousMonth."}}

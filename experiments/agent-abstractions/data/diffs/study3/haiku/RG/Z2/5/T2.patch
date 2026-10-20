@@ -1,0 +1,167 @@
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..2c688af 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -237,6 +237,10 @@ export type APIScheduleEntity = Pick<
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
+ };
+ 
++export type APIScheduleListEntity = APIScheduleEntity & {
++  expectedAmount: number; // The single amount the schedule is expected to post
++};
++
+ export const scheduleModel = {
+   toExternal(schedule: ScheduleEntity): APIScheduleEntity {
+     return {
+diff --git a/packages/loot-core/src/server/api.test.ts b/packages/loot-core/src/server/api.test.ts
+index 32f6ed6..6118573 100644
+--- a/packages/loot-core/src/server/api.test.ts
++++ b/packages/loot-core/src/server/api.test.ts
+@@ -1,6 +1,9 @@
+ import * as db from '#server/db';
++import { loadMappings } from '#server/db/mappings';
+ import * as sheet from '#server/sheet';
++import { loadRules } from '#server/transactions/transaction-rules';
+ import { getBankSyncError } from '#shared/errors';
++import type { RuleConditionEntity } from '#types/models';
+ import type { ServerHandlers } from '#types/server-handlers';
+ 
+ import { app as accountGroupsApp } from './account-groups/app';
+@@ -8,6 +11,7 @@ import { app as accountsApp } from './accounts/app';
+ import { installAPI } from './api';
+ import { createBudget } from './budget/base';
+ import * as prefs from './prefs';
++import { createSchedule } from './schedules/app';
+ 
+ vi.mock('#shared/errors', () => ({
+   getBankSyncError: vi.fn(error => `Bank sync error: ${error}`),
+@@ -189,6 +193,72 @@ describe('API handlers', () => {
+     });
+   });
+ 
++  describe('api/schedules-get', () => {
++    beforeEach(global.emptyDatabase());
++
++    beforeEach(async () => {
++      await prefs.loadPrefs();
++      await loadMappings();
++      await loadRules();
++    });
++
++    test('returns the expected amount for each schedule', async () => {
++      const dateCondition = {
++        op: 'is',
++        field: 'date',
++        value: '2020-12-20',
++      } satisfies RuleConditionEntity;
++      const rangedId = await createSchedule({
++        schedule: { name: 'Ranged' },
++        conditions: [
++          dateCondition,
++          {
++            op: 'isbetween',
++            field: 'amount',
++            value: { num1: -10100, num2: -20000 },
++          },
++        ],
++      });
++      const singleId = await createSchedule({
++        schedule: { name: 'Single' },
++        conditions: [
++          dateCondition,
++          { op: 'is', field: 'amount', value: -5000 },
++        ],
++      });
++      const noAmountId = await createSchedule({
++        schedule: { name: 'No amount' },
++        conditions: [dateCondition],
++      });
++
++      // The schedules service populates these paths at startup, which the test skips.
++      db.runQuery(
++        'INSERT OR REPLACE INTO schedules_json_paths (schedule_id, payee, account, amount, date) VALUES (?, ?, ?, ?, ?)',
++        [rangedId, null, null, '$[1]', '$[0]'],
++      );
++      db.runQuery(
++        'INSERT OR REPLACE INTO schedules_json_paths (schedule_id, payee, account, amount, date) VALUES (?, ?, ?, ?, ?)',
++        [singleId, null, null, '$[1]', '$[0]'],
++      );
++
++      const schedules = await handlers['api/schedules-get']();
++      const expectedById = Object.fromEntries(
++        schedules.map(schedule => [schedule.id, schedule.expectedAmount]),
++      );
++
++      expect(expectedById).toEqual({
++        [rangedId]: -20000,
++        [singleId]: -5000,
++        [noAmountId]: 0,
++      });
++      expect(schedules.find(s => s.id === rangedId)).toMatchObject({
++        name: 'Ranged',
++        amount: { num1: -10100, num2: -20000 },
++        amountOp: 'isbetween',
++      });
++    });
++  });
++
+   describe('api/rule-create', () => {
+     beforeEach(global.emptyDatabase());
+ 
+diff --git a/packages/loot-core/src/server/api.ts b/packages/loot-core/src/server/api.ts
+index dd819a0..d609a19 100644
+--- a/packages/loot-core/src/server/api.ts
++++ b/packages/loot-core/src/server/api.ts
+@@ -11,6 +11,7 @@ import {
+ } from '#shared/errors';
+ import * as monthUtils from '#shared/months';
+ import { q } from '#shared/query';
++import { getScheduledAmount } from '#shared/schedules';
+ import {
+   deleteTransaction,
+   ungroupTransactions,
+@@ -928,7 +929,10 @@ handlers['api/schedules-get'] = async function () {
+   checkFileOpen();
+   const { data } = await aqlQuery(q('schedules').select('*'));
+   const schedules = data as ScheduleEntity[];
+-  return schedules.map(schedule => scheduleModel.toExternal(schedule));
++  return schedules.map(schedule => ({
++    ...scheduleModel.toExternal(schedule),
++    expectedAmount: getScheduledAmount(schedule._amount),
++  }));
+ };
+ 
+ handlers['api/schedule-create'] = withMutation(async function (
+diff --git a/packages/loot-core/src/types/api-handlers.ts b/packages/loot-core/src/types/api-handlers.ts
+index 679a8c9..47c2f8d 100644
+--- a/packages/loot-core/src/types/api-handlers.ts
++++ b/packages/loot-core/src/types/api-handlers.ts
+@@ -10,6 +10,7 @@ import type {
+   APIPayeeEntity,
+   APIRuleEntity,
+   APIScheduleEntity,
++  APIScheduleListEntity,
+   APITagEntity,
+ } from '#server/api-models';
+ import type { BudgetFileHandlers } from '#server/budgetfiles/app';
+@@ -303,7 +304,7 @@ export type ApiHandlers = {
+ 
+   'api/schedule-delete': (id: string) => Promise<void>;
+ 
+-  'api/schedules-get': () => Promise<APIScheduleEntity[]>;
++  'api/schedules-get': () => Promise<APIScheduleListEntity[]>;
+   'api/get-id-by-name': (arg: {
+     type: string;
+     name: string;
+diff --git a/upcoming-release-notes/api-schedule-expected-amount.md b/upcoming-release-notes/api-schedule-expected-amount.md
+new file mode 100644
+index 0000000..c9202bf
+--- /dev/null
++++ b/upcoming-release-notes/api-schedule-expected-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Add `expectedAmount` to schedules returned by the API, giving the single amount a schedule is expected to post

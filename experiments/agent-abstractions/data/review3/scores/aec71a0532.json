@@ -1,0 +1,12 @@
+{"id": "aec71a0532",
+"reuse": {"score": 4, "why": "Introduces one getBudgetableCategories selection that setZero, set3MonthAvg, set6/12MonthAvg (via a new setAllNMonthAvg) and the new setLastMonthSpending reuse, and the new action reuses getSheetValue/setBudget/batchMessages; only copyPreviousMonth does not use it."},
+"duplication": {"score": 3, "why": "copyPreviousMonth re-states every exclusion (income outside tracking, hidden/group hidden with the flag, saved templates, #fixed groups) as row checks, and the tests carry two near-identical runAll/runAllHidden loops."},
+"placement": {"score": 4, "why": "Selection, tag and template checks live in budget/actions.ts beside the actions that use them; template parsing could have leaned on the goal-template module, but the layer is right."},
+"scope": {"score": 4, "why": "Changes stay within month-wide actions, their handler registration, tests and release notes; folding set6/12MonthAvg into setAllNMonthAvg is a related cleanup."},
+"maintainability": {"score": 3, "why": "Most actions share one exclusion rule, but the second copy in copyPreviousMonth must be kept in sync by hand for every future exclusion, as steps 3 and 4 already required."},
+"bypasses_abstraction": {"value": true, "where": "copyPreviousMonth in budget/actions.ts filters getBudgetData rows with its own hidden/template/#fixed/income checks instead of using getBudgetableCategories."},
+"duplicated_blocks": 2,
+"would_merge": "with_changes",
+"disguised_duplication": {"value": true, "where": "copyPreviousMonth reshapes the getBudgetableCategories rule into per-row early returns over getBudgetData (which gained goal_def/cat_group columns for it); runAll and runAllHidden in actions.test.ts are the same loop under two names."},
+"abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 1, "bypassing_call_sites": 1, "where": "getBudgetableCategories gained includeHiddenCategories with a conditional SQL hidden clause; copyPreviousMonth re-implements the whole selection instead of calling it."}
+}

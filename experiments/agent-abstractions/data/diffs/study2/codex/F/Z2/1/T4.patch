@@ -1,0 +1,92 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index d443295..a69d27f 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -8,8 +8,8 @@ import {
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
+-  getScheduleOccurrenceMatchStartDate,
+   getScheduledAmount,
++  getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+@@ -37,12 +37,19 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+-      [{ num1: 10100, num2: 20000 }, 20000],
+-      [{ num1: 20000, num2: 10100 }, 20000],
+-    ])('uses the range end furthest from zero: %j', (amount, expected) => {
++      [{ num1: 10100, num2: 20000 }, 10100],
++      [{ num1: 20000, num2: 10100 }, 10100],
++      [{ num1: -3000, num2: 5000 }, -3000],
++    ])('uses the lowest value in the range: %j', (amount, expected) => {
+       expect(getScheduledAmount(amount)).toBe(expected);
+     });
+ 
++    it('inverts the selected range amount when requested', () => {
++      expect(getScheduledAmount({ num1: 10100, num2: 20000 }, true)).toBe(
++        -10100,
++      );
++    });
++
+     it('keeps single amounts and missing amounts unchanged', () => {
+       expect(getScheduledAmount(-123)).toBe(-123);
+       expect(getScheduledAmount(null as never)).toBe(0);
+@@ -50,9 +57,9 @@ describe('schedules', () => {
+ 
+     it.each([
+       [-10000, -10750],
+-      [10000, 10750],
++      [10000, 9250],
+       [-1234, -1327],
+-    ])('uses the approximate tolerance furthest from zero for %i', (amount, expected) => {
++    ])('uses the lowest approximate value for %i', (amount, expected) => {
+       expect(getScheduledAmount(amount, false, 'isapprox')).toBe(expected);
+     });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 2be2b06..6f2674d 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -1,6 +1,5 @@
+ // @ts-strict-ignore
+ import type { IRuleOptions } from '@rschedule/core';
+-import { getApproxNumberThreshold } from './rules';
+ import * as d from 'date-fns';
+ 
+ import { Condition } from '#server/rules';
+@@ -8,6 +7,7 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import { q } from './query';
++import { getApproxNumberThreshold } from './rules';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+@@ -379,7 +379,7 @@ export function applyWeekendRuleToDay(
+ }
+ 
+ // The amount a schedule is expected to post. Ranged ("is between") and
+-// approximate amounts are scheduled at the end furthest from zero.
++// approximate amounts are scheduled at the lowest value they allow.
+ export function getScheduledAmount(
+   amount: number | { num1: number; num2: number },
+   inverse: boolean = false,
+@@ -391,11 +391,11 @@ export function getScheduledAmount(
+ 
+   if (typeof amount === 'number') {
+     const threshold = op === 'isapprox' ? getApproxNumberThreshold(amount) : 0;
+-    const scheduledAmount = amount + Math.sign(amount || 1) * threshold;
++    const scheduledAmount =
++      amount + (amount > 0 ? -1 : Math.sign(amount || 1)) * threshold;
+     return inverse ? -scheduledAmount : scheduledAmount;
+   }
+-  const scheduledAmount =
+-    Math.abs(amount.num1) >= Math.abs(amount.num2) ? amount.num1 : amount.num2;
++  const scheduledAmount = Math.min(amount.num1, amount.num2);
+   return inverse ? -scheduledAmount : scheduledAmount;
+ }
+ 

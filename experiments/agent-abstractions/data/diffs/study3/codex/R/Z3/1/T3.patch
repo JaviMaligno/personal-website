@@ -1,0 +1,123 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index c8082ea..43a687b 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -182,6 +182,7 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
++  await link.assertAccountOpen(upgradingId);
+   await link.assertAccountNotLinked(
+     'goCardless',
+     account.account_id,
+@@ -254,6 +255,7 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
++  await link.assertAccountOpen(upgradingId);
+   await link.assertAccountNotLinked(
+     'simpleFin',
+     externalAccount.account_id,
+@@ -336,6 +338,7 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
++  await link.assertAccountOpen(upgradingId);
+   await link.assertAccountNotLinked(
+     'pluggyai',
+     externalAccount.account_id,
+@@ -420,6 +423,7 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
++  await link.assertAccountOpen(upgradingId);
+   await link.assertAccountNotLinked(
+     'akahu',
+     externalAccount.account_id,
+@@ -499,6 +503,7 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
++  await link.assertAccountOpen(upgradingId);
+   await link.assertAccountNotLinked(
+     'enableBanking',
+     externalAccount.account_id,
+@@ -587,6 +592,7 @@ async function linkFintegraAccount({
+   startingDate,
+   startingBalance,
+ }: LinkAccountBaseParams & { externalAccount: SyncServerFintegraAccount }) {
++  await link.assertAccountOpen(upgradingId);
+   await link.assertAccountNotLinked(
+     'fintegra',
+     externalAccount.account_id,
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index 5a8ae3b..a911d9b 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -1,7 +1,11 @@
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ 
+-import { assertAccountNotLinked, findOrCreateBank } from './link';
++import {
++  assertAccountNotLinked,
++  assertAccountOpen,
++  findOrCreateBank,
++} from './link';
+ 
+ beforeEach(async () => {
+   await global.emptyDatabase()();
+@@ -131,3 +135,28 @@ describe('assertAccountNotLinked', () => {
+     ).resolves.toBeUndefined();
+   });
+ });
++
++describe('assertAccountOpen', () => {
++  it('rejects a closed account', async () => {
++    await db.insertWithUUID('accounts', {
++      id: 'closed',
++      name: 'Closed account',
++      closed: 1,
++    });
++
++    await expect(assertAccountOpen('closed')).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  });
++
++  it('allows open accounts and linking as a new account', async () => {
++    await db.insertWithUUID('accounts', {
++      id: 'open',
++      name: 'Open account',
++      closed: 0,
++    });
++
++    await expect(assertAccountOpen('open')).resolves.toBeUndefined();
++    await expect(assertAccountOpen()).resolves.toBeUndefined();
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index f500ac8..e72f17a 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -68,3 +68,20 @@ export async function assertAccountNotLinked(
+     throw new Error('This bank account is already linked to another account.');
+   }
+ }
++
++export async function assertAccountOpen(accountId?: string) {
++  if (!accountId) {
++    return;
++  }
++
++  const account = await db.first<{ closed: number }>(
++    'SELECT closed FROM accounts WHERE id = ?',
++    [accountId],
++  );
++
++  if (account?.closed === 1) {
++    throw new Error(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  }
++}

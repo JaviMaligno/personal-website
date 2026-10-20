@@ -1,0 +1,13 @@
+{
+  "id": "4922079749",
+  "reuse": {"score": 3, "why": "Reuses getRangedAmount and getApproxNumberThreshold and consolidates the server/shared sites, but adds a new getExpectedAmount instead of extending the existing getScheduledAmount that the API's expectedAmount and the client already use."},
+  "duplication": {"score": 3, "why": "getExpectedAmount repeats getScheduledAmount's null/number/range dispatch, leaving two resolvers of 'the amount a schedule is expected at' that now disagree on approximate amounts, although five inline dispatches were removed."},
+  "placement": {"score": 5, "why": "The rule lives in shared/schedules.ts beside the range helper, and callers only pass value and operator."},
+  "scope": {"score": 5, "why": "Only amount resolution sites, the forecast raw type, tests and a release note."},
+  "maintainability": {"score": 3, "why": "A maintainer must know that getExpectedAmount and getScheduledAmount differ; api-models.ts expectedAmount and the client views silently keep the old rule for approximate amounts."},
+  "bypasses_abstraction": {"value": true, "where": "shared/schedules.ts getExpectedAmount is written next to getScheduledAmount rather than extending it; server/api-models.ts scheduleModel.toExternal (expectedAmount) and desktop-client callers stay on getScheduledAmount."},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "getExpectedAmount reshapes getScheduledAmount (null -> 0, number, range via getRangedAmount) under a new name with an op parameter instead of inverse."},
+  "one_place": {"value": false, "where": "The approximate rule is only in getExpectedAmount; getScheduledAmount, used by api-models.ts expectedAmount and by SchedulesTable, Balance, SchedulesListItem, MobileSchedulesPage and useScheduleEdit, does not apply it."}
+}

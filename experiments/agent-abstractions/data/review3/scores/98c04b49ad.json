@@ -1,0 +1,13 @@
+{
+  "id": "98c04b49ad",
+  "reuse": {"score": 3, "why": "Adds getWorstCaseAmount and uses it at every site, but the existing getScheduledAmount already handles missing, numeric and ranged amounts, and the five sites keep their own null/number/range dispatch instead of calling it."},
+  "duplication": {"score": 3, "why": "The range rule now has one definition, but the change leaves the 'missing ? 0 : number ? value : range' dispatch copied at four sites (schedules/app.ts twice, forecast, preview) plus schedule-template, alongside getScheduledAmount, which does the same."},
+  "placement": {"score": 5, "why": "The rule lives in shared/schedules.ts next to getScheduledAmount, where both server and client can import it."},
+  "scope": {"score": 5, "why": "Only the rule, its call sites, a test and a release note change; one comment is awkwardly line-wrapped."},
+  "maintainability": {"score": 4, "why": "A future change to the range rule is one edit, though a change to how missing or numeric amounts are planned would still have to touch each copied dispatch."},
+  "bypasses_abstraction": {"value": true, "where": "updateActions and postTransactionForSchedule (schedules/app.ts), normalizeSchedule (forecast-schedules.ts), computeSchedulePreviewTransactions and schedule-template keep their own amount dispatch instead of calling getScheduledAmount"},
+  "duplicated_blocks": 0,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "The leftover per-site dispatches are pre-existing near-identical copies, not reshaped by this diff"},
+  "one_place": {"value": true, "where": "getWorstCaseAmount in shared/schedules.ts, used by getScheduledAmount and by all five server/shared sites that previously computed the midpoint"}
+}

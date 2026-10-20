@@ -1,0 +1,13 @@
+{
+  "id": "5859c8b262",
+  "reuse": {"score": 3, "why": "Extends the shared getDateWithSkippedWeekend and reuses recurConfigToRSchedule/RSchedule for the new handler, but getDatesInRange writes its own weekend/holiday test instead of the isNonBusinessDay predicate the same diff introduces (left private)."},
+  "duplication": {"score": 2, "why": "The daily 'skip non-business days' rule is implemented twice (a loop in getNextDate and a flatMap branch in getDatesInRange), and the holiday membership check is re-written inline in getDatesInRange with exact-match only, diverging from the MM-DD handling in isNonBusinessDay."},
+  "placement": {"score": 3, "why": "The date-adjustment rule belongs in shared/schedules.ts, yet the daily-vs-other dispatch and holiday test are decided inline in the server handler, while the new handler itself sits correctly next to getUpcomingDates."},
+  "scope": {"score": 4, "why": "Changes stay within schedules (shared helper, server handlers, RecurConfig type) and their tests."},
+  "maintainability": {"score": 2, "why": "The weekend/holiday decision now lives in three shapes (helper, getNextDate daily loop, getDatesInRange branch) while getUpcomingDates and budget/schedule-template.ts still call the old path without the daily skip or holidays, so the rule already disagrees across call sites."},
+  "bypasses_abstraction": {"value": true, "where": "server/schedules/app.ts getDatesInRange decides daily skipping with its own 'd.isWeekend(date) || config.holidays?.includes(...)' instead of a shared predicate; server/budget/schedule-template.ts and getUpcomingDates are not routed through the new daily/holiday rule."},
+  "duplicated_blocks": 2,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "The non-business-day test in getDatesInRange is a reshaped copy of isNonBusinessDay (Array.includes instead of some/day-or-MM-DD), and the daily-skip branch is reshaped from getNextDate's while-loop into a flatMap filter."},
+  "abstraction_drift": {"value": true, "parameters_added": 1, "special_case_branches": 2, "bypassing_call_sites": 3, "where": "getDateWithSkippedWeekend gains a holidays parameter; daily-frequency special cases are added outside it in getNextDate and getDatesInRange; getDatesInRange re-implements the holiday check, and getUpcomingDates plus schedule-template.ts bypass the daily rule."}
+}

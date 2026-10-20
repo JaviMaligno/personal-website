@@ -1,0 +1,13 @@
+{
+  "id": "e84e5573fe",
+  "reuse": {"score": 5, "why": "Every step goes through the existing linkBankSyncAccount helper (duplicate-link, closed-account and takeover rules, and the Fintegra link), reuses the unlink field set from unlinkAccount, and generalises the Akahu downloader instead of copying it."},
+  "duplication": {"score": 4, "why": "Rules are written once in the shared link helper and the unlinked-fields object is shared with unlinkAccount; the new fintegraAccounts listing is a verbatim copy of akahuAccounts with a different URL."},
+  "placement": {"score": 5, "why": "Link rules sit in the shared link routine before any side effect, download logic in sync.ts, server paths in server-config.ts and the provider id in SYNC_PROVIDERS."},
+  "scope": {"score": 3, "why": "Adds an unrequested fintegra-accounts listing handler and desktop-client provider entries although the request says the client side is handled separately."},
+  "maintainability": {"score": 4, "why": "Centralised and readable; the replaceExistingLink flag has to be hand-threaded through each provider wrapper, and the extra listing copy adds another per-provider function to maintain."},
+  "bypasses_abstraction": {"value": false, "where": ""},
+  "duplicated_blocks": 1,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": false, "where": "fintegraAccounts copies akahuAccounts verbatim apart from the server URL, not disguised."},
+  "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "linkBankSyncAccount in packages/loot-core/src/server/accounts/app.ts gains replaceExistingLink; the closed-account and already-linked checks apply to every provider with no provider-specific branches, and linkFintegraAccount calls the helper like the other providers. downloadAkahuTransactions becomes downloadServerTransactions(serverUrl, providerName, ...) used by Akahu and Fintegra."}
+}

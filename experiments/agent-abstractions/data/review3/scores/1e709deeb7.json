@@ -1,0 +1,11 @@
+{"id":"1e709deeb7",
+"reuse":{"score":3,"why":"Introduces one shared selection used by all five month-wide actions, but ignores the tree's existing notion of a UI-saved template (template_settings source = 'ui', used in statements.ts and cleanup-template-notes.ts) and makes copyPreviousMonth run a second query and intersect ids instead of extending getBudgetData."},
+"duplication":{"score":4,"why":"Removes three copies of the hidden-filter SQL into getMonthWideTargetCategories, though the income/tracking guard is still repeated in each of the five actions."},
+"placement":{"score":4,"why":"The selection lives in budget/actions.ts beside the actions that use it; encoding the rule purely in SQL is consistent with the tree, though it splits the rule between the query (hidden/template) and per-action code (income)."},
+"scope":{"score":5,"why":"Only the month-wide actions, focused tests and a release note are touched; single-category actions are unaffected."},
+"maintainability":{"score":4,"why":"One function now owns which categories month-wide actions write, which is easy to own, but the two-step filter in copyPreviousMonth and the separate income check are small rough edges."},
+"bypasses_abstraction":{"value":false,"where":"No existing helper for month-wide category selection existed; the template check uses goal_def IS NULL rather than the template_settings source convention, which is a missed convention rather than a bypassed helper."},
+"duplicated_blocks":0,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"None; the repeated income guard is pre-existing and left verbatim."},
+"one_place":{"value":true,"where":"getMonthWideTargetCategories in budget/actions.ts is used by copyPreviousMonth, setZero, set3MonthAvg, set6MonthAvg and set12MonthAvg for the hidden/group-hidden/template rule."}}

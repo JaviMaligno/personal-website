@@ -1,0 +1,154 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index a5523cd..d253c9e 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -218,6 +218,32 @@ describe('set budget average', () => {
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(600);
+   });
+ 
++  it('includes hidden categories and hidden groups when requested', async () => {
++    await db.insertCategoryGroup({
++      id: 'hidden-group',
++      name: 'Hidden',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'hidden-cat',
++      name: 'Hidden category',
++      cat_group: 'hidden-group',
++      is_income: 0,
++    });
++    await db.updateWithSchema('category_groups', {
++      id: 'hidden-group',
++      hidden: 1,
++    });
++    await db.updateWithSchema('categories', { id: 'hidden-cat', hidden: 1 });
++    await setBudget({ category: 'hidden-cat', month: '2024-04', amount: 900 });
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-04', includeHiddenCategories: true });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-hidden-cat')).toBe(0);
++  });
++
+   it('leaves fixed groups untouched in bulk averages, using group notes only', async () => {
+     await db.insertCategoryGroup({
+       id: 'fixed-group',
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 8b441eb..c8b8fd1 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -274,14 +274,26 @@ export async function copySinglePreviousMonth({
+   });
+ }
+ 
+-export async function setZero({ month }: { month: string }): Promise<void> {
++type MonthBudgetOptions = {
++  month: string;
++  includeHiddenCategories?: boolean;
++};
++
++function visibleCategoriesFilter(includeHiddenCategories: boolean): string {
++  return includeHiddenCategories ? '' : 'AND c.hidden = 0 AND g.hidden = 0';
++}
++
++export async function setZero({
++  month,
++  includeHiddenCategories = false,
++}: MonthBudgetOptions): Promise<void> {
+   const categories = await db.all<
+     db.DbViewCategory & { group_note: string | null }
+   >(
+     `SELECT c.*, gn.note AS group_note FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
+      LEFT JOIN notes gn ON gn.id = g.id
+-     WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++     WHERE c.tombstone = 0 ${visibleCategoriesFilter(includeHiddenCategories)}
+        AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'`,
+   );
+ 
+@@ -300,9 +312,8 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+ 
+ export async function setLastMonthSpending({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: MonthBudgetOptions): Promise<void> {
+   const categories = await db.all<
+     db.DbViewCategoryWithGroupHidden & { group_note: string | null }
+   >(
+@@ -311,7 +322,7 @@ export async function setLastMonthSpending({
+     FROM categories c
+     LEFT JOIN category_groups g ON c.cat_group = g.id
+     LEFT JOIN notes gn ON gn.id = g.id
+-    WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++    WHERE c.tombstone = 0 ${visibleCategoriesFilter(includeHiddenCategories)}
+       AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'
+     `,
+   );
+@@ -339,9 +350,8 @@ export async function setLastMonthSpending({
+ 
+ export async function set3MonthAvg({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: MonthBudgetOptions): Promise<void> {
+   const categories = await db.all<
+     db.DbViewCategoryWithGroupHidden & { group_note: string | null }
+   >(
+@@ -350,7 +360,7 @@ export async function set3MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   LEFT JOIN notes gn ON gn.id = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0 ${visibleCategoriesFilter(includeHiddenCategories)}
+     AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'
+   `,
+   );
+@@ -381,9 +391,8 @@ export async function set3MonthAvg({
+ 
+ export async function set12MonthAvg({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: MonthBudgetOptions): Promise<void> {
+   const categories = await db.all<
+     db.DbViewCategoryWithGroupHidden & { group_note: string | null }
+   >(
+@@ -392,7 +401,7 @@ export async function set12MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   LEFT JOIN notes gn ON gn.id = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0 ${visibleCategoriesFilter(includeHiddenCategories)}
+     AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'
+   `,
+   );
+@@ -412,9 +421,8 @@ export async function set12MonthAvg({
+ 
+ export async function set6MonthAvg({
+   month,
+-}: {
+-  month: string;
+-}): Promise<void> {
++  includeHiddenCategories = false,
++}: MonthBudgetOptions): Promise<void> {
+   const categories = await db.all<
+     db.DbViewCategoryWithGroupHidden & { group_note: string | null }
+   >(
+@@ -423,7 +431,7 @@ export async function set6MonthAvg({
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
+   LEFT JOIN notes gn ON gn.id = g.id
+-  WHERE c.tombstone = 0 AND c.hidden = 0 AND g.hidden = 0
++  WHERE c.tombstone = 0 ${visibleCategoriesFilter(includeHiddenCategories)}
+     AND COALESCE(JSON_EXTRACT(c.template_settings, '$.source'), 'notes') <> 'ui'
+   `,
+   );

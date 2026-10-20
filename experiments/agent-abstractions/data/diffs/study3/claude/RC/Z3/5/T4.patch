@@ -1,0 +1,211 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index a794253..ee7ed56 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -51,6 +51,7 @@ type LinkAccountBaseParams = {
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
++  replaceExistingLink?: boolean;
+ };
+ 
+ export type AccountHandlers = {
+@@ -175,12 +176,13 @@ async function assertBankAccountNotLinked(
+   syncSource: NonNullable<AccountEntity['account_sync_source']>,
+   externalAccountId: string,
+   upgradingId?: AccountEntity['id'],
++  replaceExistingLink = false,
+ ) {
+   const existing = await db.first<{ id: string }>(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',
+     [syncSource, externalAccountId, upgradingId ?? null],
+   );
+-  if (existing) {
++  if (existing && !replaceExistingLink) {
+     throw new Error('This bank account is already linked to another account.');
+   }
+ 
+@@ -208,6 +210,7 @@ async function linkBankSyncAccount({
+   startingBalance,
+   fileId,
+   syncedTables,
++  replaceExistingLink = false,
+ }: {
+   bank: { id: string; bank_id: string };
+   externalAccountId: string;
+@@ -219,9 +222,31 @@ async function linkBankSyncAccount({
+   startingBalance?: number;
+   fileId?: string;
+   syncedTables: string[];
++  replaceExistingLink?: boolean;
+ }) {
+   let id: string;
+ 
++  if (replaceExistingLink) {
++    // Release any other account holding this bank account. Only local state
++    // is changed: the bank connection stays in use by the new link.
++    const holders = await db.all<{ id: string }>(
++      'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id IS NOT ?',
++      [syncSource, externalAccountId, upgradingId ?? null],
++    );
++    for (const holder of holders) {
++      await db.updateAccount({
++        id: holder.id,
++        account_id: null,
++        bank: null,
++        balance_current: null,
++        balance_available: null,
++        balance_limit: null,
++        account_sync_source: null,
++        bank_sync_status: null,
++      });
++    }
++  }
++
+   if (upgradingId) {
+     const accRow = await db.first<db.DbAccount>(
+       'SELECT * FROM accounts WHERE id = ?',
+@@ -283,6 +308,7 @@ async function linkGoCardlessAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+@@ -291,6 +317,7 @@ async function linkGoCardlessAccount({
+     'goCardless',
+     account.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+@@ -308,6 +335,7 @@ async function linkGoCardlessAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+     syncedTables: ['transactions', 'accounts'],
+   });
+ }
+@@ -318,6 +346,7 @@ async function linkSimpleFinAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
+@@ -325,6 +354,7 @@ async function linkSimpleFinAccount({
+     'simpleFin',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -351,6 +381,7 @@ async function linkSimpleFinAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+     syncedTables: ['transactions', 'accounts'],
+   });
+ }
+@@ -361,6 +392,7 @@ async function linkPluggyAiAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
+@@ -368,6 +400,7 @@ async function linkPluggyAiAccount({
+     'pluggyai',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const fileId = getPrefs()?.cloudFileId;
+@@ -396,6 +429,7 @@ async function linkPluggyAiAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+     fileId,
+     syncedTables: ['transactions', 'accounts'],
+   });
+@@ -407,6 +441,7 @@ async function linkAkahuAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
+@@ -414,6 +449,7 @@ async function linkAkahuAccount({
+     'akahu',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -437,6 +473,7 @@ async function linkAkahuAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+     syncedTables: ['transactions'],
+   });
+ }
+@@ -447,6 +484,7 @@ async function linkFintegraAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerFintegraAccount;
+ }) {
+@@ -454,6 +492,7 @@ async function linkFintegraAccount({
+     'fintegra',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -474,6 +513,7 @@ async function linkFintegraAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+     syncedTables: ['transactions', 'accounts'],
+   });
+ }
+@@ -484,6 +524,7 @@ async function linkEnableBankingAccount({
+   offBudget = false,
+   startingDate,
+   startingBalance,
++  replaceExistingLink = false,
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
+@@ -491,6 +532,7 @@ async function linkEnableBankingAccount({
+     'enableBanking',
+     externalAccount.account_id,
+     upgradingId,
++    replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -521,6 +563,7 @@ async function linkEnableBankingAccount({
+     offBudget,
+     startingDate,
+     startingBalance,
++    replaceExistingLink,
+     syncedTables: ['transactions', 'accounts'],
+   });
+ }

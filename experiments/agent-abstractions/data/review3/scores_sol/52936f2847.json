@@ -1,0 +1,45 @@
+{
+ "id": "52936f2847",
+ "reuse": {
+  "score": 3,
+  "why": "Fintegra reuses findOrCreateBank and linkBankSyncAccount, but duplicates transaction-download plumbing and the local clearing operation in unlinkAccount."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The change duplicates both an existing provider downloader's request/response flow and unlinkAccount's account-field reset."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Server responsibilities remain in the established modules, but the Fintegra model belongs in its own provider module and an assertion helper should not perform unlink mutations."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on the requested linking policies, Fintegra integration, and related tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared validation serves every provider, but its misleading assertion name, mutation responsibility, and duplicated unlink fields make future changes harder to own."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "app.ts: assertBankAccountNotLinked reproduces unlinkAccount's local clearing operation; extract that operation so replacement can reuse it without provider cleanup."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "sync.ts: downloadFintegraTransactions reshapes the existing downloadEnableBankingTransactions request/error/response flow into compact expressions and a retVal variable rather than sharing it."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 0,
+  "where": "app.ts: the shared duplicate-link assertion gains replaceExistingLink, closed-account rejection, and a replacement branch that mutates another account; all six provider handlers call it."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 50.0
+ }
+}

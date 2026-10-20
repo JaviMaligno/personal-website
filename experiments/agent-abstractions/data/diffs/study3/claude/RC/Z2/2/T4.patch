@@ -1,0 +1,97 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index e59f271..0c17a94 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -5,10 +5,10 @@ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ import * as monthUtils from './months';
+ import {
+   computeSchedulePreviewTransactions,
++  getExpectedAmount,
+   getHasTransactionsQuery,
+   getNextDate,
+   getNextDateAfter,
+-  getExpectedAmount,
+   getRangeExpectedAmount,
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+@@ -647,18 +647,20 @@ describe('schedules', () => {
+ });
+ 
+ describe('getRangeExpectedAmount', () => {
+-  it('picks the end furthest from zero regardless of order', () => {
++  it('picks the lowest end regardless of order', () => {
+     expect(getRangeExpectedAmount({ num1: -10100, num2: -20000 })).toBe(-20000);
+     expect(getRangeExpectedAmount({ num1: -20000, num2: -10100 })).toBe(-20000);
+-    expect(getRangeExpectedAmount({ num1: 10100, num2: 20000 })).toBe(20000);
+-    expect(getRangeExpectedAmount({ num1: 20000, num2: 10100 })).toBe(20000);
++    expect(getRangeExpectedAmount({ num1: 10100, num2: 20000 })).toBe(10100);
++    expect(getRangeExpectedAmount({ num1: 20000, num2: 10100 })).toBe(10100);
++    expect(getRangeExpectedAmount({ num1: -3000, num2: 5000 })).toBe(-3000);
++    expect(getRangeExpectedAmount({ num1: 5000, num2: -3000 })).toBe(-3000);
+   });
+ });
+ 
+ describe('getExpectedAmount', () => {
+-  it('uses the end of an approximate amount furthest from zero', () => {
++  it('uses the lowest end of an approximate amount', () => {
+     expect(getExpectedAmount(-10000, 'isapprox')).toBe(-10750);
+-    expect(getExpectedAmount(10000, 'isapprox')).toBe(10750);
++    expect(getExpectedAmount(10000, 'isapprox')).toBe(9250);
+     expect(getExpectedAmount(-1234, 'isapprox')).toBe(-1327);
+   });
+ 
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 03e62c1..44f84cd 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -6,8 +6,8 @@ import { Condition } from '#server/rules';
+ import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
+ 
+ import * as monthUtils from './months';
+-import { getApproxNumberThreshold } from './rules';
+ import { q } from './query';
++import { getApproxNumberThreshold } from './rules';
+ 
+ export const DEFAULT_UPCOMING_SCHEDULE_DAYS = '7';
+ 
+@@ -355,16 +355,16 @@ export function getDateWithSkippedWeekend(
+ }
+ 
+ // The single amount a ranged ("is between") schedule amount is expected to
+-// come to: the end of the range furthest from zero (the worst case).
++// come to: the lowest value the range allows (the worst case).
+ export function getRangeExpectedAmount(range: {
+   num1: number;
+   num2: number;
+ }): number {
+-  return Math.abs(range.num2) > Math.abs(range.num1) ? range.num2 : range.num1;
++  return Math.min(range.num1, range.num2);
+ }
+ 
+ // The single amount a schedule is expected to come to for planning: ranged
+-// and approximate amounts resolve to the end furthest from zero (the worst
++// and approximate amounts resolve to the lowest value they allow (the worst
+ // case); "is" amounts are used as-is and a missing amount is 0.
+ export function getExpectedAmount(
+   amount: number | { num1: number; num2: number } | null | undefined,
+@@ -373,7 +373,7 @@ export function getExpectedAmount(
+   if (amount == null) return 0;
+   if (typeof amount !== 'number') return getRangeExpectedAmount(amount);
+   if (op === 'isapprox') {
+-    return amount + Math.sign(amount) * getApproxNumberThreshold(amount);
++    return amount - getApproxNumberThreshold(amount);
+   }
+   return amount;
+ }
+diff --git a/upcoming-release-notes/worst-case-lowest-amount.md b/upcoming-release-notes/worst-case-lowest-amount.md
+new file mode 100644
+index 0000000..1c4cc9f
+--- /dev/null
++++ b/upcoming-release-notes/worst-case-lowest-amount.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Schedules with ranged or approximate amounts are now expected at the lowest value they allow, so incoming money is planned at its least favorable end

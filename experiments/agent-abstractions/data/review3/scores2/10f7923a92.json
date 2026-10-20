@@ -1,0 +1,12 @@
+{"id":"10f7923a92",
+"reuse":{"score":3,"why":"The new link rules go into one prepareBankAccountLink guard called by all six link functions and unlinkAccount now shares clearBankLink, but Fintegra's link and download are written as copies of the existing provider functions rather than reusing a shared sequence."},
+"duplication":{"score":2,"why":"linkFintegraAccount is a sixth full copy of the upgrade/insert/payee/sync/sync-event sequence and downloadFintegraTransactions is a line-for-line copy of downloadAkahuTransactions."},
+"placement":{"score":4,"why":"The guard and clearBankLink sit in server/accounts/app.ts with the link handlers, the download in sync.ts with its siblings, the base path in server-config.ts and the provider id in the shared SYNC_PROVIDERS list."},
+"scope":{"score":4,"why":"Changes serve the four steps; the desktop-client edits are the minimum needed to keep exhaustive provider maps type-correct."},
+"maintainability":{"score":3,"why":"The link rules (duplicate holder, closed account, takeover) have one home, but each new provider still needs a copied link function and download function, so the sequence now has six copies to keep in sync."},
+"bypasses_abstraction":{"value":false,"where":"All link handlers, including linkFintegraAccount, call prepareBankAccountLink; unlinkAccount uses clearBankLink."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"linkFintegraAccount (accounts/app.ts) and downloadFintegraTransactions (accounts/sync.ts) are plain, recognisable copies of the existing provider functions."},
+"abstraction_drift":{"value":false,"parameters_added":1,"special_case_branches":0,"bypassing_call_sites":0,"where":"prepareBankAccountLink in accounts/app.ts gained the replaceExistingLink parameter for step 4; its other branches are the rules themselves, and every link handler calls it."}
+}

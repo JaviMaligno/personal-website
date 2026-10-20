@@ -1,0 +1,12 @@
+{"id": "854fcb7718",
+ "reuse": {"score": 5, "why": "Extends the existing applyWeekendRule, getDateWithSkippedWeekend and isDailyWeekendSkip helpers and threads holidays through every existing caller instead of adding parallel logic."},
+ "duplication": {"score": 4, "why": "The off-day test is defined once (isOffDay), but the '+ holidays.length' search-window padding heuristic is repeated in getNextDate, getUpcomingDates and getDatesInRange."},
+ "placement": {"score": 5, "why": "isOffDay and the move loop live in shared/schedules.ts next to the existing weekend rule; server code only passes config.holidays."},
+ "scope": {"score": 5, "why": "Only the holidays field, its threading and the off-day rule are touched."},
+ "maintainability": {"score": 4, "why": "The weekend/holiday rule is centralised; the remaining wart is the repeated window-size heuristic and the per-caller daily filter that pre-existed."},
+ "bypasses_abstraction": {"value": false, "where": "All weekend handling goes through applyWeekendRule/isOffDay; no call site re-implements it."},
+ "duplicated_blocks": 1,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "Only the small window-padding expression is repeated, openly, not reshaped."},
+ "one_place": {"value": true, "where": "isOffDay in shared/schedules.ts decides weekend-or-holiday and is used by getDateWithSkippedWeekend (move) and by the daily-skip filters in getNextDate, getUpcomingDates and getDatesInRange; every applyWeekendRule caller receives holidays."}
+}

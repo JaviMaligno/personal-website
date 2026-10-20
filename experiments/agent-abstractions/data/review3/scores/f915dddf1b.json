@@ -1,0 +1,8 @@
+{"id":"f915dddf1b",
+"completeness":{"per_site":{"forecast":"partial","rule-action-sync":"full","post-transaction":"full","preview":"partial","budget-template":"none"},
+"left_out":{"budget-template":"preserve_inconsistency"},
+"sites_full":2,"sites_partial":2,"sites_total":5,"value":0.6,
+"why":"updateActions and postTransactionForSchedule call getScheduledAmount with the raw value (full); normalizeSchedule keeps its own number-vs-range dispatch and calls only the new range-only getRangedAmountMidpoint, although the existing helper decides both cases (partial); computeSchedulePreviewTransactions keeps its own null ? 0 dispatch around getScheduledAmount (partial); the template's halve-the-rounded-sum copy is untouched, which preserves the listed inconsistency but not as an explicit parameter (none)."},
+"interface":{"score":3,"why":"Reuses the existing getScheduledAmount for the three-way decision but adds a second exported range-only entry point that lets callers keep their own dispatch, and the template's different rounding is not made explicit as a parameter."},
+"disguised_duplication":{"value":true,"where":"forecast-schedules.ts normalizeSchedule keeps the typeof-number dispatch that getScheduledAmount already performs, split into a local ternary plus getRangedAmountMidpoint; shared/schedules.ts computeSchedulePreviewTransactions repeats the helper's null check."}
+}

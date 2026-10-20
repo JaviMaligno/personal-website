@@ -1,0 +1,12 @@
+{"id":"afc8c15173",
+"reuse":{"score":5,"why":"Turns the existing Pluggy link into a provider-parameterised linkBankSyncAccount used by Pluggy, Akahu and Fintegra, extracts clearAccountBankLink from unlinkAccount and reuses it for the takeover, and generalises the Akahu download and account listing instead of copying them."},
+"duplication":{"score":4,"why":"Removes the Pluggy/Akahu link copy and the unlink reset copy; small residual repetition remains in the two thin getServer wrappers (akahuAccounts/fintegraAccounts) and the two parallel syncAccount dispatch branches."},
+"placement":{"score":4,"why":"Guard, shared link and unlink reset live in accounts/app.ts and the download in sync.ts where the tree keeps them; the Fintegra balance rule is added as another `||` in processBankSyncDownload's provider branch rather than a provider-level property."},
+"scope":{"score":3,"why":"Beyond the four steps it refactors the existing Pluggy/Akahu handlers, adds an unrequested 'fintegra-accounts' listing handler and touches two desktop-client files despite the request being server-side only (partly forced by SYNC_PROVIDERS typing)."},
+"maintainability":{"score":4,"why":"Fewer per-provider copies and one clearly named claimBankAccount guard; the merge silently gives Akahu the Pluggy-specific fileId and accounts-table notification, which a maintainer would want called out."},
+"bypasses_abstraction":{"value":false,"where":""},
+"duplicated_blocks":1,
+"would_merge":"yes",
+"disguised_duplication":{"value":false,"where":""},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":0,"where":"claimBankAccount in accounts/app.ts takes replaceExistingLink and carries the closed-upgrading-account branch and the replace-and-clear branch; every link handler (GoCardless, SimpleFin, EnableBanking and the shared linkBankSyncAccount) calls it"}
+}

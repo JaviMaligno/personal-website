@@ -1,0 +1,12 @@
+{"id":"133543182b",
+"reuse":{"score":4,"why":"Extends the existing getDateWithSkippedWeekend with a holidays parameter and adds a shared isSkippedDay predicate in shared/schedules.ts, reused by getNextDate and the server date functions."},
+"duplication":{"score":3,"why":"getUpcomingDates now re-implements the same per-occurrence 'skip daily / move otherwise / filter null' mapping that getDatesInRange has, in a reordered shape, and the '(holidays.length) + 3' look-around constant is restated in several places."},
+"placement":{"score":4,"why":"The day-skipping rule lives in shared/schedules.ts, where the weekend rule already lived; server code only consumes it."},
+"scope":{"score":3,"why":"Includes unrelated churn in app.test.ts (import reordering and reformatting of existing getDatesInRange calls)."},
+"maintainability":{"score":3,"why":"The optional holidays parameter defaults to [] so callers that forget it silently ignore holidays: budget/schedule-template.ts still calls getDateWithSkippedWeekend without holidays, so the rule is not applied there."},
+"bypasses_abstraction":{"value":false,"where":"All weekend handling still goes through getDateWithSkippedWeekend / the new isSkippedDay."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"server/schedules/app.ts getUpcomingDates: its new map (skipWeekend guard, daily-and-skipped -> null, else getDateWithSkippedWeekend, filter null) is the same logic as getDatesInRange's map, reordered rather than shared."},
+"one_place":{"value":false,"where":"isSkippedDay/getDateWithSkippedWeekend in shared/schedules.ts hold the rule, but holidays must be threaded by each caller and budget/schedule-template.ts (two getDateWithSkippedWeekend calls) is not updated, so that path still treats only weekends as skipped."}
+}

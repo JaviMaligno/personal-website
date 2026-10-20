@@ -1,0 +1,11 @@
+{"id":"ebf30e7934",
+"reuse":{"score":3,"why":"Weekend/holiday moves go through the existing getDateWithSkippedWeekend and RSchedule, but the daily-skip rule is not given a shared helper: getUpcomingDates and getDatesInRange each write their own skip loop next to getNextDate's firstWeekdayOccurrence."},
+"duplication":{"score":2,"why":"The 'skipWeekend && frequency === daily' decision and the skip-weekend-occurrence filtering appear three times (shared getNextDate, getUpcomingDates, getDatesInRange), and getDatesInRange re-codes the move-or-skip dispatch rather than sharing one per-occurrence adjust function."},
+"placement":{"score":3,"why":"Holiday logic sits in shared/schedules correctly, but the daily-skip rule is spread across shared and server/schedules/app.ts, and schedule-template.ts only got the holidays argument, not the daily rule."},
+"scope":{"score":4,"why":"Changes stay on schedules; the rule-utils data additions and four release notes are related to the steps."},
+"maintainability":{"score":3,"why":"A future change to how an occurrence is adjusted (skip vs move vs holiday) must be applied in three places that already diverge (bounded take sizes, schedule-template not covered)."},
+"bypasses_abstraction":{"value":true,"where":"schedules/app.ts getUpcomingDates and getDatesInRange re-implement the daily weekend skip with isWeekendOrHoliday loops instead of going through a shared adjust/next-date helper; budget/schedule-template.ts calls getDateWithSkippedWeekend directly without the daily rule."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The daily-skip filter is expressed three ways: firstWeekdayOccurrence in shared/schedules.ts, a bounded for-loop in getUpcomingDates, and a continue-in-loop with the move/skip dispatch in getDatesInRange."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":3,"bypassing_call_sites":3,"where":"getDateWithSkippedWeekend gained a holidays parameter; getNextDate gained a daily-schedule branch (skipsWeekendDays in first lookup, reverse lookup and the move guard); getUpcomingDates, getDatesInRange and schedule-template.ts decide skip-vs-move themselves."}}

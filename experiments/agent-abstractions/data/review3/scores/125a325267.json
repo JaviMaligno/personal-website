@@ -1,0 +1,11 @@
+{"id":"125a325267",
+"reuse":{"score":3,"why":"Keeps the existing getDateWithSkippedWeekend call but puts the daily rule beside it in getNextDate instead of in that shared weekend helper used by getUpcomingDates and schedule-template; it also reads dateCond.value where the function otherwise uses value.schedule.data."},
+"duplication":{"score":3,"why":"The weekend filter under the isDailyWithSkippedWeekends condition is written twice in the same function, once for forward and once for reverse occurrences."},
+"placement":{"score":3,"why":"shared/schedules.ts is the right module, but the rule is inlined in one caller rather than in the weekend helper every caller uses."},
+"scope":{"score":5,"why":"Only getNextDate and a test."},
+"maintainability":{"score":2,"why":"A magic take of 14, a filter repeated twice, and a rule that only one of the three weekend paths knows about; getUpcomingDates and schedule-template will keep moving daily weekend dates."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getNextDate decides the daily case itself instead of extending getDateWithSkippedWeekend, which server/schedules/app.ts getUpcomingDates and server/budget/schedule-template.ts still rely on unchanged."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The repeated filter is a plain copy within getNextDate, not disguised."},
+"one_place":{"value":false,"where":"Rule added only inside shared/schedules.ts getNextDate; getUpcomingDates in server/schedules/app.ts and the schedule-template paths still apply getDateWithSkippedWeekend's move rule to daily schedules."}}

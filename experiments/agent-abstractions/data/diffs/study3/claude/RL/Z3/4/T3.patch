@@ -1,0 +1,33 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 6fa645e..f995c90 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -33,8 +33,8 @@ import type {
+   GoCardlessToken,
+   ImportTransactionEntity,
+   SyncServerAkahuAccount,
+-  SyncServerFintegraAccount,
+   SyncServerEnableBankingAccount,
++  SyncServerFintegraAccount,
+   SyncServerGoCardlessAccount,
+   SyncServerPluggyAiAccount,
+   SyncServerSimpleFinAccount,
+@@ -229,6 +229,18 @@ async function linkProviderAccount({
+   institution?: Parameters<typeof link.findOrCreateBank>[0];
+   newAccountFields?: { mask?: string; official_name?: string };
+ }) {
++  if (upgradingId) {
++    const target = await db.first<{ closed: number }>(
++      'SELECT closed FROM accounts WHERE id = ? AND tombstone = 0',
++      [upgradingId],
++    );
++    if (target?.closed === 1) {
++      throw new Error(
++        'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++      );
++    }
++  }
++
+   await assertBankAccountNotLinked(
+     syncSource,
+     externalAccount.account_id,

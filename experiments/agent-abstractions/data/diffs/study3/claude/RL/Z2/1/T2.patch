@@ -1,0 +1,28 @@
+diff --git a/packages/loot-core/src/server/api-models.ts b/packages/loot-core/src/server/api-models.ts
+index 238c0c7..bc9eeaa 100644
+--- a/packages/loot-core/src/server/api-models.ts
++++ b/packages/loot-core/src/server/api-models.ts
+@@ -11,6 +11,7 @@ import type {
+   TagEntity,
+ } from '#types/models';
+ 
++import { getScheduledAmount } from '#shared/schedules';
+ import type { RemoteFile } from './cloud-storage';
+ import * as models from './models';
+ 
+@@ -234,6 +235,7 @@ export type APIScheduleEntity = Pick<
+   account?: ScheduleEntity['_account']; // Optional will default to null
+   amount?: ScheduleEntity['_amount']; // Provide only 1 number except if the Amount
+   amountOp: AmountOPType; // 'is' | 'isapprox' | 'isbetween'
++  expectedAmount?: number; // Read-only: the amount the schedule is expected to post
+   date: ScheduleEntity['_date']; // mandatory field in creating a schedule Mandatory field in creation
+ };
+ 
+@@ -250,6 +252,7 @@ export const scheduleModel = {
+       account: schedule._account,
+       amount: schedule._amount,
+       amountOp: schedule._amountOp as 'is' | 'isapprox' | 'isbetween', // e.g. 'isapprox', 'is', etc.
++      expectedAmount: getScheduledAmount(schedule._amount),
+       date: schedule._date,
+     };
+   },

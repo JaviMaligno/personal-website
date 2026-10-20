@@ -1,0 +1,12 @@
+{"id": "5bebc12c5d",
+ "reuse": {"score": 3, "why": "Extends the existing hidden-filter SQL pattern and shares the template condition as a constant, but does not build on the template module's notion of a category with templates (goal_def) or introduce a shared category selection."},
+ "duplication": {"score": 2, "why": "setZero gets a fourth copy of the same categories/category_groups query, and copyPreviousMonth applies the template rule through a separate inverted query plus an in-loop Set check."},
+ "placement": {"score": 3, "why": "Logic stays in budget/actions.ts where the actions live, but the eligibility rule is spread across each action's SQL rather than one selection function."},
+ "scope": {"score": 5, "why": "Only the month-wide actions are touched; single-category actions are left alone."},
+ "maintainability": {"score": 2, "why": "The rule of which categories month-wide actions skip now lives in five places (four SQL strings and copyPreviousMonth's checks), joined by string interpolation of a SQL fragment."},
+ "bypasses_abstraction": {"value": false, "where": ""},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "copyPreviousMonth re-expresses the template rule as `NOT ${NO_SAVED_TEMPLATES}` in its own query and a Set filter, instead of sharing the selection the other actions use"},
+ "one_place": {"value": false, "where": "Template condition is a shared SQL fragment, but the hidden/group-hidden rule and the selection itself are repeated in setZero, set3/6/12MonthAvg SQL and in copyPreviousMonth's loop in packages/loot-core/src/server/budget/actions.ts"}
+}

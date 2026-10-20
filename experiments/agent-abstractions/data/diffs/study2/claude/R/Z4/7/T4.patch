@@ -1,0 +1,98 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index ebbf17c..623d814 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -517,7 +517,9 @@ async function getUpcomingDates({ config, count }) {
+       return schedule
+         .occurrences({
+           start,
+-          take: count * 7 + (config.holidays?.length ?? 0),
++          take:
++            count * 7 +
++            (config.holidays?.length ?? 0) * (Math.ceil((count * 7) / 365) + 1),
+         })
+         .toArray()
+         .filter(date => !isNonWorkingDay(date.date, config.holidays))
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5d9f3fc..5d54525 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -14,6 +14,7 @@ import {
+   getUpcomingDays,
+   indexPostedScheduleTransactions,
+   isCustomUpcomingLength,
++  isNonWorkingDay,
+   isScheduleOccurrencePosted,
+   UPCOMING_LENGTH_PRESET_LABELS,
+   UPCOMING_LENGTH_PRESET_OPTIONS,
+@@ -700,3 +701,34 @@ describe('getDateWithSkippedWeekend with holidays', () => {
+     ).toBe('2020-12-10');
+   });
+ });
++
++describe('recurring MM-DD holidays', () => {
++  it('skips the same day in every year', () => {
++    for (const day of ['2020-12-25', '2021-12-25', '2024-12-25']) {
++      const date = monthUtils.parseDate(day);
++      expect(isNonWorkingDay(date, ['12-25'])).toBe(true);
++    }
++    expect(isNonWorkingDay(monthUtils.parseDate('2020-12-24'), ['12-25'])).toBe(
++      false,
++    );
++  });
++
++  it('still treats YYYY-MM-DD as one day only and allows mixing', () => {
++    const holidays = ['2020-12-14', '12-25'];
++    expect(isNonWorkingDay(monthUtils.parseDate('2020-12-14'), holidays)).toBe(
++      true,
++    );
++    expect(isNonWorkingDay(monthUtils.parseDate('2021-12-14'), holidays)).toBe(
++      false,
++    );
++    expect(
++      monthUtils.dayFromDate(
++        getDateWithSkippedWeekend(
++          monthUtils.parseDate('2021-12-25'),
++          'after',
++          holidays,
++        ),
++      ),
++    ).toBe('2021-12-27');
++  });
++});
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 0e72940..d893012 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -369,11 +369,15 @@ export function getNextDateAfter(dateCond, afterDate: string): string | null {
+   return null;
+ }
+ 
++// Entries are either `YYYY-MM-DD` (that day only) or `MM-DD` (every year)
++function isHoliday(date: Date, holidays?: string[]): boolean {
++  if (holidays == null || holidays.length === 0) return false;
++  const day = monthUtils.dayFromDate(date);
++  return holidays.includes(day) || holidays.includes(day.slice(5));
++}
++
+ export function isNonWorkingDay(date: Date, holidays?: string[]): boolean {
+-  return (
+-    d.isWeekend(date) ||
+-    (holidays != null && holidays.includes(monthUtils.dayFromDate(date)))
+-  );
++  return d.isWeekend(date) || isHoliday(date, holidays);
+ }
+ 
+ export function getDateWithSkippedWeekend(
+diff --git a/upcoming-release-notes/recurring-holidays.md b/upcoming-release-notes/recurring-holidays.md
+new file mode 100644
+index 0000000..954e3e4
+--- /dev/null
++++ b/upcoming-release-notes/recurring-holidays.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow schedule holidays to be entered as MM-DD to repeat every year

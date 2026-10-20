@@ -1,0 +1,213 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index dd7f4e0..e84918a 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -12,6 +12,7 @@ import {
+   set3MonthAvg,
+   setBudget,
+   setCategoryCarryover,
++  setLastMonthSpending,
+   setNMonthAvg,
+   setZero,
+ } from './actions';
+@@ -349,6 +350,7 @@ describe('month-wide budget actions', () => {
+   afterEach(global.emptyDatabase());
+ 
+   async function setupDatabase() {
++    await db.insertAccount({ id: 'account1', name: 'Account 1' });
+     await db.insertCategoryGroup({
+       id: 'income-group',
+       name: 'Income',
+@@ -483,4 +485,133 @@ describe('month-wide budget actions', () => {
+       700,
+     );
+   });
++
++  it('setLastMonthSpending leaves hidden and template-managed categories untouched', async () => {
++    await setupDatabase();
++    await db.insertTransaction({
++      date: '2024-03-10',
++      amount: -3000,
++      account: 'account1',
++      category: 'cat-ok',
++    });
++    await setBudgetForAll('2024-04', 700);
++    await sheet.waitOnSpreadsheet();
++
++    await setLastMonthSpending({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-cat-ok')).toBe(3000);
++    expect(await getSheetValue('budget202404', 'budget-cat-hidden')).toBe(700);
++    expect(
++      await getSheetValue('budget202404', 'budget-cat-in-hidden-group'),
++    ).toBe(700);
++    expect(await getSheetValue('budget202404', 'budget-cat-templated')).toBe(
++      700,
++    );
++  });
++});
++
++describe('setLastMonthSpending', () => {
++  beforeEach(global.emptyDatabase());
++  afterEach(global.emptyDatabase());
++
++  async function setupDatabase() {
++    await db.insertAccount({ id: 'account1', name: 'Account 1' });
++    await db.insertCategoryGroup({
++      id: 'income-group',
++      name: 'Income',
++      is_income: 1,
++    });
++    await db.insertCategory({
++      id: 'income-cat',
++      name: 'Income',
++      cat_group: 'income-group',
++      is_income: 1,
++    });
++    await db.insertCategoryGroup({
++      id: 'group1',
++      name: 'group1',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'cat-spent',
++      name: 'cat-spent',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'cat-refunded',
++      name: 'cat-refunded',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'cat-unspent',
++      name: 'cat-unspent',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await sheet.loadSpreadsheet(db);
++    await budget.createBudget(['2024-03', '2024-04']);
++
++    await db.insertTransaction({
++      date: '2024-03-10',
++      amount: -3000,
++      account: 'account1',
++      category: 'cat-spent',
++    });
++    await db.insertTransaction({
++      date: '2024-03-11',
++      amount: 500,
++      account: 'account1',
++      category: 'cat-spent',
++    });
++    await db.insertTransaction({
++      date: '2024-03-12',
++      amount: 400,
++      account: 'account1',
++      category: 'cat-refunded',
++    });
++    await db.insertTransaction({
++      date: '2024-03-13',
++      amount: 5000,
++      account: 'account1',
++      category: 'income-cat',
++    });
++    await sheet.waitOnSpreadsheet();
++  }
++
++  it('budgets each expense category its net spending from the previous month', async () => {
++    await setupDatabase();
++
++    await setLastMonthSpending({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-cat-spent')).toBe(2500);
++    expect(await getSheetValue('budget202404', 'budget-cat-unspent')).toBe(0);
++    expect(await getSheetValue('budget202404', 'budget-cat-refunded')).toBe(0);
++  });
++
++  it('leaves income categories untouched in envelope budget mode', async () => {
++    await setupDatabase();
++    await setBudget({ category: 'income-cat', month: '2024-04', amount: 123 });
++    await sheet.waitOnSpreadsheet();
++
++    await setLastMonthSpending({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-income-cat')).toBe(123);
++  });
++
++  it('budgets income categories the amount received in tracking budget mode', async () => {
++    await setupDatabase();
++    db.runQuery(
++      `INSERT INTO preferences (id, value) VALUES ('budgetType', 'tracking')`,
++    );
++
++    await setLastMonthSpending({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-income-cat')).toBe(5000);
++  });
+ });
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index c476243..a3f946a 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -287,6 +287,31 @@ export async function setZero({ month }: { month: string }): Promise<void> {
+   });
+ }
+ 
++export async function setLastMonthSpending({
++  month,
++}: {
++  month: string;
++}): Promise<void> {
++  const prevSheetName = monthUtils.sheetForMonth(monthUtils.prevMonth(month));
++  const categories = await getMonthWideCategories();
++
++  await batchMessages(async () => {
++    for (const cat of categories) {
++      if (cat.is_income === 1 && !isTrackingBudget()) {
++        continue;
++      }
++
++      const netAmount = await getSheetValue(
++        prevSheetName,
++        'sum-amount-' + cat.id,
++      );
++      const amount = cat.is_income === 1 ? netAmount : -netAmount;
++
++      void setBudget({ category: cat.id, month, amount: Math.max(amount, 0) });
++    }
++  });
++}
++
+ export async function set3MonthAvg({
+   month,
+ }: {
+diff --git a/packages/loot-core/src/server/budget/app.ts b/packages/loot-core/src/server/budget/app.ts
+index b61f24c..4bf1674 100644
+--- a/packages/loot-core/src/server/budget/app.ts
++++ b/packages/loot-core/src/server/budget/app.ts
+@@ -26,6 +26,7 @@ export type BudgetHandlers = {
+   'budget/copy-previous-month': typeof actions.copyPreviousMonth;
+   'budget/copy-single-month': typeof actions.copySinglePreviousMonth;
+   'budget/set-zero': typeof actions.setZero;
++  'budget/set-last-month-spending': typeof actions.setLastMonthSpending;
+   'budget/set-3month-avg': typeof actions.set3MonthAvg;
+   'budget/set-6month-avg': typeof actions.set6MonthAvg;
+   'budget/set-12month-avg': typeof actions.set12MonthAvg;
+@@ -81,6 +82,10 @@ app.method(
+   mutator(undoable(actions.copySinglePreviousMonth)),
+ );
+ app.method('budget/set-zero', mutator(undoable(actions.setZero)));
++app.method(
++  'budget/set-last-month-spending',
++  mutator(undoable(actions.setLastMonthSpending)),
++);
+ app.method('budget/set-3month-avg', mutator(undoable(actions.set3MonthAvg)));
+ app.method('budget/set-6month-avg', mutator(undoable(actions.set6MonthAvg)));
+ app.method('budget/set-12month-avg', mutator(undoable(actions.set12MonthAvg)));

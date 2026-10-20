@@ -1,0 +1,131 @@
+diff --git a/packages/loot-core/src/server/accounts/app.test.ts b/packages/loot-core/src/server/accounts/app.test.ts
+new file mode 100644
+index 0000000..a8ef873
+--- /dev/null
++++ b/packages/loot-core/src/server/accounts/app.test.ts
+@@ -0,0 +1,44 @@
++import { app } from '#server/accounts/app';
++import * as db from '#server/db';
++import { loadMappings } from '#server/db/mappings';
++
++beforeEach(async () => {
++  await global.emptyDatabase()();
++  await loadMappings();
++}, 60_000);
++
++const goCardlessAccount = {
++  balance: 0,
++  institution: 'Test Bank',
++  account_id: 'bank-account-1',
++  mask: '1234',
++  name: 'Checking',
++  official_name: 'Checking Account',
++};
++
++describe('bank account linking', () => {
++  it('rejects a second link without creating an account or payee', async () => {
++    await db.insertAccount({
++      id: 'existing',
++      name: 'Existing',
++      account_id: goCardlessAccount.account_id,
++      account_sync_source: 'goCardless',
++      closed: 1,
++    });
++
++    await expect(
++      app.handlers['gocardless-accounts-link']({
++        requisitionId: 'requisition',
++        account: goCardlessAccount,
++      }),
++    ).rejects.toMatchObject({
++      message: 'This bank account is already linked to another account.',
++    });
++
++    expect(await db.getAccounts()).toHaveLength(1);
++    expect(
++      await db.first('SELECT id FROM payees WHERE transfer_acct IS NOT NULL'),
++    ).toBeNull();
++  });
++
++});
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 1ca2951..7d36277 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -52,6 +52,24 @@ type LinkAccountBaseParams = {
+   startingBalance?: number;
+ };
+ 
++async function assertBankAccountNotLinked(
++  provider: AccountEntity['account_sync_source'],
++  bankAccountId: string,
++  upgradingId?: AccountEntity['id'],
++) {
++  const existing = await db.first<{ id: string }>(
++    `SELECT id FROM accounts
++     WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ?
++       AND (? IS NULL OR id != ?)
++     LIMIT 1`,
++    [provider, bankAccountId, upgradingId ?? null, upgradingId ?? null],
++  );
++
++  if (existing) {
++    throw APIError('This bank account is already linked to another account.');
++  }
++}
++
+ export type AccountHandlers = {
+   'account-update': typeof updateAccount;
+   'accounts-get': typeof getAccounts;
+@@ -180,6 +198,7 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
++  await assertBankAccountNotLinked('goCardless', account.account_id, upgradingId);
+   let id;
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+ 
+@@ -247,6 +266,11 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
++  await assertBankAccountNotLinked(
++    'simpleFin',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id;
+ 
+   const institution = {
+@@ -324,6 +348,11 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
++  await assertBankAccountNotLinked(
++    'pluggyai',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id;
+   const fileId = getPrefs()?.cloudFileId;
+ 
+@@ -403,6 +432,7 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
++  await assertBankAccountNotLinked('akahu', externalAccount.account_id, upgradingId);
+   let id;
+ 
+   const institution = {
+@@ -477,6 +507,11 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
++  await assertBankAccountNotLinked(
++    'enableBanking',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   let id: string | undefined;
+ 
+   const institution = {

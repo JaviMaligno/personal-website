@@ -1,0 +1,61 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index d55dc53..c826852 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -46,8 +46,8 @@ describe('schedules', () => {
+       expect(getScheduledAmount(-10000, 'isapprox')).toBe(-10750);
+     });
+ 
+-    it('uses the end of an approximate income furthest from zero', () => {
+-      expect(getScheduledAmount(10000, 'isapprox')).toBe(10750);
++    it('uses the lowest value of an approximate income', () => {
++      expect(getScheduledAmount(10000, 'isapprox')).toBe(9250);
+     });
+ 
+     it('rounds the approximate tolerance to the cent', () => {
+@@ -70,10 +70,22 @@ describe('schedules', () => {
+       ).toBe(-20000);
+     });
+ 
+-    it('uses the end of a range furthest from zero for income', () => {
++    it('uses the lowest value of a range for income', () => {
+       expect(
+         getScheduledAmount({ num1: 10100, num2: 20000 }, 'isbetween'),
+-      ).toBe(20000);
++      ).toBe(10100);
++    });
++
++    it('uses the lowest value of a range for income regardless of entry order', () => {
++      expect(
++        getScheduledAmount({ num1: 20000, num2: 10100 }, 'isbetween'),
++      ).toBe(10100);
++    });
++
++    it('uses the negative end of a range spanning zero', () => {
++      expect(getScheduledAmount({ num1: -3000, num2: 5000 }, 'isbetween')).toBe(
++        -3000,
++      );
+     });
+ 
+     it('inverts the worst-case amount when requested', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 959af7f..c19af23 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -366,14 +366,9 @@ export function getScheduledAmount(
+   let expected: number;
+   if (typeof amount === 'number') {
+     expected =
+-      op === 'isapprox'
+-        ? amount + Math.sign(amount) * getApproxNumberThreshold(amount)
+-        : amount;
++      op === 'isapprox' ? amount - getApproxNumberThreshold(amount) : amount;
+   } else {
+-    expected =
+-      Math.abs(amount.num1) >= Math.abs(amount.num2)
+-        ? amount.num1
+-        : amount.num2;
++    expected = Math.min(amount.num1, amount.num2);
+   }
+   return inverse ? -expected : expected;
+ }

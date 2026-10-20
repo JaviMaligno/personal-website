@@ -1,0 +1,44 @@
+{
+ "id": "1e102b60bd",
+ "reuse": {
+  "score": 3,
+  "why": "Consumers reuse the shared weekend helpers, but getUpcomingDates repeats the daily-skip predicate and the range handler independently derives adjustment bounds."
+ },
+ "duplication": {
+  "score": 3,
+  "why": "Daily-skip eligibility and holiday-dependent adjustment bounds each have multiple definitions."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Holiday recognition and date adjustment belong in shared/schedules.ts, but the server handler also owns knowledge about the adjustment policy."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on the requested scheduling changes, their consumers, tests, and release notes."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "The split skip-and-adjust interface, independently maintained traversal bounds, and untyped handler config make future scheduling changes harder to maintain consistently."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "server/schedules/app.ts:getUpcomingDates reimplements shared/schedules.ts:dropsWeekends with rule.skipWeekend && rule.frequency === 'daily'."
+ },
+ "duplicated_blocks": 2,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "getDatesInRange expresses adjustment reach as 3 + holidays.length while applyWeekendRule expresses it as 2 + holidays.length, reshaping the same policy knowledge into a separate range-padding calculation."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 2,
+  "special_case_branches": 2,
+  "bypassing_call_sites": 1,
+  "where": "WeekendRule gains frequency and holidays; applyWeekendRule adds daily-frequency handling and an invalid-mode fallback, while getUpcomingDates independently repeats the daily-skip dispatch."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 38.9
+ }
+}

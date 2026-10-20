@@ -1,0 +1,14 @@
+{
+  "id": "b710a27781",
+  "completeness": {
+    "per_site": {"next-date": "partial", "upcoming-dates": "full", "template-first": "full", "template-following": "full"},
+    "left_out": {},
+    "sites_full": 3,
+    "sites_partial": 1,
+    "sites_total": 4,
+    "value": 0.875,
+    "why": "getUpcomingDates and both schedule-template sites pass their raw enable flag and mode to applyWeekendRule/applyWeekendRuleToDay, which decide whether and how to move the date; getNextDate calls applyWeekendRule but computes the enable flag itself as '!!skipWeekend && !noSkipWeekend', so whether the rule applies is still settled at that site (the noSkipWeekend option is not a named parameter of the definition), scored partial per the lower-level rule."
+  },
+  "interface": {"score": 4, "why": "applyWeekendRule takes just the date, the enable flag and the mode, with each caller mapping its own field name (weekendSolve vs weekendSolveMode); the day-string variant is a convenience wrapper, but the noSkipWeekend override is folded into the flag at the caller rather than made explicit, and the wrapper repeats the enable ternary instead of delegating."},
+  "disguised_duplication": {"value": true, "where": "applyWeekendRuleToDay in shared/schedules.ts re-states the 'skipWeekend ? getDateWithSkippedWeekend(...) : date' decision of applyWeekendRule with string conversion around it instead of calling applyWeekendRule."}
+}

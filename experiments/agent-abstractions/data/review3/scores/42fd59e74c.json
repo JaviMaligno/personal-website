@@ -1,0 +1,11 @@
+{"id": "42fd59e74c",
+ "reuse": {"score": 2, "why": "Writes its own getTemplatedCategoryIds that re-reads and re-parses goal_def instead of reusing goal-template's getTemplates, and adds the hidden filter to setZero as yet another hand-written query rather than one shared category selection."},
+ "duplication": {"score": 2, "why": "The 'fetch templated ids, then || templated.has(id)' step is pasted into five actions, setZero gains a reshaped copy of the averages' hidden-category SQL, and copyPreviousMonth still decides hidden in JS."},
+ "placement": {"score": 3, "why": "The new helper sits in budget/actions.ts next to the actions, but template knowledge belongs with goal-template.ts, and the selection rule stays spread across each action's query and loop."},
+ "scope": {"score": 5, "why": "Only the month-wide actions are touched; single-category actions are left alone as requested."},
+ "maintainability": {"score": 2, "why": "The skip rule now lives in five loops and three different hidden-category expressions (JS flags, SQL with IS NULL, SQL without), so the next rule change needs edits everywhere and the copies already differ."},
+ "bypasses_abstraction": {"value": true, "where": "getTemplatedCategoryIds in budget/actions.ts re-implements reading and parsing categories.goal_def, which goal-template.ts's getTemplates already does."},
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": true, "where": "setZero's new LEFT JOIN query is a re-aliased copy of the set3/6/12MonthAvg query with an added 'OR g.hidden IS NULL', and getTemplatedCategoryIds is a reshaped version of goal-template's getTemplates."},
+ "one_place": {"value": false, "where": "The hidden rule is decided in copyPreviousMonth's JS check, setZero's new SQL and the three average queries separately, and the template rule is applied by an inline templated.has check in each of the five actions; there is no single selection function."}}

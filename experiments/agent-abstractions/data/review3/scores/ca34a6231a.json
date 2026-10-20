@@ -1,0 +1,12 @@
+{"id": "ca34a6231a",
+ "reuse": {"score": 5, "why": "Expresses the rule through the RSchedule exrules mechanism and the existing ScheduleRuleOptions shape next to recurConfigToRSchedule, leaving getDateWithSkippedWeekend and the existing move logic untouched for non-daily schedules."},
+ "duplication": {"score": 5, "why": "The daily-skip rule is written once in recurConfigToExcludedRules; the two call sites only pass its result."},
+ "placement": {"score": 5, "why": "The rule lives in shared/schedules.ts beside recurConfigToRSchedule, where the tree turns a recur config into rschedule rules."},
+ "scope": {"score": 5, "why": "Only the new exclusion function, the two schedule construction sites and a release note."},
+ "maintainability": {"score": 4, "why": "Clean single definition, but every place that builds an RSchedule from a recur config must remember to pair rrules with recurConfigToExcludedRules rather than getting both from one builder."},
+ "bypasses_abstraction": {"value": false, "where": "Both RSchedule constructions that apply weekend handling (parseRecurDate, getUpcomingDates) use the new definition; find-schedules builds discovery schedules that carry no weekend setting."},
+ "duplicated_blocks": 0,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "No logic is duplicated."},
+ "one_place": {"value": true, "where": "recurConfigToExcludedRules in shared/schedules.ts, used by parseRecurDate (server/rules/rule-utils.ts, which feeds getNextDate and schedule-template) and getUpcomingDates (server/schedules/app.ts)."}
+}

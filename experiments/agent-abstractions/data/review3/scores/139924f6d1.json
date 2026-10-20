@@ -1,0 +1,12 @@
+{"id": "139924f6d1",
+"reuse": {"score": 5, "why": "Extends the existing shared getScheduledAmount, reuses getApproxNumberThreshold for the matching tolerance, and moves the budget template from its own isbetween ternary onto getScheduledAmount."},
+"duplication": {"score": 5, "why": "The approximate worst case is defined once (getApproximateWorstCaseAmount inside getScheduledAmount); call sites only pass their operator."},
+"placement": {"score": 5, "why": "The rule lives in shared/schedules.ts beside the ranged worst case, where every server and client consumer already resolves schedule amounts."},
+"scope": {"score": 4, "why": "Every getScheduledAmount caller is threaded with its operator, including display-only list and table cells, which goes a little beyond planning but keeps all consumers consistent."},
+"maintainability": {"score": 4, "why": "One definition for all consumers is easy to own; the optional loosely typed op after a positional inverse boolean (every caller writes 'false, op') means a new caller that omits it silently gets the exact value."},
+"bypasses_abstraction": {"value": false, "where": "All planning consumers (budget template, forecast, preview transactions, post-transaction, API expectedAmount, balances) go through getScheduledAmount; the template's direct getWorstCaseAmount use is removed."},
+"duplicated_blocks": 0,
+"would_merge": "yes",
+"disguised_duplication": {"value": false, "where": "No duplicated logic; the per-caller edits only pass the operator."},
+"one_place": {"value": true, "where": "getScheduledAmount (with getApproximateWorstCaseAmount) in packages/loot-core/src/shared/schedules.ts, called by every code path that resolves a schedule's expected amount."}
+}

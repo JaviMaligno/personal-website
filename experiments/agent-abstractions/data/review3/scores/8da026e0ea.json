@@ -1,0 +1,12 @@
+{"id":"8da026e0ea",
+"reuse":{"score":4,"why":"Builds on the existing getScheduledAmount and getApproxNumberThreshold, and routes schedule-template, forecast and the API model through shared helpers."},
+"duplication":{"score":3,"why":"The missing/number/range dispatch is still repeated at the two app.ts sites and in the preview, which call getRangedAmount/getWorstCaseAmount piecemeal instead of one resolving function."},
+"placement":{"score":4,"why":"The rule lives in shared/schedules.ts next to getScheduledAmount, where the tree keeps schedule amount logic."},
+"scope":{"score":4,"why":"Focused on schedule amount resolution plus the API field, tests and release notes."},
+"maintainability":{"score":3,"why":"Three overlapping entry points (getRangedAmount, getWorstCaseAmount, getScheduledAmount with inverse+op) and callers that choose different ones, some without the op, make it unclear which one applies the full rule."},
+"bypasses_abstraction":{"value":true,"where":"schedules/app.ts updateActions and postTransactionForSchedule plus computeSchedulePreviewTransactions keep their own null/number/range dispatch around getRangedAmount instead of calling getScheduledAmount/getWorstCaseAmount with the op; api-models calls getScheduledAmount without the op"},
+"duplicated_blocks":3,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The amount == null ? 0 : number ? ... : range dispatch stays copied at app.ts (x2) and the preview, now split across getRangedAmount and getWorstCaseAmount calls"},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":1,"bypassing_call_sites":4,"where":"getScheduledAmount gains an op parameter after inverse; getWorstCaseAmount has an isapprox branch; app.ts (2 sites) and the preview call getRangedAmount directly, api-models omits op"}
+}

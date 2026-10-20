@@ -1,0 +1,44 @@
+{
+ "id": "4ae0dbf6dc",
+ "reuse": {
+  "score": 4,
+  "why": "All providers share the new link guards, and Fintegra reuses bank lookup and sync helpers, although local unlink cleanup remains copied."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The diff repeats guard orchestration across six handlers and duplicates existing account-linking, transaction-download, and unlink-cleanup logic."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider integration follows the existing module boundaries, but an assertion helper now also performs account mutations."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits stay focused on the requested linking rules, replacement option, and server-side Fintegra integration."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Shared guards centralize the rules, but copied workflows and destructive side effects hidden behind an assertion name make future changes harder to own."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "All six link handlers use the shared guards and bank lookup; the existing unlinkAccount operation includes provider cleanup that replacement explicitly must avoid."
+ },
+ "duplicated_blocks": 4,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "downloadFintegraTransactions reshapes the existing authenticated transaction-download and response-normalization sequence using a renamed response variable and a more compact request."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 0,
+  "where": "assertAccountIsNotLinked gains replaceExistingLink and a replacement branch that clears another account's bank fields, turning validation into mutation while retaining its assertion interface."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 33.4
+ }
+}

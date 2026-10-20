@@ -1,0 +1,7 @@
+{"id": "a81a137581",
+ "completeness": {"per_site": {"gocardless": "full", "simplefin": "full", "pluggyai": "full", "akahu": "full", "enablebanking": "full"},
+  "left_out": {}, "sites_full": 5, "sites_partial": 0, "sites_total": 5, "value": 1.0,
+  "why": "All five link functions now only do their own bank lookup and pass their own account row, bank id and event tables to linkBankSyncAccount, which owns upgrade-or-insert (with throw), transfer payee, initial syncAccount, handleSyncResponse and sync-event; the Pluggy file id and Akahu tables are explicit arguments, and the unreachable Enable Banking id check is subsumed."},
+ "interface": {"score": 4, "why": "Parameters map to the real variations (account row carrying mask/official_name, eventTables, fileId), but includeFileId is a redundant flag alongside fileId (passing fileId undefined to syncAccount is equivalent), adding a speculative-looking boolean with an array-spread call."},
+ "disguised_duplication": {"value": false, "where": "The five copies of the link sequence are removed and replaced by calls to linkBankSyncAccount; only the per-provider institution/bank lookup remains, which is provider-specific."}
+}

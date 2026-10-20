@@ -1,0 +1,12 @@
+{"id": "217210be30",
+ "reuse": {"score": 5, "why": "Routes every month-wide action, including the new setLastMonthSpending, through the existing isMonthFillCategory predicate and getAverageBudgetAmount sign helper, and reuses extractTagsFromText from shared/tags for the #fixed tag."},
+ "duplication": {"score": 4, "why": "The exclusion rules live in one predicate; the only repetition is the extra has_template/group_note projection and notes join added to the three category queries (getBudgetData, setZero, getSpendingFillCategories)."},
+ "placement": {"score": 5, "why": "Rules stay in the predicate in server/budget/actions.ts, the handler is registered in server/budget/app.ts beside its siblings."},
+ "scope": {"score": 5, "why": "Only month-wide actions, their registration and tests."},
+ "maintainability": {"score": 4, "why": "One predicate, one options type (MonthActionOptions) and one category-loading helper make the rule easy to own; the projection repeated in three SQL strings and the loose goal_def IS NOT NULL check are the remaining rough edges."},
+ "bypasses_abstraction": {"value": false, "where": "All month-wide actions go through isMonthFillCategory."},
+ "duplicated_blocks": 1,
+ "would_merge": "yes",
+ "disguised_duplication": {"value": false, "where": "The repeated column list is plain repetition of a projection, not reshaped logic."},
+ "abstraction_drift": {"value": false, "parameters_added": 1, "special_case_branches": 0, "bypassing_call_sites": 0, "where": "getSpendingFillCategories (renamed from getAverageFillCategories) gains an includeHiddenCategories parameter that every action passes through; isMonthFillCategory's option is renamed and its template/#fixed conditions apply uniformly, with no per-action branches."}
+}

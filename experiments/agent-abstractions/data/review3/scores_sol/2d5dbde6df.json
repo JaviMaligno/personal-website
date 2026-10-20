@@ -1,0 +1,44 @@
+{
+ "id": "2d5dbde6df",
+ "reuse": {
+  "score": 3,
+  "why": "The change reuses recurrence conversion and weekend adjustment helpers, but leaves each consumer to implement the daily skip policy."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The daily skip-versus-shift decision appears in four places, with three additional implementations of the same policy."
+ },
+ "placement": {
+  "score": 3,
+  "why": "Holiday classification belongs in shared/schedules.ts, but schedule handlers and budget templates also take responsibility for shared recurrence policy."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The changes are focused on the four requested schedule enhancements and their supporting types, tests, and release notes."
+ },
+ "maintainability": {
+  "score": 2,
+  "why": "Maintainers must coordinate four policy implementations and separate occurrence-limit heuristics, while the new handler leaves config untyped despite the existing RecurConfig type."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "getNextDate, getUpcomingDates, getDatesInRange, and createScheduleList decide daily skipping outside applyWeekendRule, bypassing or disabling its adjustment rather than extending the shared policy."
+ },
+ "duplicated_blocks": 3,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "The same daily non-working-day policy is reshaped into a find predicate in getNextDate, continue branches in the handlers, and isSkippedOccurrence/getShiftedDate closures in createScheduleList."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 2,
+  "special_case_branches": 0,
+  "bypassing_call_sites": 4,
+  "where": "A holidays parameter is added to both applyWeekendRule and getDateWithSkippedWeekend; their adjustment remains general, but getNextDate, getUpcomingDates, getDatesInRange, and createScheduleList independently implement the daily exception outside those helpers."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 36.9
+ }
+}

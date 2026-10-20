@@ -1,0 +1,12 @@
+{"id":"73757dfff3",
+"reuse":{"score":4,"why":"getNextDate, getUpcomingDates, the new getDatesInRange and the budget schedule template all go through the single shared applyWeekendRule, and the new handler reuses recurConfigToRSchedule and RSchedule."},
+"duplication":{"score":4,"why":"The weekend, holiday and daily-skip rule is defined once; what remains is the template's outer skipWeekend ternary, repeated twice, and two small local wrappers around applyWeekendRule."},
+"placement":{"score":4,"why":"The rule sits in shared/schedules.ts and the handler in schedules/app.ts as the tree does; the parse-and-format wrappers in schedule-template are local rather than shared."},
+"scope":{"score":4,"why":"Every change serves the five steps; the field rename weekendSolve to weekendSolveMode in parseRecurDate aligns the RSchedule data with the rule type and is justified."},
+"maintainability":{"score":4,"why":"One rule object passed to one function is easy to evolve; the look-ahead sizes (count*7 plus the holiday count, and 2 + 3 per holiday days of padding) are heuristic magic numbers, and the redundant outer gating in schedule-template could drift."},
+"bypasses_abstraction":{"value":true,"where":"budget/schedule-template.ts createScheduleList still wraps the call in its own `dateConditions.value.skipWeekend ? getAdjustedOccurrence(...) : nextBaseDate` ternary, which re-decides whether the rule applies when applyWeekendRule already does."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"No logic is copied under another shape; getAdjustedOccurrence and isSkippedOccurrence are thin adapters over applyWeekendRule."},
+"abstraction_drift":{"value":true,"parameters_added":0,"special_case_branches":0,"bypassing_call_sites":2,"where":"applyWeekendRule(date, rule) keeps one rule-object parameter, and its frequency and holidays fields carry the daily-skip and holiday steps without extra flags; the two createScheduleList sites in schedule-template.ts still gate on skipWeekend themselves."}
+}

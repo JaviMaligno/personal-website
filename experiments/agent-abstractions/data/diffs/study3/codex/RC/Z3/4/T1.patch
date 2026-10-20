@@ -1,0 +1,192 @@
+diff --git a/packages/loot-core/src/server/accounts/app-link.test.ts b/packages/loot-core/src/server/accounts/app-link.test.ts
+new file mode 100644
+index 0000000..f4d265d
+--- /dev/null
++++ b/packages/loot-core/src/server/accounts/app-link.test.ts
+@@ -0,0 +1,101 @@
++// @ts-strict-ignore
++import * as connection from '#platform/server/connection';
++import * as db from '#server/db';
++import { loadMappings } from '#server/db/mappings';
++import { runMutator } from '#server/mutators';
++
++import { app } from './app';
++import * as bankSync from './sync';
++
++vi.mock('./sync', async () => ({
++  ...(await vi.importActual('./sync')),
++  syncAccount: vi.fn(),
++}));
++
++beforeEach(async () => {
++  vi.resetAllMocks();
++  await global.emptyDatabase()();
++  await loadMappings();
++});
++
++describe('bank account linking', () => {
++  it('refuses a second link without changing data or contacting the sync server', async () => {
++    db.runQuery(
++      'INSERT INTO banks (id, bank_id, name, tombstone) VALUES (?, ?, ?, 0)',
++      ['bank1', 'sfin-bank', 'SimpleFin'],
++    );
++    await db.insertAccount({
++      id: 'existing',
++      name: 'Checking',
++      bank: 'bank1',
++      account_id: 'external-1',
++      account_sync_source: 'simpleFin',
++      closed: 1,
++    });
++    vi.mocked(connection.send).mockClear();
++
++    await expect(
++      runMutator(() =>
++        app.handlers['simplefin-accounts-link']({
++          externalAccount: {
++            account_id: 'external-1',
++            name: 'Checking',
++            orgId: 'new-bank',
++            balance: 0,
++          },
++          upgradingId: 'other-account',
++        }),
++      ),
++    ).rejects.toThrow(
++      'This bank account is already linked to another account.',
++    );
++
++    const accounts = await db.all<db.DbAccount>('SELECT * FROM accounts');
++    expect(accounts).toHaveLength(1);
++    expect(accounts[0]).toMatchObject({
++      id: 'existing',
++      name: 'Checking',
++      bank: 'bank1',
++      account_id: 'external-1',
++      account_sync_source: 'simpleFin',
++    });
++    expect(await db.all('SELECT * FROM banks')).toHaveLength(1);
++    expect(await db.all('SELECT * FROM payees')).toHaveLength(0);
++    expect(bankSync.syncAccount).not.toHaveBeenCalled();
++    expect(connection.send).not.toHaveBeenCalled();
++  });
++
++  it('allows relinking the account that already holds the bank link', async () => {
++    db.runQuery(
++      'INSERT INTO banks (id, bank_id, name, tombstone) VALUES (?, ?, ?, 0)',
++      ['bank1', 'sfin-bank', 'SimpleFin'],
++    );
++    await db.insertAccount({
++      id: 'existing',
++      name: 'Checking',
++      bank: 'bank1',
++      account_id: 'external-1',
++      account_sync_source: 'simpleFin',
++    });
++    vi.mocked(bankSync.syncAccount).mockResolvedValue({
++      added: [],
++      updated: [],
++      updatedPreview: [],
++    });
++
++    await runMutator(() =>
++      app.handlers['simplefin-accounts-link']({
++        externalAccount: {
++          account_id: 'external-1',
++          name: 'Checking',
++          orgId: 'sfin-bank',
++          institution: 'SimpleFin',
++          balance: 0,
++        },
++        upgradingId: 'existing',
++      }),
++    );
++
++    expect(bankSync.syncAccount).toHaveBeenCalledTimes(1);
++  });
++});
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 4208a11..5cd2831 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -52,6 +52,24 @@ type LinkAccountBaseParams = {
+   startingBalance?: number;
+ };
+ 
++async function assertBankAccountNotLinked(
++  accountSyncSource: string,
++  accountId: string,
++  upgradingId?: AccountEntity['id'],
++) {
++  const existing = await db.first<{ id: string }>(
++    `SELECT id FROM accounts
++     WHERE account_sync_source = ? AND account_id = ? AND tombstone = 0
++       AND (? IS NULL OR id != ?)
++     LIMIT 1`,
++    [accountSyncSource, accountId, upgradingId ?? null, upgradingId ?? null],
++  );
++
++  if (existing) {
++    throw new Error('This bank account is already linked to another account.');
++  }
++}
++
+ async function linkBankSyncAccount({
+   upgradingId,
+   bankId,
+@@ -248,6 +266,7 @@ async function linkGoCardlessAccount({
+   requisitionId: string;
+   account: SyncServerGoCardlessAccount;
+ }) {
++  await assertBankAccountNotLinked('goCardless', account.account_id, upgradingId);
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+   return linkBankSyncAccount({
+     upgradingId,
+@@ -276,6 +295,11 @@ async function linkSimpleFinAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerSimpleFinAccount;
+ }) {
++  await assertBankAccountNotLinked(
++    'simpleFin',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+@@ -314,6 +338,11 @@ async function linkPluggyAiAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
++  await assertBankAccountNotLinked(
++    'pluggyai',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   const fileId = getPrefs()?.cloudFileId;
+ 
+   const institution = {
+@@ -355,6 +384,11 @@ async function linkAkahuAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerAkahuAccount;
+ }) {
++  await assertBankAccountNotLinked(
++    'akahu',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   const institution = {
+     name: externalAccount.institution ?? null,
+   };
+@@ -390,6 +424,11 @@ async function linkEnableBankingAccount({
+ }: LinkAccountBaseParams & {
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
++  await assertBankAccountNotLinked(
++    'enableBanking',
++    externalAccount.account_id,
++    upgradingId,
++  );
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an

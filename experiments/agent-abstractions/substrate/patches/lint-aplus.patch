@@ -1,0 +1,451 @@
+diff --git a/packages/loot-core/eslint-rules/allow-list.mjs b/packages/loot-core/eslint-rules/allow-list.mjs
+new file mode 100644
+index 0000000..47e7e78
+--- /dev/null
++++ b/packages/loot-core/eslint-rules/allow-list.mjs
+@@ -0,0 +1,53 @@
++// Shared helpers for the agent lint rules.
++//
++// Base sites that already break a rule are allow-listed individually (file +
++// source line, SQL prefix or method name), never by turning a rule off for a
++// file or a directory. Allow-lists are passed as rule options in
++// eslint.agent.config.mjs.
++import path from 'node:path';
++
++/** Path of the linted file relative to packages/loot-core, with `/` separators. */
++export function relFile(context) {
++  const f = context.filename;
++  const rel = path.isAbsolute(f) ? path.relative(context.cwd, f) : f;
++  return rel.split(path.sep).join('/');
++}
++
++export function inDir(context, dirs) {
++  const rel = relFile(context);
++  return dirs.some(d => rel.startsWith(d));
++}
++
++/** Trimmed source text of the line where `node` starts. */
++export function lineText(context, node) {
++  return context.sourceCode.lines[node.loc.start.line - 1].trim();
++}
++
++/**
++ * Allow-list check for one linted file. Entries are `{ file, count?, ...key }`;
++ * an entry covers at most `count` (default 1) reports in that file, so adding
++ * one more identical line to an allow-listed file is still reported.
++ */
++export function allowList(options, rel) {
++  const entries = (options?.[0]?.allow ?? []).filter(e => e.file === rel);
++  const used = new Map();
++  return pred => {
++    const e = entries.find(x => pred(x) && (used.get(x) ?? 0) < (x.count ?? 1));
++    if (!e) return false;
++    used.set(e, (used.get(e) ?? 0) + 1);
++    return true;
++  };
++}
++
++export const allowSchema = [
++  {
++    type: 'object',
++    properties: {
++      allow: {
++        type: 'array',
++        items: { type: 'object', required: ['file'], properties: { count: { type: 'integer', minimum: 1 } }, additionalProperties: true },
++      },
++    },
++    additionalProperties: true,
++  },
++];
+diff --git a/packages/loot-core/eslint-rules/base-allow-list.mjs b/packages/loot-core/eslint-rules/base-allow-list.mjs
+new file mode 100644
+index 0000000..af96b2d
+--- /dev/null
++++ b/packages/loot-core/eslint-rules/base-allow-list.mjs
+@@ -0,0 +1,156 @@
++// Base sites (9732a446, condition A+ +L) that already break an agent lint rule.
++// Each entry allows its site(s) individually: file + SQL prefix, trimmed source
++// line or method name; `count` caps how many identical sites in that file it
++// covers (default 1). No rule is switched off for a file or a directory.
++// Frozen together with the rules.
++
++// agent/no-send-messages: 4 entries, 4 sites
++export const sendMessages = [
++  {file: "src/server/prefs.ts", line: "import { sendMessages } from './sync';"},
++  {file: "src/server/prefs.ts", line: "await sendMessages(messages);"},
++  {file: "src/server/undo.ts", line: "import { sendMessages } from './sync';"},
++  {file: "src/server/undo.ts", line: "return sendMessages("},
++];
++
++// agent/mutator-required: 125 entries, 125 sites
++export const mutatorRequired = [
++  {file: "src/server/account-groups/app.ts", name: "account-groups-get"},
++  {file: "src/server/accounts/app.ts", name: "accounts-get"},
++  {file: "src/server/accounts/app.ts", name: "account-balance"},
++  {file: "src/server/accounts/app.ts", name: "account-properties"},
++  {file: "src/server/accounts/app.ts", name: "gocardless-accounts-link"},
++  {file: "src/server/accounts/app.ts", name: "simplefin-accounts-link"},
++  {file: "src/server/accounts/app.ts", name: "pluggyai-accounts-link"},
++  {file: "src/server/accounts/app.ts", name: "akahu-accounts-link"},
++  {file: "src/server/accounts/app.ts", name: "enablebanking-accounts-link"},
++  {file: "src/server/accounts/app.ts", name: "account-close"},
++  {file: "src/server/accounts/app.ts", name: "secret-set"},
++  {file: "src/server/accounts/app.ts", name: "secret-check"},
++  {file: "src/server/accounts/app.ts", name: "gocardless-poll-web-token"},
++  {file: "src/server/accounts/app.ts", name: "gocardless-poll-web-token-stop"},
++  {file: "src/server/accounts/app.ts", name: "gocardless-status"},
++  {file: "src/server/accounts/app.ts", name: "simplefin-status"},
++  {file: "src/server/accounts/app.ts", name: "pluggyai-status"},
++  {file: "src/server/accounts/app.ts", name: "akahu-status"},
++  {file: "src/server/accounts/app.ts", name: "enablebanking-status"},
++  {file: "src/server/accounts/app.ts", name: "enablebanking-aspsps"},
++  {file: "src/server/accounts/app.ts", name: "enablebanking-start-auth"},
++  {file: "src/server/accounts/app.ts", name: "enablebanking-complete-auth"},
++  {file: "src/server/accounts/app.ts", name: "enablebanking-poll-auth"},
++  {file: "src/server/accounts/app.ts", name: "enablebanking-poll-auth-stop"},
++  {file: "src/server/accounts/app.ts", name: "enablebanking-configure"},
++  {file: "src/server/accounts/app.ts", name: "simplefin-accounts"},
++  {file: "src/server/accounts/app.ts", name: "pluggyai-accounts"},
++  {file: "src/server/accounts/app.ts", name: "akahu-accounts"},
++  {file: "src/server/accounts/app.ts", name: "gocardless-get-banks"},
++  {file: "src/server/accounts/app.ts", name: "gocardless-create-web-token"},
++  {file: "src/server/accounts/app.ts", name: "accounts-bank-sync"},
++  {file: "src/server/accounts/app.ts", name: "simplefin-batch-sync"},
++  {file: "src/server/accounts/app.ts", name: "account-unlink"},
++  {file: "src/server/admin/app.ts", name: "users-get"},
++  {file: "src/server/admin/app.ts", name: "user-delete-all"},
++  {file: "src/server/admin/app.ts", name: "user-add"},
++  {file: "src/server/admin/app.ts", name: "user-update"},
++  {file: "src/server/admin/app.ts", name: "access-add"},
++  {file: "src/server/admin/app.ts", name: "access-delete-all"},
++  {file: "src/server/admin/app.ts", name: "access-get-available-users"},
++  {file: "src/server/admin/app.ts", name: "transfer-ownership"},
++  {file: "src/server/admin/app.ts", name: "owner-created"},
++  {file: "src/server/auth/app.ts", name: "subscribe-needs-bootstrap"},
++  {file: "src/server/auth/app.ts", name: "subscribe-bootstrap"},
++  {file: "src/server/auth/app.ts", name: "subscribe-get-login-methods"},
++  {file: "src/server/auth/app.ts", name: "subscribe-get-user"},
++  {file: "src/server/auth/app.ts", name: "subscribe-change-password"},
++  {file: "src/server/auth/app.ts", name: "subscribe-sign-in"},
++  {file: "src/server/auth/app.ts", name: "subscribe-sign-out"},
++  {file: "src/server/auth/app.ts", name: "subscribe-set-token"},
++  {file: "src/server/auth/app.ts", name: "enable-openid"},
++  {file: "src/server/auth/app.ts", name: "enable-password"},
++  {file: "src/server/budget/app.ts", name: "envelope-budget-month"},
++  {file: "src/server/budget/app.ts", name: "tracking-budget-month"},
++  {file: "src/server/budget/app.ts", name: "must-category-transfer"},
++  {file: "src/server/budget/app.ts", name: "budget/get-category-automations"},
++  {file: "src/server/budget/app.ts", name: "budget/dry-run-category-template"},
++  {file: "src/server/budget/app.ts", name: "budget/store-note-templates"},
++  {file: "src/server/budget/app.ts", name: "budget/store-note-cleanups"},
++  {file: "src/server/budget/app.ts", name: "budget/render-note-templates"},
++  {file: "src/server/budgetfiles/app.ts", name: "validate-budget-name"},
++  {file: "src/server/budgetfiles/app.ts", name: "unique-budget-name"},
++  {file: "src/server/budgetfiles/app.ts", name: "reset-budget-cache"},
++  {file: "src/server/budgetfiles/app.ts", name: "upload-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "download-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "sync-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "load-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "create-demo-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "close-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "delete-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "duplicate-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "create-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "import-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "export-budget"},
++  {file: "src/server/budgetfiles/app.ts", name: "upload-file-web"},
++  {file: "src/server/budgetfiles/app.ts", name: "backups-get"},
++  {file: "src/server/budgetfiles/app.ts", name: "backup-load"},
++  {file: "src/server/budgetfiles/app.ts", name: "backup-make"},
++  {file: "src/server/encryption/app.ts", name: "key-make"},
++  {file: "src/server/encryption/app.ts", name: "key-test"},
++  {file: "src/server/filters/app.ts", name: "filter-create"},
++  {file: "src/server/filters/app.ts", name: "filter-update"},
++  {file: "src/server/forecast/app.ts", name: "forecast/generate"},
++  {file: "src/server/formulas/app.ts", name: "formula-load-user-preferences"},
++  {file: "src/server/notes/app.ts", name: "notes-save"},
++  {file: "src/server/notes/app.ts", name: "notes-get"},
++  {file: "src/server/payees/app.ts", name: "common-payees-get"},
++  {file: "src/server/payees/app.ts", name: "payees-get"},
++  {file: "src/server/payees/app.ts", name: "payees-get-orphaned"},
++  {file: "src/server/payees/app.ts", name: "payees-get-rule-counts"},
++  {file: "src/server/payees/app.ts", name: "payees-check-orphaned"},
++  {file: "src/server/payees/app.ts", name: "payees-get-rules"},
++  {file: "src/server/payees/app.ts", name: "payee-location-create"},
++  {file: "src/server/payees/app.ts", name: "payee-locations-get"},
++  {file: "src/server/payees/app.ts", name: "payee-location-delete"},
++  {file: "src/server/payees/app.ts", name: "payees-get-nearby"},
++  {file: "src/server/preferences/app.ts", name: "preferences/get"},
++  {file: "src/server/preferences/app.ts", name: "save-global-prefs"},
++  {file: "src/server/preferences/app.ts", name: "load-global-prefs"},
++  {file: "src/server/preferences/app.ts", name: "save-prefs"},
++  {file: "src/server/preferences/app.ts", name: "load-prefs"},
++  {file: "src/server/preferences/app.ts", name: "save-server-prefs"},
++  {file: "src/server/reports/app.ts", name: "report/get"},
++  {file: "src/server/rules/app.ts", name: "rule-validate"},
++  {file: "src/server/rules/app.ts", name: "rule-add"},
++  {file: "src/server/rules/app.ts", name: "rule-add-payee-rename"},
++  {file: "src/server/rules/app.ts", name: "rules-get"},
++  {file: "src/server/rules/app.ts", name: "rule-get"},
++  {file: "src/server/rules/app.ts", name: "rules-run"},
++  {file: "src/server/schedules/app.ts", name: "schedule/force-run-service"},
++  {file: "src/server/schedules/app.ts", name: "schedule/discover"},
++  {file: "src/server/schedules/app.ts", name: "schedule/get-upcoming-dates"},
++  {file: "src/server/spreadsheet/app.ts", name: "create-query"},
++  {file: "src/server/sync/app.ts", name: "sync"},
++  {file: "src/server/sync/app.ts", name: "sync-reset"},
++  {file: "src/server/sync/app.ts", name: "sync-repair"},
++  {file: "src/server/tags/app.ts", name: "tags-get"},
++  {file: "src/server/tags/app.ts", name: "tags-discover"},
++  {file: "src/server/tools/app.ts", name: "tools/fix-split-transactions"},
++  {file: "src/server/transactions/app.ts", name: "transaction-add"},
++  {file: "src/server/transactions/app.ts", name: "transaction-update"},
++  {file: "src/server/transactions/app.ts", name: "transaction-delete"},
++  {file: "src/server/transactions/app.ts", name: "transactions-parse-file"},
++  {file: "src/server/transactions/app.ts", name: "transactions-export"},
++  {file: "src/server/transactions/app.ts", name: "transactions-export-query"},
++];
++
++// agent/no-explicit-any: 3 entries, 3 sites
++export const noExplicitAny = [
++  {file: "src/server/aql/exec.ts", line: "const data: any = await runCompiledAqlQuery("},
++  {file: "src/server/db/index.ts", line: "return rows[0] as any;"},
++  {file: "src/server/db/index.ts", line: "return convertedRows as any[];"},
++];
++
++// agent/ban-ts-comment: 3 entries, 8 sites
++export const banTsComment = [
++  {file: "src/server/api.ts", line: "// @ts-expect-error - fix me", count: 5},
++  {file: "src/server/encryption/encryption-internals.electron.ts", line: "// @ts-expect-error fix me", count: 2},
++  {file: "src/server/spreadsheet/spreadsheet.ts", line: "// @ts-expect-error Graph should be converted to class"},
++];
+diff --git a/packages/loot-core/eslint-rules/mutator-required.mjs b/packages/loot-core/eslint-rules/mutator-required.mjs
+new file mode 100644
+index 0000000..15904e3
+--- /dev/null
++++ b/packages/loot-core/eslint-rules/mutator-required.mjs
+@@ -0,0 +1,73 @@
++// Handler registrations `app.method('<name>', handler)` for mutating methods
++// (names not starting with get/query/list) must be wrapped so that the
++// mutation is tracked:
++//   form 'mutator'  (A+L):  app.method('<name>', mutator(...))
++//   form 'mutation' (A+ +L): app.method(...mutation('<name>', handler))
++// Base registrations that do not follow the form are allow-listed by
++// file + method name.
++import { allowList, relFile } from './allow-list.mjs';
++
++const READ = /^(get|query|list)/;
++
++function calleeName(callee) {
++  if (callee.type === 'Identifier') return callee.name;
++  if (callee.type === 'MemberExpression' && !callee.computed) return callee.property.name;
++  return null;
++}
++
++function literalName(n) {
++  if (n?.type === 'Literal' && typeof n.value === 'string') return n.value;
++  if (n?.type === 'TemplateLiteral' && n.expressions.length === 0) return n.quasis[0].value.cooked;
++  return null;
++}
++
++export default {
++  meta: {
++    type: 'problem',
++    schema: [
++      {
++        type: 'object',
++        properties: {
++          form: { enum: ['mutator', 'mutation'] },
++          allow: { type: 'array', items: { type: 'object', required: ['file', 'name'] } },
++        },
++        additionalProperties: false,
++      },
++    ],
++    messages: {
++      mutator: "Mutating handler '{{name}}' must be registered as app.method('{{name}}', mutator(...)).",
++      mutation: "Mutating handler '{{name}}' must be registered as app.method(...mutation('{{name}}', handler)).",
++    },
++  },
++  create(context) {
++    const form = context.options[0]?.form ?? 'mutator';
++    const rel = relFile(context);
++    const isAllowed = allowList(context.options, rel);
++    const report = (node, name) => {
++      if (isAllowed(e => e.name === name)) return;
++      context.report({ node, messageId: form, data: { name } });
++    };
++    return {
++      CallExpression(node) {
++        const { callee } = node;
++        if (callee.type !== 'MemberExpression' || calleeName(callee) !== 'method' ||
++            callee.object.type !== 'Identifier' || callee.object.name !== 'app') return;
++        const [first, second] = node.arguments;
++        if (first?.type === 'SpreadElement') {
++          const inner = first.argument;
++          if (inner.type !== 'CallExpression') return;
++          const name = literalName(inner.arguments[0]);
++          if (name == null || READ.test(name)) return;
++          if (form === 'mutation' && calleeName(inner.callee) === 'mutation') return;
++          if (form === 'mutator') return; // spread registrations carry no handler to inspect
++          report(node, name);
++          return;
++        }
++        const name = literalName(first);
++        if (name == null || READ.test(name)) return;
++        if (form === 'mutator' && second?.type === 'CallExpression' && calleeName(second.callee) === 'mutator') return;
++        report(node, name);
++      },
++    };
++  },
++};
+diff --git a/packages/loot-core/eslint-rules/no-send-messages.mjs b/packages/loot-core/eslint-rules/no-send-messages.mjs
+new file mode 100644
+index 0000000..8c45373
+--- /dev/null
++++ b/packages/loot-core/eslint-rules/no-send-messages.mjs
+@@ -0,0 +1,30 @@
++// Only the db write helpers (src/server/db/) and the sync engine
++// (src/server/sync/) may reference sendMessages.
++import { allowList, allowSchema, inDir, lineText, relFile } from './allow-list.mjs';
++
++export default {
++  meta: {
++    type: 'problem',
++    schema: allowSchema,
++    messages: {
++      send: 'Only db/ and sync/ may call sendMessages; use the db write helpers.',
++    },
++  },
++  create(context) {
++    if (inDir(context, ['src/server/db/', 'src/server/sync/'])) return {};
++    const rel = relFile(context);
++    const isAllowed = allowList(context.options, rel);
++    return {
++      Identifier(node) {
++        if (node.name !== 'sendMessages') return;
++        // `import { sendMessages }` yields two Identifier nodes (imported, local).
++        const p = node.parent;
++        if (p?.type === 'ImportSpecifier' && node === p.local && p.imported !== p.local &&
++            p.imported.range?.[0] === node.range[0]) return;
++        const text = lineText(context, node);
++        if (isAllowed(e => e.line === text)) return;
++        context.report({ node, messageId: 'send' });
++      },
++    };
++  },
++};
+diff --git a/packages/loot-core/eslint-rules/with-allow-list.mjs b/packages/loot-core/eslint-rules/with-allow-list.mjs
+new file mode 100644
+index 0000000..3fae709
+--- /dev/null
++++ b/packages/loot-core/eslint-rules/with-allow-list.mjs
+@@ -0,0 +1,27 @@
++// Wraps a built-in or plugin rule so that base sites can be allow-listed one by
++// one (file + trimmed source line of the reported location) instead of turning
++// the rule off for a file. `baseOptions` are fixed here, not in the config.
++import { allowList, allowSchema, relFile } from './allow-list.mjs';
++
++export function withAllowList(base, baseOptions = []) {
++  const { defaultOptions: _ignored, ...meta } = base.meta;
++  return {
++    meta: { ...meta, schema: allowSchema },
++    create(context) {
++      const rel = relFile(context);
++      const isAllowed = allowList(context.options, rel);
++      const proxy = Object.create(context, {
++        options: { value: baseOptions },
++        report: {
++          value(d) {
++            const loc = d.loc?.start ?? d.loc ?? d.node.loc.start;
++            const text = context.sourceCode.lines[loc.line - 1].trim();
++            if (isAllowed(e => e.line === text)) return;
++            context.report(d);
++          },
++        },
++      });
++      return base.create(proxy);
++    },
++  };
++}
+diff --git a/packages/loot-core/eslint.agent.config.mjs b/packages/loot-core/eslint.agent.config.mjs
+new file mode 100644
+index 0000000..c127127
+--- /dev/null
++++ b/packages/loot-core/eslint.agent.config.mjs
+@@ -0,0 +1,63 @@
++// Agent lint rules for A+ +L, run by `yarn lint` after `tsgo -b`.
++// Do not bypass the domain layer: no db/write imports outside domain/ and db/,
++// no `as Cents` outside domain/money.ts, no `any` or ts-comments in src/server,
++// sendMessages only in db/ and sync/, mutating handlers registered via mutation().
++// Base sites that already break a rule are allow-listed one by one in
++// eslint-rules/base-allow-list.mjs; no rule is turned off for a file or a directory.
++import tsParser from '@typescript-eslint/parser';
++import tseslint from 'typescript-eslint';
++
++import * as allow from './eslint-rules/base-allow-list.mjs';
++import mutatorRequired from './eslint-rules/mutator-required.mjs';
++import noSendMessages from './eslint-rules/no-send-messages.mjs';
++import { withAllowList } from './eslint-rules/with-allow-list.mjs';
++
++const ts = tseslint.plugin.rules;
++
++export default [
++  {
++    ignores: ['**/*.test.ts', '**/*.spec.ts', '**/__tests__/**', '**/__mocks__/**', 'src/mocks/**'],
++  },
++  {
++    files: ['src/**/*.ts'],
++    languageOptions: { parser: tsParser },
++    plugins: {
++      agent: {
++        rules: {
++          'mutator-required': mutatorRequired,
++          'no-send-messages': noSendMessages,
++          'no-explicit-any': withAllowList(ts['no-explicit-any']),
++          // No ts-comment escape hatch, with or without a description.
++          'ban-ts-comment': withAllowList(ts['ban-ts-comment'], [
++            { 'ts-expect-error': true, 'ts-ignore': true, 'ts-nocheck': true, 'ts-check': false },
++          ]),
++        },
++      },
++    },
++    rules: {
++      'no-restricted-imports': ['error', {
++        patterns: [{
++          regex: '^(#server/db/write|(\\.\\./)+db/write|\\./db/write)(\\.[jt]s)?$',
++          message: 'The db write API is private to src/server/domain/; call a domain command instead.',
++        }],
++      }],
++      'no-restricted-syntax': ['error', {
++        selector: "TSAsExpression[typeAnnotation.typeName.name='Cents'], TSTypeAssertion[typeAnnotation.typeName.name='Cents']",
++        message: 'Construct Cents with cents.fromInteger/fromAmount, not a cast.',
++      }],
++      'agent/no-send-messages': ['error', { allow: allow.sendMessages }],
++      'agent/mutator-required': ['error', { form: 'mutation', allow: allow.mutatorRequired }],
++    },
++  },
++  {
++    files: ['src/server/**/*.ts'],
++    rules: {
++      'agent/no-explicit-any': ['error', { allow: allow.noExplicitAny }],
++      'agent/ban-ts-comment': ['error', { allow: allow.banTsComment }],
++    },
++  },
++  // The domain layer and the db layer own the write API.
++  { files: ['src/server/domain/**', 'src/server/db/**'], rules: { 'no-restricted-imports': 'off' } },
++  // The only place allowed to brand a number as Cents.
++  { files: ['src/server/domain/money.ts'], rules: { 'no-restricted-syntax': 'off' } },
++];
+diff --git a/packages/loot-core/package.json b/packages/loot-core/package.json
+index 63e6e66..ffbc5bc 100644
+--- a/packages/loot-core/package.json
++++ b/packages/loot-core/package.json
+@@ -194,7 +194,7 @@
+     "test:web": "ENV=web vitest --run -c vitest.web.config.ts",
+     "typecheck": "tsgo -b && tsc-strict",
+     "build": "tsgo -b",
+-    "lint": "tsgo -b",
++    "lint": "tsgo -b && eslint -c eslint.agent.config.mjs src",
+     "prepack": "yarn build && node scripts/add-types-conditions.mts",
+     "postpack": "node scripts/restore-package-json.mts"
+   },

@@ -1,0 +1,13 @@
+{"id": "decfe95992",
+ "reuse": {"score": 5, "why": "Builds on the existing getRangedScheduleAmount/getScheduledAmount helpers in shared/schedules, reuses getApproxNumberThreshold for the tolerance, and the API field calls the same getScheduledAmount the UI uses."},
+ "duplication": {"score": 5, "why": "Replaces the inline midpoint in schedule-template and every null/number/range ternary (schedules app, forecast, preview, getScheduledAmount) with one getExpectedScheduleAmount call."},
+ "placement": {"score": 5, "why": "The expected-amount rule sits in shared/schedules with the other schedule amount helpers; the API field is computed in the api-models mapping."},
+ "scope": {"score": 5, "why": "Only the amount rule, its call sites, the API field and tests/release notes."},
+ "maintainability": {"score": 4, "why": "One function owns the rule for every server path and getScheduledAmount delegates to it, but op is optional so the desktop-client callers of getScheduledAmount silently keep the exact approximate amount, and a stale 'rounded midpoint' comment remains in computeSchedulePreviewTransactions."},
+ "bypasses_abstraction": {"value": false, "where": "All loot-core amount sites route through getExpectedScheduleAmount (directly or via getScheduledAmount); no copy of the rule remains."},
+ "duplicated_blocks": 0,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "The per-site dispatches are removed rather than reshaped; getScheduledAmount now delegates to getExpectedScheduleAmount."},
+ "abstraction_drift": {"value": true, "parameters_added": 2, "special_case_branches": 1, "bypassing_call_sites": 0,
+  "where": "shared/schedules.ts: getExpectedScheduleAmount takes an op with an isapprox branch (step 3), and getScheduledAmount gains an optional op parameter alongside its inverse flag; no caller re-implements the rule, though the desktop-client callers of getScheduledAmount do not pass op."}
+}

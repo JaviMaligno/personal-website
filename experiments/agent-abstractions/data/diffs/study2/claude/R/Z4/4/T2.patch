@@ -1,0 +1,116 @@
+diff --git a/packages/loot-core/src/server/schedules/app.test.ts b/packages/loot-core/src/server/schedules/app.test.ts
+index 84d9707..1cc94cc 100644
+--- a/packages/loot-core/src/server/schedules/app.test.ts
++++ b/packages/loot-core/src/server/schedules/app.test.ts
+@@ -1206,3 +1206,40 @@ describe('schedule app', () => {
+     });
+   });
+ });
++
++describe('schedule/get-dates-in-range', () => {
++  const base = {
++    start: '2024-01-01',
++    frequency: 'monthly',
++    interval: 1,
++    patterns: [],
++    skipWeekend: true,
++    weekendSolveMode: 'after',
++    endMode: 'never',
++  };
++
++  it('moves weekend occurrences and decides by the final day', async () => {
++    // 2024-06-01 is a Saturday -> Monday 2024-06-03
++    const config = { ...base, start: '2024-06-01' };
++    const call = (start, end) =>
++      schedulesApp.handlers['schedule/get-dates-in-range']({
++        config,
++        start,
++        end,
++      });
++    expect(await call('2024-06-02', '2024-06-30')).toEqual(['2024-06-03']);
++    expect(await call('2024-05-01', '2024-06-02')).toEqual([]);
++    expect(await call('2024-06-03', '2024-06-03')).toEqual(['2024-06-03']);
++  });
++
++  it('skips weekends for daily schedules', async () => {
++    const config = { ...base, frequency: 'daily', start: '2024-06-01' };
++    expect(
++      await schedulesApp.handlers['schedule/get-dates-in-range']({
++        config,
++        start: '2024-06-01',
++        end: '2024-06-05',
++      }),
++    ).toEqual(['2024-06-03', '2024-06-04', '2024-06-05']);
++  });
++});
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 4ad21a6..9ad9ba4 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -22,7 +22,7 @@ import {
+ } from '#server/transactions/transaction-rules';
+ import { undoable } from '#server/undo';
+ import { RSchedule } from '#server/util/rschedule';
+-import { currentDay, dayFromDate } from '#shared/months';
++import { currentDay, dayFromDate, parseDate } from '#shared/months';
+ import { q } from '#shared/query';
+ import {
+   DEFAULT_UPCOMING_SCHEDULE_DAYS,
+@@ -502,6 +502,41 @@ function discoverSchedules() {
+   return findSchedules();
+ }
+ 
++async function getDatesInRange({
++  config,
++  start,
++  end,
++}: {
++  config: Parameters<typeof recurConfigToRSchedule>[0];
++  start: string;
++  end: string;
++}): Promise<string[]> {
++  if (start > end) return [];
++
++  const schedule = new RSchedule({ rrules: recurConfigToRSchedule(config) });
++
++  // Weekend adjustment moves an occurrence by at most 2 days, so look a
++  // little beyond the period and decide by the final day.
++  const from = d.startOfDay(d.subDays(parseDate(start), 3));
++  const to = d.endOfDay(d.addDays(parseDate(end), 3));
++
++  const days = new Set<string>();
++  for (const occurrence of schedule.occurrences({ start: from, end: to })) {
++    let date = occurrence.date;
++    if (config.skipWeekend) {
++      if (config.frequency === 'daily') {
++        if (d.isWeekend(date)) continue;
++      } else {
++        date = getDateWithSkippedWeekend(date, config.weekendSolveMode);
++      }
++    }
++    const day = dayFromDate(date);
++    if (day >= start && day <= end) days.add(day);
++  }
++
++  return [...days].sort();
++}
++
+ async function getUpcomingDates({ config, count }) {
+   const rules = recurConfigToRSchedule(config);
+ 
+@@ -850,6 +885,7 @@ export type SchedulesHandlers = {
+   'schedule/force-run-service': typeof advanceSchedulesService;
+   'schedule/discover': typeof discoverSchedules;
+   'schedule/get-upcoming-dates': typeof getUpcomingDates;
++  'schedule/get-dates-in-range': typeof getDatesInRange;
+ };
+ 
+ // Expose functions to the client
+@@ -870,6 +906,7 @@ app.method(
+ );
+ app.method('schedule/discover', discoverSchedules);
+ app.method('schedule/get-upcoming-dates', getUpcomingDates);
++app.method('schedule/get-dates-in-range', getDatesInRange);
+ 
+ app.service(trackJSONPaths);
+ 

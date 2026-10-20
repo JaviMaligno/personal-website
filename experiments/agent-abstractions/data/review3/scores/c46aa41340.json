@@ -1,0 +1,12 @@
+{"id":"c46aa41340",
+"reuse":{"score":3,"why":"Extends the shared getScheduledAmount used by all server sites, but re-derives the 7.5% tolerance inline instead of calling the existing getApproxNumberThreshold in shared/rules.ts that matching uses."},
+"duplication":{"score":3,"why":"`Math.round(Math.abs(amount) * 0.075)` duplicates getApproxNumberThreshold, so the matching tolerance and the planning tolerance can drift apart."},
+"placement":{"score":4,"why":"The rule is in shared/schedules.ts with the range rule; the op is threaded from each caller, which is where the tree keeps the condition operator."},
+"scope":{"score":5,"why":"Only the helper, its server call sites, comments and tests."},
+"maintainability":{"score":3,"why":"An optional positional amountOp after a boolean forces `false` placeholders at every call, and callers that omit the op (client SchedulesTable, Balance, mobile lists) silently get the old exact-value behaviour."},
+"bypasses_abstraction":{"value":true,"where":"shared/schedules.ts getScheduledAmount recomputes the approx tolerance instead of using getApproxNumberThreshold from shared/rules.ts."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"The tolerance formula of getApproxNumberThreshold is rewritten inline (with Math.sign) inside getScheduledAmount rather than called."},
+"one_place":{"value":false,"where":"The rule is defined in getScheduledAmount, but it only applies when the caller passes amountOp; the server paths do, while client callers of the same helper (desktop-client Balance.tsx, SchedulesTable.tsx, mobile SchedulesListItem/MobileSchedulesPage) do not, and the tolerance itself is a second copy of getApproxNumberThreshold."}
+}

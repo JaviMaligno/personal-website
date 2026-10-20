@@ -1,0 +1,189 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index d77948c..af53d0e 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -262,6 +262,47 @@ describe('set budget average', () => {
+     }
+     expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
+   });
++
++  it('leaves categories in fixed groups alone and only checks group notes', async () => {
++    await db.insertCategoryGroup({
++      id: 'fixed-group',
++      name: 'Fixed group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'fixed-cat',
++      name: 'Rent',
++      cat_group: 'fixed-group',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'tagged-category-cat',
++      name: 'Tagged category',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.insert('notes', { id: 'fixed-group', note: 'Rent #fixed monthly' });
++    await db.insert('notes', {
++      id: 'tagged-category-cat',
++      note: 'Category notes contain #fixed',
++    });
++    await setBudget({ category: 'fixed-cat', month: '2024-04', amount: 1234 });
++    await setBudget({
++      category: 'tagged-category-cat',
++      month: '2024-04',
++      amount: 5678,
++    });
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-fixed-cat')).toBe(1234);
++    expect(
++      await getSheetValue('budget202404', 'budget-tagged-category-cat'),
++    ).toBe(0);
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(0);
++  });
+ });
+ 
+ describe('coverOverbudgeted', () => {
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 5f884eb..9995e83 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -65,10 +66,7 @@ function monthFromDbMonth(month: number): string {
+ }
+ 
+ // TODO: complete list of fields.
+-type BudgetData = {
+-  is_income: 1 | 0;
+-  hidden: 1 | 0;
+-  group_hidden: 1 | 0;
++type BudgetData = MonthBudgetCategory & {
+   category: string;
+   amount: number;
+ };
+@@ -76,7 +74,7 @@ type BudgetData = {
+ type MonthBudgetCategory = Pick<
+   db.DbViewCategoryWithGroupHidden,
+   'is_income' | 'hidden' | 'group_hidden'
+-> & Pick<db.DbCategory, 'goal_def'>;
++> & Pick<db.DbCategory, 'goal_def' | 'id'> & { group_note: string | null };
+ 
+ type MonthBudgetAction = 'copy-previous' | 'zero' | 'average' | 'last-month-spending';
+ 
+@@ -91,6 +89,9 @@ function shouldWriteMonthBudgetCategory(
+   if (category.hidden === 1 || category.group_hidden === 1) {
+     return false;
+   }
++  if (extractTagsFromText(category.group_note ?? '').includes('fixed')) {
++    return false;
++  }
+   if (category.goal_def) {
+     return false;
+   }
+@@ -107,16 +108,15 @@ function getBudgetData<T extends BudgetTable>(
+ ): Promise<BudgetData[]> {
+   return db.all<
+     (db.DbReflectBudget | db.DbZeroBudget) &
+-      Pick<
+-        db.DbViewCategoryWithGroupHidden,
+-        'is_income' | 'hidden' | 'group_hidden'
+-      >
++      MonthBudgetCategory
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT b.*, c.id, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden,
++      n.note AS group_note
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes n ON n.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -284,10 +284,11 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<MonthBudgetCategory & Pick<db.DbCategory, 'id'>>(
+-    `SELECT c.*, g.hidden AS group_hidden
++  const categories = await db.all<MonthBudgetCategory>(
++    `SELECT c.*, g.hidden AS group_hidden, n.note AS group_note
+      FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
++     LEFT JOIN notes n ON n.id = g.id
+      WHERE c.tombstone = 0`,
+   );
+ 
+@@ -306,10 +307,11 @@ export async function setLastMonthSpending({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+-    `SELECT c.*, g.hidden AS group_hidden
++  const categories = await db.all<MonthBudgetCategory>(
++    `SELECT c.*, g.hidden AS group_hidden, n.note AS group_note
+      FROM categories c
+      LEFT JOIN category_groups g ON c.cat_group = g.id
++     LEFT JOIN notes n ON n.id = g.id
+      WHERE c.tombstone = 0`,
+   );
+   const prevMonth = monthUtils.prevMonth(month);
+@@ -336,11 +338,12 @@ export async function set3MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<MonthBudgetCategory>(
+     `
+-    SELECT c.*, g.hidden AS group_hidden
++    SELECT c.*, g.hidden AS group_hidden, n.note AS group_note
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -369,11 +372,12 @@ export async function set12MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<MonthBudgetCategory>(
+     `
+-    SELECT c.*, g.hidden AS group_hidden
++    SELECT c.*, g.hidden AS group_hidden, n.note AS group_note
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -393,11 +397,12 @@ export async function set6MonthAvg({
+ }: {
+   month: string;
+ }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<MonthBudgetCategory>(
+     `
+-    SELECT c.*, g.hidden AS group_hidden
++    SELECT c.*, g.hidden AS group_hidden, n.note AS group_note
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes n ON n.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );

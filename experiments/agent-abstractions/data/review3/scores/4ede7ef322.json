@@ -1,0 +1,11 @@
+{"id":"4ede7ef322",
+"reuse":{"score":3,"why":"Simplifies getScheduledAmount and reuses getApproxNumberThreshold in schedule-template, but api-models re-implements the missing/number/range dispatch inline instead of calling getScheduledAmount."},
+"duplication":{"score":2,"why":"scheduleModel.toExternal copies the null/number/range ternary and its own Math.min range rule next to the shared helper that already does exactly this."},
+"placement":{"score":3,"why":"The range rule sits in shared/schedules.ts, but the approximate-amount worst-case rule is bolted onto the budget template call site instead of the shared expected-amount helper, so forecast, posting, preview and the API never apply it."},
+"scope":{"score":4,"why":"Focused on the amount rule and the API field; removing the now-unused rounding option is a justified cleanup."},
+"maintainability":{"score":2,"why":"The expected-amount rule is now split across getScheduledAmount, an inline approx adjustment in schedule-template and a hand-written copy in api-models, so the next rule change must find three places."},
+"bypasses_abstraction":{"value":true,"where":"packages/loot-core/src/server/api-models.ts scheduleModel.toExternal (expectedAmount) and packages/loot-core/src/server/budget/schedule-template.ts createScheduleList (isapprox adjustment outside getScheduledAmount)"},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"api-models.ts expectedAmount reshapes getScheduledAmount's dispatch as an inline ternary with Math.min"},
+"abstraction_drift":{"value":true,"parameters_added":0,"special_case_branches":0,"bypassing_call_sites":2,"where":"getScheduledAmount itself loses its rounding parameter, but api-models.ts re-implements it and schedule-template.ts applies the approximate tolerance around it rather than inside it"}}

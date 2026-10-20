@@ -1,0 +1,12 @@
+{"id":"fcbed794e8",
+"reuse":{"score":4,"why":"All weekend decisions (getNextDate, getUpcomingDates, getDatesInRange, schedule-template) go through the new applyWeekendRule/applyWeekendRuleToDay, which wrap the existing getDateWithSkippedWeekend. Every RSchedule construction gets the new exdates. But the rrules+exdates pair is rebuilt by hand at four sites instead of through one factory."},
+"duplication":{"score":3,"why":"The holiday rule is written twice in shared/schedules.ts: isOffDay matches YYYY-MM-DD and MM-DD for moves, and recurConfigToExdates parses and expands the same two formats for daily skips. Each RSchedule site also repeats `rrules: recurConfigToRSchedule(c), exdates: recurConfigToExdates(c)`."},
+"placement":{"score":4,"why":"The weekend rule, holiday matching and the daily skip all live in shared/schedules.ts. Encoding the daily skip in recurConfigToRSchedule (a weekday byDayOfWeek and an empty-rule hack) mixes rule policy into the recurrence translation."},
+"scope":{"score":5,"why":"Every edit serves one of the steps: the shared weekend rule, the daily skip, the range handler, holidays and yearly holidays, plus tests and release notes."},
+"maintainability":{"score":3,"why":"The weekend move is defined once, which is the main win. But the holiday rule has two encodings (an off-day check versus a 60-year exdate expansion with arbitrary bounds), there is an interval%7 special case, and every new RSchedule must remember to pass exdates."},
+"bypasses_abstraction":{"value":false,"where":"Every weekend-move site calls applyWeekendRule/applyWeekendRuleToDay, and every RSchedule construction (rule-utils, getUpcomingDates, getDatesInRange, find-schedules takeDates) passes recurConfigToExdates."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"shared/schedules.ts: recurConfigToExdates re-implements the YYYY-MM-DD / MM-DD holiday matching of isOffDay as an expansion into concrete dates instead of sharing one holiday predicate."},
+"abstraction_drift":{"value":true,"parameters_added":1,"special_case_branches":2,"bypassing_call_sites":0,"where":"A `holidays` parameter is threaded through getDateWithSkippedWeekend/applyWeekendRule/applyWeekendRuleToDay. recurConfigToRSchedule gains a daily skipWeekend branch plus a nested `interval % 7 === 0 && isWeekend(start)` empty-rule special case. No call site bypasses applyWeekendRule."}
+}

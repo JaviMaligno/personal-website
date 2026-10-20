@@ -1,0 +1,75 @@
+diff --git a/packages/loot-core/src/server/schedules/app.ts b/packages/loot-core/src/server/schedules/app.ts
+index 902bc47..b5656d3 100644
+--- a/packages/loot-core/src/server/schedules/app.ts
++++ b/packages/loot-core/src/server/schedules/app.ts
+@@ -151,8 +151,8 @@ function updateActions(
+ 
+   // Mirrors how `_amount` resolves: a deleted/empty amount condition value
+   // yields 0, so the action is synced to 0 too, keeping it consistent with
+-  // the amount the schedule actually posts. A ranged ("is between") amount
+-  // is scheduled at the end furthest from zero.
++  // the amount the schedule actually posts. A ranged or approximate amount
++  // is scheduled at its lowest allowed value.
+   const amountValue = amountCond.value;
+   const amount = getExpectedScheduleAmount(amountValue, amountCond.op);
+ 
+@@ -587,8 +587,8 @@ async function postTransactionForSchedule({
+     return;
+   }
+ 
+-  // A missing amount (deleted condition) posts 0; a ranged ("is between")
+-  // amount posts at the end furthest from zero.
++  // A missing amount (deleted condition) posts 0; a ranged or approximate
++  // amount posts at its lowest allowed value.
+   const amount = getExpectedScheduleAmount(
+     schedule._amount,
+     schedule._amountOp,
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 1f4f645..7201188 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -26,11 +26,12 @@ describe('schedules', () => {
+     it.each([
+       [{ num1: -10100, num2: -20000 }, -20000],
+       [{ num1: -20000, num2: -10100 }, -20000],
+-      [{ num1: 10100, num2: 20000 }, 20000],
+-      [{ num1: 20000, num2: 10100 }, 20000],
++      [{ num1: 10100, num2: 20000 }, 10100],
++      [{ num1: 20000, num2: 10100 }, 10100],
++      [{ num1: -3000, num2: 5000 }, -3000],
+       [12345, 12345],
+       [10000, 10000, 'is'],
+-      [10000, 10750, 'isapprox'],
++      [10000, 9250, 'isapprox'],
+       [-10000, -10750, 'isapprox'],
+       [-1234, -1327, 'isapprox'],
+       [0, 0, 'isapprox'],
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index ad8fad5..720fcfa 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -19,11 +19,9 @@ export function getExpectedScheduleAmount(
+     ? 0
+     : typeof amount === 'number'
+       ? op === 'isapprox'
+-        ? amount + Math.sign(amount) * Math.round(Math.abs(amount) * 0.075)
++        ? amount - Math.round(Math.abs(amount) * 0.075)
+         : amount
+-      : Math.abs(amount.num1) >= Math.abs(amount.num2)
+-        ? amount.num1
+-        : amount.num2;
++      : Math.min(amount.num1, amount.num2);
+ }
+ 
+ // Preset token values used by UI selects. Keep labels in the UI (i18n) but
+@@ -512,8 +510,8 @@ export function computeSchedulePreviewTransactions(
+         dates.shift();
+       }
+ 
+-      // A missing amount previews as 0; a ranged amount previews at the end
+-      // furthest from zero.
++      // A missing amount previews as 0; a ranged or approximate amount
++      // previews at its lowest allowed value.
+       const amount = getExpectedScheduleAmount(
+         schedule._amount,
+         schedule._amountOp,

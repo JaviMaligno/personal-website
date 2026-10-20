@@ -1,0 +1,214 @@
+diff --git a/packages/docs/blog/2026-07-02-release-26-7-0.md b/packages/docs/blog/2026-07-02-release-26-7-0.md
+index a9bed17b8..d606c0706 100644
+--- a/packages/docs/blog/2026-07-02-release-26-7-0.md
++++ b/packages/docs/blog/2026-07-02-release-26-7-0.md
+@@ -138,7 +138,6 @@ This release adds a new experimental bank sync provider, releases the CLI as sta
+ - [#8027](https://github.com/actualbudget/actual/pull/8027) Move i18n usage outside of loot-core. — thanks @MatissJanis
+ - [#8044](https://github.com/actualbudget/actual/pull/8044) Upgraded the desktop Electron runtime from 39.8.5 (EOL) to 41.7.1. — thanks @MikesGlitch
+ - [#8049](https://github.com/actualbudget/actual/pull/8049) Fix react compiler application on Windows Electron app — thanks @matt-fidd
+-- [#8064](https://github.com/actualbudget/actual/pull/8064) Adds internal currency-aware helpers to `currencies.ts` and `util.ts`. — thanks @StephenBrown2
+ - [#8065](https://github.com/actualbudget/actual/pull/8065) Add auto-generated documentation page for upcoming release notes in Docusaurus. — thanks @MatissJanis
+ - [#8067](https://github.com/actualbudget/actual/pull/8067) Remove unnecessary playwright container pulls to speed up CI — thanks @matt-fidd
+ - [#8089](https://github.com/actualbudget/actual/pull/8089) Move mechanical agent rules into shared agent hooks (wired for Claude, Codex, and Cursor). — thanks @MatissJanis
+diff --git a/packages/docs/docs/releases.md b/packages/docs/docs/releases.md
+index 28bb4788e..08b28cf40 100644
+--- a/packages/docs/docs/releases.md
++++ b/packages/docs/docs/releases.md
+@@ -482,7 +482,6 @@ This release adds a new experimental bank sync provider, releases the CLI as sta
+ - [#8027](https://github.com/actualbudget/actual/pull/8027) Move i18n usage outside of loot-core. — thanks @MatissJanis
+ - [#8044](https://github.com/actualbudget/actual/pull/8044) Upgraded the desktop Electron runtime from 39.8.5 (EOL) to 41.7.1. — thanks @MikesGlitch
+ - [#8049](https://github.com/actualbudget/actual/pull/8049) Fix react compiler application on Windows Electron app — thanks @matt-fidd
+-- [#8064](https://github.com/actualbudget/actual/pull/8064) Adds internal currency-aware helpers to `currencies.ts` and `util.ts`. — thanks @StephenBrown2
+ - [#8065](https://github.com/actualbudget/actual/pull/8065) Add auto-generated documentation page for upcoming release notes in Docusaurus. — thanks @MatissJanis
+ - [#8067](https://github.com/actualbudget/actual/pull/8067) Remove unnecessary playwright container pulls to speed up CI — thanks @matt-fidd
+ - [#8089](https://github.com/actualbudget/actual/pull/8089) Move mechanical agent rules into shared agent hooks (wired for Claude, Codex, and Cursor). — thanks @MatissJanis
+diff --git a/packages/loot-core/src/shared/currencies.test.ts b/packages/loot-core/src/shared/currencies.test.ts
+deleted file mode 100644
+index b4c934bdf..000000000
+--- a/packages/loot-core/src/shared/currencies.test.ts
++++ /dev/null
+@@ -1,44 +0,0 @@
+-import { currencies, getDecimalPlaces } from './currencies';
+-
+-describe('getDecimalPlaces', () => {
+-  it('returns 2 for empty string (None)', () => {
+-    expect(getDecimalPlaces('')).toBe(2);
+-  });
+-
+-  it('returns 0 for zero-decimal currencies', () => {
+-    expect(getDecimalPlaces('JPY')).toBe(0);
+-    expect(getDecimalPlaces('KRW')).toBe(0);
+-    expect(getDecimalPlaces('IRR')).toBe(0);
+-  });
+-
+-  it('returns 2 for standard currencies', () => {
+-    expect(getDecimalPlaces('USD')).toBe(2);
+-    expect(getDecimalPlaces('EUR')).toBe(2);
+-    expect(getDecimalPlaces('GBP')).toBe(2);
+-  });
+-
+-  it('returns 2 as safe default for unknown codes', () => {
+-    expect(getDecimalPlaces('XYZ')).toBe(2);
+-  });
+-});
+-
+-describe('currency metadata', () => {
+-  it.each(currencies)(
+-    '$name ($code) has a numeric decimalPlaces field',
+-    currency => {
+-      expect(typeof currency.decimalPlaces).toBe('number');
+-    },
+-  );
+-
+-  it.each(currencies)(
+-    '$name ($code) has non-negative decimalPlaces',
+-    currency => {
+-      expect(currency.decimalPlaces).toBeGreaterThanOrEqual(0);
+-    },
+-  );
+-
+-  it('first entry is None with code empty string and decimalPlaces 2', () => {
+-    expect(currencies[0].code).toBe('');
+-    expect(currencies[0].decimalPlaces).toBe(2);
+-  });
+-});
+diff --git a/packages/loot-core/src/shared/currencies.ts b/packages/loot-core/src/shared/currencies.ts
+index 2c2350a80..3620b7bb7 100644
+--- a/packages/loot-core/src/shared/currencies.ts
++++ b/packages/loot-core/src/shared/currencies.ts
+@@ -76,7 +76,3 @@ export const currencies: Currency[] = [
+ export function getCurrency(code: string): Currency {
+   return currencies.find(c => c.code === code) || currencies[0];
+ }
+-
+-export function getDecimalPlaces(currencyCode: string): number {
+-  return getCurrency(currencyCode)?.decimalPlaces ?? 2;
+-}
+diff --git a/packages/loot-core/src/shared/util.test.ts b/packages/loot-core/src/shared/util.test.ts
+index a556c21b6..db9406d0e 100644
+--- a/packages/loot-core/src/shared/util.test.ts
++++ b/packages/loot-core/src/shared/util.test.ts
+@@ -1,8 +1,6 @@
+ import {
+-  amountToCurrencyInteger,
+   currencyToAmount,
+   getNumberFormat,
+-  integerToCurrencyWithDecimal,
+   looselyParseAmount,
+   setNumberFormat,
+   stringToInteger,
+@@ -239,69 +237,4 @@ describe('utility functions', () => {
+     // Unicode minus
+     expect(stringToInteger('−3')).toBe(-3);
+   });
+-
+-  describe('integerToCurrencyWithDecimal with currency', () => {
+-    beforeEach(() => {
+-      setNumberFormat({ format: 'comma-dot', hideFraction: false });
+-    });
+-
+-    test('empty string (None) uses 2dp', () => {
+-      expect(integerToCurrencyWithDecimal(1234, '')).toBe('12.34');
+-    });
+-
+-    test('USD uses 2dp', () => {
+-      expect(integerToCurrencyWithDecimal(1234, 'USD')).toBe('12.34');
+-    });
+-
+-    test('JPY uses 0dp', () => {
+-      expect(integerToCurrencyWithDecimal(1234, 'JPY')).toBe('1,234');
+-    });
+-
+-    test('IRR uses 0dp', () => {
+-      expect(integerToCurrencyWithDecimal(1234, 'IRR')).toBe('1,234');
+-    });
+-
+-    test('unknown currency XYZ defaults to 2dp', () => {
+-      expect(integerToCurrencyWithDecimal(1234, 'XYZ')).toBe('12.34');
+-    });
+-
+-    test('no currency argument preserves existing behavior', () => {
+-      expect(integerToCurrencyWithDecimal(1234)).toBe('12.34');
+-      expect(integerToCurrencyWithDecimal(1200)).toBe('12.00');
+-    });
+-  });
+-
+-  describe('amountToCurrencyInteger', () => {
+-    test('empty string (None) uses 2dp', () => {
+-      expect(amountToCurrencyInteger(12.34, '')).toBe(1234);
+-    });
+-
+-    test('USD uses 2dp', () => {
+-      expect(amountToCurrencyInteger(12.34, 'USD')).toBe(1234);
+-    });
+-
+-    test('JPY uses 0dp (multiply by 1)', () => {
+-      expect(amountToCurrencyInteger(1234, 'JPY')).toBe(1234);
+-    });
+-
+-    test('IRR uses 0dp (multiply by 1)', () => {
+-      expect(amountToCurrencyInteger(1234, 'IRR')).toBe(1234);
+-    });
+-
+-    it.each<[number, string]>([
+-      [12.34, 'USD'],
+-      [1234, 'JPY'],
+-      [5678, 'IRR'],
+-    ])(
+-      'round-trip amountToCurrencyInteger/integerToCurrencyWithDecimal: %s %s',
+-      (amount, currency) => {
+-        setNumberFormat({ format: 'comma-dot', hideFraction: false });
+-        const encoded = amountToCurrencyInteger(amount, currency);
+-        const decoded = parseFloat(
+-          integerToCurrencyWithDecimal(encoded, currency).replace(/,/g, ''),
+-        );
+-        expect(decoded).toBeCloseTo(amount, 8);
+-      },
+-    );
+-  });
+ });
+diff --git a/packages/loot-core/src/shared/util.ts b/packages/loot-core/src/shared/util.ts
+index fb2b1bf84..07d273caf 100644
+--- a/packages/loot-core/src/shared/util.ts
++++ b/packages/loot-core/src/shared/util.ts
+@@ -2,8 +2,6 @@
+ import { formatDistanceToNow } from 'date-fns';
+ import type { Locale } from 'date-fns';
+ 
+-import { getDecimalPlaces } from './currencies';
+-
+ export function last<T>(arr: Array<T>) {
+   return arr[arr.length - 1];
+ }
+@@ -455,19 +453,7 @@ export function integerToCurrency(
+   return formatter.format(amount);
+ }
+ 
+-export function integerToCurrencyWithDecimal(
+-  integerAmount: IntegerAmount,
+-  currencyCode?: string,
+-) {
+-  if (currencyCode !== undefined) {
+-    const dp = getDecimalPlaces(currencyCode);
+-    return integerToCurrency(
+-      integerAmount,
+-      getNumberFormat({ ...numberFormatConfig, decimalPlaces: dp }).formatter,
+-      dp,
+-    );
+-  }
+-
++export function integerToCurrencyWithDecimal(integerAmount: IntegerAmount) {
+   // If decimal digits exist, keep them. Otherwise format them as usual.
+   if (integerAmount % 100 !== 0) {
+     return integerToCurrency(
+@@ -482,10 +468,6 @@ export function integerToCurrencyWithDecimal(
+   return integerToCurrency(integerAmount);
+ }
+ 
+-export function amountToCurrencyInteger(amount: number, code: string): number {
+-  return amountToInteger(amount, getDecimalPlaces(code));
+-}
+-
+ export function amountToCurrency(amount: Amount): CurrencyAmount {
+   return getNumberFormat().formatter.format(amount);
+ }

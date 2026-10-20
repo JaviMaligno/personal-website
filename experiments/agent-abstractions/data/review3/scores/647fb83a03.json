@@ -1,0 +1,13 @@
+{
+  "id": "647fb83a03",
+  "reuse": {"score": 4, "why": "Extends the existing getDateWithSkippedWeekend with a holidays parameter and threads it through all its callers, but the 'off day' test is written fresh at each site instead of one exported predicate."},
+  "duplication": {"score": 3, "why": "The weekend-or-holiday predicate appears three times (isOffDay in schedules/app.ts, isOff inside getDateWithSkippedWeekend, and the inline notWeekend in getNextDate), while the template's repeated adjust expression is consolidated into a local solveWeekend."},
+  "placement": {"score": 4, "why": "Moving the date stays in shared/schedules.ts, but the daily-skip predicate is defined privately in server/schedules/app.ts and again inline in shared code rather than next to the shared date helper."},
+  "scope": {"score": 4, "why": "Focused on holidays; the solveWeekend extraction in schedule-template.ts is a small adjacent tidy-up needed to pass holidays without a third copy."},
+  "maintainability": {"score": 3, "why": "Adding another kind of off day later would require editing three separate predicates that must stay identical."},
+  "bypasses_abstraction": {"value": false, "where": "All date moves go through getDateWithSkippedWeekend; there was no shared off-day predicate before, so the copies are new duplication rather than a bypass."},
+  "duplicated_blocks": 2,
+  "would_merge": "with_changes",
+  "disguised_duplication": {"value": true, "where": "The weekend-or-holiday check is restated under three names: isOffDay (server/schedules/app.ts), isOff (getDateWithSkippedWeekend) and the reshaped notWeekend lambda in getNextDate (shared/schedules.ts)."},
+  "one_place": {"value": false, "where": "Moving an occurrence is decided once in getDateWithSkippedWeekend, but which days count as off (for daily skipping) is decided separately in isOffDay (getDatesInRange, getUpcomingDates) and inline in getNextDate."}
+}

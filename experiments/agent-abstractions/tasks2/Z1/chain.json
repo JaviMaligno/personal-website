@@ -1,0 +1,89 @@
+{
+  "zone": "Z1",
+  "logic": "Which categories a month-wide (bulk) budget action writes: visible-categories rule, income only in tracking budgets, sign inversion of averages",
+  "zone_files": {
+    "R": [
+      "server/budget/actions.ts"
+    ],
+    "F": [
+      "server/budget/actions.ts"
+    ]
+  },
+  "consumer_ids": "the budget handler each consumer test drives (budget/<id>)",
+  "f_comment_fact": {
+    "fact": "F's getBulkBudgetCategories comment: the average actions skip a category whose group row does not exist, copy last month does not (implicit in R: SQL LEFT JOIN NULL vs JS === 1).",
+    "basis": "No hidden test of T1-T4 has a category whose group row is missing: every category's cat_group (g-income, g-living, g-archive, g-loans) is inserted with insertCategoryGroup and no group is deleted, so no expected value depends on missing-group handling.",
+    "rule": "Per step, depends_on_f_comment_fact is true when the step's hidden tests depend on a fact stated only in F's doc comments (docs/study2-refactor-review-independent.md, 'Do F's doc comments give F an unfair advantage?'); decided by reading the hidden tests, before any pilot run (spec amendment 2026-10-08, item 10).",
+    "decided": "2026-10-08"
+  },
+  "steps": [
+    {
+      "id": "T1",
+      "kind": "rule",
+      "depends_on_f_comment_fact": false,
+      "consumers": [
+        "copy-previous-month",
+        "set-zero",
+        "set-3month-avg",
+        "set-6month-avg",
+        "set-12month-avg"
+      ],
+      "summary": "skip hidden categories, categories in hidden groups and categories with saved templates in every bulk action"
+    },
+    {
+      "id": "T2",
+      "kind": "consumer",
+      "depends_on_f_comment_fact": false,
+      "consumers": [
+        "set-last-month-spending"
+      ],
+      "summary": "new bulk action budget/set-last-month-spending over the same categories"
+    },
+    {
+      "id": "T3",
+      "kind": "rule",
+      "depends_on_f_comment_fact": false,
+      "consumers": [
+        "copy-previous-month",
+        "set-zero",
+        "set-3month-avg",
+        "set-6month-avg",
+        "set-12month-avg",
+        "set-last-month-spending"
+      ],
+      "summary": "also skip categories in groups whose notes carry #fixed"
+    },
+    {
+      "id": "T4",
+      "kind": "build",
+      "depends_on_f_comment_fact": false,
+      "consumers": [
+        "copy-previous-month",
+        "set-zero",
+        "set-3month-avg",
+        "set-6month-avg",
+        "set-12month-avg",
+        "set-last-month-spending"
+      ],
+      "summary": "optional includeHiddenCategories flag on every bulk action; other exclusions still apply"
+    }
+  ],
+  "t2_reuse": {
+    "helpers": {
+      "F": [
+        "getBulkBudgetCategories",
+        "averageToBudget"
+      ],
+      "R": [
+        "setNMonthAvg"
+      ]
+    },
+    "markers": [
+      "is_income\\s*===?\\s*1\\s*&&\\s*!\\s*isTrackingBudget\\(\\)",
+      "\\bhidden\\s*===?\\s*1",
+      "\\bhidden\\s*=\\s*0",
+      "group_hidden",
+      "is_income\\s*===?\\s*0"
+    ]
+  }
+}

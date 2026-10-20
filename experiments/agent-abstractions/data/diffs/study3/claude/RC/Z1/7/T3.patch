@@ -1,0 +1,165 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index eb89778..c93c7bc 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -13,6 +13,7 @@ import {
+   setCategoryCarryover,
+   setLastMonthSpending,
+   setNMonthAvg,
++  setZero,
+ } from './actions';
+ import * as budget from './base';
+ 
+@@ -209,6 +210,38 @@ describe('setLastMonthSpending', () => {
+   });
+ });
+ 
++describe('fixed groups', () => {
++  beforeEach(global.emptyDatabase());
++  afterEach(global.emptyDatabase());
++
++  it('leaves categories in a #fixed group untouched', async () => {
++    await setupAverageDatabase();
++    await db.insertCategoryGroup({ id: 'fixed', name: 'Fixed', is_income: 0 });
++    await db.insertCategory({
++      id: 'rent',
++      name: 'Rent',
++      cat_group: 'fixed',
++      is_income: 0,
++    });
++    await db.insertCategory({
++      id: 'tagged-cat',
++      name: 'Tagged',
++      cat_group: 'group1',
++      is_income: 0,
++    });
++    await db.insert('notes', { id: 'fixed', note: 'Set once #fixed' });
++    await setBudget({ category: 'rent', month: '2024-04', amount: 5000 });
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-04' });
++    await setLastMonthSpending({ month: '2024-04' });
++    await sheet.waitOnSpreadsheet();
++
++    expect(await getSheetValue('budget202404', 'budget-rent')).toBe(5000);
++    expect(await getSheetValue('budget202404', 'budget-cat1')).toBe(1200);
++  });
++});
++
+ describe('coverOverbudgeted', () => {
+   beforeEach(global.emptyDatabase());
+   afterEach(global.emptyDatabase());
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index 405c77a..9b11983 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -69,6 +69,7 @@ type BudgetData = {
+   is_income: 1 | 0;
+   hidden: 1 | 0;
+   group_hidden: 1 | 0;
++  group_notes?: string | null;
+   goal_def?: string | null;
+   category: string;
+   amount: number;
+@@ -84,13 +85,14 @@ function getBudgetData<T extends BudgetTable>(
+         db.DbViewCategoryWithGroupHidden,
+         'is_income' | 'hidden' | 'group_hidden'
+       > &
+-      Pick<db.DbCategory, 'goal_def'>
++      Pick<db.DbCategory, 'goal_def'> & { group_notes: string | null }
+   >(
+     `
+-    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden
++    SELECT b.*, c.is_income, c.hidden, c.goal_def, g.hidden AS group_hidden, gn.note AS group_notes
+     FROM ${table} b
+     LEFT JOIN categories c ON b.category = c.id
+     LEFT JOIN category_groups g ON c.cat_group = g.id
++    LEFT JOIN notes gn ON gn.id = g.id
+     WHERE c.tombstone = 0 AND b.month = ?
+   `,
+     [month],
+@@ -219,11 +221,12 @@ function setCarryover(
+ //
+ // - `isIncome` categories are only filled in tracking budgets.
+ // - Hidden categories, categories in hidden groups, and categories with saved
+-//   budget templates are left untouched.
++
+ type FillableCategory = {
+   is_income: 1 | 0;
+   hidden?: 1 | 0 | null;
+   group_hidden?: 1 | 0 | null;
++  group_notes?: string | null;
+   goal_def?: string | null;
+ };
+ 
+@@ -239,6 +242,11 @@ function hasSavedTemplates(goalDef?: string | null): boolean {
+   }
+ }
+ 
++// Groups tagged `#fixed` in their notes hold set-once budgets.
++function isFixedGroup(groupNotes?: string | null): boolean {
++  return !!groupNotes && /(^|\s)#fixed(?![\w-])/i.test(groupNotes);
++}
++
+ function shouldFillCategory(cat: FillableCategory): boolean {
+   if (cat.is_income === 1 && !isTrackingBudget()) {
+     return false;
+@@ -246,6 +254,9 @@ function shouldFillCategory(cat: FillableCategory): boolean {
+   if (cat.hidden === 1 || cat.group_hidden === 1) {
+     return false;
+   }
++  if (isFixedGroup(cat.group_notes)) {
++    return false;
++  }
+   return !hasSavedTemplates(cat.goal_def);
+ }
+ 
+@@ -256,13 +267,16 @@ function averageToBudgetAmount(avg: number, isIncome: 1 | 0): number {
+ }
+ 
+ async function getAverageFillCategories(): Promise<
+-  db.DbViewCategoryWithGroupHidden[]
++  (db.DbViewCategoryWithGroupHidden & { group_notes: string | null })[]
+ > {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { group_notes: string | null }
++  >(
+     `
+-  SELECT c.*, g.hidden AS group_hidden
++  SELECT c.*, g.hidden AS group_hidden, gn.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes gn ON gn.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+@@ -312,11 +326,14 @@ export async function copySinglePreviousMonth({
+ }
+ 
+ export async function setZero({ month }: { month: string }): Promise<void> {
+-  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
++  const categories = await db.all<
++    db.DbViewCategoryWithGroupHidden & { group_notes: string | null }
++  >(
+     `
+-  SELECT c.*, g.hidden AS group_hidden
++  SELECT c.*, g.hidden AS group_hidden, gn.note AS group_notes
+   FROM categories c
+   LEFT JOIN category_groups g ON c.cat_group = g.id
++  LEFT JOIN notes gn ON gn.id = g.id
+   WHERE c.tombstone = 0
+   `,
+   );
+diff --git a/upcoming-release-notes/skip-fixed-groups-in-bulk-budget.md b/upcoming-release-notes/skip-fixed-groups-in-bulk-budget.md
+new file mode 100644
+index 0000000..7609717
+--- /dev/null
++++ b/upcoming-release-notes/skip-fixed-groups-in-bulk-budget.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Month-wide budget actions now leave categories in groups tagged `#fixed` in the group notes untouched

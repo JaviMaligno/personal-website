@@ -1,0 +1,10 @@
+{"id":"b8736e0b6b",
+"reuse":{"score":2,"why":"Copies the local-unlink field reset from unlinkAccount instead of extracting it into a shared helper both can call."},
+"duplication":{"score":2,"why":"The eight-field db.updateAccount reset (account_id, bank, balances, sync source, sync status) is duplicated verbatim from unlinkAccount, and the flag is threaded by hand through six provider functions."},
+"placement":{"score":2,"why":"The unlink side effect is buried inside assertNotLinkedElsewhere, a guard whose name says it only checks, and runs before the rest of the link work."},
+"scope":{"score":4,"why":"Mostly focused on the flag, but also changes the guard to throw 'not found' for a missing upgrading account, an unrequested behaviour tweak."},
+"maintainability":{"score":2,"why":"A mutating 'assert' and a copied unlink reset mean future changes to what unlinking clears must be made in two places, and the side effect is easy to miss."},
+"bypasses_abstraction":{"value":true,"where":"assertNotLinkedElsewhere in server/accounts/app.ts clears the previous holder with its own db.updateAccount instead of going through the unlink logic in unlinkAccount."},
+"duplicated_blocks":1,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":false,"where":"The copied reset is a verbatim copy of unlinkAccount's update, not reshaped."}}

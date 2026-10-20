@@ -1,0 +1,231 @@
+{
+  "zone": "Z2",
+  "author": "author-agent:Z2",
+  "date": "2026-10-08",
+  "rf_frozen_verified": {
+    "tag": "rf-frozen",
+    "commit": "162d65bcd5189d0d7e3a96fff323e549de54e12a",
+    "checked_before_writing": true
+  },
+  "role": "test author only: statements, hidden tests, consumers.json, chain.json, sanity. No implementation or reference patch written; references are the implementer agent's job (plan Task 2).",
+  "chain": {
+    "T1": "rule: a ranged amount resolves to the end furthest from zero (was the midpoint); must reach every existing consumer",
+    "T2": "consumer: new expectedAmount field in the API schedule list, resolved as the rest of the app does (so it carries T1's rule)",
+    "T3": "rule extension: approximate amounts resolve to the end of their 7.5% tolerance furthest from zero; every consumer including T2's",
+    "T4": "build: the rule becomes 'lowest allowed value' (money in -> end closest to zero; ranges spanning zero -> negative end); every consumer including T2's"
+  },
+  "consumers": {
+    "forecast": "forecast/generate handler (balance on the occurrence date)",
+    "preview": "exported shared preview computation (the client's entry point; there is no server handler for previews). Exists under the same name in R and F; it is a consumer, not an R copy or an F helper",
+    "post-transaction": "schedule/post-transaction handler (posted row)",
+    "rule-action-sync": "rule-get / rule-update / schedule/update handlers (set-amount action after the schedule's amount changes)",
+    "budget-template": "budget/dry-run-category-template handler, real database (expense category for money out, income category for money in)",
+    "api-schedule-list": "api/schedules-get via installAPI (new field expectedAmount)"
+  },
+  "test_rules_followed": [
+    "behavioural, through public handlers / the exported client entry point, on a real test database",
+    "nothing mocked (Z2 has no network boundary); MockDate only fixes today's date",
+    "imports only modules and names that exist in both work/variants/R and work/variants/F; no F helper or R copy is imported or named",
+    "one test file per consumer per step, self-contained (no shared helper module), paths unique to Z2 under packages/loot-core/src/server/study2-z2/",
+    "every test asserts at least one value that differs from the untouched behaviour, so each consumer test fails on its own"
+  ],
+  "statement_checks": {
+    "aa.tasks.statement_leaks": "clean for T1..T4",
+    "extra": "no file paths, function/handler names of existing code, copy counts or per-site enumeration; T2 names only the new API field it asks for"
+  },
+  "verification": {
+    "sanity": "sanity.json: all 60 tests fail on aa-actual:R and aa-actual:F with an AssertionError on the expected amount (seeded vitest, one process per consumer file)",
+    "positive_control": "on a scratch clone of R (not kept), the T1/T3/T4 tests with the schedule amount replaced by an exact amount equal to the expected value pass 50/50, so setup and assertions are satisfiable; the API tests are excluded (the field does not exist yet)"
+  },
+  "notes": [
+    "zone_files are the four files holding the logic in R and F; T2's new consumer lands where the agent chooses (likely the API layer), outside zone_files",
+    "after T1 the base inconsistency in the template's range rounding no longer affects any tested value (worst-case bounds are integers)",
+    "t2_reuse in chain.json is harness configuration (static T2 check), never shown to agents; it lists the existing shared amount function for both R (where it still exists, exported, unused in loot-core) and F"
+  ],
+  "adjudication": {
+    "date": "2026-10-08",
+    "by": "adjudicator agent (not author, not implementer)",
+    "record": "adjudication.md",
+    "sanity": "sanity_check.json (aa chain sanity)",
+    "rounds": 1,
+    "changes": [
+      "T2 hidden test 'ranged schedules report the amount they are expected to post' split into an expense test and an income test (same assertions); T2/consumers.json updated",
+      "chain.json T4 'supersedes' the 12 T1/T2/T3 income tests that T4's rule change contradicts; evaluator excludes superseded tests from carried defects (aa.chain_eval)"
+    ],
+    "steps_kept": [
+      "T1",
+      "T2",
+      "T3",
+      "T4"
+    ],
+    "dropped": [],
+    "implementer_audit": "transcript not available to the adjudicator; reference patches scanned for hidden-test content (chains.reference_leaks): none"
+  },
+  "files_sha256": {
+    "T1/consumers.json": "8b60515c4b7e27c344e11c0f63db4b0dc4552dc47a885e1ac48d1c6f722645de",
+    "T1/hidden/packages/loot-core/src/server/study2-z2/t1-budget-template.test.ts": "d15a1f3d42f8df032be2032efa3c73d042a3ff0fd0489bdd54cb7bd21a0c4e23",
+    "T1/hidden/packages/loot-core/src/server/study2-z2/t1-forecast.test.ts": "7ce1b62e5f11094905d6f1472651f55c3ef99b28ff3f2af5d976353e804f6364",
+    "T1/hidden/packages/loot-core/src/server/study2-z2/t1-post-transaction.test.ts": "b23bd5b141d126623c67e7e7c3be5941f4a92f8014268f02e55c2ad839b27f04",
+    "T1/hidden/packages/loot-core/src/server/study2-z2/t1-preview.test.ts": "4957c3db31872e9438e5f9fe07f03bdf746f4bd4ee5dd04f69b82ec9132f179f",
+    "T1/hidden/packages/loot-core/src/server/study2-z2/t1-rule-action-sync.test.ts": "dba0e197ef0d1b59cbfc9a5b3c5243d2860eeaa77c6c31eb0a528e9e1b8ec1bc",
+    "T1/statement.md": "6685becb361e853d7aa4048bd9c1a2897035341cf5952b56ae68c358daa4671a",
+    "T2/consumers.json": "ff58e27e4ab9f733146a44fef1721dae7329a76ef2aa8ae4d40414a94571789a",
+    "T2/hidden/packages/loot-core/src/server/study2-z2/t2-api-schedule-list.test.ts": "4f51b5b7467765c81aa3c60600b61a45dacdc1099c80e79a241d37fba521b509",
+    "T2/statement.md": "5ca232bb7b591b286bba70201a065c81d74a0e0b04b857e313a25fc71dd08e2c",
+    "T3/consumers.json": "606af2c559995b67e808d1b733ab8827736d69ce8cd0a4d5cc1db4025b15e0e8",
+    "T3/hidden/packages/loot-core/src/server/study2-z2/t3-api-schedule-list.test.ts": "0e7ac49e9177b7da5bded4ab3add9805f2af1208f0a88e7fd07517bbb792ef81",
+    "T3/hidden/packages/loot-core/src/server/study2-z2/t3-budget-template.test.ts": "de083db96fc3c4796c76b79341d532a11f60bfdef4644c921192a74ed0a55b1c",
+    "T3/hidden/packages/loot-core/src/server/study2-z2/t3-forecast.test.ts": "5c2c93d48b6267213214f4634ecc79f3b9286e36eeb0905a2e256d39d4bcefdb",
+    "T3/hidden/packages/loot-core/src/server/study2-z2/t3-post-transaction.test.ts": "54f213df22f78923c0a5ec89b1a7065f1fd11e9f4f900fd38b83ea4c6b825868",
+    "T3/hidden/packages/loot-core/src/server/study2-z2/t3-preview.test.ts": "edccfe9b3d377159377ac8dbaac05f29e1353a7645b9e41d4449a47d54198cef",
+    "T3/hidden/packages/loot-core/src/server/study2-z2/t3-rule-action-sync.test.ts": "cdf14bb04f0956301dd5a2c965bb467ddd5140fe6b3ab8f502a718e19db8a54e",
+    "T3/statement.md": "f0164e747ea6a730157be74889ebe8b80ef6fdb65a80248785adf105893ed3f2",
+    "T4/consumers.json": "b84c5052d258b9a05bf73c37725d8365868ee95f92aa2ca4cca4a2d66bbae95b",
+    "T4/hidden/packages/loot-core/src/server/study2-z2/t4-api-schedule-list.test.ts": "6b6486843bd2446dff09dcb780004adb45a0af0d456584975f406c85fc2a37f5",
+    "T4/hidden/packages/loot-core/src/server/study2-z2/t4-budget-template.test.ts": "7dc6297ec0c2e07dee5e9f425fc8dc8dc8cad0942b428f048e4ead7bf242cae0",
+    "T4/hidden/packages/loot-core/src/server/study2-z2/t4-forecast.test.ts": "5db13e21444c37c612b34826fd342ee6bc95c8fcdd107bdce52dc3fb047ea585",
+    "T4/hidden/packages/loot-core/src/server/study2-z2/t4-post-transaction.test.ts": "2f1184d4b058d7138f2e98bb4dfabc878c85478a96b5d1c184755e5abea7ed31",
+    "T4/hidden/packages/loot-core/src/server/study2-z2/t4-preview.test.ts": "9d1bd85c2f6ae53a8149d1a51785e2d92fbde92c9e331739c2e9a2a68cb187fd",
+    "T4/hidden/packages/loot-core/src/server/study2-z2/t4-rule-action-sync.test.ts": "f9e8f771952ff7d19635e0be13c4c6c2325f8351e69fe9110e980cc078d587d4",
+    "T4/statement.md": "181388fb6c524dee0a3d0a7e106a8d2fc586cb17f25551745315a706247fa285",
+    "chain.json": "1f23598b5a7eddc39e2126f09fba6d642c5f39165f9be83c1bb1b9a3e1c19b39",
+    "sanity.json": "7f5884cad5b4f803b054286591ce3e4744e09736036af361964cf68e92fa1f0f"
+  },
+  "implementer": "implementer-agent-blind:Z2",
+  "implementer_audit": "orchestrator transcript audit 2026-10-08: clean — docs/audits/2026-10-08-blind-implementers.md",
+  "references_blind": {
+    "date": "2026-10-08",
+    "reason": "spec amendment 6: the first implementers read author material, so the references were not written from the statement only (spec section 3).",
+    "implementer": "implementer-agent-blind:Z2",
+    "inputs": "only the de-hinted statements (tasks2/<Z>/T*/statement.md at afb4d8e, copied out of the repo) and scratch copies of work/variants/R and F (git archive of HEAD = rf-frozen trees, fresh git repo with one baseline commit). No tasks2/ author file, no hidden tests, no spec/plan/variants doc in the work dir.",
+    "independence_audit": {
+      "by": "orchestration audit agent (not author, not implementer)",
+      "transcript": "not readable by this auditor; the transcript audit is the orchestrator's",
+      "work_dir_checks": [
+        "statements byte-identical to afb4d8e:tasks2/<Z>/T*/statement.md (unchanged at HEAD)",
+        "R and F baseline trees identical to the frozen variant trees (R 77602e7e, F 5c46975b)",
+        "each tree's history = baseline + 4 step commits; no test file in any commit",
+        "no file under blind2/<Z>/ (excluding node_modules) with a hidden-test file name; no mention of tasks2, hidden/, consumers.json or adjudication",
+        "the 62 hidden-test describe/it titles of >=12 chars: none in patches, scratch or statements (only 'Enable Banking', an upstream product name already in the baseline)",
+        "line overlap of hidden tests (minus upstream test lines) with scratch tests and added patch lines: Z3 scratch shares two error messages quoted verbatim in the Z3 T1/T3 statements and one idiomatic db.first<db.DbBank>('SELECT * FROM banks WHERE id = ?' line (upstream link.test.ts uses the same query form); patches: none",
+        "each installed patch equals that step's commit diff in the implementer's tree"
+      ],
+      "reference_leaks": "aa chain sanity (chains.reference_leaks): see sanity_check.json"
+    },
+    "patch_sha256_16_old_to_new": {
+      "T1.F": {
+        "old": "ef7991838d59ab55",
+        "new": "935b29e5639186c9"
+      },
+      "T1.R": {
+        "old": "4069fa2cec4dc34a",
+        "new": "787a97c274134d96"
+      },
+      "T2.F": {
+        "old": "367b6c95401b84f4",
+        "new": "f22241ecc3662a35"
+      },
+      "T2.R": {
+        "old": "367b6c95401b84f4",
+        "new": "f22241ecc3662a35"
+      },
+      "T3.F": {
+        "old": "8ee00a44dd118980",
+        "new": "45ab2329ef7095c0"
+      },
+      "T3.R": {
+        "old": "0885b4228d438fb5",
+        "new": "458dfc4817c61eae"
+      },
+      "T4.F": {
+        "old": "0984308807c95dde",
+        "new": "6955fe93e27cb897"
+      },
+      "T4.R": {
+        "old": "34d6a47446973b94",
+        "new": "6613fa60cda76532"
+      }
+    },
+    "patch_form": "git diff of that step only (abbreviated index lines), from the variant root"
+  },
+  "references_superseded": {
+    "implementer": "implementer-agent:Z2",
+    "exposure": "self-reported: read tasks2/Z2/chain.json and provenance.json (consumer lists, zone files, chain design).",
+    "status": "replaced by the blind references on 2026-10-08; old patches remain in git history (commit before this one)",
+    "references": {
+      "implementer": "implementer-agent:Z2",
+      "date": "2026-10-08",
+      "inputs_read": "tasks2/Z2/T1..T4/statement.md and chain.json/provenance.json only; code read from scratch copies of work/variants/R and work/variants/F outside the repo. Never opened hidden/, consumers.json or sanity.json; hidden tests not run.",
+      "method": "each step implemented on top of the previous one, separately on R and on F; reference.<cond>.patch = git diff --full-index of that step only (applies to the untouched variant after the previous steps' patches)",
+      "design": {
+        "T1": "R: every inline copy (preview, forecast, rule-action sync, post-transaction, budget template) plus the exported getScheduledAmount (client) resolves a range to the end furthest from zero, order-independent, negative end on a tie. F: getScheduledAmount changed once; its rangeRounding parameter (template's half-of-rounded-sum quirk) removed because no midpoint is taken any more.",
+        "T2": "same patch on R and F: scheduleModel.toExternal adds expectedAmount = getScheduledAmount(schedule._amount) (0 without an amount); APIScheduleEntity gets an optional read-only expectedAmount; api/schedule-update rejects it as system-managed.",
+        "T3": "approximate amounts resolve to value +/- getApproxNumberThreshold(value) away from zero. R: added at every inline copy and in the exported helper (now (amount, op?, inverse)). F: helper gains the op parameter (second position; no caller used inverse); every server caller and the client scheduled-balance sum pass _amountOp; display-only client callers unchanged.",
+        "T4": "lowest allowed value: range -> min(num1, num2); approximate -> value - threshold. R: every copy and the helper; F: helper only."
+      },
+      "verification": {
+        "typecheck": "loot-core `yarn lint` (tsgo -b) green after every step on R and F; desktop-client `yarn typecheck` green after T3 (client code touched) on R and F",
+        "own_tests": "implementer scratch tests (not in patches): per consumer (preview, forecast normalize, post-transaction, rule-action sync, budget template, API list) x 12 amount cases against a step oracle written from the statements; pass after each step; checked to fail on the pre-step tree",
+        "suite": "full loot-core node suite after T4: 1304 passed, 2 skipped, on R and on F; packages/api schedules test passes on R after T2",
+        "patch_chain": "T1..T4 patches applied in order with git apply --check onto fresh checkouts of the untouched variants reproduce the final trees exactly"
+      },
+      "files_sha256": {
+        "T1/reference.R.patch": "4069fa2cec4dc34a3cf5041bc0a2e4ea783f7bd677ef4c8fdcb29bc6ba859d8c",
+        "T1/reference.F.patch": "ef7991838d59ab55cff8183a99cf6994895bfb7503d70e58a1bfd40777a30151",
+        "T2/reference.R.patch": "367b6c95401b84f431614cf9812c5ed02795141648bd97a44d3b27937a33e799",
+        "T2/reference.F.patch": "367b6c95401b84f431614cf9812c5ed02795141648bd97a44d3b27937a33e799",
+        "T3/reference.R.patch": "0885b4228d438fb50e6190e91fee22267b4e85d24235bb833a13eeaa3506e7e8",
+        "T3/reference.F.patch": "8ee00a44dd118980c4eb175b699572c18eb80c826f8bfadf4bc3d4ab893b4435",
+        "T4/reference.R.patch": "34d6a47446973b94087f32b02a25a124ed746ba5414c96edd1bd765b94500f0b",
+        "T4/reference.F.patch": "0984308807c95dde50cdf61bd1cee4c064450f4bc0e778a7e8c0d5734bb8833e"
+      }
+    },
+    "moved_here": "2026-10-08 (spec amendment 2026-10-08, item 9, before any pilot run): the block(s) 'references' described the superseded implementer and its references; moved here from the top level so that the top level describes only the blind references."
+  },
+  "adjudication_blind": {
+    "date": "2026-10-08",
+    "by": "orchestration audit agent (not author, not implementer)",
+    "record": "adjudication.md (section 'Blind references')",
+    "sanity": "sanity_check.json (aa chain sanity, blind references)",
+    "rounds": 0,
+    "max_rounds": 1,
+    "changes": [],
+    "steps_kept": [
+      "T1",
+      "T2",
+      "T3",
+      "T4"
+    ],
+    "dropped": [],
+    "per_step": {
+      "T1": {
+        "kind": "rule",
+        "consumers": 5,
+        "consumer_tests": 15,
+        "untouched_fail_individually": "R and F",
+        "reference_cumulative_lint_typecheck": "pass R and F"
+      },
+      "T2": {
+        "kind": "consumer",
+        "consumers": 1,
+        "consumer_tests": 4,
+        "untouched_fail_individually": "R and F",
+        "reference_cumulative_lint_typecheck": "pass R and F"
+      },
+      "T3": {
+        "kind": "rule",
+        "consumers": 6,
+        "consumer_tests": 18,
+        "untouched_fail_individually": "R and F",
+        "reference_cumulative_lint_typecheck": "pass R and F"
+      },
+      "T4": {
+        "kind": "build",
+        "consumers": 6,
+        "consumer_tests": 24,
+        "untouched_fail_individually": "R and F",
+        "reference_cumulative_lint_typecheck": "pass R and F"
+      }
+    }
+  }
+}

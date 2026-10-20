@@ -1,0 +1,45 @@
+{
+ "id": "e5a6961dfc",
+ "reuse": {
+  "score": 4,
+  "why": "The change reuses getScheduledAmount and getApproxNumberThreshold, although the API wrapper redundantly handles missing amounts."
+ },
+ "duplication": {
+  "score": 4,
+  "why": "Range and approximate planning remain shared, with only the API wrapper's null-to-zero guard duplicating existing logic."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Planning policy stays in shared/schedules, although list-specific serialization is split between api-models and the API handler."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The edits are focused on schedule amount planning, its consumers, API typing, tests, and release notes."
+ },
+ "maintainability": {
+  "score": 4,
+  "why": "The shared implementation is compact, but an optional string operator makes it easy for existing callers to omit policy-relevant context."
+ },
+ "bypasses_abstraction": {
+  "value": false,
+  "where": "The API consumer delegates to getScheduledAmount, which delegates tolerance calculation to getApproxNumberThreshold."
+ },
+ "duplicated_blocks": 1,
+ "would_merge": "yes",
+ "disguised_duplication": {
+  "value": false,
+  "where": "The redundant missing-amount guard is explicit; the planning logic is shared rather than reshaped into copies."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 0,
+  "where": "getScheduledAmount replaces rangeRounding with amountOp and adds an isapprox branch; both directly represent requested variation, and no consumers reimplement the policy."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "tree_access": "git",
+  "wall_s": 32.6
+ }
+}

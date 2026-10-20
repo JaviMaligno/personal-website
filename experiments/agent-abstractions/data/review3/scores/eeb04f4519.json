@@ -1,0 +1,11 @@
+{"id": "eeb04f4519",
+ "reuse": {"score": 4, "why": "Extends the existing getScheduledAmount with an op parameter, reuses getApproxNumberThreshold for the tolerance and mirrors getRangedAmountWorstCase with getApproxAmountWorstCase; forecast now calls the shared helper instead of its own dispatch."},
+ "duplication": {"score": 4, "why": "No logic is copied, but schedule-template.ts keeps its own isbetween/isapprox/else op dispatch that duplicates what getScheduledAmount now decides."},
+ "placement": {"score": 5, "why": "The approximate worst case lives in shared/schedules.ts next to the ranged worst case."},
+ "scope": {"score": 5, "why": "Only the amount helper, its planning/posting callers and tests are touched."},
+ "maintainability": {"score": 3, "why": "The op parameter is optional, and computeSchedulePreviewTransactions and the client balance still call getScheduledAmount without it, so previews ignore the new rule; stale 'rounded midpoint' comments in schedules/app.ts remain."},
+ "bypasses_abstraction": {"value": true, "where": "server/budget/schedule-template.ts dispatches on op itself to getRangedAmountWorstCase/getApproxAmountWorstCase instead of calling getScheduledAmount(value, false, op)"},
+ "duplicated_blocks": 1,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": ""},
+ "one_place": {"value": false, "where": "rule defined in shared/schedules.ts getApproxAmountWorstCase/getScheduledAmount(op), but computeSchedulePreviewTransactions (shared/schedules.ts) and desktop-client Balance.tsx do not pass op, and schedule-template.ts keeps its own op dispatch"}}

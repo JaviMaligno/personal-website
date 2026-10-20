@@ -1,0 +1,128 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 15db909..0d2b6de 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -48,6 +48,7 @@ import * as bankSync from './sync';
+ // Shared base type for link account parameters
+ type LinkAccountBaseParams = {
+   upgradingId?: AccountEntity['id'];
++  replaceExistingLink?: boolean;
+   offBudget?: boolean;
+   startingDate?: string;
+   startingBalance?: number;
+@@ -191,6 +192,7 @@ async function assertBankAccountNotLinked(
+   syncSource: LinkBankSyncAccountParams['syncSource'],
+   accountId: string,
+   upgradingId?: AccountEntity['id'],
++  replaceExistingLink = false,
+ ) {
+   if (upgradingId) {
+     const target = await db.first<{ closed: number }>(
+@@ -204,13 +206,14 @@ async function assertBankAccountNotLinked(
+     }
+   }
+ 
+-  const existing = await db.first<{ id: string }>(
++  const existing = await db.all<{ id: string }>(
+     'SELECT id FROM accounts WHERE tombstone = 0 AND account_sync_source = ? AND account_id = ? AND id != ?',
+     [syncSource, accountId, upgradingId ?? ''],
+   );
+-  if (existing) {
++  if (existing.length > 0 && !replaceExistingLink) {
+     throw new Error('This bank account is already linked to another account.');
+   }
++  return existing.map(row => row.id);
+ }
+ 
+ // Upgrades the chosen local account (or creates a new one with its transfer
+@@ -226,8 +229,29 @@ async function linkBankSyncAccount({
+   newAccountFields,
+   fileId,
+   syncedTables,
++  replaceExistingLink,
+ }: LinkBankSyncAccountParams) {
+-  await assertBankAccountNotLinked(syncSource, accountId, upgradingId);
++  const previousHolders = await assertBankAccountNotLinked(
++    syncSource,
++    accountId,
++    upgradingId,
++    replaceExistingLink,
++  );
++
++  // Only local fields are cleared: the bank connection stays in use by the
++  // new link, so nothing is sent to the provider.
++  for (const previousId of previousHolders) {
++    await db.updateAccount({
++      id: previousId,
++      account_id: null,
++      bank: null,
++      balance_current: null,
++      balance_available: null,
++      balance_limit: null,
++      account_sync_source: null,
++      bank_sync_status: null,
++    });
++  }
+ 
+   let id: string;
+ 
+@@ -297,6 +321,7 @@ async function linkGoCardlessAccount({
+     'goCardless',
+     account.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+ 
+   const bank = await link.findOrCreateBank(account.institution, requisitionId);
+@@ -325,6 +350,7 @@ async function linkSimpleFinAccount({
+     'simpleFin',
+     externalAccount.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -362,6 +388,7 @@ async function linkPluggyAiAccount({
+     'pluggyai',
+     externalAccount.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+ 
+   const fileId = getPrefs()?.cloudFileId;
+@@ -402,6 +429,7 @@ async function linkAkahuAccount({
+     'akahu',
+     externalAccount.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -436,6 +464,7 @@ async function linkFintegraAccount({
+     'fintegra',
+     externalAccount.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+ 
+   const institution = {
+@@ -467,6 +496,7 @@ async function linkEnableBankingAccount({
+     'enableBanking',
+     externalAccount.account_id,
+     params.upgradingId,
++    params.replaceExistingLink,
+   );
+ 
+   const institution = {
+diff --git a/upcoming-release-notes/replace-existing-bank-link.md b/upcoming-release-notes/replace-existing-bank-link.md
+new file mode 100644
+index 0000000..6d7daaf
+--- /dev/null
++++ b/upcoming-release-notes/replace-existing-bank-link.md
+@@ -0,0 +1,6 @@
++---
++category: Enhancements
++authors: [agent]
++---
++
++Allow linking a bank account that another local account already holds, unlinking the previous account.

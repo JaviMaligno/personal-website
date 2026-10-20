@@ -1,0 +1,11 @@
+{"id":"42a788e52d",
+"reuse":{"score":4,"why":"All six provider link functions, including Fintegra, now delegate to the new linkBankSyncAccount and ensureBankAccountIsNotLinked and keep using findOrCreateBank/syncAccount/handleSyncResponse; but the takeover path re-implements unlinkAccount's field clearing and the Fintegra download copies the Akahu one."},
+"duplication":{"score":3,"why":"The link flow is de-duplicated, but the unlink field reset is a copy of unlinkAccount's db.updateAccount block and downloadFintegraTransactions repeats downloadAkahuTransactions in compressed form."},
+"placement":{"score":4,"why":"Shared link helpers sit in accounts/app.ts next to their callers and the download in sync.ts; the closed-account and takeover rules are bundled into a guard named for 'not linked', which blurs responsibilities."},
+"scope":{"score":4,"why":"Mostly on-task across the four steps, but it also deletes/trims explanatory comments in the SimpleFin, PluggyAi and Enable Banking functions and drops the enable-banking id guard."},
+"maintainability":{"score":3,"why":"One link flow is a clear win, but includeFileId (redundant with fileId), the guard that also unlinks other accounts, and the copied reset/download leave several places to keep in sync."},
+"bypasses_abstraction":{"value":true,"where":"ensureBankAccountIsNotLinked clears the link fields of the previous holder with its own db.updateAccount instead of going through unlinkAccount (deliberately, to avoid the GoCardless remove-account call, but without extracting the shared reset)."},
+"duplicated_blocks":2,
+"would_merge":"with_changes",
+"disguised_duplication":{"value":true,"where":"sync.ts downloadFintegraTransactions is downloadAkahuTransactions reshaped (logging and error branch dropped, inline objects); the unlink reset in ensureBankAccountIsNotLinked repeats unlinkAccount's update."},
+"abstraction_drift":{"value":true,"parameters_added":2,"special_case_branches":2,"bypassing_call_sites":1,"where":"linkBankSyncAccount gets an includeFileId flag with a conditional spread just for PluggyAi; ensureBankAccountIsNotLinked gains replaceExistingLink plus a closed-account branch and an unlink branch; the takeover reset bypasses unlinkAccount."}}

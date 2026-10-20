@@ -1,0 +1,8 @@
+{"id": "e8705694f4",
+"completeness": {"per_site": {"copy-previous-month": "full", "set-zero": "full", "set-3month-avg": "full", "set-6month-avg": "full", "set-12month-avg": "full", "set-n-month-avg-sign": "full"},
+ "left_out": {},
+ "sites_full": 6, "sites_partial": 0, "sites_total": 6, "value": 1.0,
+ "why": "Every site takes the hidden/hidden-group/income-in-tracking decision from isMonthFillCategory (setZero via an explicit includeHidden: true, the preserved inconsistency), the three averages share getAverageFillCategories, and both sign inversions go through getAverageBudgetAmount; the SQL no longer filters hidden rows itself, only the join type (INNER for averages) still encodes the unchecked missing-group difference."},
+"interface": {"score": 4, "why": "A small predicate with one named includeHidden option for the real setZero variation and a separate sign helper; the missing-group inconsistency is carried implicitly by INNER vs LEFT JOIN in two queries rather than being explicit, and setZero/getAverageFillCategories repeat the same SELECT."},
+"disguised_duplication": {"value": true, "where": "setZero and getAverageFillCategories carry the same category SELECT, differing only in LEFT vs INNER JOIN, instead of one query with the join choice made explicit."}
+}

@@ -1,0 +1,44 @@
+{
+ "id": "18c0405f1d",
+ "reuse": {
+  "score": 3,
+  "why": "All providers share the new link guards and Fintegra uses findOrCreateBank and syncAccount, but local unlinking and provider orchestration remain copied."
+ },
+ "duplication": {
+  "score": 2,
+  "why": "The diff duplicates account-link orchestration, transaction downloading, Akahu's starting-balance calculation, and unlinkAccount's field-clearing block."
+ },
+ "placement": {
+  "score": 4,
+  "why": "Provider integration follows the existing module boundaries, although destructive unlinking is buried inside a function named as a validation guard."
+ },
+ "scope": {
+  "score": 5,
+  "why": "The changes stay focused on the requested linking rules, replacement option, Fintegra integration, and accompanying tests."
+ },
+ "maintainability": {
+  "score": 3,
+  "why": "Centralized guards help maintain the linking rules, but duplicated provider workflows and unlink state transitions create multiple places to maintain."
+ },
+ "bypasses_abstraction": {
+  "value": true,
+  "where": "app.ts: ensureBankAccountIsNotLinked independently implements unlinkAccount's local field clearing; extracting that operation would allow reuse without invoking provider cleanup."
+ },
+ "duplicated_blocks": 4,
+ "would_merge": "with_changes",
+ "disguised_duplication": {
+  "value": true,
+  "where": "linkFintegraAccount condenses the existing provider-link workflow, and downloadFintegraTransactions reshapes the existing authenticated transaction-download workflow without sharing it."
+ },
+ "abstraction_drift": {
+  "value": true,
+  "parameters_added": 1,
+  "special_case_branches": 1,
+  "bypassing_call_sites": 0,
+  "where": "ensureBankAccountIsNotLinked gains replaceExistingLink and a replacement branch that mutates another account, expanding a validation helper into a state-changing operation; all six linking handlers still use the shared guards."
+ },
+ "_judge": {
+  "model": "gpt-6.1-sol",
+  "wall_s": 26.1
+ }
+}

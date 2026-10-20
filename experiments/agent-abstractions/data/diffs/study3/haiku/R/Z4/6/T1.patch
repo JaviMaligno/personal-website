@@ -1,0 +1,87 @@
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a..fccd69d 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -497,6 +497,67 @@ describe('schedules', () => {
+       const result = getNextDate(dateCond, new Date(2017, 0, 1));
+       expect(result).toBeNull();
+     });
++
++    it('skips weekend occurrences of a daily schedule instead of moving them', () => {
++      /* Dec 2020 calendar for reference:
++        | Su | Mo | Tu | We | Th | Fr | Sa |
++        | 06 | 07 | 08 | 09 | 10 | 11 | 12 |
++        | 13 | 14 | 15 | 16 | 17 | 18 | 19 |
++        */
++      const dateCond = {
++        op: 'is',
++        field: 'date',
++        value: {
++          start: '2020-12-11',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 11))).toBe('2020-12-11');
++      expect(getNextDate(dateCond, new Date(2020, 11, 12))).toBe('2020-12-14');
++    });
++
++    it('does not place a daily schedule starting on a weekend before its start', () => {
++      const dateCond = {
++        op: 'is',
++        field: 'date',
++        value: {
++          start: '2020-12-12',
++          frequency: 'daily',
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'before',
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 12))).toBe('2020-12-14');
++    });
++
++    it('skips weekend occurrences of an every-few-days schedule', () => {
++      /* Dec 2020 calendar for reference:
++        | Su | Mo | Tu | We | Th | Fr | Sa |
++        | 06 | 07 | 08 | 09 | 10 | 11 | 12 |
++        | 13 | 14 | 15 | 16 | 17 | 18 | 19 |
++        */
++      const dateCond = {
++        op: 'is',
++        field: 'date',
++        value: {
++          start: '2020-12-09',
++          frequency: 'daily',
++          interval: 2,
++          patterns: [],
++          skipWeekend: true,
++          weekendSolveMode: 'after',
++        },
++      };
++
++      expect(getNextDate(dateCond, new Date(2020, 11, 10))).toBe('2020-12-11');
++      expect(getNextDate(dateCond, new Date(2020, 11, 12))).toBe('2020-12-15');
++    });
+   });
+ 
+   describe('getNextDateAfter', () => {
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index 44d4950..2af844f 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -224,7 +224,9 @@ export function recurConfigToRSchedule(config) {
+ 
+   switch (config.frequency) {
+     case 'daily':
+-      // Nothing to do
++      if (config.skipWeekend) {
++        return [{ ...base, byDayOfWeek: ['MO', 'TU', 'WE', 'TH', 'FR'] }];
++      }
+       return [base];
+     case 'weekly':
+       // Nothing to do

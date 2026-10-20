@@ -1,0 +1,12 @@
+{"id": "42dbd1fe45",
+ "reuse": {"score": 3, "why": "Routes getScheduledAmount through the new getWorstCaseAmount, but the five server/shared sites keep their own missing/number/range dispatch instead of calling the existing getScheduledAmount, which already decides all three cases."},
+ "duplication": {"score": 3, "why": "The range arithmetic is now single-sourced, but the diff leaves five copies of the null/number/range ternary in place around the new helper rather than collapsing them into getScheduledAmount."},
+ "placement": {"score": 5, "why": "The new rule lives in shared/schedules.ts next to getScheduledAmount, where amount resolution for schedules belongs."},
+ "scope": {"score": 5, "why": "Only the midpoint sites, their comments, a focused test and a release note are touched."},
+ "maintainability": {"score": 4, "why": "Changing the range rule again needs one edit, though the parallel getScheduledAmount and per-site dispatches remain two ways to resolve the same amount."},
+ "bypasses_abstraction": {"value": true, "where": "schedule-template.ts createScheduleList, forecast-schedules.ts normalizeSchedule, schedules/app.ts updateActions and postTransactionForSchedule, and shared computeSchedulePreviewTransactions keep their own dispatch and call getWorstCaseAmount instead of the existing getScheduledAmount."},
+ "duplicated_blocks": 0,
+ "would_merge": "with_changes",
+ "disguised_duplication": {"value": false, "where": "No new copies; the remaining per-site ternaries are pre-existing and left as they were."},
+ "one_place": {"value": true, "where": "getWorstCaseAmount in shared/schedules.ts is the single definition of the range rule, used by getScheduledAmount and by every server/shared site that previously computed the midpoint."}
+}

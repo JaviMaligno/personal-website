@@ -1,0 +1,117 @@
+diff --git a/packages/loot-core/src/server/accounts/app.ts b/packages/loot-core/src/server/accounts/app.ts
+index 4299ce1..fd7e13a 100644
+--- a/packages/loot-core/src/server/accounts/app.ts
++++ b/packages/loot-core/src/server/accounts/app.ts
+@@ -183,6 +183,7 @@ async function linkGoCardlessAccount({
+   account: SyncServerGoCardlessAccount;
+ }) {
+   let id;
++  await link.ensureAccountIsOpen(upgradingId);
+   await link.ensureAccountIsNotLinked(
+     'goCardless',
+     requisitionId,
+@@ -257,6 +258,8 @@ async function linkSimpleFinAccount({
+ }) {
+   let id;
+ 
++  await link.ensureAccountIsOpen(upgradingId);
++
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+     // the desktop-client can render a localized fallback instead of baking an
+@@ -340,6 +343,7 @@ async function linkPluggyAiAccount({
+   externalAccount: SyncServerPluggyAiAccount;
+ }) {
+   let id;
++  await link.ensureAccountIsOpen(upgradingId);
+   const fileId = getPrefs()?.cloudFileId;
+ 
+   const institution = {
+@@ -426,6 +430,7 @@ async function linkAkahuAccount({
+   externalAccount: SyncServerAkahuAccount;
+ }) {
+   let id;
++  await link.ensureAccountIsOpen(upgradingId);
+ 
+   const institution = {
+     name: externalAccount.institution ?? null,
+@@ -507,6 +512,7 @@ async function linkEnableBankingAccount({
+   externalAccount: SyncServerEnableBankingAccount;
+ }) {
+   let id: string | undefined;
++  await link.ensureAccountIsOpen(upgradingId);
+ 
+   const institution = {
+     // Persist a null name when the provider doesn't report an institution, so
+@@ -596,6 +602,7 @@ async function linkFintegraAccount({
+   startingDate,
+   startingBalance,
+ }: LinkAccountBaseParams & { externalAccount: SyncServerFintegraAccount }) {
++  await link.ensureAccountIsOpen(upgradingId);
+   await link.ensureAccountIsNotLinked(
+     'fintegra',
+     externalAccount.orgId,
+diff --git a/packages/loot-core/src/server/accounts/link.test.ts b/packages/loot-core/src/server/accounts/link.test.ts
+index 4d5667b..61d061d 100644
+--- a/packages/loot-core/src/server/accounts/link.test.ts
++++ b/packages/loot-core/src/server/accounts/link.test.ts
+@@ -1,13 +1,30 @@
+ import * as db from '#server/db';
+ import { loadMappings } from '#server/db/mappings';
+ 
+-import { findOrCreateBank } from './link';
++import { ensureAccountIsOpen, findOrCreateBank } from './link';
+ 
+ beforeEach(async () => {
+   await global.emptyDatabase()();
+   await loadMappings();
+ });
+ 
++describe('ensureAccountIsOpen', () => {
++  it('allows new accounts and open existing accounts', async () => {
++    await expect(ensureAccountIsOpen()).resolves.toBeUndefined();
++    await db.insertWithUUID('accounts', { id: 'open-account', closed: 0 });
++
++    await expect(ensureAccountIsOpen('open-account')).resolves.toBeUndefined();
++  });
++
++  it('rejects a closed account', async () => {
++    await db.insertWithUUID('accounts', { id: 'closed-account', closed: 1 });
++
++    await expect(ensureAccountIsOpen('closed-account')).rejects.toThrow(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  });
++});
++
+ async function getBanks() {
+   return await db.all<db.DbBank>(
+     'SELECT id, bank_id, name FROM banks ORDER BY name',
+diff --git a/packages/loot-core/src/server/accounts/link.ts b/packages/loot-core/src/server/accounts/link.ts
+index 20f0240..9557c17 100644
+--- a/packages/loot-core/src/server/accounts/link.ts
++++ b/packages/loot-core/src/server/accounts/link.ts
+@@ -5,6 +5,23 @@ import * as db from '#server/db';
+ 
+ type Institution = string | { name?: string | null };
+ 
++export async function ensureAccountIsOpen(accountId?: db.DbAccount['id']) {
++  if (!accountId) {
++    return;
++  }
++
++  const account = await db.first<{ closed: number }>(
++    'SELECT closed FROM accounts WHERE id = ?',
++    [accountId],
++  );
++
++  if (account?.closed) {
++    throw new Error(
++      'Closed accounts cannot be linked to a bank account. Reopen the account first.',
++    );
++  }
++}
++
+ function getInstitutionName(institution: Institution | null | undefined) {
+   if (typeof institution === 'string') {
+     return institution;

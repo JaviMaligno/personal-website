@@ -1,0 +1,173 @@
+diff --git a/packages/loot-core/src/server/budget/actions.test.ts b/packages/loot-core/src/server/budget/actions.test.ts
+index b7a9be7..52b740c 100644
+--- a/packages/loot-core/src/server/budget/actions.test.ts
++++ b/packages/loot-core/src/server/budget/actions.test.ts
+@@ -13,6 +13,7 @@ import {
+   setCategoryCarryover,
+   setLastMonthSpending,
+   setNMonthAvg,
++  setZero,
+ } from './actions';
+ import * as budget from './base';
+ 
+@@ -359,3 +360,45 @@ async function setupAverageDatabase() {
+ 
+   await sheet.waitOnSpreadsheet();
+ }
++
++describe('#fixed groups', () => {
++  beforeEach(global.emptyDatabase());
++  afterEach(global.emptyDatabase());
++
++  it('are skipped by month-wide actions; only group notes count', async () => {
++    await db.insertCategoryGroup({ id: 'inc-g', name: 'Income', is_income: 1 });
++    await db.insertCategory({
++      id: 'inc',
++      name: 'Inc',
++      cat_group: 'inc-g',
++      is_income: 1,
++    });
++    await db.insertCategoryGroup({
++      id: 'fixed-g',
++      name: 'Fixed',
++      is_income: 0,
++    });
++    await db.insertCategoryGroup({
++      id: 'plain-g',
++      name: 'Plain',
++      is_income: 0,
++    });
++    await db.insertCategory({ id: 'rent', name: 'Rent', cat_group: 'fixed-g' });
++    await db.insertCategory({ id: 'food', name: 'Food', cat_group: 'plain-g' });
++    await db.update('notes', { id: 'fixed-g', note: 'Monthly #fixed costs' });
++    await db.update('notes', { id: 'food', note: '#fixed' });
++    await sheet.loadSpreadsheet(db);
++    await budget.createBudget(['2024-01']);
++
++    await setBudget({ category: 'rent', month: '2024-01', amount: 5000 });
++    await setBudget({ category: 'food', month: '2024-01', amount: 7000 });
++    await sheet.waitOnSpreadsheet();
++
++    await setZero({ month: '2024-01' });
++    await sheet.waitOnSpreadsheet();
++
++    const sheetName = 'budget202401';
++    expect(await getSheetValue(sheetName, 'budget-rent')).toBe(5000);
++    expect(await getSheetValue(sheetName, 'budget-food')).toBe(0);
++  });
++});
+diff --git a/packages/loot-core/src/server/budget/actions.ts b/packages/loot-core/src/server/budget/actions.ts
+index a9ff4f3..ef9907f 100644
+--- a/packages/loot-core/src/server/budget/actions.ts
++++ b/packages/loot-core/src/server/budget/actions.ts
+@@ -7,6 +7,7 @@ import { batchMessages } from '#server/sync';
+ import { getCurrency } from '#shared/currencies';
+ import { getLocale } from '#shared/locale';
+ import * as monthUtils from '#shared/months';
++import { extractTagsFromText } from '#shared/tags';
+ import { integerToCurrency, safeNumber } from '#shared/util';
+ import type { IntegerAmount } from '#shared/util';
+ import type { CategoryEntity } from '#types/models';
+@@ -214,10 +215,30 @@ function setCarryover(
+   });
+ }
+ 
++// Ids of categories in a group whose notes carry the `#fixed` tag. Month-wide
++// actions leave these alone. Only the group's notes count.
++export async function getFixedCategoryIds(): Promise<Set<string>> {
++  const rows = await db.all<{ id: string; note: string | null }>(
++    `
++  SELECT c.id, n.note
++  FROM categories c
++  JOIN category_groups g ON c.cat_group = g.id
++  JOIN notes n ON n.id = g.id
++  WHERE c.tombstone = 0 AND n.note IS NOT NULL
++  `,
++  );
++  return new Set(
++    rows
++      .filter(r => extractTagsFromText(r.note ?? '').includes('fixed'))
++      .map(r => r.id),
++  );
++}
++
+ // Categories that month-wide actions may write to: not hidden, not in a
+-// hidden group, and without saved budget templates.
+-function getFillableCategories() {
+-  return db.all<db.DbViewCategoryWithGroupHidden>(
++// hidden group, not in a `#fixed` group, and without saved budget templates.
++async function getFillableCategories() {
++  const fixedIds = await getFixedCategoryIds();
++  const categories = await db.all<db.DbViewCategoryWithGroupHidden>(
+     `
+   SELECT c.*
+   FROM categories c
+@@ -227,6 +248,7 @@ function getFillableCategories() {
+     AND (c.goal_def IS NULL OR TRIM(c.goal_def) IN ('', '[]', 'null'))
+   `,
+   );
++  return categories.filter(c => !fixedIds.has(c.id));
+ }
+ 
+ // Actions
+@@ -239,6 +261,7 @@ export async function copyPreviousMonth({
+   const prevMonth = dbMonth(monthUtils.prevMonth(month));
+   const table = getBudgetTable();
+   const budgetData = await getBudgetData(table, prevMonth.toString());
++  const fixedIds = await getFixedCategoryIds();
+ 
+   await batchMessages(async () => {
+     budgetData.forEach(prevBudget => {
+@@ -248,6 +271,9 @@ export async function copyPreviousMonth({
+       if (prevBudget.hidden === 1 || prevBudget.group_hidden === 1) {
+         return;
+       }
++      if (fixedIds.has(prevBudget.category)) {
++        return;
++      }
+       if (
+         prevBudget.goal_def != null &&
+         !['', '[]', 'null'].includes(prevBudget.goal_def.trim())
+diff --git a/packages/loot-core/src/server/budget/goal-template.test.ts b/packages/loot-core/src/server/budget/goal-template.test.ts
+index d495e12..7ca92c9 100644
+--- a/packages/loot-core/src/server/budget/goal-template.test.ts
++++ b/packages/loot-core/src/server/budget/goal-template.test.ts
+@@ -15,6 +15,7 @@ import {
+ import * as statements from './statements';
+ 
+ vi.mock('./actions', () => ({
++  getFixedCategoryIds: vi.fn().mockResolvedValue(new Set()),
+   getSheetValue: vi.fn(),
+   getSheetBoolean: vi.fn(),
+   isTrackingBudget: vi.fn(),
+diff --git a/packages/loot-core/src/server/budget/goal-template.ts b/packages/loot-core/src/server/budget/goal-template.ts
+index 979a56e..b3c1786 100644
+--- a/packages/loot-core/src/server/budget/goal-template.ts
++++ b/packages/loot-core/src/server/budget/goal-template.ts
+@@ -8,7 +8,13 @@ import type { CategoryEntity, CategoryGroupEntity } from '#types/models';
+ import type { CleanupTemplate } from '#types/models/cleanup-templates';
+ import type { Template } from '#types/models/templates';
+ 
+-import { getSheetValue, isTrackingBudget, setBudget, setGoal } from './actions';
++import {
++  getFixedCategoryIds,
++  getSheetValue,
++  isTrackingBudget,
++  setBudget,
++  setGoal,
++} from './actions';
+ import { CategoryTemplateContext } from './category-template-context';
+ import { tombstoneOrphanCleanupGroups } from './cleanup-groups';
+ import { checkTemplateNotes, storeNoteTemplates } from './template-notes';
+@@ -142,7 +148,10 @@ async function getCategories(): Promise<CategoryEntity[]> {
+   const { data: categoryGroups }: { data: CategoryGroupEntity[] } =
+     await aqlQuery(q('category_groups').filter({ hidden: false }).select('*'));
+ 
+-  return categoryGroups.flatMap(g => g.categories || []).filter(c => !c.hidden);
++  const fixedIds = await getFixedCategoryIds();
++  return categoryGroups
++    .flatMap(g => g.categories || [])
++    .filter(c => !c.hidden && !fixedIds.has(c.id));
+ }
+ 
+ async function getTemplates(
