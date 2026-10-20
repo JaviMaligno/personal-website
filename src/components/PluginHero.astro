@@ -25,9 +25,19 @@ const videos = plugin.videos.map((v) => {
   };
 });
 const first = videos[0];
+// Private plugins carry their own badge and a phase stepper instead of videos.
+const badge = 'badge' in p ? p.badge : s.pluginBadge;
+const phases = (plugin.pipeline ?? []).map((skill, i) => ({
+  skill,
+  text: 'pipeline' in p ? p.pipeline[i] : '',
+}));
+const projectUrl = plugin.projectSlug
+  ? `${getLocalizedPath('/', lang)}projects/${plugin.projectSlug}`
+  : null;
 ---
 
 <div class="card plugin-hero" data-plugin-hero>
+  {first ? (
   <div class="phone">
     <video
       src={`/videos/plugins/${first.slug}.mp4`}
@@ -40,8 +50,18 @@ const first = videos[0];
       aria-label={first.title}
     ></video>
   </div>
+  ) : (
+  <div class="pipeline">
+    <p class="pipeline-label">{s.pipelineLabel}</p>
+    <ol>
+      {phases.map((ph) => (
+        <li><code>{ph.skill}</code><span>{ph.text}</span></li>
+      ))}
+    </ol>
+  </div>
+  )}
   <div class="plugin-body">
-    <span class="plugin-badge">{s.pluginBadge}</span>
+    <span class="plugin-badge">{badge}</span>
     <h3>{p.title}</h3>
     <p class="lead">{p.description}</p>
     <ul class="plugin-skills">
@@ -49,8 +69,8 @@ const first = videos[0];
         <li><code>{skill}</code><span>{p.skills[i]}</span></li>
       ))}
     </ul>
-    <p class="videos-label">{s.videosLabel}</p>
-    <div class="video-chips" role="group" aria-label={s.videosLabel}>
+    {first && <p class="videos-label">{s.videosLabel}</p>}
+    {first && <div class="video-chips" role="group" aria-label={s.videosLabel}>
       {videos.map((v, i) => (
         <button
           type="button"
@@ -64,11 +84,12 @@ const first = videos[0];
           ▶ {v.title} <small>{v.duration}</small>
         </button>
       ))}
-    </div>
+    </div>}
     <div class="plugin-actions">
-      <a class="btn btn-primary" href={plugin.repoUrl} target="_blank" rel="noopener">{s.repoLabel}</a>
-      <a class="btn btn-secondary" href={social.instagram} target="_blank" rel="noopener">{s.instagramLabel}</a>
-      <a class="btn btn-secondary" data-article-link href={first.articleUrl ?? '#'} hidden={!first.articleUrl}>{s.articleLabel}</a>
+      {plugin.repoUrl && <a class="btn btn-primary" href={plugin.repoUrl} target="_blank" rel="noopener">{s.repoLabel}</a>}
+      {projectUrl && <a class="btn btn-primary" href={projectUrl}>{s.caseStudyLabel}</a>}
+      {first && <a class="btn btn-secondary" href={social.instagram} target="_blank" rel="noopener">{s.instagramLabel}</a>}
+      {first && <a class="btn btn-secondary" data-article-link href={first.articleUrl ?? '#'} hidden={!first.articleUrl}>{s.articleLabel}</a>}
     </div>
     <div class="tags">
       {plugin.tags.map((tag) => <span class="tag">{tag}</span>)}
@@ -78,7 +99,8 @@ const first = videos[0];
 
 <script>
   document.querySelectorAll<HTMLElement>('[data-plugin-hero]').forEach((hero) => {
-    const video = hero.querySelector('video')!;
+    const video = hero.querySelector('video');
+    if (!video) return;
     const article = hero.querySelector<HTMLAnchorElement>('[data-article-link]')!;
     const chips = hero.querySelectorAll<HTMLButtonElement>('.video-chip');
     chips.forEach((chip) => {
@@ -116,6 +138,59 @@ const first = videos[0];
     box-shadow: var(--shadow-lg);
   }
   .phone video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pipeline {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-md);
+    border-radius: 22px;
+    border: 1px solid var(--glass-border);
+    background: var(--bg-secondary);
+  }
+  .pipeline-label { font-size: 0.8125rem; color: var(--text-muted); margin-bottom: var(--space-sm); }
+  .pipeline ol { list-style: none; padding: 0; margin: 0; counter-reset: phase; }
+  .pipeline li {
+    counter-increment: phase;
+    position: relative;
+    padding: 0 0 0.875rem 2.25rem;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+  }
+  .pipeline li::before {
+    content: counter(phase);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-text);
+    background: var(--accent-surface);
+    border: 1px solid rgba(129, 140, 248, 0.35);
+  }
+  .pipeline li:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 1.625rem;
+    bottom: 0.125rem;
+    width: 1px;
+    background: rgba(129, 140, 248, 0.35);
+  }
+  .pipeline li:last-child { padding-bottom: 0; }
+  .pipeline code {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    background: none;
+    padding: 0;
+  }
   .plugin-badge {
     display: inline-block;
     font-size: 0.6875rem;
