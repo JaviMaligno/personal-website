@@ -4,6 +4,8 @@
 export const social = {
   linkedin: "https://linkedin.com/in/javier-aguilar-ai",
   github: "https://github.com/JaviMaligno",
+  x: "https://x.com/JaviMaligno",
+  instagram: "https://www.instagram.com/agilabs_ai",
   email: "javiecija96@gmail.com"
 };
 
