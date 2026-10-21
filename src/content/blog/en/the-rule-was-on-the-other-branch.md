@@ -134,11 +134,17 @@ After the stop, an external review raised three findings, and they went back to 
 
 This is the behaviour I want from the loop more than any single phase. The decision is not the agent's taste against mine; it is a recorded reason, with the evidence next to it, that I can read and overturn.
 
-## Live, and handed over
+## What the live check found
 
-<!-- TODO: fill in when the run finishes phases 7–9: live verification evidence, the hand-off for promotion, the close-out. -->
+After the merge the loop confirmed the build published the image under the exact name it expected, checking the manifest and its digest in the build log rather than the build's verdict. It merged the version bump in the test environment's config repository and waited until both replicas were serving that exact commit before calling the integration done.
 
-After the merge the loop confirmed the build published the image under the exact name it expected, merged the bump in the test environment's config repository, and waited until both pods were serving that exact commit before calling the integration done. Promotion beyond the test environment belongs to another team in my organisation, so phase 8 is built to end in an explicit hand-off, with the reason, the owner and the prepared material, instead of a skipped step.
+Phase 7 then went through the requirements one by one against the deployed service. The points about the published contract passed against the Swagger the deployment serves, which was byte for byte the merged file. The rare path, the content filter, passed with deterministic probes against the deployed module, and the log says plainly that no real provider filter was triggered. A real HTTP call returned 200 with the service abstaining after running out of research time, recorded as "not proof of a correct answer". The test data lived in a tenant reserved for that QA, and its cache was deleted and checked to be empty afterwards.
+
+Then a recursive comparison of a real response against the published contract found two nested fields that the service already returned and the contract did not declare. The earlier pass for that point had come from fixtures; the loop marked it as superseded by the failure against the real response.
+
+It went back to phases 4 to 6 on its own. Three failing tests first, then the fix, which only declares what was already emitted, then an independent review. In the meantime someone else's PR had moved the integration branch, so the protected fast-forward stopped. The loop did a trial merge, integrated with a merge commit so as not to lose that work, and re-ran the tests on the result, including the other change's own. It re-pointed the config change to the new commit and archived the first pass's evidence before repeating it.
+
+That is where the run stands as I write this: the corrected image is queued for a build runner, and the config change stays unmerged on purpose, because nothing is deployed without a verified manifest. Promotion beyond the test environment belongs to another team in my organisation, so phase 8 will end in an explicit hand-off, with the reason, the owner and the prepared material, instead of a skipped step.
 
 Phase 7 also has to say what it could not measure. A criterion that only real traffic will show, or that an outage left unchecked, is marked 🔄 with its cause and a dated wait, and the ticket stays open until it is measured. It is never marked as passed with a note: a criterion left unmeasured that way reads as a pass to anyone skimming the report.
 

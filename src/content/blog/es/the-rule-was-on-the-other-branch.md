@@ -134,11 +134,17 @@ Tras la parada, una revisión externa encontró tres problemas, que volvieron a 
 
 Es el comportamiento que más quiero del bucle, por encima de cualquier fase concreta. La decisión no es el gusto del agente contra el mío: es un motivo escrito, con la evidencia al lado, que puedo leer y revocar.
 
-## En vivo, y traspasado
+## Lo que encontró la comprobación en vivo
 
-<!-- TODO: completar cuando la ejecución termine las fases 7–9: evidencia de la verificación en vivo, el traspaso para la promoción, el cierre. -->
+Tras el merge, el bucle comprobó que la build publicó la imagen con el nombre exacto que esperaba, mirando el manifiesto y su digest en el log de la build en lugar del veredicto de la build. Mergeó la subida de versión en el repositorio de configuración del entorno de pruebas y esperó a que las dos réplicas sirvieran ese commit exacto antes de dar la integración por hecha.
 
-Tras el merge, el bucle comprobó que la build publicó la imagen con el nombre exacto que esperaba, mergeó la subida de versión en el repositorio de configuración del entorno de pruebas y esperó a que los dos pods sirvieran ese commit exacto antes de dar la integración por hecha. La promoción más allá del entorno de pruebas la hace otro equipo de mi organización, así que la fase 8 está pensada para terminar en un traspaso explícito, con el motivo, el responsable y el material preparado, en lugar de un paso que se salta.
+Después, la fase 7 recorrió los requisitos uno a uno contra el servicio desplegado. Los puntos sobre el contrato publicado pasaron contra el Swagger que sirve el despliegue, idéntico byte a byte al fichero mergeado. La ruta rara, el filtro de contenido, pasó con sondas deterministas sobre el módulo desplegado, y el log dice claramente que no se disparó ningún filtro real del proveedor. Una llamada HTTP real devolvió 200 con el servicio absteniéndose al agotar su tiempo de investigación, registrado como «no es una prueba de acierto». Los datos de prueba vivían en un tenant reservado para esa QA, y su caché se borró y se comprobó vacía al terminar.
+
+Entonces una comparación recursiva de una respuesta real contra el contrato publicado encontró dos campos anidados que el servicio ya devolvía y el contrato no declaraba. El aprobado anterior de ese punto venía de fixtures; el bucle lo marcó como sustituido por el fallo contra la respuesta real.
+
+Volvió por su cuenta a las fases 4 a 6. Primero tres tests en rojo, luego el arreglo, que solo declara lo que ya se emitía, y después una revisión independiente. Mientras tanto, una PR ajena había movido la rama de integración y el fast-forward protegido se paró. El bucle hizo un merge de prueba, integró con un merge commit para no perder ese trabajo y repitió los tests sobre el resultado, incluidos los del cambio ajeno. Reapuntó el cambio de configuración al nuevo commit y archivó la evidencia de la primera pasada antes de repetirla.
+
+Ahí está la ejecución mientras escribo esto: la imagen corregida espera en cola a que haya un runner para la build, y el cambio de configuración sigue sin mergear a propósito, porque no se despliega nada sin un manifiesto verificado. La promoción más allá del entorno de pruebas la hace otro equipo de mi organización, así que la fase 8 terminará en un traspaso explícito, con el motivo, el responsable y el material preparado, en lugar de un paso que se salta.
 
 La fase 7 también tiene que decir lo que no pudo medir. Un criterio que solo mostrará el tráfico real, o que una caída dejó sin comprobar, se marca 🔄 con su causa y una espera fechada, y el ticket sigue abierto hasta medirlo. Nunca se marca como superado con una nota: un criterio sin medir anotado así se lee como un aprobado para quien repasa el informe en diagonal.
 
