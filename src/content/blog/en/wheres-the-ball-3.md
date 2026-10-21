@@ -49,7 +49,7 @@ So I built the topological features: the persistence statistics of the player cl
 
 ![Persistent homology adds nothing over plain geometry](/blog/wtb3-topology-nothing.png)
 
-It doesn't clear the bar. Topological features on their own land far behind plain geometry (0.258 vs 0.111 in soccer — barely better than the naive baseline). And bolting them onto the geometric features changes nothing: geometry-plus-topology matches geometry alone, and when I shuffle the entire topological block the error barely twitches — the tree simply ignores it once it has the geometry.
+It doesn't clear the bar. Topological features on their own land far behind plain geometry (0.258 vs 0.111 in soccer — slightly *worse* than the naive centroid baseline; in basketball, 0.206 vs 0.151, about a third of the way from the baseline to the deep net). And bolting them onto the geometric features changes nothing: geometry-plus-topology matches geometry alone, and when I shuffle the entire topological block the error barely twitches — the tree simply ignores it once it has the geometry.
 
 The appealing intuition is just wrong. The ball's position isn't a property of the *shape* of the player cloud; it's a property of where the mass is and where it's moving. Persistent homology describes the configuration beautifully at every scale, and none of that description is about the ball. A clean negative result — and the pre-registered rule is the only reason I can call it clean instead of quietly dropping it.
 

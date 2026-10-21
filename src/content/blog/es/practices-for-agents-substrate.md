@@ -55,10 +55,10 @@ python-stdnum: validadores de números fiscales, ficheros pequeños y autoconten
 
 | Condición | Resuelve | IC 95% | Turnos | Techo antes→después | ¿Se distingue de la base? |
 |---|---|---|---|---|---|
-| sin tocar (base) | 91/167 — 54% | [47%, 62%] | 30 | 62 | — |
-| cómo está escritoᵃ | 45/155 — 29% | [22%, 37%] | 40 | 62→96 | **p=0.000** |
-| dónde mirar | 76/161 — 47% | [40%, 55%] | 38 | 62→75 | n.s. (≥16% sería visible) |
-| las dos cosasᵃ | 37/157 — 24% | [18%, 31%] | 40 | 62→103 | **p=0.000** |
+| sin tocar (base) | 49/59 — 83% | [72%, 91%] | 10 | 2 | — |
+| cómo está escritoᵃ | 42/56 — 75% | [62%, 84%] | 13 | 2→4 | n.s. (≥20% sería visible) |
+| dónde mirarᵃ | 46/58 — 79% | [67%, 88%] | 10 | 2→5 | n.s. (≥20% sería visible) |
+| las dos cosasᵃ | 48/59 — 81% | [70%, 89%] | 11 | 2→5 | n.s. (≥19% sería visible) |
 
 Las condiciones con la misma marca (ᵃ) **no se distinguen entre sí**, solo de la base.
 
@@ -86,18 +86,19 @@ piezas a la vez.
 
 | Condición | Resuelve | IC 95% | Turnos | Techo antes→después | ¿Se distingue de la base? |
 |---|---|---|---|---|---|
-| sin tocar (base) | 19/35 — 54% | [38%, 70%] | 30 | 12 | — |
-| cómo está escritoᵃ | 7/26 — 27% | [14%, 46%] | 40 | 12→14 | **p=0.040** |
-| dónde mirarᵃ | 11/30 — 37% | [22%, 54%] | 38 | 12→15 | n.s. (≥36% sería visible) |
-| las dos cosas | 0/25 — 0% | [0%, 13%] | 40 | 12→18 | **p=0.000** |
+| sin tocar (base) | 91/167 — 54% | [47%, 62%] | 30 | 62 | — |
+| cómo está escritoᵃ | 45/155 — 29% | [22%, 37%] | 40 | 62→96 | **p=0.000** |
+| dónde mirar | 76/161 — 47% | [40%, 55%] | 38 | 62→75 | n.s. (≥16% sería visible) |
+| las dos cosasᵃ | 37/157 — 24% | [18%, 31%] | 40 | 62→103 | **p=0.000** |
 
 Las condiciones con la misma marca (ᵃ) **no se distinguen entre sí**, solo de la base.
 
 **Del 54% al 24%.** Degradar las dos familias a la vez se lleva por delante más de la mitad de lo
 que el agente resolvía, y degradar solo *cómo está escrito* casi lo mismo, con la mediana de turnos
-clavada en el techo. Con casi doscientas celdas por condición, las dos caídas están muy por debajo
-del azar (p<0,001) y **se distinguen también entre sí**: esconder *dónde mirar* añade daño sobre
-ensuciar el texto, pero por sí solo no hace nada que estos datos separen del ruido.
+clavada en el techo. Con más de ciento cincuenta celdas por condición, las dos caídas están muy por
+debajo del azar (p<0,001), pero **no se distinguen entre sí** (p=0,30): esconder *dónde mirar*
+encima de ensuciar el texto no añade un daño que estos datos puedan separar, y por sí solo tampoco
+hace nada que estos datos separen del ruido.
 
 Esa es la respuesta a la hipótesis, y es la contraria a la que yo había escrito. Esconder *dónde
 mirar* no produce un efecto que estos datos distingan del ruido. Ensuciar el texto sí.
@@ -115,7 +116,7 @@ Las tres corridas puestas en fila, comparando el árbol intacto con su peor cond
 | Corrida | Base | Peor condición | Turnos | Corridas en el techo |
 |---|---|---|---|---|
 | python-stdnum, tier alto | 98% | 93% | 6 → 6 | 1/60 → 2/60 |
-| python-stdnum, tier bajo | 83% | 81% | 10 → 11 | 2/59 → 5/59 |
+| python-stdnum, tier bajo | 83% | 75% | 10 → 13 | 2/59 → 4/56 |
 | pint | 54% | 24% | 30 → 40 | 62/167 → 103/157 |
 
 El modelo capaz no absorbe el daño por ser más listo: **empieza con margen**. Resuelve en 6 turnos
@@ -129,7 +130,7 @@ Uno grande con un modelo justo no tolera nada.
 ## Qué práctica se paga: la respuesta está en devolverlas, no en quitarlas
 
 Quitando cada práctica por separado del código limpio, y devolviéndola por separado al código
-totalmente degradado. Sesenta celdas por condición:
+totalmente degradado. python-stdnum, tier bajo, sesenta celdas por condición:
 
 | Práctica | Se quita del código limpio | Se devuelve al código destruido |
 |---|---|---|

@@ -61,13 +61,13 @@ Twenty agents saw the table without the code, twenty with it.
 
 | | without the code | with the code | p |
 |---|---|---|---|
-| Found the cause | 3/20 | **20/20** | <0,0001 |
-| Proposed voting or retries | **18/20** | 5/20 | <0,0001 |
-| **Patched the symptom** (voting or temperature) | **19/20** | 9/20 | **0,0006** |
-| Blamed sampling as the primary cause | 4/20 | 0/20 | 0,053 |
+| Found the cause | 3/20 | **20/20** | <0.0001 |
+| Proposed voting or retries | **18/20** | 5/20 | <0.0001 |
+| **Patched the symptom** (voting or temperature) | **19/20** | 9/20 | **0.0006** |
+| Blamed sampling as the primary cause | 4/20 | 0/20 | 0.053 |
 | Asked for instrumentation before concluding | 0/20 | 0/20 | — |
 
-The headline isn't the attribution. Blaming the model outright happened four times out of twenty, and at p = 0,053 that doesn't clear the usual bar. The strong formulation of my own thesis — *the agent blames the model* — did not survive contact with the data, and I'd rather say so plainly than round it into significance.
+The headline isn't the attribution. Blaming the model outright happened four times out of twenty, and at p = 0.053 that doesn't clear the usual bar. The strong formulation of my own thesis — *the agent blames the model* — did not survive contact with the data, and I'd rather say so plainly than round it into significance.
 
 What did survive is the behaviour. **Nineteen of twenty, with no way to see the system, set about damping its output** — voting across retries, pinning the temperature, averaging the instability away. With the code in front of them, nine. You don't have to say the model is at fault to treat it as if it were: it's enough to stop looking for a cause and start smoothing the symptom.
 
@@ -115,14 +115,14 @@ So the rubric has two opposite fields that can both be true of the same response
 
 | | without the code | with the code | p |
 |---|---|---|---|
-| **Blamed sampling for the systematic changes** | **6/20** | **0/20** | **0,0101** |
-| Found the cache | 13/20 | 20/20 | 0,0042 |
-| Correctly attributed the sampling tail | 12/20 | 15/20 | 0,25 |
-| Proposed temperature to reduce variance | 2/20 | 8/20 | 0,032 |
+| **Blamed sampling for the systematic changes** | **6/20** | **0/20** | **0.0101** |
+| Found the cache | 13/20 | 20/20 | 0.0042 |
+| Correctly attributed the sampling tail | 12/20 | 15/20 | 0.25 |
+| Proposed temperature to reduce variance | 2/20 | 8/20 | 0.032 |
 | Asked for instrumentation before concluding | 0/20 | 0/20 | — |
-| Built its own measurement instead | 18/20 | 16/20 | 0,33 |
+| Built its own measurement instead | 18/20 | 16/20 | 0.33 |
 
-Making the wrong explanation *reasonable* is what moved the number: from 4/20 at p = 0,053 to **6/20 at p = 0,0101**. The reflex isn't summoned by laziness. It's summoned by a situation where it half fits.
+Making the wrong explanation *reasonable* is what moved the number: from 4/20 at p = 0.053 to **6/20 at p = 0.0101**. The reflex isn't summoned by laziness. It's summoned by a situation where it half fits.
 
 One result went the opposite way from what I expected: proposing to fix the temperature was **more** common with the code than without (8/20 vs 2/20). Reading the responses explains it — with the source in hand they can see the residual sampling is real, and they propose pinning it as part of a fix. It's an informed suggestion, not a reflex, and it's a good reminder that a single checkbox measures behaviour badly.
 
@@ -138,13 +138,13 @@ The obvious explanation is social: being shown a table of outputs frames the job
 |---|---|---|---|
 | Asked for instrumentation before concluding | 0/20 | **0/20** | — |
 | Asked and stopped there | 0/20 | 0/20 | — |
-| **Presented the conclusion as provisional** | 6/20 | **14/20** | **0,013** |
+| **Presented the conclusion as provisional** | 6/20 | **14/20** | **0.013** |
 
 **A hundred and forty out of a hundred and forty.** Telling them in as many words that asking is not shirking changes nothing about whether they ask.
 
 What it does change is the *shape* of the answer. Hedging doubles. Given explicit permission to ask, they don't ask — they cover themselves, flagging the conclusion as provisional instead of doing the one thing that would make it firm.
 
-And the other half of the explanation is what they do instead. **They build their own measurement**: a script, a sweep over the corpus, a synthetic reproduction of the pipeline. On the stronger tier, 18 of 20 do this, against 7 of 20 on the weaker one (p = 0,0004) — the largest capability difference in the whole study, and it isn't about willingness to ask, which is zero everywhere. It's about being able to manufacture the answer without asking.
+And the other half of the explanation is what they do instead. **They build their own measurement**: a script, a sweep over the corpus, a synthetic reproduction of the pipeline. On the stronger tier, 18 of 20 do this, against 7 of 20 on the weaker one (p = 0.0004) — the largest capability difference in the whole study, and it isn't about willingness to ask, which is zero everywhere. It's about being able to manufacture the answer without asking.
 
 So it isn't incuriosity about data. Several of these responses did genuinely rigorous work to get data. Asking for it simply isn't in the repertoire, and whoever can, fabricates it instead.
 
@@ -170,9 +170,9 @@ So it isn't incuriosity about data. Several of these responses did genuinely rig
 
 I'll spend a paragraph on something that isn't in this article any more, because how it left is the point.
 
-Half of each group ran on a stronger model tier and half on a weaker one. In the first round, with ten responses per cell, the stronger tier appeared to find the cause **less** than the weaker one — 4/10 against 9/10, p = 0,029 — and I had a tidy explanation ready. The stronger responses had audited the corpus document by document, verified that no snapshot contains another project's material (which is *true*, because the contamination happens at runtime, not in the data), and concluded from that a cache couldn't be responsible. Correct reasoning, correct check, false conclusion.
+Half of each group ran on a stronger model tier and half on a weaker one. In the first round, with ten responses per cell, the stronger tier appeared to find the cause **less** than the weaker one — 4/10 against 9/10, p = 0.029 — and I had a tidy explanation ready. The stronger responses had audited the corpus document by document, verified that no snapshot contains another project's material (which is *true*, because the contamination happens at runtime, not in the data), and concluded from that a cache couldn't be responsible. Correct reasoning, correct check, false conclusion.
 
-It was a good story. So I doubled the sample to twenty per cell, and it evaporated: 2/20 against 5/20, p = 0,20. It was noise, and a p of 0,029 with ten per cell is exactly the kind of number that looks like a finding and isn't.
+It was a good story. So I doubled the sample to twenty per cell, and it evaporated: 2/20 against 5/20, p = 0.20. It was noise, and a p of 0.029 with ten per cell is exactly the kind of number that looks like a finding and isn't.
 
 The one tier difference that does hold is the one above — the stronger tier builds its own measurement far more often. That one I'd defend.
 
@@ -180,8 +180,8 @@ The one tier difference that does hold is the one above — the stronger tier bu
 
 - **With the code, 20/20 found the first fault.** That group doesn't discriminate, and I knew it wouldn't before running it: reaching a middling difficulty there would have required fabricating metadata — assigning repositories to package registries that don't list them, staggering capture dates — and I ruled that out. A study about agents cutting corners can't cut that one. The with-code group is the control, not the measurement.
 - **The literal form of the thesis remains unmeasured.** *Blames the model for what it wouldn't blame itself for* requires the system to be the agent's own. In all four groups it audits someone else's code. What I measured is an asymmetry of material, not of authorship.
-- **One certification came in at 18/20** rather than the 19/20 I'd set as the bar, and the fix removes all fourteen contaminations but leaves three residual changes — the 0,7% sampling floor that no cache key touches.
-- **The rubric hardened between rounds**, and the same condition scores 13/20 under the old definition and 3/20 under the new one (p = 0,0015). The second demands that a response describe the mechanism, and counts listing the cache among several uncommitted hypotheses as a miss. Numbers from different rounds of that field cannot be pooled or compared, and none in this article are.
+- **One certification came in at 18/20** rather than the 19/20 I'd set as the bar, and the fix removes all fourteen contaminations but leaves three residual changes — the 0.7% sampling floor that no cache key touches.
+- **The rubric hardened between rounds**, and the same condition scores 13/20 under the old definition and 3/20 under the new one (p = 0.0015). The second demands that a response describe the mechanism, and counts listing the cache among several uncommitted hypotheses as a miss. Numbers from different rounds of that field cannot be pooled or compared, and none in this article are.
 
 ## The part that took longest
 

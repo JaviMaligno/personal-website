@@ -49,7 +49,7 @@ Así que construí las features topológicas: los estadísticos de persistencia 
 
 ![La homología persistente no aporta nada sobre la geometría](/blog/wtb3-topology-nothing.png)
 
-No pasa la vara. Las features topológicas por sí solas quedan muy por detrás de la geometría (0.258 vs 0.111 en fútbol — apenas mejor que el baseline ingenuo). Y pegarlas a las features geométricas no cambia nada: geometría-más-topología iguala a la geometría sola, y cuando barajo todo el bloque topológico el error apenas se inmuta — el árbol simplemente lo ignora en cuanto tiene la geometría.
+No pasa la vara. Las features topológicas por sí solas quedan muy por detrás de la geometría (0.258 vs 0.111 en fútbol — algo *peor* que el baseline de centroide ingenuo; en baloncesto, 0.206 vs 0.151, más o menos un tercio del camino entre el baseline y la red profunda). Y pegarlas a las features geométricas no cambia nada: geometría-más-topología iguala a la geometría sola, y cuando barajo todo el bloque topológico el error apenas se inmuta — el árbol simplemente lo ignora en cuanto tiene la geometría.
 
 La intuición atractiva es sencillamente falsa. La posición del balón no es una propiedad de la *forma* del cloud de jugadores; es una propiedad de dónde está la masa y hacia dónde se mueve. La homología persistente describe la configuración maravillosamente a todas las escalas, y nada de esa descripción va del balón. Un resultado negativo limpio — y la regla pre-registrada es la única razón por la que puedo llamarlo limpio en vez de dejarlo caer discretamente.
 

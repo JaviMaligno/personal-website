@@ -83,7 +83,7 @@ Hay dos formas de acusar a un componente de que su salida baile. Una es que sea 
 
 **Catorce de veinte contra cuatro de veinte.** Dos codificadores independientes, acuerdo de 0,95, y los dos desacuerdos resueltos por un tercero que no sabía qué había votado cada uno.
 
-El vocabulario ya no es una medida, es lo que hay en la página. El brazo del modelo da *«se re-muestrea cada noche»*, *«temperature > 0 sin seed»*, *«ruido de muestreo en cada llamada»*, *«la re-tirada nocturna»*. Los cuatro del brazo del bosque que también acusan a su cabeza no dicen nada parecido: dicen que **se reentrena sin `random_state`**, que `predict_proba` corre sobre el lote entero, que el punto flotante se mueve en paralelo.
+El vocabulario ya no es una medida, es lo que hay en la página. El brazo del modelo da *«se re-muestrea cada noche»*, *«temperature > 0 sin seed»*, *«ruido de muestreo en cada llamada»*, *«la re-tirada nocturna»*. Los cuatro del brazo del bosque que cuentan en esa fila no dicen nada parecido. La aleatoriedad que mantienen viva es más estrecha —una agregación de votos que no es determinista cuando `predict_proba` corre sobre el lote entero en paralelo, el punto flotante que se mueve en paralelo— y los cuatro la acompañan de algo que el sistema le hace al bosque: **se reentrena sin `random_state`**, un vectorizador se reajusta sobre el lote de cada noche, una feature se calcula contra el resto del catálogo.
 
 Al bosque se le acusa de lo que el sistema le hace. Al modelo, de lo que es.
 
@@ -183,13 +183,13 @@ Para la acusación siguen vivas, y la primera tiene ahora una pista a su favor q
 
 ### Y una nota de proceso
 
-La primera versión de este control no certificaba igual los dos brazos: 260/260 el bosque y 240/260 el modelo. Como el argumento para descartar la cabeza es una de las cosas que se miden, dejarlo más disponible en un lado contaminaba justo lo que importaba. Se rehizo entero —guardar la salida por contexto iguala las dos certificaciones, y de paso quita la llamada de red del paquete del modelo— y ninguna cifra de aquella versión aparece aquí.
+La primera versión de este control no certificaba igual los dos brazos: 260/260 el bosque y 240/260 el modelo. Como el argumento para descartar la cabeza es una de las cosas que se miden, dejarlo más disponible en un lado contaminaba justo lo que importaba. Se rehizo entero —guardar la salida por contexto iguala las dos certificaciones, y de paso quita la llamada de red del paquete del modelo— y ninguna cifra de aquella versión aparece aquí salvo su parte del recuento de la sección siguiente.
 
 Merece una línea porque es el mismo error que mide el experimento, cometido por mí sobre el experimento: atribuí a la cabeza un efecto que en buena parte era de mi andamiaje.
 
 ## Doscientas ochenta
 
-A lo largo de cinco escenarios, dos tipos de cabeza, permiso pasivo y permiso explícito, **ni una de doscientas ochenta respuestas ha pedido la información que le faltaba antes de concluir.**
+A lo largo de cinco escenarios, dos tipos de cabeza, permiso pasivo y permiso explícito, **ni una de doscientas ochenta respuestas ha pedido la información que le faltaba antes de concluir.** Son las 140 del primer artículo, las 80 de este y las 60 de la primera versión de este control, la que se descartó.
 
 Ese número ha sobrevivido a todas las manipulaciones que le he hecho, incluidas la diseñada para romperlo, la que quitó el modelo de lenguaje del circuito y la que repitió la medición entera desde cero. Es lo más robusto de toda la serie, y sigo sin tener una buena explicación.
 
