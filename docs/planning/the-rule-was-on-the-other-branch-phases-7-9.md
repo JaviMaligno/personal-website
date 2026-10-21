@@ -5,7 +5,59 @@ Material para la sección «Live, and handed over» de
 sin ticket, empresa, servicio, nombres de campos, tenant, equipos ni identificadores
 internos. Estado a 2026-10-21, ~17:30 UTC+1; la ejecución sigue parada desde entonces.
 
-## Resumen
+## Actualización: la ejecución terminó las fases 7–9
+
+Informe final recibido de la sesión de delivery-loop (2026-10-21, tarde). Sustituye a
+lo que dicen abajo las secciones de fase 8 y 9 y el «se detuvo» de la fase 7; lo de
+abajo queda como registro de la primera pasada y del bucle de arreglo.
+
+### Fase 7 — en vivo (segunda pasada)
+
+- El entorno de pruebas acabó sirviendo **no la imagen que construyó el bucle**, sino
+  una versión recortada por otra sesión (la de releases) sobre su propia rama, que
+  incorporaba por port los dos cambios de la tarea (la PR original y el arreglo en vivo).
+  El bucle lo detectó leyendo la versión y el commit en el endpoint de salud y verificó
+  los cinco puntos **contra esa build**, no contra la suya.
+- Resultado: tres puntos OK sin matices; uno OK salvo una divergencia conocida del port
+  (la descripción de un campo de traza); en el último, los contratos previstos pasan y
+  deja anotados cuatro campos adicionales de un desglose que siguen sin publicarse
+  (fuera del alcance, registrados, no escondidos).
+- Smoke real: 200 con una clasificación y una confianza alta (esta vez sí respondió, no
+  se abstuvo); sin credenciales, 401.
+- **No tocó el entorno de pruebas** porque había QA manual de otra persona en curso.
+
+### Extra — un rojo en la rama de integración
+
+- Detectó que un test de contrato estaba en rojo en la rama de integración desde el
+  merge del arreglo en vivo. Lo arregló en una PR nueva y **se paró antes de fusionarla**
+  para la revisión humana obligatoria del repo, igual que hizo con la PR original.
+
+### Fase 8 — traspaso
+
+- Motivo: la promoción a los entornos siguientes solo se hace mediante un ticket de
+  despliegue que abre el equipo X; el bucle no los crea.
+- Responsable: la persona de ese equipo que abre esos tickets.
+- Material en el task file: versión actual → versión propuesta para el entorno
+  siguiente, y lo mismo para producción, **señalando que no pudo observar el despliegue
+  de producción y que la versión desplegada allí no está confirmada** (la configuración
+  dice una cosa, pero no lo vio servido).
+- No creó tickets.
+
+### Fase 9 — cierre
+
+- Ticket en Finalizado, con comentario en inglés y evidencia, devuelto al responsable
+  humano, y verificado con una segunda lectura (no fiándose de la respuesta de la API).
+- Borró sus ramas solo tras comprobar con `merge-base` que estaban contenidas en la rama
+  de integración; declinó una PR de configuración que había quedado superada; quitó el
+  worktree de configuración. Conserva la rama y el worktree de la PR pendiente de
+  revisión humana.
+- Fallo de herramienta: el gestor de repos rechaza (400) editar la descripción de una PR
+  ya fusionada, así que la evidencia final quedó en el task file y en el comentario del
+  ticket.
+
+---
+
+## Resumen (primera pasada, superado en parte por lo anterior)
 
 La ejecución **no llegó a las fases 8 ni 9**, y la 7 se quedó a medias: terminó una
 primera pasada de QA en vivo, encontró un fallo, volvió sola a las fases 4–6 para
