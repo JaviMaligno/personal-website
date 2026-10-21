@@ -12,8 +12,8 @@ repoUrl: https://github.com/JaviMaligno/skill-framing-experiments
 .rtn-fig{margin:2rem 0;padding:1.25rem;background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:12px}
 .rtn-fig svg{width:100%;height:auto;display:block}
 .rtn-fig figcaption{margin-top:.75rem;color:#94a3b8;font-size:.9rem;line-height:1.5}
-.rtn-ba{table-layout:fixed;width:100%}
-.rtn-ba th,.rtn-ba td{width:50%;vertical-align:top}
+.article-content .table-wrap table td,.article-content .table-wrap table th{white-space:normal}
+.article-content table.rtn-ba{table-layout:fixed}.article-content table.rtn-ba td,.article-content table.rtn-ba th{width:50%}
 </style>
 
 En [Claude Code Curious](https://luma.com/ccc-mk), en Milton Keynes, uno de los organizadores defendió algo con lo que yo acababa de toparme: las skills funcionan mejor escritas como un papel o una metáfora que como instrucciones detalladas. El ejemplo era la documentación. En lugar de enumerar qué debe tener una buena documentación, pedirle al modelo que actúe como un bibliotecario.
@@ -32,13 +32,13 @@ Hago vídeos cortos narrados de mis artículos ([están en Instagram](https://ww
 
 Después le pedí a Opus que revisara dos guiones ya escritos con la skill actualizada. Quitó todos los números de la voz:
 
-<table class="rtn-ba">
+<div class="table-wrap"><table class="rtn-ba">
 <thead><tr><th>antes</th><th>después</th></tr></thead>
 <tbody>
 <tr><td>«With the fact in plain sight, Opus adopted the wrong conclusion 4 times in 791.»</td><td>«With the fact in plain sight, Opus almost never adopted the wrong conclusion.»</td></tr>
 <tr><td>«Gemini 3 Flash: 88%, against 3% and 0%.»</td><td>«Gemini 3 Flash: almost always, against almost never.»</td></tr>
 </tbody>
-</table>
+</table></div>
 
 La primera línea era el hallazgo de todo el artículo: Opus adoptó la conclusión equivocada 4 veces de 791. «Casi nunca» suena igual que «pocas veces», y lo importante era precisamente lo pocas que eran.
 

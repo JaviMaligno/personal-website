@@ -12,8 +12,8 @@ repoUrl: https://github.com/JaviMaligno/skill-framing-experiments
 .rtn-fig{margin:2rem 0;padding:1.25rem;background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:12px}
 .rtn-fig svg{width:100%;height:auto;display:block}
 .rtn-fig figcaption{margin-top:.75rem;color:#94a3b8;font-size:.9rem;line-height:1.5}
-.rtn-ba{table-layout:fixed;width:100%}
-.rtn-ba th,.rtn-ba td{width:50%;vertical-align:top}
+.article-content .table-wrap table td,.article-content .table-wrap table th{white-space:normal}
+.article-content table.rtn-ba{table-layout:fixed}.article-content table.rtn-ba td,.article-content table.rtn-ba th{width:50%}
 </style>
 
 At [Claude Code Curious](https://luma.com/ccc-mk) in Milton Keynes, one of the organizers made a point I had just run into myself: skills work better written as a role or a metaphor than as detailed instructions. The example was documentation. Instead of listing what good docs contain, ask the model to act as a librarian.
@@ -30,13 +30,13 @@ I make short narrated videos of my articles ([they're on Instagram](https://www.
 
 Then I asked Opus to revise two existing scripts with the updated skill. It removed every number from the voice:
 
-<table class="rtn-ba">
+<div class="table-wrap"><table class="rtn-ba">
 <thead><tr><th>before</th><th>after</th></tr></thead>
 <tbody>
 <tr><td>"With the fact in plain sight, Opus adopted the wrong conclusion 4 times in 791."</td><td>"With the fact in plain sight, Opus almost never adopted the wrong conclusion."</td></tr>
 <tr><td>"Gemini 3 Flash: 88%, against 3% and 0%."</td><td>"Gemini 3 Flash: almost always, against almost never."</td></tr>
 </tbody>
-</table>
+</table></div>
 
 The first line was the finding of the whole article. "Almost never" sounds the same as "rarely", and the point was precisely how rare.
 
