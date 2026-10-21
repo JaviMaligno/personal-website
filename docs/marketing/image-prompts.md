@@ -1777,8 +1777,8 @@ No logos, no brand names, no people, no article title overlay, no text-heavy pos
 
 # The Rule Ate the Number — 2026-10-20
 
-- Article: `src/content/blog/en/the-rule-ate-the-number.md`
-- Image: `public/blog/the-rule-ate-the-number.png`
+- Article: `src/content/blog/en/a-role-not-a-rule.md`
+- Image: `public/blog/a-role-not-a-rule.png`
 - Generator: built-in image_gen; resized to 1020x510 with System.Drawing.
 
 Exact prompt for the final image:
@@ -1825,8 +1825,8 @@ No logos, no brand names, no people, no article title overlay, no text-heavy pos
 
 ## The Rule Ate the Number
 
-- **Article:** `src/content/blog/en/the-rule-ate-the-number.md`
-- **Image:** `public/blog/the-rule-ate-the-number.png`
+- **Article:** `src/content/blog/en/a-role-not-a-rule.md`
+- **Image:** `public/blog/a-role-not-a-rule.png`
 - **Generated:** 2026-10-20 (Codex `image_gen`)
 
 ```text

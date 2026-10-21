@@ -1,20 +1,30 @@
 ---
-title: "La regla se comió la cifra"
-description: "Le pedí a mi skill de vídeos que no acumulara números, y Opus quitó todos los números de la voz. Lo reproduje con guiones nuevos, cuatro versiones de la skill y cuatro modelos: la regla y la regla parcheada pierden la cifra del hallazgo, «cuéntalo como a un compañero» no la pierde nunca, y cuanto más obediente es el modelo, peor funciona la regla."
+title: "Un papel, no una regla"
+description: "Las skills funcionan mejor escritas como un papel que como una lista de reglas: la regla se aplica a todos los casos, el papel lleva el propósito que los distingue. Mi skill de vídeos es un ejemplo. Una regla sobre números hizo que Opus quitara de la voz la cifra del hallazgo; «cuéntalo como a un compañero» la conservó. Lo medí con cuatro versiones de la skill y cuatro modelos, y cuanto más obediente es el modelo, peor funciona la regla."
 pubDate: 2026-10-24
 tags: ["IA", "Skills", "Prompting", "Evaluación", "Investigación"]
 lang: es
-translationKey: the-rule-ate-the-number
-heroImage: "/blog/the-rule-ate-the-number.png"
+translationKey: a-role-not-a-rule
+heroImage: "/blog/a-role-not-a-rule.png"
 repoUrl: https://github.com/JaviMaligno/skill-framing-experiments
 ---
 <style>
 .rtn-fig{margin:2rem 0;padding:1.25rem;background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:12px}
 .rtn-fig svg{width:100%;height:auto;display:block}
 .rtn-fig figcaption{margin-top:.75rem;color:#94a3b8;font-size:.9rem;line-height:1.5}
+.rtn-ba{table-layout:fixed;width:100%}
+.rtn-ba th,.rtn-ba td{width:50%;vertical-align:top}
 </style>
 
-Hago vídeos cortos narrados de mis artículos con una skill que escribe el guion: las escenas, lo que dice la voz y lo que sale en pantalla. En algunos, la voz leía ristras de cifras, una detrás de otra, como no habla nadie. Así que añadí una línea a la skill (las skills están en inglés):
+En [Claude Code Curious](https://luma.com/ccc-mk), en Milton Keynes, uno de los organizadores defendió algo con lo que yo acababa de toparme: las skills funcionan mejor escritas como un papel o una metáfora que como instrucciones detalladas. El ejemplo era la documentación. En lugar de enumerar qué debe tener una buena documentación, pedirle al modelo que actúe como un bibliotecario.
+
+La idea es fácil de aceptar y difícil de creer hasta que una regla te falla. Una regla dice qué evitar, y un modelo que sigue bien las instrucciones la aplica a todos los casos que encuentra, también a aquel en el que no tocaba. Un papel lleva el propósito que hay detrás de la regla, y el propósito es lo que distingue un caso de otro. Un bibliotecario sabe qué documentos va a venir a buscar alguien.
+
+El papel depende de la skill. Bibliotecario para la documentación; en mi caso, un compañero. Así encontré el mío, y esto es lo que pasó cuando lo medí.
+
+## La regla que se comió la cifra
+
+Hago vídeos cortos narrados de mis artículos ([están en Instagram](https://www.instagram.com/agilabs_ai)) con un [plugin de Claude Code](/es/skills) que escribe el guion: las escenas, lo que dice la voz y lo que sale en pantalla. En algunos, la voz leía ristras de cifras, una detrás de otra, como no habla nadie. Así que añadí una línea a la skill (las skills están en inglés):
 
 > Spoken numbers sparingly. Never chain several figures in a row, and avoid repetitive or unround values in the voice: say the one number that carries the point […] and leave the rest on screen or out.
 
@@ -22,10 +32,13 @@ Hago vídeos cortos narrados de mis artículos con una skill que escribe el guio
 
 Después le pedí a Opus que revisara dos guiones ya escritos con la skill actualizada. Quitó todos los números de la voz:
 
-| antes | después |
-|---|---|
-| «With the fact in plain sight, Opus adopted the wrong conclusion 4 times in 791.» | «With the fact in plain sight, Opus almost never adopted the wrong conclusion.» |
-| «Gemini 3 Flash: 88%, against 3% and 0%.» | «Gemini 3 Flash: almost always, against almost never.» |
+<table class="rtn-ba">
+<thead><tr><th>antes</th><th>después</th></tr></thead>
+<tbody>
+<tr><td>«With the fact in plain sight, Opus adopted the wrong conclusion 4 times in 791.»</td><td>«With the fact in plain sight, Opus almost never adopted the wrong conclusion.»</td></tr>
+<tr><td>«Gemini 3 Flash: 88%, against 3% and 0%.»</td><td>«Gemini 3 Flash: almost always, against almost never.»</td></tr>
+</tbody>
+</table>
 
 La primera línea era el hallazgo de todo el artículo: Opus adoptó la conclusión equivocada 4 veces de 791. «Casi nunca» suena igual que «pocas veces», y lo importante era precisamente lo pocas que eran.
 
@@ -38,7 +51,7 @@ Así que corregí la corrección, tres veces seguidas. Cada versión de la líne
 | **if, a oído** | caso por caso: di un número cuando se oiga bien; cuando suene raro, di lo que significa con palabras («almost never») y deja la cifra en pantalla |
 | **compañero** | dilos como se lo explicarías a un compañero: con naturalidad, dentro de la frase; lo único que hay que evitar es leer una tabla en voz alta |
 
-Cada parche era más preciso y ninguno lo arreglaba. El último no es una regla: describe una manera de hablar. Ese es el que funcionó. Por las mismas fechas oí la misma idea en un evento de Claude Code: las skills funcionan mejor escritas como un rol o una metáfora que como instrucciones detalladas.
+Cada parche era más preciso y ninguno lo arreglaba. El último no es una regla: describe quién habla y a quién. Ese es el que funcionó.
 
 Una historia sobre mis propios vídeos no es una prueba, así que lo medí.
 
@@ -125,17 +138,11 @@ Las dos primeras se leen bien, y ese es el problema. No hay nada falso en ellas;
 
 La regla pierde la cifra en todos los modelos que de verdad revisan: Opus la conserva en 1 revisión de 18, Astra en 3 y Haiku en 5. El `if` del parche los separa. Astra y Haiku conservan casi siempre la cifra con él (Astra entre 14 y 18 de 18 según el juez, Haiku 14), y Opus la pierde casi siempre (4 y 0). El modelo que mejor sigue las instrucciones es el que toma «di lo que significa con palabras» y lo aplica a cada número que encuentra.
 
-Eso cuadra con mi episodio, que fue con Opus: cada vía de escape que deja la instrucción, la toma.
+Eso cuadra con mi episodio, que fue con Opus: cada vía de escape que deja la instrucción, la toma. Y es el argumento general del principio. Cuanto mejor sigue el modelo una regla, más importa que la regla falle en algún caso, y una regla siempre falla en alguno.
 
 Luna es la excepción en el otro sentido. Apenas revisa: devuelve el borrador casi igual, con los números, con cualquier versión. Conservarlos todos no es un mérito, porque Luna ignora la corrección.
 
-## Lo que «compañero» no arregla
-
-La versión del compañero no perdió ningún hallazgo en ningún modelo. Pero tampoco quita los montones. En la única escena de los guiones originales que de verdad era un montón, Opus con la versión del compañero mantuvo las tres cifras seguidas todas las veces:
-
-> The aligned models sit at ~0.10 repetition. The base hits 0.51 in one turn, and 0.78 over many.
-
-Los jueces puntuaron cuánta tabla leída quedaba, de 0 a 3. La versión del compañero se queda en torno a 1,4 en Opus, donde la regla está en 0, y su nota global de calidad no es la más alta. Arregla el fallo grave, perder el resultado, y deja el leve. Para mis vídeos es el intercambio correcto: un montón lo recorto al revisar, pero un número que falta no lo noto si la frase suena bien.
+Lo que no puedo zanjar con esto es si el compañero devuelve los montones que lo empezaron todo. Los jueces le dieron algo más de cifras leídas de sobra que a la regla, que lo quita todo, pero esa puntuación no la contrasté con mi oído como sí hice con el veredicto principal. En el vídeo que hice con la versión del compañero no oigo ningún montón.
 
 ## Cuándo basta una regla normal
 
@@ -144,16 +151,16 @@ La misma pregunta con un material más sencillo acota el efecto: un briefing de 
 - Una regla con tope, «di como mucho la cifra que lleva el mensaje», también perdió la cifra esencial: Opus la conservó en 6 briefings de 18 y Astra en 4. Cuando la noticia es «de 9 a 12 euros» o «4 de 791», una sola cifra no basta para contarla.
 - Una regla sin tope, «no encadenes números no redondos; redondea cuando la fuente lo permita», conservó la cifra esencial en todos los modelos, 17 o 18 de 18. Y limpió el recitado mejor que «como a un compañero».
 
-Así que la regla, por sí misma, no es el problema. El briefing no tenía pantalla adonde mandar los números, y el modelo lo escribía desde cero en lugar de revisar algo que ya los tenía. Mi skill de vídeos tenía las dos cosas: «deja el resto en pantalla» y un guion lleno de números al que aplicarlo. No he aislado cuál de las dos pesa; haría falta la misma skill con y sin pantalla.
+Así que una regla no falla por ser una regla. El briefing no tenía pantalla adonde mandar los números, y el modelo lo escribía desde cero en lugar de revisar algo que ya los tenía. Mi skill de vídeos tenía las dos cosas: «deja el resto en pantalla» y un guion lleno de números al que aplicarlo. No he aislado cuál de las dos pesa; haría falta la misma skill con y sin pantalla.
 
 ## Con qué me quedo
 
-Si una corrección le da al modelo otro sitio donde poner las cosas («en pantalla», «con palabras») o un tope («el único número»), un modelo capaz lo usará en todos los casos, incluido el que importaba. Parchearlo con condiciones añade más instrucciones que cumplir al pie de la letra. Describir cómo tiene que sonar le da al modelo el propósito, y el propósito sabe qué número es el hallazgo.
+Una regla falla cuando le da al modelo otro sitio donde poner las cosas («en pantalla», «con palabras») o un tope («el único número»): un modelo capaz lo usa en todos los casos, incluido el que importaba. Parchearla con condiciones añade más instrucciones que cumplir al pie de la letra. Un papel le da al modelo el propósito, y el propósito sabe qué número es el hallazgo.
 
-Donde no había vía de escape ni tope, una regla normal funcionó igual de bien, y a veces mejor.
+Así que antes de escribir la siguiente regla en una skill, me pregunto quién haría bien esta tarea sin que nadie le diera las reglas, y escribo a esa persona. Para la documentación es un bibliotecario; para la narración, alguien que le explica un resultado a un compañero. Donde no había vía de escape ni tope, una regla normal funcionó igual de bien, y a veces mejor.
 
-Los límites: una skill, un tipo de corrección, seis artículos, tres repeticiones por celda, y todo en un solo turno y sin herramientas, cuando mi episodio real ocurrió dentro de una sesión de agente. El patrón se mantiene con dos jueces y en los tres modelos que revisan, y es el mismo con el que me topé a mano.
+Los límites: una skill, un tipo de corrección, seis artículos, tres repeticiones por celda, y todo en un solo turno y sin herramientas, cuando mi episodio real ocurrió dentro de una sesión de agente. El patrón se mantiene con dos jueces y en los tres modelos que revisan, y es el mismo con el que me topé a mano. Lo del bibliotecario solo lo conozco por la charla; no lo he medido.
 
 ---
 
-*Código, las cuatro versiones de la skill, todos los guiones y los veredictos de los dos jueces con sus razones: [skill-framing-experiments](https://github.com/JaviMaligno/skill-framing-experiments). Las skills que uso están [aquí](/es/skills).*
+*Código, las cuatro versiones de la skill, todos los guiones y los veredictos de los dos jueces con sus razones: [skill-framing-experiments](https://github.com/JaviMaligno/skill-framing-experiments). El plugin de vídeos y el resto de mis skills están [aquí](/es/skills).*
