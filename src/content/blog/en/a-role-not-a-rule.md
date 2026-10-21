@@ -1,7 +1,7 @@
 ---
 title: "A Role, Not a Rule"
 description: "Skills work better written as a role than as a list of rules: a rule gets applied to every case, a role carries the purpose that tells the cases apart. My video skill is one example. A numbers rule made Opus strip the finding's number from the voice; \"say it like a colleague\" kept it. I measured it across four skill versions and four models, and the more obedient the model, the worse the rule."
-pubDate: 2026-10-24
+pubDate: 2026-11-14
 tags: ["AI", "Skills", "Prompting", "Evaluation", "Research"]
 lang: en
 translationKey: a-role-not-a-rule

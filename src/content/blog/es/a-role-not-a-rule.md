@@ -1,7 +1,7 @@
 ---
 title: "Un papel, no una regla"
 description: "Las skills funcionan mejor escritas como un papel que como una lista de reglas: la regla se aplica a todos los casos, el papel lleva el propósito que los distingue. Mi skill de vídeos es un ejemplo. Una regla sobre números hizo que Opus quitara de la voz la cifra del hallazgo; «cuéntalo como a un compañero» la conservó. Lo medí con cuatro versiones de la skill y cuatro modelos, y cuanto más obediente es el modelo, peor funciona la regla."
-pubDate: 2026-10-24
+pubDate: 2026-11-14
 tags: ["IA", "Skills", "Prompting", "Evaluación", "Investigación"]
 lang: es
 translationKey: a-role-not-a-rule
