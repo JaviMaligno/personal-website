@@ -125,6 +125,8 @@ El núcleo del plugin no nombra ninguna herramienta. Todo lo propio de un sitio 
 
 Esto es lo que hace que merezca la pena montarlo. Una organización guarda sus perfiles en un repositorio privado: el nivel de organización y un perfil por proyecto. Una persona nueva instala el plugin, ejecuta un script y recibe el perfil de la organización más los de los proyectos cuyos repos tiene de verdad. Nada más.
 
+Alguien tiene que escribir antes esa parte compartida, pero no a mano. La primera ejecución en una organización detecta lo que puede y hace una ronda corta de preguntas sobre el resto, y cada respuesta se escribe en su nivel, incluidos el de organización y el de proyecto. Publicar esos ficheros en el repo compartido es lo que ahorra esa misma ronda a todos los que vienen después. A partir de ahí se va completando mientras la gente trabaja: una regla que alguien añade, un proyecto que alguien empieza.
+
 Lo que le queda es poco, y casi todo se escribe una vez:
 
 - **Su perfil de usuario.** Sus cuentas, los límites de su máquina, la herramienta de navegador que usa. Se escribe una vez, se queda para siempre y nunca forma parte de un fichero compartido: el CI del repo compartido comprueba que ningún perfil compartido tenga datos personales.
@@ -187,7 +189,7 @@ Unos perfiles compartidos y al día son también lo que permite que el bucle ava
 
 Las fases son la parte visible. Lo que hace que funcionen en cualquier sitio es la idea de debajo: cada práctica escrita una vez, en el nivel donde es verdad, compartida con todos los que la necesitan, recomprobada antes de que nadie se apoye en ella y leída desde la rama donde de verdad se trabaja. Nadie tiene que mantener al día al agente, porque las prácticas que lee son las mismas que el equipo ya mantiene.
 
-Si tu equipo quiere probarlo, que empiece por el perfil de la organización. El repositorio trae un ejemplo ficticio de cada nivel, y la primera ejecución en cada repo completa el resto.
+Si tu equipo quiere probarlo, basta con que una persona lo use en un ticket real y publique los perfiles de organización y de proyecto que escribe. El repositorio trae un ejemplo ficticio de cada nivel con el que compararlos.
 
 ---
 

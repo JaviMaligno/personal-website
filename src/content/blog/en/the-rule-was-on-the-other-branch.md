@@ -125,6 +125,8 @@ The plugin's core names no tool. Everything specific to a place goes in a profil
 
 This is what makes it worth setting up. An organisation keeps its profiles in one private repository: the organisation level and one profile per project. A new person installs the plugin, runs one script, and gets the organisation profile plus the profiles of the projects whose repos they actually have. Nothing else.
 
+Someone has to write that shared part first, but not by hand. The first run in an organisation detects what it can and asks one short round about the rest, and each answer is written at its level, organisation and project included. Publishing those files to the shared repo is what spares everyone after from the same round. From then on it fills in as people work: a rule someone adds, a project someone starts.
+
 What is left for them is small and mostly written once:
 
 - **Their user profile.** Their accounts, their machine's limits, the browser tool they use. Written once, kept forever, and never part of a shared file: the shared repo's CI checks that no shared profile holds personal data.
@@ -187,7 +189,7 @@ Shared, current profiles are also what let the loop run without stopping to ask.
 
 The phases are the visible part. What makes them work anywhere is the idea underneath: each practice written once, at the level where it is true, shared with everyone who needs it, re-checked before anyone relies on it, and read from the branch where the work actually happens. Nobody has to keep the agent up to date, because the practices it reads are the same ones the team already keeps.
 
-If your team wants to try it, start with the organisation profile. The repository has a fictitious example of every level, and the first run in each repo fills in the rest.
+If your team wants to try it, one person runs it on a real ticket and publishes the organisation and project profiles it writes. The repository has a fictitious example of every level to compare against.
 
 ---
 
