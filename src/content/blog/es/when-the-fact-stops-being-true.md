@@ -18,11 +18,11 @@ repoUrl: https://github.com/JaviMaligno/delayed-relevance
 
 > **Corrección.** El recuento principal de este artículo —Haiku con 3/44 frente a 44/44, y «93 de 93 pasos dependientes» con estado explícito— salió de un instrumento que no podía registrar todos los fallos: leía los pasos dependientes de una trayectoria simulada en lugar de la trayectoria real del agente, y aplicaba la acción correcta cuando un runtime no devolvía ninguna. Medido de nuevo por episodio sobre la trayectoria real, con tres modelos, el estado explícito aplica la corrección en **70 de 72 episodios** y el transcript completo en **10 de 72** (solo Haiku: 24/24 frente a 1/24). La dirección se sostiene; la perfección no. La nueva medida está en el [paper de la réplica](https://github.com/JaviMaligno/delayed-relevance/blob/main/docs/paper-draft.md).
 
-> **Réplica de *SKILL.state: Scalable Long-Horizon Agent Skills* (Badhe, Tiwari y Chung, aceptado en EMNLP) con dos modelos y más de 500 episodios.** Cada número de este artículo es un recuento de decisiones, no un promedio de episodios.
+> **Réplica de *SKILL.state: Scalable Long-Horizon Agent Skills* (Badhe, Tiwari y Chung, aceptado en EMNLP) con dos modelos y más de 500 episodios**, más un tercer modelo en el recuento corregido de la corrección retroactiva. Cada número de este artículo es un recuento de decisiones, no un promedio de episodios.
 
 Un agente lee un evento en el paso 10: *el palé que registraste en el paso 3 nunca llegó a colocarse; esa estantería está vacía*. Veinte pasos después tiene que decidir dónde almacenar el siguiente palé. La respuesta correcta es la estantería que liberó la corrección.
 
-Con el transcript entero en su contexto —el registro original, la corrección, y todo lo que hay en medio— Claude Haiku 4.5 acierta esa decisión **3 veces de 44**. Dándole en su lugar un objeto JSON de 200 caracteres, y ningún transcript, el mismo modelo acierta **44 de 44**.
+Con el transcript entero en su contexto —el registro original, la corrección, y todo lo que hay en medio— Claude Haiku 4.5 aplica esa corrección en **1 episodio de 24**. Dándole en su lugar un objeto JSON de 200 caracteres, y ningún transcript, el mismo modelo la aplica en **24 de 24**. (La primera versión de este artículo decía 3/44 frente a 44/44; ver la corrección de arriba.)
 
 Es el efecto más fuerte de toda la réplica, y también es lo que el paper afirma: su Experimento 3 dice que los runtimes con historia alucinan entre cinco y ocho turnos tras una corrección, y que el estado explícito recupera en cero. Lo nuevo de aquí abajo es la unidad de medida, no el signo.
 
@@ -94,7 +94,7 @@ La afirmación tiene dos mitades: más precisión en procedimientos largos, y un
   <text x="16" y="206" class="wl">todo lo que el agente sabrá jamás del paso 3 tiene que estar dentro</text>
   <text x="16" y="224" class="wl">del objeto de estado en el paso 4 — o se ha perdido.</text>
 </svg>
-<figcaption>Los cuatro brazos solo se diferencian en lo que va entre el procedimiento y la última observación. Stateful y ReAct llevan casi el mismo contenido; el orden en que lo llevan cuesta 5,7 veces más.</figcaption>
+<figcaption>Los cuatro brazos solo se diferencian en lo que va entre el procedimiento y la última observación. Stateful y ReAct llevan casi el mismo contenido; el orden en que lo llevan cuesta 5,2 veces más.</figcaption>
 </figure>
 
 SkillExecBench no tiene código público, así que el entorno de aquí es una reimplementación a partir de la descripción de su §4.1 —un almacén de 500 estanterías con registros densos de campos separados por barras—, igualada en **densidad de contexto** y no en contenido literal, y corriendo un 1,2–1,5x por encima de la suya en prompt medio.
@@ -288,7 +288,7 @@ Dos decisiones de diseño hacen que esto sea medible. La primera: la unidad de r
 Las seeds 4, 10 y 6 aportan 22 pasos dependientes por repetición. Las seeds 0, 1 y 2 aportan cinco entre las tres, y una de ellas no aporta ninguno. Calcular esa tabla cuesta cero llamadas a la API.
 
 <figure class="wfs-fig">
-<svg viewBox="0 0 600 218" role="img" aria-label="Cada decisión que dependía de la corrección retroactiva, una celda cada una. Con estado explícito están llenas las 44 celdas de Haiku y las 49 de Sonnet. Con el transcript completo, Haiku llena 3 de 44 y falla episodios enteros de golpe; Sonnet llena 15 de 38, aplicando todas las correcciones en un episodio y ninguna en el siguiente sobre el mismo escenario.">
+<svg viewBox="0 0 600 218" role="img" aria-label="Recuento original, superado. Cada decisión que dependía de la corrección retroactiva, una celda cada una. Con estado explícito están llenas las 44 celdas de Haiku y las 49 de Sonnet. Con el transcript completo, Haiku llena 3 de 44 y falla episodios enteros de golpe; Sonnet llena 15 de 38, aplicando todas las correcciones en un episodio y ninguna en el siguiente sobre el mismo escenario.">
   <defs>
     <style>
       .dl { fill:#e2e8f0; font:11.5px ui-sans-serif,system-ui; }
@@ -297,7 +297,7 @@ Las seeds 4, 10 y 6 aportan 22 pasos dependientes por repetición. Las seeds 0, 
       .dh { fill:#fbbf24; font:600 11.5px ui-sans-serif,system-ui; }
     </style>
   </defs>
-  <text x="16" y="24" class="dt">Cada decisión que dependía de la corrección</text>
+  <text x="16" y="24" class="dt">Cada decisión que dependía de la corrección (recuento original, superado)</text>
   <text x="16" y="42" class="dm">una celda = una decisión · los huecos separan episodios · seeds 4, 10 y 6</text>
   <text x="16" y="62" class="dh">Haiku 4.5</text>
   <text x="16" y="130" class="dh">Sonnet 5</text>
@@ -485,20 +485,20 @@ Las seeds 4, 10 y 6 aportan 22 pasos dependientes por repetición. Las seeds 0, 
   <rect x="357" y="196" width="5.7" height="11" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
   <text x="370" y="205" class="dm">fallada</text>
 </svg>
-<figcaption>El estado explícito no falla ni una corrección en 93 pasos dependientes y dos modelos. El transcript completo, que contiene físicamente la corrección, la aplica en 18 de 82.</figcaption>
+<figcaption>El recuento original, que se queda como registro y que la corrección de arriba supera: daba 93 de 93 pasos dependientes al estado explícito y 18 de 82 al transcript completo, pero su instrumento no podía registrar todos los fallos. Medido de nuevo por episodio sobre la trayectoria real, con tres modelos: 70 de 72 frente a 10 de 72.</figcaption>
 </figure>
 
-Tres cosas que solo se ven contando decisiones en vez de promediando episodios:
+Tres cosas que solo se ven contando decisiones en vez de promediando episodios. Salen del recuento original; donde la nueva medición las cambia, lo digo:
 
-**El brazo del transcript falla todo o nada por escenario.** En Haiku, los errores de cualquier otro tipo son exactamente cero en los seis episodios: sus *únicos* fallos son los pasos de la corrección, y los falla en bloque — 11 de 11, 7 de 7, 4 de 4. No es un agente que se despiste. Es un agente que ejecuta un procedimiento de 50 pasos sin una falta mientras nunca actualiza un dato. En Sonnet aparece el mismo patrón de forma bimodal: un episodio aplica los 11 y la repetición siguiente sobre el mismo escenario falla los 11.
+**El brazo del transcript falla todo o nada por escenario.** En Haiku, los errores de cualquier otro tipo son exactamente cero en los seis episodios: sus *únicos* fallos son los pasos de la corrección, y los falla en bloque — 11 de 11, 7 de 7, 4 de 4. No es un agente que se despiste. Es un agente que ejecuta un procedimiento de 50 pasos sin una falta mientras nunca actualiza un dato. En Sonnet aparece el mismo patrón de forma bimodal: un episodio aplica los 11 y la repetición siguiente sobre el mismo escenario falla los 11. Parte de esa forma en bloque es del instrumento: medido de nuevo, cada uno de estos escenarios tiene exactamente un paso que decide la corrección, y cuando el agente lo falla su mundo diverge, así que los pasos siguientes puntúan la cascada y no la corrección. Lo que sobrevive es que los aciertos se agrupan por escenario: Sonnet con el transcript aplica la corrección en 2 de 8, 0 de 8 y 7 de 8 episodios en las tres seeds.
 
-**Más capacidad ayuda y no lo resuelve.** Sonnet con el transcript completo pasa de 6,8% a 39,5%. Reconcilia la contradicción mucho más a menudo, y sigue perdiendo tres decisiones de cada cinco.
+**Más capacidad ayuda y no lo resuelve.** Con el transcript completo, Sonnet aplica la corrección en 9 de 24 episodios frente a 1 de 24 de Haiku (el recuento original decía de 6,8% a 39,5% de los pasos dependientes). Reconcilia la contradicción mucho más a menudo, y aun así la falla en más de la mitad de sus episodios.
 
-**El estado explícito lo compra, y en Sonnet lo cobra en otro sitio.** Sonnet emitió 66 parches fuera de esquema en 8 episodios, agotando los reintentos en 10 pasos que acabaron sin ninguna acción, lo que le costó 21 errores de otros tipos. Haiku emitió cero. El acierto sobre la corrección es del 100% en ambos; la *fiabilidad* del runtime depende del modelo, y eso es una propiedad del método, no de la tarea.
+**El estado explícito lo compra, y en Sonnet lo cobra en otro sitio.** Sonnet emitió 66 parches fuera de esquema en 8 episodios, agotando los reintentos en 10 pasos que acabaron sin ninguna acción, lo que le costó 21 errores de otros tipos. Haiku emitió cero. El acierto sobre la corrección es de 24 de 24 episodios en Haiku y 22 de 24 en Sonnet medido de nuevo (el recuento original decía 100% en ambos); la *fiabilidad* del runtime depende del modelo, y eso es una propiedad del método, no de la tarea.
 
 El mecanismo no tiene ningún glamour. El estado explícito tiene exactamente un sitio donde vive el dato, y corregirlo es la operación que el runtime ya ejecuta en cada paso. El transcript no borra nada: sostiene a la vez la afirmación y su desmentido, y cada paso posterior tiene que resolver la contradicción otra vez desde cero.
 
-**Tener un único sitio donde vive la verdad es una ventaja justo cuando la verdad cambia.** Es lo que afirma el paper, no un contraejemplo. Lo que esto añade es un número debajo — todas las decisiones dependientes en vez de cuatro escenarios — y una réplica en dos modelos que él no probó.
+**Tener un único sitio donde vive la verdad es una ventaja justo cuando la verdad cambia.** Es lo que afirma el paper, no un contraejemplo. Lo que esto añade es un número debajo — 72 episodios en vez de cuatro escenarios — y una réplica en tres modelos que él no probó.
 
 ## Dónde el estado explícito no hace nada
 
@@ -569,11 +569,11 @@ Un experimento sobre agentes produce números esté midiendo algo o no, y cuando
 ## Lo que me llevo
 
 - **El eje que se anuncia no es el eje.** Cuánto contexto conservas apenas mueve la precisión en una tarea donde la información está cerca. Lo que la mueve es si el dato portante está presente, vigente y destilado en el momento de la decisión.
-- **El estado explícito se gana su sitio cuando los datos se invalidan.** Un solo lugar que corregir le gana a un transcript que sostiene una afirmación y su desmentido — 93/93 contra 18/82, en los dos modelos. Si el mundo de tu agente solo acumula, esto te compra mucho menos.
+- **El estado explícito se gana su sitio cuando los datos se invalidan.** Un solo lugar que corregir le gana a un transcript que sostiene una afirmación y su desmentido — 70 de 72 episodios contra 10 de 72, con tres modelos (la primera versión decía 93/93 contra 18/82; ver la corrección). Si el mundo de tu agente solo acumula, esto te compra mucho menos.
 - **Comprimir contexto y cachear contexto están en conflicto.** Todo método que reescribe su prefijo lo paga a precio completo. Mide la factura, no el recuento de tokens, y pon tu bloque mutante *después* de lo que quieras cachear.
 - **Un esquema solo protege contra lo que su diseñador anticipó.** Un campo genérico para «ir apuntando cosas» midió indistinguible de no tener campo.
 
-Todo esto está acotado a dos modelos, un entorno que discrimina y un procedimiento lo bastante corto como para quedar por debajo del umbral de caché. Lo que generaliza no es ningún número concreto sino la aritmética: comprueba que tu efecto cabe dentro del rango que tu efecto puede tener.
+Todo esto está acotado a dos modelos (tres para la corrección retroactiva), un entorno que discrimina y un procedimiento lo bastante corto como para quedar por debajo del umbral de caché. Lo que generaliza no es ningún número concreto sino la aritmética: comprueba que tu efecto cabe dentro del rango que tu efecto puede tener.
 
 ---
 

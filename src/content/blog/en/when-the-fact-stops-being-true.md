@@ -11,11 +11,11 @@ repoUrl: https://github.com/JaviMaligno/delayed-relevance
 linkedinSummary: |
   An agent reads a correction at step 10: the pallet you filed at step 3 was never actually put away, that shelf is empty. Twenty steps later it has to decide where to store the next one.
 
-  With the entire transcript in context — the original record, the correction, everything in between — Claude Haiku 4.5 gets that decision right 3 times out of 44. Given a 200-character JSON state object instead, and no transcript at all, it gets it right 44 out of 44. Sonnet 5 goes from 15/38 to 49/49. Explicit state does not miss a single correction in 93 dependent steps across both models.
+  With the entire transcript in context — the original record, the correction, everything in between — Claude Haiku 4.5 applies that correction in 1 episode out of 24. Given a 200-character JSON state object instead, and no transcript at all, it applies it in 24 out of 24. Across three models, explicit state applies it in 70 of 72 episodes and the full transcript in 10 of 72.
 
   That is a replication of SKILL.state, an EMNLP paper proposing exactly this substitution, and it turns the paper's own recovery experiment, reported there as a yes/no over four hand-built scenarios, into a count of decisions. It also fails to reproduce the headline: on the paper's own kind of task, three of the four runtimes score a clean 1.00, because the information a warehouse agent needs is never more than about two positions away.
 
-  The cost half is worse than it looks. The token savings are real — a flat 2,157-token prompt against one growing to 16,437 — and they are not bill savings. An append-only transcript is the ideal cacheable prefix; a state object that mutates invalidates the cache. Measured with caching on, a 7.5x advantage in tokens becomes 1.4x in money, and the two orderings disagree about second place. The same content with the state block moved in front of the transcript, which is where the paper's own template puts it, costs 5.7 times more.
+  The cost half is worse than it looks. The token savings are real — a flat 2,157-token prompt against one growing to 16,437 — and they are not bill savings. An append-only transcript is the ideal cacheable prefix; a state object that mutates invalidates the cache. Measured with caching on, a 7.5x advantage in tokens becomes 1.4x in money, and the two orderings disagree about second place. The same content with the state block moved in front of the transcript, which is where the paper's own template puts it, costs 5.2 times more.
 
   The part I would keep, though, is the instrument. Two findings in this project were fully written up — tables, non-overlapping intervals, a mechanism — and then killed by checks that cost nothing: simulate an agent that is perfect except that it ignores the thing you are measuring, and check that your effect fits inside the range your effect can have. One reported separation was larger than the maximum possible effect. It was truncation.
 
@@ -30,11 +30,11 @@ linkedinSummary: |
 
 > **Correction.** The headline count of this article — Haiku at 3/44 against 44/44, and "93 of 93 dependent steps" with explicit state — came from an instrument that could not register every miss: it read its dependent steps off a simulated trajectory instead of the agent's real one, and applied the correct action whenever a runtime returned none. Re-measured per episode on the real trajectory, across three models, explicit state applies the correction in **70 of 72 episodes** and the full transcript in **10 of 72** (Haiku alone: 24/24 against 1/24). The direction stands; the perfection does not. The re-measurement is in the [replication paper](https://github.com/JaviMaligno/delayed-relevance/blob/main/docs/paper-draft.md).
 
-> **A replication of *SKILL.state: Scalable Long-Horizon Agent Skills* (Badhe, Tiwari and Chung, accepted at EMNLP) across two models and 500+ episodes.** Every headline number here is a count of decisions, not an average of episodes.
+> **A replication of *SKILL.state: Scalable Long-Horizon Agent Skills* (Badhe, Tiwari and Chung, accepted at EMNLP) across two models and 500+ episodes**, plus a third model in the corrected count of the retroactive correction. Every headline number here is a count of decisions, not an average of episodes.
 
 An agent reads an event at step 10: *the pallet you filed at step 3 was never actually put away; that shelf is empty.* Twenty steps later it has to decide where to store the next pallet. The correct answer is the shelf the correction freed.
 
-With the entire transcript in its context — the original record, the correction, everything in between — Claude Haiku 4.5 gets that decision right **3 times out of 44**. Given a 200-character JSON state object instead, and no transcript at all, the same model gets it right **44 out of 44**.
+With the entire transcript in its context — the original record, the correction, everything in between — Claude Haiku 4.5 applies that correction in **1 episode out of 24**. Given a 200-character JSON state object instead, and no transcript at all, the same model applies it in **24 out of 24**. (The first version of this article said 3/44 against 44/44; see the correction above.)
 
 That is the strongest effect in this replication. It is also the paper's own claim: its Experiment 3 reports that history-based runtimes hallucinate for five to eight turns after a correction while explicit state recovers in zero. What is new below is the unit of measurement, not the sign.
 
@@ -106,7 +106,7 @@ The claim has two halves: better accuracy on long procedures, and a prompt that 
   <text x="16" y="206" class="wl">everything the agent will ever know about step 3 has to be inside</text>
   <text x="16" y="224" class="wl">the state object by step 4 — or it is gone.</text>
 </svg>
-<figcaption>The four arms differ only in what sits between the procedure and the latest observation. Stateful and ReAct carry nearly the same content; the order they carry it in turns out to cost 5.7x.</figcaption>
+<figcaption>The four arms differ only in what sits between the procedure and the latest observation. Stateful and ReAct carry nearly the same content; the order they carry it in turns out to cost 5.2x.</figcaption>
 </figure>
 
 SkillExecBench has no public code, so the environment here is a reimplementation from the paper's §4.1 description — a 500-shelf warehouse with dense pipe-separated event records, matched on **context density** rather than literal content, and running 1.2–1.5x heavier than theirs by average prompt size.
@@ -300,7 +300,7 @@ Two design choices make this measurable at all. First, the unit of counting is n
 Seeds 4, 10 and 6 carry 22 dependent steps per repetition. Seeds 0, 1 and 2 carry five between them, and one of them carries none at all. Computing that table costs zero API calls.
 
 <figure class="wfs-fig">
-<svg viewBox="0 0 600 218" role="img" aria-label="Every decision that depended on the retroactive correction, one cell each. With explicit state all 44 Haiku cells and all 49 Sonnet cells are filled. With the full transcript, Haiku fills 3 of 44 and misses whole episodes at a time; Sonnet fills 15 of 38, applying every correction in one episode and none in the next on the same scenario.">
+<svg viewBox="0 0 600 218" role="img" aria-label="Superseded original count. Every decision that depended on the retroactive correction, one cell each. With explicit state all 44 Haiku cells and all 49 Sonnet cells are filled. With the full transcript, Haiku fills 3 of 44 and misses whole episodes at a time; Sonnet fills 15 of 38, applying every correction in one episode and none in the next on the same scenario.">
   <defs>
     <style>
       .dl { fill:#e2e8f0; font:11.5px ui-sans-serif,system-ui; }
@@ -309,7 +309,7 @@ Seeds 4, 10 and 6 carry 22 dependent steps per repetition. Seeds 0, 1 and 2 carr
       .dh { fill:#fbbf24; font:600 11.5px ui-sans-serif,system-ui; }
     </style>
   </defs>
-  <text x="16" y="24" class="dt">Every decision that depended on the correction</text>
+  <text x="16" y="24" class="dt">Every decision that depended on the correction (original count, superseded)</text>
   <text x="16" y="42" class="dm">one cell = one decision · gaps separate episodes · seeds 4, 10 and 6</text>
   <text x="16" y="62" class="dh">Haiku 4.5</text>
   <text x="16" y="130" class="dh">Sonnet 5</text>
@@ -497,20 +497,20 @@ Seeds 4, 10 and 6 carry 22 dependent steps per repetition. Seeds 0, 1 and 2 carr
   <rect x="342" y="196" width="5.7" height="11" rx="1.4" fill="#3f3f46" stroke="#64748b" stroke-width="0.8"/>
   <text x="355" y="205" class="dm">missed</text>
 </svg>
-<figcaption>Explicit state does not miss a single correction in 93 dependent steps across two models. The full transcript, which physically contains the correction, applies it on 18 of 82.</figcaption>
+<figcaption>The original count, kept for the record and superseded by the correction at the top: it read 93 of 93 dependent steps for explicit state and 18 of 82 for the full transcript, but its instrument could not register every miss. Re-measured per episode on the real trajectory, across three models: 70 of 72 against 10 of 72.</figcaption>
 </figure>
 
-Three things only visible when you count decisions rather than average episodes:
+Three things only visible when you count decisions rather than average episodes. They come from the original count; where the re-measurement changes them, I say so:
 
-**The transcript arm fails all-or-nothing per scenario.** In Haiku, errors of any other kind are exactly zero across all six episodes: its *only* mistakes are the correction steps, and it misses them in blocks — 11 of 11, 7 of 7, 4 of 4. This is not an agent drifting. It is an agent executing a 50-step procedure flawlessly while never updating one fact. In Sonnet the same pattern appears bimodally: one episode applies all 11, the next repetition on the same scenario misses all 11.
+**The transcript arm fails all-or-nothing per scenario.** In Haiku, errors of any other kind are exactly zero across all six episodes: its *only* mistakes are the correction steps, and it misses them in blocks — 11 of 11, 7 of 7, 4 of 4. This is not an agent drifting. It is an agent executing a 50-step procedure flawlessly while never updating one fact. In Sonnet the same pattern appears bimodally: one episode applies all 11, the next repetition on the same scenario misses all 11. Part of that block shape is the instrument: re-measured, each of these scenarios has exactly one step the correction decides, and once an agent misses it its world diverges, so the later steps score the cascade rather than the correction. What survives is the clustering by scenario: Sonnet with the transcript applies the correction in 2 of 8, 0 of 8 and 7 of 8 episodes across the three seeds.
 
-**More capability helps and does not solve it.** Sonnet with the full transcript goes from 6.8% to 39.5%. It reconciles the contradiction far more often, and still loses three decisions in five.
+**More capability helps and does not solve it.** With the full transcript, Sonnet applies the correction in 9 of 24 episodes against Haiku's 1 of 24 (the original count said 6.8% to 39.5% of dependent steps). It reconciles the contradiction far more often, and still misses it in more than half its episodes.
 
-**Explicit state buys it, and in Sonnet charges for it elsewhere.** Sonnet emitted 66 out-of-schema patches across 8 episodes, exhausting the retry budget on 10 steps that then produced no action at all, which cost it 21 errors of other kinds. Haiku emitted zero. Accuracy on the correction is 100% in both; the runtime's *reliability* is model-dependent, and that is a property of the method rather than of the task.
+**Explicit state buys it, and in Sonnet charges for it elsewhere.** Sonnet emitted 66 out-of-schema patches across 8 episodes, exhausting the retry budget on 10 steps that then produced no action at all, which cost it 21 errors of other kinds. Haiku emitted zero. Accuracy on the correction is 24 of 24 episodes in Haiku and 22 of 24 in Sonnet once re-measured (the original count said 100% in both); the runtime's *reliability* is model-dependent, and that is a property of the method rather than of the task.
 
 The mechanism is unglamorous. Explicit state has exactly one place where the fact lives, and correcting it is the operation the runtime already performs every step. The transcript erases nothing: it holds the original record and its retraction simultaneously, and every subsequent step has to resolve the contradiction again from scratch.
 
-**Having a single place where the truth lives is an advantage precisely when the truth changes.** That is the paper's claim, not a counter-result. What this adds is a number under it — every dependent decision rather than four scenarios — and a replication in two models it never tested.
+**Having a single place where the truth lives is an advantage precisely when the truth changes.** That is the paper's claim, not a counter-result. What this adds is a number under it — 72 episodes rather than four scenarios — and a replication in three models it never tested.
 
 ## Where explicit state does nothing
 
@@ -581,11 +581,11 @@ An experiment on agents produces numbers whether or not it is measuring anything
 ## What I would take from this
 
 - **The advertised axis is the wrong axis.** How much context you keep barely moves accuracy on a task where the information is nearby. What moves it is whether the load-bearing fact is present, current, and distilled at the moment of the decision.
-- **Explicit state earns its place when facts get invalidated.** One location to correct beats a transcript holding a claim and its retraction — 93/93 against 18/82, in both models. If your agent's world only ever accumulates, this buys you much less.
+- **Explicit state earns its place when facts get invalidated.** One location to correct beats a transcript holding a claim and its retraction — 70 of 72 episodes against 10 of 72, across three models (the first version said 93/93 against 18/82; see the correction). If your agent's world only ever accumulates, this buys you much less.
 - **Compressing context and caching context are in conflict.** Every method that rewrites its prefix pays full price for it. Measure the bill, not the token count, and put your mutating block *after* whatever you want cached.
 - **A schema protects only against what its designer anticipated.** A generic field to "write things down in" measured indistinguishable from no field at all.
 
-The claims here are scoped to two models, one environment that discriminates, and a procedure short enough to sit below the caching threshold. What generalises is not any single number but the arithmetic: check that your effect fits inside the range your effect can have.
+The claims here are scoped to two models (three for the retroactive correction), one environment that discriminates, and a procedure short enough to sit below the caching threshold. What generalises is not any single number but the arithmetic: check that your effect fits inside the range your effect can have.
 
 ---
 

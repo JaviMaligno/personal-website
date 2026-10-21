@@ -83,7 +83,7 @@ There are two ways to accuse a component of an output that wobbles. One is that 
 
 **Fourteen of twenty against four of twenty.** Two independent coders, agreement 0.95, and the two disagreements settled by a third who didn't know how either had voted.
 
-The vocabulary is no longer a measure, it's simply what's on the page. The model arm gives you *"it re-samples every night"*, *"temperature > 0 with no seed"*, *"sampling noise on every call"*, *"the nightly re-roll"*. The four in the forest arm who also accuse their head say nothing of the kind: they say it **retrains without `random_state`**, that `predict_proba` runs over the whole batch, that floating point moves under parallelism.
+The vocabulary is no longer a measure, it's simply what's on the page. The model arm gives you *"it re-samples every night"*, *"temperature > 0 with no seed"*, *"sampling noise on every call"*, *"the nightly re-roll"*. The four in the forest arm counted in that row say nothing of the kind. The randomness they keep alive is a narrower one — vote aggregation that isn't deterministic when `predict_proba` runs over the whole batch in parallel, floating point that moves under parallelism — and all four pair it with something the system does to the forest: it **retrains without `random_state`**, a vectoriser gets refitted on each night's batch, a feature is computed against the rest of the catalogue.
 
 The forest gets accused of what the system does to it. The model, of what it is.
 
@@ -183,13 +183,13 @@ For the accusation they're both still live, and the first now has a hint in its 
 
 ### And a process note
 
-The first version of this control didn't certify the two arms alike: 260/260 for the forest and 240/260 for the model. Since the argument for ruling out the head is one of the things being measured, making it more available on one side contaminated exactly what mattered. It was rebuilt — storing the output by context equalises the two certifications, and takes the network call out of the model's package on the way — and no figure from that version appears here.
+The first version of this control didn't certify the two arms alike: 260/260 for the forest and 240/260 for the model. Since the argument for ruling out the head is one of the things being measured, making it more available on one side contaminated exactly what mattered. It was rebuilt — storing the output by context equalises the two certifications, and takes the network call out of the model's package on the way — and no figure from that version appears here except its share of the count in the next section.
 
 It earns a line because it's the same error the experiment measures, committed by me on the experiment: I attributed to the head an effect that was in large part my own scaffolding.
 
 ## Two hundred and eighty
 
-Across five scenarios, two kinds of head, passive permission and explicit permission, **not one of two hundred and eighty responses has asked for the information it was missing before concluding.**
+Across five scenarios, two kinds of head, passive permission and explicit permission, **not one of two hundred and eighty responses has asked for the information it was missing before concluding.** That is the 140 of the first article, the 80 of this one, and the 60 of the discarded first version of this control.
 
 That number has survived every manipulation I've thrown at it, including the one designed to break it, the one that took the language model out of the loop, and the one that repeated the whole measurement from scratch. It is the most robust thing in the whole series, and I still don't have a good explanation for it.
 

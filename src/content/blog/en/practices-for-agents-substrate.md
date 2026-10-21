@@ -53,10 +53,10 @@ python-stdnum: tax-number validators, small self-contained files.
 
 | Condition | Solves | 95% CI | Turns | Ceiling before→after | Distinct from baseline? |
 |---|---|---|---|---|---|
-| untouched (baseline) | 91/167 — 54% | [47%, 62%] | 30 | 62 | — |
-| how it's writtenᵃ | 45/155 — 29% | [22%, 37%] | 40 | 62→96 | **p=0.000** |
-| where to look | 76/161 — 47% | [40%, 55%] | 38 | 62→75 | n.s. (≥16% would be visible) |
-| bothᵃ | 37/157 — 24% | [18%, 31%] | 40 | 62→103 | **p=0.000** |
+| untouched (baseline) | 49/59 — 83% | [72%, 91%] | 10 | 2 | — |
+| how it's writtenᵃ | 42/56 — 75% | [62%, 84%] | 13 | 2→4 | n.s. (≥20% would be visible) |
+| where to lookᵃ | 46/58 — 79% | [67%, 88%] | 10 | 2→5 | n.s. (≥20% would be visible) |
+| bothᵃ | 48/59 — 81% | [70%, 89%] | 11 | 2→5 | n.s. (≥19% would be visible) |
 
 Conditions sharing a mark (ᵃ) **cannot be told apart from each other**, only from the baseline.
 
@@ -85,18 +85,19 @@ pieces at once.
 
 | Condition | Solves | 95% CI | Turns | Ceiling before→after | Distinct from baseline? |
 |---|---|---|---|---|---|
-| untouched (baseline) | 19/35 — 54% | [38%, 70%] | 30 | 12 | — |
-| how it's writtenᵃ | 7/26 — 27% | [14%, 46%] | 40 | 12→14 | **p=0.040** |
-| where to lookᵃ | 11/30 — 37% | [22%, 54%] | 38 | 12→15 | n.s. (≥36% would be visible) |
-| both | 0/25 — 0% | [0%, 13%] | 40 | 12→18 | **p=0.000** |
+| untouched (baseline) | 91/167 — 54% | [47%, 62%] | 30 | 62 | — |
+| how it's writtenᵃ | 45/155 — 29% | [22%, 37%] | 40 | 62→96 | **p=0.000** |
+| where to look | 76/161 — 47% | [40%, 55%] | 38 | 62→75 | n.s. (≥16% would be visible) |
+| bothᵃ | 37/157 — 24% | [18%, 31%] | 40 | 62→103 | **p=0.000** |
 
 Conditions sharing a mark (ᵃ) **cannot be told apart from each other**, only from the baseline.
 
 **From 54% to 24%.** Degrading both families at once takes away more than half of what the agent was
 solving, and degrading only *how it's written* costs almost as much, with the median turn count
-pinned at the ceiling. At nearly two hundred cells per condition both drops sit far below chance
-(p<0.001) and **they are also distinct from each other**: hiding *where to look* adds damage on top
-of dirtying the text, but on its own it does nothing this data separates from noise.
+pinned at the ceiling. At over a hundred and fifty cells per condition both drops sit far below chance
+(p<0.001), but **they cannot be told apart from each other** (p=0.30): hiding *where to look* on
+top of dirtying the text adds no damage this data can separate, and on its own it does nothing this
+data separates from noise either.
 
 That is the answer to the hypothesis, and it is the opposite of what I wrote down. Hiding *where to
 look* produces no effect this data can separate from noise. Dirtying the text does.
@@ -114,7 +115,7 @@ The three runs lined up, comparing the untouched tree with its worst condition:
 | Run | Baseline | Worst condition | Turns | Runs at the ceiling |
 |---|---|---|---|---|
 | python-stdnum, high tier | 98% | 93% | 6 → 6 | 1/60 → 2/60 |
-| python-stdnum, low tier | 83% | 81% | 10 → 11 | 2/59 → 5/59 |
+| python-stdnum, low tier | 83% | 75% | 10 → 13 | 2/59 → 4/56 |
 | pint | 54% | 24% | 30 → 40 | 62/167 → 103/157 |
 
 The capable model doesn't absorb the damage by being smarter: **it starts with margin**. It solves
@@ -128,7 +129,7 @@ one with a stretched model tolerates nothing.
 ## Which practice pays: the answer is in giving them back, not in removing them
 
 Removing each practice on its own from clean code, and giving each one back on its own to fully
-degraded code. Sixty cells per condition:
+degraded code. python-stdnum, low tier, sixty cells per condition:
 
 | Practice | Removed from clean code | Given back to destroyed code |
 |---|---|---|
