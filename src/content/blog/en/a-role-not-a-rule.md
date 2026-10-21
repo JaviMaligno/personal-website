@@ -17,7 +17,7 @@ repoUrl: https://github.com/JaviMaligno/skill-framing-experiments
 
 At [Claude Code Curious](https://luma.com/ccc-mk) in Milton Keynes, one of the organizers made a point I had just run into myself: skills work better written as a role or a metaphor than as detailed instructions. The example was documentation. Instead of listing what good docs contain, ask the model to act as a librarian.
 
-The idea is easy to agree with and hard to believe until a rule fails on you. A rule names what to avoid, and a model that follows instructions well applies it to every case it finds, including the one where it was wrong. A role carries the purpose behind the rule, and the purpose is what tells the cases apart. A librarian knows which documents someone will come looking for.
+The idea is easy to agree with and hard to believe until a rule fails on you. A rule spells out what to do in each case, and a model that follows instructions well applies it to every case that fits, including the ones its author didn't have in mind. A role carries the purpose behind the rule, and the purpose is what tells the cases apart. A librarian knows which documents someone will come looking for.
 
 The role depends on the skill. Librarian for documentation; in my case, a colleague. This is how I found mine, and what happened when I measured it.
 
@@ -37,7 +37,7 @@ Then I asked Opus to revise two existing scripts with the updated skill. It remo
 </tbody>
 </table></div>
 
-The first line was the finding of the whole article. "Almost never" sounds the same as "rarely", and the point was precisely how rare.
+The first line was the finding of the whole article. After the revision, the voice didn't say a single figure from the study.
 
 So I corrected the correction, three times in a row. Each version of the line is a real commit:
 

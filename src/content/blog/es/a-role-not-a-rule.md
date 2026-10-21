@@ -17,7 +17,7 @@ repoUrl: https://github.com/JaviMaligno/skill-framing-experiments
 
 En [Claude Code Curious](https://luma.com/ccc-mk), en Milton Keynes, uno de los organizadores defendió algo con lo que yo acababa de toparme: las skills funcionan mejor escritas como un papel o una metáfora que como instrucciones detalladas. El ejemplo era la documentación. En lugar de enumerar qué debe tener una buena documentación, pedirle al modelo que actúe como un bibliotecario.
 
-La idea es fácil de aceptar y difícil de creer hasta que una regla te falla. Una regla dice qué evitar, y un modelo que sigue bien las instrucciones la aplica a todos los casos que encuentra, también a aquel en el que no tocaba. Un papel lleva el propósito que hay detrás de la regla, y el propósito es lo que distingue un caso de otro. Un bibliotecario sabe qué documentos va a venir a buscar alguien.
+La idea es fácil de aceptar y difícil de creer hasta que una regla te falla. Una regla fija qué hacer en cada caso, y un modelo que sigue bien las instrucciones la aplica a todos los casos que encajan, también a los que su autor no tenía en mente. Un papel lleva el propósito que hay detrás de la regla, y el propósito es lo que distingue un caso de otro. Un bibliotecario sabe qué documentos va a venir a buscar alguien.
 
 El papel depende de la skill. Bibliotecario para la documentación; en mi caso, un compañero. Así encontré el mío, y esto es lo que pasó cuando lo medí.
 
@@ -39,7 +39,7 @@ Después le pedí a Opus que revisara dos guiones ya escritos con la skill actua
 </tbody>
 </table></div>
 
-La primera línea era el hallazgo de todo el artículo: Opus adoptó la conclusión equivocada 4 veces de 791. «Casi nunca» suena igual que «pocas veces», y lo importante era precisamente lo pocas que eran.
+La primera línea era el hallazgo de todo el artículo: Opus adoptó la conclusión equivocada 4 veces de 791. Tras la revisión, la voz no decía ni una cifra del estudio.
 
 Así que corregí la corrección, tres veces seguidas. Cada versión de la línea es un commit real:
 
