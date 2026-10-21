@@ -1,6 +1,6 @@
 ---
 title: "La regla estaba en la otra rama"
-description: "Las prácticas de un equipo viven en la checklist de un repo, en la wiki de la organización, en las convenciones de un proyecto y en la cabeza de la gente. Hice delivery-loop para escribirlas donde aplican y mantenerlas al día. Una ejecución real mostró por qué importa lo segundo: la regla que debía frenar un merge estaba al día en una rama y faltaba en la copia con la que arrancaron los agentes."
+description: "Las prácticas de un equipo viven en el checklist de un repo, una wiki de la organización, una convención del proyecto y la cabeza de la gente. delivery-loop escribe cada una una vez, en el nivel donde es verdad: lo de la organización se comparte, lo tuyo se escribe una vez y lo de cada repo viaja con el repo."
 pubDate: 2026-11-17
 tags: ["Agentes de IA", "Claude Code", "Codex", "Entrega de software", "Experiencia de desarrollo"]
 lang: es
@@ -15,152 +15,173 @@ repoUrl: "https://github.com/JaviMaligno/delivery-loop"
 .dl-fig figcaption { font-size: 0.9rem; color: #94a3b8; margin-top: 0.6rem; }
 </style>
 
-En todos los equipos en los que he trabajado, las prácticas están repartidas por una docena de sitios. La checklist de PR vive en un repositorio. La regla de quién promociona a producción vive en una página de la wiki de toda la organización. La rama en la que integra un proyecto es una convención de ese proyecto, a veces escrita y a veces no. El comando de tests está en un README, salvo que se haya mudado a un Makefile. Y buena parte vive solo en la cabeza de quien lleva más tiempo allí.
+Todos los equipos con los que he trabajado guardan sus prácticas en una docena de sitios. El checklist de las PR vive en un repositorio. Quién promueve a producción está en una página de la wiki de toda la organización. La rama en la que integra un proyecto es una convención de ese proyecto. El comando de tests está en un README, salvo que se haya movido a un Makefile. Y buena parte solo vive en la cabeza de quienes llevan más tiempo.
 
-Las personas se apañan porque lo absorben durante meses. Un agente empieza cada sesión sin nada de eso, o con una copia que alguien pegó en un prompt y que se quedó vieja a la semana. Me encontraba una y otra vez los mismos fallos: trabajo rehecho porque se olvidaba una rama anterior, «desplegado» entendido como «sirviendo», un ticket cerrado sin pruebas y las mismas cinco preguntas sobre mi entorno al empezar cada sesión.
+Las personas lo absorben en meses. Un agente empieza cada sesión sin nada de eso, o con una copia que alguien pegó en un prompt y que se quedó vieja a la semana siguiente.
 
-Así que hice [delivery-loop](https://github.com/JaviMaligno/delivery-loop), un plugin que lleva una tarea desde su origen (un ticket, un documento de requisitos, una petición) hasta un cambio integrado, verificado en vivo en un entorno de pruebas, traspasado para su promoción y cerrado. El bucle en sí es la parte fácil. La que me importa es cómo aprende las prácticas del sitio donde se ejecuta y cómo las mantiene al día cuando cambian.
+[delivery-loop](https://github.com/JaviMaligno/delivery-loop) es un plugin para Claude Code y Codex que lleva una tarea desde su ticket hasta un cambio verificado en un entorno de pruebas y traspasado. Llevar una tarea hasta el final no es nuevo por sí solo. Lo que hace que funcione en más de un sitio es de dónde saca el agente las prácticas del sitio donde trabaja, cómo se comparten entre quienes lo usan y cómo se mantienen al día sin que nadie tenga que mantenerlas.
 
-## Cada práctica tiene su nivel
+## El bucle, fase a fase
 
-El núcleo del plugin no nombra ninguna herramienta. Dice qué recibe cada fase, qué produce y qué evidencia demuestra que está hecha. Todo lo específico de un entorno va en un perfil, y los perfiles van por capas:
+Primero, qué hace el bucle. Una tarea pasa por diez fases; una pequeña se salta la especificación, las preguntas abiertas y el plan.
 
 <figure class="dl-fig">
-<svg viewBox="0 0 600 300" role="img" aria-label="Cuatro niveles de perfil apilados de lejano a cercano: valores por defecto del plugin, usuario, organización o proyecto, y repositorio. Cada nivel guarda prácticas distintas, gana el más cercano y lo marcado como invariante no se puede relajar por debajo.">
-  <g font-family="ui-sans-serif,system-ui,sans-serif">
-    <rect x="40" y="24" width="370" height="50" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.1)"/>
-    <text x="58" y="47" fill="#e2e8f0" font-size="15" font-weight="600">Por defecto</text>
-    <text x="58" y="65" fill="#94a3b8" font-size="12">clases de autoridad, invariantes, metodología</text>
-    <rect x="40" y="88" width="370" height="50" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.1)"/>
-    <text x="58" y="111" fill="#e2e8f0" font-size="15" font-weight="600">Usuario</text>
-    <text x="58" y="129" fill="#94a3b8" font-size="12">tu máquina, tus accesos, tu autonomía</text>
-    <rect x="40" y="152" width="370" height="50" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.1)"/>
-    <text x="58" y="175" fill="#e2e8f0" font-size="15" font-weight="600">Organización / proyecto</text>
-    <text x="58" y="193" fill="#94a3b8" font-size="12">tracker, convenciones de CI, revisores, quién promociona</text>
-    <rect x="40" y="216" width="370" height="50" rx="8" fill="#1f2a2c" stroke="#2dd4bf"/>
-    <text x="58" y="239" fill="#5eead4" font-size="15" font-weight="600">Repositorio</text>
-    <text x="58" y="257" fill="#94a3b8" font-size="12">ramas, comandos de test, URLs de entornos</text>
-    <line x1="440" y1="40" x2="440" y2="250" stroke="#64748b" stroke-width="2"/>
-    <path d="M432 240 L440 254 L448 240 Z" fill="#64748b"/>
-    <text x="456" y="120" fill="#e2e8f0" font-size="13">lejos → cerca</text>
-    <text x="456" y="140" fill="#94a3b8" font-size="12">gana el cercano</text>
-    <text x="456" y="176" fill="#fbbf24" font-size="12">[invariant]</text>
-    <text x="456" y="194" fill="#94a3b8" font-size="12">no se relaja</text>
-    <text x="456" y="210" fill="#94a3b8" font-size="12">por debajo</text>
+<svg viewBox="0 0 600 270" role="img" aria-label="Las diez fases del bucle en cuatro grupos: entender (arranque, especificación, huecos, plan), construir (implementar, revisar), demostrar (integrar hasta que el entorno de pruebas sirve el commit exacto, verificación en vivo con evidencia por requisito) y traspasar (promover o traspasar, cerrar el ticket).">
+  <g font-family="ui-sans-serif,system-ui,sans-serif" text-anchor="middle">
+    <g fill="#22222e" stroke-width="1.5">
+      <rect x="20" y="30" width="100" height="62" rx="8" stroke="#94a3b8"/>
+      <rect x="134" y="30" width="100" height="62" rx="8" stroke="#94a3b8"/>
+      <rect x="248" y="30" width="100" height="62" rx="8" stroke="#94a3b8"/>
+      <rect x="362" y="30" width="100" height="62" rx="8" stroke="#94a3b8"/>
+      <rect x="476" y="30" width="100" height="62" rx="8" stroke="#2dd4bf"/>
+      <rect x="20" y="146" width="100" height="62" rx="8" stroke="#2dd4bf"/>
+      <rect x="134" y="146" width="100" height="62" rx="8" stroke="#f59e0b"/>
+      <rect x="248" y="146" width="100" height="62" rx="8" stroke="#f59e0b"/>
+      <rect x="362" y="146" width="100" height="62" rx="8" stroke="#e2e8f0"/>
+      <rect x="476" y="146" width="100" height="62" rx="8" stroke="#e2e8f0"/>
+    </g>
+    <g fill="#e2e8f0" font-size="14" font-weight="600">
+      <text x="70" y="56">0 arranque</text>
+      <text x="184" y="56">1 spec</text>
+      <text x="298" y="56">2 huecos</text>
+      <text x="412" y="56">3 plan</text>
+      <text x="526" y="56" font-size="13">4 implementar</text>
+      <text x="70" y="172">5 revisar</text>
+      <text x="184" y="172">6 integrar</text>
+      <text x="298" y="172">7 en vivo</text>
+      <text x="412" y="172">8 promover</text>
+      <text x="526" y="172">9 cerrar</text>
+    </g>
+    <g fill="#94a3b8" font-size="11">
+      <text x="70" y="76">¿hecho? tamaño</text>
+      <text x="184" y="76">puntos con ID</text>
+      <text x="298" y="76">dudas abiertas</text>
+      <text x="412" y="76">plan revisado</text>
+      <text x="526" y="76">tests primero</text>
+      <text x="70" y="192">segunda opinión</text>
+      <text x="184" y="192">sirve ese SHA</text>
+      <text x="298" y="192">evidencia por ID</text>
+      <text x="412" y="192">o traspaso</text>
+      <text x="526" y="192">ticket, limpieza</text>
+    </g>
+    <g stroke="#64748b" stroke-width="1.5" fill="none">
+      <path d="M120 61 L132 61"/><path d="M234 61 L246 61"/><path d="M348 61 L360 61"/><path d="M462 61 L474 61"/>
+      <path d="M120 177 L132 177"/><path d="M234 177 L246 177"/><path d="M348 177 L360 177"/><path d="M462 177 L474 177"/>
+      <path d="M526 92 L526 119 L70 119 L70 144"/>
+    </g>
+    <g font-size="12">
+      <rect x="60" y="234" width="10" height="10" rx="2" fill="none" stroke="#94a3b8"/><text x="108" y="243" fill="#94a3b8">entender</text>
+      <rect x="180" y="234" width="10" height="10" rx="2" fill="none" stroke="#2dd4bf"/><text x="226" y="243" fill="#5eead4">construir</text>
+      <rect x="290" y="234" width="10" height="10" rx="2" fill="none" stroke="#f59e0b"/><text x="338" y="243" fill="#fbbf24">demostrar</text>
+      <rect x="400" y="234" width="10" height="10" rx="2" fill="none" stroke="#e2e8f0"/><text x="448" y="243" fill="#e2e8f0">traspasar</text>
+    </g>
   </g>
 </svg>
-<figcaption>Cada práctica se escribe una vez, en el nivel donde es verdad. Gana el nivel más cercano, salvo los invariantes como «producción no se toca», que ningún nivel inferior puede relajar.</figcaption>
+<figcaption>Diez fases en cuatro grupos. Una tarea pequeña pasa del arranque directamente a implementar.</figcaption>
 </figure>
 
-Esto refleja dónde viven ya las prácticas. «La promoción a producción la hace el equipo X» es verdad para toda la organización, así que va en el perfil de la organización. «Este repo integra en `develop`, no en `main`» es verdad para un repositorio, así que va ahí. Nada se copia a cada repo y nada está en el plugin.
+- **Entender.** Comprueba si el trabajo ya está hecho (un ticket marcado como pendiente puede estar en producción por una PR que nunca lo citó), crea un espacio de trabajo aislado y dimensiona la tarea. Convierte el ticket o el documento en puntos con IDs estables, separa lo que solo puede decidir una persona y escribe un plan que otro agente revisa antes de tocar código.
+- **Construir.** Primero los tests, luego el cambio, en commits ligados a los IDs; después una revisión independiente con los revisores que diga el perfil.
+- **Demostrar.** Tras el merge, espera a que el entorno de pruebas sirva ese commit exacto, no a que el despliegue diga que ha ido bien. Luego comprueba cada ID contra el entorno desplegado. Siempre que haya algo que ver, la evidencia es visual: capturas o una grabación, que se suben al ticket. Una API o una cola llevan en su lugar una respuesta real.
+- **Traspasar.** La promoción a producción o, cuando es cosa de otro, un traspaso explícito con el material preparado. Después el ticket pasa a hecho con su evidencia, y se limpian ramas, espacios de trabajo y datos de prueba.
 
-Eso último es lo que permite que el mismo bucle funcione en cualquier sitio. El repo público solo lleva perfiles de ejemplo ficticios; los reales de mi empresa viven en un repo privado de esa empresa. El mismo plugin funciona, sin cambios, en Claude Code y en Codex.
+Casi cada uno de esos pasos se apoya en una práctica del sitio: qué estado del ticket significa «en revisión», quién revisa, en qué rama se integra, cómo llega un cambio al entorno de pruebas, quién promueve. Para eso están los perfiles.
 
-## Escribirlas sin un cuestionario
+## Cada práctica se escribe una vez, en su nivel
 
-Nadie rellena un perfil de cuarenta campos, así que casi todo lo hace una skill llamada `census`. Primero detecta: el remote de git y la protección de ramas, la configuración de CI y qué jobs corren en cada evento, los runners de tests, la configuración de despliegue, las herramientas y servidores MCP que tiene la sesión. Solo pregunta lo que la detección no resuelve, una vez y con una respuesta recomendada. Cada dato se escribe en su nivel, con su origen y la fecha en que se comprobó.
+El núcleo del plugin no nombra ninguna herramienta. Todo lo propio de un sitio va en un perfil, y los perfiles van por niveles que reflejan dónde viven ya las prácticas. «La promoción a producción es del equipo de plataforma» es verdad para toda la organización, así que va en el perfil de la organización. «Este repo integra en `develop`» es verdad para un repositorio, así que va ahí. Nada se copia en cada repo y nada está en el plugin.
 
-Una regla se ganó su sitio enseguida: un procedimiento copiado de un documento no es un procedimiento verificado. Antes de que `census` escriba «se promociona mergeando la rama A en B», comprueba que el remote y la rama existen y que el push avanzaría sin conflicto. Si el procedimiento documentado no funciona, escribe el que sí funciona, con la evidencia.
+<figure class="dl-fig">
+<svg viewBox="0 0 600 340" role="img" aria-label="Cinco niveles de perfil de lejos a cerca: valores por defecto, que se actualizan con el plugin; usuario, que cada persona escribe una vez; organización, compartido y mantenido en un solo sitio; proyecto, compartido e instalado solo por quien trabaja en él; repositorio, versionado en el repo y actualizado con él. Gana el nivel más cercano, salvo las invariantes.">
+  <g font-family="ui-sans-serif,system-ui,sans-serif">
+    <text x="40" y="22" fill="#94a3b8" font-size="12">nivel</text>
+    <text x="330" y="22" fill="#94a3b8" font-size="12">lo escribe · se actualiza</text>
+    <rect x="30" y="32" width="540" height="50" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.1)"/>
+    <text x="48" y="55" fill="#e2e8f0" font-size="15" font-weight="600">Por defecto</text>
+    <text x="48" y="72" fill="#94a3b8" font-size="12">invariantes, autoridad, método</text>
+    <text x="330" y="62" fill="#e2e8f0" font-size="13">el plugin · en cada versión</text>
+    <rect x="30" y="92" width="540" height="50" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.1)"/>
+    <text x="48" y="115" fill="#e2e8f0" font-size="15" font-weight="600">Usuario</text>
+    <text x="48" y="132" fill="#94a3b8" font-size="12">cuentas, máquina, herramientas, autonomía</text>
+    <text x="330" y="122" fill="#e2e8f0" font-size="13">tú · una vez</text>
+    <rect x="30" y="152" width="540" height="50" rx="8" fill="#2a2418" stroke="#f59e0b"/>
+    <text x="48" y="175" fill="#fbbf24" font-size="15" font-weight="600">Organización</text>
+    <text x="48" y="192" fill="#94a3b8" font-size="12">tracker, revisores, política de CI, quién promueve</text>
+    <text x="330" y="182" fill="#e2e8f0" font-size="13">repo compartido · una PR, para todos</text>
+    <rect x="30" y="212" width="540" height="50" rx="8" fill="#2a2418" stroke="#f59e0b"/>
+    <text x="48" y="235" fill="#fbbf24" font-size="15" font-weight="600">Proyecto</text>
+    <text x="48" y="252" fill="#94a3b8" font-size="12">entornos, releases, identidad de pruebas</text>
+    <text x="330" y="242" fill="#e2e8f0" font-size="13">repo compartido · si trabajas en él</text>
+    <rect x="30" y="272" width="540" height="50" rx="8" fill="#1f2a2c" stroke="#2dd4bf"/>
+    <text x="48" y="295" fill="#5eead4" font-size="15" font-weight="600">Repositorio</text>
+    <text x="48" y="312" fill="#94a3b8" font-size="12">ramas, comandos de test, despliegue, URLs</text>
+    <text x="330" y="302" fill="#e2e8f0" font-size="13">el propio repo · en cada pull</text>
+  </g>
+</svg>
+<figcaption>Los niveles se combinan de lejos a cerca y gana el más cercano, salvo las invariantes como «nunca se prueba contra producción», que ningún nivel inferior puede relajar. Los niveles en ámbar son los compartidos: los escribe una vez quien lo sabe, para todos.</figcaption>
+</figure>
+
+## Pensado para compartirse
+
+Esto es lo que hace que merezca la pena montarlo. Una organización guarda sus perfiles en un repositorio privado: el nivel de organización y un perfil por proyecto. Una persona nueva instala el plugin, ejecuta un script y recibe el perfil de la organización más los de los proyectos cuyos repos tiene de verdad. Nada más.
+
+Lo que le queda es poco, y casi todo se escribe una vez:
+
+- **Su perfil de usuario.** Sus cuentas, los límites de su máquina, la herramienta de navegador que usa. Se escribe una vez, se queda para siempre y nunca forma parte de un fichero compartido: el CI del repo compartido comprueba que ningún perfil compartido tenga datos personales.
+- **Cada repo nuevo.** La primera ejecución en un repo sin perfil detecta lo que puede (remote, protección de ramas, jobs de CI, runners de tests, configuración de despliegue) y pregunta solo lo que la detección no resuelve, una vez y con una respuesta recomendada. El resultado se versiona en el repo, así que el siguiente compañero que haga pull lo tiene sin ejecutar nada. En el repositorio de un cliente, ese mismo perfil se queda en local, dentro de `.git`, para que nunca llegue al cliente.
+
+Nadie vuelve a aprender la organización. Cuando una regla cambia para todos, cambia en un sitio con una PR y todos la reciben en la siguiente instalación. Cuando un repo cambia su rama de integración, el perfil de ese repo cambia con él.
+
+## El mismo plugin, dos organizaciones
+
+Lo uso en dos organizaciones que trabajan de forma muy distinta. En una, la rama de integración es `develop`, un cambio llega al entorno de pruebas subiendo una versión en un repositorio de configuración aparte, y la promoción más allá es de otro equipo. En la otra, varios proyectos de cliente tienen cada uno sus entornos y su proceso de release, las revisiones incluyen agentes de revisión propios de la empresa, y los repositorios de cliente nunca deben recibir nuestros ficheros.
+
+El núcleo es el mismo en las dos, sin cambios, en Claude Code y en Codex. Cada una de esas diferencias es una línea en un perfil, en su nivel. El repo público solo lleva perfiles de ejemplo ficticios; los reales viven en el repo privado de cada organización.
 
 ## Mantenerlas al día
 
-Un perfil que era correcto al escribirlo se queda viejo solo. Me pasó lo mismo cuando [audité las memorias que guarda mi agente](/es/blog/the-memory-that-was-true): las obsoletas nunca fueron falsas al escribirse, describían un estado que caducó. Por eso el perfil se trata como algo que hay que volver a comprobar, no como algo de lo que fiarse:
+Un perfil que era correcto al escribirlo se queda viejo solo, igual que [las memorias que guarda mi agente](/es/blog/the-memory-that-was-true): nunca fueron falsas al escribirse, describían un estado que caducó. Por eso el perfil se trata como algo que hay que volver a comprobar, no como algo de lo que fiarse:
 
-- Al empezar cada tarea, una comprobación barata compara el perfil con lo que muestra el repo: remote, rama por defecto, protección, configuración de despliegue, checks obligatorios. Si algo no cuadra, se actualiza ese dato en su nivel y se deja una línea en el informe.
+- Al empezar cada tarea, una comprobación barata compara el perfil con lo que muestra el repo. Si algo no cuadra, se actualiza ese dato en su nivel y se deja una línea en el informe.
 - Cualquier dato con más de 30 días se vuelve a verificar antes de que el bucle se apoye en él.
-- Cuando el perfil y otra fuente no coinciden, gana la fuente fechada más reciente, la vieja se corrige donde vive y el cambio queda registrado. Sin fecha o con la misma fecha: pregunta. Una nota antigua que manda hacer las pruebas con una cuenta compartida pierde frente a una regla más nueva que exige una nominativa.
-- Los datos de estructura no tienen margen. Un repositorio que se movió de carpeta conservaba en su perfil un enlace fechado, marcado como verificado y ya falso, así que rutas y enlaces se recomprueban siempre.
-- Los perfiles se vuelven a combinar al entrar en integración y en verificación en vivo, porque las reglas pueden cambiar a mitad de tarea.
+- Cuando el perfil y otra fuente no coinciden, gana la fuente fechada más reciente, y la vieja se corrige donde vive, así que el arreglo llega a todos los que comparten ese nivel.
+- Los perfiles se vuelven a combinar a mitad de tarea, porque las reglas pueden cambiar mientras el trabajo está en curso.
 
-Esa es toda la idea: escribir cada práctica donde aplica y dar por hecho que va a cambiar.
+## La regla estaba en la otra rama
 
-## Una ejecución real, en el otro harness
+Mantener las prácticas al día es solo la mitad. El agente además tiene que leer las vigentes, y ahí una ejecución real me sorprendió.
 
-Llevaba un par de días usando el plugin con Claude Code. Luego lo instalé en Codex CLI (0.163, con gpt-6.1-sol en esfuerzo medio) y le di un ticket real del trabajo con una sola instrucción: impleméntalo. El ticket pedía que el contrato publicado de la API de un [servicio de clasificación que mantengo](/es/projects/compliance-classifier) coincidiera con lo que el servicio emite de verdad, en cinco puntos.
-
-En trece minutos pasó de la fase 0 a la 6, con cada paso en su registro de la tarea:
-
-- **Inicio.** Dimensionó la tarea como una feature, creó un worktree aislado y eligió `develop` en lugar de un `main` desfasado porque es donde integra de verdad el repo, dejando la decisión escrita.
-- **Spec y huecos.** Convirtió el ticket en cinco requisitos con IDs estables y registró siete decisiones. Una de ellas descartaba un campo a propósito: el schema prometía un valor que el formateador nunca emite, así que en vez de documentarlo, el cambio borra la declaración muerta y explica por qué.
-- **Plan.** Un segundo agente revisó el plan antes de escribir código.
-- **Implementación.** Escribió primero los tests de contrato que fallan (14 en rojo, 4 en verde) y después la implementación, en commits ligados a los IDs de requisito.
-- **Revisión e integración.** Una revisión independiente, la PR abierta y 199 tests en verde.
-
-Y entonces se paró.
-
-## La parada
-
-El repositorio tiene una checklist de PR, y una de sus reglas pide que una persona dé fe de que ha revisado y validado el código generado por IA antes de que salga. Codex lo registró como decisión D0.7, dejó esa casilla sin marcar y me pidió revisión en lugar de mergear. Sus propias palabras en la decisión: una revisión automática no puede sustituir a la atestación de una persona.
-
-La regla no era nueva: llevaba dos semanas y media en la rama de integración. Los dos tickets anteriores del mismo repositorio habían pasado por el mismo plugin con Claude Code a lo largo del día anterior, y los dos se mergearon sin ella. Parece una diferencia entre agentes. No lo es, y la causa real es más útil.
-
-Las tres ejecuciones se lanzaron desde el mismo directorio, mi checkout principal del repositorio, que estaba en una rama de principios de mes. Sus ficheros de instrucciones son anteriores a la regla: ninguno menciona la checklist de PR. Luego el bucle trabaja en un worktree nuevo sobre la rama de integración, donde las instrucciones están al día y la regla está. Así que todas las ejecuciones arrancaron con la misma copia desfasada de las prácticas del repositorio, y las actuales estaban a un directorio de distancia.
-
-Lo que cambió fue si el agente fue a leerlas. Durante la fase 0, Codex abrió el fichero de instrucciones del worktree buscando sus reglas de desarrollo, tests y flujo de trabajo, encontró la regla de revisión y, más tarde, leyó la propia checklist antes de escribir D0.7. Nada en el plugin se lo pedía. Las ejecuciones con Claude trabajaron en la misma rama sin releer esos ficheros; en una de ellas, las instrucciones del worktree entraron por primera vez en el contexto 94 minutos después del merge.
+Un repositorio en el que trabajo había añadido una regla a su checklist de PR: una persona tiene que dar fe de que ha revisado cualquier código generado por IA antes de que salga. Una ejecución se paró antes del merge y me pidió esa revisión. Dos ejecuciones anteriores en el mismo repositorio habían mergeado sin ella. La regla estaba vigente y en el sitio correcto, la rama de integración. Pero las tres sesiones se habían lanzado desde un checkout en una rama más antigua, cuyos ficheros de instrucciones son anteriores a la regla. Después el trabajo se hacía en un worktree nuevo sobre la rama de integración. La ejecución que se paró releyó allí las instrucciones; las otras trabajaron con la copia con la que habían empezado.
 
 <figure class="dl-fig">
-<svg viewBox="0 0 600 270" role="img" aria-label="Todas las ejecuciones arrancaron desde un checkout en una rama vieja cuyos ficheros de instrucciones no tenían la regla de revisión. El trabajo se hizo en un worktree sobre la rama de integración, donde la regla existía. Codex releyó las instrucciones del worktree en la fase 0 y se paró antes del merge; las ejecuciones con Claude no las releyeron y mergearon.">
+<svg viewBox="0 0 600 200" role="img" aria-label="Las sesiones empiezan desde un checkout en una rama antigua cuyos ficheros de instrucciones no tienen la regla de revisión. El trabajo se hace en un worktree sobre la rama de integración, donde la regla existe. Una ejecución que relee las instrucciones del worktree se para antes del merge; una que se queda con la copia del arranque mergea sin la regla.">
   <g font-family="ui-sans-serif,system-ui,sans-serif">
     <rect x="30" y="24" width="250" height="62" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.15)"/>
     <text x="155" y="48" fill="#e2e8f0" font-size="14" font-weight="600" text-anchor="middle">Checkout de arranque</text>
-    <text x="155" y="68" fill="#94a3b8" font-size="12" text-anchor="middle">rama vieja · sin la regla</text>
+    <text x="155" y="68" fill="#94a3b8" font-size="12" text-anchor="middle">rama antigua · sin la regla</text>
     <rect x="320" y="24" width="250" height="62" rx="8" fill="#1f2a2c" stroke="#2dd4bf"/>
     <text x="445" y="48" fill="#5eead4" font-size="14" font-weight="600" text-anchor="middle">Worktree de la tarea</text>
     <text x="445" y="68" fill="#94a3b8" font-size="12" text-anchor="middle">rama de integración · con la regla</text>
     <path d="M282 55 L316 55" stroke="#64748b" stroke-width="2"/>
     <path d="M308 49 L318 55 L308 61 Z" fill="#64748b"/>
-    <rect x="30" y="130" width="250" height="44" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.1)"/>
-    <text x="155" y="157" fill="#e2e8f0" font-size="13" text-anchor="middle">Codex: relee en la fase 0</text>
-    <rect x="320" y="130" width="250" height="44" rx="8" fill="#22222e" stroke="rgba(255,255,255,0.1)"/>
-    <text x="445" y="157" fill="#e2e8f0" font-size="13" text-anchor="middle">Claude Code (2): no relee</text>
-    <path d="M155 174 L155 204" stroke="#2dd4bf" stroke-width="2"/>
-    <path d="M445 174 L445 204" stroke="#64748b" stroke-width="2" stroke-dasharray="5 4"/>
-    <rect x="30" y="206" width="250" height="44" rx="8" fill="#1f2a2c" stroke="#2dd4bf"/>
-    <text x="155" y="233" fill="#5eead4" font-size="13" text-anchor="middle">se para y pide revisión</text>
-    <rect x="320" y="206" width="250" height="44" rx="8" fill="#2a2418" stroke="#f59e0b"/>
-    <text x="445" y="233" fill="#fbbf24" font-size="13" text-anchor="middle">mergea sin la regla</text>
+    <path d="M155 88 L155 124" stroke="#64748b" stroke-width="2" stroke-dasharray="5 4"/>
+    <path d="M445 88 L445 124" stroke="#2dd4bf" stroke-width="2"/>
+    <rect x="30" y="126" width="250" height="50" rx="8" fill="#2a2418" stroke="#f59e0b"/>
+    <text x="155" y="148" fill="#fbbf24" font-size="13" text-anchor="middle">se queda con la copia inicial</text>
+    <text x="155" y="166" fill="#94a3b8" font-size="12" text-anchor="middle">mergea sin la regla</text>
+    <rect x="320" y="126" width="250" height="50" rx="8" fill="#1f2a2c" stroke="#2dd4bf"/>
+    <text x="445" y="148" fill="#5eead4" font-size="13" text-anchor="middle">relee en el worktree</text>
+    <text x="445" y="166" fill="#94a3b8" font-size="12" text-anchor="middle">se para y pide revisión humana</text>
   </g>
 </svg>
-<figcaption>La regla existía y estaba al día. Que se aplicara dependió de si el agente releía las prácticas de la rama en la que de verdad trabajaba.</figcaption>
+<figcaption>La regla existía y estaba vigente. Que se aplicara dependía de qué copia de las prácticas estaba leyendo el agente.</figcaption>
 </figure>
 
-Quiero ser cuidadoso con lo que esto demuestra. Es una ejecución contra dos, no una comparación de modelos, y no lo leería como «Codex es más prudente»: leyó el fichero correcto una vez, por iniciativa propia, sin que el bucle le diera motivo. Era un hueco de mi bucle, y es justo el problema del que va este artículo. El plugin vuelve a comprobar su propio perfil al empezar cada tarea, pero no relee los ficheros de instrucciones del repositorio desde la rama donde se hace el trabajo. La práctica estaba escrita en el sitio correcto y al día; los agentes simplemente arrancaron con una copia anterior. Así que el arreglo fue a la fase 0, junto a la comprobación del perfil, no a una regla sobre checklists. Desde la versión 0.7.1, cuando la sesión se lanzó desde un checkout en una rama que no es la de integración ni la de producción, la fase 0 lee los ficheros de instrucciones del agente, y lo que importan, desde el workspace nuevo, sigue esos y registra de qué fichero y de qué rama salieron. No he vuelto a lanzar un ticket desde entonces, así que ese comportamiento está publicado, pero aún no probado en vivo.
+Así que ya no se deja al azar: cuando una sesión se lanzó desde una rama distinta de la de integración o la de producción, el plugin lee los ficheros de instrucciones del repositorio desde el espacio de trabajo donde se hace el trabajo y deja constancia de qué rama vienen.
 
-Cuando aprobé el merge, el bucle registró la aprobación con un matiz: permiso para mergear, no una atestación de revisión línea a línea. Es exactamente la diferencia que la regla existe para proteger, y ahora está escrita con mi nombre y la fecha.
+## Menos preguntas por el camino
 
-## Discrepar con evidencia
-
-Tras la parada, una revisión externa encontró tres problemas, que volvieron a la misma sesión de Codex. Reprodujo dos de ellos con tests que fallaban antes de cambiar nada. Una de las instrucciones que le llegaron pedía que el enum publicado de motivos fuera literalmente igual a una constante del código. Codex comprobó antes el código fuente y vio que el servicio emite un valor más, `content_filtered`, desde una segunda ruta. Dejó escrito en el registro que la igualdad literal «excluiría un valor real», publicó el conjunto completo y volvió a pasar la suite entera (6.609 tests), corrigiendo de paso una entrada de deuda conocida que había quedado desfasada.
-
-Es el comportamiento que más quiero del bucle, por encima de cualquier fase concreta. La decisión no es el gusto del agente contra el mío: es un motivo escrito, con la evidencia al lado, que puedo leer y revocar.
-
-## Lo que encontró la comprobación en vivo
-
-Tras el merge, el bucle comprobó que la build publicó la imagen con el nombre exacto que esperaba, mirando el manifiesto y su digest en el log de la build en lugar del veredicto de la build. Mergeó la subida de versión en el repositorio de configuración del entorno de pruebas y esperó a que las dos réplicas sirvieran ese commit exacto antes de dar la integración por hecha.
-
-Después, la fase 7 recorrió los requisitos uno a uno contra el servicio desplegado. Los puntos sobre el contrato publicado pasaron contra el Swagger que sirve el despliegue, idéntico byte a byte al fichero mergeado. La ruta rara, el filtro de contenido, pasó con sondas deterministas sobre el módulo desplegado, y el log dice claramente que no se disparó ningún filtro real del proveedor. Una llamada HTTP real devolvió 200 con el servicio absteniéndose al agotar su tiempo de investigación, registrado como «no es una prueba de acierto». Los datos de prueba vivían en un tenant reservado para esa QA, y su caché se borró y se comprobó vacía al terminar.
-
-Entonces una comparación recursiva de una respuesta real contra el contrato publicado encontró dos campos anidados que el servicio ya devolvía y el contrato no declaraba. El aprobado anterior de ese punto venía de fixtures; el bucle lo marcó como sustituido por el fallo contra la respuesta real.
-
-Volvió por su cuenta a las fases 4 a 6. Primero tres tests en rojo, luego el arreglo, que solo declara lo que ya se emitía, y después una revisión independiente. Mientras tanto, una PR ajena había movido la rama de integración y el fast-forward protegido se paró. El bucle hizo un merge de prueba, integró con un merge commit para no perder ese trabajo y repitió los tests sobre el resultado, incluidos los del cambio ajeno. Reapuntó el cambio de configuración al nuevo commit y archivó la evidencia de la primera pasada antes de repetirla.
-
-El arreglo pasa por las mismas puertas que el primer cambio: el cambio de configuración no se mergea hasta verificar el manifiesto de la imagen nueva, y la segunda pasada de QA corre contra lo que de verdad se sirve. La promoción más allá del entorno de pruebas la hace otro equipo de mi organización, así que la fase 8 termina en un traspaso explícito, con el motivo, el responsable y el material preparado, en lugar de un paso que se salta.
-
-La fase 7 también tiene que decir lo que no pudo medir. Un criterio que solo mostrará el tráfico real, o que una caída dejó sin comprobar, se marca 🔄 con su causa y una espera fechada, y el ticket sigue abierto hasta medirlo. Nunca se marca como superado con una nota: un criterio sin medir anotado así se lee como un aprobado para quien repasa el informe en diagonal.
-
-## Comprobar el entorno antes de fiarse de él
-
-Las prácticas son la mitad de lo que el bucle tiene que saber de un sitio. La otra mitad es el entorno: las cuentas, herramientas y conexiones que va a usar la tarea. Estas fallan de una forma que un perfil no detecta, porque parecen bien cuando preguntas por ellas.
-
-Configurado no es autenticado, autenticado no es expuesto en la sesión, y expuesto no es que funcione. Una herramienta que aparecía como conectada devolvió `invalid_grant` en su primera llamada real. `gh auth status` decía una cuenta de GitHub mientras los comandos corrían con otra que no veía el repositorio; la cuenta que de verdad se usa es la que devuelve `gh api user`. Una pestaña del navegador seguía mostrando el entorno de pruebas con la VPN caída, porque una página ya cargada no prueba que haya acceso. Un linter local una versión mayor por detrás del CI pasó una comprobación que luego el CI suspendió.
-
-Por eso la fase 0 empieza con una comprobación previa. Cada capacidad que va a usar la tarea se prueba con una llamada real, y las herramientas locales de comprobación corren en la versión que fija el repositorio o el CI. Lo que falla se plantea en una sola ronda, ofreciendo el sustituto que se aceptó la vez anterior, y la respuesta se guarda para que la siguiente ejecución no vuelva a preguntar. Sin ella, los problemas de configuración aparecen de uno en uno a mitad de la tarea.
-
-La misma regla vale en el otro extremo. Un despliegue marcado «SUCCESS» no dice qué commit se está sirviendo; lo que cuenta es el SHA que reporta la plataforma, o un contenido que solo produce el cambio. Por eso la ejecución de arriba esperó a que los dos pods sirvieran el commit exacto.
-
-En Codex, el entorno necesitó dos cosas, ninguna de ellas un cambio en el plugin: un sandbox con red para el merge, el despliegue y las comprobaciones en vivo, y un servidor MCP para el tracker y el host del código. Encontró esas herramientas por su cuenta.
-
-Lo que no hace es inventarse prácticas. Las lee, las escribe en su nivel, las vuelve a comprobar y se para cuando una lo pide. Si una práctica solo existe en la cabeza de alguien, el bucle preguntará una vez. Si existe en una rama que el agente no ha releído, pasa lo de esta ejecución, y por eso releer es la parte que más me importa.
+Unos perfiles compartidos y al día son también lo que permite que el bucle avance sin pararse a preguntar. Antes de empezar, prueba con una llamada real cada capacidad que va a usar la tarea, porque configurado no es autenticado y autenticado no es que funcione: una herramienta que aparece como conectada puede fallar en su primera llamada, y `gh auth status` puede decir una cuenta mientras los comandos corren con otra. Lo que falla se plantea en una sola ronda, y la respuesta se guarda en su nivel para que nadie vuelva a preguntar. Lo que queda para una persona son las decisiones que de verdad son suyas: una decisión de negocio, un texto que verá el cliente, la revisión de la que esa regla tiene que dar fe.
 
 ---
 
