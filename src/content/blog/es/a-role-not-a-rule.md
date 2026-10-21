@@ -12,7 +12,6 @@ repoUrl: https://github.com/JaviMaligno/skill-framing-experiments
 .rtn-fig{margin:2rem 0;padding:1.25rem;background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:12px}
 .rtn-fig svg{width:100%;height:auto;display:block}
 .rtn-fig figcaption{margin-top:.75rem;color:#94a3b8;font-size:.9rem;line-height:1.5}
-.article-content .table-wrap table td,.article-content .table-wrap table th{white-space:normal}
 .article-content table.rtn-ba{table-layout:fixed}.article-content table.rtn-ba td,.article-content table.rtn-ba th{width:50%}
 </style>
 
