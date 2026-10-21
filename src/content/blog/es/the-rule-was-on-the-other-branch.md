@@ -68,7 +68,8 @@ Un perfil que era correcto al escribirlo se queda viejo solo. Me pasó lo mismo 
 
 - Al empezar cada tarea, una comprobación barata compara el perfil con lo que muestra el repo: remote, rama por defecto, protección, configuración de despliegue, checks obligatorios. Si algo no cuadra, se actualiza ese dato en su nivel y se deja una línea en el informe.
 - Cualquier dato con más de 30 días se vuelve a verificar antes de que el bucle se apoye en él.
-- Cuando el perfil y otra fuente no coinciden, gana la fuente fechada más reciente, la vieja se corrige donde vive y el cambio queda registrado. Sin fecha o con la misma fecha: pregunta.
+- Cuando el perfil y otra fuente no coinciden, gana la fuente fechada más reciente, la vieja se corrige donde vive y el cambio queda registrado. Sin fecha o con la misma fecha: pregunta. Una nota antigua que manda hacer las pruebas con una cuenta compartida pierde frente a una regla más nueva que exige una nominativa.
+- Los datos de estructura no tienen margen. Un repositorio que se movió de carpeta conservaba en su perfil un enlace fechado, marcado como verificado y ya falso, así que rutas y enlaces se recomprueban siempre.
 - Los perfiles se vuelven a combinar al entrar en integración y en verificación en vivo, porque las reglas pueden cambiar a mitad de tarea.
 
 Esa es toda la idea: escribir cada práctica donde aplica y dar por hecho que va a cambiar.
@@ -139,7 +140,17 @@ Es el comportamiento que más quiero del bucle, por encima de cualquier fase con
 
 Tras el merge, el bucle comprobó que la build publicó la imagen con el nombre exacto que esperaba, mergeó la subida de versión en el repositorio de configuración del entorno de pruebas y esperó a que los dos pods sirvieran ese commit exacto antes de dar la integración por hecha. La promoción más allá del entorno de pruebas la hace otro equipo de mi organización, así que la fase 8 está pensada para terminar en un traspaso explícito, con el motivo, el responsable y el material preparado, en lugar de un paso que se salta.
 
-## Qué necesita y qué no hace
+La fase 7 también tiene que decir lo que no pudo medir. Un criterio que solo mostrará el tráfico real, o que una caída dejó sin comprobar, se marca 🔄 con su causa y una espera fechada, y el ticket sigue abierto hasta medirlo. Nunca se marca como superado con una nota: un criterio sin medir anotado así se lee como un aprobado para quien repasa el informe en diagonal.
+
+## Comprobar el entorno antes de fiarse de él
+
+Las prácticas son la mitad de lo que el bucle tiene que saber de un sitio. La otra mitad es el entorno: las cuentas, herramientas y conexiones que va a usar la tarea. Estas fallan de una forma que un perfil no detecta, porque parecen bien cuando preguntas por ellas.
+
+Configurado no es autenticado, autenticado no es expuesto en la sesión, y expuesto no es que funcione. Una herramienta que aparecía como conectada devolvió `invalid_grant` en su primera llamada real. `gh auth status` decía una cuenta de GitHub mientras los comandos corrían con otra que no veía el repositorio; la cuenta que de verdad se usa es la que devuelve `gh api user`. Una pestaña del navegador seguía mostrando el entorno de pruebas con la VPN caída, porque una página ya cargada no prueba que haya acceso. Un linter local una versión mayor por detrás del CI pasó una comprobación que luego el CI suspendió.
+
+Por eso la fase 0 empieza con una comprobación previa. Cada capacidad que va a usar la tarea se prueba con una llamada real, y las herramientas locales de comprobación corren en la versión que fija el repositorio o el CI. Lo que falla se plantea en una sola ronda, ofreciendo el sustituto que se aceptó la vez anterior, y la respuesta se guarda para que la siguiente ejecución no vuelva a preguntar. Sin ella, los problemas de configuración aparecen de uno en uno a mitad de la tarea.
+
+La misma regla vale en el otro extremo. Un despliegue marcado «SUCCESS» no dice qué commit se está sirviendo; lo que cuenta es el SHA que reporta la plataforma, o un contenido que solo produce el cambio. Por eso la ejecución de arriba esperó a que los dos pods sirvieran el commit exacto.
 
 En Codex, el entorno necesitó dos cosas, ninguna de ellas un cambio en el plugin: un sandbox con red para el merge, el despliegue y las comprobaciones en vivo, y un servidor MCP para el tracker y el host del código. Encontró esas herramientas por su cuenta.
 

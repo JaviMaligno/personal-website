@@ -68,7 +68,8 @@ A profile that was right when written goes stale on its own. I found the same th
 
 - At the start of every task, a cheap recheck compares the profile with what the repo shows: remote, default branch, protection, deploy configuration, required checks. A mismatch updates that datum at its level and gets one line in the report.
 - Any datum older than 30 days is verified again before the loop relies on it.
-- When the profile and another source disagree, the newer dated source wins, the stale one is fixed where it lives, and the change is logged. Undated or same date: it asks.
+- When the profile and another source disagree, the newer dated source wins, the stale one is fixed where it lives, and the change is logged. Undated or same date: it asks. An old note pointing the tests at a shared account loses to a newer rule that requires a named one.
+- Layout facts get no grace period. A repository moved to another folder kept a link in its profile that was dated, marked as verified, and already false, so paths and links are re-checked every time.
 - The profiles are merged again on entering integration and live verification, because rules can change in the middle of a task.
 
 That is the whole idea: write each practice where it applies, and assume it will change.
@@ -139,7 +140,17 @@ This is the behaviour I want from the loop more than any single phase. The decis
 
 After the merge the loop confirmed the build published the image under the exact name it expected, merged the bump in the test environment's config repository, and waited until both pods were serving that exact commit before calling the integration done. Promotion beyond the test environment belongs to another team in my organisation, so phase 8 is built to end in an explicit hand-off, with the reason, the owner and the prepared material, instead of a skipped step.
 
-## What it needs, and what it doesn't do
+Phase 7 also has to say what it could not measure. A criterion that only real traffic will show, or that an outage left unchecked, is marked 🔄 with its cause and a dated wait, and the ticket stays open until it is measured. It is never marked as passed with a note: a criterion left unmeasured that way reads as a pass to anyone skimming the report.
+
+## Checking the environment before trusting it
+
+The practices are half of what the loop has to know about a place. The other half is the environment: the accounts, tools and connections the task will use. These fail in a way a profile cannot catch, because they look fine when you ask about them.
+
+Configured is not authenticated, authenticated is not exposed to the session, and exposed is not working. A tool listed as connected returned `invalid_grant` on its first real call. `gh auth status` reported one GitHub account while commands ran as another that could not see the repository; the account actually in use is the one `gh api user` returns. A browser tab kept showing the test environment after the VPN had dropped, because a page that is already loaded proves nothing about access. A local linter one major version behind CI passed a check that CI then failed.
+
+So phase 0 starts with a preflight. Every capability the task will use is probed with a real call, and local check tools run at the version the repository or CI pins. Whatever fails is raised in a single round, offering the substitute accepted last time, and the answer is saved so the next run does not ask again. Without it, setup problems surface one at a time in the middle of the task.
+
+The same rule applies at the other end. A deployment marked "SUCCESS" does not say which commit is being served; what counts is the SHA the platform reports, or content that only the change produces. That is why the run above waited for both pods to serve the exact commit.
 
 In Codex, the environment needed two things, neither of them changes to the plugin: a sandbox with network access for merge, deploy and live checks, and an MCP server for the tracker and the code host. It found those tools on its own.
 
