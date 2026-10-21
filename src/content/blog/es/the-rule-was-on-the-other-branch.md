@@ -19,7 +19,7 @@ Todos los equipos con los que he trabajado guardan sus prácticas en una docena 
 
 Las personas lo absorben en meses. Un agente empieza cada sesión sin nada de eso, o con una copia que alguien pegó en un prompt y que se quedó vieja a la semana siguiente.
 
-[delivery-loop](https://github.com/JaviMaligno/delivery-loop) es un plugin para Claude Code y Codex que lleva una tarea desde su ticket hasta un cambio verificado en un entorno de pruebas y traspasado. Llevar una tarea hasta el final no es nuevo por sí solo. Lo que hace que funcione en más de un sitio es de dónde saca el agente las prácticas del sitio donde trabaja, cómo se comparten entre quienes lo usan y cómo se mantienen al día sin que nadie tenga que mantenerlas.
+Por eso hice [delivery-loop](https://github.com/JaviMaligno/delivery-loop), un plugin para Claude Code y Codex que lleva una tarea desde su ticket hasta un cambio verificado en un entorno de pruebas y traspasado. Llevar una tarea hasta el final no es nuevo por sí solo. Lo que hace que funcione en más de un sitio es de dónde saca el agente las prácticas del sitio donde trabaja, cómo se comparten entre quienes lo usan y cómo se mantienen al día sin que nadie tenga que mantenerlas.
 
 ## El bucle, fase a fase
 
@@ -182,6 +182,12 @@ Así que ya no se deja al azar: cuando una sesión se lanzó desde una rama dist
 ## Menos preguntas por el camino
 
 Unos perfiles compartidos y al día son también lo que permite que el bucle avance sin pararse a preguntar. Antes de empezar, prueba con una llamada real cada capacidad que va a usar la tarea, porque configurado no es autenticado y autenticado no es que funcione: una herramienta que aparece como conectada puede fallar en su primera llamada, y `gh auth status` puede decir una cuenta mientras los comandos corren con otra. Lo que falla se plantea en una sola ronda, y la respuesta se guarda en su nivel para que nadie vuelva a preguntar. Lo que queda para una persona son las decisiones que de verdad son suyas: una decisión de negocio, un texto que verá el cliente, la revisión de la que esa regla tiene que dar fe.
+
+## Por dónde empezar
+
+Las fases son la parte visible. Lo que hace que funcionen en cualquier sitio es la idea de debajo: cada práctica escrita una vez, en el nivel donde es verdad, compartida con todos los que la necesitan, recomprobada antes de que nadie se apoye en ella y leída desde la rama donde de verdad se trabaja. Nadie tiene que mantener al día al agente, porque las prácticas que lee son las mismas que el equipo ya mantiene.
+
+Si tu equipo quiere probarlo, que empiece por el perfil de la organización. El repositorio trae un ejemplo ficticio de cada nivel, y la primera ejecución en cada repo completa el resto.
 
 ---
 

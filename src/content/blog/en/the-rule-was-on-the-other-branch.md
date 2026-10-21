@@ -19,7 +19,7 @@ Every team I have worked with keeps its practices in a dozen places. The PR chec
 
 People absorb this over months. An agent starts every session without any of it, or with a copy someone pasted into a prompt that went stale the week after.
 
-[delivery-loop](https://github.com/JaviMaligno/delivery-loop) is a plugin for Claude Code and Codex that takes a task from its ticket to a change verified in a test environment and handed over. Taking a task to the end is not new by itself. What makes it work in more than one place is where the agent gets the practices of the place it runs in, how they are shared between the people who use it, and how they stay current without anyone maintaining them.
+So I built [delivery-loop](https://github.com/JaviMaligno/delivery-loop), a plugin for Claude Code and Codex that takes a task from its ticket to a change verified in a test environment and handed over. Taking a task to the end is not new by itself. What makes it work in more than one place is where the agent gets the practices of the place it runs in, how they are shared between the people who use it, and how they stay current without anyone maintaining them.
 
 ## The loop, phase by phase
 
@@ -182,6 +182,12 @@ So now it is not left to chance: when a session was launched from a branch other
 ## Fewer questions on the way
 
 Shared, current profiles are also what let the loop run without stopping to ask. Before starting, it probes every capability the task will use with a real call, because configured is not authenticated and authenticated is not working: a tool listed as connected can fail on its first call, and `gh auth status` can report one account while commands run as another. Whatever fails is raised in a single round, and the answer is saved at its level so no one asks again. What remains for a person are the decisions that are genuinely theirs: a business call, a client-facing text, the attestation that rule exists to protect.
+
+## Where to start
+
+The phases are the visible part. What makes them work anywhere is the idea underneath: each practice written once, at the level where it is true, shared with everyone who needs it, re-checked before anyone relies on it, and read from the branch where the work actually happens. Nobody has to keep the agent up to date, because the practices it reads are the same ones the team already keeps.
+
+If your team wants to try it, start with the organisation profile. The repository has a fictitious example of every level, and the first run in each repo fills in the rest.
 
 ---
 
