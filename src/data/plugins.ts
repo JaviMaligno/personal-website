@@ -50,7 +50,7 @@ export const plugins: Plugin[] = [
     repoUrl: 'https://github.com/JaviMaligno/delivery-loop',
     pipeline: ['0 · start', '1–3 · spec, gaps, plan', '4–6 · implement, review, integrate', '7 · live verification', '8–9 · promote, close'],
     skills: ['deliver', 'census', 'spec', 'qa-design', 'qa-execution'],
-    tags: ['Claude Code plugin', 'Spec-driven', 'QA', 'MIT'],
+    tags: ['Claude Code plugin', 'Codex', 'Spec-driven', 'QA', 'MIT'],
     videos: [],
   },
 ];
