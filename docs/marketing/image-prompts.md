@@ -1775,6 +1775,30 @@ Clean geometric composition with a strong left-to-right flow, distinct but coher
 No logos, no brand names, no people, no article title overlay, no text-heavy poster, no watermarks. No purple gradient blobs, no bokeh, no glossy 3D render look.
 ```
 
+# The Rule Ate the Number — 2026-10-20
+
+- Article: `src/content/blog/en/a-role-not-a-rule.md`
+- Image: `public/blog/a-role-not-a-rule.png`
+- Generator: built-in image_gen; resized to 1020x510 with System.Drawing.
+
+Exact prompt for the final image:
+
+```text
+Create a 1020x510 PNG hero image for the technical article "The Rule Ate the Number". Wide 2:1 composition. Do not print the title.
+
+Refined technical editorial ILLUSTRATION: crisp bitmap artwork, fine ink-like contours, matte flat color planes, restrained dimensional shading, subtle print texture. Dark but not monochrome. Balanced teal, amber, graphite and off-white, high contrast, professional AI/developer blog aesthetic. Every element sharply drawn. Plain graphite background with no room or scenery.
+
+Depict a working voice-briefing editor: two large transcript panels side by side inside a simple monitor frame, a small illustrated desktop microphone below, and a small source-data card above. The source card shows a tiny two-bar chart, with bars labeled "9" and "12", the latter taller. Thin connectors feed this same source into both panels.
+
+Left panel: amber skill-document header "rule" and instruction "at most one figure". The transcript reads "Price rises from" followed by an empty dashed amber slot, then "to 12". Directly below the gap is a small discarded "9" token with one amber strike through it. Below that is an amber voice-memo waveform interrupted by silence beneath the gap. The active numerical cap has removed the original price and essential context.
+
+Right panel: teal note header "way of doing it" and instruction "say it like a colleague". Its transcript reads "Price rises from 9 to 12", with both numbers naturally embedded in the sentence and subtly highlighted in teal. A continuous teal voice-memo waveform beneath it suggests fluent speech.
+
+The two off-white transcript cards dominate the composition, with readable dark lettering and generous spacing. Source chart and microphone are secondary. Almost front-facing view, clean geometric arrangement, ample margins. The short quoted labels and sentences are the only text. Concrete software workflow, not an abstract metaphor or a text-heavy poster.
+
+No photography, photorealism, glossy 3D rendering, depth-of-field blur, bokeh, purple gradients, glowing blobs, plants, cups, books, room decor, people, logos, brand names, robots or watermarks.
+```
+
 
 ## Ask the agent to refactor. Writing the rule isn't enough
 
@@ -1796,4 +1820,27 @@ On the far left, integrate a smaller secondary lint checker panel labeled "jscpd
 Clean geometric composition with a strong left-to-right flow, distinct but coherent zones, a quiet graphite background, generous separation between connectors, and all important elements comfortably inside the frame. Keep the partly hidden fourth file and the shared function readable at hero size.
 
 No logos, no brand names, no people, no article title overlay, no text-heavy poster, no watermarks. No purple gradient blobs, no bokeh, no glossy 3D render look.
+```
+
+
+## The Rule Ate the Number
+
+- **Article:** `src/content/blog/en/a-role-not-a-rule.md`
+- **Image:** `public/blog/a-role-not-a-rule.png`
+- **Generated:** 2026-10-20 (Codex `image_gen`)
+
+```text
+Create a 1020x510 PNG hero image for the technical article "The Rule Ate the Number". Wide 2:1 composition. Do not print the title.
+
+Refined technical editorial ILLUSTRATION: crisp bitmap artwork, fine ink-like contours, matte flat color planes, restrained dimensional shading, subtle print texture. Dark but not monochrome. Balanced teal, amber, graphite and off-white, high contrast, professional AI/developer blog aesthetic. Every element sharply drawn. Plain graphite background with no room or scenery.
+
+Depict a working voice-briefing editor: two large transcript panels side by side inside a simple monitor frame, a small illustrated desktop microphone below, and a small source-data card above. The source card shows a tiny two-bar chart, with bars labeled "9" and "12", the latter taller. Thin connectors feed this same source into both panels.
+
+Left panel: amber skill-document header "rule" and instruction "at most one figure". The transcript reads "Price rises from" followed by an empty dashed amber slot, then "to 12". Directly below the gap is a small discarded "9" token with one amber strike through it. Below that is an amber voice-memo waveform interrupted by silence beneath the gap. The active numerical cap has removed the original price and essential context.
+
+Right panel: teal note header "way of doing it" and instruction "say it like a colleague". Its transcript reads "Price rises from 9 to 12", with both numbers naturally embedded in the sentence and subtly highlighted in teal. A continuous teal voice-memo waveform beneath it suggests fluent speech.
+
+The two off-white transcript cards dominate the composition, with readable dark lettering and generous spacing. Source chart and microphone are secondary. Almost front-facing view, clean geometric arrangement, ample margins. The short quoted labels and sentences are the only text. Concrete software workflow, not an abstract metaphor or a text-heavy poster.
+
+No photography, photorealism, glossy 3D rendering, depth-of-field blur, bokeh, purple gradients, glowing blobs, plants, cups, books, room decor, people, logos, brand names, robots or watermarks.
 ```

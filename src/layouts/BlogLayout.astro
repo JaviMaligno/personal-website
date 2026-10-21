@@ -40,6 +40,11 @@ const {
 const toc = headings.filter((h) => h.depth === 2);
 const showToc = toc.length >= 3;
 
+// Las tablas de 2-3 columnas no partian linea fuera de la primera columna:
+// con frases largas se salian de la columna. Desde esta fecha todas las
+// celdas parten; los articulos anteriores se quedan como se revisaron.
+const wrapTables = pubDate >= new Date("2026-10-20");
+
 const lang = getLangFromUrl(Astro.url) as Language;
 const t = useTranslations(lang);
 const currentYear = new Date().getFullYear();
@@ -363,7 +368,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
             )
           }
 
-          <div class="article-content">
+          <div class:list={["article-content", wrapTables && "wrap-tables"]}>
             <slot />
           </div>
 
@@ -1008,6 +1013,13 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString(
      cell wrap and give the labels a floor */
   .article-content :global(table:has(th:nth-child(4)) th),
   .article-content :global(table:has(th:nth-child(4)) td) {
+    white-space: normal;
+  }
+
+  /* articles from 2026-10-20 on (see wrapTables): every cell wraps, so a
+     2-3 column table with prose stays inside the reading column */
+  .article-content.wrap-tables :global(th),
+  .article-content.wrap-tables :global(td) {
     white-space: normal;
   }
 
