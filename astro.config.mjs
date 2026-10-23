@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import { unified } from '@astrojs/markdown-remark';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeTableWrap from './src/plugins/rehype-table-wrap.mjs';
@@ -23,7 +24,10 @@ export default defineConfig({
   // demand, which it opts into with `export const prerender = false`.
   adapter: vercel(),
 
+  // Preserve the existing remark/rehype math and table pipeline after Astro7.
+  compressHTML: true,
   markdown: {
+    processor: unified(),
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex, rehypeTableWrap],
   },

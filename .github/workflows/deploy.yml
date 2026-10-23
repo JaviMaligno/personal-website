@@ -7,6 +7,14 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -23,20 +31,33 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.23.4'
+          node-version: '24.22.1'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Check migrated content types
+        if: github.event_name == 'pull_request'
+        run: npx --no-install astro check --tsconfig tsconfig.security.json
 
       - name: Build
         run: npm run build
 
+      - name: Check rendered content and publication links
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+        run: node --test --test-concurrency=2 scripts/publications/store-links.test.mjs scripts/publications/rendered-page.check.mjs scripts/publications/security-render.check.mjs
+
+      - name: Offline math, local fonts and site routing contracts
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+        run: node security/math-routing.contract.mjs
+
       - name: Install Vercel CLI
+        if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
         run: npm install -g vercel@latest
 
       - name: Pull Vercel Environment (Preview)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Pull Vercel Environment (Production)
@@ -44,7 +65,7 @@ jobs:
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel (Preview)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
         run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel (Production)
