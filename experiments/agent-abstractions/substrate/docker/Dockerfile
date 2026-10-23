@@ -6,9 +6,10 @@
 # Stage `cli` (Node + agent CLIs, no repository) is also built alone as `aa-cli`
 # (aa.runner.build_cli_image) for the memorisation probe, which must not see
 # any Actual tree.
-FROM node:24.18.1-bookworm AS cli
+FROM node:24.22.1-bookworm AS cli
 RUN corepack enable && apt-get update \
- && apt-get install -y --no-install-recommends git python3 build-essential ripgrep \
+ && apt-get install -y --no-install-recommends git python3 build-essential ripgrep ca-certificates \
+ && update-ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 RUN npm i -g @anthropic-ai/claude-code@2.1.289 @openai/codex@0.159.3
 USER node
