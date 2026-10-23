@@ -1,8 +1,0 @@
-{"id": "82407af11e",
- "completeness": {"per_site": {"next-date": "full", "upcoming-dates": "full", "template-first": "partial", "template-following": "partial"},
-  "left_out": {},
-  "sites_full": 2, "sites_partial": 2, "sites_total": 4, "value": 0.75,
-  "why": "applyWeekendRule(date, rule) now decides both whether (skipWeekend) and how (mode); getNextDate keeps only its site-specific noSkipWeekend guard and getUpcomingDates passes its config straight through, but both createScheduleList sites still wrap the call in their own `skipWeekend ? ... : nextBaseDate` ternary, so the enable decision is still taken locally there (twice)."},
- "interface": {"score": 3, "why": "A single (date, {skipWeekend, weekendSolveMode}) parameter fits the real variation and noSkipWeekend stays as the one site-only option, but instead of letting each caller map its own field name the diff renames the parsed schedule's weekendSolve to weekendSolveMode in parseRecurDate, silently erasing a listed inconsistency rather than making it explicit, and the template callers keep a redundant outer skipWeekend check."},
- "disguised_duplication": {"value": false, "where": "No reshaped copy: the old getDateWithSkippedWeekend is replaced, not kept beside the new helper; the leftover duplication is the redundant skipWeekend ternary kept verbatim at the two createScheduleList sites in server/budget/schedule-template.ts, which is undisguised."}
-}
