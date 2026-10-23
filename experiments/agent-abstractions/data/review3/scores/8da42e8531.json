@@ -1,7 +1,0 @@
-{"id": "8da42e8531",
- "completeness": {"per_site": {"gocardless": "full", "simplefin": "full", "pluggyai": "full", "akahu": "full", "enablebanking": "full"},
-  "left_out": {}, "sites_full": 5, "sites_partial": 0, "sites_total": 5, "value": 1.0,
-  "why": "All five link functions are now thin wrappers that pass their own bank key, institution and account fields to linkBankSyncAccount, which owns upgrade-vs-insert, transfer payee, initial sync, handleSyncResponse and the sync event; Akahu's tables are an explicit argument and the mask is optional data. The Pluggy-only file id was folded into the shared function for every provider rather than kept local or parameterised, which is an interface issue, not a site still deciding locally."},
- "interface": {"score": 3, "why": "The parameters (source, institution, bankId, externalAccount with optional mask, syncEventTables) map to real variation and Akahu's narrower sync-event is made explicit, but the 'only Pluggy.ai sends the file id' inconsistency is silently erased by always passing getPrefs()?.cloudFileId instead of being an explicit option, and the unreachable EnableBanking null check is dropped without note."},
- "disguised_duplication": {"value": false, "where": "The five copies of the link sequence are removed and replaced by one linkBankSyncAccount in server/accounts/app.ts; the remaining per-provider wrappers only map fields."}
-}

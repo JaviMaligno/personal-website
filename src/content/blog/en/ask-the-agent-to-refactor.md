@@ -5,7 +5,7 @@ pubDate: 2026-10-19
 tags: ["Agents", "Claude Code", "Codex", "Software Design", "Experiments"]
 lang: en
 translationKey: ask-the-agent-to-refactor
-repoUrl: "https://github.com/JaviMaligno/personal-website/tree/main/experiments/agent-abstractions"
+repoUrl: "https://github.com/JaviMaligno/agent-abstractions"
 heroImage: "/blog/ask-the-agent-to-refactor.png"
 linkedinImage: "/blog/ask-the-agent-to-refactor-fig-2.png"
 ---
@@ -176,4 +176,4 @@ Pocock asked people to be braver and design abstractions. My data adds one thing
 
 ---
 
-*Limits: one codebase, one effort level, three agents. The registered judge and its second pass are the same model; the cross-family check with Sol covers the chain diffs, not every score. With four code areas, the per-area sign test can never reach significance. A related result: in [an earlier experiment](/en/blog/practices-for-agents-substrate) on how the way code is written affects agents, the effects only appeared in large repositories. The pre-registered design, the code, the anonymised data and the full report are [in the repository](https://github.com/JaviMaligno/personal-website/tree/main/experiments/agent-abstractions).*
+*Limits: one codebase, one effort level, three agents. The registered judge and its second pass are the same model; the cross-family check with Sol covers the chain diffs, not every score. With four code areas, the per-area sign test can never reach significance. A related result: in [an earlier experiment](/en/blog/practices-for-agents-substrate) on how the way code is written affects agents, the effects only appeared in large repositories. The pre-registered design, the code, the anonymised data and the full report are [in the repository](https://github.com/JaviMaligno/agent-abstractions).*

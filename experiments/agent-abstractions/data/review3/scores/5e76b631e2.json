@@ -1,7 +1,0 @@
-{"id":"5e76b631e2",
-"completeness":{"per_site":{"copy-previous-month":"full","set-zero":"full","set-3month-avg":"partial","set-6month-avg":"partial","set-12month-avg":"partial","set-n-month-avg-sign":"full"},
-"left_out":{},
-"sites_full":3,"sites_partial":3,"sites_total":6,"value":0.75,
-"why":"copyPreviousMonth and setZero route the whole selection through shouldFillCategory with an explicit hiddenPolicy, and both sign sites use averageToBudgetAmount; the three average actions call shouldFillCategory('require-visible') but their SQL still filters c.hidden = 0 AND g.hidden = 0, so the hidden rule is still decided at those sites (twice)."},
-"interface":{"score":4,"why":"A named three-way hiddenPolicy makes the preserved inconsistencies (setZero includes hidden, copy skips only flagged-hidden, averages require known-visible groups) explicit without speculative options; isTrackingBudget is passed in by every caller though it is a global the helper could read itself."},
-"disguised_duplication":{"value":true,"where":"set3/6/12MonthAvg in server/budget/actions.ts keep the hidden filter in their SQL WHERE clause while the 'require-visible' policy re-checks the same rule in fill-rules.ts; the three identical category queries remain copied"}}

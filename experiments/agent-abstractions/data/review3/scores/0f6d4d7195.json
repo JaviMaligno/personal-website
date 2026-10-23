@@ -1,8 +1,0 @@
-{"id":"0f6d4d7195",
-"completeness":{"per_site":{"copy-previous-month":"full","set-zero":"full","set-3month-avg":"partial","set-6month-avg":"partial","set-12month-avg":"partial","set-n-month-avg-sign":"full"},
-"left_out":{},
-"sites_full":3,"sites_partial":3,"sites_total":6,"value":0.75,
-"why":"copyPreviousMonth and setZero route the whole selection through shouldWriteMonthBudget (setZero via the explicit 'zero' variation) and setNMonthAvg takes its sign from averageBudgetAmount; the three average actions call the shared predicate but keep their own copied SQL with c.hidden = 0 AND g.hidden = 0, so the hidden rule is still decided in each query (and the predicate's hidden check never sees those fields)."},
-"interface":{"score":3,"why":"A small predicate plus a sign helper is reasonable, but the variation is encoded as an action-name enum ('copy-previous' | 'zero' | 'average') rather than an explicit hidden-rule parameter, the 'average' path duplicates a hidden check the SQL already applies, and the missing-group inconsistency stays implicit in the SQL rather than made explicit."},
-"disguised_duplication":{"value":false,"where":"The duplicated hidden-filter SQL in set3/6/12MonthAvg is left as-is (visible, not reshaped); the extracted helpers replace rather than disguise the inline checks."}
-}
