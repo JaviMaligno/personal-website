@@ -1812,3 +1812,20 @@ The right-hand editor is labeled "teammate-notes.md". Show a few short, generic 
 
 Crisp bitmap illustration with sharp edges, subtle dimensional depth, refined surface texture, and high contrast. Dark but not monochrome: balanced teal, amber, graphite, slate, and off-white accents. Professional AI/developer blog aesthetic, carefully spaced windows and connectors, generous outer margins, clear hierarchy readable at thumbnail size. The sealed report and magnified notes are the focal points. No people, hands, robots, logos, brand names, watermark, text-heavy poster, abstract floating nodes, purple gradient blobs, or bokeh.
 ```
+
+## Which sport is it? (sport-from-motion) — 2026-09-29
+
+- Articles: `src/content/blog/en/sport-from-motion.md`, `src/content/blog/es/sport-from-motion.md`
+- Image: `public/blog/sport-from-motion.png`
+- Generated: 2026-09-29, Codex CLI (`codex exec -s workspace-write`), built-in image_gen, resized to 1020x510 with `sips`. Pending review by Javier.
+
+```text
+Use case: scientific-educational
+Asset type: 1020x510 pixel blog hero image, wide 2:1 composition.
+Primary request: Create a refined technical editorial bitmap illustration for the article "Which Sport Is It? Recognising a Sport Only From How the Players Move". Show the experiment as a concrete working system: ten anonymous player dots become eight snapshots, temporal order is tested against shuffling, and a small laptop classifier measures accuracy. Do not print the article title.
+Scene and composition: A carefully composed graphite research workspace, dark but not monochrome. A dominant flat top-down tracking panel contains exactly ten plain grey circular dots with faint short motion trails, on an unmarked neutral field. Each dot represents an entire player, never a human skeleton. Beside it is a tidy contact sheet of exactly eight snapshot panels in two rows of four, individually numbered 1 through 8, each showing the same ten grey dots at successive positions. Include a small clean crossing-arrows shuffle icon between snapshot frames, without obscuring their contents. Fine teal and amber connectors lead naturally from tracking data and snapshots to a tangible open laptop in shallow three-quarter perspective. Its screen faces the viewer sufficiently directly for the terminal text to be readable. Integrate a compact accuracy bar chart and a small four-by-four confusion-matrix grid as supporting analysis panels. Maintain generous breathing room, strong visual hierarchy, crisp geometric edges, and a unified editorial scene rather than a text-heavy dashboard.
+Data details: The small chart has three accurately proportioned horizontal bars on a common baseline, labelled "ordered 83%", "shuffled 71%", and "chance 25%". Use teal for ordered, amber for shuffled, muted off-white for chance. The confusion matrix has sixteen square cells with a stronger teal diagonal and a few subdued amber off-diagonal cells; no detailed labels needed.
+Text (verbatim): Snapshot numbers "1", "2", "3", "4", "5", "6", "7", "8". Laptop terminal lines: "minirocket --condition motion", "order: shuffled vs ordered", "clips: 400", "accuracy: 0.83". Chart labels: "ordered 83%", "shuffled 71%", "chance 25%". Use restrained, readable monospace lettering; keep all text sparse and subordinate to the illustration.
+Style and palette: Crisp bitmap illustration, refined technical editorial art, high contrast, professional AI/developer blog aesthetic. Balanced teal, amber, graphite and warm off-white accents. All player dots remain plain neutral grey. Subtle matte surface texture, precise thin lines, restrained shadows, no photographic depth-of-field.
+Constraints: No logos, no brand names or manufacturer marks; minirocket appears only as the requested terminal command. No sport equipment, balls, jerseys, people, bodies, pitch markings, court lines, goals, hoops or sport-specific scenery. No headline, paragraphs, text-heavy poster, watermark, purple gradient blobs, bokeh or decorative neon haze. Keep every essential element inside the wide 2:1 frame.
+```
