@@ -5,7 +5,7 @@ pubDate: 2026-10-19
 tags: ["Agentes", "Claude Code", "Codex", "Diseño de software", "Experimentos"]
 lang: es
 translationKey: ask-the-agent-to-refactor
-repoUrl: "https://github.com/JaviMaligno/personal-website/tree/main/experiments/agent-abstractions"
+repoUrl: "https://github.com/JaviMaligno/agent-abstractions"
 heroImage: "/blog/ask-the-agent-to-refactor.png"
 linkedinImage: "/blog/ask-the-agent-to-refactor-fig-2.png"
 ---
@@ -173,4 +173,4 @@ Pocock pedía a la gente que fuera más valiente y diseñara abstracciones. Mis 
 
 ---
 
-*Límites: un solo código, un nivel de esfuerzo, tres agentes. El juez registrado y su segunda pasada son el mismo modelo; el chequeo con Sol, de otra familia, cubre los diffs de cadena, no todas las puntuaciones. Con cuatro zonas, el test de signo por zona nunca puede llegar a significación. Un resultado relacionado: en [un experimento anterior](/es/blog/practices-for-agents-substrate) sobre cómo afecta a los agentes la forma de escribir el código, los efectos solo aparecían en repositorios grandes. El diseño preregistrado, el código, los datos anonimizados y el informe completo están [en el repositorio](https://github.com/JaviMaligno/personal-website/tree/main/experiments/agent-abstractions).*
+*Límites: un solo código, un nivel de esfuerzo, tres agentes. El juez registrado y su segunda pasada son el mismo modelo; el chequeo con Sol, de otra familia, cubre los diffs de cadena, no todas las puntuaciones. Con cuatro zonas, el test de signo por zona nunca puede llegar a significación. Un resultado relacionado: en [un experimento anterior](/es/blog/practices-for-agents-substrate) sobre cómo afecta a los agentes la forma de escribir el código, los efectos solo aparecían en repositorios grandes. El diseño preregistrado, el código, los datos anonimizados y el informe completo están [en el repositorio](https://github.com/JaviMaligno/agent-abstractions).*
