@@ -2,6 +2,28 @@
 
 Exact prompts used to generate blog hero images (via Codex `image_gen`), for reproducibility and iteration. Newest first.
 
+## the-rule-was-on-the-other-branch
+
+- **Article:** `src/content/blog/{en,es}/the-rule-was-on-the-other-branch.md`
+- **Image:** `public/blog/the-rule-was-on-the-other-branch.png`
+- **Generated:** 2026-10-21, built-in `image_gen`; resized to 1020x510.
+
+```text
+Create a 1020x510 pixel blog hero image, landscape 2:1, for the technical article "The Rule Was on the Other Branch". Do not print the article title.
+
+Style: refined technical editorial bitmap illustration, dark but not monochrome. Depict a concrete working AI-agent delivery system inside a repository, with precise architectural connections, layered panels, subtle material depth, and crisp readable typography. High contrast, balanced teal, amber, graphite, and off-white. Clean geometric composition with several distinct zones and generous separation.
+
+The dominant upper zone shows two git branch lanes diverging from a shared commit, displayed side by side. Left: "OLD LAUNCH BRANCH", muted graphite and off-white, with an instruction-file card headed "AGENTS.md", containing only the generic lines "build", "test", "workflow"; it contains no human-review requirement. Right: "CURRENT INTEGRATION BRANCH", teal, with the same "AGENTS.md" card, the same basic lines, and a conspicuous amber-highlighted addition: "human review before merge". Beneath it, a small "PR checklist" section contains the visibly EMPTY checkbox "[ ] reviewed by a human". This difference between two versions of the same instruction file is the main visual story.
+
+Across the middle, show one connected delivery pipeline of exactly ten compact phase boxes numbered once each, in order: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9. A small "ticket" tab feeds phase 0. A thin connector labelled "re-read" links the current instruction file to phase 0. Phases 0 through 5 are teal; phase 6 connects to a prominent closed amber merge barrier with an octagonal stop signal, labelled "MERGE" and "awaiting human approval". The current file's highlighted rule connects directly to this barrier. Phases 7 through 9 remain muted, connected by a dashed continuation beyond the barrier; phase 7 connects to a small server panel labelled "LIVE TEST ENV". The pipeline is visibly paused before merge, with downstream work pending.
+
+Lower supporting zones: four slightly offset profile cards labelled "defaults", "user", "org", "repo", connected into the pipeline; and a compact terminal headed "task log" showing only three short lines: "> instructions re-read", "> tests passed", "> approval pending". Keep these subordinate to the branch comparison and merge gate.
+
+Use clear short labels and restrained technical detail, legible at hero size. Professional AI/developer blog aesthetic, polished editorial composition, subtle shadows, sharp edges. No logos, brand names, people, robot mascots, watermarks, text-heavy poster, purple gradient blobs, bokeh, or abstract floating-node metaphor. Opaque background.
+```
+
+---
+
 ## dont-just-say-ignore-it
 
 - **Article:** `src/content/blog/{en,es}/dont-just-say-ignore-it.md`
