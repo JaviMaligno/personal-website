@@ -99,8 +99,10 @@ Every article must have a `heroImage`. Generate it using Codex CLI, which has ac
 **Delegate the final prompt to Codex.** Codex knows its own image model better than we do: don't hand it a rigid pre-baked prompt — give it the article context plus the style constraints below and let it write and run the final image prompt itself.
 
 ```bash
-codex exec --full-auto "Read the article at src/content/blog/en/article-slug.md. Craft an image-generation prompt for its hero image following these style constraints: [STYLE CONSTRAINTS BELOW]. Then generate the image with your image_gen tool and save it to public/blog/article-slug.png. Finally, print the exact prompt you used."
+codex exec -s workspace-write "Read the article at src/content/blog/en/article-slug.md. Craft an image-generation prompt for its hero image following these style constraints: [STYLE CONSTRAINTS BELOW]. Then generate the image with your image_gen tool and save it to public/blog/article-slug.png. Finally, print the exact prompt you used."
 ```
+
+`--full-auto` was removed in codex-cli 0.164; `-s workspace-write` is the equivalent (writes only inside the repo). Close stdin (`< /dev/null`) so it can't hang waiting for input.
 
 Codex will use its built-in `image_gen` tool, generate the image, and copy it to the specified path in the project.
 
