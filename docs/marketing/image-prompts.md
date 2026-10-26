@@ -1829,3 +1829,20 @@ Text (verbatim): Snapshot numbers "1", "2", "3", "4", "5", "6", "7", "8". Laptop
 Style and palette: Crisp bitmap illustration, refined technical editorial art, high contrast, professional AI/developer blog aesthetic. Balanced teal, amber, graphite and warm off-white accents. All player dots remain plain neutral grey. Subtle matte surface texture, precise thin lines, restrained shadows, no photographic depth-of-field.
 Constraints: No logos, no brand names or manufacturer marks; minirocket appears only as the requested terminal command. No sport equipment, balls, jerseys, people, bodies, pitch markings, court lines, goals, hoops or sport-specific scenery. No headline, paragraphs, text-heavy poster, watermark, purple gradient blobs, bokeh or decorative neon haze. Keep every essential element inside the wide 2:1 frame.
 ```
+
+# The caveat that became the pitch — 2026-10-26
+
+- Article: `src/content/blog/en/the-caveat-that-became-the-pitch.md`
+- Image: `public/blog/the-caveat-that-became-the-pitch.png`
+- Generator: built-in image_gen; resized to 1020x510 with `sips`.
+
+```text
+Create a 1020x510 blog hero image for the technical article "The caveat that became the pitch".
+Style: refined technical editorial illustration, dark but not monochrome, crisp bitmap artwork with high contrast and a professional AI/developer blog aesthetic.
+Scene: an actual document-production workspace seen from a shallow overhead angle on a graphite desk. A left-to-right chain of four document cards shows how a small reviewer caveat gets copied forward and promoted into the main pitch. Label the four cards, in readable restrained typography: "reviewer-guide.md", "demo-runbook.docx", "guide.html", "deck.pptx". Render the first as a reviewer manual page, the second as a presenter runbook, the third as a one-page guide, and the fourth as a landscape slide. Arrange them in a clean geometric composition with enough separation to see each stage, subtle paper depth and controlled shadows.
+Across all four documents repeat the exact short sentence "Do not guess from names". On the reviewer manual it is a small amber-highlighted sentence among a few muted body-text rules; in the runbook it is a medium highlighted presenter line; in the guide it is a large amber callout; on the final slide it has grown into the dominant headline. The increasing type size and highlight area must be immediately apparent. Use only sparse gray strokes for other body copy. This illustrates a caveat being amplified through reuse, not an endorsed product slogan.
+A compact agent terminal window sits in the lower foreground, integrated with the document chain. Show three readable generic monospace lines: "> read demo-runbook.docx", "> write guide.html", "> write deck.pptx". Thin teal directional arrows connect successive documents, and a tidy teal connector links the terminal to the runbook and guide, making the read-then-write workflow concrete. These four documents, terminal, and connecting arrows are the six main visual elements.
+Palette: balanced teal, amber, graphite, and off-white accents; dark desk, warm off-white paper, teal file tabs and terminal text, amber emphasis that grows across the sequence. Refined sharp edges, subtle surface texture, generous outer margins, sophisticated editorial lighting. Keep all essential content within the frame, readable at blog thumbnail scale.
+No logos, no brand names, no people, no robot character, no article-title overlay, no text-heavy poster, no purple gradient blobs, no bokeh. Wide 2:1 composition, final target 1020x510 pixels.
+```
+
