@@ -80,7 +80,7 @@ The valuable part was never the framework. It was the knowledge of how to do thi
 
 ## What the plugin format gives
 
-Turning the pipeline into a [Claude Code plugin](/en/skills) keeps the phases and changes everything around them.
+Turning the pipeline into a [Claude Code plugin](/en/skills#data-source-automator) keeps the phases and changes everything around them.
 
 **No API bill anywhere.** The developer already pays for a Claude or Codex subscription. The plugin runs on it. There are no keys to provision, no per-run cost to justify, no separate budget line for "the automation". The economics stop being a conversation.
 

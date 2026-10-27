@@ -80,7 +80,7 @@ Lo valioso nunca fue el framework. Era el conocimiento de cómo se hace este tra
 
 ## Qué aporta el formato plugin
 
-Convertir el pipeline en un [plugin de Claude Code](/es/skills) mantiene las fases y cambia todo lo que las rodea.
+Convertir el pipeline en un [plugin de Claude Code](/es/skills#data-source-automator) mantiene las fases y cambia todo lo que las rodea.
 
 **Ninguna factura de API.** El desarrollador ya paga una suscripción de Claude o de Codex, y el plugin corre sobre ella. No hay claves que dar de alta, ni coste por ejecución que justificar, ni una partida aparte para «la automatización». La economía deja de ser un tema de conversación.
 
