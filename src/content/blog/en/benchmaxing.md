@@ -1,6 +1,6 @@
 ---
 title: "Benchmaxing: Winning the Exam Is Not Doing Better Work"
-description: "What is documented about benchmaxing, and what a small Opus 5 versus Fable 5 pilot actually found: shared failures, ties, and an intuition the probes did not confirm."
+description: "What is documented about benchmaxing, and what a small Opus 5 versus Fable 5 pilot actually found: shared failures, ties, an intuition the probes did not confirm, and an update with five more models."
 pubDate: 2026-09-16
 tags: ["AI", "Evaluation", "Claude", "Benchmarks"]
 lang: en
@@ -107,6 +107,8 @@ A conservative alternative exists under those rules: durably grant a single emis
 
 The interesting gap is between identifying the right concepts and closing the guarantee being promised. An answer can mention all the expected patterns and still require a substantial correction.
 
+*Update, 28 October 2026: with five more models, this failure turned out not to be shared by all of them. See [the update below](#update-28-october-2026-five-more-models).*
+
 ## Ties count too
 
 On permissions, both resolved the eight core decisions: tenant and owner restrictions, bounded exceptions, the excluded time endpoint, and amount redaction. Both also detected that a cache shared by tenant could leak data and that permissions and later data changes needed revalidation.
@@ -114,6 +116,30 @@ On permissions, both resolved the eight core decisions: tenant and owner restric
 On data analysis, both performed the requested calculations and rejected the misleading comparison: one system looked better in aggregate because it had received many more easy tasks. Both included the cost of repairing failures and distinguished a projection from a causal conclusion.
 
 Those cases did not separate the models on the core criteria. I did not discard them or keep increasing the difficulty until I found a winner. They mark a limit of the instrument: tasks that looked demanding proved insufficient to distinguish the models in this sample.
+
+## Update, 28 October 2026: five more models
+
+After publishing, I wanted to know whether the shared failure belonged to Claude or to the problem. I ran the same five cases, with the same frozen prompts, on Kimi K3.1 Pro, Gemini 4 Argon and three open-weight models: DeepSeek V4 Pro, Qwen3.8 2.4T and GLM 5.3. Then I repeated the two worker cases three more times for all seven models, all through Claude Code with the original options. Each model now has four runs per worker case.
+
+Runs in which the design keeps the guarantee of at most one external effect:
+
+| Model | Warehouse (D2) | Printing (D2b) | Total |
+|---|---|---|---|
+| Opus 5 | 0/4 | 0/4 | 0/8 |
+| Fable 5 | 0/4 | 0/4 | 0/8 |
+| Kimi K3.1 Pro | 3/4 | 4/4 | 7/8 |
+| Gemini 4 Argon | 2/4 | 4/4 | 6/8 |
+| DeepSeek V4 Pro | 0/4 | 2/4 | 2/8 |
+| Qwen3.8 2.4T | 0/4 | 2/4 | 2/8 |
+| GLM 5.3 | 0/4 | 1/4 | 1/8 |
+
+The failure was not shared by everyone. Kimi and Gemini closed the guarantee in most runs: they never hand the emission permit to a second worker, and an in-flight item left without an owner goes to review instead of being resent. Opus and Fable did not close it in any of their sixteen runs. Their designs consistently let another worker take over after the lease expired, inside a time window, which is exactly the race described above. The open-weight models sit in between, mostly on the printing variant.
+
+The other cases moved less, with one run each. On the double charge, only Gemini gave a complete answer. On permissions, all seven tied. On data analysis, all seven got the figures right, and two missed part of the framing.
+
+This does not demonstrate benchmaxing for anyone. Fable fails exactly as Opus does, so the result says nothing specific about how Opus 5 was trained. Kimi and Gemini, whose scores also attract suspicion, did best on a case that is unpublished and that they could not have seen. What it changes is my reading of the section above: on this mechanism, the gap was not between capable models and a hard problem, but between model families. Whether any of these models is benchmaxed needs a different test, comparing each model's drop from public benchmark items to fresh equivalent variants. I am leaving that, together with the agentic work I did not measure, for a follow-up.
+
+*Method for the update: the first run of the new models used OpenRouter's API, with no system prompt and 16,384 tokens. The repeats ran through Claude Code: Opus and Fable on the Max subscription, the other models through OpenRouter's Anthropic-compatible endpoint. I did not verify that the effort setting reaches every provider equivalently. The answers were shuffled, relabelled and graded blind by model subagents against the preregistered criteria. When they graded the September Opus and Fable answers among the others, they reproduced the published verdicts. Four runs per case cannot give a precise rate. [Answers, verdicts and limits are in the evidence repository](https://github.com/JaviMaligno/benchmaxing-probes/blob/main/assessment-expansion.md).*
 
 ## What remains of the suspicion
 
