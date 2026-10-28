@@ -1,7 +1,7 @@
 ---
 title: "Enseñar a un modelo pequeño a reconocer un deporte por puntos en movimiento"
 description: "Afiné Laya, un modelo de decisión de pesos abiertos de 322M, con los mismos puntos en movimiento en los que fallaron los modelos de frontera. Con la receta oficial no aprendió nada; entrenado lo suficiente, aprendió a leer el orden de las fotos, pero solo con algunas semillas."
-pubDate: 2026-10-30
+pubDate: 2026-10-31
 tags: ["IA", "Fine-tuning", "Deporte", "Evaluación", "Modelos abiertos"]
 lang: es
 translationKey: sport-from-motion-laya

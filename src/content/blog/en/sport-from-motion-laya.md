@@ -1,7 +1,7 @@
 ---
 title: "Teaching a Small Model to Recognise a Sport From Moving Dots"
 description: "I fine-tuned Laya, a 322M open-weights decision model, on the same moving dots the frontier models failed on. With the official recipe it learned nothing; with enough training it learned to read the order of the snapshots, but only for some seeds."
-pubDate: 2026-10-30
+pubDate: 2026-10-31
 tags: ["AI", "Fine-tuning", "Sports", "Evaluation", "Open Models"]
 lang: en
 translationKey: sport-from-motion-laya
