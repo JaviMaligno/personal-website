@@ -108,8 +108,16 @@ async function publishToDevto() {
       return `{% katex %}\n${safe}\n{% endkatex %}`;
     });
     // 4) Inline $…$ → readable unicode (Dev.to has no reliable inline-math tag).
+    //    Common TeX commands become their symbols so "\sqrt{\log n}" reads "√log n".
+    const texSymbols = {
+      sqrt: '√', log: 'log', lnot: '¬', lor: '∨', land: '∧', oplus: '⊕', le: '≤', ge: '≥',
+      in: '∈', dots: '…', cdot: '·', times: '×', approx: '≈', pm: '±',
+      Omega: 'Ω', Phi: 'Φ', Pi: 'Π', delta: 'δ', lambda: 'λ', sigma: 'σ', ell: 'ℓ',
+    };
     devtoContent = devtoContent.replace(/\$([^$\n]+)\$/g, (_m, eq) =>
-      eq.replace(/\\text\{([^}]*)\}/g, '$1').replace(/\\,/g, ' ').replace(/\^N\b/g, 'ᴺ').replace(/[{}]/g, '').trim()
+      eq.replace(/\\text\{([^}]*)\}/g, '$1').replace(/\\,/g, ' ').replace(/\^N\b/g, 'ᴺ').replace(/\\#/g, '#')
+        .replace(/\\([A-Za-z]+)/g, (cmd, name) => (name in texSymbols ? texSymbols[name] + (/^[a-z]/i.test(texSymbols[name]) ? ' ' : '') : cmd))
+        .replace(/[{}]/g, '').replace(/ +/g, ' ').trim()
     );
 
     // Transform content for Dev.to compatibility

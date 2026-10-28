@@ -1861,3 +1861,21 @@ Text (verbatim): Snapshot numbers "1", "2", "3", "4", "5", "6", "7", "8". Laptop
 Style and palette: Crisp bitmap illustration, refined technical editorial art, high contrast, professional AI/developer blog aesthetic. Balanced teal, amber, graphite and warm off-white accents. All player dots remain plain neutral grey. Subtle matte surface texture, precise thin lines, restrained shadows, no photographic depth-of-field.
 Constraints: No logos, no brand names or manufacturer marks; minirocket appears only as the requested terminal command. No sport equipment, balls, jerseys, people, bodies, pitch markings, court lines, goals, hoops or sport-specific scenery. No headline, paragraphs, text-heavy poster, watermark, purple gradient blobs, bokeh or decorative neon haze. Keep every essential element inside the wide 2:1 frame.
 ```
+
+## The Exponential Time Hypothesis Fell Twice (exponential-time-hypothesis-falls) — 2026-10-28
+
+- Articles: `src/content/blog/en/exponential-time-hypothesis-falls.md`, `src/content/blog/es/exponential-time-hypothesis-falls.md`
+- Image: `public/blog/exponential-time-hypothesis-falls.png`
+- Generated: 2026-10-28, **not** with Codex (no `codex` CLI in the cloud session). Hand-written SVG,
+  `scripts/heroes/exponential-time-hypothesis-falls.svg`, rasterised at 1020x510 with headless
+  Chromium. Placeholder until regenerated with Codex if wanted; prompt to use then:
+
+```text
+Create a 1020x510 blog hero image for a technical article titled "The Exponential Time Hypothesis Fell Twice. The Way Through Was a Minus Sign".
+Style: refined technical editorial illustration, dark but not monochrome, showing the algorithm as a working system: on the left a dense expander-like graph of clause nodes cut by a dashed amber line that crosses many edges; in the centre a grid of nodes with one highlighted rectangle whose two crossing diagonals (labelled x, y, u, v at the corners) are being rewritten into teal horizontal edges and amber vertical edges; on the right a terminal window reading "$ lake build", "✓ ETHIsFalse", "#3-SAT time: 2^O(n/√log n)" above a small bar chart whose bars shrink step by step.
+Visual motifs: expander graph with a cut, grid rectangle with crossing diagonals, a small Fano-plane motif for the octonions, terminal with Lean build output, descending bar chart, clean geometric composition.
+No logos, no brand names, no people, no text-heavy poster.
+Use crisp bitmap illustration, high contrast, professional AI/developer blog aesthetic, balanced teal, amber, graphite, and off-white accents, no purple gradient blobs, no bokeh.
+```
+
+- Inline figures: pre-rendered for Dev.to with `node scripts/figures/render-inline-svg-figures.cjs <article.md> <slug> public/blog`.
