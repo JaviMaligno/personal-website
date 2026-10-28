@@ -1,5 +1,22 @@
 // Written by the TTS script; regenerated on every run. Durations in seconds, keyed by line key.
 import type { Lang, Word } from './types.ts';
 
-export const AUDIO: Partial<Record<Lang, Record<string, number>>> = {};
-export const WORDS: Partial<Record<Lang, Record<string, Word[]>>> = {};
+export const AUDIO: Partial<Record<Lang, Record<string, number>>> = {
+  "en": {
+    "hook-01": 4.32,
+    "dinner-01": 2.32,
+    "dinner-02": 2.56,
+    "dinner-03": 2.88,
+    "dinner-04": 4.56,
+    "dinner-05": 3.84,
+    "check-01": 3.6,
+    "finding-01": 4,
+    "finding-02": 4.64,
+    "bases-01": 4.4,
+    "papers-01": 4.4,
+    "papers-02": 2.32,
+    "closer-01": 3.04,
+    "closer-02": 1.84
+  }
+};
+export const WORDS: Partial<Record<Lang, Record<string, Word[]>>> = {"en":{"hook-01":[["Your",0.12,0.28],["friends",0.36,0.68],["send",0.68,0.92],["conditions",1,1.48],["for",1.56,1.64],["a",1.64,1.72],["dinner.",1.8,2.2],["Is",2.358,2.52],["there",2.6,2.76],["one",2.76,3.08],["guest",3.16,3.32],["list",3.4,3.56],["that",3.64,3.72],["works?",3.72,4.2]],"dinner-01":[["\"Ana",0.12,0.36],["comes,",0.36,1],["or",1.24,1.32],["Bea",1.32,1.64],["doesn't.\"",1.64,2.2]],"dinner-02":[["\"Carlos",0.12,0.68],["or",0.765,0.84],["Diego,",0.84,1.48],["at",1.721,1.88],["least",1.96,2.12],["one.\"",2.12,2.44]],"dinner-03":[["\"Not",0.12,0.44],["Ana,",0.44,0.92],["Bea",1.186,1.48],["and",1.48,1.64],["Carlos",1.72,2.12],["together.\"",2.12,2.76]],"dinner-04":[["Each",0.12,0.36],["friend",0.36,0.68],["is",0.765,0.92],["a",1,1],["yes",1,1.48],["or",1.577,1.72],["a",1.8,1.8],["no.",1.88,2.12],["Each",2.513,2.68],["condition",2.68,3.16],["names",3.24,3.56],["at",3.64,3.72],["most",3.72,4.12],["three.",4.2,4.44]],"dinner-05":[["That's",0.12,0.44],["three-SAT,",0.44,1.16],["the",1.444,1.56],["reference",1.56,1.96],["hard",2.04,2.2],["problem",2.2,2.6],["of",2.689,2.76],["computer",2.76,3.16],["science.",3.24,3.72]],"check-01":[["Checking",0.12,0.44],["a",0.52,0.52],["guest",0.6,0.84],["list",0.84,1.08],["is",1.16,1.24],["easy.",1.24,1.64],["One",1.952,2.12],["pass",2.12,2.44],["over",2.52,2.6],["the",2.68,2.68],["conditions.",2.68,3.48]],"finding-01":[["Finding",0.12,0.52],["one",0.52,0.76],["is",0.84,0.84],["hard.",0.92,1.32],["Every",1.624,1.88],["friend",1.96,2.2],["you",2.28,2.36],["add",2.36,2.6],["doubles",2.68,3],["the",3.08,3.08],["lists",3.08,3.4],["to",3.48,3.56],["try.",3.64,3.88]],"finding-02":[["About",0.12,0.36],["a",0.44,0.44],["billion",0.44,1],["with",1.08,1.24],["30",1.24,1.56],["friends.",1.64,2.2],["A",2.51,2.6],["31-digit",2.6,3.4],["number",3.4,3.72],["with",3.8,3.96],["100.",4.04,4.52]],"bases-01":[["Forty",0.12,0.6],["years",0.6,1],["of",1.08,1.16],["clever",1.24,1.48],["ideas",1.48,1.96],["lowered",2.04,2.28],["that",2.36,2.44],["growth",2.44,2.68],["rate.",2.76,3.08],["Never",3.42,3.88],["to",3.96,3.96],["one.",3.96,4.28]],"papers-01":[["In",0.12,0.2],["1999",0.28,1.16],["that",1.24,1.4],["became",1.48,1.72],["a",1.72,1.8],["bet.",1.88,2.2],["The",2.484,2.6],["Exponential",2.68,3.24],["Time",3.24,3.48],["Hypothesis.",3.48,4.28]],"papers-02":[["Over",0.12,0.44],["800",0.479,1.16],["papers",1.16,1.56],["rest",1.64,1.88],["on",1.96,1.96],["it.",1.96,2.2]],"closer-01":[["This",0.12,0.36],["week,",0.44,0.76],["two",0.926,1.24],["AI",1.32,1.56],["labs",1.56,1.96],["proved",2.04,2.28],["it",2.36,2.36],["false.",2.36,2.92]],"closer-02":[["Part",0.12,0.44],["two.",0.52,0.76],["How.",1.227,1.72]]}};
