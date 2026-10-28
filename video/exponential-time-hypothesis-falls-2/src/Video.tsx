@@ -2,7 +2,8 @@ import React from 'react';
 import { AbsoluteFill, Sequence, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { Audio } from '@remotion/media';
 import { TransitionSeries, linearTiming } from '@remotion/transitions';
-import { AUDIO } from './audio.generated.ts';
+import { AUDIO, WORDS } from './audio.generated.ts';
+import { resolveMark } from './marks.ts';
 import { VIDEOS } from './timeline.ts';
 import { FPS, SCENE_TRANSITION, handOverAt, linesInVideo, sceneFrames } from './timing.ts';
 import { SETTINGS } from './settings.ts';
@@ -13,6 +14,7 @@ import { ANIMS } from './anim/index.ts';
 import { Background } from './components/Background.tsx';
 import { Intro, Outro } from './components/Cards.tsx';
 import { Captions } from './components/Captions.tsx';
+import { Cameo, type CameoSpec } from './components/Cameo.tsx';
 import { Badge } from './components/Brand.tsx';
 import { dip } from './components/Dip.tsx';
 import type { Lang, Scene } from './types.ts';
@@ -51,6 +53,27 @@ const AnimView: React.FC<{ scene: Scene; p: ArticleVideoProps }> = ({ scene, p }
   );
 };
 
+/** The avatar cameos of an anim scene (`cameos` in its props), each landing on its mark. */
+const Cameos: React.FC<{ scene: Scene; vertical: boolean }> = ({ scene, vertical }) => {
+  const cameos = (scene.anim?.props as { cameos?: CameoSpec[] } | undefined)?.cameos;
+  if (!cameos?.length) return null;
+  const lang = scene.lines[0]?.voice ?? 'en';
+  return (
+    <>
+      {cameos.map((c, i) => (
+        <Cameo
+          key={i}
+          pose={c.pose}
+          at={typeof c.at === 'number' ? c.at : resolveMark(scene.lines, c.at, WORDS[lang], lang)}
+          dur={c.dur}
+          side={c.side}
+          vertical={vertical}
+        />
+      ))}
+    </>
+  );
+};
+
 const SceneView: React.FC<{ scene: Scene; p: ArticleVideoProps }> = ({ scene, p }) => {
   // The intro shows its first line as the big hook, so the captions start from the second line.
   const captioned = scene.kind === 'intro' ? scene.lines.slice(1) : scene.lines;
@@ -64,6 +87,7 @@ const SceneView: React.FC<{ scene: Scene; p: ArticleVideoProps }> = ({ scene, p 
           <div style={{ position: 'absolute', top: p.vertical ? V.badgeTop : 48, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
             <Badge size={p.vertical ? 1.1 : 0.9} />
           </div>
+          {!p.noSubs && <Cameos scene={scene} vertical={p.vertical} />}
         </>
       )}
       {!p.noSubs && <Captions lines={captioned} lang={p.subs} vertical={p.vertical} until={handOverAt(scene)} />}

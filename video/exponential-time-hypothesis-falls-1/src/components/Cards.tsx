@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
+import { Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { C, GRADIENT } from '../brand.ts';
 import { fontFamily, SAFE, V } from '../theme.ts';
 import { SETTINGS } from '../settings.ts';
@@ -66,7 +66,7 @@ export const Intro: React.FC<{ hook?: Line; lang: Lang; vertical: boolean }> = (
   );
 };
 
-/** Closing card: AGILabs badge, the site address and the article's title. */
+/** Closing card: the author avatar (when SETTINGS.avatar is set), AGILabs badge, the site address and the article's title. */
 export const Outro: React.FC<{ lang: Lang; vertical: boolean }> = ({ lang, vertical }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -88,8 +88,13 @@ export const Outro: React.FC<{ lang: Lang; vertical: boolean }> = ({ lang, verti
         fontFamily,
       }}
     >
-      <div style={item(0)}>
-        <Badge size={vertical ? 2.4 : 2} />
+      {SETTINGS.avatar && (
+        <div style={{ ...item(0), width: vertical ? 300 : 220, height: vertical ? 300 : 220, borderRadius: '50%', padding: 8, background: GRADIENT }}>
+          <Img src={staticFile(SETTINGS.avatar)} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+        </div>
+      )}
+      <div style={item(SETTINGS.avatar ? 4 : 0)}>
+        <Badge size={SETTINGS.avatar ? (vertical ? 2 : 1.7) : vertical ? 2.4 : 2} />
       </div>
       <div style={item(6)}>
         <Site size={vertical ? 1.5 : 1.3} />

@@ -31,6 +31,7 @@ const build = (): Cuts => ({
           { value: '≈ 1 billion', label: L('with 30 friends', 'con 30 amigos') },
           { value: '31 digits', label: L('with 100 friends', 'con 100 amigos') },
         ],
+        cameos: [{ pose: 'thinking', at: [0, 'hard'], dur: 2.4 }],
       },
       [
         say(0.3, 'Finding one is hard: every friend you add doubles the lists to try.', 'Encontrarla es difícil: cada amigo que añades duplica las listas que probar.'),
@@ -63,10 +64,10 @@ const build = (): Cuts => ({
     anim(
       'closer',
       'KeyQuote',
-      { text: L('This week it fell. Twice.', 'Esta semana cayó. Dos veces.'), emphasis: ['Twice', 'veces'] },
+      { text: L('This week it fell. Twice.', 'Esta semana cayó. Dos veces.'), emphasis: ['Twice', 'veces'], cameos: [{ pose: 'amazed', at: [0, 'false'], dur: 2.2 }] },
       [
         say(0.3, 'This week, two AI labs proved it false.', 'Esta semana, dos laboratorios de IA demostraron que es falsa.'),
-        say(0, 'Part two: how.', 'Segunda parte: cómo.'),
+        say(0, 'How they did it is in part two.', 'Cómo lo hicieron, en la segunda parte.'),
       ],
       { min: 4 },
     ),

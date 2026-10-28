@@ -15,6 +15,9 @@ export type Settings = {
   poster: null | { scene: string; second: number };
   /** Title of the source article, shown in muted text on the outro card. */
   articleTitle: Label;
+  /** Optional author avatar (round, under public/), shown on the outro card. Cameos read their
+   * cut-outs from public/avatar/avatar-<pose>.png. null = no avatar. */
+  avatar?: null | string;
 };
 
 export const SETTINGS: Settings = {
@@ -25,4 +28,5 @@ export const SETTINGS: Settings = {
   targetSeconds: 50,
   poster: { scene: 'dinner', second: 9 },
   articleTitle: { en: 'The Exponential Time Hypothesis Fell Twice · 1/2', es: 'La hipótesis del tiempo exponencial ha caído dos veces · 1/2' },
+  avatar: 'avatar/avatar-profile.png',
 };

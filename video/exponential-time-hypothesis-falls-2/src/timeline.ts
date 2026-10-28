@@ -9,7 +9,7 @@ const build = (): Cuts => ({
     intro('hook', [
       say(0.4, 'Two AI labs just refuted the Exponential Time Hypothesis. Here is how.', 'Dos laboratorios de IA acaban de refutar la hipótesis del tiempo exponencial. Así lo hicieron.'),
     ]),
-    anim('wall', 'ExpanderCut', {}, [
+    anim('wall', 'ExpanderCut', { cameos: [{ pose: 'thinking', at: [1, 'wall'], dur: 2.4 }] }, [
       say(0.3, 'Link two conditions when they share a friend.', 'Une dos condiciones cuando comparten un amigo.'),
       say(0, "The wall: hard puzzles can't be split without cutting too many links.", 'El muro: los puzles difíciles no se pueden partir sin cortar demasiados enlaces.'),
     ], { min: 5.5 }),
@@ -20,7 +20,7 @@ const build = (): Cuts => ({
       [say(0.3, 'Both labs count the solutions instead, so terms can cancel.', 'Los dos cuentan las soluciones, para que los términos puedan cancelarse.')],
       { min: 4 },
     ),
-    anim('octonions', 'CrossingRewrite', {}, [
+    anim('octonions', 'CrossingRewrite', { cameos: [{ pose: 'amazed', at: [0, 'octonions'], dur: 2.2 }] }, [
       say(0.3, "Claude's proof uses an identity from 1818, from the octonions.", 'La prueba de Claude usa una identidad de 1818, de los octoniones.'),
       say(0, 'Two crossing links become pieces that are cheap one way or the other.', 'Dos enlaces cruzados se convierten en piezas baratas en una dirección o en la otra.'),
     ], { min: 9 }),
@@ -82,7 +82,7 @@ const build = (): Cuts => ({
     anim(
       'closer',
       'KeyQuote',
-      { text: L('ETH is false. Twice.', 'ETH es falsa. Dos veces.'), emphasis: ['Twice', 'veces'], beat: 1 },
+      { text: L('ETH is false. Twice.', 'ETH es falsa. Dos veces.'), emphasis: ['Twice', 'veces'], beat: 1, cameos: [{ pose: 'pointing', at: [1, 'false'], dur: 2.2 }] },
       [
         say(0.3, 'Two labs, the same week, the same bound.', 'Dos laboratorios, la misma semana, la misma cota.'),
         say(0, 'The hypothesis is false.', 'La hipótesis es falsa.'),

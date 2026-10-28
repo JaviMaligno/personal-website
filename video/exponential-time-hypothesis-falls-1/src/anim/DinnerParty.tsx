@@ -1,4 +1,5 @@
 import React from 'react';
+import { Img, staticFile } from 'remotion';
 import { C, alpha } from '../brand.ts';
 import type { AnimProps } from './types.ts';
 import { CONDITIONS, FRIENDS, LIST, frameState, type DinnerPartyProps } from './DinnerParty.state.ts';
@@ -30,8 +31,9 @@ export const DinnerParty: React.FC<AnimProps & DinnerPartyProps> = (p) => {
           const chipColor = c.fill > 0.5 ? (yes ? GREEN : RED) : C.muted;
           return (
             <div key={name} style={{ width: col, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, opacity: f.appear, transform: `translateY(${(1 - f.appear) * 30}px)` }}>
-              <div style={{ width: 150, height: 150, borderRadius: 75, background: C.card, border: `6px solid ${C.accentText}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 72, fontWeight: 800, color: C.text }}>
-                {name[0]}
+              {/* Each friend is a caricature (public/friends/friend-<name>.png), not a letter. */}
+              <div style={{ width: 150, height: 150, borderRadius: 75, background: C.card, border: `6px solid ${C.accentText}`, overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                <Img src={staticFile(`friends/friend-${name.toLowerCase()}.png`)} style={{ width: '112%', height: '112%', objectFit: 'cover', objectPosition: 'center 20%' }} />
               </div>
               <div style={{ fontSize: 44, fontWeight: 700, color: C.text }}>{name}</div>
               <div
