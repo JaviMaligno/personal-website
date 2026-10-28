@@ -71,9 +71,11 @@ What makes it hard is an asymmetry. If someone hands you a guest list, **checkin
 
 The best algorithms don't try everything; they prune, guess cleverly, and backtrack. But their running time still grows *exponentially*: each extra variable multiplies the work by a fixed factor, the *base*. For trying everything the base is 2 (one more friend, twice the lists). Schöning's random walk brought it to $1.334$ in 1999, PPSZ with Hertli's analysis to $1.308$, Liu's deterministic algorithm to $1.328$. That sounds like a small gain and it is an enormous one: $2^{100}$ is a 31-digit number, $1.308^{100}$ a 12-digit one. But forty years of very clever work never brought the base close to 1.
 
-In 1999 Russell Impagliazzo and Ramamohan Paturi turned that experience into a conjecture, the **Exponential Time Hypothesis** (ETH): the base can be lowered but never to 1. However clever the algorithm, each extra variable will always cost a fixed multiplier, some $2^{\delta}$ with $\delta > 0$. Its stronger sibling, SETH, says that when conditions can mention many variables, you cannot even lower the base much.
+In 1999 Russell Impagliazzo and Ramamohan Paturi turned that experience into a conjecture, the **Exponential Time Hypothesis** (ETH): the base can be lowered but never to 1. Put precisely: there is some number $c$ greater than 1 such that no algorithm solves every 3-SAT instance faster than $c^n$. However clever the algorithm, each extra variable will always cost at least that fixed multiplier. Its stronger sibling, SETH, says that when conditions can mention many variables, you cannot even lower the base much.
 
-An algorithm that breaks this is called *subexponential*, written $2^{o(n)}$: the multiplier you pay per extra variable keeps shrinking towards 1 as the problem grows. It is still not fast in any everyday sense, but it is a different kind of growth, and ETH said it was impossible.
+Papers usually write the same thing with the base fixed at 2 and the change moved into the exponent. Any base $c$ is a power of 2, $c = 2^{\delta}$, so $c^n = 2^{\delta n}$: trying everything is $\delta = 1$, and $1.308^n$ is about $2^{0.39n}$. Lowering the base towards 1 and lowering $\delta$ towards 0 are the same thing. In that language ETH says $\delta$ can never go below some fixed positive number.
+
+An algorithm that breaks this is called *subexponential*, written $2^{o(n)}$: its exponent grows more slowly than $\delta n$ for every $\delta > 0$. In the language of bases, the multiplier you pay per extra variable keeps shrinking towards 1 as the problem grows. It is still not fast in any everyday sense, but it is a different kind of growth, and ETH said it was impossible.
 
 <figure class="eth-fig">
 <svg viewBox="0 0 600 270" role="img" aria-label="Bar chart of the best known running time for 3-SAT written as base to the n: brute force 2, Schöning 1999 1.334, Liu 2018 deterministic 1.328, PPSZ with Hertli 2014 randomized 1.308. The 2026 algorithms have an effective base that tends to 1 as n grows, which is what refutes the Exponential Time Hypothesis.">
@@ -112,7 +114,7 @@ An algorithm that breaks this is called *subexponential*, written $2^{o(n)}$: th
 
 That bet was not idle. Anthropic's paper reports a literature search, carried out by Claude, that found more than 800 papers proving at least one result only under ETH or something that implies it. ETH is the reason we "know" that k-Clique has no $n^{o(k)}$ algorithm, that many parameterized algorithms are optimal, that dynamic programming over tree decompositions cannot be improved. In 2019 Ryan Williams put his own odds at 70% that ETH was true and 25% for SETH. Most of the field would have put them higher.
 
-Both papers now give a deterministic algorithm that runs in $2^{o(n)}$: for every $\delta > 0$, eventually faster than $2^{\delta n}$. That refutes ETH, SETH, Gap-ETH and the counting version #ETH in one go.
+Both papers now give a deterministic algorithm that runs in $2^{o(n)}$: for every $\delta > 0$ it is eventually faster than $2^{\delta n}$, which is to say it eventually beats every base above 1. That refutes ETH, SETH, Gap-ETH and the counting version #ETH in one go.
 
 ## The wall
 
@@ -240,7 +242,7 @@ and it can be checked by brute force on all 4,096 settings of the 12 bits. Read 
 
 The rest is bookkeeping, done carefully. Strings are split into blocks of 3, and the expansion is grouped by how many blocks took the column choice, which keeps the number of terms polynomial. For each term the algorithm merges rows or columns, whichever is cheaper. Per block, the two directions together cost $3 + 6 + 1 + 1 = 11$ bits against the $12$ of two crossings, so the cheaper direction pays at most $11/12$ of what was there before. Then it groups the merged rows into $K$ balanced super-nodes and recurses.
 
-One level shrinks the exponent by a factor of $11/12$. Repeat it and the exponent goes to zero: the paper's bound is $e_\ell \le 1.12\,(11/12)^\ell$. The price is that each level needs vastly more nodes, $K_\ell = 9K_{\ell-1}^{16}$ starting from 64, which is why all of this only matters for astronomically large formulas.
+The paper writes the running time as $2^{e S}$, where $S$ is the number of bits on the edges, proportional to the size of the formula. So $e$ plays the role of $\delta$ above, and $2^e$ is the base, paid per bit instead of per variable. One level shrinks $e$ by a factor of $11/12$. Repeat it and $e$ goes to zero, which is the base going to 1: the paper's bound is $e_\ell \le 1.12\,(11/12)^\ell$. The price is that each level needs vastly more nodes, $K_\ell = 9K_{\ell-1}^{16}$ starting from 64, which is why all of this only matters for astronomically large formulas.
 
 <figure class="eth-fig">
 <svg viewBox="0 0 600 230" role="img" aria-label="Chart of the running-time exponent at each level of the recursion in Anthropic's algorithm. Level 0 is brute force with exponent 1. Level 1 is slightly worse, about 1.03, because the first grid is small. From level 2 on, the exponent falls by a factor of eleven twelfths per level, bounded by 1.12 times eleven twelfths to the level, reaching under 0.47 by level 10 and tending to zero.">
@@ -265,7 +267,7 @@ One level shrinks the exponent by a factor of $11/12$. Repeat it and the exponen
   <text x="320" y="222" font-size="11.5" fill="#94a3b8" text-anchor="middle">recursion level ℓ (bound e_ℓ ≤ 1.12 · (11/12)^ℓ from level 2)</text>
   <text x="87" y="22" font-size="10.5" fill="#94a3b8" text-anchor="middle">brute</text>
 </svg>
-<figcaption>Each level of the recursion multiplies the exponent by about 11/12. It never reaches zero at any fixed level, but it gets below any δ you name, which is exactly what refuting ETH requires.</figcaption>
+<figcaption>Each level of the recursion multiplies the exponent (the δ of 2^δn, so the base is 2^δ) by about 11/12. It never reaches zero at any fixed level, but it gets below any δ you name, which is exactly what refuting ETH requires.</figcaption>
 </figure>
 
 The identity is the beautiful part. Its classical form says that the product of two sums of eight squares is again a sum of eight squares. Ferdinand Degen found it in 1818, and John Graves found it again in 1843 while showing that the norm of the octonions, the eight-dimensional cousin of the complex numbers, is multiplicative. The sign function $\sigma$ in the algorithm is, in the paper's words, "the table of signs of the multiplication of the octonions, with the basis elements renamed". Hurwitz proved in 1898 that such identities exist only for 1, 2, 4 and 8 squares. The paper has an appendix explaining why the search for a cheaper decomposition of a crossing leads straight to Hurwitz's problem, and why, under the simple bit count it uses, only eight leaves a gain: two squares break even, four break even, eight give 11 out of 12.
