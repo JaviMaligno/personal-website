@@ -7,6 +7,7 @@ import * as quote from '../src/anim/KeyQuote.state.ts';
 import * as grid from '../src/anim/StatGrid.state.ts';
 import * as cut from '../src/anim/ExpanderCut.state.ts';
 import * as cross from '../src/anim/CrossingRewrite.state.ts';
+import * as dinner from '../src/anim/DinnerParty.state.ts';
 
 // Fields that are animation progress and must stay within [0, 1].
 const PROGRESS = new Set(['progress', 'appear', 'grow', 'fill', 'draw', 'pop', 'opacity', 'emphasis']);
@@ -29,6 +30,8 @@ type Case = { name: string; state: (t: number, beats: number[], dur: number) => 
 const CASES: Case[] = [
   { name: 'ExpanderCut', state: (t, b, d) => cut.frameState({}, t, b, d) },
   { name: 'CrossingRewrite', state: (t, b, d) => cross.frameState({}, t, b, d) },
+  { name: 'DinnerParty intro', state: (t, b, d) => dinner.frameState({ mode: 'intro' }, t, b, d) },
+  { name: 'DinnerParty check', state: (t, b, d) => dinner.frameState({ mode: 'check' }, t, b, d) },
   { name: 'Counter', state: (t, b, d) => counter.frameState({ value: 70, suffix: '%', label: 'pass rate', decimals: 1, beat: 1 }, t, b, d) },
   { name: 'Counter (beat out of range)', state: (t, b, d) => counter.frameState({ value: 3, label: 'x', beat: 9 }, t, b, d) },
   {
@@ -212,4 +215,13 @@ test('CrossingRewrite: crossing first, pieces only after the second beat', () =>
   const end = cross.frameState({}, 6, [0.2, 3], 6);
   assert.equal(end.split, 1);
   assert.equal(end.col.appear, 1);
+});
+
+test('DinnerParty: the checked list meets every condition', () => {
+  const [ana, bea, carlos, diego] = dinner.LIST;
+  assert.ok(ana || !bea);
+  assert.ok(carlos || diego);
+  assert.ok(!(ana && bea && carlos));
+  const end = dinner.frameState({ mode: 'check' }, 6, [0.2], 6);
+  assert.ok(end.cards.every((c) => c.tick === 1));
 });

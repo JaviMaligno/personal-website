@@ -73,14 +73,10 @@ test('sceneStarts overlaps scenes by the transition', () => {
   assert.equal(total, sceneFrames(a) + sceneFrames(b) - SCENE_TRANSITION);
 });
 
-test('settings defaults and placeholder timeline', () => {
+test('settings and timeline of this video', () => {
   assert.deepEqual(SETTINGS.voices, ['en']);
-  assert.deepEqual(SETTINGS.subtitles, ['en']);
-  assert.equal(SETTINGS.targetSeconds, 45);
-  assert.deepEqual(SETTINGS.music, { src: 'music/bed.wav', volume: 0.2, duck: 0.3 });
-  assert.equal(SETTINGS.poster, null);
-  assert.deepEqual(TIMELINE.map((s) => s.kind), ['intro', 'anim', 'outro']);
-  assert.equal(TIMELINE[1].anim?.name, 'KeyQuote');
+  assert.equal(TIMELINE[0].kind, 'intro');
+  assert.equal(TIMELINE.at(-1)?.kind, 'outro');
   assert.equal(VIDEOS.en.main, TIMELINE);
 });
 

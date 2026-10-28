@@ -1,4 +1,8 @@
-# The Exponential Time Hypothesis Fell Twice — article video (EN) · script draft v1 (PENDING APPROVAL)
+# The Exponential Time Hypothesis Fell Twice — part 2 of 2: how it fell · script draft v2 (PENDING APPROVAL)
+
+v2: split in two videos at Javier's request. Part 1 (`../exponential-time-hypothesis-falls-1`) now
+explains the problem with the dinner party; rows 2-5 below (3-SAT, bases, 1999, 800 papers)
+moved there, the hook is new and the wall is told with the dinner's conditions.
 
 Article: exponential-time-hypothesis-falls (javieraguilar.ai, EN/ES, pubDate 2026-10-28).
 Vertical 9:16, target ~55-58 s, 140 spoken words. The article explains two results by OpenAI and
@@ -19,12 +23,8 @@ worlds of counting and deciding. Everything else is library components.
 
 | # | Narration (EN) | Narration (ES) | Visual | Component | Source sentence |
 |---|---|---|---|---|---|
-| 1 | Two AI labs just refuted the same famous hypothesis, hours apart. | Dos laboratorios de IA acaban de refutar la misma hipótesis famosa, con horas de diferencia. | Hook card | intro | "On 26 October two papers appeared within hours of each other."; "Both were found by an internal model." |
-| 2 | 3-SAT asks if yes-or-no choices can meet every condition. It always took exponential time. | 3-SAT pregunta si unas decisiones de sí o no pueden cumplir todas las condiciones. Siempre costó tiempo exponencial. | Bars: brute force 2ⁿ | `BarCompare` | "is there any guest list that meets every condition at once? That is 3-SAT."; "their running time still grows exponentially" |
-| 3 | Clever ideas shrank the base. Never to one. | Ideas ingeniosas rebajaron la base. Nunca a uno. | Bars 1.334ⁿ, 1.308ⁿ grow, shorter | `BarCompare` | "Schöning's random walk got 1.334^n in 1999, PPSZ and Hertli's analysis got 1.308^n"; "the base never got close to 1." |
-| 4 | In 1999 that became a bet: the Exponential Time Hypothesis. | En 1999 eso se convirtió en una apuesta: la hipótesis del tiempo exponencial. | Counter 800+ (starts on line 5) | `Counter` | "In 1999 Russell Impagliazzo and Ramamohan Paturi turned that experience into a hypothesis" |
-| 5 | Over 800 papers rest on it. | Más de 800 artículos se apoyan en ella. | Counter reaches "800+", label "papers rest on ETH" | `Counter` | "more than 800 papers proving at least one result only under ETH or something that implies it" |
-| 6 | The wall: hard formulas can't be split without cutting too many links. | El muro: las fórmulas difíciles no se pueden partir sin cortar demasiados enlaces. | Tangled ring of nodes; a dashed cut sweeps round, the crossing links glow amber at every angle; label "every cut: many bits" | bespoke `ExpanderCut` | "every way of splitting the nodes into two halves of comparable size is crossed by a constant fraction of all the edges"; "This is the wall." |
+| 1 | Two AI labs just refuted the Exponential Time Hypothesis. Here is how. | Dos laboratorios de IA acaban de refutar la hipótesis del tiempo exponencial. Así lo hicieron. | Hook card | intro | "On 26 October two papers appeared within hours of each other." |
+| 6 | Link two conditions when they share a friend. The wall: hard puzzles can't be split without cutting too many links. | Une dos condiciones cuando comparten un amigo. El muro: los puzles difíciles no se pueden partir sin cortar demasiados enlaces. | Tangled ring; on the second line a cut sweeps round and the crossing links glow | bespoke `ExpanderCut` | "join two dots with a line when they mention the same friend"; "every way of splitting the nodes into two halves of comparable size is crossed by a constant fraction of all the edges" |
 | 7 | Both labs count the solutions instead, so terms can cancel. | Los dos cuentan las soluciones, para que los términos puedan cancelarse. | Key line "Count, don't decide." | `KeyQuote` | "They count them, exactly"; "Once negative numbers are allowed in the middle of the computation, two expensive pieces can cancel into a cheap one." |
 | 8 | Claude's proof uses an identity from 1818, from the octonions. | La prueba de Claude usa una identidad de 1818, de los octoniones. | Rectangle x, y / u, v with two crossing diagonals, "6 bits"; small "1818 · octonions" tag | bespoke `CrossingRewrite` (beat 0) | "One of them does it with an identity a Danish mathematician wrote down in 1818."; "the table of signs of the multiplication of the octonions" |
 | 9 | Two crossing links become pieces that are cheap one way or the other. | Dos enlaces cruzados se convierten en piezas baratas en una dirección o en la otra. | The crossing splits into "row choice · 3 bits" + "column choice · 3 bits (columns)", a ± between them | bespoke `CrossingRewrite` (beat 1) | "Neither term means anything combinatorially, they take negative values, and only their sum is a count. But each term is cheap in one direction." |
@@ -34,9 +34,7 @@ worlds of counting and deciding. Everything else is library components.
 | 13 | Two labs, the same week, the same bound. The hypothesis is false. | Dos laboratorios, la misma semana, la misma cota. La hipótesis es falsa. | Key line "ETH is false. Twice." | `KeyQuote` | "Two labs, the same week, the same bound."; "ETH is false, twice, independently, with formal proofs, pending the human review that is now under way." |
 | 14 | (no narration) | | Outro card ~2 s: AGILabs badge, javieraguilar.ai, article title | outro | |
 
-**Word count (EN):** 11 + 15 + 8 + 10 + 6 + 12 + 10 + 10 + 13 + 13 + 12 + 9 + 12 = **141 words** (v1.1: row 2 now says what 3-SAT is)
-("10^10,000" spoken "ten to the ten thousand"), about 55 s at ~2.5 words/s plus the silent
-outro.
+**Length (v2):** about 54 s by the template's estimate (`npm run lint` checks it again after TTS).
 
 ## Hedges kept from the article
 

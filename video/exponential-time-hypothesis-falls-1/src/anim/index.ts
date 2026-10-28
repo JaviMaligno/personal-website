@@ -9,6 +9,7 @@ import { KeyQuote } from './KeyQuote.tsx';
 import { StatGrid } from './StatGrid.tsx';
 import { ExpanderCut } from './ExpanderCut.tsx';
 import { CrossingRewrite } from './CrossingRewrite.tsx';
+import { DinnerParty } from './DinnerParty.tsx';
 
 export type { AnimProps };
 
@@ -21,4 +22,5 @@ export const ANIMS: Record<string, React.FC<AnimProps & any>> = {
   StatGrid,
   ExpanderCut,
   CrossingRewrite,
+  DinnerParty,
 };

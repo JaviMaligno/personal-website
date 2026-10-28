@@ -57,9 +57,11 @@ export function frameState(_props: ExpanderCutProps, t: number, beats: number[],
   const b0 = beatAt(beats, 0);
   const d = Number.isFinite(dur) && dur > 0 ? dur : 6;
   const appear = easeOutCubic(progress(st, b0, 0.6));
-  const cutOn = progress(st, b0 + 0.7, 0.4);
-  const sweepLen = Math.max(0.5, d - (b0 + 1.1) - 0.5);
-  const sweep = clamp01(progress(st, b0 + 1.1, sweepLen));
+  // The cut comes in on the second beat when there is one ("The wall: ..."), else soon after the first.
+  const b1 = beats[1] !== undefined && Number.isFinite(beats[1]) ? beats[1] : b0 + 0.7;
+  const cutOn = progress(st, b1, 0.4);
+  const sweepLen = Math.max(0.5, d - (b1 + 0.4) - 0.5);
+  const sweep = clamp01(progress(st, b1 + 0.4, sweepLen));
   const angle = Math.PI / 2 + 0.2 + sweep * Math.PI;
   const crossing: number[] = EDGES.map(([i, j]) => (cutOn > 0 && side(i, angle) !== side(j, angle) ? 1 : 0));
   return {
@@ -67,6 +69,6 @@ export function frameState(_props: ExpanderCutProps, t: number, beats: number[],
     cut: { opacity: cutOn, angle },
     crossing,
     crossCount: crossing.reduce((a, b) => a + b, 0),
-    label: { opacity: progress(st, b0 + 1.3, 0.5) },
+    label: { opacity: progress(st, b1 + 0.6, 0.5) },
   };
 }

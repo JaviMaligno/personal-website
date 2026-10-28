@@ -1,4 +1,4 @@
-// The Exponential Time Hypothesis Fell Twice — article video. Narration from script.md (draft v1,
+// The Exponential Time Hypothesis Fell Twice — part 2 of 2, how it fell. Narration from script.md (draft v1,
 // pending approval). The wall (an expander that every cut severs) and the way through it (count,
 // so pieces can carry signs; one crossing becomes two cheap pieces) are the two bespoke scenes.
 import type { Cuts } from './types.ts';
@@ -7,38 +7,11 @@ import { L, anim, intro, outro, say, videos } from './narrate.ts';
 const build = (): Cuts => ({
   main: [
     intro('hook', [
-      say(0.4, 'Two AI labs just refuted the same famous hypothesis, hours apart.', 'Dos laboratorios de IA acaban de refutar la misma hipótesis famosa, con horas de diferencia.'),
+      say(0.4, 'Two AI labs just refuted the Exponential Time Hypothesis. Here is how.', 'Dos laboratorios de IA acaban de refutar la hipótesis del tiempo exponencial. Así lo hicieron.'),
     ]),
-    anim(
-      'bases',
-      'BarCompare',
-      {
-        bars: [
-          { label: L('Brute force', 'Fuerza bruta'), value: 2, display: '2ⁿ' },
-          { label: 'Schöning (1999)', value: 1.334, display: '1.334ⁿ' },
-          { label: 'PPSZ + Hertli', value: 1.308, display: '1.308ⁿ', highlight: true },
-        ],
-        max: 2,
-      },
-      [
-        say(0.3, '3-SAT asks if yes-or-no choices can meet every condition. It always took exponential time.', '3-SAT pregunta si unas decisiones de sí o no pueden cumplir todas las condiciones. Siempre costó tiempo exponencial.', {
-          en: 'Three-SAT asks if yes-or-no choices can meet every condition. It always took exponential time.',
-          es: 'Tres-SAT pregunta si unas decisiones de sí o no pueden cumplir todas las condiciones. Siempre costó tiempo exponencial.',
-        }),
-        say(0, 'Clever ideas shrank the base. Never to one.', 'Ideas ingeniosas rebajaron la base. Nunca a uno.'),
-      ],
-    ),
-    anim(
-      'papers',
-      'Counter',
-      { value: 800, suffix: '+', label: L('papers rest on ETH', 'artículos se apoyan en ETH'), beat: 1 },
-      [
-        say(0.2, 'In 1999 that became a bet: the Exponential Time Hypothesis.', 'En 1999 eso se convirtió en una apuesta: la hipótesis del tiempo exponencial.'),
-        say(0, 'Over 800 papers rest on it.', 'Más de 800 artículos se apoyan en ella.'),
-      ],
-    ),
     anim('wall', 'ExpanderCut', {}, [
-      say(0.3, "The wall: hard formulas can't be split without cutting too many links.", 'El muro: las fórmulas difíciles no se pueden partir sin cortar demasiados enlaces.'),
+      say(0.3, 'Link two conditions when they share a friend.', 'Une dos condiciones cuando comparten un amigo.'),
+      say(0, "The wall: hard puzzles can't be split without cutting too many links.", 'El muro: los puzles difíciles no se pueden partir sin cortar demasiados enlaces.'),
     ], { min: 5.5 }),
     anim(
       'count',
