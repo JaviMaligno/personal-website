@@ -1,6 +1,6 @@
 ---
 title: "Benchmaxing: ganar el examen no es hacer mejor el trabajo"
-description: "Qué está documentado sobre benchmaxing y qué reveló un pequeño piloto con Opus 5 y Fable 5: fallos compartidos, empates y una intuición que las pruebas no confirmaron."
+description: "Qué está documentado sobre benchmaxing y qué reveló un pequeño piloto con Opus 5 y Fable 5: fallos compartidos, empates, una intuición que las pruebas no confirmaron y una actualización con cinco modelos más."
 pubDate: 2026-09-16
 tags: ["IA", "Evaluación", "Claude", "Benchmarks"]
 lang: es
@@ -107,6 +107,8 @@ Existe una alternativa conservadora bajo esas reglas: conceder de forma durable 
 
 Lo interesante es la distancia entre identificar los conceptos correctos y cerrar la garantía que se está prometiendo. Una respuesta puede mencionar todos los patrones esperables y seguir necesitando una corrección sustancial.
 
+*Actualización, 28 de octubre de 2026: con cinco modelos más, este fallo resultó no ser común a todos. Ver [la actualización más abajo](#actualización-28-de-octubre-de-2026-cinco-modelos-más).*
+
 ## Los empates también cuentan
 
 En permisos, ambos resolvieron las ocho decisiones centrales: restricciones por tenant y propietario, excepciones acotadas, extremo temporal excluido y ocultación de importes. También detectaron que una caché compartida por tenant podía filtrar datos y que había que revalidar permisos y cambios posteriores.
@@ -114,6 +116,30 @@ En permisos, ambos resolvieron las ocho decisiones centrales: restricciones por 
 En el análisis de datos, ambos hicieron los cálculos pedidos y rechazaron la comparación engañosa: un sistema parecía mejor en el agregado porque había recibido muchas más tareas fáciles. También incluyeron el coste de corregir fallos y distinguieron una proyección de una conclusión causal.
 
 Esos casos no separaron a los modelos en los criterios centrales. No los descarté ni seguí aumentando la dificultad hasta conseguir un ganador. Marcan un límite del instrumento: tareas que parecían exigentes resultaron insuficientes para distinguirlos en esta muestra.
+
+## Actualización, 28 de octubre de 2026: cinco modelos más
+
+Tras publicar, quise saber si el fallo compartido era de Claude o del problema. Pasé los mismos cinco casos, con los mismos prompts congelados, a Kimi K3.1 Pro, Gemini 4 Argon y tres modelos de pesos abiertos: DeepSeek V4 Pro, Qwen3.8 2.4T y GLM 5.3. Después repetí los dos casos de workers tres veces más para los siete modelos, todo a través de Claude Code con las opciones originales. Cada modelo tiene ahora cuatro corridas por caso de workers.
+
+Corridas en las que el diseño mantiene la garantía de como mucho un efecto externo:
+
+| Modelo | Almacén (D2) | Cartas (D2b) | Total |
+|---|---|---|---|
+| Opus 5 | 0/4 | 0/4 | 0/8 |
+| Fable 5 | 0/4 | 0/4 | 0/8 |
+| Kimi K3.1 Pro | 3/4 | 4/4 | 7/8 |
+| Gemini 4 Argon | 2/4 | 4/4 | 6/8 |
+| DeepSeek V4 Pro | 0/4 | 2/4 | 2/8 |
+| Qwen3.8 2.4T | 0/4 | 2/4 | 2/8 |
+| GLM 5.3 | 0/4 | 1/4 | 1/8 |
+
+El fallo no era de todos. Kimi y Gemini cerraron la garantía en la mayoría de corridas: nunca pasan el permiso de emisión a un segundo worker, y una operación en vuelo que se queda sin dueño pasa a revisión en lugar de reenviarse. Opus y Fable no la cerraron en ninguna de sus dieciséis corridas. Sus diseños dejan siempre que otro worker tome el relevo al expirar el lease, dentro de una ventana de tiempo, que es justo la carrera descrita arriba. Los modelos de pesos abiertos quedan en medio, sobre todo en la variante de las cartas.
+
+Los otros casos se movieron menos, con una corrida cada uno. En el doble cobro, solo Gemini dio una respuesta completa. En permisos, empataron los siete. En el análisis de datos, los siete acertaron las cifras y dos se dejaron parte del planteamiento.
+
+Esto no demuestra benchmaxing de nadie. Fable falla exactamente igual que Opus, así que el resultado no dice nada específico sobre cómo se entrenó Opus 5. Kimi y Gemini, cuyas puntuaciones también despiertan sospechas, salieron mejor en un caso inédito que no han podido ver. Lo que cambia es mi lectura de la sección anterior: en este mecanismo, la diferencia no estaba entre modelos capaces y un problema difícil, sino entre familias de modelos. Saber si alguno de estos modelos está benchmaxeado requiere otra prueba: comparar cuánto cae cada uno al pasar de ítems de benchmarks públicos a variantes nuevas equivalentes. Lo dejo, junto con el trabajo agéntico que no medí, para una continuación.
+
+*Método de la actualización: la primera corrida de los modelos nuevos usó la API de OpenRouter, sin system prompt y con 16.384 tokens. Las repeticiones pasaron por Claude Code: Opus y Fable con la suscripción Max, el resto de modelos a través del endpoint compatible con Anthropic de OpenRouter. No verifiqué que el ajuste de esfuerzo llegue igual a todos los proveedores. Las respuestas se barajaron, se reetiquetaron y las evaluaron a ciegas subagentes de modelo con los criterios prerregistrados. Al evaluar entre las demás las respuestas de Opus y Fable de septiembre, reprodujeron los veredictos publicados. Cuatro corridas por caso no permiten estimar una tasa precisa. [Respuestas, veredictos y límites en el repositorio de evidencia](https://github.com/JaviMaligno/benchmaxing-probes/blob/main/assessment-expansion.md).*
 
 ## Qué queda de la sospecha
 
