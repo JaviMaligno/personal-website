@@ -6,7 +6,7 @@ tags: ["IA", "Matemáticas", "Complejidad Computacional", "Investigación", "Ant
 lang: es
 translationKey: exponential-time-hypothesis-falls
 heroImage: "/blog/exponential-time-hypothesis-falls.png"
-linkedinImage: /blog/exponential-time-hypothesis-falls-fig-3.png
+linkedinImage: /blog/exponential-time-hypothesis-falls-fig-4.png
 linkedinLinks:
   - label: "El paper de Anthropic y la prueba en Lean"
     url: "https://github.com/anthropics/formal-math/tree/main/eth"
@@ -14,11 +14,11 @@ linkedinLinks:
     url: "https://github.com/openai/math/blob/main/lean/docs/378.md"
 ---
 
-El 26 de octubre aparecieron dos papers con pocas horas de diferencia. Uno, de OpenAI, se titula [*The Exponential Time Hypothesis is False*](https://github.com/openai/math/blob/main/lean/docs/378.md). El otro, de Anthropic, firmado por "Claude", se titula [*A 2^o(n) Time Algorithm for 3-SAT*](https://github.com/anthropics/formal-math/tree/main/eth). Los dos dicen lo mismo: el problema difícil canónico de la informática, decidir si una fórmula booleana se puede satisfacer, no necesita tiempo exponencial. Los dos vienen con una formalización en Lean. Los dos los encontró un modelo interno. El paper de Anthropic fecha el hallazgo el 16 de octubre, "con 14M de tokens de salida y sin intervención humana"; el manuscrito de OpenAI está fechado el 17 de octubre.
+El 26 de octubre aparecieron dos papers con pocas horas de diferencia. Uno, de OpenAI, se titula [*The Exponential Time Hypothesis is False*](https://github.com/openai/math/blob/main/lean/docs/378.md). El otro, de Anthropic, firmado por "Claude", se titula [*A 2^o(n) Time Algorithm for 3-SAT*](https://github.com/anthropics/formal-math/tree/main/eth). Los dos dicen lo mismo: el problema difícil de referencia de la informática, que explico más abajo con una cena, se puede resolver más rápido de lo que nadie creía posible, y una conjetura sobre la que se habían construido cientos de resultados es falsa. Los dos vienen con una demostración comprobada línea a línea por Lean, un programa que verifica matemáticas de forma mecánica. A los dos los encontró un modelo de IA que los laboratorios no han lanzado. El paper de Anthropic fecha el hallazgo el 16 de octubre, "con 14M de tokens de salida y sin intervención humana"; el manuscrito de OpenAI está fechado el 17 de octubre.
 
 Los titulares se quedaron en lo de "la IA resuelve un enigma de hace décadas". Eso deja fuera lo que a mí me parece más interesante, que es el *cómo*. He leído los dos papers, y la respuesta no son dos trucos sin relación. Los dos algoritmos chocan con el mismo muro con el que ha chocado todo algoritmo de SAT desde los años ochenta, y los dos lo atraviesan de la misma manera: resolviendo un problema más difícil que el que se pedía y dejando que los números negativos se cancelen. Uno de ellos lo hace con una identidad que un matemático danés escribió en 1818.
 
-Nada de esto hace más rápidos los SAT solvers, y nada de esto toca P vs NP. Llegaré a por qué. Primero, qué es lo que ha caído.
+Nada de esto hace más rápido ningún software real, y nada de esto resuelve P vs NP, la famosa pregunta del millón de dólares. Llegaré a por qué. Primero, el problema en palabras sencillas, porque sin él nada de esta historia tiene sentido.
 
 <style>
 .eth-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -26,11 +26,54 @@ Nada de esto hace más rápidos los SAT solvers, y nada de esto toca P vs NP. Ll
 .eth-fig figcaption{color:#94a3b8;font-size:.85rem;margin:.9rem .25rem;text-align:center;line-height:1.55}
 </style>
 
+## El problema: una cena con condiciones
+
+Imagina que organizas una cena y tus amigos te han mandado condiciones. "Voy si viene Ana o si no viene Bea." "Al menos uno de Carlos y Diego." "Ana, Bea y Carlos juntos no, por favor." Cada amigo es una decisión de sí o no, y cada condición menciona como mucho a tres amigos. La pregunta: **¿existe alguna lista de invitados que cumpla todas las condiciones a la vez?**
+
+Eso es **3-SAT**. "SAT" viene de *satisfacibilidad*: ¿se pueden satisfacer todas las condiciones juntas? El "3" es porque cada condición, que se llama *cláusula*, implica como mucho tres variables de sí o no. Escrita como la escriben los informáticos, una cláusula tiene esta pinta: $(x_1 \lor \lnot x_2 \lor x_5)$, "viene el amigo 1, o no viene el 2, o viene el 5".
+
+Parece un pasatiempo, y es *el* pasatiempo. En 1971 Stephen Cook demostró que una familia enorme de problemas (horarios, rutas de reparto, comprobar que un chip no tiene fallos, sudokus y miles más) se puede traducir a él. Resuelve 3-SAT deprisa y los resuelves todos deprisa. Por eso es el problema difícil de referencia de la informática.
+
+Lo que lo hace difícil es una asimetría. Si alguien te da una lista de invitados, **comprobarla** es trivial: repasas las condiciones una a una. **Encontrar** una es otra historia. Con $n$ amigos hay $2^n$ listas posibles: con 30 amigos, unos mil millones; con 100, tantas que un millón de ordenadores comprobando cada uno mil millones de listas por segundo tardarían unos 40 millones de años en recorrerlas. La pregunta desde los años setenta es cuánto mejor que "probarlas todas" se puede hacer.
+
+<figure class="eth-fig">
+<svg viewBox="0 0 600 250" role="img" aria-label="La asimetría de 3-SAT. A la izquierda, comprobar una lista de invitados contra tres condiciones es una sola pasada y tres marcas. A la derecha, encontrar una lista válida probándolas todas son 2 elevado a n listas: 1.024 con 10 amigos, unos mil millones con 30 y un número de 31 cifras con 100.">
+  <text x="150" y="26" text-anchor="middle" font-size="13" fill="#5eead4" font-weight="700">Comprobar una lista: fácil</text>
+  <text x="450" y="26" text-anchor="middle" font-size="13" fill="#fbbf24" font-weight="700">Encontrar una: 2ⁿ listas</text>
+  <rect x="30" y="44" width="240" height="56" rx="8" fill="#0f1117" stroke="rgba(255,255,255,0.12)"/>
+  <text x="44" y="66" font-size="11" fill="#94a3b8">lista de invitados</text>
+  <g font-size="12.5" font-family="ui-monospace,'JetBrains Mono',monospace">
+    <text x="44" y="88" fill="#e2e8f0">Ana ✔  Bea ✘  Carlos ✔  Diego ✘</text>
+  </g>
+  <g font-size="12" fill="#e2e8f0">
+    <text x="44" y="132">Viene Ana, o no viene Bea</text>
+    <text x="44" y="162">Carlos o Diego, al menos uno</text>
+    <text x="44" y="192">Ana, Bea y Carlos juntos no</text>
+  </g>
+  <g font-size="15" fill="#2dd4bf" font-weight="700"><text x="256" y="133" text-anchor="end">✔</text><text x="256" y="163" text-anchor="end">✔</text><text x="256" y="193" text-anchor="end">✔</text></g>
+  <text x="150" y="228" text-anchor="middle" font-size="11.5" fill="#94a3b8">una pasada por las condiciones</text>
+  <line x1="300" y1="44" x2="300" y2="220" stroke="rgba(255,255,255,0.1)"/>
+  <g font-size="12" fill="#e2e8f0">
+    <text x="330" y="78">10 amigos</text><text x="330" y="132">30 amigos</text><text x="330" y="186">100 amigos</text>
+  </g>
+  <rect x="420" y="66" width="19" height="16" rx="2" fill="#f59e0b"/>
+  <rect x="420" y="120" width="48" height="16" rx="2" fill="#f59e0b"/>
+  <rect x="420" y="174" width="150" height="16" rx="2" fill="#f59e0b"/>
+  <g font-size="12" font-family="ui-monospace,'JetBrains Mono',monospace" fill="#fbbf24">
+    <text x="447" y="78">1.024</text><text x="476" y="132">≈ mil millones</text><text x="420" y="210">un número de 31 cifras</text>
+  </g>
+  <text x="450" y="236" text-anchor="middle" font-size="11.5" fill="#94a3b8">(longitud: número de cifras)</text>
+</svg>
+<figcaption>La asimetría de 3-SAT. Comprobar una respuesta propuesta es rápido; encontrar una probándolas todas duplica el coste con cada amigo que añades.</figcaption>
+</figure>
+
 ## Qué decía la hipótesis
 
-Una instancia de 3-SAT es una lista de cláusulas como $(x_1 \lor \lnot x_2 \lor x_5)$ sobre $n$ variables verdadero/falso, y la pregunta es si alguna asignación hace verdaderas todas las cláusulas. Probar las $2^n$ asignaciones siempre funciona. El juego desde los años ochenta ha sido ganarle a eso, y se ha jugado sobre la *base* de la exponencial: el paseo aleatorio de Schöning consiguió $1.334^n$ en 1999, PPSZ con el análisis de Hertli $1.308^n$, el algoritmo determinista de Liu $1.328^n$. Cuarenta años de trabajo muy ingenioso, y la base nunca se acercó a 1.
+Los mejores algoritmos no lo prueban todo: podan, adivinan con astucia y dan marcha atrás. Pero su tiempo sigue creciendo de forma *exponencial*: cada variable de más multiplica el trabajo por un factor fijo, la *base*. Para probarlo todo la base es 2 (un amigo más, el doble de listas). El paseo aleatorio de Schöning la bajó a $1.334$ en 1999, PPSZ con el análisis de Hertli a $1.308$, el algoritmo determinista de Liu a $1.328$. Parece poca ganancia y es enorme: $2^{100}$ es un número de 31 cifras, $1.308^{100}$ uno de 12. Pero cuarenta años de trabajo muy ingenioso nunca acercaron la base a 1.
 
-En 1999 Russell Impagliazzo y Ramamohan Paturi convirtieron esa experiencia en una hipótesis: existe una constante $\delta > 0$ tal que 3-SAT necesita tiempo $2^{\delta n}$. Puedes rebajar la base, dice la **hipótesis del tiempo exponencial** (ETH, por sus siglas en inglés), pero no puedes llevarla a 1. Su hermana más fuerte, SETH, dice que con cláusulas lo bastante largas ni siquiera se puede rebajar mucho.
+En 1999 Russell Impagliazzo y Ramamohan Paturi convirtieron esa experiencia en una conjetura, la **hipótesis del tiempo exponencial** (ETH, por sus siglas en inglés): la base se puede bajar, pero nunca hasta 1. Por listo que sea el algoritmo, cada variable de más costará siempre un multiplicador fijo, algún $2^{\delta}$ con $\delta > 0$. Su hermana más fuerte, SETH, dice que cuando las condiciones pueden mencionar muchas variables, ni siquiera se puede bajar mucho la base.
+
+A un algoritmo que rompe esto se le llama *subexponencial*, y se escribe $2^{o(n)}$: el multiplicador que pagas por cada variable de más va encogiendo hacia 1 a medida que el problema crece. Sigue sin ser rápido en ningún sentido cotidiano, pero es otro tipo de crecimiento, y ETH decía que era imposible.
 
 <figure class="eth-fig">
 <svg viewBox="0 0 600 270" role="img" aria-label="Gráfico de barras del mejor tiempo conocido para 3-SAT escrito como base elevada a n: fuerza bruta 2, Schöning 1999 1,334, Liu 2018 determinista 1,328, PPSZ con Hertli 2014 aleatorizado 1,308. Los algoritmos de 2026 tienen una base efectiva que tiende a 1 al crecer n, que es lo que refuta la hipótesis del tiempo exponencial.">
@@ -75,9 +118,9 @@ Los dos papers dan ahora un algoritmo determinista que corre en $2^{o(n)}$: para
 
 Esta es la intuición de por qué la base nunca llegó a 1, y es el mismo dibujo en los dos papers.
 
-Dibuja la fórmula como un grafo: las cláusulas son nodos, y dos cláusulas se unen si comparten variables. El paper de Anthropic dice que cada arista "lleva bits", uno por variable compartida. El algoritmo rápido natural es divide y vencerás: corta el grafo en dos mitades, enumera todos los valores posibles de los bits que cruzan el corte y, para cada valor, resuelve las dos mitades por separado. Si cruzan pocos bits, eso es muchísimo más rápido que la fuerza bruta.
+Vuelve a la cena. Dibuja cada condición como un punto, y une dos puntos con una línea cuando mencionan al mismo amigo. El paper de Anthropic dice que cada línea "lleva bits", uno por decisión de sí o no compartida. El atajo natural es divide y vencerás: parte el dibujo en dos mitades, prueba todas las respuestas posibles solo para los amigos cuyas líneas cruzan el corte y, para cada una, resuelve cada mitad por su cuenta. Si tus amigos forman dos grupos que apenas se conocen, cruzan el corte pocas decisiones, y esto es muchísimo más rápido que probar todas las listas.
 
-El problema es que la fórmula no la eliges tú. Las fórmulas aleatorias, y en general las instancias difíciles, parecen **grafos expansores**, en los que cualquier forma de partir los nodos en dos mitades de tamaño comparable la cruza una fracción constante de todas las aristas. En palabras del paper, "cualquier algoritmo que fije de antemano un árbol de cortes y enumere los bits que cruzan cada corte tarda $2^{\Omega(n)}$. Por eso las ideas anteriores de divide y vencerás solo mejoraban la constante del exponente."
+El problema es que a los amigos no los eliges tú. Los conjuntos de condiciones aleatorios, y en general las instancias difíciles, parecen **grafos expansores**, en los que cualquier forma de partir los nodos en dos mitades de tamaño comparable la cruza una fracción constante de todas las aristas. En palabras del paper, "cualquier algoritmo que fije de antemano un árbol de cortes y enumere los bits que cruzan cada corte tarda $2^{\Omega(n)}$. Por eso las ideas anteriores de divide y vencerás solo mejoraban la constante del exponente."
 
 <figure class="eth-fig">
 <svg viewBox="0 0 600 262" role="img" aria-label="Dos grafos lado a lado. A la izquierda, una fórmula cuyo grafo de cláusulas tiene dos grupos poco conectados: un corte entre ellos lo cruzan solo dos aristas, así que divide y vencerás sale barato. A la derecha, un grafo tipo expansor en el que cualquier corte equilibrado lo cruzan muchas aristas, así que enumerar los bits que cruzan cuesta tiempo exponencial elija el corte que elija.">
@@ -119,7 +162,7 @@ Para atravesar el muro hay que dejar de pagar por cada bit que cruza. Y no hay m
 
 ## Contar, no decidir
 
-Así que los dos papers hacen algo que suena al revés. No deciden si existe una asignación que satisface la fórmula. Las **cuentan**, exactamente, que es el problema #3-SAT y en principio es mucho más difícil (lo mejor que había para contar rondaba $1.64^n$, peor que para decidir). Comprobar si la cuenta es cero decide la satisfacibilidad gratis.
+Así que los dos papers hacen algo que suena al revés. No preguntan "¿hay alguna lista de invitados válida?". Preguntan "¿**cuántas** listas válidas hay?" y calculan el número exacto, que es el problema #3-SAT y en principio es mucho más difícil (lo mejor que había para contar rondaba $1.64^n$, peor que para decidir). Comprobar si la cuenta es cero decide la satisfacibilidad gratis.
 
 ¿Por qué complicarse la vida? Porque una cuenta es una suma, y una suma es álgebra. El número de asignaciones que satisfacen la fórmula es
 
@@ -128,6 +171,8 @@ $$\#F = \sum_{x \in \{0,1\}^n} \prod_{\text{cláusulas } e} \Phi_e(x)$$
 donde cada $\Phi_e$ vale 1 si la cláusula $e$ se cumple y 0 si no. Una suma de productos se puede reordenar, reescribir, expandir y reagrupar, y nada obliga a que los términos intermedios valgan 0 o 1, ni siquiera a que sean positivos. En cuanto se admiten números negativos a mitad del cálculo, dos piezas caras pueden cancelarse en una barata. Los algoritmos de ramificación, que preguntan "¿y si $x_1$ es verdadera?", no pueden hacer esto: cada rama es una subpregunta real con una respuesta real no negativa.
 
 Ese es el movimiento común. A partir de ahí los dos papers lo implementan de maneras completamente distintas.
+
+*Si solo quieres la idea, ya la tienes: el muro es que los problemas difíciles no se pueden partir limpiamente, y el camino es contar con números que pueden ser negativos, para que las partes caras se cancelen. Las dos secciones siguientes cuentan cómo lo hizo cada laboratorio, con algo más de matemáticas; puedes saltar a [Qué cambia y qué no](#qué-cambia-y-qué-no) sin perder el hilo.*
 
 ## La ruta de Claude: una identidad de 1818
 
@@ -290,7 +335,7 @@ Y los mecanismos riman más de lo que parece. La construcción de OpenAI está h
 
 **En la práctica no cambia nada.** El paper de Anthropic es inusualmente directo al respecto. Para una 3-CNF con $m = 5n$ cláusulas, su cota solo mejora los $2^n$ de la fuerza bruta cuando $n > 10^{10\,000}$, y la cota solo en $n$, cuando $n > 10^{10^8}$. Los autores añaden que su enfoque general "parece poco probable que dé ninguna mejora general salvo que $n > 10^7$, se instancie como se instancie", mientras que la fuerza bruta ya es imposible con $n = 100$. Tu SAT solver, tu planificador, tu herramienta de verificación van exactamente igual de rápido que la semana pasada.
 
-**P vs NP sigue intacto.** Una cota $2^{o(n)}$ para 3-SAT no se traslada a todos los problemas NP, porque las reducciones en tiempo polinómico pueden inflar polinómicamente el número de variables, y $2^{o(n)}$ compuesto con un polinomio ya no es subexponencial. Para problemas con reducciones que mantienen el tamaño lineal, sí se traslada: OpenAI obtiene conteo subexponencial de conjuntos independientes, coloraciones propias y emparejamientos perfectos; Anthropic lista Independent Set, Clique, Vertex Cover y Dominating Set en $O(2^{\delta n})$ para todo $\delta > 0$.
+**P vs NP sigue intacto.** P vs NP pregunta si problemas como 3-SAT se pueden resolver en tiempo *polinómico*, con un trabajo que crece como $n^2$ o $n^3$, muchísimo más rápido que nada de lo que hay en estos papers. ETH era una apuesta más fuerte que P ≠ NP, así que perderla no dice nada de la más débil. Y una cota $2^{o(n)}$ para 3-SAT no se traslada a todos los problemas NP, porque las reducciones en tiempo polinómico pueden inflar polinómicamente el número de variables, y $2^{o(n)}$ compuesto con un polinomio ya no es subexponencial. Para problemas con reducciones que mantienen el tamaño lineal, sí se traslada: OpenAI obtiene conteo subexponencial de conjuntos independientes, coloraciones propias y emparejamientos perfectos; Anthropic lista Independent Set, Clique, Vertex Cover y Dominating Set en $O(2^{\delta n})$ para todo $\delta > 0$.
 
 **Una estantería de teoremas ha cambiado de estado.** Todo lo demostrado "bajo ETH" o "bajo SETH" ha perdido su hipótesis. Parte sobrevive sobre cimientos más débiles: las cotas inferiores cuadráticas para la distancia de edición y la subsecuencia común más larga también se siguen de la conjetura de Orthogonal Vectors, que ninguno de los dos papers refuta. Mucho de lo demás, el equivalente a unos 800 artículos, necesita ahora otra razón para ser cierto o resulta ser falso.
 

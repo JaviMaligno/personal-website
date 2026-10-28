@@ -21,9 +21,9 @@ const build = (): Cuts => ({
         max: 2,
       },
       [
-        say(0.3, 'Since the 1980s, every 3-SAT algorithm has needed exponential time.', 'Desde los ochenta, todo algoritmo para 3-SAT ha necesitado tiempo exponencial.', {
-          en: 'Since the 1980s, every three-SAT algorithm has needed exponential time.',
-          es: 'Desde los ochenta, todo algoritmo para tres-SAT ha necesitado tiempo exponencial.',
+        say(0.3, '3-SAT asks if yes-or-no choices can meet every condition. It always took exponential time.', '3-SAT pregunta si unas decisiones de sí o no pueden cumplir todas las condiciones. Siempre costó tiempo exponencial.', {
+          en: 'Three-SAT asks if yes-or-no choices can meet every condition. It always took exponential time.',
+          es: 'Tres-SAT pregunta si unas decisiones de sí o no pueden cumplir todas las condiciones. Siempre costó tiempo exponencial.',
         }),
         say(0, 'Clever ideas shrank the base. Never to one.', 'Ideas ingeniosas rebajaron la base. Nunca a uno.'),
       ],

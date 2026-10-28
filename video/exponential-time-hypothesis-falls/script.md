@@ -20,7 +20,7 @@ worlds of counting and deciding. Everything else is library components.
 | # | Narration (EN) | Narration (ES) | Visual | Component | Source sentence |
 |---|---|---|---|---|---|
 | 1 | Two AI labs just refuted the same famous hypothesis, hours apart. | Dos laboratorios de IA acaban de refutar la misma hipótesis famosa, con horas de diferencia. | Hook card | intro | "On 26 October two papers appeared within hours of each other."; "Both were found by an internal model." |
-| 2 | Since the 1980s, every 3-SAT algorithm has needed exponential time. | Desde los ochenta, todo algoritmo para 3-SAT ha necesitado tiempo exponencial. | Bars: brute force 2ⁿ | `BarCompare` | "Trying all 2^n assignments always works. The game since the 1980s has been to beat that" |
+| 2 | 3-SAT asks if yes-or-no choices can meet every condition. It always took exponential time. | 3-SAT pregunta si unas decisiones de sí o no pueden cumplir todas las condiciones. Siempre costó tiempo exponencial. | Bars: brute force 2ⁿ | `BarCompare` | "is there any guest list that meets every condition at once? That is 3-SAT."; "their running time still grows exponentially" |
 | 3 | Clever ideas shrank the base. Never to one. | Ideas ingeniosas rebajaron la base. Nunca a uno. | Bars 1.334ⁿ, 1.308ⁿ grow, shorter | `BarCompare` | "Schöning's random walk got 1.334^n in 1999, PPSZ and Hertli's analysis got 1.308^n"; "the base never got close to 1." |
 | 4 | In 1999 that became a bet: the Exponential Time Hypothesis. | En 1999 eso se convirtió en una apuesta: la hipótesis del tiempo exponencial. | Counter 800+ (starts on line 5) | `Counter` | "In 1999 Russell Impagliazzo and Ramamohan Paturi turned that experience into a hypothesis" |
 | 5 | Over 800 papers rest on it. | Más de 800 artículos se apoyan en ella. | Counter reaches "800+", label "papers rest on ETH" | `Counter` | "more than 800 papers proving at least one result only under ETH or something that implies it" |
@@ -34,7 +34,7 @@ worlds of counting and deciding. Everything else is library components.
 | 13 | Two labs, the same week, the same bound. The hypothesis is false. | Dos laboratorios, la misma semana, la misma cota. La hipótesis es falsa. | Key line "ETH is false. Twice." | `KeyQuote` | "Two labs, the same week, the same bound."; "ETH is false, twice, independently, with formal proofs, pending the human review that is now under way." |
 | 14 | (no narration) | | Outro card ~2 s: AGILabs badge, javieraguilar.ai, article title | outro | |
 
-**Word count (EN):** 11 + 10 + 8 + 10 + 6 + 12 + 10 + 10 + 13 + 13 + 12 + 9 + 12 = **136 words**
+**Word count (EN):** 11 + 15 + 8 + 10 + 6 + 12 + 10 + 10 + 13 + 13 + 12 + 9 + 12 = **141 words** (v1.1: row 2 now says what 3-SAT is)
 ("10^10,000" spoken "ten to the ten thousand"), about 55 s at ~2.5 words/s plus the silent
 outro.
 
