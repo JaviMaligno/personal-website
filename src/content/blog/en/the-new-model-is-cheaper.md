@@ -1,7 +1,7 @@
 ---
 title: "The New Model Is Cheaper. Testing It Isn't."
 description: "Swapping the model behind a production agent is rarely plug-and-play, because the harness was tuned to the old one. The method I use to test a swap, what one swap cost, and the volume below which the evaluation pays the provider more than production does."
-pubDate: 2026-11-02
+pubDate: 2026-11-26
 tags: ["AI", "Evaluation", "LLM", "Engineering", "Economics"]
 lang: en
 translationKey: the-new-model-is-cheaper

@@ -1,7 +1,7 @@
 ---
 title: "El modelo nuevo es más barato. Probarlo, no."
 description: "Cambiar el modelo de un agente en producción casi nunca es enchufar y listo, porque el harness está ajustado al anterior. El método que uso para probar un cambio, lo que costó uno, y el volumen por debajo del cual la evaluación le deja al proveedor más que la producción."
-pubDate: 2026-11-02
+pubDate: 2026-11-26
 tags: ["IA", "Evaluación", "LLM", "Ingeniería", "Economía"]
 lang: es
 translationKey: the-new-model-is-cheaper
