@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 import matter from 'gray-matter';
+import { convertMathForDevto } from './math.mjs';
 
 /**
  * Publishes a blog post to Dev.to
@@ -77,7 +78,7 @@ async function publishToDevto() {
 
     let devtoContent = content;
 
-    // --- Dev.to compatibility: it renders neither inline SVG nor $$…$$ KaTeX ---
+    // --- Dev.to compatibility: it renders neither inline SVG nor $…$ KaTeX ---
     // 1) Strip scoped <style> blocks (would show as raw CSS text on Dev.to).
     devtoContent = devtoContent.replace(/<style>[\s\S]*?<\/style>\s*/g, '');
 
@@ -99,26 +100,9 @@ async function publishToDevto() {
       return `![${alt}](${url})\n\n*${cap}*`;
     });
 
-    // 3) KaTeX: block $$…$$ → Dev.to's {% katex %} liquid tag.
-    //    Markdown turns "\_" inside \text{} into a bare "_" that KaTeX reads as a
-    //    subscript and rejects ("Expected 'EOF', got '_'"); collapse underscores
-    //    inside \text{} to spaces (no subscripts live there).
-    devtoContent = devtoContent.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, (_m, eq) => {
-      const safe = eq.trim().replace(/\\text\{([^}]*)\}/g, (_mm, inner) => `\\text{${inner.replace(/\\?_/g, ' ')}}`);
-      return `{% katex %}\n${safe}\n{% endkatex %}`;
-    });
-    // 4) Inline $…$ → readable unicode (Dev.to has no reliable inline-math tag).
-    //    Common TeX commands become their symbols so "\sqrt{\log n}" reads "√log n".
-    const texSymbols = {
-      sqrt: '√', log: 'log', lnot: '¬', lor: '∨', land: '∧', oplus: '⊕', le: '≤', ge: '≥',
-      in: '∈', dots: '…', cdot: '·', times: '×', approx: '≈', pm: '±',
-      Omega: 'Ω', Phi: 'Φ', Pi: 'Π', delta: 'δ', lambda: 'λ', sigma: 'σ', ell: 'ℓ',
-    };
-    devtoContent = devtoContent.replace(/\$([^$\n]+)\$/g, (_m, eq) =>
-      eq.replace(/\\text\{([^}]*)\}/g, '$1').replace(/\\,/g, ' ').replace(/\^N\b/g, 'ᴺ').replace(/\\#/g, '#')
-        .replace(/\\([A-Za-z]+)/g, (cmd, name) => (name in texSymbols ? texSymbols[name] + (/^[a-z]/i.test(texSymbols[name]) ? ' ' : '') : cmd))
-        .replace(/[{}]/g, '').replace(/ +/g, ' ').trim()
-    );
+    // 3) Math ($…$ and $$…$$) → Dev.to's {% katex %} / {% katex inline %}
+    //    liquid tags, escaped against Dev.to's backslash stripping (math.mjs).
+    devtoContent = convertMathForDevto(devtoContent);
 
     // Transform content for Dev.to compatibility
     // Replace Loom iframe embeds with links (Dev.to doesn't support Loom iframes)
