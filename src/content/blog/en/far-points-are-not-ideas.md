@@ -10,9 +10,7 @@ linkedinImage: "/blog/far-points-are-not-ideas-linkedin.png"
 ---
 Recently [@syntheticbeef posted a recipe on X](https://x.com/syntheticbeef/status/2112904858718367750) for getting AI to invent genuinely new ideas. You embed the games on Steam, pick points in the space that are far from all of them, turn each point back into a game description, and rank the results by how different they are from what already exists. If a point is far from everything, the idea that comes out of it should be new.
 
-My objection was immediate. In a space with a thousand dimensions almost everything is far from everything, and almost all of that space is noise. An empty point is not necessarily a place where an idea fits. It may be a place where no meaningful text fits at all.
-
-A friend replied that coherence is just one more dimension, with its own local optima, and that image diffusion proves it: ask for an astronaut riding a horse and you get one, even though the model has never seen such a thing. I agreed that those strange, meaningful corners exist. But diffusion reaches them by starting from concepts it knows ("astronaut", "horse") and combining them by similarity. The tweet does the opposite: it looks for dissimilarity, with no concept to start from.
+My objection was immediate: in a space with a thousand dimensions almost everything is far from everything, and almost all of that space is noise. An empty point does not mean there is an idea there; there may be no meaningful text there at all. A friend replied that coherence is just another dimension, with its own local optima, and that image diffusion shows strange, meaningful corners exist: an astronaut riding a horse. I agreed that they exist, but diffusion reaches them by starting from a concept and moving by similarity; the tweet looks for dissimilarity with no starting point.
 
 It was an argument that could be measured, so I measured it.
 
@@ -24,7 +22,7 @@ It was an argument that could be measured, so I measured it.
 
 ## Three maps
 
-The main map is the tweet's: the 71,939 Steam games released before 2024, with their descriptions, genres and tags. I set aside the 41,000 released afterwards, to check at the end whether any idea got ahead of what came out later.
+The main map is the tweet's: the Steam games released before 2024, about 68,000, with their descriptions, genres and tags. I set aside the 41,000 released afterwards, to check at the end whether any idea got ahead of what came out later.
 
 A video game catalogue is a very particular space, and I did not want the conclusion to depend on it. So I repeated everything on two other catalogues that look nothing like Steam:
 
@@ -33,11 +31,11 @@ A video game catalogue is a very particular space, and I did not want the conclu
 
 Each text becomes a vector with Qwen3-Embedding-0.6B, an open embedding model. To measure how close two texts are I use the cosine between their vectors: 1 if they point the same way, 0 if they have nothing to do with each other.
 
-A note on the Steam map. I left out the 3,717 games that Steam tags as sexual content or nudity, because Azure's content filter rejected requests that showed them as examples. I checked afterwards that adding them back does not change the geometry: the nearest game to the far points stays at the same distance, and the centre of the map barely moves (cosine 0.9999 between the two centres). Explicit games without the tag did stay in, though, and one of them appears below.
+## Two ways to turn a point into text
 
-## Turning a point into a game
+A point in the space is a list of 1,024 numbers. No language model can read it, so the tweet takes for granted a step that is not trivial: turning the point back into text. There are two ways to do it.
 
-A point in the space cannot be read directly. To "decode" it, an LLM writes a game listing in a loop. In each round it sees the 8 real games nearest to the point and, after writing, it only gets back a score: the cosine between its listing and the point. Four rounds of three candidates, and I keep the best. On arXiv the LLM writes a paper abstract, and on patents, an application.
+The first is the one anyone would think of. You show the LLM the 8 real games nearest to the point, ask it for a game listing, and tell it how close it got: the cosine between its listing and the point. With that score it tries again, like a game of hot and cold. Four rounds of three candidates, and I keep the best. On arXiv the LLM writes a paper abstract, and on patents, an application.
 
 <figure class="lg-fig">
 <svg viewBox="0 0 600 190" role="img" aria-label="The decoding loop: the target point gives its 8 nearest neighbours, the LLM writes a listing, it is embedded, its cosine with the point is measured and only that score goes back to the LLM, for 4 rounds of 3 candidates.">
@@ -58,6 +56,12 @@ A point in the space cannot be read directly. To "decode" it, an LLM writes a ga
 <figcaption>The decoder. The LLM never sees the point, only the games around it and a score of how close it got.</figcaption>
 </figure>
 
+This approach has an obvious problem. Give it 8 games and it will most likely write something that resembles those 8, and then the point is irrelevant: it is the same as asking "make me a game based on these". The only thing that could make the point matter is the cosine score. If hot and cold worked, the LLM would move towards the point beyond what the neighbours give it. That can be measured, and I measured it.
+
+The second way shows nothing. A GPU search generates texts that directly maximise the cosine with the point. Those texts get very close, but they are word soup, so Claude or Codex then rewrite them to be readable, with the cosine as their only clue. Two models have to accept the result as coherent. This is the real test of the tweet's idea: if there is a coherent text near the point, this is the method most likely to find it.
+
+## Five kinds of point
+
 I tried five kinds of point. Each kind is what an experiment calls an arm:
 
 - **REAL**: the point of a real game that I hide from the map. This is the control. If the method cannot recover a game that exists, nothing else means anything.
@@ -66,19 +70,195 @@ I tried five kinds of point. Each kind is what an experiment calls an arm:
 - **FAR**: the tweet's recipe. Out of 20,000 random directions, the 50 furthest from any game.
 - **PLAIN**: no map. I just ask the model to "invent a new game, different from any that exists".
 
-On Steam I used six generators, the models that write the listings: Claude Opus, Sonnet and Haiku, gpt-6.1-sol, and gpt-6-luna through the API and through Codex. On arXiv and patents I used two, luna through Codex and Sonnet. Before scoring, another model rewrote every listing into the same 120-word format, so that style would not give away where it came from. Then four different models scored them blind on coherence, feasibility, appeal, and novelty against the five most similar existing texts. Real games released after 2024 were mixed in as a reference. I also scored 80 by hand.
+On Steam I used six generators, the models that write the listings: Claude Opus, Sonnet and Haiku, gpt-6.1-sol, and gpt-6-luna through the API and through Codex. On arXiv and patents I used two, luna through Codex and Sonnet. Before scoring, another model rewrote every listing into the same 120-word format, so that style would not give away where it came from. Then four different models scored them blind on coherence, feasibility, appeal, and novelty against the five most similar existing texts. Real games released after 2024 were mixed in as a reference. I also scored 64 of the same items by hand.
 
-## What comes out of each kind of point
+## What comes out when you show the neighbours
 
-**REAL works.** When the point is a hidden game, the decoder goes back to its neighbourhood, at a cosine of around 0.7. It gets as close as the most similar existing game, and sometimes closer. With *Star Farmer: Warlock of the Universe* hidden, it wrote *Voidbloom Run*, a space-farming game about growing seeds on hostile planets, at 0.87.
+**REAL works.** When the point is a hidden game, the decoder goes back to its neighbourhood, at a cosine of around 0.7. With *Star Farmer: Warlock of the Universe* hidden, it wrote *Voidbloom Run*, a space-farming game about growing seeds on hostile planets, at 0.87.
 
-And it rebuilds whatever is on the map, including what nobody would want. One of the hidden games was *SEX with HITLER: WW2*, and the neighbours the model saw included its two sequels. It wrote *Hitler: No Future in Berlin*, a visual novel with shooting in which the defeated Führer tries to survive in the ruins of Berlin and meets "five adult heroines" (cosine 0.69). The method has no judgement. It goes wherever there is text.
+And it rebuilds whatever is on the map, including what nobody would want. One of the hidden games was *SEX with HITLER: WW2*, and the neighbours the model saw included its two sequels. It wrote *Hitler: No Future in Berlin*, a visual novel with shooting in which the defeated Führer tries to survive in the ruins of Berlin and meets "five adult heroines" (cosine 0.69).
 
 **INTERP produces literal combinations.** Between a virtual reality meditation game and a strategy game with demons came *Ashen Breath: Legions of the Void*, a dark-fantasy tactical RPG "with an optional VR meditation mode" (0.84). It is what was asked for, and you can see the seam.
 
-**FAR goes nowhere.** The listing lands at a cosine of 0.03 to 0.05 from the point, depending on the generator, which is practically zero. And it is not that the LLM is doing badly: the nearest existing game to those points is at 0.046. What comes out is an ordinary game. The neighbours of one point were *Challenge from the Black Cat*, a Japanese hamster puzzle game and *My Furry Stepmom*, and out came *Pounce & Pop: Kitten's Block Quest*, a kitten pushing blocks to get home (0.069). Another gave *The Museum of Unfinished Things*, a museum that rearranges itself at night (0.028). Reasonable games, pleasant even, that could already be on Steam.
+**FAR goes nowhere.** The listing lands at a cosine of 0.03 to 0.05 from the point, depending on the generator, which is practically zero. The nearest existing game to those points is at 0.046, so there is nothing better either. What comes out is an ordinary game that resembles the neighbours it was shown. One point's neighbours were *Challenge from the Black Cat*, a Japanese hamster puzzle game and *My Furry Stepmom*, and out came *Pounce & Pop: Kitten's Block Quest*, a kitten pushing blocks to get home (0.069). Another gave *The Museum of Unfinished Things*, a museum that rearranges itself at night (0.028). Reasonable games, pleasant even, that could already be on Steam.
 
-The geometry explains why. Texts do not spread across the whole space. They all share a common direction, so they occupy a narrow cap of the sphere: any two Steam games have a cosine of 0.41, while two random directions have 0 ± 0.03. FAR points are random directions picked for being far from everything, so they fall outside the cap. Any listing the LLM writes, however odd, falls inside it.
+The same happens on arXiv and patents: what gets written for a FAR point lands below 0.08.
+
+## Is it just copying the neighbours?
+
+FAR listings were much closer to their 8 neighbours than to the point itself: on Steam, at a cosine of 0.63–0.72 from their centroid, against 0.03 from the point. That held for 100% of FAR listings in all three catalogues. The question from before was still open: does the cosine score add anything, or is it all the neighbours?
+
+To separate the two I ran a causal test. Same point, same cosine score, and only one change: the neighbours the LLM sees. They can be the true ones, another point's, or none at all. I ran it on Steam and arXiv, with two generators (luna and Sonnet), on REAL, GAP and FAR, with 20 points per combination and the decision rules written down before running anything.
+
+<figure class="lg-fig">
+<svg viewBox="0 0 600 300" role="img" aria-label="Mean cosine between listing and point depending on the neighbours shown. With the true neighbours, REAL reaches 0.73 on Steam and 0.78 on arXiv; with another point's neighbours or none it drops to 0.3-0.4. In FAR, with the true neighbours it only reaches 0.03-0.05, and without them it stays below zero.">
+<g font-size="11" fill="#94a3b8">
+<rect x="150" y="8" width="11" height="11" fill="#2dd4bf"/><text x="166" y="18">true neighbours</text>
+<rect x="292" y="8" width="11" height="11" fill="#f59e0b"/><text x="308" y="18">another point's</text>
+<rect x="406" y="8" width="11" height="11" fill="#64748b"/><text x="422" y="18">no neighbours</text>
+</g>
+<line x1="45" y1="230" x2="300" y2="230" stroke="rgba(255,255,255,0.25)"/><line x1="325" y1="230" x2="580" y2="230" stroke="rgba(255,255,255,0.25)"/>
+<g stroke="rgba(255,255,255,0.07)"><line x1="45" y1="105" x2="300" y2="105"/><line x1="325" y1="105" x2="580" y2="105"/><line x1="45" y1="55" x2="300" y2="55"/><line x1="325" y1="55" x2="580" y2="55"/></g>
+<g font-size="10" fill="#94a3b8" text-anchor="end"><text x="40" y="233">0</text><text x="40" y="108">0.5</text><text x="40" y="58">0.7</text></g>
+<g fill="#2dd4bf"><rect x="60" y="48" width="18" height="182"/><rect x="145" y="105.5" width="18" height="124.5"/><rect x="230" y="223.25" width="18" height="6.75"/>
+<rect x="340" y="34" width="18" height="196"/><rect x="425" y="114" width="18" height="116"/><rect x="510" y="217" width="18" height="13"/></g>
+<g fill="#f59e0b"><rect x="82" y="120" width="18" height="110"/><rect x="167" y="139.75" width="18" height="90.25"/><rect x="252" y="230" width="18" height="5.25"/>
+<rect x="362" y="143.75" width="18" height="86.25"/><rect x="447" y="153" width="18" height="77"/><rect x="532" y="230" width="18" height="4.25"/></g>
+<g fill="#64748b"><rect x="104" y="124" width="18" height="106"/><rect x="189" y="142.25" width="18" height="87.75"/><rect x="274" y="230" width="18" height="3.25"/>
+<rect x="384" y="137.5" width="18" height="92.5"/><rect x="469" y="156.25" width="18" height="73.75"/><rect x="554" y="230" width="18" height="3.5"/></g>
+<g font-size="11.5" fill="#e2e8f0" text-anchor="middle"><text x="91" y="266">REAL</text><text x="176" y="266">GAP</text><text x="261" y="266">FAR</text><text x="371" y="266">REAL</text><text x="456" y="266">GAP</text><text x="541" y="266">FAR</text></g>
+<g font-size="10" fill="#5eead4" text-anchor="middle"><text x="239" y="216">0.03</text><text x="519" y="210">0.05</text></g>
+<g font-size="9.5" fill="#fbbf24" text-anchor="middle"><text x="268" y="247">−0.02</text><text x="548" y="247">−0.02</text></g>
+<g font-size="12.5" fill="#f8fafc" text-anchor="middle" font-weight="600"><text x="172" y="290">Steam</text><text x="452" y="290">arXiv</text></g>
+</svg>
+<figcaption>Listing–point cosine, mean of the two generators. Without the true neighbours, even a hidden game or paper stays at 0.3–0.4, barely closer than to any other point. The cosine score on its own brings almost nothing closer.</figcaption>
+</figure>
+
+It is the neighbours, in all 12 combinations. With another point's neighbours, the listing heads towards that other point. With no neighbours, playing hot and cold alone, the listing ends up only 0.04 to 0.07 closer to its own point than to any other point of the same kind. Even for a hidden game, without neighbours it stays at 0.36–0.47, when with them it reaches 0.7–0.8.
+
+In hindsight this looks obvious, and partly it is: give an LLM 8 games and it writes something that depends on those 8, not on a point it knows nothing about. But that is what any decoder built on an LLM this way does, so any "idea" that comes out of a point along this route is a blend of its neighbours. To find out whether there is anything at the point, you have to search without neighbours.
+
+## Searching without neighbours
+
+Before looking at far points I checked that the search worked. With the hidden games and papers of REAL, the best coherent text ended up closer to the point than any existing text in all 10 cases in each catalogue. In most GAP holes it reached the level of what exists, or a little beyond.
+
+<figure class="lg-fig">
+<svg viewBox="0 0 600 328" role="img" aria-label="Each dot is a point in the space. Horizontally, the cosine of the nearest existing text; vertically, that of the best coherent text found by the search without neighbours. On REAL and GAP the search gets as close as what exists, or closer. On FAR everything stays in the bottom corner: on Steam 5 of 20 points beat what exists by more than 0.05, but none passes 0.14.">
+<text x="160" y="22" fill="#e2e8f0" font-size="12" text-anchor="middle" font-weight="600">all points (Steam)</text>
+<rect x="60" y="50" width="200" height="200" fill="none" stroke="rgba(255,255,255,0.12)"/>
+<line x1="60" y1="250" x2="260" y2="50" stroke="#64748b" stroke-dasharray="4 4"/>
+<text x="60" y="265" fill="#94a3b8" font-size="10" text-anchor="middle">0</text>
+<text x="54" y="253.5" fill="#94a3b8" font-size="10" text-anchor="end">0</text>
+<text x="160.0" y="265" fill="#94a3b8" font-size="10" text-anchor="middle">0.5</text>
+<text x="54" y="153.5" fill="#94a3b8" font-size="10" text-anchor="end">0.5</text>
+<text x="260" y="265" fill="#94a3b8" font-size="10" text-anchor="middle">1</text>
+<text x="54" y="53.5" fill="#94a3b8" font-size="10" text-anchor="end">1</text>
+<circle cx="71.4" cy="240.8" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="66.6" cy="238.8" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="69.4" cy="251.6" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="67.5" cy="236.7" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="67.7" cy="234.8" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="67.3" cy="243.4" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="68.2" cy="240.0" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="68.0" cy="225.7" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="68.1" cy="248.4" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="73.8" cy="240.7" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="68.4" cy="235.6" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="68.5" cy="222.4" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="68.5" cy="231.4" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="68.5" cy="234.7" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="69.2" cy="233.2" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="68.8" cy="238.8" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="70.7" cy="234.9" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="69.9" cy="228.2" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="70.3" cy="229.0" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="71.1" cy="241.1" r="3.2" fill="#f8fafc" fill-opacity="0.85"/>
+<circle cx="164.0" cy="154.4" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="165.1" cy="145.0" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="164.4" cy="120.7" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="164.0" cy="144.2" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="169.0" cy="131.5" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="167.7" cy="132.0" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="169.2" cy="138.3" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="169.7" cy="142.0" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="166.3" cy="141.2" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="166.9" cy="128.5" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="166.7" cy="144.3" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="174.5" cy="154.7" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="171.2" cy="158.6" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="167.1" cy="145.1" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="170.7" cy="132.1" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="168.0" cy="134.8" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="171.0" cy="134.3" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="168.3" cy="121.6" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="167.7" cy="130.3" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="171.2" cy="133.9" r="3.2" fill="#f59e0b" fill-opacity="0.85"/>
+<circle cx="202.0" cy="96.9" r="3.2" fill="#2dd4bf" fill-opacity="0.85"/>
+<circle cx="206.0" cy="78.9" r="3.2" fill="#2dd4bf" fill-opacity="0.85"/>
+<circle cx="226.2" cy="72.8" r="3.2" fill="#2dd4bf" fill-opacity="0.85"/>
+<circle cx="208.6" cy="72.4" r="3.2" fill="#2dd4bf" fill-opacity="0.85"/>
+<circle cx="200.2" cy="84.2" r="3.2" fill="#2dd4bf" fill-opacity="0.85"/>
+<circle cx="215.7" cy="79.1" r="3.2" fill="#2dd4bf" fill-opacity="0.85"/>
+<circle cx="206.1" cy="95.7" r="3.2" fill="#2dd4bf" fill-opacity="0.85"/>
+<circle cx="204.9" cy="88.2" r="3.2" fill="#2dd4bf" fill-opacity="0.85"/>
+<circle cx="213.7" cy="78.8" r="3.2" fill="#2dd4bf" fill-opacity="0.85"/>
+<circle cx="204.6" cy="86.5" r="3.2" fill="#2dd4bf" fill-opacity="0.85"/>
+<text x="202.0" y="60.0" fill="#5eead4" font-size="11" text-anchor="end">REAL</text>
+<text x="166.0" y="110.0" fill="#fbbf24" font-size="11" text-anchor="middle">GAP</text>
+<text x="78.0" y="216.0" fill="#f8fafc" font-size="11">FAR</text>
+<rect x="58.0" y="220.0" width="34.0" height="32.0" fill="none" stroke="#94a3b8" stroke-dasharray="2 2"/>
+<text x="98.0" y="246.0" fill="#94a3b8" font-size="10">zoom →</text>
+<text x="440" y="22" fill="#e2e8f0" font-size="12" text-anchor="middle" font-weight="600">zoom: FAR points</text>
+<rect x="340" y="50" width="200" height="200" fill="none" stroke="rgba(255,255,255,0.12)"/>
+<polygon points="340.0,191.1764705882353 481.1764705882353,50.0 340.0,50.0" fill="rgba(45,212,191,0.10)"/>
+<line x1="340.0" y1="191.1764705882353" x2="481.1764705882353" y2="50.0" stroke="#2dd4bf" stroke-width="0.8" stroke-dasharray="3 3"/>
+<line x1="340.0" y1="250.0" x2="540.0" y2="50.0" stroke="#64748b" stroke-dasharray="4 4"/>
+<text x="363.52941176470586" y="265" fill="#94a3b8" font-size="10" text-anchor="middle">0</text>
+<text x="546" y="229.97058823529412" fill="#94a3b8" font-size="10">0</text>
+<text x="422.3529411764706" y="265" fill="#94a3b8" font-size="10" text-anchor="middle">0.05</text>
+<text x="546" y="171.1470588235294" fill="#94a3b8" font-size="10">0.05</text>
+<text x="481.1764705882353" y="265" fill="#94a3b8" font-size="10" text-anchor="middle">0.1</text>
+<text x="546" y="112.3235294117647" fill="#94a3b8" font-size="10">0.1</text>
+<text x="540.0" y="265" fill="#94a3b8" font-size="10" text-anchor="middle">0.15</text>
+<text x="546" y="53.5" fill="#94a3b8" font-size="10">0.15</text>
+<circle cx="430.9" cy="172.4" r="3.4" fill="#f8fafc"/>
+<circle cx="402.6" cy="160.4" r="3.4" fill="#f8fafc"/>
+<circle cx="418.9" cy="235.8" r="3.4" fill="#f8fafc"/>
+<circle cx="407.9" cy="148.1" r="3.4" fill="#f8fafc"/>
+<circle cx="409.1" cy="137.3" r="3.4" fill="#f8fafc"/>
+<circle cx="406.6" cy="187.9" r="3.4" fill="#f8fafc"/>
+<circle cx="411.8" cy="167.8" r="3.4" fill="#f8fafc"/>
+<circle cx="410.4" cy="83.7" r="3.4" fill="#f8fafc"/>
+<circle cx="411.1" cy="217.1" r="3.4" fill="#f8fafc"/>
+<circle cx="444.7" cy="171.9" r="3.4" fill="#f8fafc"/>
+<circle cx="413.2" cy="141.9" r="3.4" fill="#f8fafc"/>
+<circle cx="413.4" cy="64.4" r="3.4" fill="#f8fafc"/>
+<circle cx="413.6" cy="116.8" r="3.4" fill="#f8fafc"/>
+<circle cx="413.8" cy="136.4" r="3.4" fill="#f8fafc"/>
+<circle cx="417.5" cy="127.8" r="3.4" fill="#f8fafc"/>
+<circle cx="415.6" cy="160.7" r="3.4" fill="#f8fafc"/>
+<circle cx="426.4" cy="137.6" r="3.4" fill="#f8fafc"/>
+<circle cx="421.5" cy="98.1" r="3.4" fill="#f8fafc"/>
+<circle cx="424.1" cy="103.2" r="3.4" fill="#f8fafc"/>
+<circle cx="428.8" cy="174.2" r="3.4" fill="#f8fafc"/>
+<circle cx="432.1" cy="153.9" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="439.1" cy="165.4" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="421.0" cy="241.5" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="423.6" cy="147.8" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="441.0" cy="167.0" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="430.5" cy="190.4" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="444.5" cy="168.0" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="428.2" cy="167.1" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="454.0" cy="153.6" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="441.5" cy="186.5" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="440.0" cy="197.3" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="428.7" cy="138.9" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="453.7" cy="135.4" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="462.0" cy="98.6" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="453.3" cy="149.3" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="434.7" cy="110.2" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="429.9" cy="189.9" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="436.4" cy="233.0" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="436.0" cy="136.4" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<circle cx="453.0" cy="100.9" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/>
+<text x="160" y="282" fill="#94a3b8" font-size="10.5" text-anchor="middle">nearest existing text →</text>
+<text x="440" y="282" fill="#94a3b8" font-size="10.5" text-anchor="middle">nearest existing text →</text>
+<text x="22" y="150" fill="#94a3b8" font-size="10.5" text-anchor="middle" transform="rotate(-90 22 150)">best coherent text found →</text>
+<circle cx="150" cy="310" r="3.4" fill="#f8fafc"/><text x="158" y="313.5" fill="#e2e8f0" font-size="10.5">FAR Steam</text>
+<circle cx="240" cy="310" r="3.4" fill="none" stroke="#fbbf24" stroke-width="1.3"/><text x="248" y="313.5" fill="#e2e8f0" font-size="10.5">FAR arXiv</text>
+<line x1="325" y1="310" x2="345" y2="310" stroke="#64748b" stroke-dasharray="4 4"/><text x="351" y="313.5" fill="#e2e8f0" font-size="10.5">same as what exists</text>
+<rect x="478" y="304" width="14" height="12" fill="rgba(45,212,191,0.25)" stroke="#2dd4bf" stroke-width="0.8" stroke-dasharray="3 3"/><text x="498" y="313.5" fill="#e2e8f0" font-size="10.5">+0.05: escapes</text>
+</svg>
+<figcaption>The search without neighbours gets where text already exists, and a little beyond. On FAR points it stays stuck near zero: on Steam, 5 of 20 beat what exists by more than 0.05, and the best reaches 0.14.</figcaption>
+</figure>
+
+On FAR points things change. On arXiv my objection holds: for 90% of the points, the best coherent text does not beat the nearest existing paper. On Steam, not entirely. For 25% of the points the coherent text does land more than 0.05 above the nearest game, and for 15% if I also require approval from a third model that had not written or filtered anything it was judging. Getting a little beyond what exists is possible.
+
+But look at the scale. Those escaping texts stay at a cosine of 0.09–0.14 from their point, when the point itself is at 1. "Further out than any game" is not "at the point". This qualifies my objection, and I think it improves it. Leaving the map is not impossible. It is that what you reach stays very far from what you asked for, and what you read is still an ordinary game.
+
+## Why: the cap
+
+The geometry explains why far points are out of reach. Texts do not spread across the whole space. They all share a common direction, so they occupy a narrow cap of the sphere: any two Steam games have a cosine of 0.41, while two random directions have 0 ± 0.03. FAR points are random directions picked for being far from everything, so they fall outside the cap. Any text, however odd, falls inside it.
 
 <figure class="lg-fig">
 <svg viewBox="0 0 600 340" role="img" aria-label="Texts occupy a narrow cap of the sphere. An interior GAP hole sits inside the cap, between games. A FAR point sits outside it, on the rest of the sphere, and the description written for it lands back in the cap, next to the neighbours it was shown.">
@@ -111,47 +291,15 @@ The geometry explains why. Texts do not spread across the whole space. They all 
 <figcaption>Schematic, not to scale. GAP holes lie inside the region where text exists; FAR points lie outside it. Whatever is written for a FAR point lands back inside.</figcaption>
 </figure>
 
-The same happens on arXiv and patents. Before building any arXiv point, I computed from the corpus statistics alone how far the nearest paper would be from a far point. I predicted 0.062 and got 0.058. On patents it came out at 0.062. In all three catalogues, what gets written for a FAR point lands below 0.08.
-
-## The text goes where the neighbours are
-
-Looking at where the FAR listings landed, I noticed something else. They were much closer to the 8 neighbours the LLM had been shown than to the point itself: on Steam, at a cosine of 0.63–0.72 from their centroid, against 0.03 from the point. That held for 100% of FAR listings in all three catalogues. But it was a correlation, and it could have another explanation: maybe the neighbours are simply the closest thing to the point that exists.
-
-So I ran the causal test. Same point, same cosine score, and only one change: the neighbours the LLM sees. They can be the true ones, another point's, or none at all. I ran it on Steam and arXiv, with two generators (luna and Sonnet), on REAL, GAP and FAR, with 20 points per combination and the decision rules written down before running anything. Patents were not part of this test.
-
-<figure class="lg-fig">
-<svg viewBox="0 0 600 300" role="img" aria-label="Mean cosine between listing and point depending on the neighbours shown. With the true neighbours, REAL reaches 0.73 on Steam and 0.78 on arXiv; with another point's neighbours or none it drops to 0.3-0.4. In FAR, with the true neighbours it only reaches 0.03-0.05, and without them it stays below zero.">
-<g font-size="11" fill="#94a3b8">
-<rect x="150" y="8" width="11" height="11" fill="#2dd4bf"/><text x="166" y="18">true neighbours</text>
-<rect x="292" y="8" width="11" height="11" fill="#f59e0b"/><text x="308" y="18">another point's</text>
-<rect x="406" y="8" width="11" height="11" fill="#64748b"/><text x="422" y="18">no neighbours</text>
-</g>
-<line x1="45" y1="230" x2="300" y2="230" stroke="rgba(255,255,255,0.25)"/><line x1="325" y1="230" x2="580" y2="230" stroke="rgba(255,255,255,0.25)"/>
-<g stroke="rgba(255,255,255,0.07)"><line x1="45" y1="105" x2="300" y2="105"/><line x1="325" y1="105" x2="580" y2="105"/><line x1="45" y1="55" x2="300" y2="55"/><line x1="325" y1="55" x2="580" y2="55"/></g>
-<g font-size="10" fill="#94a3b8" text-anchor="end"><text x="40" y="233">0</text><text x="40" y="108">0.5</text><text x="40" y="58">0.7</text></g>
-<g fill="#2dd4bf"><rect x="60" y="48" width="18" height="182"/><rect x="145" y="105.5" width="18" height="124.5"/><rect x="230" y="223.25" width="18" height="6.75"/>
-<rect x="340" y="34" width="18" height="196"/><rect x="425" y="114" width="18" height="116"/><rect x="510" y="217" width="18" height="13"/></g>
-<g fill="#f59e0b"><rect x="82" y="120" width="18" height="110"/><rect x="167" y="139.75" width="18" height="90.25"/><rect x="252" y="230" width="18" height="5.25"/>
-<rect x="362" y="143.75" width="18" height="86.25"/><rect x="447" y="153" width="18" height="77"/><rect x="532" y="230" width="18" height="4.25"/></g>
-<g fill="#64748b"><rect x="104" y="124" width="18" height="106"/><rect x="189" y="142.25" width="18" height="87.75"/><rect x="274" y="230" width="18" height="3.25"/>
-<rect x="384" y="137.5" width="18" height="92.5"/><rect x="469" y="156.25" width="18" height="73.75"/><rect x="554" y="230" width="18" height="3.5"/></g>
-<g font-size="11.5" fill="#e2e8f0" text-anchor="middle"><text x="91" y="266">REAL</text><text x="176" y="266">GAP</text><text x="261" y="266">FAR</text><text x="371" y="266">REAL</text><text x="456" y="266">GAP</text><text x="541" y="266">FAR</text></g>
-<g font-size="10" fill="#5eead4" text-anchor="middle"><text x="239" y="216">0.03</text><text x="519" y="210">0.05</text></g>
-<g font-size="9.5" fill="#fbbf24" text-anchor="middle"><text x="268" y="247">−0.02</text><text x="548" y="247">−0.02</text></g>
-<g font-size="12.5" fill="#f8fafc" text-anchor="middle" font-weight="600"><text x="172" y="290">Steam</text><text x="452" y="290">arXiv</text></g>
-</svg>
-<figcaption>Listing–point cosine, mean of the two generators. Remove or swap the neighbours and the little a listing got closer to a FAR point disappears: the cosine score on its own brings nothing closer.</figcaption>
-</figure>
-
-The result was the same in all 12 combinations: changing the neighbours drags the listing towards whatever neighbours it sees. On FAR, the little the listing got closer to the point (0.02–0.07 with the true neighbours) disappears as soon as you remove or swap them, and it sits at −0.02/−0.01. **The cosine score on its own does not bring the text any closer to a far point. What the LLM can do is write something that resembles what you show it.**
+With this geometry the distance can be predicted before looking. Before building any arXiv point, I computed from the corpus statistics alone how far the nearest paper would be from a far point. I predicted 0.062 and got 0.058. On patents it came out at 0.062.
 
 ## What does work: asking without a map
 
-Interior holes can be reached. A GAP listing gets to 0.48–0.55 from its point on Steam, as close as the best existing game. But they are not newer. On Steam the judges gave them a novelty of 4.9 out of 10, below INTERP (5.5), with all six generators. On arXiv they tied with INTERP, and on patents it depends on the generator. A hole between games gets filled with something that looks like the games around it.
+Interior holes can be reached, but they are not newer. On Steam the judges gave them a novelty of 4.9 out of 10, below INTERP (5.5), with all six generators. On arXiv they tied with INTERP, and on patents it depends on the generator. A hole between games gets filled with something that looks like the games around it.
 
 For the judges, the most novel output was the one that did not use the map: PLAIN, simply asking for "a new game". With every generator, PLAIN beat the best guided arm by 1.1 to 2.6 points of novelty.
 
-Until I read the listings one after another. Sonnet called 45 of its 50 games "Tidewright" something, and luna through Codex wrote 46 museums out of 50. I saw it straight away ("otro museo… cansino", another museum, tiresome). The judges did not, because they scored each listing on its own and never saw two together. Each idea was new against the catalogue, but the generator kept repeating the same idea. The same happened on arXiv: Sonnet titled 43 of its 50 papers "Tidal" something.
+Until I read the listings one after another. Sonnet called 45 of its 50 games "Tidewright" something, and luna through Codex wrote 46 museums out of 50. I saw it straight away: another museum, and by then a tiresome one. The judges did not, because they scored each listing on its own and never saw two together. Each idea was new against the catalogue, but the generator kept repeating the same idea. The same happened on arXiv: Sonnet titled 43 of its 50 papers "Tidal" something.
 
 <figure class="lg-fig">
 <svg viewBox="0 0 600 300" role="img" aria-label="Median similarity between each generator's 50 ideas. PLAIN with Sonnet reaches 0.86 and with luna via Codex 0.81, far above 50 random real games (0.40) and the guided arms (0.35-0.49).">
@@ -171,36 +319,73 @@ Until I read the listings one after another. Sonnet called 45 of its 50 games "T
 
 I fixed it with a variant, PLAIND, in which the model sees the titles it has already proposed. Repetition drops almost to the level of the guided arms, and novelty stays the highest in all three catalogues, 1 to 5 points above INTERP depending on the generator.
 
-My novelty and the judges' turned out less alike than I expected. On patents I gave every arm 1.2 to 3 points less than the judges did. For three of the four FAR patents I read I answered "yes, I know something that does this", and of one GAP patent I wrote that it was "un recommendation system de toda la vida", a plain old recommendation system. I think we measure different things. The judges reward what is specific and unfamiliar compared with the five texts they are shown, and I ask whether the concept already exists.
-
-## What if we really search for a coherent text far away?
-
-All of the above left the tweet one way out: maybe the LLM does not reach far points because it searches badly, not because there is nothing there. So I searched harder. A GPU search optimises the cosine directly, without showing any neighbours, and produces texts that get very close to the point but are word soup. Claude or Codex then rewrite them so they can be read, with the cosine as their only clue. Two models had to accept the text as coherent. Before looking at far points I checked that the method worked: it recovered all 10 hidden games and all 10 hidden papers of REAL.
-
-On arXiv my objection holds: for 90% of FAR points, the best coherent text does not beat the nearest existing paper. On Steam, not entirely. For 25% of the points the coherent text does land more than 0.05 above the nearest game, and for 15% if I also require approval from a third model that had not written or filtered anything it was judging. Getting a little beyond what exists is possible.
+My novelty and the judges' turned out less alike than I expected.
 
 <figure class="lg-fig">
-<svg viewBox="0 0 600 230" role="img" aria-label="Cosine scale from 0 to 1. The best existing game is at 0.042 from a FAR point and the best coherent text at 0.07, 0.14 at most; a hidden real game is recovered at 0.84 and the point is at 1.">
-<line x1="40" y1="60" x2="560" y2="60" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
-<g font-size="10" fill="#94a3b8" text-anchor="middle"><text x="40" y="78">0</text><text x="300" y="78">0.5</text><text x="560" y="78">1</text></g>
-<rect x="40" y="52" width="104" height="16" fill="none" stroke="#64748b" stroke-dasharray="3 3"/>
-<circle cx="477.8" cy="60" r="5" fill="#2dd4bf"/><text x="477.8" y="96" fill="#5eead4" font-size="11" text-anchor="middle">REAL: 0.84</text>
-<path d="M560,48 l3,7 8,1 -6,5 2,8 -7,-4 -7,4 2,-8 -6,-5 8,-1z" fill="#f59e0b"/><text x="548" y="35" fill="#fbbf24" font-size="11" text-anchor="end">the point: 1</text>
-<path d="M40,68 L40,138 M144,68 L560,138" stroke="#64748b" stroke-dasharray="3 3" fill="none"/>
-<line x1="40" y1="150" x2="560" y2="150" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
-<g font-size="10" fill="#94a3b8" text-anchor="middle"><text x="40" y="168">0</text><text x="300" y="168">0.1</text><text x="560" y="168">0.2</text></g>
-<line x1="149" y1="140" x2="149" y2="160" stroke="#94a3b8" stroke-width="2"/>
-<text x="149" y="128" fill="#e2e8f0" font-size="11" text-anchor="middle">nearest game 0.042 (median)</text>
-<circle cx="219" cy="150" r="5" fill="#2dd4bf"/>
-<text x="219" y="190" fill="#5eead4" font-size="11" text-anchor="middle">coherent median 0.07</text>
-<rect x="274" y="144" width="130" height="12" rx="3" fill="rgba(45,212,191,0.35)" stroke="#2dd4bf"/>
-<text x="339" y="128" fill="#5eead4" font-size="11" text-anchor="middle">the escapes: 0.09–0.14</text>
-<text x="300" y="218" fill="#94a3b8" font-size="10.5" text-anchor="middle">zoom from 0 to 0.2 · Steam, FAR points, GPU search + rewrite</text>
+<svg viewBox="0 0 600 420" role="img" aria-label="Mean novelty I gave against the judges, by catalogue and arm. On Steam we agree except on PLAIN, where the judges give 7.6 and I give 5.2. On arXiv we mostly agree. On patents I give 1.2 to 3 points less on every arm.">
+<rect x="230" y="8" width="10" height="10" rx="5" fill="#f59e0b"/><text x="246" y="17" fill="#e2e8f0" font-size="11">me</text>
+<rect x="300" y="8" width="10" height="10" rx="5" fill="#2dd4bf"/><text x="316" y="17" fill="#e2e8f0" font-size="11">judges</text>
+<text x="20" y="48" fill="#f8fafc" font-size="12" font-weight="600">Steam</text>
+<text x="218" y="48" fill="#e2e8f0" font-size="11" text-anchor="end">INTERP <tspan fill="#64748b" font-size="9.5">n=13</tspan></text>
+<line x1="230" y1="44" x2="554" y2="44" stroke="rgba(255,255,255,0.06)"/>
+<line x1="418.3" y1="44" x2="410.0" y2="44" stroke="#64748b" stroke-width="2"/>
+<circle cx="418.3" cy="44" r="5" fill="#f59e0b"/><circle cx="410.0" cy="44" r="5" fill="#2dd4bf"/>
+<text x="218" y="75" fill="#e2e8f0" font-size="11" text-anchor="end">GAP <tspan fill="#64748b" font-size="9.5">n=6</tspan></text>
+<line x1="230" y1="71" x2="554" y2="71" stroke="rgba(255,255,255,0.06)"/>
+<line x1="416.1" y1="71" x2="402.4" y2="71" stroke="#64748b" stroke-width="2"/>
+<circle cx="416.1" cy="71" r="5" fill="#f59e0b"/><circle cx="402.4" cy="71" r="5" fill="#2dd4bf"/>
+<text x="218" y="102" fill="#e2e8f0" font-size="11" text-anchor="end">PLAIN <tspan fill="#64748b" font-size="9.5">n=5</tspan></text>
+<line x1="230" y1="98" x2="554" y2="98" stroke="rgba(255,255,255,0.06)"/>
+<line x1="381.2" y1="98" x2="467.6" y2="98" stroke="#64748b" stroke-width="2"/>
+<circle cx="381.2" cy="98" r="5" fill="#f59e0b"/><circle cx="467.6" cy="98" r="5" fill="#2dd4bf"/>
+<text x="218" y="129" fill="#e2e8f0" font-size="11" text-anchor="end">PLAIND <tspan fill="#64748b" font-size="9.5">n=8</tspan></text>
+<line x1="230" y1="125" x2="554" y2="125" stroke="rgba(255,255,255,0.06)"/>
+<line x1="446.0" y1="125" x2="455.0" y2="125" stroke="#64748b" stroke-width="2"/>
+<circle cx="446.0" cy="125" r="5" fill="#f59e0b"/><circle cx="455.0" cy="125" r="5" fill="#2dd4bf"/>
+<text x="20" y="166" fill="#f8fafc" font-size="12" font-weight="600">arXiv</text>
+<text x="218" y="166" fill="#e2e8f0" font-size="11" text-anchor="end">GAP <tspan fill="#64748b" font-size="9.5">n=3</tspan></text>
+<line x1="230" y1="162" x2="554" y2="162" stroke="rgba(255,255,255,0.06)"/>
+<line x1="398.1" y1="162" x2="403.9" y2="162" stroke="#64748b" stroke-width="2"/>
+<circle cx="398.1" cy="162" r="5" fill="#f59e0b"/><circle cx="403.9" cy="162" r="5" fill="#2dd4bf"/>
+<text x="218" y="193" fill="#e2e8f0" font-size="11" text-anchor="end">FAR <tspan fill="#64748b" font-size="9.5">n=4</tspan></text>
+<line x1="230" y1="189" x2="554" y2="189" stroke="rgba(255,255,255,0.06)"/>
+<line x1="410.0" y1="189" x2="412.2" y2="189" stroke="#64748b" stroke-width="2"/>
+<circle cx="410.0" cy="189" r="5" fill="#f59e0b"/><circle cx="412.2" cy="189" r="5" fill="#2dd4bf"/>
+<text x="218" y="220" fill="#e2e8f0" font-size="11" text-anchor="end">PLAIND <tspan fill="#64748b" font-size="9.5">n=5</tspan></text>
+<line x1="230" y1="216" x2="554" y2="216" stroke="rgba(255,255,255,0.06)"/>
+<line x1="431.6" y1="216" x2="465.8" y2="216" stroke="#64748b" stroke-width="2"/>
+<circle cx="431.6" cy="216" r="5" fill="#f59e0b"/><circle cx="465.8" cy="216" r="5" fill="#2dd4bf"/>
+<text x="218" y="247" fill="#e2e8f0" font-size="11" text-anchor="end">later real ones <tspan fill="#64748b" font-size="9.5">n=4</tspan></text>
+<line x1="230" y1="243" x2="554" y2="243" stroke="rgba(255,255,255,0.06)"/>
+<line x1="437.0" y1="243" x2="376.2" y2="243" stroke="#64748b" stroke-width="2"/>
+<circle cx="437.0" cy="243" r="5" fill="#f59e0b"/><circle cx="376.2" cy="243" r="5" fill="#2dd4bf"/>
+<text x="20" y="284" fill="#f8fafc" font-size="12" font-weight="600">Patents</text>
+<text x="218" y="284" fill="#e2e8f0" font-size="11" text-anchor="end">GAP <tspan fill="#64748b" font-size="9.5">n=3</tspan></text>
+<line x1="230" y1="280" x2="554" y2="280" stroke="rgba(255,255,255,0.06)"/>
+<line x1="349.9" y1="280" x2="419.0" y2="280" stroke="#64748b" stroke-width="2"/>
+<circle cx="349.9" cy="280" r="5" fill="#f59e0b"/><circle cx="419.0" cy="280" r="5" fill="#2dd4bf"/>
+<text x="218" y="311" fill="#e2e8f0" font-size="11" text-anchor="end">FAR <tspan fill="#64748b" font-size="9.5">n=4</tspan></text>
+<line x1="230" y1="307" x2="554" y2="307" stroke="rgba(255,255,255,0.06)"/>
+<line x1="338.0" y1="307" x2="446.0" y2="307" stroke="#64748b" stroke-width="2"/>
+<circle cx="338.0" cy="307" r="5" fill="#f59e0b"/><circle cx="446.0" cy="307" r="5" fill="#2dd4bf"/>
+<text x="218" y="338" fill="#e2e8f0" font-size="11" text-anchor="end">PLAIND <tspan fill="#64748b" font-size="9.5">n=5</tspan></text>
+<line x1="230" y1="334" x2="554" y2="334" stroke="rgba(255,255,255,0.06)"/>
+<line x1="402.8" y1="334" x2="480.2" y2="334" stroke="#64748b" stroke-width="2"/>
+<circle cx="402.8" cy="334" r="5" fill="#f59e0b"/><circle cx="480.2" cy="334" r="5" fill="#2dd4bf"/>
+<text x="218" y="365" fill="#e2e8f0" font-size="11" text-anchor="end">later real ones <tspan fill="#64748b" font-size="9.5">n=4</tspan></text>
+<line x1="230" y1="361" x2="554" y2="361" stroke="rgba(255,255,255,0.06)"/>
+<line x1="356.0" y1="361" x2="398.8" y2="361" stroke="#64748b" stroke-width="2"/>
+<circle cx="356.0" cy="361" r="5" fill="#f59e0b"/><circle cx="398.8" cy="361" r="5" fill="#2dd4bf"/>
+<text x="230" y="394" fill="#94a3b8" font-size="10" text-anchor="middle">1</text>
+<text x="338" y="394" fill="#94a3b8" font-size="10" text-anchor="middle">4</text>
+<text x="446" y="394" fill="#94a3b8" font-size="10" text-anchor="middle">7</text>
+<text x="554" y="394" fill="#94a3b8" font-size="10" text-anchor="middle">10</text>
+<text x="392.0" y="410" fill="#94a3b8" font-size="10.5" text-anchor="middle">mean novelty (1–10)</text>
 </svg>
-<figcaption>Beyond any existing game is not the same as at the point. Even the coherent texts that escape stay at 0.09–0.14 from a point that sits at 1.</figcaption>
+<figcaption>My novelty against the judges' (64 items scored by both). On patents, where I recognised almost everything, I am much harsher; on Steam I only part ways on PLAIN, the one with the repeated museums.</figcaption>
 </figure>
 
-But look at the scale. Those escaping texts stay at a cosine of 0.09–0.14 from their point. The nearest game was at 0.04 (median of those 20 points), and the point itself is at 1. "Further out than any game" is not "at the point". This qualifies my objection, and I think it improves it. Leaving the map is not impossible. It is that what you reach stays very far from what you asked for, and what you read is still an ordinary game.
+On Steam we agree except on PLAIN, because of the repeated museums. On patents I am much harsher on every arm. For three of the four FAR patents I read I answered "yes, I know something that does this", and one GAP patent I described as a plain old recommendation system. I think we measure different things. The judges reward what is specific and unfamiliar compared with the five texts they are shown, and I ask whether the concept already exists.
 
 ## Can it be proved?
 
@@ -214,8 +399,9 @@ That left the check against later games and papers. On Steam it does not work: o
 
 ## In short
 
+- **Decoding a point with an LLM blends its neighbours.** The cosine score adds almost nothing; what comes out depends on what you show it.
+- **Searching without neighbours, far points are still out of reach.** The best I found stays at 0.14 from a point that sits at 1, because texts live in a cap and those points are outside it.
 - **Interior holes can be reached, but they are not new.** They get filled with something that resembles what surrounds them.
-- **Far points cannot be reached.** The text goes back to the cap where texts live, next to the neighbours it is shown, and the causal test shows that the neighbours are what pull it there.
 - **Novelty came from asking for it**, not from empty geometry, as long as the model sees what it has already proposed.
 
 The tweet gets something right: there are unexplored corners of the map that can be reached. But a point far from everything is not an idea waiting for someone to write it down. Almost always, it is a place where no text fits.
