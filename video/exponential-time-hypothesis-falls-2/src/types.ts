@@ -16,7 +16,10 @@ export function tx(label: Label, lang: Lang): string {
  * written form (captions); `spoken`, when set for a language, is what the TTS reads instead
  * ("fourteen out of twenty" for "14/20"), and the captions keep the written form.
  */
-export type Line = { key: string; start: number; dur: number; text: Text; voice: Lang; spoken?: Partial<Text> };
+export type Line = { key: string; start: number; dur: number; text: Text; voice: Lang; spoken?: Partial<Text>; tone?: Tone };
+
+/** How one line is voiced when it departs from the config's default (Cartesia only). */
+export type Tone = { emotion?: string; speed?: number };
 
 /** What the TTS reads for a line: its spoken form when one is given, else the written text. */
 export const spokenText = (line: Pick<Line, 'text' | 'spoken'>, lang: Lang): string => line.spoken?.[lang] || line.text[lang];

@@ -2,7 +2,7 @@
 // lines play one after another, and their start times ("beats") drive the animation.
 import { AUDIO } from './audio.generated.ts';
 import { SETTINGS } from './settings.ts';
-import { spokenText, type Cuts, type Label, type Lang, type Line, type Scene, type Text } from './types.ts';
+import { spokenText, type Cuts, type Label, type Lang, type Line, type Scene, type Text, type Tone } from './types.ts';
 
 /** Silence between two lines, in seconds. */
 export const GAP = 0.35;
@@ -40,9 +40,14 @@ export const L = (en: string, es: string): Label => ({ en, es });
  * what the TTS should read per language when it differs from the caption text (numbers, symbols,
  * version strings): `say(0, 'It solved 14/20.', '…', { en: 'It solved fourteen out of twenty.' })`.
  */
-export type Spec = { at: number; en: string; es: string; spoken?: Partial<Text> };
-export const say = (at: number, en: string, es: string, spoken?: Partial<Text>): Spec =>
-  spoken ? { at, en, es, spoken } : { at, en, es };
+export type Spec = { at: number; en: string; es: string; spoken?: Partial<Text>; tone?: Tone };
+export const say = (at: number, en: string, es: string, spoken?: Partial<Text>, tone?: Tone): Spec => ({
+  at,
+  en,
+  es,
+  ...(spoken ? { spoken } : {}),
+  ...(tone ? { tone } : {}),
+});
 
 const CHARS_PER_SECOND: Record<Lang, number> = { en: 14.5, es: 15.5 };
 
@@ -63,7 +68,7 @@ const place = (id: string, specs: Spec[]): Line[] => {
     const text = { en: spec.en, es: spec.es };
     const dur = lineSeconds(key, spokenText({ text, spoken: spec.spoken }, current), current);
     const start = prevEnd === null ? Math.max(0, spec.at) : Math.max(spec.at, prevEnd + GAP);
-    lines.push({ key, start: round(start), dur, text, voice: current, ...(spec.spoken ? { spoken: spec.spoken } : {}) });
+    lines.push({ key, start: round(start), dur, text, voice: current, ...(spec.spoken ? { spoken: spec.spoken } : {}), ...(spec.tone ? { tone: spec.tone } : {}) });
     prevEnd = start + dur;
   });
   return lines;

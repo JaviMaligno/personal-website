@@ -11,6 +11,7 @@ export default {
     engine: 'auto',
     model: 'sonic-3.6-2026-08-27',
     speed: 1,
+    emotion: 'excited', // default Cartesia emotion (EN); a line overrides it with its tone
     // Voice a colon inside a line as a full stop (captions keep the colon): with the cloned voice
     // the word before a colon rises like a question. Part of the voiced text, so of the line cache.
     colonsAsStops: true,

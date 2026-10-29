@@ -17,11 +17,11 @@ const build = (): Cuts => ({
       'count',
       'KeyQuote',
       { text: L("Count, don't decide.", 'Contar, no decidir.'), emphasis: ['Count', 'Contar'] },
-      [say(0.3, 'Both labs count the solutions instead, so terms can cancel.', 'Los dos cuentan las soluciones, para que los términos puedan cancelarse.')],
+      [say(0.3, 'Both labs count the solutions instead, so terms can cancel.', 'Los dos cuentan las soluciones, para que los términos puedan cancelarse.', undefined, { emotion: 'confident' })],
       { min: 4 },
     ),
     anim('octonions', 'CrossingRewrite', { cameos: [{ pose: 'amazed', at: [0, 'octonions'], dur: 2.2 }] }, [
-      say(0.3, "Claude's proof uses an identity from 1818, from the octonions.", 'La prueba de Claude usa una identidad de 1818, de los octoniones.'),
+      say(0.3, "Claude's proof uses an identity from 1818, from the octonions.", 'La prueba de Claude usa una identidad de 1818, de los octoniones.', undefined, { emotion: 'amazed' }),
       say(0, 'Two crossing links become pieces that are cheap one way or the other.', 'Dos enlaces cruzados se convierten en piezas baratas en una dirección o en la otra.'),
     ], { min: 9 }),
     anim(
@@ -40,7 +40,7 @@ const build = (): Cuts => ({
         say(0.3, 'Each level shrinks the exponent by 11/12, as low as you like.', 'Cada nivel encoge el exponente en 11/12, tan bajo como quieras.', {
           en: 'Each level shrinks the exponent by eleven twelfths, as low as you like.',
           es: 'Cada nivel encoge el exponente en once doceavos, tan bajo como quieras.',
-        }),
+        }, { emotion: 'surprised' }),
       ],
       { min: 5 },
     ),
@@ -75,7 +75,7 @@ const build = (): Cuts => ({
         say(0.3, 'No faster solvers: it only wins past 10^10,000 variables.', 'Sin solvers más rápidos: solo gana pasadas 10^10.000 variables.', {
           en: 'No faster solvers: it only wins past ten to the ten thousand variables.',
           es: 'Sin solvers más rápidos: solo gana pasadas diez elevado a diez mil variables.',
-        }),
+        }, { emotion: 'skeptical' }),
       ],
       { min: 5 },
     ),
@@ -85,7 +85,7 @@ const build = (): Cuts => ({
       { text: L('ETH is false. Twice.', 'ETH es falsa. Dos veces.'), emphasis: ['Twice', 'veces'], beat: 1, cameos: [{ pose: 'pointing', at: [1, 'false'], dur: 2.2 }] },
       [
         say(0.3, 'Two labs, the same week, the same bound.', 'Dos laboratorios, la misma semana, la misma cota.'),
-        say(0, 'The hypothesis is false.', 'La hipótesis es falsa.'),
+        say(0, 'The hypothesis is false.', 'La hipótesis es falsa.', undefined, { emotion: 'confident', speed: 1.05 }),
       ],
       { min: 5 },
     ),

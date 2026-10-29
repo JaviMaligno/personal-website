@@ -1,6 +1,6 @@
 // Voices every narration line: public/audio/{lang}/{key}.wav (+ {key}.words.json with Cartesia's
 // word timestamps), then rewrites src/audio.generated.ts from what is on disk.
-// Lines are cached by a hash of engine + voice + model + speed + text (+ the voice's `post` chain):
+// Lines are cached by a hash of engine + voice + model + speed (+ emotion) + text (+ the voice's `post` chain):
 // only new or edited lines are voiced again. A voice's optional `post` (an ffmpeg -af chain) is
 // applied to each line right after synthesis; it must keep the line's length (word timestamps). One engine per language (see tts-engine.mjs): if Cartesia drops out half way,
 // the whole language is redone with Kokoro, and the next run with Cartesia back redoes it again.
@@ -10,7 +10,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { VIDEOS } from '../src/timeline.ts';
 import { SETTINGS } from '../src/settings.ts';
-import { spokenText, type Lang, type Word } from '../src/types.ts';
+import { spokenText, type Lang, type Tone, type Word } from '../src/types.ts';
 import config from '../video.config.mjs';
 import { at, secret, findFfmpeg, wavSeconds, CARTESIA, cartesiaHeaders } from './lib.mjs';
 import { chooseEngine, cartesiaUnavailable, postChain, lineHash, colonsAsStops } from './tts-engine.mjs';
@@ -47,7 +47,14 @@ const wavFile = (pcm: Buffer): Buffer => {
 };
 
 // ── Cartesia: one line through the SSE endpoint, which streams audio chunks and word timestamps.
-async function cartesiaLine(text: string, voice: CartesiaVoice): Promise<{ audio: Buffer; words: Word[] }> {
+// A line's tone overrides the config's default emotion and speed. Cartesia emotions are English only.
+const toneOf = (tone: Tone | undefined, lang: Lang) => ({
+  speed: tone?.speed ?? TTS.speed ?? 1,
+  emotion: lang === 'en' ? (tone?.emotion ?? TTS.emotion) : undefined,
+});
+
+async function cartesiaLine(text: string, voice: CartesiaVoice, tone: { speed: number; emotion?: string }): Promise<{ audio: Buffer; words: Word[] }> {
+  const config = { ...(tone.speed !== 1 ? { speed: tone.speed } : {}), ...(tone.emotion ? { emotion: tone.emotion } : {}) };
   const body = {
     model_id: TTS.model,
     transcript: text,
@@ -55,7 +62,7 @@ async function cartesiaLine(text: string, voice: CartesiaVoice): Promise<{ audio
     language: voice.language ?? 'en',
     output_format: { container: 'raw', encoding: 'pcm_s16le', sample_rate: RATE },
     add_timestamps: true,
-    ...(TTS.speed && TTS.speed !== 1 ? { generation_config: { speed: TTS.speed } } : {}),
+    ...(Object.keys(config).length ? { generation_config: config } : {}),
   };
   let res: Response;
   try {
@@ -141,9 +148,9 @@ function kokoroBatch(jobs: { text: string; out: string }[], voice: KokoroVoice) 
 // (see colonsAsStops in tts-engine.mjs): only the audio changes, never the caption.
 const voiced = (text: string): string => (TTS.colonsAsStops === false ? text : colonsAsStops(text));
 
-const linesOf = (lang: Lang): Map<string, string> => {
-  const lines = new Map<string, string>();
-  for (const cut of Object.values(VIDEOS[lang] ?? {})) for (const scene of cut) for (const l of scene.lines) lines.set(l.key, voiced(spokenText(l, lang)));
+const linesOf = (lang: Lang): Map<string, { text: string; tone?: Tone }> => {
+  const lines = new Map<string, { text: string; tone?: Tone }>();
+  for (const cut of Object.values(VIDEOS[lang] ?? {})) for (const scene of cut) for (const l of scene.lines) lines.set(l.key, { text: voiced(spokenText(l, lang)), tone: l.tone });
   return lines;
 };
 
@@ -165,11 +172,13 @@ for (const lang of langs) {
 
   if (choice.engine === 'cartesia') {
     try {
-      for (const [k, text] of lines) {
+      for (const [k, { text, tone }] of lines) {
         const file = path.join(dir, `${k}.wav`);
-        const hash = lineHash(['cartesia', cvoice!.id, TTS.model, TTS.speed ?? 1], text, cpost);
+        const t = toneOf(tone, lang);
+        // The emotion joins the hash only when set, so lines voiced before emotions keep their hash.
+        const hash = lineHash(['cartesia', cvoice!.id, TTS.model, t.speed, ...(t.emotion ? [t.emotion] : [])], text, cpost);
         if (cache[k] === hash && fs.existsSync(file)) continue;
-        const { audio, words } = await cartesiaLine(text, cvoice!);
+        const { audio, words } = await cartesiaLine(text, cvoice!, t);
         fs.writeFileSync(file, audio);
         applyPost(file, cpost);
         fs.writeFileSync(path.join(dir, `${k}.words.json`), JSON.stringify(words));
@@ -188,7 +197,7 @@ for (const lang of langs) {
     if (choice.warning) console.warn(`\nWARNING ${lang.toUpperCase()}: ${choice.warning}.\n  The whole language uses this voice; captions fall back to proportional timing.\n`);
     if (!kvoice) throw new Error(`no Kokoro voice for "${lang}": set tts.kokoro.voices.${lang} in video.config.mjs`);
     const jobs: { key: string; hash: string; text: string; out: string }[] = [];
-    for (const [k, text] of lines) {
+    for (const [k, { text }] of lines) {
       const out = path.join(dir, `${k}.wav`);
       const hash = lineHash(['kokoro', kvoice.voice, kvoice.lang, TTS.kokoro?.speed ?? 1], text, kpost);
       if (cache[k] === hash && fs.existsSync(out)) continue;
