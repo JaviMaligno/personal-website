@@ -22,12 +22,13 @@ It was an argument that could be measured, so I measured it.
 
 ## Three maps
 
-The main map is the tweet's: the Steam games released before 2024, about 68,000, with their descriptions, genres and tags. I set aside the 41,000 released afterwards, to check at the end whether any idea got ahead of what came out later.
+I repeated everything on three catalogues that look nothing like each other, so that the conclusion would not depend on one:
 
-A video game catalogue is a very particular space, and I did not want the conclusion to depend on it. So I repeated everything on two other catalogues that look nothing like Steam:
-
+- **Steam**, the tweet's map: about 68,000 games released before 2024, with their descriptions, genres and tags. I set aside the 41,000 released afterwards, to check at the end whether any idea got ahead of what came out later.
 - **arXiv**: 72,000 computer science papers from before 2023, each with its title and abstract.
 - **Patents**: 71,521 US patent applications filed between 2012 and 2015.
+
+Steam is the thread of the article. arXiv and patents are there to check that what happens is not a quirk of video games.
 
 Each text becomes a vector with Qwen3-Embedding-0.6B, an open embedding model. To measure how close two texts are I use the cosine between their vectors: 1 if they point the same way, 0 if they have nothing to do with each other.
 
@@ -35,7 +36,7 @@ Each text becomes a vector with Qwen3-Embedding-0.6B, an open embedding model. T
 
 A point in the space is a list of 1,024 numbers. No language model can read it, so the tweet takes for granted a step that is not trivial: turning the point back into text. There are two ways to do it.
 
-The first is the one anyone would think of. You show the LLM the 8 real games nearest to the point, ask it for a game listing, and tell it how close it got: the cosine between its listing and the point. With that score it tries again, like a game of hot and cold. Four rounds of three candidates, and I keep the best. On arXiv the LLM writes a paper abstract, and on patents, an application.
+**The first is to show it the neighbours**, the one anyone would think of. You show the LLM the 8 real games nearest to the point, ask it for a game listing, and tell it how close it got: the cosine between its listing and the point. With that score it tries again, like a game of hot and cold. Four rounds of three candidates, and I keep the best. On arXiv the LLM writes a paper abstract, and on patents, an application.
 
 <figure class="lg-fig">
 <svg viewBox="0 0 600 190" role="img" aria-label="The decoding loop: the target point gives its 8 nearest neighbours, the LLM writes a listing, it is embedded, its cosine with the point is measured and only that score goes back to the LLM, for 4 rounds of 3 candidates.">
@@ -56,9 +57,9 @@ The first is the one anyone would think of. You show the LLM the 8 real games ne
 <figcaption>The decoder. The LLM never sees the point, only the games around it and a score of how close it got.</figcaption>
 </figure>
 
-This approach has an obvious problem. Give it 8 games and it will most likely write something that resembles those 8, and then the point is irrelevant: it is the same as asking "make me a game based on these". The only thing that could make the point matter is the cosine score. If hot and cold worked, the LLM would move towards the point beyond what the neighbours give it. That can be measured, and I measured it.
+This approach has an obvious problem. **Give it 8 games and it will most likely write something that resembles those 8**, and then the point is irrelevant: it is the same as asking "make me a game based on these". The only thing that could make the point matter is the cosine score. If hot and cold worked, the LLM would move towards the point beyond what the neighbours give it. That can be measured, and I measured it.
 
-The second way shows nothing. A GPU search generates texts that directly maximise the cosine with the point. Those texts get very close, but they are word soup, so Claude or Codex then rewrite them to be readable, with the cosine as their only clue. Two models have to accept the result as coherent. This is the real test of the tweet's idea: if there is a coherent text near the point, this is the method most likely to find it.
+**The second way is to search without showing anything.** A GPU search generates texts that directly maximise the cosine with the point. Those texts get very close, but they are word soup, so Claude or Codex then rewrite them to be readable, with the cosine as their only clue. Two models have to accept the result as coherent. This is the real test of the tweet's idea: if there is a coherent text near the point, this is the method most likely to find it.
 
 ## Five kinds of point
 
@@ -74,13 +75,13 @@ On Steam I used six generators, the models that write the listings: Claude Opus,
 
 ## What comes out when you show the neighbours
 
-**REAL works.** When the point is a hidden game, the decoder goes back to its neighbourhood, at a cosine of around 0.7. With *Star Farmer: Warlock of the Universe* hidden, it wrote *Voidbloom Run*, a space-farming game about growing seeds on hostile planets, at 0.87.
+**REAL works.** When the point is a hidden game, the decoder goes back to its neighbourhood, at a cosine of around 0.7. With [*Star Farmer: Warlock of the Universe*](https://store.steampowered.com/app/2398900/) hidden, it wrote *Voidbloom Run*, a space-farming game about growing seeds on hostile planets, at 0.87.
 
-And it rebuilds whatever is on the map, including what nobody would want. One of the hidden games was *SEX with HITLER: WW2*, and the neighbours the model saw included its two sequels. It wrote *Hitler: No Future in Berlin*, a visual novel with shooting in which the defeated Führer tries to survive in the ruins of Berlin and meets "five adult heroines" (cosine 0.69).
+And it rebuilds whatever is on the map, including what nobody would want. One of the hidden games was [*SEX with HITLER: WW2*](https://store.steampowered.com/app/2298590/), and the neighbours the model saw included the two earlier games in the series, [*SEX with HITLER*](https://store.steampowered.com/app/1849000/) and [*SEX with HITLER 2*](https://store.steampowered.com/app/2194810/). It wrote *Hitler: No Future in Berlin*, a visual novel with shooting in which the defeated Führer tries to survive in the ruins of Berlin and meets "five adult heroines" (cosine 0.69).
 
-**INTERP produces literal combinations.** Between a virtual reality meditation game and a strategy game with demons came *Ashen Breath: Legions of the Void*, a dark-fantasy tactical RPG "with an optional VR meditation mode" (0.84). It is what was asked for, and you can see the seam.
+**INTERP produces literal combinations.** Between [*Skill Master VR -- Learn Meditation*](https://store.steampowered.com/app/553430/), a virtual reality meditation game, and [*Demon's Rise - Lords of Chaos*](https://store.steampowered.com/app/844420/), a strategy game with demons, came *Ashen Breath: Legions of the Void*, a dark-fantasy tactical RPG "with an optional VR meditation mode" (0.84). It is what was asked for, and you can see the seam.
 
-**FAR goes nowhere.** The listing lands at a cosine of 0.03 to 0.05 from the point, depending on the generator, which is practically zero. The nearest existing game to those points is at 0.046, so there is nothing better either. What comes out is an ordinary game that resembles the neighbours it was shown. One point's neighbours were *Challenge from the Black Cat*, a Japanese hamster puzzle game and *My Furry Stepmom*, and out came *Pounce & Pop: Kitten's Block Quest*, a kitten pushing blocks to get home (0.069). Another gave *The Museum of Unfinished Things*, a museum that rearranges itself at night (0.028). Reasonable games, pleasant even, that could already be on Steam.
+**FAR goes nowhere.** The listing lands at a cosine of 0.03 to 0.05 from the point, depending on the generator, which is practically zero. The nearest existing game to those points is at 0.046, so there is nothing better either. What comes out is an ordinary game that resembles the neighbours it was shown. One point's neighbours were [*Challenge from the Black Cat*](https://store.steampowered.com/app/2517090/), [a Japanese hamster puzzle game](https://store.steampowered.com/app/1714200/) and [*My Furry Stepmom*](https://store.steampowered.com/app/2082060/), and out came *Pounce & Pop: Kitten's Block Quest*, a kitten pushing blocks to get home (0.069). Another gave *The Museum of Unfinished Things*, a museum that rearranges itself at night (0.028). Reasonable games, pleasant even, that could already be on Steam.
 
 The same happens on arXiv and patents: what gets written for a FAR point lands below 0.08.
 
@@ -114,9 +115,9 @@ To separate the two I ran a causal test. Same point, same cosine score, and only
 <figcaption>Listing–point cosine, mean of the two generators. Without the true neighbours, even a hidden game or paper stays at 0.3–0.4, barely closer than to any other point. The cosine score on its own brings almost nothing closer.</figcaption>
 </figure>
 
-It is the neighbours, in all 12 combinations. With another point's neighbours, the listing heads towards that other point. With no neighbours, playing hot and cold alone, the listing ends up only 0.04 to 0.07 closer to its own point than to any other point of the same kind. Even for a hidden game, without neighbours it stays at 0.36–0.47, when with them it reaches 0.7–0.8.
+**It is the neighbours, in all 12 combinations.** With another point's neighbours, the listing heads towards that other point. With no neighbours, playing hot and cold alone, the listing ends up only 0.04 to 0.07 closer to its own point than to any other point of the same kind. Even for a hidden game, without neighbours it stays at 0.36–0.47, when with them it reaches 0.7–0.8.
 
-In hindsight this looks obvious, and partly it is: give an LLM 8 games and it writes something that depends on those 8, not on a point it knows nothing about. But that is what any decoder built on an LLM this way does, so any "idea" that comes out of a point along this route is a blend of its neighbours. To find out whether there is anything at the point, you have to search without neighbours.
+In hindsight this looks obvious, and partly it is: give an LLM 8 games and it writes something that depends on those 8, not on a point it knows nothing about. But that is what any decoder built on an LLM this way does, so any "idea" that comes out of a point along this route is a blend of its neighbours. **To find out whether there is anything at the point, you have to search without neighbours.**
 
 ## Searching without neighbours
 
@@ -252,13 +253,13 @@ Before looking at far points I checked that the search worked. With the hidden g
 <figcaption>The search without neighbours gets where text already exists, and a little beyond. On FAR points it stays stuck near zero: on Steam, 5 of 20 beat what exists by more than 0.05, and the best reaches 0.14.</figcaption>
 </figure>
 
-On FAR points things change. On arXiv my objection holds: for 90% of the points, the best coherent text does not beat the nearest existing paper. On Steam, not entirely. For 25% of the points the coherent text does land more than 0.05 above the nearest game, and for 15% if I also require approval from a third model that had not written or filtered anything it was judging. Getting a little beyond what exists is possible.
+On FAR points things change. **On arXiv my objection holds:** for 90% of the points, the best coherent text does not beat the nearest existing paper. **On Steam, not entirely.** For 25% of the points the coherent text does land more than 0.05 above the nearest game, and for 15% if I also require approval from a third model that had not written or filtered anything it was judging. Getting a little beyond what exists is possible.
 
-But look at the scale. Those escaping texts stay at a cosine of 0.09–0.14 from their point, when the point itself is at 1. "Further out than any game" is not "at the point". This qualifies my objection, and I think it improves it. Leaving the map is not impossible. It is that what you reach stays very far from what you asked for, and what you read is still an ordinary game.
+But look at the scale. **Those escaping texts stay at a cosine of 0.09–0.14 from their point, when the point itself is at 1.** "Further out than any game" is not "at the point". This qualifies my objection, and I think it improves it. Leaving the map is not impossible. It is that what you reach stays very far from what you asked for, and what you read is still an ordinary game.
 
 ## Why: the cap
 
-The geometry explains why far points are out of reach. Texts do not spread across the whole space. They all share a common direction, so they occupy a narrow cap of the sphere: any two Steam games have a cosine of 0.41, while two random directions have 0 ± 0.03. FAR points are random directions picked for being far from everything, so they fall outside the cap. Any text, however odd, falls inside it.
+The geometry explains why far points are out of reach. Texts do not spread across the whole space. They all share a common direction, so **they occupy a narrow cap of the sphere**: any two Steam games have a cosine of 0.41, while two random directions have 0 ± 0.03. FAR points are random directions picked for being far from everything, so they fall outside the cap. Any text, however odd, falls inside it.
 
 <figure class="lg-fig">
 <svg viewBox="0 0 600 340" role="img" aria-label="Texts occupy a narrow cap of the sphere. An interior GAP hole sits inside the cap, between games. A FAR point sits outside it, on the rest of the sphere, and the description written for it lands back in the cap, next to the neighbours it was shown.">
@@ -295,11 +296,11 @@ With this geometry the distance can be predicted before looking. Before building
 
 ## What does work: asking without a map
 
-Interior holes can be reached, but they are not newer. On Steam the judges gave them a novelty of 4.9 out of 10, below INTERP (5.5), with all six generators. On arXiv they tied with INTERP, and on patents it depends on the generator. A hole between games gets filled with something that looks like the games around it.
+**Interior holes can be reached, but they are not newer.** On Steam the judges gave them a novelty of 4.9 out of 10, below INTERP (5.5), with all six generators. On arXiv they tied with INTERP, and on patents it depends on the generator. A hole between games gets filled with something that looks like the games around it.
 
-For the judges, the most novel output was the one that did not use the map: PLAIN, simply asking for "a new game". With every generator, PLAIN beat the best guided arm by 1.1 to 2.6 points of novelty.
+**For the judges, the most novel output was the one that did not use the map:** PLAIN, simply asking for "a new game". With every generator, PLAIN beat the best guided arm by 1.1 to 2.6 points of novelty.
 
-Until I read the listings one after another. Sonnet called 45 of its 50 games "Tidewright" something, and luna through Codex wrote 46 museums out of 50. I saw it straight away: another museum, and by then a tiresome one. The judges did not, because they scored each listing on its own and never saw two together. Each idea was new against the catalogue, but the generator kept repeating the same idea. The same happened on arXiv: Sonnet titled 43 of its 50 papers "Tidal" something.
+**Until I read the listings one after another.** Sonnet called 45 of its 50 games "Tidewright" something, and luna through Codex wrote 46 museums out of 50. I saw it straight away: another museum, and by then a tiresome one. The judges did not, because they scored each listing on its own and never saw two together. Each idea was new against the catalogue, but the generator kept repeating the same idea. The same happened on arXiv: Sonnet titled 43 of its 50 papers "Tidal" something.
 
 <figure class="lg-fig">
 <svg viewBox="0 0 600 300" role="img" aria-label="Median similarity between each generator's 50 ideas. PLAIN with Sonnet reaches 0.86 and with luna via Codex 0.81, far above 50 random real games (0.40) and the guided arms (0.35-0.49).">
@@ -317,7 +318,7 @@ Until I read the listings one after another. Sonnet called 45 of its 50 games "T
 <figcaption>Asking without the map gives the newest ideas one at a time, but two generators almost always repeat the same one. Showing the model its earlier ideas (PLAIND) brings repetition down almost to the guided arms.</figcaption>
 </figure>
 
-I fixed it with a variant, PLAIND, in which the model sees the titles it has already proposed. Repetition drops almost to the level of the guided arms, and novelty stays the highest in all three catalogues, 1 to 5 points above INTERP depending on the generator.
+**I fixed it with a variant, PLAIND**, in which the model sees the titles it has already proposed. Repetition drops almost to the level of the guided arms, and novelty stays the highest in all three catalogues, 1 to 5 points above INTERP depending on the generator.
 
 My novelty and the judges' turned out less alike than I expected.
 
@@ -389,13 +390,13 @@ On Steam we agree except on PLAIN, because of the repeated museums. On patents I
 
 ## Can it be proved?
 
-I wanted to go beyond the data, and with help from gpt-6-astra I tried to prove a bound: how close a coherent text can get to a far point. No bound held, because each proposal fell to data we already had. Coherence is not smooth: the judges give opposite verdicts to listings that differ by a single word. And no probability threshold from a language model separates what the judges accept from what they reject.
+I wanted to go beyond the data, and with help from gpt-6-astra I tried to prove a bound: how close a coherent text can get to a far point. **No bound held**, because each proposal fell to data we already had. Coherence is not smooth: the judges give opposite verdicts to listings that differ by a single word. And no probability threshold from a language model separates what the judges accept from what they reject.
 
-So I turned it around: can we prove there is no bound? Strictly speaking, no, because texts of bounded length are a finite set and always have a maximum. What was proved, and checked in Lean, is something else. Without a rule that says what counts as coherent, nobody can certify a ceiling better than the trivial one, however many tests they run. And in general the problem is computationally hard.
+So I turned it around: can we prove there is no bound? Strictly speaking, no, because texts of bounded length are a finite set and always have a maximum. What was proved, and checked in Lean, is something else. **Without a rule that says what counts as coherent, nobody can certify a ceiling better than the trivial one**, however many tests they run. And in general the problem is computationally hard.
 
 ## Did any idea get ahead of the future?
 
-That left the check against later games and papers. On Steam it does not work: once every listing is rewritten into the same format, real games from before and after 2024 are barely distinguishable. On arXiv it does work, and FAR ideas get no closer to what was published after 2023 than any old paper does. PLAIND ideas do get closer. But the generators were trained after 2023, so that shows they know what came next, not that they anticipate it. The one generator that could not know those papers, gpt-4o, anticipates nothing once style is removed.
+That left the check against later games and papers. On Steam it does not work: once every listing is rewritten into the same format, real games from before and after 2024 are barely distinguishable. On arXiv it does work, and **FAR ideas get no closer to what was published after 2023 than any old paper does.** PLAIND ideas do get closer. But the generators were trained after 2023, so that shows they know what came next, not that they anticipate it. The one generator that could not know those papers, gpt-4o, anticipates nothing once style is removed.
 
 ## In short
 
