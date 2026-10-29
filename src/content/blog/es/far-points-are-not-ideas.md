@@ -412,4 +412,4 @@ Me queda la otra mitad de la pregunta, la que el resultado de arXiv deja abierta
 
 ---
 
-*El código, los preregistros y las demostraciones en Lean están en [github.com/JaviMaligno/latent-gap-ideas]($R).*
+*El código, los preregistros y las demostraciones en Lean están en [github.com/JaviMaligno/latent-gap-ideas](https://github.com/JaviMaligno/latent-gap-ideas).*

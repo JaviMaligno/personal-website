@@ -412,4 +412,4 @@ The other half of the question remains, the one the arXiv result leaves open: ca
 
 ---
 
-*The code, pre-registrations and Lean proofs are at [github.com/JaviMaligno/latent-gap-ideas]($R).*
+*The code, pre-registrations and Lean proofs are at [github.com/JaviMaligno/latent-gap-ideas](https://github.com/JaviMaligno/latent-gap-ideas).*
