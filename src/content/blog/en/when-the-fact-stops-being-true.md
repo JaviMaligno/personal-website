@@ -275,12 +275,12 @@ There is one number you have to measure before any of this means anything: **the
 
 **Realistic procedure — 5,243 tokens.** A field reference for the 112 fields the events actually carry, six exception rules, five worked examples. Real operating procedures look like this. Now every arm's static half caches, and two things happen:
 
-- **SKILL.state gets 41% cheaper: $109 → $64 per thousand episodes.** The procedure got three and a half times longer and the bill went down, because it crossed the threshold. Memory goes from saving 0% to 48%, Stateful from 0% to 22%.
+- **SKILL.state gets 41% cheaper: \$109 → \$64 per thousand episodes.** The procedure got three and a half times longer and the bill went down, because it crossed the threshold. Memory goes from saving 0% to 48%, Stateful from 0% to 22%.
 - **The advantage in money widens to 2.51x while the advantage in raw tokens narrows to 3.43x.** In both conditions the raw token count is the wrong number to quote: it says 7.54x or 3.43x where the invoice says 1.39x or 2.51x.
 
-The row to actually act on is Stateful. It sends almost exactly what ReAct sends. It puts a mutating state block **in front of** the transcript instead of behind it — which is where the paper's own Appendix A.3 template puts it — and is billed **$849 against $162 per thousand episodes**. Same content, same task, same score of 1.00. A 5.2x difference, and it holds in both conditions.
+The row to actually act on is Stateful. It sends almost exactly what ReAct sends. It puts a mutating state block **in front of** the transcript instead of behind it — which is where the paper's own Appendix A.3 template puts it — and is billed **\$849 against \$162 per thousand episodes**. Same content, same task, same score of 1.00. A 5.2x difference, and it holds in both conditions.
 
-On Sonnet 5, at 3x the input price, those become $2,546 against $486. Per thousand episodes, prompt order is a four-figure line item.
+On Sonnet 5, at 3x the input price, those become \$2,546 against \$486. Per thousand episodes, prompt order is a four-figure line item.
 
 ## Where explicit state actually wins
 

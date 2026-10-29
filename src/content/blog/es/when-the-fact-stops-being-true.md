@@ -263,12 +263,12 @@ Hay un número que hay que medir antes de que nada de esto signifique algo: **el
 
 **Procedimiento realista — 5.243 tokens.** Una referencia de los 112 campos que los eventos llevan de verdad, seis reglas de excepción, cinco ejemplos resueltos. Un procedimiento operativo real tiene esta forma. Ahora la mitad estática de cada brazo cachea, y pasan dos cosas:
 
-- **SKILL.state se abarata un 41%: de $109 a $64 por cada mil episodios.** El procedimiento se hizo tres veces y media más largo y la factura bajó, porque cruzó el umbral. Memory pasa de ahorrar 0% a 48%, y Stateful de 0% a 22%.
+- **SKILL.state se abarata un 41%: de \$109 a \$64 por cada mil episodios.** El procedimiento se hizo tres veces y media más largo y la factura bajó, porque cruzó el umbral. Memory pasa de ahorrar 0% a 48%, y Stateful de 0% a 22%.
 - **La ventaja en dinero se ensancha a 2,51x mientras la de tokens brutos se estrecha a 3,43x.** En las dos condiciones el recuento bruto es la cifra equivocada para citar: dice 7,54x o 3,43x donde la factura dice 1,39x o 2,51x.
 
-La fila sobre la que hay que actuar es Stateful. Manda casi exactamente lo que manda ReAct. Pone un bloque de estado mutante **delante** del transcript en vez de detrás —que es donde lo coloca la plantilla de su Apéndice A.3— y le facturan **$849 frente a $162 por cada mil episodios**. Mismo contenido, misma tarea, mismo score de 1,00. Una diferencia de 5,2x, y aguanta en las dos condiciones.
+La fila sobre la que hay que actuar es Stateful. Manda casi exactamente lo que manda ReAct. Pone un bloque de estado mutante **delante** del transcript en vez de detrás —que es donde lo coloca la plantilla de su Apéndice A.3— y le facturan **\$849 frente a \$162 por cada mil episodios**. Mismo contenido, misma tarea, mismo score de 1,00. Una diferencia de 5,2x, y aguanta en las dos condiciones.
 
-En Sonnet 5, con la entrada a 3x, eso son $2.546 frente a $486. Por cada mil episodios, el orden del prompt es una partida de cuatro cifras.
+En Sonnet 5, con la entrada a 3x, eso son \$2.546 frente a \$486. Por cada mil episodios, el orden del prompt es una partida de cuatro cifras.
 
 ## Dónde gana de verdad el estado explícito
 
