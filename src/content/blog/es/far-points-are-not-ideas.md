@@ -6,6 +6,7 @@ tags: ["IA", "Embeddings", "LLMs", "Investigación", "Creatividad"]
 lang: es
 translationKey: far-points-are-not-ideas
 heroImage: "/blog/far-points-are-not-ideas.png"
+linkedinImage: "/blog/far-points-are-not-ideas-linkedin.png"
 ---
 Hace poco [@syntheticbeef publicó en X](https://x.com/syntheticbeef/status/2112904858718367750) una receta para que la IA invente ideas de verdad nuevas. Embebes los juegos de Steam, eliges puntos del espacio que estén lejos de todos ellos, conviertes cada punto de vuelta en la descripción de un juego y ordenas el resultado por lo distinto que es de lo que ya existe. Si el punto está lejos de todo, la idea que sale de él debería ser nueva.
 

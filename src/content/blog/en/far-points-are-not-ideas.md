@@ -6,6 +6,7 @@ tags: ["AI", "Embeddings", "LLMs", "Research", "Creativity"]
 lang: en
 translationKey: far-points-are-not-ideas
 heroImage: "/blog/far-points-are-not-ideas.png"
+linkedinImage: "/blog/far-points-are-not-ideas-linkedin.png"
 ---
 Recently [@syntheticbeef posted a recipe on X](https://x.com/syntheticbeef/status/2112904858718367750) for getting AI to invent genuinely new ideas. You embed the games on Steam, pick points in the space that are far from all of them, turn each point back into a game description, and rank the results by how different they are from what already exists. If a point is far from everything, the idea that comes out of it should be new.
 
