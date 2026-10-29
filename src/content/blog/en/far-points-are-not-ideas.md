@@ -7,6 +7,7 @@ lang: en
 translationKey: far-points-are-not-ideas
 heroImage: "/blog/far-points-are-not-ideas.png"
 linkedinImage: "/blog/far-points-are-not-ideas-linkedin.png"
+repoUrl: "https://github.com/JaviMaligno/latent-gap-ideas"
 ---
 Recently [@syntheticbeef posted a recipe on X](https://x.com/syntheticbeef/status/2112904858718367750) for getting AI to invent genuinely new ideas. You embed the games on Steam, pick points in the space that are far from all of them, turn each point back into a game description, and rank the results by how different they are from what already exists. If a point is far from everything, the idea that comes out of it should be new.
 
@@ -392,7 +393,7 @@ On Steam we agree except on PLAIN, because of the repeated museums. On patents I
 
 I wanted to go beyond the data, and with help from gpt-6-astra I tried to prove a bound: how close a coherent text can get to a far point. **No bound held**, because each proposal fell to data we already had. Coherence is not smooth: the judges give opposite verdicts to listings that differ by a single word. And no probability threshold from a language model separates what the judges accept from what they reject.
 
-So I turned it around: can we prove there is no bound? Strictly speaking, no, because texts of bounded length are a finite set and always have a maximum. What was proved, and checked in Lean, is something else. **Without a rule that says what counts as coherent, nobody can certify a ceiling better than the trivial one**, however many tests they run. And in general the problem is computationally hard.
+So I turned it around: can we prove there is no bound? Strictly speaking, no, because texts of bounded length are a finite set and always have a maximum. What was proved, and [checked in Lean](https://github.com/JaviMaligno/latent-gap-ideas/tree/main/lean), is something else. **Without a rule that says what counts as coherent, nobody can certify a ceiling better than the trivial one**, however many tests they run. And in general the problem is computationally hard.
 
 ## Did any idea get ahead of the future?
 
@@ -408,3 +409,7 @@ That left the check against later games and papers. On Steam it does not work: o
 The tweet gets something right: there are unexplored corners of the map that can be reached. But a point far from everything is not an idea waiting for someone to write it down. Almost always, it is a place where no text fits.
 
 The other half of the question remains, the one the arXiv result leaves open: can a model reach an idea that genuinely did not exist when it was trained? This is the Einstein test Demis Hassabis proposed: train a model only on what was known before 1911 and see whether it arrives at general relativity. That will be part two, with a generator whose training cutoff I control.
+
+---
+
+*The code, pre-registrations and Lean proofs are at [github.com/JaviMaligno/latent-gap-ideas]($R).*

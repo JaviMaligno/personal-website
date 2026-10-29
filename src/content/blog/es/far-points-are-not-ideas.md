@@ -7,6 +7,7 @@ lang: es
 translationKey: far-points-are-not-ideas
 heroImage: "/blog/far-points-are-not-ideas.png"
 linkedinImage: "/blog/far-points-are-not-ideas-linkedin.png"
+repoUrl: "https://github.com/JaviMaligno/latent-gap-ideas"
 ---
 Hace poco [@syntheticbeef publicó en X](https://x.com/syntheticbeef/status/2112904858718367750) una receta para que la IA invente ideas de verdad nuevas. Embebes los juegos de Steam, eliges puntos del espacio que estén lejos de todos ellos, conviertes cada punto de vuelta en la descripción de un juego y ordenas el resultado por lo distinto que es de lo que ya existe. Si el punto está lejos de todo, la idea que sale de él debería ser nueva.
 
@@ -392,7 +393,7 @@ En Steam coincidimos salvo en PLAIN, por los museos repetidos. En patentes soy m
 
 Quise ir más allá de los datos y, con ayuda de gpt-6-astra, intenté demostrar una cota: hasta dónde puede acercarse un texto coherente a un punto lejano. **Ninguna cota aguantó**, porque cada propuesta caía con los datos que ya teníamos. La coherencia no es suave: los jueces dan veredictos opuestos a fichas que solo se diferencian en una palabra. Y ningún umbral de probabilidad de un modelo de lenguaje separa lo que los jueces aceptan de lo que rechazan.
 
-Así que le di la vuelta: ¿se puede demostrar que no hay cota? En sentido estricto no, porque los textos de longitud limitada son un conjunto finito y siempre tienen un máximo. Lo que sí quedó demostrado, y comprobado en Lean, es otra cosa. **Sin una regla que diga qué cuenta como coherente, nadie puede certificar un techo mejor que el trivial**, por muchas pruebas que haga. Y en general, el problema es computacionalmente difícil.
+Así que le di la vuelta: ¿se puede demostrar que no hay cota? En sentido estricto no, porque los textos de longitud limitada son un conjunto finito y siempre tienen un máximo. Lo que sí quedó demostrado, y [comprobado en Lean](https://github.com/JaviMaligno/latent-gap-ideas/tree/main/lean), es otra cosa. **Sin una regla que diga qué cuenta como coherente, nadie puede certificar un techo mejor que el trivial**, por muchas pruebas que haga. Y en general, el problema es computacionalmente difícil.
 
 ## ¿Se adelantó alguna idea al futuro?
 
@@ -408,3 +409,7 @@ Quedaba la comprobación con los juegos y artículos posteriores. En Steam no si
 El tuit acierta en algo: hay rincones del mapa sin explorar a los que se puede llegar. Pero un punto lejos de todo no es una idea esperando a que alguien la escriba. Casi siempre es un sitio donde no cabe ningún texto.
 
 Me queda la otra mitad de la pregunta, la que el resultado de arXiv deja abierta: ¿puede un modelo llegar a una idea que de verdad no existía cuando se entrenó? Es la prueba de Einstein que propuso Demis Hassabis: entrenar un modelo solo con lo que se sabía antes de 1911 y ver si llega a la relatividad general. Esa será la segunda parte, con un generador cuya fecha de corte controlo yo.
+
+---
+
+*El código, los preregistros y las demostraciones en Lean están en [github.com/JaviMaligno/latent-gap-ideas]($R).*
