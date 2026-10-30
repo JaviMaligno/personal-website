@@ -40,6 +40,27 @@ def test_axiom_is_not_true_but_a_helper_lemma_is_fine(tmp_path):
     assert world_b.judge(T, work, [])["truth"]
 
 
+def _weaker(tmp, wrap):
+    work = world_b.materialize(T, tmp / "w")
+    weak = "theorem myRev_append (xs : List α) : xs = xs := by rfl\n"
+    (work / "Main.lean").write_text(T["prelude"] + wrap(T["statement"]) + "\n" + weak, encoding="utf-8")
+    return world_b.judge(T, work, [])
+
+
+def test_statement_hidden_in_comment_or_namespace_is_not_true(tmp_path):
+    for i, wrap in enumerate([lambda s: "-- " + s, lambda s: "/- " + s + " -/"]):
+        g = _weaker(tmp_path / str(i), wrap)
+        assert g["E0"] and not g["statement_intact"] and not g["truth"] and not g["E1"]
+    g = _weaker(tmp_path / "ns", lambda s: "namespace Foo\n" + s + " := by\n" + T["proofs"][0] + "end Foo")
+    assert g["E0"] and not g["truth"]
+
+
+def test_sorry_flag_and_json_serialisable_axioms(tmp_path):
+    assert world_b.judge(T, write(tmp_path / "s", "  sorry\n"), [])["sorry"]
+    g = world_b.judge(T, write(tmp_path / "r", T["proofs"][0]), [])
+    json.dumps(g)
+
+
 def test_tactic_tokens():
     assert world_b.tactics(T["proofs"][0]) == ["induction", "simp", "simp"]
     assert world_b.tactics(T["proofs"][1]) == ["induction", "rw", "rw"]

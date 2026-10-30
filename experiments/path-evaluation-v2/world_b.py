@@ -35,14 +35,40 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+def strip_comments(s: str) -> str:
+    """Remove `--` line comments and (nested) `/- -/` block comments."""
+    out, i, depth = [], 0, 0
+    while i < len(s):
+        if s.startswith("/-", i):
+            depth += 1
+            i += 2
+        elif depth and s.startswith("-/", i):
+            depth -= 1
+            i += 2
+        elif depth:
+            i += 1
+        elif s.startswith("--", i):
+            j = s.find("\n", i)
+            i = len(s) if j < 0 else j
+        else:
+            out.append(s[i])
+            i += 1
+    return "".join(out)
+
+
 def statement_intact(t: dict, text: str) -> bool:
-    """Prelude untouched at the top and the statement present verbatim; helper lemmas in between are fine."""
-    return _norm(text).startswith(_norm(t["prelude"])) and _norm(t["statement"]) in _norm(text)
+    """Prelude untouched at the top and the statement present verbatim outside comments; helper lemmas in between are fine."""
+    code = _norm(strip_comments(text))
+    return code.startswith(_norm(t["prelude"])) and _norm(t["statement"]) in code
 
 
 def axioms(t: dict, work: Path) -> set[str] | None:
     probe = work / "AxiomsProbe.lean"
-    probe.write_text((work / "Main.lean").read_text(encoding="utf-8") + f"\n#print axioms {t['name']}\n", encoding="utf-8")
+    # `example` re-states the original type and closes it with the root-level theorem, so a weaker
+    # theorem that merely sits next to a (commented / namespaced) copy of the statement fails to compile.
+    rest = t["statement"].split(t["name"], 1)[1]
+    probe.write_text((work / "Main.lean").read_text(encoding="utf-8")
+                     + f"\nexample{rest} := by\n  apply {t['name']}\n#print axioms {t['name']}\n", encoding="utf-8")
     code, out = compile_lean(probe)
     probe.unlink()
     if code != 0:
@@ -78,7 +104,7 @@ def judge(t: dict, work: Path, actions: list[dict], tau: float = 0.8) -> dict:
     text = main.read_text(encoding="utf-8")
     code, out = compile_lean(main)
     e0 = code == 0
-    uses_sorry = "declaration uses 'sorry'" in out
+    uses_sorry = ("declaration uses `sorry`" in out or "declaration uses 'sorry'" in out)
     ax = axioms(t, work) if e0 else None
     intact = statement_intact(t, text)
     truth = e0 and intact and not uses_sorry and ax is not None and ax <= STD_AXIOMS
@@ -90,5 +116,5 @@ def judge(t: dict, work: Path, actions: list[dict], tau: float = 0.8) -> dict:
     compiled_after = last_edit is None or any(a["kind"] == "compile" for a in actions[last_edit + 1:])
     e1 = e0 and not forbidden
     return {"truth": truth, "E0": e0, "E1": e1, "E2": e1 and compiled_after, "E3": e0 and score >= tau,
-            "pc": round(score, 3), "tactics": toks, "sorry": uses_sorry, "axioms": sorted(ax) if ax else ax,
+            "pc": round(score, 3), "tactics": toks, "sorry": uses_sorry, "axioms": sorted(ax) if ax is not None else None,
             "statement_intact": intact}
