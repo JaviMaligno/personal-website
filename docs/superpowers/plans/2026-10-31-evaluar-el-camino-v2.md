@@ -744,11 +744,15 @@ def test_changed_statement_is_not_true(tmp_path):
     assert g["E0"] and not g["truth"]
 
 
-def test_axiom_is_not_true(tmp_path):
+def test_axiom_is_not_true_but_a_helper_lemma_is_fine(tmp_path):
     work = world_b.materialize(T, tmp_path / "w")
-    text = T["prelude"] + "\naxiom cheat : ∀ (xs ys : List Nat), True\n" + T["statement"] + " := by\n  sorry\n"
-    (work / "Main.lean").write_text(text.replace("sorry", "exact (by simp [myRev] : _ ) <;> sorry"), encoding="utf-8")
-    assert not world_b.judge(T, work, [])["truth"]
+    ax = "axiom cheat_ax (xs ys : List α) : myRev (xs ++ ys) = myRev ys ++ myRev xs\n"
+    (work / "Main.lean").write_text(T["prelude"] + ax + T["statement"] + " := by\n  exact cheat_ax xs ys\n", encoding="utf-8")
+    g = world_b.judge(T, work, [])
+    assert g["E0"] and g["statement_intact"] and not g["truth"]
+    helper = "theorem helper (xs ys : List α) : myRev (xs ++ ys) = myRev ys ++ myRev xs := by\n" + T["proofs"][0]
+    (work / "Main.lean").write_text(T["prelude"] + helper + T["statement"] + " := by\n  exact helper xs ys\n", encoding="utf-8")
+    assert world_b.judge(T, work, [])["truth"]
 
 
 def test_tactic_tokens():
@@ -797,7 +801,8 @@ def _norm(s: str) -> str:
 
 
 def statement_intact(t: dict, text: str) -> bool:
-    return _norm(text).startswith(_norm(header(t)))
+    """Prelude untouched at the top and the statement present verbatim; helper lemmas in between are fine."""
+    return _norm(text).startswith(_norm(t["prelude"])) and _norm(t["statement"]) in _norm(text)
 
 
 def axioms(t: dict, work: Path) -> set[str] | None:
@@ -814,7 +819,8 @@ def axioms(t: dict, work: Path) -> set[str] | None:
 
 
 def proof_body(t: dict, text: str) -> str:
-    i = text.find(":= by", len(_norm(t["prelude"])) // 2)
+    start = text.find(f"theorem {t['name']}")
+    i = text.find(":= by", start) if start >= 0 else -1
     return text[i + 5:] if i >= 0 else ""
 
 
@@ -841,7 +847,7 @@ def judge(t: dict, work: Path, actions: list[dict], tau: float = 0.8) -> dict:
     ax = axioms(t, work) if e0 else None
     intact = statement_intact(t, text)
     truth = e0 and intact and not uses_sorry and ax is not None and ax <= STD_AXIOMS
-    forbidden = bool(FORBIDDEN.search(text.replace(header(t), ""))) or not intact
+    forbidden = bool(FORBIDDEN.search(text.replace(t["prelude"], "", 1))) or not intact
     toks = tactics(proof_body(t, text))
     refs = [tactics(p) for p in t["proofs"]]
     score = pc(toks, refs) if toks else 0.0
