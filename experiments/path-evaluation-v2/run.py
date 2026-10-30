@@ -66,7 +66,7 @@ def run_agent(cfg: dict, work: Path, prompt: str, world: str) -> tuple[dict, lis
 
 
 def episode(world: str, task: dict, model: str, cfg: dict, rep: int) -> dict:
-    work = TMP / "work"
+    work = TMP / f"work-{world}"  # per world: the two worlds may run in parallel processes
     (world_a if world == "a" else world_b).materialize(task, work)
     res, actions, events = run_agent(cfg, work, prompt_for(world, task), world)
     EVENTS.mkdir(parents=True, exist_ok=True)
@@ -74,7 +74,7 @@ def episode(world: str, task: dict, model: str, cfg: dict, rep: int) -> dict:
     ev_file.write_text("\n".join(events) + "\n", encoding="utf-8")
     try:
         if world == "a":
-            judge = world_a.judge(task, work, actions, TMP / "judge")
+            judge = world_a.judge(task, work, actions, TMP / "judge-a")
         else:
             judge = world_b.judge(task, work, actions)
     except OSError as e:  # the agent left its work copy unusable: invalid work, kept visible in analysis

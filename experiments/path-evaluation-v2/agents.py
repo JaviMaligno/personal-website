@@ -16,7 +16,8 @@ import qwen_loop
 import setup_env
 
 HERE = Path(__file__).parent
-CODEX_HOME = Path(__import__("tempfile").gettempdir()) / "pe2" / "codexhome"
+# One Codex home per world, so two runner processes (one per world) can run side by side.
+CODEX_HOMES = Path(__import__("tempfile").gettempdir()) / "pe2"
 CLAUDE_TOOLS = "Bash,Read,Edit,Write,Grep,Glob"
 
 
@@ -28,9 +29,10 @@ def env_for(world: str) -> dict:
     return env
 
 
-def prepare_codex_home(model: str, effort: str) -> Path:
-    CODEX_HOME.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(Path.home() / ".codex" / "auth.json", CODEX_HOME / "auth.json")
+def prepare_codex_home(model: str, effort: str, world: str) -> Path:
+    home = CODEX_HOMES / f"codexhome-{world}"
+    home.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(Path.home() / ".codex" / "auth.json", home / "auth.json")
     # [windows] sandbox: without it the isolated home has no working sandbox and every command is
     # "blocked by policy" (observed 2026-10-30); the user's own config sets it to "elevated".
     lines = [f'model = "{model}"', f'model_reasoning_effort = "{effort}"', "", "[windows]", 'sandbox = "elevated"', ""]
@@ -38,8 +40,8 @@ def prepare_codex_home(model: str, effort: str) -> Path:
         if root.exists():
             for p in sorted(root.rglob("SKILL.md")):
                 lines += ["[[skills.config]]", f"path = '{p}'", "enabled = false", ""]
-    (CODEX_HOME / "config.toml").write_text("\n".join(lines), encoding="utf-8")
-    return CODEX_HOME
+    (home / "config.toml").write_text("\n".join(lines), encoding="utf-8")
+    return home
 
 
 def run_claude(model: str, work: Path, prompt: str, world: str, timeout=1800) -> dict:
@@ -57,7 +59,7 @@ def run_claude(model: str, work: Path, prompt: str, world: str, timeout=1800) ->
 
 
 def run_codex(model: str, effort: str, work: Path, prompt: str, world: str, timeout=1800) -> dict:
-    home = prepare_codex_home(model, effort)
+    home = prepare_codex_home(model, effort, world)
     env = env_for(world) | {"CODEX_HOME": str(home)}
     cmd = [shutil.which("codex") or "codex", "exec", "--json", "--ephemeral", "--skip-git-repo-check",
            "--disable", "plugins", "-s", "workspace-write", "-"]

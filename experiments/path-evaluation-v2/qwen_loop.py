@@ -42,7 +42,7 @@ def _exec(work: Path, env: dict, tool: str, a: dict) -> str:
         if tool == "list_dir":
             return "\n".join(sorted(p.name + ("/" if p.is_dir() else "") for p in (work / a.get("path", ".")).iterdir()))
         if tool == "search":
-            r = subprocess.run(["grep", "-rn", "-E", a["pattern"], a.get("path", ".")], cwd=work, capture_output=True, text=True, timeout=60)
+            r = subprocess.run(["grep", "-rn", "-E", a["pattern"], a.get("path", ".")], cwd=work, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
             return r.stdout[:20000] or "(no matches)"
         if tool == "write_file":
             p = work / a["path"]; p.parent.mkdir(parents=True, exist_ok=True); p.write_text(a["content"], encoding="utf-8"); return "written"
@@ -52,7 +52,7 @@ def _exec(work: Path, env: dict, tool: str, a: dict) -> str:
                 return f"error: old text found {s.count(a['old'])} times"
             p.write_text(s.replace(a["old"], a["new"]), encoding="utf-8"); return "replaced"
         if tool == "run_command":
-            r = subprocess.run([_git_bash(env), "-lc", a["command"]], cwd=work, env=env, capture_output=True, text=True, timeout=600)
+            r = subprocess.run([_git_bash(env), "-lc", a["command"]], cwd=work, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
             return (r.stdout + r.stderr)[-20000:] + f"\n[exit {r.returncode}]"
     except Exception as e:  # tool errors go back to the model, like a CLI would show them
         return f"error: {type(e).__name__}: {e}"
