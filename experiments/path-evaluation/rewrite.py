@@ -85,7 +85,7 @@ class RewriteWorld:
         return no_invalid if self.kind == "trap" else no_invalid and self.final_ok()
 
     def _find(self, s):
-        sub = norm(parse(s))
+        sub = norm(parse(str(s)))
         if sub not in set(subterms(self.state)):
             raise ValueError(f"'{s}' is not a subexpression of the current expression")
         return sub
@@ -114,7 +114,7 @@ class RewriteWorld:
         if tool == "cancel":
             if sub[0] != "div":
                 raise ValueError("cancel needs a fraction")
-            f = norm(parse(args["factor"]))
+            f = norm(parse(str(args["factor"])))
             num, den = _drop(sub[1], f), _drop(sub[2], f)
             if num is None or den is None:
                 raise ValueError(f"'{args['factor']}' is not a factor of both numerator and denominator")

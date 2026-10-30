@@ -59,3 +59,11 @@ def test_trap_truth_is_about_validity_not_reaching():
     w = RewriteWorld("(x*y + y)/y", "x + 1", {"x": "real", "y": "real"}, kind="trap")
     w.call("submit", {})
     assert w.done and not w.final_ok() and w.truth()
+
+
+def test_non_string_args_record_error_step():
+    w = RewriteWorld("x/x", "1", {"x": "positive"})
+    r1 = w.call("cancel", {"sub": "x/x", "factor": 1})
+    r2 = w.call("prove_nonzero", {"sub": 1})
+    assert r1.startswith("error:") and r2.startswith("error:")
+    assert len(w.steps) == 2 and not w.steps[0]["changed"]
