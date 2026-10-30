@@ -1,0 +1,11 @@
+{
+  "id": "t09-length-myfilter-le",
+  "name": "length_myFilter_le",
+  "difficulty": "medium",
+  "prelude": "def myFilter (p : α → Bool) : List α → List α\n  | [] => []\n  | x :: xs => if p x then x :: myFilter p xs else myFilter p xs\n",
+  "statement": "theorem length_myFilter_le (p : α → Bool) (xs : List α) : (myFilter p xs).length ≤ xs.length",
+  "proofs": [
+    "  induction xs with\n  | nil => simp [myFilter]\n  | cons x xs ih =>\n    simp only [myFilter]\n    split <;> simp <;> omega\n",
+    "  induction xs with\n  | nil => exact Nat.le_refl 0\n  | cons x xs ih =>\n    cases h : p x with\n    | true =>\n      simp only [myFilter, h, ↓reduceIte, List.length_cons]\n      exact Nat.succ_le_succ ih\n    | false =>\n      simp only [myFilter, h, Bool.false_eq_true, ↓reduceIte, List.length_cons]\n      exact Nat.le_succ_of_le ih\n"
+  ]
+}

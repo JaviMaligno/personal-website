@@ -1,0 +1,11 @@
+{
+  "id": "t14-sumacc-zero",
+  "name": "sumAcc_zero",
+  "difficulty": "hard",
+  "prelude": "def mySum : List Nat → Nat\n  | [] => 0\n  | x :: xs => x + mySum xs\n\ndef sumAcc : List Nat → Nat → Nat\n  | [], acc => acc\n  | x :: xs, acc => sumAcc xs (acc + x)\n",
+  "statement": "theorem sumAcc_zero (xs : List Nat) : sumAcc xs 0 = mySum xs",
+  "proofs": [
+    "  have h : ∀ acc, sumAcc xs acc = acc + mySum xs := by\n    induction xs with\n    | nil => intro acc; simp [sumAcc, mySum]\n    | cons x xs ih => intro acc; simp [sumAcc, mySum, ih]; omega\n  simpa using h 0\n",
+    "  have h : ∀ ys acc, sumAcc ys acc = acc + mySum ys := by\n    intro ys acc\n    fun_induction sumAcc ys acc with\n    | case1 acc => rw [mySum, Nat.add_zero]\n    | case2 acc x xs ih => rw [ih, mySum, Nat.add_assoc]\n  rw [h, Nat.zero_add]\n"
+  ]
+}

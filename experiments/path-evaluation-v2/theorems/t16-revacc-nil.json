@@ -1,0 +1,11 @@
+{
+  "id": "t16-revacc-nil",
+  "name": "revAcc_nil",
+  "difficulty": "hard",
+  "prelude": "def myRev : List α → List α\n  | [] => []\n  | x :: xs => myRev xs ++ [x]\n\ndef revAcc : List α → List α → List α\n  | [], acc => acc\n  | x :: xs, acc => revAcc xs (x :: acc)\n",
+  "statement": "theorem revAcc_nil (xs : List α) : revAcc xs [] = myRev xs",
+  "proofs": [
+    "  have h : ∀ acc : List α, revAcc xs acc = myRev xs ++ acc := by\n    induction xs with\n    | nil => intro acc; rfl\n    | cons x xs ih => intro acc; simp [revAcc, myRev, ih]\n  simpa using h []\n",
+    "  have h : ∀ ys acc : List α, revAcc ys acc = myRev ys ++ acc := by\n    intro ys acc\n    induction ys generalizing acc with\n    | nil => rfl\n    | cons y ys ih => rw [revAcc, ih, myRev, List.append_assoc, List.singleton_append]\n  rw [h, List.append_nil]\n"
+  ]
+}

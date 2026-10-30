@@ -1,0 +1,11 @@
+{
+  "id": "t02-double-eq",
+  "name": "double_eq",
+  "difficulty": "easy",
+  "prelude": "def double : Nat → Nat\n  | 0 => 0\n  | n + 1 => double n + 2\n",
+  "statement": "theorem double_eq (n : Nat) : double n = 2 * n",
+  "proofs": [
+    "  induction n with\n  | zero => rfl\n  | succ k ih => simp only [double, ih]; omega\n",
+    "  have double_add : ∀ m k, double (m + k) = double m + double k := by\n    intro m k\n    induction k with\n    | zero => rfl\n    | succ k ih => rw [← Nat.add_assoc, double, ih, double, Nat.add_assoc]\n  induction n with\n  | zero => rfl\n  | succ k ih =>\n    rw [double_add k 1, ih]\n    show 2 * k + 2 = 2 * (k + 1)\n    rw [Nat.mul_succ]\n"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "t10-take-append-drop",
+  "name": "take_append_drop",
+  "difficulty": "medium",
+  "prelude": "def myTake : Nat → List α → List α\n  | 0, _ => []\n  | _ + 1, [] => []\n  | n + 1, x :: xs => x :: myTake n xs\n\ndef myDrop : Nat → List α → List α\n  | 0, xs => xs\n  | _ + 1, [] => []\n  | n + 1, _ :: xs => myDrop n xs\n",
+  "statement": "theorem take_append_drop (n : Nat) (xs : List α) : myTake n xs ++ myDrop n xs = xs",
+  "proofs": [
+    "  induction n generalizing xs with\n  | zero => rfl\n  | succ n ih =>\n    cases xs with\n    | nil => rfl\n    | cons x xs => simp [myTake, myDrop, ih]\n",
+    "  induction xs generalizing n with\n  | nil => cases n <;> rfl\n  | cons x xs ih =>\n    cases n with\n    | zero => rfl\n    | succ n => rw [myTake, myDrop, List.cons_append, ih]\n"
+  ]
+}

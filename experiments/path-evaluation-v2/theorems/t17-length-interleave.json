@@ -1,0 +1,11 @@
+{
+  "id": "t17-length-interleave",
+  "name": "length_interleave",
+  "difficulty": "hard",
+  "prelude": "def interleave : List α → List α → List α\n  | [], ys => ys\n  | x :: xs, ys => x :: interleave ys xs\ntermination_by xs ys => xs.length + ys.length\n",
+  "statement": "theorem length_interleave (xs ys : List α) :\n    (interleave xs ys).length = xs.length + ys.length",
+  "proofs": [
+    "  fun_induction interleave xs ys with\n  | case1 ys => simp\n  | case2 x xs ys ih => simp [ih]; omega\n",
+    "  have h : ∀ n (as bs : List α), as.length + bs.length = n →\n      (interleave as bs).length = as.length + bs.length := by\n    intro n\n    induction n with\n    | zero =>\n      intro as bs hn\n      cases as with\n      | nil => rw [interleave, List.length_nil, Nat.zero_add]\n      | cons a as => simp at hn\n    | succ n ih =>\n      intro as bs hn\n      cases as with\n      | nil => rw [interleave, List.length_nil, Nat.zero_add]\n      | cons a as =>\n        rw [interleave, List.length_cons, ih bs as (by simp at hn; omega), List.length_cons]\n        omega\n  exact h _ xs ys rfl\n"
+  ]
+}
