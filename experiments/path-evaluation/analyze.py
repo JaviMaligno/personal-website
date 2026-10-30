@@ -10,7 +10,9 @@ import argparse
 import json
 from pathlib import Path
 
+import rewrite
 from evaluators import condensed, e0, e1, e2, e3
+from references import all_shortest, with_proofs
 
 HERE = Path(__file__).parent
 TAUS = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
@@ -28,6 +30,13 @@ def load_tasks():
     out = {}
     for wn in ("rewrite", "onboarding"):
         for t in json.loads((HERE / f"tasks/{wn}.json").read_text()):
+            # E3all: every shortest derivation, not only the 2 the task builder keeps,
+            # to separate "the reference path punishes valid orders" from our limit=2.
+            if wn == "rewrite" and t["kind"] == "solvable":
+                t["reference_tokens_all"] = [[rewrite.token(a, b) for a, b in with_proofs(p)]
+                                             for p in all_shortest(t)]
+            else:
+                t["reference_tokens_all"] = t["reference_tokens"]
             out[(wn, t["id"])] = t
     return out
 
@@ -45,7 +54,9 @@ def without_proofs(refs):
 def score(r, task, tau):
     return {"E0": e0(r), "E1": e1(r, task["rules"]), "E2": e2(r, task["rules"]),
             "E3": e3(r, task["reference_tokens"], tau),
-            "E3np": e3(r, without_proofs(task["reference_tokens"]), tau)}
+            "E3np": e3(r, without_proofs(task["reference_tokens"]), tau),
+            "E3all": e3(r, task.get("reference_tokens_all", task["reference_tokens"]), tau),
+            "E3all_np": e3(r, without_proofs(task.get("reference_tokens_all", task["reference_tokens"])), tau)}
 
 
 def table(traces, tasks, tau=0.8):

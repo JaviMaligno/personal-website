@@ -75,6 +75,27 @@ def count_derivations(task, max_len):
     return paths(norm(parse(task["start"])), max_len)
 
 
+def all_shortest(task, cap=500):
+    """Every valid derivation of minimal length, not just the first `limit` the BFS keeps:
+    with limit=2, an equally valid order of independent steps can be missing."""
+    first = shortest(task, limit=1)
+    if not first:
+        return []
+    length, goal, out = len(first[0]), norm(parse(task["target"])), []
+
+    def walk(state, path):
+        if len(out) >= cap:
+            return
+        for move, new in successors(state, task):
+            if new == goal and len(path) + 1 == length:
+                out.append(path + [move])
+            elif new != goal and len(path) + 1 < length:
+                walk(new, path + [move])
+
+    walk(norm(parse(task["start"])), [])
+    return out
+
+
 def with_proofs(path):
     out = []
     for tool, args in path:

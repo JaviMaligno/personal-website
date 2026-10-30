@@ -1,4 +1,4 @@
-from references import count_derivations, shortest, with_proofs
+from references import all_shortest, count_derivations, shortest, with_proofs
 
 TASK = {"id": "t", "kind": "solvable", "start": "(x**3 + x**2)/x**2", "target": "x + 1",
         "assumptions": {"x": "positive"}}
@@ -27,3 +27,11 @@ def test_with_proofs_inserts_condition_checks():
 def test_trap_has_no_valid_derivation_but_an_invalid_one():
     assert shortest(TRAP) == []
     assert shortest(TRAP, allow_invalid=True)
+
+
+def test_all_shortest_includes_every_order_of_independent_steps():
+    task = {"id": "two", "kind": "solvable", "start": "(x**2 + x)/x + sqrt(y**2)", "target": "x + 1 + y",
+            "assumptions": {"x": "positive", "y": "positive"}}
+    orders = {tuple(tool for tool, _ in p) for p in all_shortest(task)}
+    assert ("sqrt_square", "factor", "cancel") in orders
+    assert len(orders) == 3
