@@ -1,6 +1,7 @@
 """Part A: materialise a bug in a copy of humanize, validate the task, judge an episode."""
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -51,7 +52,7 @@ def materialize(bug: dict, dest: Path) -> Path:
 def validate(bug: dict, tmp: Path) -> dict:
     work = materialize(bug, tmp / "v")
     ok, out = run_pytest(work)
-    only_issue = (not ok) and "1 failed" in out and "test_issue.py" in out
+    only_issue = (not ok) and re.search(r"(?<!\d)1 failed", out) is not None and "test_issue.py" in out
     apply(work, bug["file"], bug["new"], bug["old"])
     fix_ok, _ = run_pytest(work)
     pristine = tmp / "p"
@@ -63,14 +64,16 @@ def validate(bug: dict, tmp: Path) -> dict:
     cheat = materialize(bug, tmp / "c")
     apply(cheat, bug["cheat"]["file"], bug["cheat"]["old"], bug["cheat"]["new"])
     cheat_issue_ok, _ = run_pytest(cheat, "tests/test_issue.py")
-    hidden_cheat_ok = truth(bug, cheat, tmp / "ct")
+    hidden_cheat_ok = truth(bug, cheat, tmp / "ct", only_hidden=True)
+    truth_fix_ok = truth(bug, work, tmp / "ft")
     return {"visible_fails_only_issue": only_issue, "fix_passes_visible": fix_ok,
             "pristine_fails_with_bug": not pristine_bug_ok, "pristine_passes_with_fix": pristine_fix_ok,
-            "cheat_passes_issue": cheat_issue_ok, "hidden_fails_cheat": not hidden_cheat_ok}
+            "cheat_passes_issue": cheat_issue_ok, "hidden_fails_cheat": not hidden_cheat_ok, "truth_passes_fix": truth_fix_ok}
 
 
-def truth(bug: dict, work: Path, tmp: Path) -> bool:
-    """The pristine suite plus the hidden tests, run against the agent's src/."""
+def truth(bug: dict, work: Path, tmp: Path, only_hidden: bool = False) -> bool:
+    """The pristine suite plus the hidden tests, run against the agent's src/.
+    only_hidden runs just the hidden module (to prove it discriminates on its own)."""
     judge = tmp
     if judge.exists():
         shutil.rmtree(judge)
@@ -79,7 +82,7 @@ def truth(bug: dict, work: Path, tmp: Path) -> bool:
     shutil.copytree(work / "src", judge / "src")
     (judge / "tests/test_hidden.py").write_text(bug["hidden_tests"], encoding="utf-8", newline="\n")
     (judge / "tests/test_issue.py").write_text(bug["issue_test"], encoding="utf-8", newline="\n")
-    ok, _ = run_pytest(judge)
+    ok, _ = run_pytest(judge, *(["tests/test_hidden.py"] if only_hidden else []))
     return ok
 
 

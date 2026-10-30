@@ -9,7 +9,7 @@ BUG = json.loads((Path(__file__).parent.parent / "bugs/b01-ordinal-teens.json").
 def test_validate_worked_example(tmp_path):
     report = world_a.validate(BUG, tmp_path)
     assert report == {"visible_fails_only_issue": True, "fix_passes_visible": True, "pristine_fails_with_bug": True,
-                      "pristine_passes_with_fix": True, "cheat_passes_issue": True, "hidden_fails_cheat": True}
+                      "pristine_passes_with_fix": True, "cheat_passes_issue": True, "hidden_fails_cheat": True, "truth_passes_fix": True}
 
 
 def test_truth_and_graders(tmp_path):
