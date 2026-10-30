@@ -6,7 +6,7 @@
 
 **Architecture:** Plain Python modules in `experiments/path-evaluation/`. Each world records every tool call as a step with `progress`, `token` and (rewrite world) `valid` flags, and computes its own `final_ok()` and semantic `truth()`. Evaluators score a trace from its steps plus per-task rules and reference tokens. The runner appends one JSON line per episode; the analysis re-scores everything offline.
 
-**Tech Stack:** Python 3.12+, `uv`, `sympy` (only for checking conditions and computing expand/factor), `pytest`. HTTP calls via the stdlib transport copied from `experiments/subagent-trust/transport.py`.
+**Tech Stack:** Python 3.12+, `uv`, `sympy` (only for checking conditions and computing expand/factor), `pytest`. Claude models run through the Claude Code CLI (Javier's subscription) with the world exposed as an MCP server; Qwen through OpenRouter with the stdlib transport copied from `experiments/subagent-trust/transport.py`.
 
 **Spec:** `docs/superpowers/specs/2026-10-30-evaluar-el-camino-design.md`.
 
@@ -1385,20 +1385,293 @@ git commit -m "path-evaluation: prompts and agent loop"
 
 ---
 
-### Task 9: Runner and live smoke test
+### Task 9: Runner, Claude Code CLI backend and live smoke test
+
+Decided with Javier (2026-10-30): Haiku and Sonnet run through **his Claude Code subscription** (`claude -p`), not an API: Vertex is not set up for this account and per-token billing is what he wants to avoid. Qwen keeps the OpenRouter API path (`run_episode`). With the CLI, Claude Code runs the tool loop itself; the world lives in a small MCP server that logs every executed call, and the runner replays those calls into a fresh (deterministic) world to get `steps`, `final_ok` and `truth` exactly as on the API path.
+
+Measured on 2026-10-30 with `claude` 2.1.314: `--setting-sources ""` + `--strict-mcp-config` + `--tools ""` + `--system-prompt` leaves only our system prompt plus a short account/workspace note (~800 tokens total); the init event reports `model=claude-haiku-5-5` for `--model haiku`; thinking is on by default. `--bare` is NOT usable: it disables subscription (OAuth) auth. Per-message usage comes in the `assistant` events of `--output-format stream-json --verbose` (one event per content block, same message id: dedupe by id).
 
 **Files:**
+- Create: `experiments/path-evaluation/mcp_world.py`
+- Create: `experiments/path-evaluation/cli_backend.py`
 - Create: `experiments/path-evaluation/run.py`
+- Modify: `experiments/path-evaluation/models.json` (haiku, sonnet → `claude_cli`)
+- Modify: `experiments/path-evaluation/analyze.py` (`tokens_used` counts cache tokens)
+- Test: `experiments/path-evaluation/tests/test_mcp_world.py`, `experiments/path-evaluation/tests/test_cli_backend.py`
 
-- [ ] **Step 1: Implement `run.py`**
+- [ ] **Step 1: Write the failing tests**
+
+`tests/test_mcp_world.py`:
+
+```python
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).parent.parent
+
+
+def test_server_lists_tools_and_logs_executed_calls(tmp_path):
+    ep = tmp_path / "episode.json"
+    ep.write_text(json.dumps({"world": "rewrite", "max_calls": 1, "task": {
+        "start": "(x**2 + x)/x", "target": "x + 1", "assumptions": {"x": "positive"}, "kind": "solvable"}}))
+    log = tmp_path / "steps.jsonl"
+    msgs = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "factor", "arguments": {"sub": "x**2 + x"}}},
+        {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "submit", "arguments": {}}},
+    ]
+    proc = subprocess.run([sys.executable, str(HERE / "mcp_world.py"), str(ep), str(log)],
+                          input="\n".join(json.dumps(m) for m in msgs) + "\n",
+                          capture_output=True, text=True, encoding="utf-8", timeout=60)
+    replies = [json.loads(l) for l in proc.stdout.splitlines()]
+    assert [r["id"] for r in replies] == [1, 2, 3, 4]          # no reply to the notification
+    assert "factor" in {t["name"] for t in replies[1]["result"]["tools"]}
+    assert replies[2]["result"]["content"][0]["text"] == "x*(x + 1)/x"
+    assert replies[3]["result"]["content"][0]["text"].startswith("not executed")  # budget of 1
+    assert [json.loads(l) for l in log.read_text().splitlines()] == [
+        {"tool": "factor", "args": {"sub": "x**2 + x"}}]
+```
+
+`tests/test_cli_backend.py`:
+
+```python
+import json
+
+from cli_backend import build_cmd, parse_stream
+
+
+def test_build_cmd_isolates_the_session():
+    cmd = build_cmd({"model": "claude-haiku-5-5"}, "SYS", "USER", "cfg.json", 40)
+    joined = " ".join(cmd)
+    for flag in ("--strict-mcp-config", "--no-session-persistence", "--verbose"):
+        assert flag in cmd
+    assert cmd[cmd.index("--setting-sources") + 1] == ""
+    assert cmd[cmd.index("--tools") + 1] == ""
+    assert cmd[cmd.index("--system-prompt") + 1] == "SYS"
+    assert cmd[cmd.index("--allowedTools") + 1] == "mcp__world"
+    assert "--bare" not in joined
+
+
+def test_parse_stream_dedupes_usage_by_message_id():
+    lines = [
+        {"type": "system", "subtype": "init", "model": "claude-haiku-5-5"},
+        {"type": "assistant", "message": {"id": "m1", "usage": {"input_tokens": 2, "output_tokens": 8}}},
+        {"type": "assistant", "message": {"id": "m1", "usage": {"input_tokens": 2, "output_tokens": 8}}},
+        {"type": "assistant", "message": {"id": "m2", "usage": {"input_tokens": 5, "output_tokens": 1}}},
+        {"type": "result", "subtype": "success", "num_turns": 2, "result": "ok"},
+    ]
+    usage, result, model = parse_stream("\n".join(json.dumps(l) for l in lines) + "\nnot json\n")
+    assert usage == [{"input_tokens": 2, "output_tokens": 8}, {"input_tokens": 5, "output_tokens": 1}]
+    assert result["subtype"] == "success" and model == "claude-haiku-5-5"
+```
+
+- [ ] **Step 2: Run to verify failure**
+
+Run: `uv run pytest tests/test_mcp_world.py -q` then `uv run pytest tests/test_cli_backend.py -q`
+Expected: both FAIL (missing modules / files).
+
+- [ ] **Step 3: Implement `mcp_world.py`**
+
+```python
+"""Expose one world as an MCP server over stdio, for agents driven by the Claude Code CLI.
+
+    python mcp_world.py <episode.json> <steps.jsonl>
+
+episode.json holds {"world", "task", "max_calls"}. Every executed tool call is appended
+to steps.jsonl as {"tool", "args"}; the runner replays them into a fresh world
+afterwards, so this process never has to report scores.
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+import onboarding  # noqa: E402
+import rewrite  # noqa: E402
+
+
+def make_world(world, task):
+    if world == "rewrite":
+        w = rewrite.RewriteWorld(task["start"], task["target"], task["assumptions"], kind=task["kind"])
+        return w, rewrite.TOOLS
+    return onboarding.OnboardingWorld(task["customer"]), onboarding.TOOLS
+
+
+def handle(msg, world, tools, log, state):
+    method, mid = msg.get("method"), msg.get("id")
+    if mid is None:  # notification
+        return None
+    if method == "initialize":
+        version = (msg.get("params") or {}).get("protocolVersion", "2025-06-18")
+        result = {"protocolVersion": version, "capabilities": {"tools": {}},
+                  "serverInfo": {"name": "world", "version": "0.1.0"}}
+    elif method == "tools/list":
+        result = {"tools": [{"name": t["name"], "description": t["description"], "inputSchema": t["schema"]}
+                            for t in tools]}
+    elif method == "tools/call":
+        name = msg["params"]["name"]
+        args = msg["params"].get("arguments") or {}
+        if world.done or state["calls"] >= state["max_calls"]:
+            text = "not executed: the episode is over"
+        else:
+            text = world.call(name, args)
+            state["calls"] += 1
+            with log.open("a", encoding="utf-8") as f:
+                f.write(json.dumps({"tool": name, "args": args}) + "\n")
+        result = {"content": [{"type": "text", "text": text}], "isError": False}
+    elif method == "ping":
+        result = {}
+    else:
+        return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32601, "message": f"unknown method {method}"}}
+    return {"jsonrpc": "2.0", "id": mid, "result": result}
+
+
+def main():
+    sys.stdin.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8")
+    ep = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+    log = Path(sys.argv[2])
+    world, tools = make_world(ep["world"], ep["task"])
+    state = {"calls": 0, "max_calls": ep.get("max_calls", 30)}
+    for line in sys.stdin:
+        if not line.strip():
+            continue
+        reply = handle(json.loads(line), world, tools, log, state)
+        if reply is not None:
+            sys.stdout.write(json.dumps(reply) + "\n")
+            sys.stdout.flush()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+- [ ] **Step 4: Implement `cli_backend.py`**
+
+```python
+"""Run one episode through the Claude Code CLI (subscription auth) instead of an API.
+
+The CLI runs the tool loop itself; the world lives in an MCP server (mcp_world.py)
+that logs every executed call. The caller replays those calls into a fresh world,
+which is deterministic, so steps/final_ok/truth come out as with agent.run_episode.
+
+Context differences against the API path, constant across Claude runs and reported
+in the results: Claude Code adds a short account/workspace note to our system prompt,
+and the model thinks by default. --setting-sources "" keeps settings hooks and
+CLAUDE.md out; --tools "" removes the built-in tools. --bare would be cleaner but
+disables subscription auth.
+"""
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+HERE = Path(__file__).parent
+CLAUDE = shutil.which("claude") or "claude"
+
+
+def build_cmd(model, system, user, mcp_cfg, max_turns):
+    return [CLAUDE, "-p", user, "--system-prompt", system, "--model", model["model"],
+            "--setting-sources", "", "--strict-mcp-config", "--mcp-config", str(mcp_cfg),
+            "--tools", "", "--allowedTools", "mcp__world", "--no-session-persistence",
+            "--output-format", "stream-json", "--verbose", "--max-turns", str(max_turns)]
+
+
+def parse_stream(text):
+    usage, result, model = {}, None, None
+    for line in text.splitlines():
+        try:
+            m = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if m.get("type") == "system" and m.get("subtype") == "init":
+            model = m.get("model")
+        elif m.get("type") == "assistant":
+            msg = m.get("message", {})
+            usage[msg.get("id")] = msg.get("usage", {})  # one event per content block
+        elif m.get("type") == "result":
+            result = m
+    return list(usage.values()), result, model
+
+
+def run_cli_episode(model, world_name, task, system, user, max_calls=30, max_turns=40, timeout=900):
+    """Returns (result dict, executed calls as [{"tool", "args"}])."""
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "episode.json").write_text(json.dumps({"world": world_name, "task": task, "max_calls": max_calls}),
+                                        encoding="utf-8")
+        steps_log = d / "steps.jsonl"
+        cfg = {"mcpServers": {"world": {"command": sys.executable,
+                                        "args": [str(HERE / "mcp_world.py"), str(d / "episode.json"),
+                                                 str(steps_log)]}}}
+        (d / "mcp.json").write_text(json.dumps(cfg), encoding="utf-8")
+        try:
+            proc = subprocess.run(build_cmd(model, system, user, d / "mcp.json", max_turns), cwd=d,
+                                  capture_output=True, text=True, encoding="utf-8", timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return {"stop": "error", "error": f"timeout after {timeout}s", "calls": 0, "usage": []}, []
+        calls = ([json.loads(l) for l in steps_log.read_text(encoding="utf-8").splitlines()]
+                 if steps_log.exists() else [])
+    usage, result, resolved = parse_stream(proc.stdout)
+    if result is None:
+        return {"stop": "error", "error": f"exit {proc.returncode}: {proc.stderr[-500:]}",
+                "calls": len(calls), "usage": usage}, calls
+    return {"stop": result.get("subtype"), "calls": len(calls), "usage": usage, "resolved_model": resolved,
+            "num_turns": result.get("num_turns"), "final_text": result.get("result", "")}, calls
+```
+
+- [ ] **Step 5: Run the two test files**
+
+Run: `uv run pytest tests/test_mcp_world.py -q` then `uv run pytest tests/test_cli_backend.py -q`
+Expected: 1 passed, then 2 passed.
+
+- [ ] **Step 6: Update `models.json`**
+
+```json
+{
+  "haiku": {"transport": "claude_cli", "model": "claude-haiku-5-5"},
+  "sonnet": {"transport": "claude_cli", "model": "claude-sonnet-5-5"},
+  "qwen": {"transport": "openai", "model": "qwen/qwen-2.5-7b-instruct",
+           "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+           "key_file": "~/.config/openrouter/key", "max_tokens": 2048}
+}
+```
+
+- [ ] **Step 7: Count cache tokens in `analyze.py`**
+
+The CLI path reports most input as cache creation/read. Replace `tokens_used` in `analyze.py` with:
+
+```python
+def tokens_used(r):
+    keys = ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens",
+            "prompt_tokens", "completion_tokens")
+    return sum(u.get(k, 0) or 0 for u in r.get("usage", []) for k in keys)
+```
+
+Run: `uv run pytest tests/test_analyze.py -q` — Expected: 2 passed.
+
+- [ ] **Step 8: Implement `run.py`**
 
 ```python
 """Run agents over the tasks and append one JSON line per episode.
 
-    uv run python run.py --models haiku,sonnet --world rewrite --tasks 5 --reps 1 --out traces/pilot.jsonl
+    uv run python run.py --models haiku,sonnet,qwen --world both --tasks 5 --reps 1 --out traces/pilot.jsonl
 
-Sequential on purpose (this machine saturates). Re-running with the same --out skips
-episodes already recorded without error, so an interrupted run resumes where it stopped.
+Claude models go through the Claude Code CLI (subscription); others through the API
+loop in agent.py. Sequential on purpose (this machine saturates). Re-running with the
+same --out skips episodes already recorded without error, so an interrupted run
+resumes where it stopped.
 """
 from __future__ import annotations
 
@@ -1411,8 +1684,10 @@ import prompts
 import rewrite
 import transport
 from agent import run_episode
+from cli_backend import run_cli_episode
 
 HERE = Path(__file__).parent
+MAX_CALLS = 30
 
 
 def load_models(names):
@@ -1433,6 +1708,19 @@ def make(world_name, task):
     w = onboarding.OnboardingWorld(task["customer"])
     user = prompts.ONBOARDING_USER.format(id=task["customer"]["id"])
     return w, prompts.ONBOARDING_SYSTEM, user, onboarding.TOOLS
+
+
+def episode(model, wn, task):
+    w, system, user, tools = make(wn, task)
+    if model["transport"] != "claude_cli":
+        return w, run_episode(model, w, system, user, tools, max_calls=MAX_CALLS)
+    res, calls = run_cli_episode(model, wn, task, system, user, max_calls=MAX_CALLS)
+    for c in calls:  # deterministic replay: same steps the MCP server produced
+        w.call(c["tool"], c["args"])
+    if res["stop"] != "error":
+        res["stop"] = ("done" if w.done else "budget" if len(calls) >= MAX_CALLS
+                       else "max_turns" if res["stop"] == "error_max_turns" else "no_tool_call")
+    return w, res
 
 
 def main():
@@ -1465,8 +1753,7 @@ def main():
                 for rep in range(args.reps):
                     if (wn, task["id"], mname, rep) in done:
                         continue
-                    w, system, user, tools = make(wn, task)
-                    res = run_episode(model, w, system, user, tools, max_calls=30)
+                    w, res = episode(model, wn, task)
                     rec = {"world": wn, "task_id": task["id"], "kind": task["kind"], "model": mname,
                            "rep": rep, **res, "steps": w.steps,
                            "final_ok": w.final_ok(), "truth": w.truth()}
@@ -1481,25 +1768,19 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: Smoke test with Haiku on one task per world**
+- [ ] **Step 9: Live smoke, one task per world per model, sequential**
 
-Run: `uv run python run.py --models haiku --task-ids r05,o01 --reps 1 --out traces/smoke.jsonl`
-Expected: two lines, `stop=done` (or `no_tool_call` after a `submit`-less ending), no `error=`. If `error=HTTP 404` on Vertex: the model id or region is wrong; check the Vertex Model Garden id for Haiku 5.5 and fix `models.json`. If `gcloud` is not found: set `GCLOUD` to the full path of `gcloud.cmd`.
+Run: `uv run python run.py --models haiku --task-ids r05,o01 --out traces/smoke.jsonl`
+Then: `uv run python run.py --models sonnet --task-ids r05,o01 --out traces/smoke.jsonl`
+Then: `uv run python run.py --models qwen --task-ids r05,o01 --out traces/smoke.jsonl`
+Expected: 6 lines, no `error=`, `calls>0` on every line. Open `traces/smoke.jsonl` and check by eye: Claude lines have `resolved_model` equal to the configured id and non-empty `usage`; `steps` tokens look like `factor(sub=x**2 + x**3)`; `truth` matches what the steps show.
+Troubleshooting: a Claude line with `calls=0` and `stop=no_tool_call` usually means the MCP server did not start or tools were not permitted: run the printed `build_cmd` by hand once from a temp dir and read stderr. If Qwen makes no tool calls on both tasks, switch `qwen` to `qwen/qwen3-8b` and record it.
 
-Open `traces/smoke.jsonl` and check by eye that `steps` contains tokens like `factor(sub=x**2 + x**3)` and that `truth` matches what the steps show.
-
-- [ ] **Step 3: Smoke test the Qwen model**
-
-Precondition: an OpenRouter key in `~/.config/openrouter/key`. If the file does not exist, stop here and report it as a blocker (credential needed from Javier); do not invent a substitute.
-
-Run: `uv run python run.py --models qwen --task-ids r05,o01 --reps 1 --out traces/smoke.jsonl`
-Expected: two lines with tool calls executed (`calls>0`). If the model returns no tool calls on both, try `qwen/qwen3-8b` and record the change in `models.json`.
-
-- [ ] **Step 4: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
-git add experiments/path-evaluation/run.py experiments/path-evaluation/traces/smoke.jsonl experiments/path-evaluation/models.json
-git commit -m "path-evaluation: runner and live smoke"
+git add experiments/path-evaluation/mcp_world.py experiments/path-evaluation/cli_backend.py experiments/path-evaluation/run.py experiments/path-evaluation/models.json experiments/path-evaluation/analyze.py experiments/path-evaluation/tests/test_mcp_world.py experiments/path-evaluation/tests/test_cli_backend.py experiments/path-evaluation/traces/smoke.jsonl
+git commit -m "path-evaluation: runner with Claude Code CLI backend and live smoke"
 ```
 
 ---
