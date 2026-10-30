@@ -1,0 +1,112 @@
+"""Sequential, resumable runner: one episode at a time, one JSONL record per episode.
+
+    uv run python run.py --world a --models haiku sonnet --tasks b01-ordinal-teens --reps 2 --out runs/pilot-a.jsonl
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import traceback
+from pathlib import Path
+
+import agents
+import normalize
+import world_a
+import world_b
+
+HERE = Path(__file__).parent
+TMP = HERE / "runs" / "tmp"
+EVENTS = HERE / "runs" / "events"
+GRADERS = ("E0", "E1", "E2", "E3")
+
+
+def load_tasks(world: str, ids: list[str] | None) -> list[dict]:
+    folder = HERE / ("bugs" if world == "a" else "theorems")
+    tasks = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(folder.glob("*.json"))]
+    return [t for t in tasks if not ids or t["id"] in ids]
+
+
+def prompt_for(world: str, task: dict) -> str:
+    if world == "a":
+        return (f"Bug report: {task['report']}\nA failing test reproducing it is in tests/test_issue.py. "
+                f"Run the test suite with: {world_a.TEST_CMD}\nFix the bug.")
+    return (f"Prove the theorem {task['name']} in Main.lean by replacing `sorry` with a proof. "
+            "Check your work with: lean Main.lean")
+
+
+def done_keys(out: Path) -> set[tuple]:
+    keys = set()
+    if out.exists():
+        for line in out.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            if "error" not in r:
+                keys.add((r["world"], r["task"], r["model"], r["rep"]))
+    return keys
+
+
+def run_agent(cfg: dict, work: Path, prompt: str, world: str) -> tuple[dict, list[dict], list[str]]:
+    """Returns (agent result, actions, raw event lines)."""
+    root = str(work)
+    if cfg["kind"] == "claude":
+        res = agents.run_claude(cfg["model"], work, prompt, world)
+        return res, normalize.from_claude(res["events"], root), res["events"]
+    if cfg["kind"] == "codex":
+        res = agents.run_codex(cfg["model"], cfg["effort"], work, prompt, world)
+        return res, normalize.from_codex(res["events"], root), res["events"]
+    res = agents.run_qwen(cfg, work, prompt, world)
+    return res, normalize.from_qwen(res["steps"], root), [json.dumps(s) for s in res["steps"]]
+
+
+def episode(world: str, task: dict, model: str, cfg: dict, rep: int) -> dict:
+    work = TMP / "work"
+    (world_a if world == "a" else world_b).materialize(task, work)
+    res, actions, events = run_agent(cfg, work, prompt_for(world, task), world)
+    EVENTS.mkdir(parents=True, exist_ok=True)
+    ev_file = EVENTS / f"{world}-{task['id']}-{model}-{rep}.jsonl"
+    ev_file.write_text("\n".join(events) + "\n", encoding="utf-8")
+    if world == "a":
+        judge = world_a.judge(task, work, actions, TMP / "judge")
+    else:
+        judge = world_b.judge(task, work, actions)
+    return {"world": world, "task": task["id"], "model": model, "rep": rep, "stop": res.get("stop"),
+            "resolved_model": res.get("resolved_model"), "usage": res.get("usage"), "actions": actions,
+            "judge": judge, "events_file": ev_file.relative_to(HERE).as_posix()}
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--world", required=True, choices=["a", "b"])
+    ap.add_argument("--models", nargs="+", required=True)
+    ap.add_argument("--tasks", nargs="*")
+    ap.add_argument("--reps", type=int, default=1)
+    ap.add_argument("--out", required=True)
+    args = ap.parse_args(argv)
+
+    models = json.loads((HERE / "models.json").read_text(encoding="utf-8"))
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    done = done_keys(out)
+    tasks = load_tasks(args.world, args.tasks)
+    for task in tasks:
+        for model in args.models:
+            for rep in range(args.reps):
+                if (args.world, task["id"], model, rep) in done:
+                    continue
+                try:
+                    rec = episode(args.world, task, model, models[model], rep)
+                    j = rec["judge"]
+                    print(f"{task['id']} {model} #{rep} stop={rec['stop']} truth={j['truth']} "
+                          + " ".join(f"{g}={j[g]}" for g in GRADERS) + f" pc={j['pc']}", flush=True)
+                except Exception as e:  # noqa: BLE001 - record and continue; error records are retried on resume
+                    rec = {"world": args.world, "task": task["id"], "model": model, "rep": rep,
+                           "error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc()[-1500:]}
+                    print(f"{task['id']} {model} #{rep} ERROR {rec['error']}", file=sys.stderr, flush=True)
+                with out.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+if __name__ == "__main__":
+    main()
