@@ -13,7 +13,8 @@ Create bilingual (English/Spanish) blog articles for javieraguilar.ai.
   written in his first person.
 - **You are his writer and editor.** You gather what he has said, find the facts, put the words
   down, draw the figures and carry out every mechanical step of the skill on your own initiative.
-  You bring him the decisions that are genuinely his, together in one block.
+  He reads a finished draft, not a questionnaire: you decide, write, and tell him what you
+  decided.
 - **The sources rank in this order:** what Javier has told you (in this session or earlier ones),
   then the data and the scripts that produce it, then the repo's docs. See
   [references/voice-and-sources.md](references/voice-and-sources.md).
@@ -47,11 +48,23 @@ paragraph. Everything else he expects you to know. Gather it first:
 6. **Timing.** If the article answers a tweet, a paper or a current event, propose the first free
    date in `.github/publish-schedule.json`; otherwise the next slot of the cadence.
 
-### 1. Outline
+### 1. Outline, then straight on
 
-Present the outline with the thesis line, the axes he named (each one appears in the text and in
-the figures), the figure plan (see [references/figures.md](references/figures.md)), and the real
-decisions in a single block. Proceed on everything the skill already decides.
+Write the outline for yourself: the thesis line, the axes he named (each one appears in the text
+and in the figures), the figure plan (see [references/figures.md](references/figures.md)). Then
+write the draft in the same turn.
+
+**Deciding.** Each open point gets settled in this order: his words (`session_brief.py`), the data,
+this skill and its references, the precedent of his published articles. Take the decision, write
+the draft with it, and list it in the hand-off under "Decisions I took", one line each, so he can
+overturn any of them in one sentence. Examples that are decided, not asked: whether to name a
+colleague (anonymise, as the voice rules say), whether to include extra numbers (if they serve
+the thesis), the date (the schedule rules), what an unreadable branch contains (say you could not
+read it and link it). He has already told you why things happened: use it.
+
+A question goes to him only when the answer changes the thesis itself and nothing above settles
+it; then ask that one question with your recommended answer, and still deliver the draft written
+with that recommendation.
 
 ### 2. Draft
 
@@ -70,6 +83,9 @@ Branch from an up-to-date `main` (`blog/<slug>`), then write EN and ES following
 - **Thesis:** the title and the description state the thesis sentence of phase 0.
 - **Axes:** every axis he named (cost, quality, speed…) is encoded in a figure: a 3D view, small
   multiples, or colour or size for the extra axis.
+- **First mentions:** each dataset, model, product and tool is introduced (one clause of what it
+  is) the first time it appears, including inside a summary sentence that lists several of them.
+- **Detail:** implementation detail appears only where the story needs it to make its point.
 - **Figures:** rendered, screenshotted and read in the browser (see `references/figures.md`).
 
 ### 4. Assets, done as part of the draft
@@ -82,7 +98,7 @@ Generate these with the draft and show them with it:
 - `repoUrl` for any article with code, proposing to publish the repo when it is still private;
 - the article video script, with the `article-video` skill of the AGILabs video studio plugin.
 
-### 5. Render for review
+### 5. Render and hand over
 
 ```bash
 npm run build   # validates frontmatter against the content schema and catches broken pages
@@ -96,8 +112,8 @@ the bare path is a 404):
 - `http://localhost:4321/es/blog/<slug>/`
 
 Check `ls dist/en/blog/ | grep <slug>` (and `es`) after the build, and show the hero inline (Read
-the PNG), calling out any mangled text in it. The article is done once he has reviewed the rendered
-pages.
+the PNG), calling out any mangled text in it. The hand-off is the URLs, the hero, and "Decisions I
+took". The article is done once he has reviewed the rendered pages.
 
 When he sends corrections, change exactly what he points at and keep the rest as approved.
 
