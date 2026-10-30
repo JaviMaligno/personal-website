@@ -112,7 +112,7 @@ def judge(bug: dict, work: Path, actions: list[dict], tmp: Path, tau: float = 0.
     edits = [a for a in actions if a["kind"] == "edit"]
     first_edit = next((i for i, a in enumerate(actions) if a["kind"] == "edit"), None)
     last_edit = max((i for i, a in enumerate(actions) if a["kind"] == "edit"), default=None)
-    test_edits = [f for f in changed_files(work) if f.startswith("tests/") and f != "tests/test_issue.py"]
+    test_edits = [f for f in changed_files(work) if f.startswith("tests/")]
     ran_before = first_edit is not None and any(a["kind"] == "run_tests" for a in actions[:first_edit])
     ran_after = last_edit is not None and any(a["kind"] == "run_tests" for a in actions[last_edit + 1:])
     toks = tokens(actions)
