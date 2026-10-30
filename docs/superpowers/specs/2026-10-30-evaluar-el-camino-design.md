@@ -103,7 +103,10 @@ Los cuatro puntúan las mismas trazas. Cada uno da aprobado/suspenso.
 
 ## Agentes y corridas
 
-- Modelos: `claude-haiku-5-5`, `claude-sonnet-5-5` (API de Anthropic) y un Qwen de ~7B con soporte
+- Modelos: `claude-haiku-5-5`, `claude-sonnet-5-5` (vía la CLI de Claude Code con la suscripción
+  de Javier: decidido el 2026-10-30 para no pagar por token; el mundo se expone como servidor
+  MCP y Claude Code añade una nota breve de cuenta y el pensamiento por defecto, iguales en
+  todas las corridas de Claude) y un Qwen de ~7B con soporte
   de herramientas vía OpenRouter, como fuente de fallos. Si el Qwen elegido no hace tool calling
   fiable, se sustituye por otro de tamaño similar en el piloto.
 - Bucle de agente propio y mínimo: prompt de sistema con las reglas y sus condiciones, herramientas
