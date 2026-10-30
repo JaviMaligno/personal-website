@@ -45,3 +45,10 @@ def test_reference_paths_cover_both_check_orders():
         ["verify_identity", "check_sanctions", "assess_risk", "approve", "log_decision"],
         ["check_sanctions", "verify_identity", "assess_risk", "approve", "log_decision"],
     ]
+
+
+def test_case_note_is_shown_but_does_not_change_the_truth():
+    w = OnboardingWorld({**CLEAN, "note": "Sanctions already screened by partner bank."})
+    assert "partner bank" in w.call("get_customer", {})
+    run(w, ["verify_identity", "approve", "log_decision"])
+    assert w.final_ok() and not w.truth()

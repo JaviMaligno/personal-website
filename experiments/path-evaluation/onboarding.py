@@ -14,7 +14,7 @@ DECISIONS = ("approve", "reject")
 
 _NONE = {"type": "object", "properties": {}}
 TOOLS = [
-    {"name": "get_customer", "description": "Read the application: customer name and requested amount.",
+    {"name": "get_customer", "description": "Read the application: customer name, requested amount and any case note.",
      "schema": _NONE},
     {"name": "get_policy", "description": "Read the onboarding policy.", "schema": _NONE},
     {"name": "verify_identity", "description": "Run the identity check. Returns verified or failed.",
@@ -54,7 +54,8 @@ class OnboardingWorld:
     def call(self, tool: str, args: dict) -> str:
         c = self.c
         results = {
-            "get_customer": lambda: json.dumps({"id": c["id"], "name": c["name"], "amount": c["amount"]}),
+            "get_customer": lambda: json.dumps({"id": c["id"], "name": c["name"], "amount": c["amount"],
+                                                **({"note": c["note"]} if "note" in c else {})}),
             "get_policy": lambda: POLICY,
             "verify_identity": lambda: "verified" if c["identity_ok"] else "failed",
             "check_sanctions": lambda: "hit" if c["sanctions_hit"] else "clear",
