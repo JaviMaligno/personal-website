@@ -1879,3 +1879,19 @@ Use crisp bitmap illustration, high contrast, professional AI/developer blog aes
 ```
 
 - Inline figures: pre-rendered for Dev.to with `node scripts/figures/render-inline-svg-figures.cjs <article.md> <slug> public/blog`.
+
+## No Benchmaxing Found, and the Vibes Still Count (no-benchmaxing-found) — 2026-10-29
+
+- Articles: `src/content/blog/en/no-benchmaxing-found.md`, `src/content/blog/es/no-benchmaxing-found.md`
+- Image: `public/blog/no-benchmaxing-found.png`
+- Generated: 2026-10-29 with Codex (`image_gen`), prompt written by Codex from the article and the style constraints:
+
+```text
+Create a 1020x510 blog hero image for the technical article "No Benchmaxing Found, and the Vibes Still Count". Use case: illustration-story. Render a refined technical editorial bitmap illustration, dark but not monochrome, with a wide 2:1 composition.
+
+Show two adjacent concrete desk scenes in one coherent, slightly elevated three-quarter view. On the left, a clean, solved exam setting: an off-white grading sheet with one perfectly aligned row of identical green check marks and a clear "45/45" score; two neatly paired problem cards labelled "original" and "variant", with small mathematical notation suggesting equivalent problems with different numbers; and a compact electronic scoring device beside a reference sheet labelled "answer key". Everything here is orderly, complete and confidently graded.
+
+On the right, show an engineer's messy real workbench during a collaboration with an AI agent, with the engineer absent. A monitor and keyboard anchor the workspace. The monitor displays a restrained terminal interface with a few readable generic lines: "> agent", "subagent 3/5", and "waiting for context". Around it are overlapping amber and off-white sticky notes carrying half-formed tasks such as "maybe...", "check scope?" and "what changed?", a loosely placed ticket card labelled "ticket" with "expected: ?" and an unfinished checklist, scattered working papers and a ceramic coffee cup. The clutter should feel purposeful and unresolved. There is no answer key or final score on this side.
+
+Communicate the article's point through the objects: passing well-specified tests is real evidence, while open-ended work still involves ambiguity, changing context and deciding what to ask. Do not imply cheating, failed exams or a broken AI. Use clean geometric composition and strong visual hierarchy, crisp edges, subtle tactile paper texture, controlled shadows, and enough breathing room for the scene to read at thumbnail size. Balance teal, amber, graphite and off-white accents; reserve green for the exam check marks. Keep all text short, legible, generic and integrated naturally into objects. No headline or article title printed in the image. No logos, model names, company names, brand names, people, faces, hands, humanoid robots, text-heavy poster, purple gradient blobs, bokeh or watermark.
+```
