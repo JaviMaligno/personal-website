@@ -220,7 +220,7 @@ def _call(model, system, msgs, tools):
                                   for c in msg.get("tool_calls") or []],
                    "stop": choice["finish_reason"], "usage": data.get("usage", {}),
                    "response_id": data.get("id"), "raw_kind": "openai",
-                   "raw": {k: v for k, v in msg.items() if k in ("role", "content", "tool_calls")}}
+                   "raw": {k: v for k, v in msg.items() if k in ("role", "content", "tool_calls", "reasoning", "reasoning_details")}}
         elif kind == "responses":
             key = Path(model["key_file"]).expanduser().read_text().strip()
             body = render_responses(system, msgs, tools)

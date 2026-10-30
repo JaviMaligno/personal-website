@@ -70,4 +70,7 @@ def run_cli_episode(model, world_name, task, system, user, max_calls=30, max_tur
         return {"stop": "error", "error": f"exit {proc.returncode}: {proc.stderr[-500:]}",
                 "calls": len(calls), "usage": usage}, calls
     return {"stop": result.get("subtype"), "calls": len(calls), "usage": usage, "resolved_model": resolved,
-            "num_turns": result.get("num_turns"), "final_text": result.get("result", "")}, calls
+            "num_turns": result.get("num_turns"), "final_text": result.get("result", ""),
+            # The per-message usage in assistant events is a streaming snapshot (output and
+            # thinking tokens are undercounted); the result event carries the real totals.
+            "result_usage": result.get("usage"), "api_equivalent_usd": result.get("total_cost_usd")}, calls
