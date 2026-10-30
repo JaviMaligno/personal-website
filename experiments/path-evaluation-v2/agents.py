@@ -19,6 +19,8 @@ HERE = Path(__file__).parent
 # One Codex home per world, so two runner processes (one per world) can run side by side.
 CODEX_HOMES = Path(__import__("tempfile").gettempdir()) / "pe2"
 CLAUDE_TOOLS = "Bash,Read,Edit,Write,Grep,Glob"
+# Edit/Write only inside the work copy (checked 2026-10-31: a bare "Write" allow wrote outside it).
+CLAUDE_ALLOWED = "Bash,Read,Grep,Glob,Edit(./**),Write(./**)"
 
 
 def env_for(world: str) -> dict:
@@ -46,7 +48,7 @@ def prepare_codex_home(model: str, effort: str, world: str) -> Path:
 
 def run_claude(model: str, work: Path, prompt: str, world: str, timeout=1800) -> dict:
     cmd = [shutil.which("claude") or "claude", "-p", prompt, "--model", model, "--setting-sources", "",
-           "--strict-mcp-config", "--tools", CLAUDE_TOOLS, "--allowedTools", CLAUDE_TOOLS,
+           "--strict-mcp-config", "--tools", CLAUDE_TOOLS, "--allowedTools", CLAUDE_ALLOWED,
            "--output-format", "stream-json", "--verbose", "--no-session-persistence", "--max-turns", "80"]
     r = subprocess.run(cmd, cwd=work, env=env_for(world), capture_output=True, text=True, encoding="utf-8",
                        timeout=timeout, stdin=subprocess.DEVNULL)

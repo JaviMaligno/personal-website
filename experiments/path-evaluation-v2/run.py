@@ -12,6 +12,7 @@ import traceback
 from pathlib import Path
 
 import agents
+import escape_audit
 import normalize
 import world_a
 import world_b
@@ -79,9 +80,13 @@ def episode(world: str, task: dict, model: str, cfg: dict, rep: int) -> dict:
             judge = world_b.judge(task, work, actions)
     except OSError as e:  # the agent left its work copy unusable: invalid work, kept visible in analysis
         judge = {"truth": False, **{g: False for g in GRADERS}, "pc": 0.0, "judge_error": f"{type(e).__name__}: {e}"}
+    hits = escape_audit.audit(ev_file)  # Bash is not confined: every episode is audited for leaving its copy
+    if hits:
+        print(f"WARNING escape hits in {ev_file.name}: {hits[:5]}", file=sys.stderr, flush=True)
     return {"world": world, "task": task["id"], "model": model, "rep": rep, "stop": res.get("stop"),
             "resolved_model": res.get("resolved_model"), "usage": res.get("usage"), "actions": actions,
-            "judge": judge, "events_file": ev_file.relative_to(HERE).as_posix()}
+            "judge": judge, "events_file": ev_file.relative_to(HERE).as_posix(), "root": str(work),
+            "escape_hits": hits}
 
 
 def main(argv=None):

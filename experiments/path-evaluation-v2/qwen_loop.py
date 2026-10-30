@@ -35,19 +35,27 @@ def _git_bash(env: dict) -> str:
     raise FileNotFoundError("Git Bash not found")
 
 
+def _inside(work: Path, rel: str) -> Path:
+    """Resolve a tool path and refuse anything outside the work copy."""
+    p = (work / rel).resolve()
+    if p != work.resolve() and work.resolve() not in p.parents:
+        raise PermissionError(f"{rel} is outside the working directory")
+    return p
+
+
 def _exec(work: Path, env: dict, tool: str, a: dict) -> str:
     try:
         if tool == "read_file":
-            return (work / a["path"]).read_text(encoding="utf-8")[:20000]
+            return _inside(work, a["path"]).read_text(encoding="utf-8")[:20000]
         if tool == "list_dir":
-            return "\n".join(sorted(p.name + ("/" if p.is_dir() else "") for p in (work / a.get("path", ".")).iterdir()))
+            return "\n".join(sorted(p.name + ("/" if p.is_dir() else "") for p in _inside(work, a.get("path", ".")).iterdir()))
         if tool == "search":
-            r = subprocess.run(["grep", "-rn", "-E", a["pattern"], a.get("path", ".")], cwd=work, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+            r = subprocess.run(["grep", "-rn", "-E", a["pattern"], str(_inside(work, a.get("path", ".")))], cwd=work, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
             return r.stdout[:20000] or "(no matches)"
         if tool == "write_file":
-            p = work / a["path"]; p.parent.mkdir(parents=True, exist_ok=True); p.write_text(a["content"], encoding="utf-8"); return "written"
+            p = _inside(work, a["path"]); p.parent.mkdir(parents=True, exist_ok=True); p.write_text(a["content"], encoding="utf-8"); return "written"
         if tool == "replace_in_file":
-            p = work / a["path"]; s = p.read_text(encoding="utf-8")
+            p = _inside(work, a["path"]); s = p.read_text(encoding="utf-8")
             if s.count(a["old"]) != 1:
                 return f"error: old text found {s.count(a['old'])} times"
             p.write_text(s.replace(a["old"], a["new"]), encoding="utf-8"); return "replaced"

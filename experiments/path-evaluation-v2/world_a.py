@@ -96,21 +96,22 @@ def changed_files(work: Path) -> list[str]:
 
 
 def tokens(actions: list[dict]) -> list[str]:
+    """CORE's condensation: drop self-loops (calls that leave the state unchanged: reading,
+    searching, listing) and keep the state-changing ones, edits by file and test runs."""
     out = []
     for a in actions:
         k, t = a["kind"], a["target"]
-        if k in ("read", "edit"):
-            out.append(f"{k}:{'tests' if t.startswith('tests/') else t}")
-        else:
-            out.append(k)
+        if k == "edit":
+            out.append(f"edit:{'tests' if t.startswith('tests/') else t}")
+        elif k == "run_tests":
+            out.append("run_tests")
     return condense(out)
 
 
 def references(bug: dict) -> list[list[str]]:
+    """Golden paths over state-changing calls: reproduce, fix the buggy file, verify; or fix, verify."""
     f = bug["file"]
-    return [["run_tests", "search", f"read:{f}", f"edit:{f}", "run_tests"],
-            ["run_tests", f"read:{f}", f"edit:{f}", "run_tests"],
-            ["read:tests", "run_tests", "search", f"read:{f}", f"edit:{f}", "run_tests"]]
+    return [["run_tests", f"edit:{f}", "run_tests"], [f"edit:{f}", "run_tests"]]
 
 
 def judge(bug: dict, work: Path, actions: list[dict], tmp: Path, tau: float = 0.8) -> dict:

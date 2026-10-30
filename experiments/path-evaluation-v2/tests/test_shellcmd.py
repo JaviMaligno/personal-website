@@ -30,5 +30,18 @@ def test_powershell_unwrap_and_cmdlets():
     assert kinds(inner) == [("read", "tests/test_issue.py"), ("search", "")]
 
 
+def test_heredoc_script_is_one_command_and_comparisons_are_not_redirects():
+    cmd = "python - <<'EOF'\nimport humanize\nprint(delta.days >= 5 * 365 / 12)\nx = a > b\nEOF"
+    assert kinds(cmd) == [("run_other", "")]
+    assert kinds('python -c "print(1 > 0)"') == [("run_other", "")]
+
+
+def test_real_redirects_are_edits_but_null_sinks_and_fd_dups_are_not():
+    assert kinds("echo hi > out.txt") == [("edit", "out.txt")]
+    assert kinds("cat > src/a.py <<'EOF'\nx >= 1\nEOF") == [("edit", "src/a.py")]
+    assert kinds("ls 2>/dev/null") == [("list", "")]
+    assert kinds("python -m pytest -q 2>&1") == [("run_tests", "")]
+
+
 def test_absolute_paths_become_relative():
     assert kinds("cat /w/src/humanize/number.py", root="/w") == [("read", "src/humanize/number.py")]

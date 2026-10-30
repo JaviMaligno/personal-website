@@ -74,6 +74,27 @@ def _files(words: list[str]) -> list[str]:
     return [w for w in words[1:] if not w.startswith("-") and ("/" in w or "." in w) and not re.fullmatch(r"[\d,]+p", w)]
 
 
+NULL_SINKS = {"/dev/null", "nul", "$null"}
+
+
+def _redirect_target(seg: str) -> str | None:
+    """File written by an output redirection outside quotes; None for comparisons (`>=`),
+    `2>&1`, null sinks and redirections that live inside a quoted script."""
+    unquoted = re.sub(r"'[^']*'|\"[^\"]*\"", "''", seg)
+    m = re.search(r"(?<![<>=!-])\d?>{1,2}(?![=>&])\s*([^\s;|&<>]+)", unquoted)
+    if not m or m.group(1).lower() in NULL_SINKS or m.group(1) == "''":
+        return None
+    return m.group(1)
+
+
+HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1([^\n]*)\n.*?\n[ \t]*\2[ \t]*(?=\n|$)", re.S)
+
+
+def strip_heredocs(cmd: str) -> str:
+    """A heredoc's body is the input of one command, not more commands: keep only its first line."""
+    return HEREDOC.sub(lambda m: "<<HEREDOC" + m.group(3), cmd)
+
+
 def classify_segment(seg: str, root: str) -> dict:
     try:
         words = shlex.split(seg, posix=True)
@@ -90,9 +111,11 @@ def classify_segment(seg: str, root: str) -> dict:
         return {"kind": "compile", "target": ""}
     if head == "sed" and "-i" in words:
         return {"kind": "edit", "target": _rel(files[-1], root) if files else ""}
-    if head in {"set-content", "out-file", "add-content"} or re.search(r"(?<![<>])>{1,2}\s*\S", seg):
-        target = files[-1] if files else ""
-        return {"kind": "edit", "target": _rel(target, root)}
+    if head in {"set-content", "out-file", "add-content"}:
+        return {"kind": "edit", "target": _rel(files[-1], root) if files else ""}
+    redirect = _redirect_target(seg)
+    if redirect:
+        return {"kind": "edit", "target": _rel(redirect, root)}
     if head == "sed" or head in READ:
         return {"kind": "read", "target": _rel(files[-1], root) if files else ""}
     if head in SEARCH or (head == "git" and len(words) > 1 and words[1] == "grep"):
@@ -103,4 +126,4 @@ def classify_segment(seg: str, root: str) -> dict:
 
 
 def classify(cmd: str, root: str) -> list[dict]:
-    return [classify_segment(s, root) for s, new in _actions(unwrap_powershell(cmd)) if new]
+    return [classify_segment(s, root) for s, new in _actions(strip_heredocs(unwrap_powershell(cmd))) if new]

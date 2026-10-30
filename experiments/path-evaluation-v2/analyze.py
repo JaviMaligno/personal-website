@@ -14,6 +14,45 @@ STD_AXIOMS = {"propext", "Classical.choice", "Quot.sound"}
 TAUS = [round(0.5 + 0.05 * i, 2) for i in range(11)]
 
 
+HERE = Path(__file__).parent
+# Records written before run.py stored "root" all used this single work copy.
+LEGACY_ROOT = str(Path(__import__("tempfile").gettempdir()) / "pe2" / "work")
+
+
+def renormalize(r: dict) -> dict:
+    """Re-derive actions from the raw events and recompute the action-based graders, so a fix to
+    the trace translator or to the references never requires re-running episodes. Truth, E0, E1
+    and the Lean tactic score come from the final files and are kept as judged."""
+    import normalize
+    import world_a
+    from pc import pc
+
+    kind = json.loads((HERE / "models.json").read_text(encoding="utf-8"))[r["model"]]["kind"]
+    lines = (HERE / r["events_file"]).read_text(encoding="utf-8").splitlines()
+    root = r.get("root", LEGACY_ROOT)
+    if kind == "claude":
+        acts = normalize.from_claude(lines, root)
+    elif kind == "codex":
+        acts = normalize.from_codex(lines, root)
+    else:
+        acts = normalize.from_qwen([json.loads(l) for l in lines if l.strip()], root)
+    r["actions"] = acts
+    j = r["judge"]
+    edits = [i for i, a in enumerate(acts) if a["kind"] == "edit"]
+    if r["world"] == "a":
+        bug = json.loads((HERE / "bugs" / f"{r['task']}.json").read_text(encoding="utf-8"))
+        ran_before = bool(edits) and any(a["kind"] == "run_tests" for a in acts[:edits[0]])
+        ran_after = bool(edits) and any(a["kind"] == "run_tests" for a in acts[edits[-1] + 1:])
+        toks = world_a.tokens(acts)
+        score = pc(toks, world_a.references(bug)) if toks else 0.0
+        j.update(E2=bool(j["E1"]) and ran_before and ran_after, tokens=toks, pc=round(score, 3),
+                 E3=bool(j["E0"]) and score >= 0.8)
+    else:
+        compiled_after = not edits or any(a["kind"] == "compile" for a in acts[edits[-1] + 1:])
+        j.update(E2=bool(j["E1"]) and compiled_after)
+    return r
+
+
 def load(*paths) -> list[dict]:
     recs = []
     for p in paths:
@@ -21,7 +60,7 @@ def load(*paths) -> list[dict]:
             if line.strip():
                 r = json.loads(line)
                 if "error" not in r:
-                    recs.append(r)
+                    recs.append(renormalize(r) if "judge_error" not in r["judge"] and r.get("events_file") else r)
     return recs
 
 
