@@ -1879,3 +1879,25 @@ Use crisp bitmap illustration, high contrast, professional AI/developer blog aes
 ```
 
 - Inline figures: pre-rendered for Dev.to with `node scripts/figures/render-inline-svg-figures.cjs <article.md> <slug> public/blog`.
+
+## There Is No Best Model, Only a Frontier (there-is-no-best-model) — 2026-10-30
+
+- Article: `src/content/blog/en/there-is-no-best-model.md`
+- Image: `public/blog/there-is-no-best-model.png`
+- Generator: built-in image_gen; resized to 1020x510 with `sips`.
+
+```text
+Create a 1020x510 pixel blog hero image, wide 2:1 landscape composition, for the technical article "Ten Times the Price per Token, 39% More per Task". Do not print the article title.
+
+Use case: stylized-concept. Style: refined technical editorial illustration, crisp bitmap art with precise linework, subtle matte texture and restrained dimensional shading. Dark but not monochrome, high contrast, professional AI/developer blog aesthetic. Balanced teal, amber, graphite and warm off-white accents.
+
+Scene: an unoccupied engineer's desk with a wide physical monitor showing a coherent model-evaluation dashboard, a slim keyboard along the foreground, and a tangible stopwatch beside the monitor. Use a shallow three-quarter view, with the screen nearly front-facing so the charts read clearly. The dashboard fills most of the image; leave generous outer margins and keep essential details readable at thumbnail size.
+
+The dominant left two-thirds of the screen contains a scatter chart comparing anonymous AI models. Label the horizontal axis "cost per task" increasing to the right, and the vertical axis "quality" increasing upward. Four bright teal points form an increasing Pareto frontier: steep gains at low cost, a clear knee, then flattening toward the upper right. Connect only these four points with a crisp teal curve. Mark the knee with a restrained amber ring. Put several muted grey dominated points strictly below and to the right of better frontier points. Add only the small generic label "Pareto frontier"; no model names, detailed ticks or numeric claims.
+
+On the right of the same dashboard, show a compact panel labelled "task cost" containing one horizontal stacked bar: a very thin teal model slice, approximately 4% of the total width, and a large amber web-search segment taking nearly all the remaining width, with a tiny slate remainder. Short leader lines identify the thin slice as "model" and the large segment as "web search". Make this contrast visually unmistakable. Below it place a clean semicircular latency gauge labelled "latency", with a fine off-white needle and restrained teal and amber tick accents. The physical stopwatch on the desk reinforces waiting time without becoming the main subject.
+
+Convey a concrete working measurement system: quality, the full cost of completing a task, and waiting time are evaluated together. Sparse readable generic interface text only, no headline or explanatory paragraphs. Clean geometric composition, sharp chart marks, controlled screen illumination, subtle desk shadows, no excessive glow.
+
+No real model names, logos, brand names, people, hands, robots, watermark, text-heavy poster, purple gradient blobs, bokeh, abstract floating nodes or decorative neon haze.
+```
