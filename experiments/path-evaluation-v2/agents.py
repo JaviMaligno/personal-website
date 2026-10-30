@@ -60,9 +60,11 @@ def run_codex(model: str, effort: str, work: Path, prompt: str, world: str, time
     home = prepare_codex_home(model, effort)
     env = env_for(world) | {"CODEX_HOME": str(home)}
     cmd = [shutil.which("codex") or "codex", "exec", "--json", "--ephemeral", "--skip-git-repo-check",
-           "--disable", "plugins", "-s", "workspace-write", prompt]
+           "--disable", "plugins", "-s", "workspace-write", "-"]
+    # Prompt goes via stdin ("-"): codex is a .CMD shim on Windows and cmd.exe truncates argv at the first newline.
+    # input= also gives EOF after the prompt, so stdin stays isolated.
     r = subprocess.run(cmd, cwd=work, env=env, capture_output=True, text=True, encoding="utf-8",
-                       timeout=timeout, stdin=subprocess.DEVNULL)
+                       timeout=timeout, input=prompt)
     lines = r.stdout.splitlines()
     usage = next((json.loads(l).get("usage") for l in reversed(lines) if "turn.completed" in l), None)
     return {"events": lines, "resolved_model": model, "stop": "done" if r.returncode == 0 else f"exit {r.returncode}",
