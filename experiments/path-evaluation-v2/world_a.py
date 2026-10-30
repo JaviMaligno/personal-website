@@ -1,8 +1,10 @@
 """Part A: materialise a bug in a copy of humanize, validate the task, judge an episode."""
 from __future__ import annotations
 
+import os
 import re
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 
@@ -37,7 +39,8 @@ def _git(work: Path, *args):
 
 def materialize(bug: dict, dest: Path) -> Path:
     if dest.exists():
-        shutil.rmtree(dest)
+        # git marks .git/objects read-only on Windows; clear the bit so rmtree can delete them
+        shutil.rmtree(dest, onexc=lambda f, p, e: (os.chmod(p, stat.S_IWRITE), f(p)))
     shutil.copytree(REPO, dest)
     apply(dest, bug["file"], bug["old"], bug["new"])
     for h in bug["hide"]:
