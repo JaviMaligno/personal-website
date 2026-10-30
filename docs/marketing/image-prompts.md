@@ -2,6 +2,30 @@
 
 Exact prompts used to generate blog hero images (via Codex `image_gen`), for reproducibility and iteration. Newest first.
 
+## check-the-step-not-the-path
+
+- **Article:** `src/content/blog/{en,es}/check-the-step-not-the-path.md`
+- **Image:** `public/blog/check-the-step-not-the-path.png`
+- **Generated:** 2026-10-30, built-in `image_gen`. Generated at 1774x887; scaled to 1020x510.
+
+```text
+Create a 1020x510 pixel blog hero image, exact 2:1 landscape composition, for a technical article titled "Check the Step, Not the Path". Do not print the article title in the image.
+
+Style: refined technical editorial bitmap illustration, dark but not monochrome, high contrast, professional AI/developer blog aesthetic. Depict the article's core idea as a working system: a precise evaluation desk with algebra derivation cards, an inspection magnifier, a compact terminal, a verdict checklist, and a separate rigid reference track. Slight overhead perspective, restrained material depth, crisp edges, fine technical details, subtle desk texture. Balanced teal, amber, graphite, and off-white accents.
+
+Composition: several distinct, neatly arranged zones with breathing room and a generous safe margin. The agent's derivation dominates the middle of the desk, with cards linked by clear directional arrows. Readable off-white monospace algebra: first card "(x^2-1)/(x-1)", arrow labeled "factor", second card "(x+1)(x-1)/(x-1)", arrow labeled "cancel", final teal-edged card "x+1". Give the cancellation arrow and its associated step an amber outline and an amber inspection marker. A small nearby hypothesis slip reads "x > 0".
+
+Make a large physical magnifying glass over the cancellation's side-condition slip the focal point. Within the lens, render "x - 1 != 0 ?" and beneath it a small amber failure cross plus "not proved". A tiny supporting annotation reads "x = 1 allowed". The logical point must be clear: x > 0 does not exclude x = 1, so cancellation is unjustified even though the final expression matches the target.
+
+Along the upper zone, show a separate, subdued rigid slate reference track, labeled "reference path", with fixed evenly spaced checkpoints and angular rail connectors. The agent's route below deviates from the reference checkpoints. Keep the reference track secondary; its mismatch is about a prescribed sequence, while the amber inspection checks the actual condition of one step.
+
+In the lower zone, a compact terminal window reads "prove_nonzero(x - 1) -> not proved", connected by a thin amber arrow to the inspected step. Beside it, a concise checklist panel has exactly two verdict rows: a teal check and "final state: pass"; an amber cross and "step check: fail". Use legible, carefully typeset generic labels and algebra with correct symbols and spelling. Keep text confined to the working objects; illustration first, not a text-heavy poster.
+
+No logos, no brand names, no people, no robot characters, no watermark, no purple gradient blobs, no bokeh.
+```
+
+---
+
 ## dont-just-say-ignore-it
 
 - **Article:** `src/content/blog/{en,es}/dont-just-say-ignore-it.md`
