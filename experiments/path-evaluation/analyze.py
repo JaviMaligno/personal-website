@@ -65,11 +65,9 @@ def fn_kind(tokens, refs):
 
 
 def tokens_used(r):
-    total = 0
-    for u in r.get("usage", []):
-        total += u.get("input_tokens", 0) + u.get("output_tokens", 0)
-        total += u.get("prompt_tokens", 0) + u.get("completion_tokens", 0)
-    return total
+    keys = ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens",
+            "prompt_tokens", "completion_tokens")
+    return sum(u.get(k, 0) or 0 for u in r.get("usage", []) for k in keys)
 
 
 def print_table(rows):
