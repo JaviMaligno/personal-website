@@ -43,5 +43,13 @@ def test_real_redirects_are_edits_but_null_sinks_and_fd_dups_are_not():
     assert kinds("python -m pytest -q 2>&1") == [("run_tests", "")]
 
 
+def test_python_script_that_writes_a_file_is_an_edit():
+    cmd = "cd ../.. && python - <<'EOF'\np='src/humanize/time.py'\ns=open(p).read()\nopen(p,'w').write(s.replace('a','b'))\nEOF"
+    assert kinds(cmd) == [("edit", "src/humanize/time.py")]
+    assert kinds("python -c \"print(open('x.py').read())\"") == [("run_other", "")]
+    both = "python - <<'EOF'\nopen('src/a.py','w').write('x')\nEOF\npython -m pytest -q"
+    assert kinds(both) == [("edit", "src/a.py"), ("run_tests", "")]
+
+
 def test_absolute_paths_become_relative():
     assert kinds("cat /w/src/humanize/number.py", root="/w") == [("read", "src/humanize/number.py")]

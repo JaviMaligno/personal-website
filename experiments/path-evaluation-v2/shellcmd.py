@@ -125,5 +125,25 @@ def classify_segment(seg: str, root: str) -> dict:
     return {"kind": "run_other", "target": ""}
 
 
+SCRIPT_WRITE = re.compile(r"write_text\(|\.write\(|open\([^)]*,\s*['\"][wa]\+?['\"]")
+SCRIPT_TARGET = re.compile(r"['\"]([\w./\\-]+\.(?:py|lean|toml|cfg|txt|md))['\"]")
+
+
+def _script_edit(cmd: str, root: str) -> dict | None:
+    """A Python script (heredoc or -c) that writes a file is an edit of that file: agents edit
+    this way too (seen: Opus rewriting time.py through `python - <<EOF ... open(p).write(...)`)."""
+    if not re.search(r"\bpython[\d.]*(?:\.exe)?\b", cmd) or not SCRIPT_WRITE.search(cmd):
+        return None
+    m = SCRIPT_TARGET.search(cmd)
+    return {"kind": "edit", "target": _rel(m.group(1), root) if m else ""}
+
+
 def classify(cmd: str, root: str) -> list[dict]:
-    return [classify_segment(s, root) for s, new in _actions(strip_heredocs(unwrap_powershell(cmd))) if new]
+    raw = unwrap_powershell(cmd)
+    edit = _script_edit(raw, root)
+    acts = [classify_segment(s, root) for s, new in _actions(strip_heredocs(raw)) if new]
+    if edit:  # the python segment becomes the edit, in its own place; the rest keeps its actions
+        i = next((k for k, a in enumerate(acts) if a["kind"] == "run_other"), None)
+        acts = [a for a in acts if a["kind"] != "run_other"]
+        acts.insert(len(acts) if i is None else min(i, len(acts)), edit)
+    return acts

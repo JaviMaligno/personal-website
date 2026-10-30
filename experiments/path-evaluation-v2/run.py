@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import tempfile
 import traceback
@@ -80,13 +81,25 @@ def episode(world: str, task: dict, model: str, cfg: dict, rep: int) -> dict:
             judge = world_b.judge(task, work, actions)
     except OSError as e:  # the agent left its work copy unusable: invalid work, kept visible in analysis
         judge = {"truth": False, **{g: False for g in GRADERS}, "pc": 0.0, "judge_error": f"{type(e).__name__}: {e}"}
+    final = final_state(world, work)
     hits = escape_audit.audit(ev_file)  # Bash is not confined: every episode is audited for leaving its copy
     if hits:
         print(f"WARNING escape hits in {ev_file.name}: {hits[:5]}", file=sys.stderr, flush=True)
     return {"world": world, "task": task["id"], "model": model, "rep": rep, "stop": res.get("stop"),
             "resolved_model": res.get("resolved_model"), "usage": res.get("usage"), "actions": actions,
             "judge": judge, "events_file": ev_file.relative_to(HERE).as_posix(), "root": str(work),
-            "escape_hits": hits}
+            "escape_hits": hits, "final": final}
+
+
+def final_state(world: str, work: Path) -> str:
+    """What the agent left behind, for manual review: the diff (A) or the proof file (B)."""
+    try:
+        if world == "a":
+            r = subprocess.run(["git", "diff"], cwd=work, capture_output=True, text=True, encoding="utf-8", errors="replace")
+            return r.stdout[:20000]
+        return (work / "Main.lean").read_text(encoding="utf-8")[:20000]
+    except OSError as e:
+        return f"unavailable: {e}"
 
 
 def main(argv=None):
