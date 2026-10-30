@@ -1,23 +1,141 @@
 ---
 name: blog-writer
-description: Write bilingual blog articles for the personal website and handle their publication workflow, including native LinkedIn articles through the browser. Use when creating, preparing, publishing, or scheduling a blog article. Handles EN/ES translations, frontmatter, and content structure.
+description: Write bilingual blog articles for the personal website and handle their publication workflow, including the article video and the native LinkedIn article. Use when creating, preparing, publishing, or scheduling a blog article, including when an experiment has just finished and the next step is "write it up". Handles the brief, EN/ES translations, frontmatter, figures, hero image and scheduling.
 ---
 
 # Blog Article Writer
 
 Create bilingual (English/Spanish) blog articles for javieraguilar.ai.
 
-When publishing or scheduling an article, the authoring agent also publishes or
-schedules its native LinkedIn article through the browser. Read
-[references/linkedin-articles.md](references/linkedin-articles.md) for this step.
-The brief LinkedIn post continues through the existing automated workflow.
+## Roles
+
+- **Javier is the author.** The thesis, the story, the why and the voice are his. The article is
+  written in his first person.
+- **You are his writer and editor.** You gather what he has said, find the facts, put the words
+  down, draw the figures and carry out every mechanical step of the skill on your own initiative.
+  He reads a finished draft, not a questionnaire: you decide, write, and tell him what you
+  decided.
+- **The sources rank in this order:** what Javier has told you (in this session or earlier ones),
+  then the data and the scripts that produce it, then the repo's docs. See
+  [references/voice-and-sources.md](references/voice-and-sources.md).
+
 Writing or reviewing a draft alone does not authorize publication.
+
+## Workflow
+
+### 0. Brief: gather before outlining
+
+Javier usually starts with a short "ok, write it" at the end of an experiment, or with a dictated
+paragraph. Everything else he expects you to know. Gather it first:
+
+1. **His words.** Run
+   `python3 .claude/skills/blog-writer/scripts/session_brief.py <slug> <topic terms>` (~10 s). It
+   prints every message he sent in the sessions that touched the topic: typed, queued while you
+   were working, and from before any compaction. Turn it into a short list of directives (what to
+   keep, what confused him, the examples he values, the sources and URLs he gave) and keep it next
+   to the draft.
+2. **The thesis, in his words.** One sentence, quoting or closely paraphrasing his opening message
+   ("la idea es principalmente hablar del concepto…"). The title and the description are written
+   from this sentence. What he adds later (a remark sent while you work, a number from another
+   session) refines a section of it; the title and the spine stay on the thesis.
+3. **The inventory.** Every arm, model and condition in the experiment's data; which model plays
+   which role (agent, judge, validator) and its family; the numbers of the previous article in the
+   series that this one should be compared against.
+4. **His published positions.** Grep `src/content/blog/en/` for the concepts of the thesis. Link the
+   related articles, and make sure the new thesis builds on what he has already argued.
+5. **What is on his site.** `src/data/projects.ts`, `src/content/blog/`, `/skills`, `/mentoring`:
+   anything the article mentions that lives there gets linked, by name.
+6. **Timing.** If the article answers a tweet, a paper or a current event, propose the first free
+   date in `.github/publish-schedule.json`; otherwise the next slot of the cadence.
+
+### 1. Outline, then straight on
+
+Write the outline for yourself: the thesis line, the axes he named (each one appears in the text
+and in the figures), the figure plan (see [references/figures.md](references/figures.md)). Then
+write the draft in the same turn.
+
+**Deciding.** Each open point gets settled in this order: his words (`session_brief.py`), the data,
+this skill and its references, the precedent of his published articles. Take the decision, write
+the draft with it, and list it in the hand-off under "Decisions I took", one line each, so he can
+overturn any of them in one sentence. Examples that are decided, not asked: whether to name a
+colleague (anonymise, as the voice rules say), whether to include extra numbers (if they serve
+the thesis), the date (the schedule rules), what an unreadable branch contains (say you could not
+read it and link it). He has already told you why things happened: use it.
+
+A question goes to him only when the answer changes the thesis itself and nothing above settles
+it; then ask that one question with your recommended answer, and still deliver the draft written
+with that recommendation.
+
+### 2. Draft
+
+Branch from an up-to-date `main` (`blog/<slug>`), then write EN and ES following
+[references/voice-and-sources.md](references/voice-and-sources.md).
+
+### 3. Self-check before handing over
+
+- **Numbers:** recompute every figure in the text with a script from the raw data, including the
+  ones that came from another session.
+- **Inventory:** every arm and model in the data appears in the text; every judge is named with its
+  family.
+- **Directives:** each item of the brief list is reflected in the draft.
+- **Links:** every mention of his work and every real thing cited (tweet, paper, game, tool) is a
+  link; slugs verified.
+- **Thesis:** the title and the description state the thesis sentence of phase 0.
+- **Axes:** every axis he named (cost, quality, speed…) is encoded in a figure: a 3D view, small
+  multiples, or colour or size for the extra axis.
+- **First mentions:** each dataset, model, product and tool is introduced (one clause of what it
+  is) the first time it appears, including inside a summary sentence that lists several of them.
+- **Detail:** implementation detail appears only where the story needs it to make its point.
+- **Figures:** rendered, screenshotted and read in the browser (see `references/figures.md`).
+
+### 4. Assets, done as part of the draft
+
+Generate these with the draft and show them with it:
+
+- the hero image through Codex, and the LinkedIn image choice
+  ([references/images.md](references/images.md));
+- the figure PNGs for Dev.to;
+- `repoUrl` for any article with code, proposing to publish the repo when it is still private;
+- the article video script, with the `article-video` skill of the AGILabs video studio plugin.
+
+### 5. Render and hand over
+
+```bash
+npm run build   # validates frontmatter against the content schema and catches broken pages
+npm run dev     # run in background; serves on http://localhost:4321
+```
+
+Give Javier both URLs, with the trailing slash (`astro.config` sets `trailingSlash: 'always'`, so
+the bare path is a 404):
+
+- `http://localhost:4321/en/blog/<slug>/`
+- `http://localhost:4321/es/blog/<slug>/`
+
+Check `ls dist/en/blog/ | grep <slug>` (and `es`) after the build, and show the hero inline (Read
+the PNG), calling out any mangled text in it. The hand-off is the URLs, the hero, and "Decisions I
+took". The article is done once he has reviewed the rendered pages.
+
+When he sends corrections, change exactly what he points at and keep the rest as approved.
+
+### 6. Publish or schedule
+
+Follow [references/publishing.md](references/publishing.md): website schedule, video on the same
+day, native LinkedIn article last, X texts.
+
+### 7. Keep the case
+
+Once Javier has approved the article, run
+`python3 .claude/skills/blog-writer/scripts/record_case.py <slug>` (and `--kind video` for its video
+once its script is approved). It copies his request, the first-draft time and every correction he
+made into `~/Documents/experiment-data/skill-cases/`, before Claude Code deletes the transcripts.
+These cases are how the skill gets tested and improved: replays against real corrections.
 
 ## File Locations
 
 - English: `src/content/blog/en/[slug].md`
 - Spanish: `src/content/blog/es/[slug].md`
 - Images: `public/blog/[image-name].png` (referenced as `/blog/[image-name].png`)
+- Slugs are in English, both files, regardless of the article's language.
 
 ## Required Frontmatter Format
 
@@ -35,447 +153,38 @@ heroImage: "/blog/article-slug.png"
 ---
 ```
 
-### Field Requirements
-
 | Field | Required | Notes |
 |-------|----------|-------|
 | `title` | Yes | Translated per language |
-| `description` | Yes | Translated, SEO-friendly, 1-2 sentences |
+| `description` | Yes | Translated, SEO-friendly, 1-2 sentences, first person |
 | `pubDate` | Yes | Same date for both languages. Use the website publication date in `.github/publish-schedule.json`, or today for immediate publication; update it if the schedule moves. See `docs/blog-publishing.md` for backlog behavior. The native LinkedIn article has its own publication date and does not change this field. |
 | `tags` | Yes | Translated (e.g., "AI" → "IA") |
 | `lang` | Yes | Must be `en` or `es` |
 | `translationKey` | Yes | Same value for EN/ES pair (kebab-case) |
-| `heroImage` | Yes | Path to thumbnail (e.g., `/blog/my-article.png`). Generate with script below. |
-
-### LinkedIn Automation (Optional)
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `linkedinImage` | string | Ruta a imagen para LinkedIn (ej: `/blog/linkedin-card.png`) |
-| `repoUrl` | string | URL del repo/código del artículo (ej: `https://github.com/JaviMaligno/...`) |
-
-**`linkedinImage`:**
-- Campo opcional
-- Solo se usa para auto-publicación en LinkedIn
-- Si se omite, **se usa `heroImage` como fallback** (`publish-to-linkedin.js:92` hace `linkedinImage || heroImage`); el post solo sale sin imagen si tampoco hay hero
-- Ruta debe apuntar a archivo en `public/blog/`
-- Formatos: PNG, JPG, WEBP
-- Tamaño recomendado: 1200x627px
-
-**`repoUrl` (importante para artículos con código):**
-- Si el artículo tiene un repo/fork asociado, **ponlo siempre** en el frontmatter de EN y ES.
-- `buildPostText` en `scripts/linkedin/utils.js` añade una línea `💻 Code: <url>` al post de LinkedIn **solo si este campo existe**. Sin él, el enlace al código no sale y hay que editar el post a mano tras publicar (le pasó a `coding-agents-structure` y `restart-vs-iterate`).
-- Regla: cualquier enlace externo relevante (repo, fork, paper) debe llegar al post de LinkedIn — `repoUrl` para el código, `linkedinLinks` para papers/preprints.
-
-**Decide la imagen de LinkedIn ANTES de publicar.** El post se genera en el push del merge; una vez publicado no se puede cambiar la imagen — hay que borrar el post en LinkedIn y repostearlo a mano con `scripts/linkedin/post-standalone.js`. Así que la elección se hace en el frontmatter, no después.
-
-Recorre las imágenes del artículo y pregúntate cuál para más el scroll. Si alguna es más fuerte que el hero, ponla como `linkedinImage` en EN y ES:
-
-- **Gráficos generados** (resultados, curvas, benchmarks): un dato concreto suele ganar a una ilustración. Precedente: `forgetting-you-dont-measure` usa `linkedinImage: /blog/forgetting-mixing-curve.png` (la curva de mixing del experimento) mientras el hero es una ilustración.
-- **Memes y capturas** (tuits, pantallazos, imágenes citadas en el artículo): si el artículo se apoya en un meme o una captura reconocible, casi siempre es la mejor imagen para el feed. Precedente: `death-of-prompt-engineering` salió con el hero porque el campo estaba vacío, y hubo que borrar el post y repostearlo con `/blog/conjecture-disproved-meme.jpg` (la captura del tuit original que cita el artículo).
-
-Si eliges una imagen que ya está *dentro* del artículo, usa el archivo original (la captura o figura real), no una versión regenerada.
-
-**Ejemplo:**
-```yaml
----
-title: "Mi Artículo"
-description: "Descripción del artículo"
-pubDate: 2026-01-07
-tags: ["AI", "Automation"]
-lang: en
-translationKey: mi-articulo
-heroImage: "/blog/mi-articulo.png"
-linkedinImage: /blog/linkedin-card.png  # Opcional
----
-```
-
-## Hero Image Generation
-
-Every article must have a `heroImage`. Generate it using Codex CLI, which has access to OpenAI's image generation models (gpt-image-2).
-
-### How to Generate
-
-**Delegate the final prompt to Codex.** Codex knows its own image model better than we do: don't hand it a rigid pre-baked prompt — give it the article context plus the style constraints below and let it write and run the final image prompt itself.
-
-```bash
-codex exec -s workspace-write "Read the article at src/content/blog/en/article-slug.md. Craft an image-generation prompt for its hero image following these style constraints: [STYLE CONSTRAINTS BELOW]. Then generate the image with your image_gen tool and save it to public/blog/article-slug.png. Finally, print the exact prompt you used."
-```
-
-`--full-auto` was removed in codex-cli 0.164; `-s workspace-write` is the equivalent (writes only inside the repo). Close stdin (`< /dev/null`) so it can't hang waiting for input.
-
-Codex will use its built-in `image_gen` tool, generate the image, and copy it to the specified path in the project.
-
-### Prompt Style Constraints
-
-**Do NOT use the old "minimalist isometric illustration" template.** It produced images that were visually clean but simplistic and schematic. The proven style is a rich technical editorial illustration (see `public/blog/bootstrap-cloud-environments.png` on main as the reference result, and `docs/marketing/image-prompts.md` for its exact prompt).
-
-Anatomy of a good prompt (based on the reference):
-
-```
-Create a 1020x510 blog hero image for a technical article titled "[TITLE]".
-Style: refined technical editorial illustration, dark but not monochrome, showing [CONCRETE SCENE — the article's core concept as a working system, not an abstract metaphor].
-Visual motifs: [3-6 SPECIFIC ELEMENTS — e.g. terminal window with readable but generic lines like "session-start.sh", labeled package boxes, arrows between components, a laptop, a CI runner], clean geometric composition.
-No logos, no brand names, no people, no text-heavy poster.
-Use crisp bitmap illustration, high contrast, professional AI/developer blog aesthetic, balanced teal, amber, graphite, and off-white accents, no purple gradient blobs, no bokeh.
-```
-
-Key learnings vs the old template:
-
-- **Readable generic text is GOOD**: terminal lines, box labels, checklists with plausible-but-generic content make the image concrete and credible. Only avoid *text-heavy posters* (the image shouldn't be a wall of text).
-- **Concrete scene over abstract metaphor**: depict the actual system/workflow the article describes (terminals, workspaces, pipelines, charts) rather than floating nodes and glowing cubes.
-- **Density is a feature**: several distinct zones (a terminal, a diagram, a desk with objects) beat a single centered icon.
-- **Palette**: balanced teal, amber, graphite, off-white on dark — explicitly ban purple gradient blobs and bokeh.
-- **Size**: 1020x510 (≈2:1 hero ratio).
-
-### Workflow
-
-1. After writing the article content, run Codex with the article path + style constraints (command above)
-2. **Show the generated image to the user for review** (use Read tool on the PNG)
-3. If approved, add `heroImage: "/blog/article-slug.png"` to **both** EN and ES frontmatter
-4. If not approved, adjust the constraints and regenerate
-5. **Record the exact prompt used** in `docs/marketing/image-prompts.md` (article path, image path, generation date, prompt in a code block — follow the existing entries' format; create the file if missing)
-6. Codex image quality is trusted — no need for comparison with other generators
-
-### Requirements
-
-- Codex CLI installed (`codex` command available)
-- OpenAI API key configured in Codex
-
-## Bilingual Workflow
-
-1. **Always create both files** with matching `translationKey`
-2. Use the same `pubDate` for synchronized release
-3. Translate tags appropriately (common: AI→IA, Automation→Automatización)
-4. Keep `translationKey` identical in both files
-
-## Content Structure
-
-Follow this pattern:
-
-```markdown
-Opening paragraph establishing context and the problem/topic.
-
-## Section Heading
-
-Content with clear explanations. Focus on "why" not just "how".
-
-### Subsection (if needed)
-
-- Bullet points for lists
-- Keep them concise
-
-## Another Section
-
-Include practical examples:
-
-```language
-code block with syntax highlighting
-```
-
-## Conclusion/Next Steps
-
-Wrap up with actionable takeaways or links.
-
----
-
-*Footer with links to resources, repos, etc.*
-```
-
-## Whose Article This Is — First Person, Always
-
-**Javier is the author.** The articles are written in his first person: *"hice
-tres tandas"*, *"las leí todas a mano"*, *"estuve a punto de dar el eje por
-cerrado"*. You put the words down; the voice, the work and the byline are his.
-
-**Never write "Javier did X" or "Javier pointed out Y" inside an article.** That
-turns the piece into yours and him into a character in it. His words, 2026-09-17:
-*"quien es Javier? quien escribe el articulo? ESTOS ARTICULOS SON MIOS SOY EL
-AUTOR Y ES MI VOZ, TU SOLO PONES LAS PALABRAS"*.
-
-**And what he contributes is his credit, not an anecdote.** When he hand-labels a
-sample and catches what the automated judge got wrong, that IS the interesting
-part of the article — the human oversight finding the machine's errors. Write it
-as his work: *"etiqueto a ciegas una muestra de cada tanda"*, *"el juez se
-equivocaba en una dirección concreta"*. Not *"a reviewer objected"*.
-
-This is the complement of the rule that **your** mistakes are never narrated in
-his first person: yours get omitted or told as the experiment's, his findings are
-his.
-
-**Slugs are in English**, both files, regardless of the article's language.
-
-## Writing Style
-
-- **Tone**: Professional but conversational
-- **Focus**: Practical value, real examples
-- **Length**: 800-2000 words typically
-- **Structure**: Clear headings, scannable sections
-- **Code**: Include relevant code snippets with language identifiers
-- **Images**: Always use **absolute URLs** for inline images: `https://www.javieraguilar.ai/blog/image-name.png`. Dev.to cannot resolve relative paths (`/blog/...`), and the publish script auto-converts relative paths but using absolute URLs from the start avoids issues. The `heroImage` frontmatter field can remain a relative path (it's converted by the publish script).
-
-## Figures — Draw It, Don't Only Describe It
-
-**If the article argues about something with a shape, the article must show that shape.**
-Javier has repeatedly had to ask for a figure that should have been in the first draft, so
-treat this as a default, not an enhancement: decide about figures *while outlining*, before
-writing prose, not after the draft is finished.
-
-### The trigger test
-
-Sweep the outline. A figure is **required**, not optional, whenever a section contains any of:
-
-| Signal in the draft | The figure it owes the reader |
-|---|---|
-| You describe a diagram, architecture or slide that circulates elsewhere | **Redraw it.** The reader cannot follow a critique of a picture they can't see. Reconstruct it programmatically — never paste someone else's image. |
-| Literal geometry: distance, angle, dimension, boundary, region, projection, rotation, a space | The geometry itself. Prose about a shape is a translation of a picture; ship the picture. This is the case most often missed — it came up on the papers. |
-| A traversal, dependency, pipeline, or "A → B → C" chain in the text | The graph, with the edges labelled. |
-| Two things compared along an axis (before/after, cheap/expensive, bounded/unbounded) | A side-by-side, one panel each, same scale. |
-| A set relationship: overlap, containment, "they agree on only two of eleven" | A matrix or set diagram. A matrix is usually more legible than a Venn and far easier to get right. |
-| Any experimental result with more than ~3 numbers | A chart. A table of six numbers is a chart you didn't draw. |
-| A layered stack, ladder, or hierarchy | The stack, top to bottom. |
-
-If a section trips the test and you decide *not* to draw it, that's a judgement you should be
-able to defend in one sentence ("the three-item list is already the clearest form"). Silence is
-not a decision.
-
-### How to draw them
-
-**Inline SVG is the house style for conceptual figures** — hand-written, no library, no build
-step. Precedent: `verified-world-model-still-loses.md`, and `you-already-have-an-ontology.md`
-for diagrams. Pattern:
-
-1. One `<style>` block near the top of the article, with an article-specific class prefix
-   (`.cwm-fig`, `.ont-fig`) so styles never collide between posts.
-2. Each figure is `<figure class="…-fig">` + `<svg viewBox="0 0 600 H">` + `<figcaption>`.
-3. `viewBox` width 600, height to taste; the SVG scales to the column via `width:100%`.
-4. **Always a `role="img"` and a real `aria-label`** describing the finding, not the shape.
-5. The `figcaption` states what the reader should take away, not what the picture contains.
-
-Palette (matches the site and the generated hero images): background `#1a1a24`, borders
-`rgba(255,255,255,0.1)`, primary text `#f8fafc`/`#e2e8f0`, muted `#94a3b8`, teal `#2dd4bf`
-(with `#5eead4` for text on dark), amber `#f59e0b` (`#fbbf24` for text), slate connectors
-`#64748b`. Monospace for identifiers: `ui-monospace,'JetBrains Mono',monospace`.
-
-Use a rendered PNG instead of SVG when the figure is a **data** chart produced by a script
-(matplotlib etc.) — commit the script, and reference the image with an absolute URL.
-
-### Inline SVG does NOT survive to Dev.to on its own
-
-Dev.to renders neither inline SVG nor the scoped `<style>` block, so
-`scripts/devto/publish-to-devto.js` strips the styles and swaps each
-`<figure class="…-fig">` for a hosted PNG at
-`public/blog/<slug>-fig-<n>.{gif,png}`, **in document order**, using the SVG's
-`aria-label` as alt text and the `<figcaption>` as the caption. That means:
-
-1. **Pre-render every figure** to `public/blog/<slug>-fig-<n>.png` before publishing,
-   numbered in the order they appear in the EN article (only EN goes to Dev.to).
-   No extra dependency needed — wrap the SVG in a 1200px-wide page on `#1a1a24`
-   and rasterise with headless Chrome:
-   ```bash
-   "/c/Program Files/Google/Chrome/Application/chrome.exe" --headless --disable-gpu \
-     --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,<H> \
-     --screenshot="public/blog/<slug>-fig-<n>.png" "file:///<abs-path>/fig-<n>.html"
-   ```
-   `<H>` = `1200 × viewBoxHeight / viewBoxWidth` plus your vertical padding. Chrome's
-   `--screenshot` needs an **absolute** output path; a relative one silently writes nothing.
-2. **Miss the PNG and Dev.to gets a broken image link**, so verify the swap before
-   publishing by running the same regex over the article and checking that zero
-   `<svg` and zero `<style` survive and that every replacement points at a file
-   that exists.
-3. The `aria-label` is not just accessibility — it becomes the Dev.to alt text.
-   Write it as a sentence describing the finding.
-
-### Verify every figure in the browser
-
-SVG you wrote by hand is code, and it has bugs that only appear rendered:
-
-- **Check every arrow lands on the box it means.** A `<path>` at the wrong `y` will silently
-  connect the wrong two nodes and the diagram will confidently say something false.
-- **Check for overlaps**: labels crossed by connector lines, text escaping the `viewBox`,
-  boxes colliding. A small `<rect>` in the background colour behind a label fixes a crossing line.
-- Screenshot the rendered page (see *Render for Review*) and look at each figure. Do not ship a
-  figure you have only read as source.
-
-## Link Javier's Own Work — Every Mention Is a Link
-
-**Whenever the draft refers to something Javier has made, that mention must be a link.** Not a
-"nice to have": a naked reference to his own work is a bug in the draft. Sweep for it before
-handing the article over, because it is the single most common thing missing from first drafts.
-
-What counts, and where it points:
-
-| The draft says… | Link to |
-|---|---|
-| a previous article, "as I wrote before", "the previous article", any of its findings | `/en/blog/<slug>` · `/es/blog/<slug>` |
-| "I've written some skills", any named skill of his | `/en/skills` · `/es/skills` |
-| a project or case study | `/en/projects/<slug>` · `/es/projects/<slug>` |
-| mentoring, teaching, the starter session | `/en/mentoring` · `/es/mentoring` |
-| an experiment's code or data | the public repo, plus `repoUrl:` in the frontmatter |
-
-Rules:
-
-- **Use language-matched paths.** `/en/...` in the English file, `/es/...` in the Spanish one.
-  Copy-pasting the English link into the Spanish article sends Spanish readers to English pages.
-- **Link the first substantive mention**, not every one. Two links to the same article in one
-  post is noise; zero is a lost reader.
-- **Link the claim, not the boilerplate.** `[the previous article](/en/blog/slug), where
-  declaring provenance only moved the strongest model` beats a bare "see my previous post".
-- **Verify the slug exists** (`ls src/content/blog/en/`) before linking. A 404 in your own
-  article is worse than no link.
-- Series articles should link **backwards to their predecessor**; when a new one supersedes or
-  qualifies an older finding, say so at the point where it does.
-
-## Video Embeds
-
-### For the Website (javieraguilar.ai)
-
-Use HTML iframe embeds for video platforms. The website supports full HTML.
-
-**Loom example:**
-```html
-<div style="position: relative; padding-bottom: 56.25%; height: 0;">
-  <iframe src="https://www.loom.com/embed/VIDEO_ID"
-          frameborder="0"
-          webkitallowfullscreen
-          mozallowfullscreen
-          allowfullscreen
-          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-  </iframe>
-</div>
-```
-
-**YouTube example:**
-```html
-<div style="position: relative; padding-bottom: 56.25%; height: 0;">
-  <iframe src="https://www.youtube.com/embed/VIDEO_ID"
-          frameborder="0"
-          allowfullscreen
-          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-  </iframe>
-</div>
-```
-
-### Dev.to Compatibility
-
-**Important:** Dev.to filters HTML iframes for security. The publish script (`scripts/devto/publish-to-devto.js`) automatically transforms video embeds:
-
-- **Loom iframes** → Markdown links with note
-- **YouTube iframes** → Could be transformed to `{% youtube %}` liquid tags (not implemented yet)
-
-**What gets sent to Dev.to:**
-```markdown
-**🎥 [Watch the video demo on Loom](https://www.loom.com/share/VIDEO_ID)**
-
-> _Note: Interactive video player available on the [original article](CANONICAL_URL)_
-```
-
-**Best Practice:**
-- Always use iframe embeds in the markdown
-- The Dev.to publish script handles the transformation automatically
-- Don't manually create different versions for Dev.to
-
-## Tag Conventions
-
-Common tag translations:
-
-| English | Spanish |
-|---------|---------|
-| AI | IA |
-| Automation | Automatización |
-| Machine Learning | Machine Learning |
-| Development | Desarrollo |
-| Architecture | Arquitectura |
-
-## Example Frontmatter Pair
-
-**English** (`src/content/blog/en/my-new-post.md`):
-```yaml
----
-title: "Building Something Cool"
-description: "How I built a tool that solves a real problem."
-pubDate: 2025-01-03
-tags: ["AI", "Automation", "Claude"]
-lang: en
-translationKey: my-new-post
-heroImage: "/blog/my-new-post.png"
----
-```
-
-**Spanish** (`src/content/blog/es/my-new-post.md`):
-```yaml
----
-title: "Construyendo Algo Genial"
-description: "Cómo construí una herramienta que resuelve un problema real."
-pubDate: 2025-01-03
-tags: ["IA", "Automatización", "Claude"]
-lang: es
-translationKey: my-new-post
-heroImage: "/blog/my-new-post.png"
----
-```
-
-## Writing from LinkedIn Posts
-
-When repurposing a LinkedIn post into a blog article:
-
-1. **Fetch the post** using WebFetch to extract the content
-2. **Download any images** from the post to `public/blog/`
-3. **Expand the content** - LinkedIn posts are short; blog articles should:
-   - Add more context and background
-   - Include code examples if relevant
-   - Expand on points that were condensed
-   - Add sections the post didn't have room for
-4. **Keep the core message** but make it more comprehensive
-5. **Use original post date** as `pubDate` for authenticity
-
-### LinkedIn Image Download
-
-Images from LinkedIn posts should be:
-- Downloaded to `public/blog/[descriptive-name].png`
-- Named descriptively (e.g., `azure-content-filter-demo.png`)
-- Referenced in markdown as `/blog/[name].png`
-
-## Render for Review (do this by default)
-
-**Never hand back a finished article as raw markdown and stop there.** Always render it and give the user a URL, so they review it the way a reader will see it — typography, headings, code blocks, hero image in place, links resolving.
-
-```bash
-npm run build   # validates frontmatter against the content schema and catches broken pages
-npm run dev     # run in background; serves on http://localhost:4321
-```
-
-Then give the user both language URLs explicitly:
-
-- `http://localhost:4321/en/blog/<slug>`
-- `http://localhost:4321/es/blog/<slug>`
-
-Rules:
-- **Build before serving.** A frontmatter or schema error fails the build; catching it here beats the user hitting an error page.
-- **Verify the article actually generated**: `ls dist/en/blog/ | grep <slug>` and the same for `es`.
-- **Show the hero image inline** (Read tool on the PNG) as well, since it is easy to miss in a page scroll, and call out any visible text artefacts in the generated image — image models frequently mangle labels.
-- Only after the user has reviewed the rendered pages should you consider the article done, commit it, or schedule publication.
+| `heroImage` | Yes | Path to thumbnail (e.g., `/blog/my-article.png`). See `references/images.md`. |
+| `linkedinImage` | No | Image for the LinkedIn auto-post; falls back to `heroImage`. See `references/images.md`. |
+| `repoUrl` | For code | Adds `💻 Code: <url>` to the LinkedIn post (`buildPostText` in `scripts/linkedin/utils.js`), only when present. |
+| `linkedinLinks` | No | `[{ label, url }]`, one `🔗 <label>: <url>` line each, for papers and preprints. |
+
+Tag translations: AI → IA, Automation → Automatización, Development → Desarrollo,
+Architecture → Arquitectura; Machine Learning stays.
 
 ## Checklist Before Publishing
 
+- [ ] Brief list from `session_brief.py` reflected in the draft
 - [ ] `npm run build` passes and both pages appear in `dist/en/blog/` and `dist/es/blog/`
-- [ ] **Rendered pages reviewed by the user** at `localhost:4321` (both languages) — not just the markdown
-- [ ] **Figure sweep run against the outline** (see *Figures*): every redrawn diagram, literal geometry, traversal, comparison, set relationship, result table and layered stack either has a figure or a defensible reason not to
+- [ ] **Rendered pages reviewed by Javier** at `localhost:4321` (both languages, trailing slash)
+- [ ] Every number recomputed from the data; every arm, model and judge of the inventory present
+- [ ] **Figure sweep run against the outline** (see `references/figures.md`): every case of the trigger test has a figure or a one-sentence reason
 - [ ] **Each figure pre-rendered to `public/blog/<slug>-fig-<n>.png`** (EN order) and the Dev.to swap dry-run shows no surviving `<svg`/`<style`
-- [ ] **Every figure inspected rendered in a browser** — arrows landing on the right nodes, no label/line overlaps, nothing escaping the `viewBox` — and present in both EN and ES
-- [ ] Both EN and ES files created
-- [ ] Matching `translationKey` in both
-- [ ] Same `pubDate` in both
-- [ ] **`pubDate` matches the website publication schedule** (`.github/publish-schedule.json`, or today if merging manually) — not the draft date or the native LinkedIn article date
-- [ ] Tags translated appropriately
-- [ ] `lang` field matches file location
-- [ ] Hero image generated, reviewed by user, and placed in `public/blog/`
-- [ ] `heroImage` field set in both EN and ES frontmatter
-- [ ] Image prompt recorded in `docs/marketing/image-prompts.md`
-- [ ] **`linkedinImage` decidido antes de publicar** — revisadas todas las imágenes del artículo (gráficos, memes, capturas) y puesta la más llamativa en EN y ES si supera al hero. Sin este campo se publica el hero (`linkedinImage || heroImage`), y cambiarlo después obliga a borrar el post y repostearlo a mano.
-- [ ] **If the article involves code, `repoUrl:` set in both EN and ES frontmatter** — the LinkedIn auto-post (`scripts/linkedin/utils.js`) adds a "💻 Code:" line only when this field is present. Omitting it means editing the LinkedIn post by hand after publish.
-- [ ] Links are valid and functional
-- [ ] **Every mention of Javier's own work is a link** — previous articles, skills, projects, mentoring, experiment repos — with language-matched paths (`/en/...` in EN, `/es/...` in ES) and slugs verified to exist
+- [ ] **Every figure inspected rendered in a browser**, present in both EN and ES
+- [ ] Both EN and ES files, matching `translationKey`, same `pubDate`, `lang` matching the folder, tags translated
+- [ ] **`pubDate` matches the website publication schedule** (`.github/publish-schedule.json`, or today if merging manually)
+- [ ] Hero image generated, shown to Javier, in `public/blog/`, set in both frontmatters, prompt recorded in `docs/marketing/image-prompts.md`
+- [ ] **`linkedinImage` decided before publishing** (see `references/images.md`)
+- [ ] **`repoUrl:` set in both EN and ES** when the article involves code
+- [ ] **Every mention of Javier's own work is a link** with language-matched paths, and every real thing cited links to its source
+- [ ] Article video planned for the same day (see `references/publishing.md`)
 
 ## Publication Completion
 

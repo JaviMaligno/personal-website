@@ -18,6 +18,12 @@ Use the EN article by default, matching the existing distribution language,
 unless Javier specifies another language. The bilingual website does not imply
 publishing two native LinkedIn articles.
 
+The native article is the last step of a publication: set it once Javier has
+approved the final content, because a scheduled LinkedIn article cannot be
+edited (a link added afterwards never reaches it). On the website's release day,
+check that the page is live before the native article's time (see
+`publishing.md`).
+
 ## Prepare the article for the editor
 
 - Adapt the reviewed full article, preserving its argument, examples, sources
@@ -38,7 +44,11 @@ publishing two native LinkedIn articles.
 1. Use Javier's own Chrome through the Claude in Chrome extension
    (`mcp__claude-in-chrome__*`) when it is available: it already holds his
    LinkedIn session. Fall back to the dedicated CDP Chrome profile driven by
-   Playwright only when the extension does not connect. Confirm Javier's personal profile is the selected author. Inspect existing
+   Playwright only when the extension does not connect: launch
+   `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-debugging-port=9333 --user-data-dir="$HOME/.local/state/linkedin-cdp-profile" --disable-extensions --no-first-run "https://www.linkedin.com/feed/"`
+   and attach with `connect_over_cdp` (`uv run --with playwright python`); the
+   profile keeps his session, and he signs in again in that window if it expired.
+   Confirm Javier's personal profile is the selected author. Inspect existing
    drafts, scheduled articles and published articles for this title/topic and
    original URL; reuse the matching draft instead of creating duplicates.
 2. Open **Write article**, choose an individual article, and fill the title,
