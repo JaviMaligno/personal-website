@@ -158,9 +158,9 @@ Una referencia sin pruebas suspende casi exactamente las corridas cuidadosas: aq
 
 Ese es el problema de especificar el camino cuando el progreso no se conoce de antemano. No es solo que no sepas qué paso hace avanzar la demostración. Tampoco sabes qué forma de justificarlo va a elegir el agente. Si escribes el camino, lo que evalúas es el estilo.
 
-## En el mundo procedimental, especificar el camino compensó
+## En el mundo procedimental, especificar el camino no costó nada
 
-El alta de clientes es donde evaluar el camino debería compensar, y aquí compensó. Las notas tentadoras provocaron dos tipos de error. La mayoría cambiaron la decisión. Qwen aprobó a un cliente sancionado como «falso positivo conocido» (2 de 3 corridas sin razonamiento, 3 de 3 con él). Haiku y Qwen rechazaron un caso justo en el umbral porque una nota pedía «tratarlo como por encima del umbral, por seguridad», algo que la política no permite. El estado final ve todos esos.
+El alta de clientes es donde evaluar el camino debería compensar. Aquí no dio ninguna falsa alarma y atrapó el único atajo que vi. Las notas tentadoras provocaron dos tipos de error. La mayoría cambiaron la decisión. Qwen aprobó a un cliente sancionado como «falso positivo conocido» (2 de 3 corridas sin razonamiento, 3 de 3 con él). Haiku y Qwen rechazaron un caso justo en el umbral porque una nota pedía «tratarlo como por encima del umbral, por seguridad», algo que la política no permite. El estado final ve todos esos.
 
 El otro tipo es el que describe el paper. Con el razonamiento activado, Qwen leyó «el banco socio ya pasó el filtro de sanciones esta mañana» y aprobó al cliente sin filtrar antes: en una corrida no lo comprobó nunca y en otra lo comprobó después de aprobar. La decisión era correcta las dos veces, así que el estado final aprobó las dos. La obligación de orden «comprueba sanciones antes de aprobar» suspendió las dos, y el camino de referencia también. En 180 corridas de alta, ninguno de los dos suspendió nada válido.
 
@@ -176,7 +176,7 @@ Acotado a lo que midió este experimento:
 
 - **Especifica las condiciones que debe cumplir cada paso, y compruébalas contra el estado, no contra qué herramientas se llamaron.** Esa comprobación es como definí aquí la verdad, así que no cuenta como un evaluador que gana. El hallazgo es que fallan sus sustitutos basados en el proceso: «¿llamó antes a la herramienta de prueba?» y «¿se parece a la referencia?». En este mundo de juguete la comprobación es sympy; en un sistema real es un test, una precondición o un invariante sobre los datos.
 - **Especifica lo prohibido cuando lo conozcas.** Aquí atrapó las 33 demostraciones falsas. Escribí esas reglas sabiendo qué paso era la trampa, y las tareas resolubles no tenían nada que prohibir, así que esto mide su alcance, no cuántas falsas alarmas darían.
-- **Donde el camino se conoce de antemano, especifícalo.** En el alta, el estado final dejó pasar las 2 corridas que se saltaron el filtro de sanciones. La obligación de orden atrapó las dos y no suspendió nada válido en 180 corridas.
+- **Donde el camino se conoce de antemano, especificarlo sale barato.** En 180 corridas de alta, la obligación de orden no suspendió nada válido y atrapó las 2 corridas que se saltaron el filtro de sanciones, que el estado final dejó pasar. Son dos corridas, de un modelo y en un caso: prueba que no cuesta nada, no mide cuántas veces te salva.
 - **Donde no se conoce, trata un camino de referencia como una guía de estilo, no como una prueba de corrección.** Si usas uno, enumera todos los órdenes válidos y cuenta con que suspenderá a agentes cuidadosos o escuetos según cómo lo escribas.
 
 Esto enlaza con [un modelo que pasa todos los tests y aun así pierde](/es/blog/verified-world-model-still-loses): una comprobación puede ser exacta sobre lo que no toca. El estado final es exacto sobre dónde terminó el agente, y el camino lo es sobre cómo llegó. Lo que normalmente necesitas saber es si cada paso estaba permitido.

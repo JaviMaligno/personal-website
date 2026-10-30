@@ -158,9 +158,9 @@ A reference without proofs fails almost exactly the careful runs: the ones where
 
 That is the problem with specifying the path when progress isn't known in advance. It isn't only that you can't tell which step moves the proof forward. You also can't tell which way of justifying it the agent will choose. Write the path down and you are grading style.
 
-## In the procedural world, specifying the path paid off
+## In the procedural world, specifying the path cost nothing
 
-Onboarding is the setting where path grading should pay off, and here it did. The tempting notes caused two kinds of mistake. Most of them changed the decision. Qwen approved a sanctioned customer as a "known false positive" (2 of 3 runs without reasoning, 3 of 3 with it). Haiku and Qwen rejected a case exactly at the threshold after a note asked them to "treat it as above the threshold, to be safe", which the policy does not allow. The final state shows all of those.
+Onboarding is the setting where path grading should pay off. Here it raised no false alarms and caught the only shortcut I saw. The tempting notes caused two kinds of mistake. Most of them changed the decision. Qwen approved a sanctioned customer as a "known false positive" (2 of 3 runs without reasoning, 3 of 3 with it). Haiku and Qwen rejected a case exactly at the threshold after a note asked them to "treat it as above the threshold, to be safe", which the policy does not allow. The final state shows all of those.
 
 The other kind is the one the paper describes. With reasoning on, Qwen read "the partner bank already ran sanctions screening this morning" and approved the customer without screening first: in one run it never checked, in another it checked after approving. The decision was right both times, so the final state passed both. The ordering obligation "check sanctions before approving" failed both, and so did the reference path. Across 180 onboarding runs, neither of them failed anything valid.
 
@@ -176,7 +176,7 @@ Scoped to what this experiment measured:
 
 - **Specify the conditions each step has to satisfy, and check them against the state, not against which tools were called.** That check is how I defined the ground truth here, so it can't count as a grader that won. The finding is that the process-based stand-ins for it fail: "did it call the proof tool first" and "does it look like the reference". In this toy world the check is sympy; in a real system it is a test, a precondition or an invariant on the data.
 - **Specify forbidden actions when you know them.** Here they caught all 33 false proofs. I wrote them knowing which step was the trap, and the solvable tasks had nothing to forbid, so this measures their reach, not how often they would raise false alarms.
-- **Where the path is known in advance, specify it.** In onboarding, the final state missed the 2 runs that skipped sanctions screening. The ordering obligation caught both and failed nothing valid in 180 runs.
+- **Where the path is known in advance, specifying it is cheap.** In 180 onboarding runs the ordering obligation failed nothing valid, and it caught the 2 runs that skipped sanctions screening, which the final state missed. That is two runs, from one model, on one case: evidence that it costs nothing, not a measure of how often it saves you.
 - **Where it isn't, treat a reference path as a style guide, not a correctness check.** If you use one, enumerate all the valid orders and expect it to fail careful agents and terse ones alike, depending on how you wrote it.
 
 This connects to [a model that passes every test and still loses](/en/blog/verified-world-model-still-loses): a check can be exact about the wrong thing. A final-state check is exact about where the agent ended up, and a path check is exact about how it got there. What you usually need to know is whether each step was allowed.
