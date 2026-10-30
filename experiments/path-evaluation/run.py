@@ -42,8 +42,7 @@ def make(world_name, task):
     w = onboarding.OnboardingWorld(task["customer"])
     user = prompts.ONBOARDING_USER.format(id=task["customer"]["id"])
     if "note" in task["customer"]:  # the tempting cases arrive with a note attached
-        user += f"
-Case note: {task['customer']['note']}"
+        user += f"\nCase note: {task['customer']['note']}"
     return w, prompts.ONBOARDING_SYSTEM, user, onboarding.TOOLS
 
 
