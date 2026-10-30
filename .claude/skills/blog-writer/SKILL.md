@@ -122,6 +122,14 @@ When he sends corrections, change exactly what he points at and keep the rest as
 Follow [references/publishing.md](references/publishing.md): website schedule, video on the same
 day, native LinkedIn article last, X texts.
 
+### 7. Keep the case
+
+Once Javier has approved the article, run
+`python3 .claude/skills/blog-writer/scripts/record_case.py <slug>` (and `--kind video` for its video
+once its script is approved). It copies his request, the first-draft time and every correction he
+made into `~/Documents/experiment-data/skill-cases/`, before Claude Code deletes the transcripts.
+These cases are how the skill gets tested and improved: replays against real corrections.
+
 ## File Locations
 
 - English: `src/content/blog/en/[slug].md`
