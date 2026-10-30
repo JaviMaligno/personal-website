@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import urllib.request
 from pathlib import Path
@@ -26,6 +27,14 @@ TOOLS = [
 ]
 
 
+def _git_bash(env: dict) -> str:
+    """Git Bash, never the bare name: CreateProcess finds the System32 bash.exe (WSL) first."""
+    for cand in (shutil.which("bash", path=env.get("PATH")), r"C:\Program Files\Git\usr\bin\bash.exe"):
+        if cand and "system32" not in cand.lower() and Path(cand).exists():
+            return cand
+    raise FileNotFoundError("Git Bash not found")
+
+
 def _exec(work: Path, env: dict, tool: str, a: dict) -> str:
     try:
         if tool == "read_file":
@@ -43,7 +52,7 @@ def _exec(work: Path, env: dict, tool: str, a: dict) -> str:
                 return f"error: old text found {s.count(a['old'])} times"
             p.write_text(s.replace(a["old"], a["new"]), encoding="utf-8"); return "replaced"
         if tool == "run_command":
-            r = subprocess.run(["bash", "-lc", a["command"]], cwd=work, env=env, capture_output=True, text=True, timeout=600)
+            r = subprocess.run([_git_bash(env), "-lc", a["command"]], cwd=work, env=env, capture_output=True, text=True, timeout=600)
             return (r.stdout + r.stderr)[-20000:] + f"\n[exit {r.returncode}]"
     except Exception as e:  # tool errors go back to the model, like a CLI would show them
         return f"error: {type(e).__name__}: {e}"
