@@ -60,3 +60,10 @@ Tokens por traza (incluida caché): Haiku 10.054, Sonnet 9.072, Qwen 3.957.
 - 0 discrepancias en la revisión manual: **cumple**.
 
 Decisión pendiente con Javier (ver conversación).
+
+## Nota posterior sobre los tokens de Claude
+
+Los tokens por traza de Haiku y Sonnet salen de los eventos `assistant` del streaming de Claude
+Code, que son instantáneas parciales: la entrada y la caché son correctas, pero la salida y el
+pensamiento quedan muy por debajo del total real (en una llamada de prueba, 8 frente a 855). El
+backend guarda desde entonces el `usage` y el `total_cost_usd` del evento `result`.

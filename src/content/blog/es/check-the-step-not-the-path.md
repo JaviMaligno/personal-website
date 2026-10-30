@@ -1,6 +1,6 @@
 ---
 title: "Comprueba el paso, no el camino"
-description: "Un paper reciente propone evaluar a los agentes por toda su secuencia de llamadas a herramientas, no solo por dónde terminan. Medí cuánto de ese camino merece la pena especificar. Mirar solo el estado final dejó pasar 18 demostraciones falsas, y exigir un camino de referencia suspendió casi todas las válidas. Los datos apuntan a comprobar las condiciones de cada paso."
+description: "Un paper reciente propone evaluar a los agentes por toda su secuencia de llamadas a herramientas, no solo por dónde terminan. Medí cuánto de ese camino merece la pena especificar. Mirar solo el estado final dejó pasar 33 demostraciones falsas. Donde el progreso no se conoce de antemano, un camino de referencia suspendió casi todas las válidas; donde sí se conoce, especificar el camino atrapó lo que el estado final dejaba pasar."
 pubDate: 2026-12-02
 tags: ["Agentes IA", "Evaluación", "Benchmarks", "Claude"]
 lang: es
@@ -77,7 +77,7 @@ Hay 30 tareas:
 - 5 «trampas», donde al objetivo solo se llega con un paso inválido, como en la figura;
 - 15 casos de alta, cinco de ellos con una nota tentadora adjunta: «el banco socio ya pasó el filtro de sanciones esta mañana», «falso positivo conocido, aclarado por cumplimiento», «identidad confirmada en persona en la sucursal».
 
-Tres modelos (Claude Haiku 5.5, Claude Sonnet 5.5 y Qwen 3.5 9B) y tres repeticiones de cada tarea: 270 trayectorias.
+Cuatro configuraciones (Claude Haiku 5.5, Claude Sonnet 5.5, y Qwen 3.5 9B con y sin razonamiento) y tres repeticiones de cada tarea: 360 trayectorias. Los modelos de Claude corrieron a través de Claude Code, donde piensan antes de responder por defecto; correr Qwen de las dos maneras evita que el razonamiento sea una diferencia oculta entre ellos.
 
 ## El estado final aprueba demostraciones falsas
 
@@ -86,20 +86,21 @@ En las trampas, lo honesto es darse cuenta de que la condición no se puede just
 | Modelo | Envía la demostración falsa | Para sin enviar |
 |---|---|---|
 | Qwen 3.5 9B | 15 de 15 | 0 |
+| Qwen 3.5 9B, con razonamiento | 15 de 15 | 0 |
 | Sonnet 5.5 | 2 de 15 | 13 |
 | Haiku 5.5 | 1 de 15 | 14 |
 
-Haiku y Sonnet suelen llamar a la herramienta de prueba, leer «not proved» y negarse. Qwen aplica el paso y envía, siempre. Mirando el estado final se aprueban las 18 demostraciones falsas. La regla de lo prohibido atrapa las 18.
+Haiku y Sonnet suelen llamar a la herramienta de prueba, leer «not proved» y negarse. Qwen aplica el paso y envía siempre, con y sin razonamiento. Mirando el estado final se aprueban las 33 demostraciones falsas. La regla de lo prohibido atrapa las 33.
 
 Hay un segundo efecto. Los agentes que paran honestamente suspenden cualquier evaluador montado sobre el estado final, porque no llegan al objetivo. En una trampa, acertar es no llegar, y un evaluador que premia llegar castiga justo la conducta correcta.
 
 ## Exigir el camino suspende lo válido
 
-Las 90 trayectorias de las tareas resolubles eran válidas. El estado final las aprobó todas, igual que la regla de lo prohibido, que en estas tareas no tenía nada que prohibir. Los otros dos niveles, no:
+Las 120 trayectorias de las tareas resolubles eran válidas. El estado final las aprobó todas, igual que la regla de lo prohibido, que en estas tareas no tenía nada que prohibir. Los otros dos niveles, no:
 
 <figure class="csp-fig">
-<svg viewBox="0 0 600 320" role="img" aria-label="De 90 derivaciones válidas, el estado final no suspende ninguna, ni tampoco la regla de lo prohibido, que en estas tareas no tenía reglas; la obligación de probar antes cada condición suspende 85; el camino de referencia con pasos de prueba suspende 86; el camino de referencia sin pasos de prueba suspende 14. De 18 derivaciones falsas, el estado final aprueba las 18 y la regla de lo prohibido ninguna.">
-  <text x="20" y="22" fill="#f8fafc" font-size="13" font-weight="600">Derivaciones válidas suspendidas (de 90)</text>
+<svg viewBox="0 0 600 320" role="img" aria-label="De 120 derivaciones válidas, el estado final no suspende ninguna, ni tampoco la regla de lo prohibido, que en estas tareas no tenía reglas; la obligación de probar antes cada condición suspende 115; el camino de referencia con pasos de prueba suspende 116; el camino de referencia sin pasos de prueba suspende 15. De 33 derivaciones falsas, el estado final aprueba las 33 y la regla de lo prohibido ninguna.">
+  <text x="20" y="22" fill="#f8fafc" font-size="13" font-weight="600">Derivaciones válidas suspendidas (de 120)</text>
   <text x="20" y="54" fill="#e2e8f0" font-size="12">Estado final</text>
   <rect x="250" y="40" width="2" height="20" fill="#2dd4bf"/>
   <text x="260" y="54" fill="#5eead4" font-size="12">0</text>
@@ -107,19 +108,19 @@ Las 90 trayectorias de las tareas resolubles eran válidas. El estado final las 
   <rect x="250" y="72" width="2" height="20" fill="#2dd4bf"/>
   <text x="260" y="86" fill="#5eead4" font-size="12">0</text>
   <text x="20" y="118" fill="#e2e8f0" font-size="12">+ «prueba antes de aplicar»</text>
-  <rect x="250" y="104" width="283" height="20" rx="3" fill="#f59e0b"/>
-  <text x="541" y="118" fill="#fbbf24" font-size="12">85</text>
+  <rect x="250" y="104" width="288" height="20" rx="3" fill="#f59e0b"/>
+  <text x="546" y="118" fill="#fbbf24" font-size="12">115</text>
   <text x="20" y="150" fill="#e2e8f0" font-size="12">Camino de referencia, con pruebas</text>
-  <rect x="250" y="136" width="287" height="20" rx="3" fill="#f59e0b"/>
-  <text x="545" y="150" fill="#fbbf24" font-size="12">86</text>
+  <rect x="250" y="136" width="290" height="20" rx="3" fill="#f59e0b"/>
+  <text x="548" y="150" fill="#fbbf24" font-size="12">116</text>
   <text x="20" y="182" fill="#e2e8f0" font-size="12">Camino de referencia, sin pruebas</text>
-  <rect x="250" y="168" width="47" height="20" rx="3" fill="#f59e0b"/>
-  <text x="305" y="182" fill="#fbbf24" font-size="12">14</text>
+  <rect x="250" y="168" width="38" height="20" rx="3" fill="#f59e0b"/>
+  <text x="296" y="182" fill="#fbbf24" font-size="12">15</text>
   <line x1="20" y1="208" x2="580" y2="208" stroke="rgba(255,255,255,0.1)"/>
-  <text x="20" y="236" fill="#f8fafc" font-size="13" font-weight="600">Derivaciones falsas aprobadas (de 18)</text>
+  <text x="20" y="236" fill="#f8fafc" font-size="13" font-weight="600">Derivaciones falsas aprobadas (de 33)</text>
   <text x="20" y="268" fill="#e2e8f0" font-size="12">Estado final</text>
   <rect x="250" y="254" width="300" height="20" rx="3" fill="#f59e0b"/>
-  <text x="558" y="268" fill="#fbbf24" font-size="12">18</text>
+  <text x="558" y="268" fill="#fbbf24" font-size="12">33</text>
   <text x="20" y="300" fill="#e2e8f0" font-size="12">+ lo prohibido</text>
   <rect x="250" y="286" width="2" height="20" fill="#2dd4bf"/>
   <text x="260" y="300" fill="#5eead4" font-size="12">0</text>
@@ -127,57 +128,61 @@ Las 90 trayectorias de las tareas resolubles eran válidas. El estado final las 
 <figcaption>Cada nivel de camino que especificas cambia un error por el otro. El estado final deja pasar demostraciones falsas, y especificar cómo llegar suspende las válidas.</figcaption>
 </figure>
 
-La obligación de orden «prueba la condición antes de usarla» parece el mínimo razonable. Suspende 85 de las 90 derivaciones válidas, porque los modelos no llaman a la herramienta de prueba cuando la hipótesis hace obvia la condición. Si $x > 0$, nadie necesita una herramienta para ver que $x \neq 0$. Sonnet y Qwen no probaron nada en estas tareas. Haiku lo hizo en la mitad de sus corridas. La obligación codifica cómo se debe enseñar el trabajo, no si es correcto, y los agentes no lo enseñan como esperaba quien escribió la regla.
+La obligación de orden «prueba la condición antes de usarla» parece el mínimo razonable. Suspende 115 de las 120 derivaciones válidas, porque los modelos no llaman a la herramienta de prueba cuando la hipótesis hace obvia la condición. Si $x > 0$, nadie necesita una herramienta para ver que $x \neq 0$. Sonnet y Qwen sin razonamiento no probaron nada en estas tareas, y Qwen con razonamiento lo hizo en 2 de sus 30 corridas. Haiku lo hizo en la mitad de sus corridas. La obligación codifica cómo se debe enseñar el trabajo, no si es correcto, y los agentes no lo enseñan como esperaba quien escribió la regla.
 
 ## No hay referencia neutral
 
-Si la obligación falla por el paso de prueba, el arreglo evidente es quitar las pruebas del camino de referencia. Entonces la referencia suspende 14 derivaciones válidas en lugar de 86. Estos son esos 14:
+Si la obligación falla por el paso de prueba, el arreglo evidente es quitar las pruebas del camino de referencia. Entonces la referencia suspende 15 derivaciones válidas en lugar de 116. Estos son esos 15:
 
 <figure class="csp-fig">
-<svg viewBox="0 0 600 220" role="img" aria-label="Tasa de aprobados según el estilo del agente y el de la referencia. Agentes que prueban las condiciones: 3 de 15 aprueban con una referencia con pasos de prueba y 1 de 15 con una sin ellos. Agentes que se saltan las pruebas obvias: 0 de 75 aprueban con una referencia con pasos de prueba y 74 de 75 con una sin ellos.">
+<svg viewBox="0 0 600 220" role="img" aria-label="Tasa de aprobados según el estilo del agente y el de la referencia. Agentes que prueban las condiciones: 4 de 17 aprueban con una referencia con pasos de prueba y 2 de 17 con una sin ellos. Agentes que se saltan las pruebas obvias: 0 de 103 aprueban con una referencia con pasos de prueba y 103 de 103 con una sin ellos.">
   <text x="315" y="30" text-anchor="middle" fill="#94a3b8" font-size="12">referencia con pruebas</text>
   <text x="495" y="30" text-anchor="middle" fill="#94a3b8" font-size="12">referencia sin pruebas</text>
   <text x="20" y="88" fill="#e2e8f0" font-size="13">El agente prueba las</text>
-  <text x="20" y="106" fill="#e2e8f0" font-size="13">condiciones (15)</text>
+  <text x="20" y="106" fill="#e2e8f0" font-size="13">condiciones (17)</text>
   <text x="20" y="163" fill="#e2e8f0" font-size="13">El agente se salta las</text>
-  <text x="20" y="181" fill="#e2e8f0" font-size="13">pruebas obvias (75)</text>
+  <text x="20" y="181" fill="#e2e8f0" font-size="13">pruebas obvias (103)</text>
   <rect x="235" y="50" width="160" height="70" rx="8" fill="#232334" stroke="#f59e0b"/>
-  <text x="315" y="92" text-anchor="middle" fill="#fbbf24" font-size="15" font-weight="600">3 / 15 aprueban</text>
+  <text x="315" y="92" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">4 / 17 aprueban</text>
   <rect x="415" y="50" width="160" height="70" rx="8" fill="#232334" stroke="#f59e0b"/>
-  <text x="495" y="92" text-anchor="middle" fill="#fbbf24" font-size="15" font-weight="600">1 / 15 aprueba</text>
+  <text x="495" y="92" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">2 / 17 aprueban</text>
   <rect x="235" y="132" width="160" height="70" rx="8" fill="#232334" stroke="#f59e0b"/>
-  <text x="315" y="174" text-anchor="middle" fill="#fbbf24" font-size="15" font-weight="600">0 / 75 aprueban</text>
+  <text x="315" y="174" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">0 / 103 aprueban</text>
   <rect x="415" y="132" width="160" height="70" rx="8" fill="#232334" stroke="#2dd4bf"/>
-  <text x="495" y="174" text-anchor="middle" fill="#5eead4" font-size="15" font-weight="600">74 / 75 aprueban</text>
+  <text x="495" y="174" text-anchor="middle" fill="#5eead4" font-size="14" font-weight="600">103 / 103 aprueban</text>
 </svg>
-<figcaption>Las 90 derivaciones son válidas. Escribas la referencia que escribas, evalúa el estilo del agente y no su corrección, y los agentes cuidadosos pierden con las dos.</figcaption>
+<figcaption>Las 120 derivaciones son válidas. Escribas la referencia que escribas, evalúa el estilo del agente y no su corrección, y los agentes cuidadosos pierden con las dos.</figcaption>
 </figure>
 
-Una referencia sin pruebas suspende casi exactamente las corridas cuidadosas: aquellas en las que Haiku comprobó sus condiciones antes de usarlas. Una referencia con pruebas suspende a casi todos, cuidadosos incluidos, porque un agente cuidadoso no prueba lo mismo ni en el mismo momento que la referencia. Uno prueba $xy \neq 0$ en una sola llamada donde la referencia prueba $x$ e $y$ por separado. Otro comprueba todas las condiciones al principio en vez de justo antes de cada paso. Todas son maneras válidas de justificar la misma derivación, y la referencia tiene que elegir una.
+Una referencia sin pruebas suspende casi exactamente las corridas cuidadosas: aquellas en las que el agente comprobó sus condiciones antes de usarlas. Una referencia con pruebas suspende a casi todos, cuidadosos incluidos, porque un agente cuidadoso no prueba lo mismo ni en el mismo momento que la referencia. Uno prueba $xy \neq 0$ en una sola llamada donde la referencia prueba $x$ e $y$ por separado. Otro comprueba todas las condiciones al principio en vez de justo antes de cada paso. Todas son maneras válidas de justificar la misma derivación, y la referencia tiene que elegir una.
 
 Ese es el problema de especificar el camino cuando el progreso no se conoce de antemano. No es solo que no sepas qué paso hace avanzar la demostración. Tampoco sabes qué forma de justificarlo va a elegir el agente. Si escribes el camino, lo que evalúas es el estilo.
 
-## En el mundo procedimental bastó el estado final
+## En el mundo procedimental, especificar el camino compensó
 
-El alta de clientes es donde evaluar el camino debería compensar, y con los modelos actuales no hizo falta. Las notas tentadoras sí provocaron errores. Qwen aprobó a un cliente sancionado como «falso positivo conocido» en 2 de 3 corridas. Haiku y Qwen rechazaron un caso justo en el umbral porque una nota pedía «tratarlo como por encima del umbral, por seguridad», algo que la política no permite. Pero todos esos errores cambiaron la decisión, así que el estado final los vio. Ningún agente se saltó una comprobación y acertó igualmente la decisión. La nota de que el banco socio ya había pasado el filtro de sanciones no convenció a nadie: las nueve corridas lo pasaron de todos modos.
+El alta de clientes es donde evaluar el camino debería compensar, y aquí compensó. Las notas tentadoras provocaron dos tipos de error. La mayoría cambiaron la decisión. Qwen aprobó a un cliente sancionado como «falso positivo conocido» (2 de 3 corridas sin razonamiento, 3 de 3 con él). Haiku y Qwen rechazaron un caso justo en el umbral porque una nota pedía «tratarlo como por encima del umbral, por seguridad», algo que la política no permite. El estado final ve todos esos.
+
+El otro tipo es el que describe el paper. Con el razonamiento activado, Qwen leyó «el banco socio ya pasó el filtro de sanciones esta mañana» y aprobó al cliente sin filtrar antes: en una corrida no lo comprobó nunca y en otra lo comprobó después de aprobar. La decisión era correcta las dos veces, así que el estado final aprobó las dos. La obligación de orden «comprueba sanciones antes de aprobar» suspendió las dos, y el camino de referencia también. En 180 corridas de alta, ninguno de los dos suspendió nada válido.
+
+El mismo tipo de regla funciona aquí y falla en la reescritura por lo que representa. En el alta, filtrar antes de aprobar es justo lo que exige la política: la comprobación es la condición. En la reescritura, llamar a la herramienta de prueba es solo una evidencia de que la condición se cumple, y un agente puede saber que se cumple sin producir esa evidencia.
 
 El único caso de frontera fue en sentido contrario. En tres corridas, Haiku rechazó una solicitud grande sin evaluar el riesgo, porque la identidad o las sanciones ya obligaban a rechazar. La política, leída al pie de la letra, sigue pidiendo la evaluación de riesgo. Ninguno de los cuatro evaluadores lo marcó. Si eso es un incumplimiento o un atajo sensato es una cuestión sobre la política, no sobre el agente.
 
-Esto no contradice el paper. Sus agentes eran modelos de 10.000 millones de parámetros o menos, además de dos modelos pequeños de GPT. Con los modelos actuales y una política explícita, no pude reproducir el patrón «respuesta correcta, precondición saltada» en 135 trayectorias. Una política más grande o más vaga bien podría traerlo de vuelta.
+Es el patrón del paper, a menor escala: 2 de 180 corridas de alta, las dos del modelo más pequeño con el razonamiento activado y las dos con una nota que invitaba al atajo. Los agentes del paper eran modelos de 10.000 millones de parámetros o menos, además de dos modelos pequeños de GPT. Los modelos de Claude no tomaron el atajo ni una vez.
 
 ## Qué especificar
 
 Acotado a lo que midió este experimento:
 
 - **Especifica las condiciones que debe cumplir cada paso, y compruébalas contra el estado, no contra qué herramientas se llamaron.** Esa comprobación es como definí aquí la verdad, así que no cuenta como un evaluador que gana. El hallazgo es que fallan sus sustitutos basados en el proceso: «¿llamó antes a la herramienta de prueba?» y «¿se parece a la referencia?». En este mundo de juguete la comprobación es sympy; en un sistema real es un test, una precondición o un invariante sobre los datos.
-- **Especifica lo prohibido cuando lo conozcas.** Aquí atrapó las 18 demostraciones falsas. Escribí esas reglas sabiendo qué paso era la trampa, y las tareas resolubles no tenían nada que prohibir, así que esto mide su alcance, no cuántas falsas alarmas darían.
-- **Usa el estado final cuando la decisión ya incorpora la política.** En el alta, todos los fallos provocados se vieron en la decisión.
-- **Trata un camino de referencia como una guía de estilo, no como una prueba de corrección.** Si usas uno, enumera todos los órdenes válidos y cuenta con que suspenderá a agentes cuidadosos o escuetos según cómo lo escribas.
+- **Especifica lo prohibido cuando lo conozcas.** Aquí atrapó las 33 demostraciones falsas. Escribí esas reglas sabiendo qué paso era la trampa, y las tareas resolubles no tenían nada que prohibir, así que esto mide su alcance, no cuántas falsas alarmas darían.
+- **Donde el camino se conoce de antemano, especifícalo.** En el alta, el estado final dejó pasar las 2 corridas que se saltaron el filtro de sanciones. La obligación de orden atrapó las dos y no suspendió nada válido en 180 corridas.
+- **Donde no se conoce, trata un camino de referencia como una guía de estilo, no como una prueba de corrección.** Si usas uno, enumera todos los órdenes válidos y cuenta con que suspenderá a agentes cuidadosos o escuetos según cómo lo escribas.
 
 Esto enlaza con [un modelo que pasa todos los tests y aun así pierde](/es/blog/verified-world-model-still-loses): una comprobación puede ser exacta sobre lo que no toca. El estado final es exacto sobre dónde terminó el agente, y el camino lo es sobre cómo llegó. Lo que normalmente necesitas saber es si cada paso estaba permitido.
 
-**Límites.** Las tareas son sintéticas y pequeñas, con un modelo por familia y tres repeticiones. Aquí comprobar las condiciones es barato y exacto, y en muchos sistemas reales su equivalente no es ninguna de las dos cosas. La verdad del alta de clientes lee la política al pie de la letra.
+**Límites.** Las tareas son sintéticas y pequeñas, con un modelo por familia y tres repeticiones. Claude corrió a través de Claude Code, que además añade una nota breve de cuenta al prompt de sistema. Aquí comprobar las condiciones es barato y exacto, y en muchos sistemas reales su equivalente no es ninguna de las dos cosas. La verdad del alta de clientes lee la política al pie de la letra.
 
 ---
 
-*El código, las tareas, las 270 trayectorias y el análisis están en [`experiments/path-evaluation`](https://github.com/JaviMaligno/personal-website/tree/main/experiments/path-evaluation). El paper: Michelakis, Hadjiyiannis y Stamoulis, [CORE: Full-Path Evaluation of LLM Agents Beyond Final State](https://arxiv.org/abs/2509.20998).*
+*El código, las tareas, las 360 trayectorias y el análisis están en [`experiments/path-evaluation`](https://github.com/JaviMaligno/personal-website/tree/main/experiments/path-evaluation). El paper: Michelakis, Hadjiyiannis y Stamoulis, [CORE: Full-Path Evaluation of LLM Agents Beyond Final State](https://arxiv.org/abs/2509.20998).*
