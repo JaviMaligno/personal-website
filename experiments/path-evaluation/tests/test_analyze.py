@@ -23,3 +23,7 @@ def test_fn_kind():
     assert fn_kind(["b", "a"], [["a", "b"]]) == "order"
     assert fn_kind(["a", "x", "b"], [["a", "b"]]) == "extra_steps"
     assert fn_kind(["z"], [["a", "b"]]) == "other"
+
+
+def test_fn_kind_missing_steps():
+    assert fn_kind(["a", "c"], [["a", "b", "c"]]) == "missing_steps"

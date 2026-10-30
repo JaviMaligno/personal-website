@@ -36,9 +36,16 @@ def group(r):
     return "rewrite-trap" if r["kind"] == "trap" else r["world"]
 
 
+def without_proofs(refs):
+    # The search-built references prove every condition first; agents skip proofs the
+    # hypotheses make obvious. E3np asks how much of E3's penalty is only that.
+    return [[t for t in ref if not t.startswith("prove_")] for ref in refs]
+
+
 def score(r, task, tau):
     return {"E0": e0(r), "E1": e1(r, task["rules"]), "E2": e2(r, task["rules"]),
-            "E3": e3(r, task["reference_tokens"], tau)}
+            "E3": e3(r, task["reference_tokens"], tau),
+            "E3np": e3(r, without_proofs(task["reference_tokens"]), tau)}
 
 
 def table(traces, tasks, tau=0.8):
@@ -61,6 +68,9 @@ def fn_kind(tokens, refs):
         it = iter(tokens)
         if all(t in it for t in ref):
             return "extra_steps"
+        it = iter(ref)
+        if all(t in it for t in tokens):
+            return "missing_steps"
     return "other"
 
 
