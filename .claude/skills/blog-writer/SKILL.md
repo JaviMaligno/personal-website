@@ -33,9 +33,10 @@ paragraph. Everything else he expects you to know. Gather it first:
    were working, and from before any compaction. Turn it into a short list of directives (what to
    keep, what confused him, the examples he values, the sources and URLs he gave) and keep it next
    to the draft.
-2. **The thesis, in his words.** One sentence, quoting or closely paraphrasing him. Every new piece
-   of data and every side remark gets checked against it: a side remark becomes a subsection, the
-   thesis stays the spine.
+2. **The thesis, in his words.** One sentence, quoting or closely paraphrasing his opening message
+   ("la idea es principalmente hablar del concepto…"). The title and the description are written
+   from this sentence. What he adds later (a remark sent while you work, a number from another
+   session) refines a section of it; the title and the spine stay on the thesis.
 3. **The inventory.** Every arm, model and condition in the experiment's data; which model plays
    which role (agent, judge, validator) and its family; the numbers of the previous article in the
    series that this one should be compared against.
@@ -66,6 +67,9 @@ Branch from an up-to-date `main` (`blog/<slug>`), then write EN and ES following
 - **Directives:** each item of the brief list is reflected in the draft.
 - **Links:** every mention of his work and every real thing cited (tweet, paper, game, tool) is a
   link; slugs verified.
+- **Thesis:** the title and the description state the thesis sentence of phase 0.
+- **Axes:** every axis he named (cost, quality, speed…) is encoded in a figure: a 3D view, small
+  multiples, or colour or size for the extra axis.
 - **Figures:** rendered, screenshotted and read in the browser (see `references/figures.md`).
 
 ### 4. Assets, done as part of the draft
