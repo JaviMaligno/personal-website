@@ -1,7 +1,7 @@
 ---
 title: "No Benchmaxing Found, and the Vibes Still Count"
 description: "I ran the two tests the benchmaxing article called for: public math items against fresh equivalents, and a conductor managing its own subagents. Seven models, no familiarity signal, two scenarios at ceiling, and a reminder that my tests are benchmarks too."
-pubDate: 2026-11-26
+pubDate: 2026-12-02
 tags: ["AI", "Evaluation", "Benchmarks", "Agents"]
 lang: en
 translationKey: no-benchmaxing-found

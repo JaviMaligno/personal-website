@@ -1,7 +1,7 @@
 ---
 title: "No encontré benchmaxing, y las vibes siguen contando"
 description: "Hice las dos pruebas que pedía el artículo sobre benchmaxing: problemas públicos de matemáticas frente a variantes nuevas equivalentes, y un director gestionando a sus propios subagentes. Siete modelos, ninguna señal de familiaridad, dos escenarios en techo y un recordatorio: mis pruebas también son benchmarks."
-pubDate: 2026-11-26
+pubDate: 2026-12-02
 tags: ["IA", "Evaluación", "Benchmarks", "Agentes"]
 lang: es
 translationKey: no-benchmaxing-found
