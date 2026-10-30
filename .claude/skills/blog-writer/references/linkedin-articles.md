@@ -35,8 +35,10 @@ publishing two native LinkedIn articles.
 
 ## Publish or schedule through the browser
 
-1. Load the available browser-control skill and use the signed-in session.
-   Confirm Javier's personal profile is the selected author. Inspect existing
+1. Use Javier's own Chrome through the Claude in Chrome extension
+   (`mcp__claude-in-chrome__*`) when it is available: it already holds his
+   LinkedIn session. Fall back to the dedicated CDP Chrome profile driven by
+   Playwright only when the extension does not connect. Confirm Javier's personal profile is the selected author. Inspect existing
    drafts, scheduled articles and published articles for this title/topic and
    original URL; reuse the matching draft instead of creating duplicates.
 2. Open **Write article**, choose an individual article, and fill the title,
@@ -91,8 +93,13 @@ pre-rendered figure PNGs.
 native file picker is out of reach. Override `HTMLInputElement.prototype.click`
 so that a file input is captured and attached to the DOM instead of opening the
 picker. Then upload into it with the browser's file-upload tool, from files
-copied into the session scratchpad. The image dialog has an ALT field, which
-took about 450 characters without complaint. The caption is a textarea on the
+copied into the session scratchpad. (October 2026: the cover still needed the
+override, but the inline "Add image or video" dialog already exposed a native
+file input that the file-upload tool could target directly.) After the upload,
+the dialog shows three small icons under the preview: crop (pencil), **ALT**
+and link. ALT opens a text box (up to 1,000 characters) with an **Add** button;
+then **Next** inserts the figure. The image dialog's ALT field took about 450
+characters without complaint. The caption is a textarea on the
 inserted figure with `maxlength=250`, and it truncates silently. Rewrite longer
 website captions to fit rather than letting them be cut.
 
@@ -111,7 +118,9 @@ typed title is lost.
 
 **Autolinks.** The editor turns link-like text into links. The visible
 `javieraguilar.ai/...` link text becomes an `http://` link that redirects
-correctly. A bare filename such as `findings.md` becomes a link to
+correctly. Even an explicit `href` is overwritten when the link *text* looks
+like a domain: `<a href=".../en/blog/slug/">javieraguilar.ai</a>` was saved as
+`http://javieraguilar.ai`. A bare filename such as `findings.md` becomes a link to
 `http://findings.md`. After the last paste, list every `href` in the body and fix
 any that the source article does not contain. The link dialog cannot remove a
 link, so point it at the correct target instead.
@@ -121,6 +130,9 @@ because returning from the schedule dialog clears it. Scheduling reached about
 three months ahead (the calendar stopped at 20 December from 22 September). The
 schedule dialog shrinks after the calendar closes, so a click on its old
 position can land outside it and open "Discard draft". Choose **Go back**.
+Pick the day with a real click on the calendar cell: a JavaScript `click()` on
+the day button did not set the date, and the calendar may have moved a month by
+then, so read the confirmation line ("Mon, Nov 30, 9:00 AM …") before **Next**.
 The Scheduled list shows the first ten entries; use "Show more results" to
 verify the rest.
 
