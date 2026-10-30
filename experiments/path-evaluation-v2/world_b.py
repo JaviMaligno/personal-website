@@ -1,8 +1,10 @@
 """Part B: a core-Lean theorem; truth = compiles, statement intact, no sorry, standard axioms only."""
 from __future__ import annotations
 
+import os
 import re
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 
@@ -21,7 +23,7 @@ def header(t: dict) -> str:
 
 def materialize(t: dict, dest: Path) -> Path:
     if dest.exists():
-        shutil.rmtree(dest)
+        shutil.rmtree(dest, onexc=lambda f, p, e: (os.chmod(p, stat.S_IWRITE), f(p)))
     dest.mkdir(parents=True)
     (dest / "Main.lean").write_text(header(t) + " := by\n  sorry\n", encoding="utf-8")
     subprocess.run(["git", "init", "-q"], cwd=dest, check=True)

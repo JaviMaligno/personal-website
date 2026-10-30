@@ -16,7 +16,7 @@ import qwen_loop
 import setup_env
 
 HERE = Path(__file__).parent
-CODEX_HOME = HERE / "runs" / "tmp" / "codexhome"
+CODEX_HOME = Path(__import__("tempfile").gettempdir()) / "pe2" / "codexhome"
 CLAUDE_TOOLS = "Bash,Read,Edit,Write,Grep,Glob"
 
 

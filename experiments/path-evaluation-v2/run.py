@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
 import traceback
 from pathlib import Path
 
@@ -16,7 +17,8 @@ import world_a
 import world_b
 
 HERE = Path(__file__).parent
-TMP = HERE / "runs" / "tmp"
+# Outside the experiment folder: an agent that walks up must not find bugs/ or theorems/.
+TMP = Path(tempfile.gettempdir()) / "pe2"
 EVENTS = HERE / "runs" / "events"
 GRADERS = ("E0", "E1", "E2", "E3")
 
@@ -24,6 +26,9 @@ GRADERS = ("E0", "E1", "E2", "E3")
 def load_tasks(world: str, ids: list[str] | None) -> list[dict]:
     folder = HERE / ("bugs" if world == "a" else "theorems")
     tasks = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(folder.glob("*.json"))]
+    unknown = set(ids or []) - {t["id"] for t in tasks}
+    if unknown:
+        raise SystemExit(f"unknown task ids: {sorted(unknown)}")
     return [t for t in tasks if not ids or t["id"] in ids]
 
 
@@ -67,10 +72,13 @@ def episode(world: str, task: dict, model: str, cfg: dict, rep: int) -> dict:
     EVENTS.mkdir(parents=True, exist_ok=True)
     ev_file = EVENTS / f"{world}-{task['id']}-{model}-{rep}.jsonl"
     ev_file.write_text("\n".join(events) + "\n", encoding="utf-8")
-    if world == "a":
-        judge = world_a.judge(task, work, actions, TMP / "judge")
-    else:
-        judge = world_b.judge(task, work, actions)
+    try:
+        if world == "a":
+            judge = world_a.judge(task, work, actions, TMP / "judge")
+        else:
+            judge = world_b.judge(task, work, actions)
+    except OSError as e:  # the agent left its work copy unusable: invalid work, kept visible in analysis
+        judge = {"truth": False, **{g: False for g in GRADERS}, "pc": 0.0, "judge_error": f"{type(e).__name__}: {e}"}
     return {"world": world, "task": task["id"], "model": model, "rep": rep, "stop": res.get("stop"),
             "resolved_model": res.get("resolved_model"), "usage": res.get("usage"), "actions": actions,
             "judge": judge, "events_file": ev_file.relative_to(HERE).as_posix()}
