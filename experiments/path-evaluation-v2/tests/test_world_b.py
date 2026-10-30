@@ -64,3 +64,15 @@ def test_sorry_flag_and_json_serialisable_axioms(tmp_path):
 def test_tactic_tokens():
     assert world_b.tactics(T["proofs"][0]) == ["induction", "simp", "simp"]
     assert world_b.tactics(T["proofs"][1]) == ["induction", "rw", "rw"]
+
+
+def test_unclosed_namespace_shadowing_prelude_is_not_intact():
+    ns = T["prelude"] + "\nnamespace Foo\ndef myRev (_ : List α) : List α := []\n" + T["statement"] + " := by\n  simp [myRev]\n"
+    assert not world_b.statement_intact(T, ns)
+
+
+def test_proof_body_matches_exact_name_and_stops_at_next_declaration():
+    aux = "theorem " + T["name"] + "_aux (xs : List α) : xs ++ [] = xs := by\n  rw [List.append_nil]\n"
+    later = "\ntheorem later (xs : List α) : xs = xs := by\n  rfl\n"
+    txt = T["prelude"] + "\n" + aux + T["statement"] + " := by\n" + T["proofs"][0] + later
+    assert world_b.tactics(world_b.proof_body(T, txt)) == world_b.tactics(T["proofs"][0])

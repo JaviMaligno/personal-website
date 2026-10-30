@@ -12,6 +12,9 @@ STD_AXIOMS = {"propext", "Classical.choice", "Quot.sound"}
 FORBIDDEN = re.compile(r"\b(sorry|admit|axiom|native_decide|implemented_by|extern)\b")
 
 
+SCOPE_CMDS = re.compile(r"(?<![\w.'])(namespace|section|open|notation|macro|macro_rules|syntax|infix|infixl|infixr|prefix|postfix)(?![\w.'])")
+
+
 def header(t: dict) -> str:
     return t["prelude"] + "\n" + t["statement"]
 
@@ -59,7 +62,12 @@ def strip_comments(s: str) -> str:
 def statement_intact(t: dict, text: str) -> bool:
     """Prelude untouched at the top and the statement present verbatim outside comments; helper lemmas in between are fine."""
     code = _norm(strip_comments(text))
-    return code.startswith(_norm(t["prelude"])) and _norm(t["statement"]) in code
+    prelude = _norm(t["prelude"])
+    if not (code.startswith(prelude) and _norm(t["statement"]) in code):
+        return False
+    # scope/notation commands after the prelude can re-bind the names the statement mentions
+    # (an unclosed `namespace` makes it a different theorem), so they count as changing it.
+    return not SCOPE_CMDS.search(code[len(prelude):])
 
 
 def axioms(t: dict, work: Path) -> set[str] | None:
@@ -79,10 +87,20 @@ def axioms(t: dict, work: Path) -> set[str] | None:
     return {a.strip() for a in m.group(1).split(",")} if m else None
 
 
+_NEXT_DECL = re.compile(r"^(?:@\[[^\n]*\]\s*)?(?:private\s+|protected\s+|noncomputable\s+)*"
+                        r"(?:theorem|lemma|def|abbrev|instance|example|structure|inductive|class|#\w+)(?![\w'])", re.M)
+
+
 def proof_body(t: dict, text: str) -> str:
-    start = text.find(f"theorem {t['name']}")
-    i = text.find(":= by", start) if start >= 0 else -1
-    return text[i + 5:] if i >= 0 else ""
+    """Tactic text of the final proof: the exact-name theorem, up to the next top-level declaration."""
+    code = strip_comments(text)
+    m = re.search(rf"^theorem\s+{re.escape(t['name'])}(?![\w.'])", code, re.M)
+    i = code.find(":= by", m.end()) if m else -1
+    if i < 0:
+        return ""
+    body = code[i + 5:]
+    n = _NEXT_DECL.search(body)
+    return body[:n.start()] if n else body
 
 
 def tactics(body: str) -> list[str]:
