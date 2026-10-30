@@ -31,7 +31,7 @@ Monté dos mundos simulados pequeños que el agente maneja con herramientas.
 
 **Alta de clientes**, donde el camino se conoce de antemano. La política dice: antes de decidir, verifica la identidad y comprueba sanciones; por encima de 10.000 EUR, evalúa además el riesgo; aprueba solo si todo está limpio; después, registra la decisión. Es el tipo de mundo que usa el paper.
 
-**Reescritura algebraica**, donde el camino no se conoce. El agente recibe una expresión inicial, una expresión objetivo y unas hipótesis (por ejemplo, `x > 0`). Llega al objetivo aplicando reglas, como una demostración aplica lemas: factorizar, expandir, cancelar un factor común, simplificar `sqrt(b**2)` a `b`, separar `log(a*b)` en `log(a) + log(b)`. Algunas reglas tienen condiciones: solo puedes cancelar un factor que no sea cero, quitar la raíz si `b ≥ 0` o separar el logaritmo si todos los factores son positivos. Hay herramientas para comprobar una condición contra las hipótesis, pero nada obliga al agente a usarlas.
+**Reescritura algebraica**, donde el camino no se conoce. El agente recibe una expresión inicial, una expresión objetivo y unas hipótesis (por ejemplo, $x > 0$). Llega al objetivo aplicando reglas, como una demostración aplica lemas: factorizar, expandir, cancelar un factor común, simplificar $\sqrt{b^2}$ a $b$, separar $\log(ab)$ en $\log a + \log b$. Algunas reglas tienen condiciones: solo puedes cancelar un factor que no sea cero, quitar la raíz si $b \ge 0$ o separar el logaritmo si todos los factores son positivos. Hay herramientas para comprobar una condición contra las hipótesis, pero nada obliga al agente a usarlas.
 
 El mundo no bloquea un paso cuya condición no se cumple. Lo aplica y lo registra como inválido, igual que un matemático descuidado puede escribir un paso falso en la hoja. Eso deja sitio al caso que más importa:
 
@@ -57,7 +57,7 @@ El mundo no bloquea un paso cuya condición no se cumple. Lo aplica y lo registr
   <text x="40" y="212" fill="#e2e8f0" font-size="13">Paso a paso: x &gt; 0 no descarta x = 1, la cancelación no vale</text>
   <text x="560" y="212" text-anchor="end" fill="#fbbf24" font-size="13" font-weight="600">suspende</text>
 </svg>
-<figcaption>La respuesta es correcta y la demostración es falsa. Solo se dispone de la hipótesis <code>x &gt; 0</code>, y no excluye <code>x = 1</code>.</figcaption>
+<figcaption>La respuesta es correcta y la demostración es falsa. Solo se dispone de la hipótesis <i>x</i> &gt; 0, y no excluye <i>x</i> = 1.</figcaption>
 </figure>
 
 ## Cuatro niveles de especificación
@@ -65,7 +65,7 @@ El mundo no bloquea un paso cuya condición no se cumple. Lo aplica y lo registr
 Cada trayectoria pasa por cuatro evaluadores, y cada uno especifica más camino que el anterior:
 
 1. **Estado final.** ¿Llegó el agente a la expresión objetivo o a la decisión correcta?
-2. **Más lo prohibido.** ¿Evitó las llamadas vetadas en esa tarea, como aprobar a un cliente sancionado o cancelar ese `x − 1`?
+2. **Más lo prohibido.** ¿Evitó las llamadas vetadas en esa tarea, como aprobar a un cliente sancionado o cancelar ese $x - 1$?
 3. **Más obligaciones de orden.** ¿Hizo primero lo obligatorio? En el alta: identidad y sanciones antes de aprobar. En la reescritura: comprobar la condición con la herramienta de prueba antes de usar una regla que la exige.
 4. **Camino de referencia.** La *Path Correctness* de CORE: la distancia de edición entre la secuencia de llamadas del agente y el camino de referencia más cercano, aprobando a partir de 0,8. Los caminos de referencia salen de una búsqueda: todas las derivaciones válidas más cortas.
 
@@ -127,7 +127,7 @@ Las 90 trayectorias de las tareas resolubles eran válidas. El estado final las 
 <figcaption>Cada nivel de camino que especificas cambia un error por el otro. El estado final deja pasar demostraciones falsas, y especificar cómo llegar suspende las válidas.</figcaption>
 </figure>
 
-La obligación de orden «prueba la condición antes de usarla» parece el mínimo razonable. Suspende 85 de las 90 derivaciones válidas, porque los modelos no llaman a la herramienta de prueba cuando la hipótesis hace obvia la condición. Si `x > 0`, nadie necesita una herramienta para ver que `x ≠ 0`. Sonnet y Qwen no probaron nada en estas tareas. Haiku lo hizo en la mitad de sus corridas. La obligación codifica cómo se debe enseñar el trabajo, no si es correcto, y los agentes no lo enseñan como esperaba quien escribió la regla.
+La obligación de orden «prueba la condición antes de usarla» parece el mínimo razonable. Suspende 85 de las 90 derivaciones válidas, porque los modelos no llaman a la herramienta de prueba cuando la hipótesis hace obvia la condición. Si $x > 0$, nadie necesita una herramienta para ver que $x \neq 0$. Sonnet y Qwen no probaron nada en estas tareas. Haiku lo hizo en la mitad de sus corridas. La obligación codifica cómo se debe enseñar el trabajo, no si es correcto, y los agentes no lo enseñan como esperaba quien escribió la regla.
 
 ## No hay referencia neutral
 
@@ -153,7 +153,7 @@ Si la obligación falla por el paso de prueba, el arreglo evidente es quitar las
 <figcaption>Las 90 derivaciones son válidas. Escribas la referencia que escribas, evalúa el estilo del agente y no su corrección, y los agentes cuidadosos pierden con las dos.</figcaption>
 </figure>
 
-Una referencia sin pruebas suspende casi exactamente las corridas cuidadosas: aquellas en las que Haiku comprobó sus condiciones antes de usarlas. Una referencia con pruebas suspende a casi todos, cuidadosos incluidos, porque un agente cuidadoso no prueba lo mismo ni en el mismo momento que la referencia. Uno prueba `x·y ≠ 0` en una sola llamada donde la referencia prueba `x` e `y` por separado. Otro comprueba todas las condiciones al principio en vez de justo antes de cada paso. Todas son maneras válidas de justificar la misma derivación, y la referencia tiene que elegir una.
+Una referencia sin pruebas suspende casi exactamente las corridas cuidadosas: aquellas en las que Haiku comprobó sus condiciones antes de usarlas. Una referencia con pruebas suspende a casi todos, cuidadosos incluidos, porque un agente cuidadoso no prueba lo mismo ni en el mismo momento que la referencia. Uno prueba $xy \neq 0$ en una sola llamada donde la referencia prueba $x$ e $y$ por separado. Otro comprueba todas las condiciones al principio en vez de justo antes de cada paso. Todas son maneras válidas de justificar la misma derivación, y la referencia tiene que elegir una.
 
 Ese es el problema de especificar el camino cuando el progreso no se conoce de antemano. No es solo que no sepas qué paso hace avanzar la demostración. Tampoco sabes qué forma de justificarlo va a elegir el agente. Si escribes el camino, lo que evalúas es el estilo.
 

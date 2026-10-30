@@ -31,7 +31,7 @@ I built two small simulated worlds that the agent drives through tools.
 
 **Customer onboarding**, where the path is known in advance. The policy says: verify identity and check sanctions before any decision; above 10,000 EUR, assess risk first; approve only if everything is clean; then log the decision. This is the kind of world the paper uses.
 
-**Algebraic rewriting**, where the path is not known. The agent gets a start expression, a target and some hypotheses (say, `x > 0`). It reaches the target by applying rules, the way a proof applies lemmas: factor, expand, cancel a common factor, simplify `sqrt(b**2)` to `b`, split `log(a*b)` into `log(a) + log(b)`. Some rules have side conditions: you can only cancel a factor that is not zero, only drop the square root if `b ≥ 0`, only split the logarithm if every factor is positive. There are also tools to check a condition against the hypotheses, but nothing forces the agent to use them.
+**Algebraic rewriting**, where the path is not known. The agent gets a start expression, a target and some hypotheses (say, $x > 0$). It reaches the target by applying rules, the way a proof applies lemmas: factor, expand, cancel a common factor, simplify $\sqrt{b^2}$ to $b$, split $\log(ab)$ into $\log a + \log b$. Some rules have side conditions: you can only cancel a factor that is not zero, only drop the square root if $b \ge 0$, only split the logarithm if every factor is positive. There are also tools to check a condition against the hypotheses, but nothing forces the agent to use them.
 
 The world does not block a step whose condition fails. It applies it and records it as invalid, the way a sloppy mathematician can write a false step on the page. That makes room for the case that matters most:
 
@@ -57,7 +57,7 @@ The world does not block a step whose condition fails. It applies it and records
   <text x="40" y="212" fill="#e2e8f0" font-size="13">Step check: x &gt; 0 does not rule out x = 1, so the cancel is invalid</text>
   <text x="560" y="212" text-anchor="end" fill="#fbbf24" font-size="13" font-weight="600">fail</text>
 </svg>
-<figcaption>The answer is right and the proof is false. Only the hypothesis <code>x &gt; 0</code> is available, and it does not exclude <code>x = 1</code>.</figcaption>
+<figcaption>The answer is right and the proof is false. Only the hypothesis <i>x</i> &gt; 0 is available, and it does not exclude <i>x</i> = 1.</figcaption>
 </figure>
 
 ## Four levels of specification
@@ -65,7 +65,7 @@ The world does not block a step whose condition fails. It applies it and records
 Each trajectory goes through four graders, each specifying more of the path than the last:
 
 1. **Final state.** Did the agent reach the target expression or the correct decision?
-2. **Plus forbidden steps.** Did it avoid the calls that are off limits for this task, such as approving a sanctioned customer or cancelling that `x − 1`?
+2. **Plus forbidden steps.** Did it avoid the calls that are off limits for this task, such as approving a sanctioned customer or cancelling that $x - 1$?
 3. **Plus ordering obligations.** Did it do the mandatory things first? In onboarding: identity and sanctions before approving. In rewriting: check the condition with the proof tool before using a rule that needs it.
 4. **Reference path.** CORE's Path Correctness: the edit distance between the agent's sequence of calls and the closest golden path, passing at 0.8 or above. The golden paths are found by search: every shortest valid derivation.
 
@@ -127,7 +127,7 @@ All 90 trajectories on the solvable tasks were valid. The final state passed all
 <figcaption>Each level of path you specify trades one kind of error for the other. The final state lets false proofs through, and specifying how to get there fails the valid ones.</figcaption>
 </figure>
 
-The ordering obligation "prove the condition before you use it" sounds like the reasonable minimum. It fails 85 of the 90 valid derivations, because the models don't call the proof tool when the hypothesis makes the condition obvious. If `x > 0`, nobody needs a tool to see that `x ≠ 0`. Sonnet and Qwen never proved anything on these tasks. Haiku did in half of its runs. The obligation encodes how the work should be shown, not whether it is correct, and the agents don't show their work the way the rule-writer expected.
+The ordering obligation "prove the condition before you use it" sounds like the reasonable minimum. It fails 85 of the 90 valid derivations, because the models don't call the proof tool when the hypothesis makes the condition obvious. If $x > 0$, nobody needs a tool to see that $x \neq 0$. Sonnet and Qwen never proved anything on these tasks. Haiku did in half of its runs. The obligation encodes how the work should be shown, not whether it is correct, and the agents don't show their work the way the rule-writer expected.
 
 ## There is no neutral reference
 
@@ -153,7 +153,7 @@ Since the obligation fails over the proof step, the obvious fix is to drop proof
 <figcaption>All 90 derivations are valid. Whichever reference you write, it grades the agent's style rather than its correctness, and the careful agents lose under both.</figcaption>
 </figure>
 
-A reference without proofs fails almost exactly the careful runs: the ones where Haiku checked its conditions before using them. A reference with proofs fails nearly everyone, the careful runs included, because careful agents don't prove the same things at the same moment as the reference does. One proves `x·y ≠ 0` in a single call where the reference proves `x` and `y` separately. Another checks every condition up front instead of right before each step. All of these are valid ways to justify the same derivation, and the reference has to pick one of them.
+A reference without proofs fails almost exactly the careful runs: the ones where Haiku checked its conditions before using them. A reference with proofs fails nearly everyone, the careful runs included, because careful agents don't prove the same things at the same moment as the reference does. One proves $xy \neq 0$ in a single call where the reference proves $x$ and $y$ separately. Another checks every condition up front instead of right before each step. All of these are valid ways to justify the same derivation, and the reference has to pick one of them.
 
 That is the problem with specifying the path when progress isn't known in advance. It isn't only that you can't tell which step moves the proof forward. You also can't tell which way of justifying it the agent will choose. Write the path down and you are grading style.
 
