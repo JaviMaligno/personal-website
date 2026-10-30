@@ -61,8 +61,12 @@ FP = el evaluador aprueba una trayectoria que la verdad semántica suspende; FN 
 
 ## Lectura
 
-1. Especificar **lo prohibido** (E1) captura todas las demostraciones falsas sin suspender a
-   nadie válido: 0 FP y 0 FN en resolubles, 0 FP en trampas.
+1. Las reglas de **lo prohibido** (E1) atrapan las 18 demostraciones falsas, pero se escribieron
+   sabiendo cuál era el paso tramposo de cada trampa, y las tareas resolubles no tenían ninguna:
+   ahí E1 es idéntico a E0 y sus 0 FN no demuestran nada. Lo que los datos sí sostienen es que
+   **comprobar que la condición de cada paso se cumple** separa las falsas de las válidas, y que
+   sus sustitutos de proceso (punto 2) no lo hacen. Esa comprobación es la verdad semántica, así
+   que no es un evaluador que gane, sino el criterio que los otros aproximan.
 2. Especificar **cómo hay que llegar** (obligaciones de proceso, camino de referencia) suspende la
    mayoría de trayectorias válidas, en las dos direcciones según el estilo del agente.
 3. En el mundo procedimental, con política explícita, los modelos actuales no fallan el camino sin

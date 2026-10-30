@@ -98,12 +98,12 @@ Hay un segundo efecto. Los agentes que paran honestamente suspenden cualquier ev
 Las 90 trayectorias de las tareas resolubles eran válidas. El estado final las aprobó todas, igual que la regla de lo prohibido, que en estas tareas no tenía nada que prohibir. Los otros dos niveles, no:
 
 <figure class="csp-fig">
-<svg viewBox="0 0 600 320" role="img" aria-label="De 90 derivaciones válidas, el estado final y la regla de lo prohibido no suspenden ninguna; la obligación de probar antes cada condición suspende 85; el camino de referencia con pasos de prueba suspende 86; el camino de referencia sin pasos de prueba suspende 14. De 18 derivaciones falsas, el estado final aprueba las 18 y la regla de lo prohibido ninguna.">
+<svg viewBox="0 0 600 320" role="img" aria-label="De 90 derivaciones válidas, el estado final no suspende ninguna, ni tampoco la regla de lo prohibido, que en estas tareas no tenía reglas; la obligación de probar antes cada condición suspende 85; el camino de referencia con pasos de prueba suspende 86; el camino de referencia sin pasos de prueba suspende 14. De 18 derivaciones falsas, el estado final aprueba las 18 y la regla de lo prohibido ninguna.">
   <text x="20" y="22" fill="#f8fafc" font-size="13" font-weight="600">Derivaciones válidas suspendidas (de 90)</text>
   <text x="20" y="54" fill="#e2e8f0" font-size="12">Estado final</text>
   <rect x="250" y="40" width="2" height="20" fill="#2dd4bf"/>
   <text x="260" y="54" fill="#5eead4" font-size="12">0</text>
-  <text x="20" y="86" fill="#e2e8f0" font-size="12">+ lo prohibido</text>
+  <text x="20" y="86" fill="#e2e8f0" font-size="12">+ lo prohibido (sin reglas aquí)</text>
   <rect x="250" y="72" width="2" height="20" fill="#2dd4bf"/>
   <text x="260" y="86" fill="#5eead4" font-size="12">0</text>
   <text x="20" y="118" fill="#e2e8f0" font-size="12">+ «prueba antes de aplicar»</text>

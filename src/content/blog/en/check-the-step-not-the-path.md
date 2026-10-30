@@ -98,12 +98,12 @@ There is a second effect. The agents that stop honestly fail every grader built 
 All 90 trajectories on the solvable tasks were valid. The final state passed all of them, and so did the forbidden-step rule, which had nothing to forbid in these tasks. The other two levels did not:
 
 <figure class="csp-fig">
-<svg viewBox="0 0 600 320" role="img" aria-label="Out of 90 valid derivations, the final-state check and the forbidden-step rule fail none; the obligation to prove each condition first fails 85; the reference path with proof steps fails 86; the reference path without proof steps fails 14. Out of 18 false derivations, the final-state check passes all 18 and the forbidden-step rule passes none.">
+<svg viewBox="0 0 600 320" role="img" aria-label="Out of 90 valid derivations, the final-state check fails none, and neither does the forbidden-step rule, which had no rules in these tasks; the obligation to prove each condition first fails 85; the reference path with proof steps fails 86; the reference path without proof steps fails 14. Out of 18 false derivations, the final-state check passes all 18 and the forbidden-step rule passes none.">
   <text x="20" y="22" fill="#f8fafc" font-size="13" font-weight="600">Valid derivations failed (of 90)</text>
   <text x="20" y="54" fill="#e2e8f0" font-size="12">Final state</text>
   <rect x="250" y="40" width="2" height="20" fill="#2dd4bf"/>
   <text x="260" y="54" fill="#5eead4" font-size="12">0</text>
-  <text x="20" y="86" fill="#e2e8f0" font-size="12">+ forbidden steps</text>
+  <text x="20" y="86" fill="#e2e8f0" font-size="12">+ forbidden steps (none set here)</text>
   <rect x="250" y="72" width="2" height="20" fill="#2dd4bf"/>
   <text x="260" y="86" fill="#5eead4" font-size="12">0</text>
   <text x="20" y="118" fill="#e2e8f0" font-size="12">+ "prove before you apply"</text>
