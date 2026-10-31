@@ -16,8 +16,10 @@ import qwen_loop
 import setup_env
 
 HERE = Path(__file__).parent
-# One Codex home per world, so two runner processes (one per world) can run side by side.
-CODEX_HOMES = Path(__import__("tempfile").gettempdir()) / "pe2"
+# One Codex home per world, so two runner processes (one per world) can run side by side. Not under
+# %TEMP%: Codex refuses to keep its sandbox helper binaries there, so it re-ran the Windows sandbox
+# setup (a visible window) on every call (2026-10-31).
+CODEX_HOMES = Path.home() / ".pe2-codex"
 CLAUDE_TOOLS = "Bash,Read,Edit,Write,Grep,Glob"
 # Edit/Write only inside the work copy (checked 2026-10-31: a bare "Write" allow wrote outside it).
 CLAUDE_ALLOWED = "Bash,Read,Grep,Glob,Edit(./**),Write(./**)"
