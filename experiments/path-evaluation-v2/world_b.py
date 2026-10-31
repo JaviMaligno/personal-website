@@ -30,9 +30,17 @@ def materialize(t: dict, dest: Path) -> Path:
     return dest
 
 
+COMPILE_TIMEOUT = 300
+
+
 def compile_lean(path: Path) -> tuple[int, str]:
-    r = subprocess.run(["lean", path.name], cwd=path.parent, capture_output=True, text=True,
-                       encoding="utf-8", timeout=300)
+    """A file that does not finish compiling within the limit counts as not compiling: it is a
+    result about the proof, not a harness error (2026-10-31: a Luna proof hit it)."""
+    try:
+        r = subprocess.run(["lean", path.name], cwd=path.parent, capture_output=True, text=True,
+                           encoding="utf-8", timeout=COMPILE_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return 1, f"error: compile did not finish within {COMPILE_TIMEOUT} s"
     return r.returncode, r.stdout + r.stderr
 
 
