@@ -24,6 +24,9 @@ import world_b
 HERE = Path(__file__).parent
 # Outside the experiment folder: an agent that walks up must not find bugs/ or theorems/.
 TMP = Path(tempfile.gettempdir()) / "pe2"
+# Where copies that cannot be deleted go: away from TMP, so a later agent that climbs out of its
+# copy cannot read an earlier episode's fix.
+TRASH = Path.home() / ".pe2-trash"
 EVENTS = HERE / "runs" / "events"
 GRADERS = ("E0", "E1", "E2", "E3")
 
@@ -89,6 +92,9 @@ def episode(world: str, task: dict, model: str, cfg: dict, rep: int) -> dict:
         judge = {"truth": False, **{g: False for g in GRADERS}, "pc": 0.0, "judge_error": f"{type(e).__name__}: {e}"}
     final = final_state(world, work)
     shutil.rmtree(work, onexc=_force_remove)
+    if work.exists():
+        TRASH.mkdir(exist_ok=True)
+        os.replace(work, TRASH / f"{world}-{work.name}-{os.getpid()}")
     hits = escape_audit.audit(ev_file)  # Bash is not confined: every episode is audited for leaving its copy
     if hits:
         print(f"WARNING escape hits in {ev_file.name}: {hits[:5]}", file=sys.stderr, flush=True)
