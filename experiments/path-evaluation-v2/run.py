@@ -139,6 +139,8 @@ def main(argv=None):
             for rep in range(args.reps):
                 if (args.world, task["id"], model, rep) in done:
                     continue
+                if (HERE / "runs" / f"STOP-{args.world}").exists():  # written by mem_guard.py
+                    raise SystemExit(f"STOP-{args.world} present: stopping before the next episode")
                 try:
                     rec = episode(args.world, task, model, models[model], rep)
                     j = rec["judge"]
