@@ -109,7 +109,11 @@ def preflight_codex(cfg: dict, world: str) -> None:
     work = TMP / f"preflight-{world}"
     work.mkdir(parents=True, exist_ok=True)
     for attempt in range(2):
-        res = agents.run_codex(cfg["model"], cfg["effort"], work, "Run the shell command `echo ok` and reply with its output.", world, timeout=600)
+        try:
+            res = agents.run_codex(cfg["model"], cfg["effort"], work, "Run the shell command `echo ok` and reply with its output.", world, timeout=180)
+        except subprocess.TimeoutExpired:
+            print(f"preflight {cfg['model']} ({world}): attempt {attempt + 1} timed out", flush=True)
+            continue
         if any('"command_execution"' in l and '"item.completed"' in l for l in res["events"]):
             print(f"preflight {cfg['model']} ({world}): ok", flush=True)
             return

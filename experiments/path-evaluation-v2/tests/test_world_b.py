@@ -63,7 +63,8 @@ def test_sorry_flag_and_json_serialisable_axioms(tmp_path):
 
 def test_tactic_tokens():
     assert world_b.tactics(T["proofs"][0]) == ["induction", "simp", "simp"]
-    assert world_b.tactics(T["proofs"][1]) == ["induction", "rw", "rw"]
+    # A literal proof: the task's other references were re-authored by Astra and change shape.
+    assert world_b.tactics("  induction xs with\n  | nil => rw [myRev]\n  | cons x xs ih => rw [myRev, ih]\n") == ["induction", "rw", "rw"]
 
 
 def test_unclosed_namespace_shadowing_prelude_is_not_intact():

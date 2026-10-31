@@ -9,9 +9,9 @@ from __future__ import annotations
 import json
 import os
 import shutil
-import subprocess
 from pathlib import Path
 
+import proctree
 import qwen_loop
 import setup_env
 
@@ -55,8 +55,7 @@ def run_claude(model: str, work: Path, prompt: str, world: str, timeout=1800) ->
     cmd = [shutil.which("claude") or "claude", "-p", prompt, "--model", model, "--setting-sources", "",
            "--strict-mcp-config", "--tools", CLAUDE_TOOLS, "--allowedTools", CLAUDE_ALLOWED,
            "--output-format", "stream-json", "--verbose", "--no-session-persistence", "--max-turns", "80"]
-    r = subprocess.run(cmd, cwd=work, env=env_for(world), capture_output=True, text=True, encoding="utf-8",
-                       timeout=timeout, stdin=subprocess.DEVNULL)
+    r = proctree.run(cmd, cwd=work, env=env_for(world), text=True, encoding="utf-8", timeout=timeout)
     lines = r.stdout.splitlines()
     result = next((json.loads(l) for l in reversed(lines) if '"type":"result"' in l.replace(" ", "")), {})
     init = next((json.loads(l) for l in lines if '"subtype":"init"' in l.replace(" ", "")), {})
@@ -72,8 +71,7 @@ def run_codex(model: str, effort: str, work: Path, prompt: str, world: str, time
            "--disable", "plugins", "-s", "workspace-write", "-"]
     # Prompt goes via stdin ("-"): codex is a .CMD shim on Windows and cmd.exe truncates argv at the first newline.
     # input= also gives EOF after the prompt, so stdin stays isolated.
-    r = subprocess.run(cmd, cwd=work, env=env, capture_output=True, text=True, encoding="utf-8",
-                       timeout=timeout, input=prompt)
+    r = proctree.run(cmd, cwd=work, env=env, text=True, encoding="utf-8", timeout=timeout, input=prompt)
     lines = r.stdout.splitlines()
     usage = next((json.loads(l).get("usage") for l in reversed(lines) if "turn.completed" in l), None)
     return {"events": lines, "resolved_model": model, "stop": "done" if r.returncode == 0 else f"exit {r.returncode}",

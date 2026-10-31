@@ -7,6 +7,8 @@ import subprocess
 import urllib.request
 from pathlib import Path
 
+import proctree
+
 URL = "https://openrouter.ai/api/v1/chat/completions"
 SYSTEM = "You are a software engineering agent working in the current directory. Use the tools to inspect files, run commands and edit files. When you are done, reply with a short summary and no tool call."
 
@@ -60,7 +62,7 @@ def _exec(work: Path, env: dict, tool: str, a: dict) -> str:
                 return f"error: old text found {s.count(a['old'])} times"
             p.write_text(s.replace(a["old"], a["new"]), encoding="utf-8"); return "replaced"
         if tool == "run_command":
-            r = subprocess.run([_git_bash(env), "-lc", a["command"]], cwd=work, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
+            r = proctree.run([_git_bash(env), "-lc", a["command"]], cwd=work, env=env, text=True, encoding="utf-8", errors="replace", timeout=600)
             return (r.stdout + r.stderr)[-20000:] + f"\n[exit {r.returncode}]"
     except Exception as e:  # tool errors go back to the model, like a CLI would show them
         return f"error: {type(e).__name__}: {e}"
