@@ -1,0 +1,19 @@
+{
+  "id": "t25-insertion-sort-sum",
+  "name": "insertionSort_sum",
+  "difficulty": "hard",
+  "prelude": "def insertN (x : Nat) : List Nat → List Nat\n  | [] => [x]\n  | y :: ys => if x ≤ y then x :: y :: ys else y :: insertN x ys\ndef insertionSort : List Nat → List Nat\n  | [] => []\n  | x :: xs => insertN x (insertionSort xs)\ndef total : List Nat → Nat\n  | [] => 0\n  | x :: xs => x + total xs\n",
+  "statement": "theorem insertionSort_sum (xs : List Nat) : total (insertionSort xs) = total xs",
+  "proofs": [
+    "  have inserted (x : Nat) (ys : List Nat) : total (insertN x ys) = x + total ys := by\n    induction ys with\n    | nil => simp [insertN, total]\n    | cons y ys ih =>\n      by_cases h : x ≤ y <;> simp [insertN, total, h, ih] <;> omega\n  induction xs with\n  | nil => rfl\n  | cons x xs ih => simp [insertionSort, total, inserted, ih]\n",
+    "  have inserted (x : Nat) (ys : List Nat) : List.Perm (insertN x ys) (x :: ys) := by\n    induction ys with\n    | nil => exact List.Perm.refl _\n    | cons y ys ih =>\n      by_cases h : x ≤ y\n      · simp [insertN, h]\n      · simp only [insertN, ite_eq_right h]\n        exact (List.Perm.cons y ih).trans (List.Perm.swap x y ys)\n  have permutation (ys : List Nat) : List.Perm (insertionSort ys) ys := by\n    induction ys with\n    | nil => exact List.Perm.refl _\n    | cons y ys ih => exact (inserted y (insertionSort ys)).trans (List.Perm.cons y ih)\n  have invariant (as bs : List Nat) (h : List.Perm as bs) : total as = total bs := by\n    induction h with\n    | nil => rfl\n    | cons x h ih => simp [total, ih]\n    | swap x y zs => simp [total]; omega\n    | trans h1 h2 i1 i2 => exact i1.trans i2\n  exact invariant _ _ (permutation xs)\n"
+  ],
+  "strategies": [
+    "Prove insertion adds its element to total, then induct on the input.",
+    "Prove sorting preserves permutation and prove total invariant under permutation."
+  ],
+  "naive_proof": "  induction xs <;> simp_all <;> omega\n",
+  "naive_unfolded_proof": "  induction xs <;> simp_all [insertionSort, insertN, total] <;> omega\n",
+  "naive_fails": "checks\\t25-insertion-sort-sum-naive_proof.lean:12:19: error: simp_all made no progress",
+  "naive_unfolded_fails": "checks\\t25-insertion-sort-sum-naive_unfolded_proof.lean:12:64: error: omega could not prove the goal:"
+}

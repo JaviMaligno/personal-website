@@ -1,0 +1,19 @@
+{
+  "id": "t19-reverse-acc-fusion",
+  "name": "reverseAcc_fusion",
+  "difficulty": "hard",
+  "prelude": "def reverseAcc : List α → List α → List α\n  | [], acc => acc\n  | x :: xs, acc => reverseAcc xs (x :: acc)\n",
+  "statement": "theorem reverseAcc_fusion (xs ys acc : List α) : reverseAcc (xs ++ ys) acc = reverseAcc ys (reverseAcc xs acc)",
+  "proofs": [
+    "  induction xs generalizing acc with\n  | nil => rfl\n  | cons x xs ih => simpa [reverseAcc] using ih (x :: acc)\n",
+    "  have model (as bs : List α) : reverseAcc as bs = as.reverse ++ bs := by\n    induction as generalizing bs with\n    | nil => rfl\n    | cons a as ih => simp [reverseAcc, ih, List.reverse_cons, List.append_assoc]\n  simp [model, List.reverse_append, List.append_assoc]\n"
+  ],
+  "strategies": [
+    "Induct on xs with the accumulator generalized.",
+    "Prove the reverse-plus-suffix model, then calculate using reverse_append."
+  ],
+  "naive_proof": "  induction xs <;> simp_all <;> omega\n",
+  "naive_unfolded_proof": "  induction xs <;> simp_all [reverseAcc] <;> omega\n",
+  "naive_fails": "checks\\t19-reverse-acc-fusion-naive_proof.lean:6:32: error: omega could not prove the goal:",
+  "naive_unfolded_fails": "checks\\t19-reverse-acc-fusion-naive_unfolded_proof.lean:6:45: error: omega could not prove the goal:"
+}

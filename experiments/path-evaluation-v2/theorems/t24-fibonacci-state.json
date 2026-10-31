@@ -1,0 +1,19 @@
+{
+  "id": "t24-fibonacci-state",
+  "name": "fibState_correct",
+  "difficulty": "hard",
+  "prelude": "def fibN : Nat → Nat\n  | 0 => 0\n  | 1 => 1\n  | n + 2 => fibN n + fibN (n + 1)\ndef fibState : Nat → Nat → Nat → Nat × Nat\n  | 0, a, b => (a, b)\n  | n + 1, a, b => fibState n b (a + b)\n",
+  "statement": "theorem fibState_correct (n : Nat) : fibState n 0 1 = (fibN n, fibN (n + 1))",
+  "proofs": [
+    "  have shifted (m k : Nat) : fibState m (fibN k) (fibN (k + 1)) =\n      (fibN (m + k), fibN (m + k + 1)) := by\n    induction m generalizing k with\n    | zero => simp [fibState]\n    | succ m ih =>\n      rw [fibState, ← show fibN (k + 2) = fibN k + fibN (k + 1) from rfl]\n      have h := ih (k + 1)\n      simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using h\n  simpa [fibN] using shifted n 0\n",
+    "  have commute (m a b : Nat) : fibState m b (a + b) =\n      ((fibState m a b).2, (fibState m a b).1 + (fibState m a b).2) := by\n    induction m generalizing a b with\n    | zero => rfl\n    | succ m ih => exact ih b (a + b)\n  induction n with\n  | zero => rfl\n  | succ n ih =>\n    rw [fibState, commute, ih]\n    rfl\n"
+  ],
+  "strategies": [
+    "Generalize the starting Fibonacci index and induct on the run length.",
+    "Prove commutation with the state transition and induct at the fixed seed (0,1)."
+  ],
+  "naive_proof": "  induction n <;> simp_all <;> omega\n",
+  "naive_unfolded_proof": "  induction n <;> simp_all [fibState, fibN] <;> omega\n",
+  "naive_fails": "checks\\t24-fibonacci-state-naive_proof.lean:10:18: error: simp_all made no progress",
+  "naive_unfolded_fails": "checks\\t24-fibonacci-state-naive_unfolded_proof.lean:10:48: error: omega could not prove the goal:"
+}

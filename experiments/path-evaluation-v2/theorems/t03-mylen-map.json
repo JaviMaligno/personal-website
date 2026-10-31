@@ -6,6 +6,10 @@
   "statement": "theorem myLen_map (f : α → β) (xs : List α) : myLen (xs.map f) = myLen xs",
   "proofs": [
     "  induction xs with\n  | nil => rfl\n  | cons x xs ih => simp [myLen, ih]\n",
-    "  have hα : ∀ ys : List α, myLen ys = ys.length := by\n    intro ys\n    induction ys with\n    | nil => rfl\n    | cons y ys ih => rw [myLen, ih, List.length_cons]\n  have hβ : ∀ ys : List β, myLen ys = ys.length := by\n    intro ys\n    induction ys with\n    | nil => rfl\n    | cons y ys ih => rw [myLen, ih, List.length_cons]\n  rw [hα, hβ, List.length_map]\n"
+    "  have len_a (zs : List α) : myLen zs = zs.length := by\n    induction zs with\n    | nil => rfl\n    | cons z zs ih => simp [myLen, ih]\n  have len_b (zs : List β) : myLen zs = zs.length := by\n    induction zs with\n    | nil => rfl\n    | cons z zs ih => simp [myLen, ih]\n  rw [len_b, len_a, List.length_map]\n"
+  ],
+  "strategies": [
+    "Direct structural induction on xs.",
+    "Prove length characterizations at both element types and use length_map."
   ]
 }

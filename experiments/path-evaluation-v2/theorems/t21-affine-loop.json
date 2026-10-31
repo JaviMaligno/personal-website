@@ -1,0 +1,19 @@
+{
+  "id": "t21-affine-loop",
+  "name": "affineLoop_closed",
+  "difficulty": "hard",
+  "prelude": "def affineLoop : Nat → Nat → Nat\n  | 0, a => a\n  | n + 1, a => affineLoop n (2 * a + 1)\n",
+  "statement": "theorem affineLoop_closed (n a : Nat) : affineLoop n a + 1 = 2 ^ n * (a + 1)",
+  "proofs": [
+    "  induction n generalizing a with\n  | zero => simp [affineLoop]\n  | succ n ih =>\n    rw [affineLoop, ih, Nat.pow_succ]\n    simp only [Nat.mul_add, Nat.mul_assoc, Nat.mul_one]\n    omega\n",
+    "  have commute (k b : Nat) : affineLoop k (2 * b + 1) = 2 * affineLoop k b + 1 := by\n    induction k generalizing b with\n    | zero => rfl\n    | succ k ih => exact ih (2 * b + 1)\n  induction n with\n  | zero => simp [affineLoop]\n  | succ n ih =>\n    rw [affineLoop, commute, Nat.pow_succ]\n    calc\n      2 * affineLoop n a + 1 + 1 = 2 * (affineLoop n a + 1) := by omega\n      _ = 2 * (2 ^ n * (a + 1)) := by rw [ih]\n      _ = 2 ^ n * 2 * (a + 1) := by rw [← Nat.mul_assoc, Nat.mul_comm 2 (2 ^ n)]\n"
+  ],
+  "strategies": [
+    "Generalize the state a before induction on the iteration count.",
+    "Prove that iteration commutes with its affine step, then induct at fixed a."
+  ],
+  "naive_proof": "  induction n <;> simp_all <;> omega\n",
+  "naive_unfolded_proof": "  induction n <;> simp_all [affineLoop, Nat.pow_succ] <;> omega\n",
+  "naive_fails": "checks\\t21-affine-loop-naive_proof.lean:6:18: error: simp_all made no progress",
+  "naive_unfolded_fails": "checks\\t21-affine-loop-naive_unfolded_proof.lean:6:58: error: omega could not prove the goal:"
+}

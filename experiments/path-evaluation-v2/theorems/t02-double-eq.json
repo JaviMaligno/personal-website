@@ -5,7 +5,11 @@
   "prelude": "def double : Nat → Nat\n  | 0 => 0\n  | n + 1 => double n + 2\n",
   "statement": "theorem double_eq (n : Nat) : double n = 2 * n",
   "proofs": [
-    "  induction n with\n  | zero => rfl\n  | succ k ih => simp only [double, ih]; omega\n",
-    "  have double_add : ∀ m k, double (m + k) = double m + double k := by\n    intro m k\n    induction k with\n    | zero => rfl\n    | succ k ih => rw [← Nat.add_assoc, double, ih, double, Nat.add_assoc]\n  induction n with\n  | zero => rfl\n  | succ k ih =>\n    rw [double_add k 1, ih]\n    show 2 * k + 2 = 2 * (k + 1)\n    rw [Nat.mul_succ]\n"
+    "  induction n with\n  | zero => rfl\n  | succ n ih => simp [double, Nat.mul_add, ih]\n",
+    "  have additive (a b : Nat) : double (a + b) = double a + double b := by\n    induction b with\n    | zero => simp [double]\n    | succ b ih => simp [double, ih, Nat.add_assoc]\n  have diagonal (k : Nat) : double k = k + k := by\n    induction k with\n    | zero => rfl\n    | succ k ih => rw [additive, ih]; simp [double]; omega\n  rw [diagonal]\n  omega\n"
+  ],
+  "strategies": [
+    "Induction on n using multiplication distributivity.",
+    "Prove additivity, then use it to establish the diagonal identity double k = k + k."
   ]
 }

@@ -5,7 +5,11 @@
   "prelude": "def fib : Nat → Nat\n  | 0 => 0\n  | 1 => 1\n  | n + 2 => fib n + fib (n + 1)\n\ndef fibSum : Nat → Nat\n  | 0 => 0\n  | n + 1 => fibSum n + fib n\n",
   "statement": "theorem fibSum_eq (n : Nat) : fibSum n + 1 = fib (n + 1)",
   "proofs": [
-    "  induction n with\n  | zero => rfl\n  | succ n ih =>\n    simp only [fibSum, fib]\n    omega\n",
-    "  induction n with\n  | zero => rfl\n  | succ n ih =>\n    rw [fibSum, Nat.add_right_comm, ih, fib, Nat.add_comm]\n"
+    "  induction n with\n  | zero => rfl\n  | succ n ih => simp only [fibSum, fib]; omega\n",
+    "  have recurrence (k : Nat) : fibSum (k + 2) = fibSum (k + 1) + fibSum k + 1 := by\n    induction k with\n    | zero => rfl\n    | succ k ih =>\n      simp only [fibSum] at ih ⊢\n      rw [fib]\n      omega\n  have paired (k : Nat) : fibSum k + 1 = fib (k + 1) ∧ fibSum (k + 1) + 1 = fib (k + 2) := by\n    induction k with\n    | zero => decide\n    | succ k ih =>\n      constructor\n      · exact ih.2\n      · rw [recurrence]\n        rw [show fib (k + 1 + 2) = fib (k + 1) + fib (k + 2) from rfl]\n        omega\n  exact (paired n).1\n"
+  ],
+  "strategies": [
+    "Direct induction using the Fibonacci recurrence.",
+    "Derive a recurrence for fibSum and use a strengthened pair of consecutive equalities."
   ]
 }

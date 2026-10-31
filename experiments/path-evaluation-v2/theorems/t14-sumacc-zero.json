@@ -5,7 +5,11 @@
   "prelude": "def mySum : List Nat → Nat\n  | [] => 0\n  | x :: xs => x + mySum xs\n\ndef sumAcc : List Nat → Nat → Nat\n  | [], acc => acc\n  | x :: xs, acc => sumAcc xs (acc + x)\n",
   "statement": "theorem sumAcc_zero (xs : List Nat) : sumAcc xs 0 = mySum xs",
   "proofs": [
-    "  have h : ∀ acc, sumAcc xs acc = acc + mySum xs := by\n    induction xs with\n    | nil => intro acc; simp [sumAcc, mySum]\n    | cons x xs ih => intro acc; simp [sumAcc, mySum, ih]; omega\n  simpa using h 0\n",
-    "  have h : ∀ ys acc, sumAcc ys acc = acc + mySum ys := by\n    intro ys acc\n    fun_induction sumAcc ys acc with\n    | case1 acc => rw [mySum, Nat.add_zero]\n    | case2 acc x xs ih => rw [ih, mySum, Nat.add_assoc]\n  rw [h, Nat.zero_add]\n"
+    "  have invariant (zs : List Nat) (a : Nat) : sumAcc zs a = a + mySum zs := by\n    induction zs generalizing a with\n    | nil => simp [sumAcc, mySum]\n    | cons z zs ih => simp [sumAcc, mySum, ih, Nat.add_assoc]\n  simpa using invariant xs 0\n",
+    "  have shift (zs : List Nat) (a b : Nat) : sumAcc zs (a + b) = sumAcc zs a + b := by\n    induction zs generalizing a with\n    | nil => rfl\n    | cons z zs ih => simpa [sumAcc, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using ih (a + z)\n  induction xs with\n  | nil => rfl\n  | cons x xs ih =>\n    simp only [sumAcc, Nat.zero_add, mySum]\n    have h := shift xs 0 x\n    simp only [Nat.zero_add] at h\n    rw [h, ih, Nat.add_comm]\n"
+  ],
+  "strategies": [
+    "Generalize the accumulator to obtain its relation to mySum.",
+    "Prove accumulator translation independently, then induct on xs at accumulator zero."
   ]
 }

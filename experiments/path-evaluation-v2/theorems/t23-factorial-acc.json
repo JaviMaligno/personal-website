@@ -1,0 +1,19 @@
+{
+  "id": "t23-factorial-acc",
+  "name": "factorialAcc_correct",
+  "difficulty": "hard",
+  "prelude": "def factorial : Nat → Nat\n  | 0 => 1\n  | n + 1 => (n + 1) * factorial n\ndef factorialAcc : Nat → Nat → Nat\n  | 0, a => a\n  | n + 1, a => factorialAcc n (a * (n + 1))\n",
+  "statement": "theorem factorialAcc_correct (n : Nat) : factorialAcc n 1 = factorial n",
+  "proofs": [
+    "  have invariant (k a : Nat) : factorialAcc k a = a * factorial k := by\n    induction k generalizing a with\n    | zero => simp [factorialAcc, factorial]\n    | succ k ih => simp [factorialAcc, factorial, ih, Nat.mul_assoc]\n  simpa using invariant n 1\n",
+    "  have scale (k a b : Nat) : factorialAcc k (a * b) = a * factorialAcc k b := by\n    induction k generalizing b with\n    | zero => rfl\n    | succ k ih => simpa [factorialAcc, Nat.mul_assoc] using ih (b * (k + 1))\n  induction n with\n  | zero => rfl\n  | succ n ih =>\n    have h := scale n (n + 1) 1\n    simpa [factorialAcc, factorial, ih] using h\n"
+  ],
+  "strategies": [
+    "Prove the general multiplicative accumulator invariant.",
+    "Prove scaling equivariance, then induct at accumulator one."
+  ],
+  "naive_proof": "  induction n <;> simp_all <;> omega\n",
+  "naive_unfolded_proof": "  induction n <;> simp_all [factorialAcc, factorial] <;> omega\n",
+  "naive_fails": "checks\\t23-factorial-acc-naive_proof.lean:9:18: error: simp_all made no progress",
+  "naive_unfolded_fails": "checks\\t23-factorial-acc-naive_unfolded_proof.lean:9:57: error: omega could not prove the goal:"
+}

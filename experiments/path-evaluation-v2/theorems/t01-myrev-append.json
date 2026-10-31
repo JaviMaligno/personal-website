@@ -6,6 +6,10 @@
   "statement": "theorem myRev_append (xs ys : List α) : myRev (xs ++ ys) = myRev ys ++ myRev xs",
   "proofs": [
     "  induction xs with\n  | nil => simp [myRev]\n  | cons x xs ih => simp [myRev, ih, List.append_assoc]\n",
-    "  induction xs with\n  | nil => rw [List.nil_append, myRev, List.append_nil]\n  | cons x xs ih => rw [List.cons_append, myRev, ih, myRev, List.append_assoc]\n"
+    "  have rev_eq (zs : List α) : myRev zs = zs.reverse := by\n    induction zs with\n    | nil => rfl\n    | cons z zs ih => simp [myRev, ih, List.reverse_cons]\n  simp [rev_eq, List.reverse_append]\n"
+  ],
+  "strategies": [
+    "Structural induction on xs, reassociating append.",
+    "Identify myRev with library reverse in a helper, then use reverse_append."
   ]
 }

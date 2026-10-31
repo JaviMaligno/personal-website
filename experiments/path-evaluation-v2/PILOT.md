@@ -45,3 +45,10 @@ se descartó por fallos de arnés; sus trazas se sobrescribieron.
 Copias de trabajo fuera del repo; `Edit`/`Write` de Claude Code limitados a la copia; herramientas
 de Qwen confinadas; auditor de salidas por episodio; condensación fiel a CORE; heredocs y scripts
 de Python que escriben ficheros bien traducidos; diff final guardado por episodio.
+
+## Nota tras congelar las reglas (2026-10-31)
+
+Las referencias de Lean se sustituyeron por las de Astra (no evaluado) y E3 de Lean pasó a ser por
+estrategia. Los registros de B de este piloto no guardaban el fichero final, así que su esqueleto
+no lleva la variable de inducción ni detecta lemas auxiliares declarados aparte: su E3s contra las
+referencias nuevas (24/24 FN) no es comparable y no se usa. La corrida completa guarda el fichero.

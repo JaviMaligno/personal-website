@@ -6,6 +6,10 @@
   "statement": "theorem mySum_append (xs ys : List Nat) : mySum (xs ++ ys) = mySum xs + mySum ys",
   "proofs": [
     "  induction xs with\n  | nil => simp [mySum]\n  | cons x xs ih => simp [mySum, ih, Nat.add_assoc]\n",
-    "  induction xs with\n  | nil => rw [List.nil_append, mySum, Nat.zero_add]\n  | cons x xs ih =>\n    rw [List.cons_append, mySum, mySum, ih]\n    omega\n"
+    "  have sum_eq (zs : List Nat) : mySum zs = zs.foldr (· + ·) 0 := by\n    induction zs with\n    | nil => rfl\n    | cons z zs ih => simp [mySum, ih]\n  have offset (zs : List Nat) (a : Nat) : zs.foldr (· + ·) a = zs.foldr (· + ·) 0 + a := by\n    induction zs with\n    | nil => simp\n    | cons z zs ih => simp [ih, Nat.add_assoc]\n  rw [sum_eq, sum_eq, sum_eq, List.foldr_append, offset]\n"
+  ],
+  "strategies": [
+    "Induction on the left list and associativity of addition.",
+    "Characterize mySum as foldr and prove an offset lemma for folds."
   ]
 }

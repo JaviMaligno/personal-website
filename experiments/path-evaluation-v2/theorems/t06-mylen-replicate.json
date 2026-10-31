@@ -5,7 +5,11 @@
   "prelude": "def myLen : List α → Nat\n  | [] => 0\n  | _ :: xs => myLen xs + 1\n",
   "statement": "theorem myLen_replicate (n : Nat) (a : α) : myLen (List.replicate n a) = n",
   "proofs": [
-    "  induction n with\n  | zero => rfl\n  | succ n ih => simp [List.replicate, myLen, ih]\n",
-    "  have h : ∀ ys : List α, myLen ys = ys.length := by\n    intro ys\n    induction ys with\n    | nil => rfl\n    | cons y ys ih => rw [myLen, ih, List.length_cons]\n  rw [h, List.length_replicate]\n"
+    "  induction n with\n  | zero => rfl\n  | succ n ih => simp [List.replicate_succ, myLen, ih]\n",
+    "  have len_eq (zs : List α) : myLen zs = zs.length := by\n    induction zs with\n    | nil => rfl\n    | cons z zs ih => simp [myLen, ih]\n  rw [len_eq, List.length_replicate]\n"
+  ],
+  "strategies": [
+    "Induction on the replication count.",
+    "Induction on arbitrary lists to characterize myLen, then use length_replicate."
   ]
 }

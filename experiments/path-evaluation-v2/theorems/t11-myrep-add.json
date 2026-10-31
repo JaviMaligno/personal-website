@@ -5,7 +5,11 @@
   "prelude": "def myRep (a : α) : Nat → List α\n  | 0 => []\n  | n + 1 => a :: myRep a n\n",
   "statement": "theorem myRep_add (a : α) (m n : Nat) : myRep a (m + n) = myRep a m ++ myRep a n",
   "proofs": [
-    "  induction m with\n  | zero => simp [myRep]\n  | succ m ih => rw [Nat.add_right_comm, myRep, myRep, ih, List.cons_append]\n",
-    "  induction n with\n  | zero => simp [myRep]\n  | succ n ih =>\n    have snoc : ∀ k, myRep a (k + 1) = myRep a k ++ [a] := by\n      intro k\n      induction k with\n      | zero => rfl\n      | succ k ihk =>\n        show a :: myRep a (k + 1) = (a :: myRep a k) ++ [a]\n        rw [ihk, List.cons_append]\n    rw [← Nat.add_assoc, snoc, ih, snoc, List.append_assoc]\n"
+    "  induction m with\n  | zero => simp [myRep]\n  | succ m ih => simp [Nat.succ_add, myRep, ih]\n",
+    "  have rep_eq (k : Nat) : myRep a k = List.replicate k a := by\n    induction k with\n    | zero => rfl\n    | succ k ih => simp [myRep, ih, List.replicate_succ]\n  rw [rep_eq, rep_eq, rep_eq, List.replicate_append_replicate]\n"
+  ],
+  "strategies": [
+    "Direct induction on m.",
+    "Characterize myRep as replicate and use its concatenation identity."
   ]
 }

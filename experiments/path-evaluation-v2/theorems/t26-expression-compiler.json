@@ -1,0 +1,19 @@
+{
+  "id": "t26-expression-compiler",
+  "name": "compiler_correct",
+  "difficulty": "hard",
+  "prelude": "inductive Expr where\n  | lit : Nat → Expr\n  | add : Expr → Expr → Expr\ninductive Instr where\n  | push : Nat → Instr\n  | plus : Instr\ndef eval : Expr → Nat\n  | .lit n => n\n  | .add l r => eval l + eval r\ndef compile : Expr → List Instr\n  | .lit n => [.push n]\n  | .add l r => compile l ++ compile r ++ [.plus]\ndef run : List Instr → List Nat → Option (List Nat)\n  | [], s => some s\n  | .push n :: code, s => run code (n :: s)\n  | .plus :: code, a :: b :: s => run code ((b + a) :: s)\n  | .plus :: _, _ => none\n",
+  "statement": "theorem compiler_correct (e : Expr) : run (compile e) [] = some [eval e]",
+  "proofs": [
+    "  have continuation (t : Expr) (code : List Instr) (s : List Nat) :\n      run (compile t ++ code) s = run code (eval t :: s) := by\n    induction t generalizing code s with\n    | lit n => rfl\n    | add l r il ir =>\n      simp only [compile, List.append_assoc, il, ir, List.cons_append, List.nil_append, run, eval]\n  simpa [run] using continuation e [] []\n",
+    "  have append_run (as bs : List Instr) (s : List Nat) :\n      run (as ++ bs) s = (run as s).bind (run bs) := by\n    induction as generalizing s with\n    | nil => rfl\n    | cons a as ih =>\n      cases a with\n      | push n => simpa [run] using ih (n :: s)\n      | plus =>\n        cases s with\n        | nil => rfl\n        | cons a s => cases s with\n          | nil => rfl\n          | cons b s => simpa [run] using ih ((b + a) :: s)\n  have stack (t : Expr) (s : List Nat) : run (compile t) s = some (eval t :: s) := by\n    induction t generalizing s with\n    | lit n => rfl\n    | add l r il ir => simp [compile, append_run, il, ir, run, eval]\n  exact stack e []\n"
+  ],
+  "strategies": [
+    "Induct on expressions with both continuation code and stack generalized.",
+    "Prove execution composition for arbitrary programs, then establish a stack invariant."
+  ],
+  "naive_proof": "  induction e <;> simp_all <;> omega\n",
+  "naive_unfolded_proof": "  induction e <;> simp_all [compile, run, eval] <;> omega\n",
+  "naive_fails": "checks\\t26-expression-compiler-naive_proof.lean:20:18: error: simp_all made no progress",
+  "naive_unfolded_fails": "checks\\t26-expression-compiler-naive_unfolded_proof.lean:20:52: error: omega could not prove the goal:"
+}

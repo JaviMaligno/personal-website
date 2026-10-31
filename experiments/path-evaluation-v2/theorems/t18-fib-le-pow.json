@@ -5,7 +5,11 @@
   "prelude": "def fib : Nat → Nat\n  | 0 => 0\n  | 1 => 1\n  | n + 2 => fib n + fib (n + 1)\n",
   "statement": "theorem fib_le_pow (n : Nat) : fib n ≤ 2 ^ n",
   "proofs": [
-    "  have h : ∀ n, fib n ≤ 2 ^ n ∧ fib (n + 1) ≤ 2 ^ (n + 1) := by\n    intro n\n    induction n with\n    | zero => simp [fib]\n    | succ n ih =>\n      refine ⟨ih.2, ?_⟩\n      rw [fib, Nat.pow_succ, Nat.pow_succ]\n      have := ih.1\n      have := ih.2\n      rw [Nat.pow_succ] at this\n      omega\n  exact (h n).1\n",
-    "  induction n using Nat.strongRecOn with\n  | ind n ih =>\n    match n with\n    | 0 => simp [fib]\n    | 1 => simp [fib]\n    | k + 2 =>\n      have h1 := ih k (by omega)\n      have h2 := ih (k + 1) (by omega)\n      rw [fib, Nat.pow_succ, Nat.pow_succ]\n      rw [Nat.pow_succ] at h2\n      omega\n"
+    "  induction n using Nat.strongRecOn with\n  | ind n ih =>\n    cases n with\n    | zero => decide\n    | succ n => cases n with\n      | zero => decide\n      | succ n =>\n        have h0 := ih n (by omega)\n        have h1 := ih (n + 1) (by omega)\n        simp only [fib, Nat.pow_succ] at *\n        omega\n",
+    "  have pair (k : Nat) : fib k ≤ 2 ^ k ∧ fib (k + 1) ≤ 2 ^ (k + 1) := by\n    induction k with\n    | zero => decide\n    | succ k ih =>\n      constructor\n      · exact ih.2\n      · simp only [fib, Nat.pow_succ] at *; omega\n  exact (pair n).1\n"
+  ],
+  "strategies": [
+    "Strong induction using bounds at both smaller indices.",
+    "Ordinary induction on a strengthened pair of consecutive bounds."
   ]
 }

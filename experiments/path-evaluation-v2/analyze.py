@@ -45,12 +45,43 @@ def renormalize(r: dict) -> dict:
         ran_after = bool(edits) and any(a["kind"] == "run_tests" for a in acts[edits[-1] + 1:])
         toks = world_a.tokens(acts)
         score = pc(toks, world_a.references(bug)) if toks else 0.0
+        old = legacy_tokens_a(acts)
+        score_old = pc(old, legacy_references_a(bug)) if old else 0.0
         j.update(E2=bool(j["E1"]) and ran_before and ran_after, tokens=toks, pc=round(score, 3),
-                 E3=bool(j["E0"]) and score >= 0.8)
+                 E3=bool(j["E0"]) and score >= 0.8,
+                 **{"E3-reads": bool(j["E0"]) and score_old >= 0.8, "pc_reads": round(score_old, 3)})
     else:
+        import world_b
         compiled_after = not edits or any(a["kind"] == "compile" for a in acts[edits[-1] + 1:])
-        j.update(E2=bool(j["E1"]) and compiled_after)
+        t = json.loads((HERE / "theorems" / f"{r['task']}.json").read_text(encoding="utf-8"))
+        if r.get("final"):
+            skel, toks = world_b.strategy(t, r["final"]), world_b.tactics(world_b.proof_body(t, r["final"]))
+        else:  # records from before the final file was stored: tactic names only
+            toks = j.get("tactics") or []
+            skel = world_b.strategy_from_tactics(toks)
+        ps = pc(skel, [world_b.strategy_of_body(p) for p in t["proofs"]]) if skel else 0.0
+        pt = pc(toks, [world_b.tactics(p) for p in t["proofs"]]) if toks else 0.0
+        j.update(E2=bool(j["E1"]) and compiled_after, strategy=skel, pc_strategy=round(ps, 3), pc=round(ps, 3),
+                 E3=bool(j["E0"]) and ps >= 0.8, E3s=bool(j["E0"]) and ps >= 0.8, E3t=bool(j["E0"]) and pt >= 0.8,
+                 pc_tactics=round(pt, 3))
     return r
+
+
+def legacy_tokens_a(actions: list[dict]) -> list[str]:
+    """The pre-freeze Part A condensation (reads and searches kept), reported as E3-reads."""
+    from pc import condense
+    out = []
+    for a in actions:
+        k, t = a["kind"], a["target"]
+        out.append(f"{k}:{'tests' if t.startswith('tests/') else t}" if k in ("read", "edit") else k)
+    return condense(out)
+
+
+def legacy_references_a(bug: dict) -> list[list[str]]:
+    f = bug["file"]
+    return [["run_tests", "search", f"read:{f}", f"edit:{f}", "run_tests"],
+            ["run_tests", f"read:{f}", f"edit:{f}", "run_tests"],
+            ["read:tests", "run_tests", "search", f"read:{f}", f"edit:{f}", "run_tests"]]
 
 
 def load(*paths) -> list[dict]:
@@ -70,8 +101,16 @@ def _count(pairs) -> dict:
     return {"FP": sum(1 for g, t in pairs if g and not t), "FN": sum(1 for g, t in pairs if not g and t)}
 
 
+EXTRA = ("E3-reads", "E3s", "E3t")  # frozen-rule variants (spec, "Reglas congeladas")
+
+
 def fp_fn(recs: list[dict]) -> dict:
-    return {g: _count((r["judge"][g], r["judge"]["truth"]) for r in recs) for g in GRADERS}
+    out = {g: _count((r["judge"][g], r["judge"]["truth"]) for r in recs) for g in GRADERS}
+    for g in EXTRA:
+        rs = [r for r in recs if g in r["judge"]]
+        if rs:
+            out[g] = _count((r["judge"][g], r["judge"]["truth"]) for r in rs)
+    return out
 
 
 def tau_curve(recs: list[dict]) -> dict:

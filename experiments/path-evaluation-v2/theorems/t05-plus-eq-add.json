@@ -5,7 +5,11 @@
   "prelude": "def plus : Nat → Nat → Nat\n  | n, 0 => n\n  | n, m + 1 => plus n m + 1\n",
   "statement": "theorem plus_eq_add (n m : Nat) : plus n m = n + m",
   "proofs": [
-    "  induction m with\n  | zero => rfl\n  | succ m ih => rw [plus, ih, Nat.add_assoc]\n",
-    "  induction m with\n  | zero => simp [plus]\n  | succ m ih => simp only [plus, ih]; omega\n"
+    "  induction m with\n  | zero => rfl\n  | succ m ih => simp [plus, ih, Nat.add_assoc]\n",
+    "  have zero_left (k : Nat) : plus 0 k = k := by\n    induction k with\n    | zero => rfl\n    | succ k ih => simp [plus, ih]\n  have succ_left (a b : Nat) : plus (a + 1) b = plus a b + 1 := by\n    induction b with\n    | zero => rfl\n    | succ b ih => simp [plus, ih]\n  induction n with\n  | zero => simp [zero_left]\n  | succ n ih => rw [succ_left, ih]; omega\n"
+  ],
+  "strategies": [
+    "Induction on the recursive second argument m.",
+    "Induction on n after proving zero-left and successor-left helper lemmas."
   ]
 }

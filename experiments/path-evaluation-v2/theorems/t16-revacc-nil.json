@@ -5,7 +5,11 @@
   "prelude": "def myRev : List α → List α\n  | [] => []\n  | x :: xs => myRev xs ++ [x]\n\ndef revAcc : List α → List α → List α\n  | [], acc => acc\n  | x :: xs, acc => revAcc xs (x :: acc)\n",
   "statement": "theorem revAcc_nil (xs : List α) : revAcc xs [] = myRev xs",
   "proofs": [
-    "  have h : ∀ acc : List α, revAcc xs acc = myRev xs ++ acc := by\n    induction xs with\n    | nil => intro acc; rfl\n    | cons x xs ih => intro acc; simp [revAcc, myRev, ih]\n  simpa using h []\n",
-    "  have h : ∀ ys acc : List α, revAcc ys acc = myRev ys ++ acc := by\n    intro ys acc\n    induction ys generalizing acc with\n    | nil => rfl\n    | cons y ys ih => rw [revAcc, ih, myRev, List.append_assoc, List.singleton_append]\n  rw [h, List.append_nil]\n"
+    "  have invariant (zs acc : List α) : revAcc zs acc = myRev zs ++ acc := by\n    induction zs generalizing acc with\n    | nil => rfl\n    | cons z zs ih => simp [revAcc, myRev, ih, List.append_assoc]\n  simpa using invariant xs []\n",
+    "  have shift (zs as bs : List α) : revAcc zs (as ++ bs) = revAcc zs as ++ bs := by\n    induction zs generalizing as with\n    | nil => rfl\n    | cons z zs ih => simpa [revAcc] using ih (z :: as)\n  induction xs with\n  | nil => rfl\n  | cons x xs ih =>\n    have h := shift xs [] [x]\n    simpa [revAcc, myRev, ih] using h\n"
+  ],
+  "strategies": [
+    "Generalize to arbitrary accumulator suffixes and prove the full invariant.",
+    "Prove suffix-equivariance of revAcc, then induct with the accumulator fixed at nil."
   ]
 }

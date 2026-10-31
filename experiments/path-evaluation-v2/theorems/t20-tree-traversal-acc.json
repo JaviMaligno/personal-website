@@ -1,0 +1,19 @@
+{
+  "id": "t20-tree-traversal-acc",
+  "name": "walkAcc_correct",
+  "difficulty": "hard",
+  "prelude": "inductive Tree (α : Type u) where\n  | empty : Tree α\n  | node : Tree α → α → Tree α → Tree α\ndef inorder : Tree α → List α\n  | .empty => []\n  | .node l x r => inorder l ++ x :: inorder r\ndef walkAcc : Tree α → List α → List α\n  | .empty, acc => acc\n  | .node l x r, acc => walkAcc l (x :: walkAcc r acc)\n",
+  "statement": "theorem walkAcc_correct (t : Tree α) (acc : List α) : walkAcc t acc = inorder t ++ acc",
+  "proofs": [
+    "  induction t generalizing acc with\n  | empty => rfl\n  | node l x r il ir => simp [walkAcc, inorder, il, ir, List.append_assoc]\n",
+    "  have suffix (t : Tree α) (as bs : List α) : walkAcc t (as ++ bs) = walkAcc t as ++ bs := by\n    induction t generalizing as with\n    | empty => rfl\n    | node l x r il ir => simp [walkAcc, ir, ← il]\n  have empty_acc (t : Tree α) : walkAcc t [] = inorder t := by\n    induction t with\n    | empty => rfl\n    | node l x r il ir =>\n      have h := suffix l [] (x :: inorder r)\n      simpa [walkAcc, inorder, il, ir] using h\n  have h := suffix t [] acc\n  simpa [empty_acc] using h\n"
+  ],
+  "strategies": [
+    "Tree induction generalized over the accumulator.",
+    "Prove suffix-equivariance and empty-accumulator correctness separately."
+  ],
+  "naive_proof": "  induction t <;> simp_all <;> omega\n",
+  "naive_unfolded_proof": "  induction t <;> simp_all [walkAcc, inorder] <;> omega\n",
+  "naive_fails": "checks\\t20-tree-traversal-acc-naive_proof.lean:12:18: error: simp_all made no progress",
+  "naive_unfolded_fails": "checks\\t20-tree-traversal-acc-naive_unfolded_proof.lean:12:50: error: omega could not prove the goal:"
+}

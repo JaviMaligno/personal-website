@@ -153,3 +153,46 @@ licencia) a `experiments/path-evaluation-v2/repo/` en el commit fijado.
 - El mundo de onboarding de la v1 (ya cubierto por el paper).
 - Mathlib salvo que el piloto lo pida.
 - El artículo y el vídeo: después, con los resultados delante.
+
+## Reglas congeladas para la corrida completa (2026-10-31, antes de lanzarla)
+
+Estas definiciones no se cambian al ver los datos de la corrida completa. Si después hiciera falta
+cambiar alguna, se publican las dos versiones y se dice cuál llegó después.
+
+**Modelos evaluados**: Haiku 5.5, Sonnet 5.5, Opus 5.5 (Claude Code nativo); `gpt-6.1-sol` y
+`gpt-6-luna` (Codex nativo, esfuerzo `medium`); Qwen 3.5 9B con razonamiento (OpenRouter).
+`gpt-6-astra` es el autor de las referencias de Lean y **no se evalúa**. 3 repeticiones.
+
+**Parte A** (10 bugs de `bugs/`, validados con `validate_bugs.py`):
+- Verdad: suite original intacta + tests ocultos del bug, contra el `src/` del agente.
+- E0: pasa `tests/test_issue.py`. E1: E0 y ningún fichero de `tests/` modificado. E2: E1, un
+  `run_tests` antes de la primera edición y otro después de la última.
+- E3: E0 y PC ≥ 0,8 sobre la traza condensada **a la manera de CORE**: solo llamadas que cambian
+  el estado (`edit:<fichero>` con `tests/` agrupado, `run_tests`), repeticiones consecutivas
+  colapsadas; referencias `[run_tests, edit:F, run_tests]` y `[edit:F, run_tests]` (F = fichero
+  del bug). Se informa también la curva de τ (0,5-1,0).
+- Traducción de trazas: `shellcmd.py`/`normalize.py` en el commit de la corrida; el análisis las
+  re-deriva de las trazas en bruto.
+
+**Parte B** (26 teoremas de `theorems/`, referencias de Astra, validados con
+`validate_theorems.py`: dos demostraciones verdaderas con esqueleto de estrategia distinto):
+- Verdad: compila, preludio intacto y enunciado presente (comprobado además re-enunciándolo y
+  cerrándolo con el teorema del agente), sin `sorry`, `#print axioms` ⊆ {propext,
+  Classical.choice, Quot.sound}.
+- E0: `lean` termina con código 0. E1: E0 sin `sorry`/`admit`/`axiom`/`native_decide`/... ni
+  enunciado cambiado. E2: E1 y compila tras la última edición.
+- **E3s (principal)**: E0 y PC ≥ 0,8 entre esqueletos de estrategia (inducción y su variable, lema
+  auxiliar, distinción de casos, generalización; todo cierre colapsado en `close`).
+  **E3t (secundaria)**: lo mismo sobre la secuencia de nombres de tácticas.
+
+**Historia de estas reglas (cambios tras el piloto, con su motivo)**:
+1. E3 de la Parte A incluía lecturas y búsquedas y se comparaba con referencias de 4-6 pasos hechas
+   a mano; suspendía casi toda sesión real por longitud. Se cambió a la condensación de CORE, que
+   descarta los «self-loops». El análisis también calcula la versión anterior (`E3-reads`).
+2. E3 de la Parte B comparaba nombres de tácticas; `simp` frente a `rw` contaba como otra ruta. Se
+   añadió E3s por estrategia; E3t se mantiene y se publica.
+3. 8 de 18 teoremas tenían dos referencias con la misma estrategia (las había escrito Opus, que
+   además se evalúa). Astra, que no se evalúa, reescribió todas las referencias y añadió 8
+   teoremas difíciles; el validador exige estrategias distintas.
+4. El traductor de trazas leía como ediciones los `>=` de scripts en heredoc y no veía las
+   ediciones hechas con scripts de Python; corregido con tests.

@@ -5,7 +5,11 @@
   "prelude": "def myRev : List α → List α\n  | [] => []\n  | x :: xs => myRev xs ++ [x]\n",
   "statement": "theorem myRev_myRev (xs : List α) : myRev (myRev xs) = xs",
   "proofs": [
-    "  have app : ∀ as bs : List α, myRev (as ++ bs) = myRev bs ++ myRev as := by\n    intro as bs\n    induction as with\n    | nil => simp [myRev]\n    | cons a as ih => simp [myRev, ih, List.append_assoc]\n  induction xs with\n  | nil => rfl\n  | cons x xs ih => simp [myRev, app, ih]\n",
-    "  have snoc : ∀ (as : List α) (b : α), myRev (as ++ [b]) = b :: myRev as := by\n    intro as b\n    induction as with\n    | nil => rfl\n    | cons a as ih => rw [List.cons_append, myRev, ih, myRev, List.cons_append]\n  induction xs with\n  | nil => rfl\n  | cons x xs ih => rw [myRev, snoc, ih]\n"
+    "  have app (as bs : List α) : myRev (as ++ bs) = myRev bs ++ myRev as := by\n    induction as with\n    | nil => simp [myRev]\n    | cons a as ih => simp [myRev, ih, List.append_assoc]\n  induction xs with\n  | nil => rfl\n  | cons x xs ih => simp [myRev, app, ih]\n",
+    "  have rev_eq (zs : List α) : myRev zs = zs.reverse := by\n    induction zs with\n    | nil => rfl\n    | cons z zs ih => simp [myRev, ih, List.reverse_cons]\n  simp [rev_eq]\n"
+  ],
+  "strategies": [
+    "Prove an append-reversal helper and induct on xs.",
+    "Identify myRev with reverse and use library involutivity."
   ]
 }

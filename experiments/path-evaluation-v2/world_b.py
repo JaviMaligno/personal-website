@@ -78,7 +78,8 @@ def axioms(t: dict, work: Path) -> set[str] | None:
     # theorem that merely sits next to a (commented / namespaced) copy of the statement fails to compile.
     rest = t["statement"].split(t["name"], 1)[1]
     probe.write_text((work / "Main.lean").read_text(encoding="utf-8")
-                     + f"\nexample{rest} := by\n  apply {t['name']}\n#print axioms {t['name']}\n", encoding="utf-8")
+                     # `<;> assumption` closes the statement's own hypotheses that `apply` leaves open
+                     + f"\nexample{rest} := by\n  apply {t['name']} <;> assumption\n#print axioms {t['name']}\n", encoding="utf-8")
     code, out = compile_lean(probe)
     probe.unlink()
     if code != 0:

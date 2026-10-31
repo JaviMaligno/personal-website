@@ -1,0 +1,19 @@
+{
+  "id": "t22-deal-weave-inverse",
+  "name": "deal_weave",
+  "difficulty": "hard",
+  "prelude": "def weave : List α → List α → List α\n  | [], ys => ys\n  | x :: xs, ys => x :: weave ys xs\ntermination_by xs ys => xs.length + ys.length\ndef deal : List α → List α × List α\n  | [] => ([], [])\n  | x :: xs => let p := deal xs; (x :: p.2, p.1)\n",
+  "statement": "theorem deal_weave (xs ys : List α) (h : xs.length = ys.length) : deal (weave xs ys) = (xs, ys)",
+  "proofs": [
+    "  induction xs generalizing ys with\n  | nil =>\n    cases ys with\n    | nil => simp [weave, deal]\n    | cons y ys => simp at h\n  | cons x xs ih =>\n    cases ys with\n    | nil => simp at h\n    | cons y ys =>\n      have e := ih ys (by simpa using h)\n      simp [weave, deal, e]\n",
+    "  have balanced (as bs : List α) :\n      (as.length = bs.length ∨ as.length = bs.length + 1) → deal (weave as bs) = (as, bs) := by\n    induction as, bs using weave.induct with\n    | case1 bs =>\n      intro h\n      have e : bs = [] := by cases bs <;> simp_all\n      subst bs\n      simp [weave, deal]\n    | case2 a as bs ih =>\n      intro h\n      have hlen : bs.length = as.length ∨ bs.length = as.length + 1 := by\n        simp only [List.length_cons] at h\n        omega\n      have e := ih hlen\n      simp [weave, deal, e]\n  exact balanced xs ys (Or.inl h)\n"
+  ],
+  "strategies": [
+    "Induct on xs, generalizing ys and consuming two heads per step.",
+    "Strengthen to balanced lengths and use the function induction principle for weave."
+  ],
+  "naive_proof": "  induction xs <;> simp_all <;> omega\n",
+  "naive_unfolded_proof": "  induction xs <;> simp_all [weave, deal] <;> omega\n",
+  "naive_fails": "checks\\t22-deal-weave-inverse-naive_proof.lean:10:32: error: omega could not prove the goal:",
+  "naive_unfolded_fails": "checks\\t22-deal-weave-inverse-naive_unfolded_proof.lean:10:46: error: omega could not prove the goal:"
+}
