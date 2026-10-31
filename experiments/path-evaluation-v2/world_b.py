@@ -119,6 +119,54 @@ def tactics(body: str) -> list[str]:
     return out
 
 
+STRUCTURAL = {"induction": "induction", "cases": "cases", "rcases": "cases", "match": "cases",
+              "generalize": "generalize", "have": "aux", "suffices": "aux", "calc": "calc"}
+NEUTRAL = {"intro", "intros", "show", "unfold", "dsimp", "using"}
+
+
+def strategy_from_tactics(tacs: list[str], var: dict | None = None) -> list[str]:
+    """Strategy skeleton: structural moves kept, every closing tactic (simp, rw, omega, rfl,
+    exact, simpa, decide...) collapsed into one 'close' step. `simp` vs `rw` vs `omega` is
+    another tool for the same step, not another route."""
+    out = []
+    for i, name in enumerate(tacs):
+        tok = STRUCTURAL.get(name) or (None if name in NEUTRAL else "close")
+        if tok == "induction" and var and i in var:
+            tok = f"induction:{var[i]}"
+        if tok and not (out and out[-1] == tok == "close"):
+            out.append(tok)
+    return out
+
+
+def _induction_vars(body: str) -> dict:
+    vars_, k = {}, 0
+    for line in body.splitlines():
+        line = re.sub(r"^\|\s*[^=]*=>\s*", "", line.strip())
+        if not line or line.startswith("--"):
+            continue
+        for part in re.split(r";|<;>", line):
+            m = re.match(r"[·.]?\s*([A-Za-z_][A-Za-z_0-9?!']*)\s*(\S*)", part.strip())
+            if m:
+                if m.group(1) == "induction":
+                    vars_[k] = m.group(2)
+                k += 1
+    return vars_
+
+
+def strategy_of_body(body: str) -> list[str]:
+    return strategy_from_tactics(tactics(body), _induction_vars(body))
+
+
+def strategy(t: dict, text: str) -> list[str]:
+    """Skeleton of the final proof; 'aux' first if it relies on a helper lemma declared in the file."""
+    body = proof_body(t, text)
+    skel = strategy_of_body(body)
+    helpers = re.findall(r"^(?:theorem|lemma)\s+([\w.']+)", strip_comments(text), re.M)
+    if "aux" not in skel and any(h != t["name"] and re.search(rf"\b{re.escape(h)}\b", body) for h in helpers):
+        skel = ["aux"] + skel
+    return skel
+
+
 def judge(t: dict, work: Path, actions: list[dict], tau: float = 0.8) -> dict:
     main = work / "Main.lean"
     text = main.read_text(encoding="utf-8")
@@ -135,6 +183,10 @@ def judge(t: dict, work: Path, actions: list[dict], tau: float = 0.8) -> dict:
     last_edit = max((i for i, a in enumerate(actions) if a["kind"] == "edit"), default=None)
     compiled_after = last_edit is None or any(a["kind"] == "compile" for a in actions[last_edit + 1:])
     e1 = e0 and not forbidden
+    skel = strategy(t, text)
+    score_s = pc(skel, [strategy_of_body(p) for p in t["proofs"]]) if skel else 0.0
     return {"truth": truth, "E0": e0, "E1": e1, "E2": e1 and compiled_after, "E3": e0 and score >= tau,
             "pc": round(score, 3), "tactics": toks, "sorry": uses_sorry, "axioms": sorted(ax) if ax is not None else None,
-            "statement_intact": intact}
+            "statement_intact": intact,
+            # E3s: same metric over the strategy skeleton (another route vs another tactic)
+            "E3s": e0 and score_s >= tau, "pc_strategy": round(score_s, 3), "strategy": skel}

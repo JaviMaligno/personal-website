@@ -1,4 +1,5 @@
-"""Every theorem: each reference proof is true; ≥2 proofs with different tactic multisets."""
+"""Every theorem: each reference proof is true; >=2 proofs with different strategy skeletons
+(world_b.strategy_of_body): another tactic for the same step does not count as another route."""
 import json
 import sys
 import tempfile
@@ -16,7 +17,7 @@ for p in sorted(Path(__file__).parent.glob("theorems/*.json")):
             work = world_b.materialize(t, Path(d) / str(i))
             (work / "Main.lean").write_text(world_b.header(t) + " := by\n" + body, encoding="utf-8")
             oks.append(world_b.judge(t, work, [])["truth"])
-    multisets = {tuple(sorted(Counter(world_b.tactics(b)).items())) for b in t["proofs"]}
+    multisets = {tuple(world_b.strategy_of_body(b)) for b in t["proofs"]}
     ok = all(oks) and len(t["proofs"]) >= 2 and len(multisets) >= 2
     print(t["id"], t["difficulty"], "OK" if ok else f"FAIL truth={oks} distinct={len(multisets)}")
     if not ok:
