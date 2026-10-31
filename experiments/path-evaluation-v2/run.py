@@ -26,7 +26,7 @@ GRADERS = ("E0", "E1", "E2", "E3")
 
 
 def load_tasks(world: str, ids: list[str] | None) -> list[dict]:
-    folder = HERE / ("bugs" if world == "a" else "theorems")
+    folder = HERE / {"a": "bugs", "b": "theorems", "c": "theorems-mathlib"}[world]
     tasks = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(folder.glob("*.json"))]
     unknown = set(ids or []) - {t["id"] for t in tasks}
     if unknown:
@@ -104,12 +104,14 @@ def final_state(world: str, work: Path) -> str:
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--world", required=True, choices=["a", "b"])
+    ap.add_argument("--world", required=True, choices=["a", "b", "c"])
     ap.add_argument("--models", nargs="+", required=True)
     ap.add_argument("--tasks", nargs="*")
     ap.add_argument("--reps", type=int, default=1)
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
+    if args.world == "c":  # the judge compiles too, so this process needs Mathlib's LEAN_PATH
+        __import__("os").environ["LEAN_PATH"] = agents.env_for("c")["LEAN_PATH"]
 
     models = json.loads((HERE / "models.json").read_text(encoding="utf-8"))
     out = Path(args.out)

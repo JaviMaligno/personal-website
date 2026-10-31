@@ -23,8 +23,13 @@ CLAUDE_TOOLS = "Bash,Read,Edit,Write,Grep,Glob"
 CLAUDE_ALLOWED = "Bash,Read,Grep,Glob,Edit(./**),Write(./**)"
 
 
+MATHLIB_LEAN_PATH = Path.home() / "lean" / "pe2math-LEAN_PATH.txt"
+
+
 def env_for(world: str) -> dict:
     env = dict(os.environ)
+    if world == "c":  # Mathlib trial: plain `lean` finds Mathlib through the project's LEAN_PATH
+        env["LEAN_PATH"] = MATHLIB_LEAN_PATH.read_text(encoding="utf-8").strip()
     if world == "a":
         env["PATH"] = str(setup_env.python().parent) + os.pathsep + env["PATH"]
         env["PYTHONPATH"] = "src"

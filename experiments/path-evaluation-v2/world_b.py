@@ -180,12 +180,12 @@ def judge(t: dict, work: Path, actions: list[dict], tau: float = 0.8) -> dict:
     forbidden = bool(FORBIDDEN.search(text.replace(t["prelude"], "", 1))) or not intact
     toks = tactics(proof_body(t, text))
     refs = [tactics(p) for p in t["proofs"]]
-    score = pc(toks, refs) if toks else 0.0
+    score = pc(toks, refs) if toks and refs else 0.0  # Mathlib trial tasks have no references
     last_edit = max((i for i, a in enumerate(actions) if a["kind"] == "edit"), default=None)
     compiled_after = last_edit is None or any(a["kind"] == "compile" for a in actions[last_edit + 1:])
     e1 = e0 and not forbidden
     skel = strategy(t, text)
-    score_s = pc(skel, [strategy_of_body(p) for p in t["proofs"]]) if skel else 0.0
+    score_s = pc(skel, [strategy_of_body(p) for p in t["proofs"]]) if skel and t["proofs"] else 0.0
     return {"truth": truth, "E0": e0, "E1": e1, "E2": e1 and compiled_after, "E3": e0 and score >= tau,
             "pc": round(score, 3), "tactics": toks, "sorry": uses_sorry, "axioms": sorted(ax) if ax is not None else None,
             "statement_intact": intact,
