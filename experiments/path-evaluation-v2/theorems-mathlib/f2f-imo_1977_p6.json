@@ -1,0 +1,12 @@
+{
+ "id": "f2f-imo_1977_p6",
+ "name": "imo_1977_p6",
+ "difficulty": "minif2f",
+ "prelude": "import Mathlib\n\nset_option maxHeartbeats 400000\n\nopen BigOperators Real Nat Topology Rat\n\n",
+ "statement": "theorem imo_1977_p6\n  (f : ℕ → ℕ)\n  (h₀ : ∀ n, 0 < f n)\n  (h₁ : ∀ n, 0 < n → f (f n) < f (n + 1)) :\n  ∀ n, 0 < n → f n = n",
+ "proofs": [
+  "  have lower : ∀ k n : ℕ, k ≤ n → k ≤ f n := by\n    intro k\n    induction k with\n    | zero => intro n _; exact Nat.zero_le _\n    | succ k ih =>\n      intro n hn\n      by_cases hk : k = 0\n      · subst k\n        exact h₀ n\n      · obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero\n          (Nat.ne_of_gt (lt_of_lt_of_le (Nat.succ_pos k) hn))\n        have hm : k ≤ m := Nat.le_of_succ_le_succ hn\n        have hmp : 0 < m := lt_of_lt_of_le (Nat.pos_of_ne_zero hk) hm\n        exact Nat.succ_le_of_lt\n          (lt_of_le_of_lt (ih (f m) (ih m hm)) (h₁ m hmp))\n  have mono : ∀ a b : ℕ, 0 < a → a ≤ b → f a ≤ f b := by\n    intro a b ha hab\n    induction b, hab using Nat.le_induction with\n    | base => exact le_rfl\n    | succ b hab ih =>\n      exact le_trans ih (le_of_lt (lt_of_le_of_lt\n        (lower (f b) (f b) le_rfl) (h₁ b (lt_of_lt_of_le ha hab))))\n  intro n hn\n  apply le_antisymm _ (lower n n le_rfl)\n  by_contra h\n  exact (not_le_of_gt (h₁ n hn))\n    (mono (n + 1) (f n) (Nat.succ_pos n) (Nat.lt_of_not_ge h))"
+ ],
+ "source": "miniF2F-lean4 @ 5746b7d (MIT)",
+ "proof_source": "gpt-6-astra (unevaluated author), verified 2026-10-31"
+}
