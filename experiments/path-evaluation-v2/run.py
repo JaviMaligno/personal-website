@@ -6,6 +6,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -68,7 +71,10 @@ def run_agent(cfg: dict, work: Path, prompt: str, world: str) -> tuple[dict, lis
 
 
 def episode(world: str, task: dict, model: str, cfg: dict, rep: int) -> dict:
-    work = TMP / f"work-{world}"  # per world: the two worlds may run in parallel processes
+    # A fresh copy per episode: files Codex creates inside its Windows sandbox belong to the sandbox
+    # user and this user cannot delete them (a .pytest_cache blocked every later episode in one
+    # shared copy, 2026-10-31). Leftover copies are removed best-effort.
+    work = TMP / f"work-{world}" / f"{task['id']}-{model}-{rep}"
     (world_a if world == "a" else world_b).materialize(task, work)
     res, actions, events = run_agent(cfg, work, prompt_for(world, task), world)
     EVENTS.mkdir(parents=True, exist_ok=True)
@@ -82,6 +88,7 @@ def episode(world: str, task: dict, model: str, cfg: dict, rep: int) -> dict:
     except OSError as e:  # the agent left its work copy unusable: invalid work, kept visible in analysis
         judge = {"truth": False, **{g: False for g in GRADERS}, "pc": 0.0, "judge_error": f"{type(e).__name__}: {e}"}
     final = final_state(world, work)
+    shutil.rmtree(work, onexc=_force_remove)
     hits = escape_audit.audit(ev_file)  # Bash is not confined: every episode is audited for leaving its copy
     if hits:
         print(f"WARNING escape hits in {ev_file.name}: {hits[:5]}", file=sys.stderr, flush=True)
@@ -89,6 +96,15 @@ def episode(world: str, task: dict, model: str, cfg: dict, rep: int) -> dict:
             "resolved_model": res.get("resolved_model"), "usage": res.get("usage"), "actions": actions,
             "judge": judge, "events_file": ev_file.relative_to(HERE).as_posix(), "root": str(work),
             "escape_hits": hits, "final": final}
+
+
+def _force_remove(func, path, exc) -> None:
+    """rmtree helper: clear git's read-only bit and retry; skip what the sandbox user owns."""
+    try:
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    except OSError:
+        pass
 
 
 def final_state(world: str, work: Path) -> str:
