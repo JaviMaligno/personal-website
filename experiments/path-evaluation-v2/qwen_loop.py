@@ -92,8 +92,13 @@ def run(cfg: dict, work: Path, prompt: str, env: dict, max_calls: int = 80) -> d
         if not tcs:
             return {"steps": steps, "usage": usage, "stop": "done", "final_text": msg.get("content"), "resolved_model": cfg["model"]}
         for tc in tcs:
-            args = json.loads(tc["function"]["arguments"] or "{}")
-            out = _exec(work, env, tc["function"]["name"], args)
+            try:
+                args = json.loads(tc["function"]["arguments"] or "{}")
+            except json.JSONDecodeError as e:  # malformed arguments are the model's error: report it, don't crash
+                args = {"_unparsed": tc["function"]["arguments"]}
+                out = f"error: tool arguments are not valid JSON ({e})"
+            else:
+                out = _exec(work, env, tc["function"]["name"], args)
             steps.append({"tool": tc["function"]["name"], "args": args})
             msgs.append({"role": "tool", "tool_call_id": tc["id"], "content": out})
             calls += 1
