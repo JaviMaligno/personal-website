@@ -102,6 +102,20 @@ def final_state(world: str, work: Path) -> str:
         return f"unavailable: {e}"
 
 
+def preflight_codex(cfg: dict, world: str) -> None:
+    """A fresh CODEX_HOME's Windows sandbox needs a first run before commands return: in the Mathlib
+    trial the first episode on a new home hung on every command and never touched its file. Warm the
+    home up with a trivial command and refuse to start if no command actually ran."""
+    work = TMP / f"preflight-{world}"
+    work.mkdir(parents=True, exist_ok=True)
+    for attempt in range(2):
+        res = agents.run_codex(cfg["model"], cfg["effort"], work, "Run the shell command `echo ok` and reply with its output.", world, timeout=600)
+        if any('"command_execution"' in l and '"item.completed"' in l for l in res["events"]):
+            print(f"preflight {cfg['model']} ({world}): ok", flush=True)
+            return
+    raise SystemExit(f"preflight {cfg['model']} ({world}): no command ran after 2 attempts; not starting")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--world", required=True, choices=["a", "b", "c"])
@@ -118,6 +132,8 @@ def main(argv=None):
     out.parent.mkdir(parents=True, exist_ok=True)
     done = done_keys(out)
     tasks = load_tasks(args.world, args.tasks)
+    for model in {m for m in args.models if models[m]["kind"] == "codex"}:
+        preflight_codex(models[model], args.world)
     for task in tasks:
         for model in args.models:
             for rep in range(args.reps):
