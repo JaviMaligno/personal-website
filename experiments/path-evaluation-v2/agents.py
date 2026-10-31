@@ -16,10 +16,11 @@ import qwen_loop
 import setup_env
 
 HERE = Path(__file__).parent
-# One Codex home per world, so two runner processes (one per world) can run side by side. Not under
-# %TEMP%: Codex refuses to keep its sandbox helper binaries there, so it re-ran the Windows sandbox
-# setup (a visible window) on every call (2026-10-31).
-CODEX_HOMES = Path.home() / ".pe2-codex"
+# One Codex home shared by every run; model and effort go as flags. One home per world made the
+# homes reset each other's Windows sandbox users (each keeps its own password), forcing a full
+# sandbox setup on almost every call (2026-10-31). Not under %TEMP%: Codex refuses to keep its
+# sandbox helper binaries there.
+CODEX_HOME = Path.home() / ".pe2-codex" / "codexhome"
 CLAUDE_TOOLS = "Bash,Read,Edit,Write,Grep,Glob"
 # Edit/Write only inside the work copy (checked 2026-10-31: a bare "Write" allow wrote outside it).
 CLAUDE_ALLOWED = "Bash,Read,Grep,Glob,Edit(./**),Write(./**)"
@@ -38,26 +39,54 @@ def env_for(world: str) -> dict:
     return env
 
 
-def prepare_codex_home(model: str, effort: str, world: str) -> Path:
-    home = CODEX_HOMES / f"codexhome-{world}"
+def prepare_codex_home() -> Path:
+    home = CODEX_HOME
     home.mkdir(parents=True, exist_ok=True)
     shutil.copy2(Path.home() / ".codex" / "auth.json", home / "auth.json")
     # [windows] sandbox: without it the isolated home has no working sandbox and every command is
     # "blocked by policy" (observed 2026-10-30); the user's own config sets it to "elevated".
-    lines = [f'model = "{model}"', f'model_reasoning_effort = "{effort}"', "", "[windows]", 'sandbox = "elevated"', ""]
+    lines = ["[windows]", 'sandbox = "elevated"', ""]
     for root in (Path.home() / ".agents" / "skills", Path.home() / ".codex" / "skills"):
         if root.exists():
             for p in sorted(root.rglob("SKILL.md")):
                 lines += ["[[skills.config]]", f"path = '{p}'", "enabled = false", ""]
-    (home / "config.toml").write_text("\n".join(lines), encoding="utf-8")
+    config = home / "config.toml"
+    text = "\n".join(lines)
+    if not config.exists() or config.read_text(encoding="utf-8") != text:  # another run may be reading it
+        config.write_text(text, encoding="utf-8")
+    sync_sandbox_users()
     return home
+
+
+SANDBOX_STATE = (Path(".sandbox-secrets") / "sandbox_users.json", Path(".sandbox") / "setup_marker.json")
+
+
+def sync_sandbox_users() -> None:
+    """Every Codex home on this machine shares the Windows users CodexSandboxOffline/Online but keeps
+    its own copy of their passwords: when one home re-creates the users, the others must redo the
+    full sandbox setup (a window each time). Copy the newest password file and marker to the other
+    side, so the experiment and the user's own Codex never invalidate each other."""
+    user = Path.home() / ".codex"
+    ours, theirs = CODEX_HOME / SANDBOX_STATE[0], user / SANDBOX_STATE[0]
+    if not ours.exists() and not theirs.exists():
+        return
+    src, dst = (CODEX_HOME, user) if ours.exists() and (not theirs.exists() or ours.stat().st_mtime > theirs.stat().st_mtime) else (user, CODEX_HOME)
+    for rel in SANDBOX_STATE:
+        if (src / rel).exists() and (not (dst / rel).exists() or (src / rel).read_bytes() != (dst / rel).read_bytes()):
+            (dst / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src / rel, dst / rel)
+
+
+def codex_cmd(model: str, effort: str) -> list[str]:
+    return [shutil.which("codex") or "codex", "exec", "-m", model, "-c", f'model_reasoning_effort="{effort}"',
+            "--json", "--ephemeral", "--skip-git-repo-check", "--disable", "plugins", "-s", "workspace-write", "-"]
 
 
 def run_claude(model: str, work: Path, prompt: str, world: str, timeout=1800) -> dict:
     cmd = [shutil.which("claude") or "claude", "-p", prompt, "--model", model, "--setting-sources", "",
            "--strict-mcp-config", "--tools", CLAUDE_TOOLS, "--allowedTools", CLAUDE_ALLOWED,
            "--output-format", "stream-json", "--verbose", "--no-session-persistence", "--max-turns", "80"]
-    r = proctree.run(cmd, cwd=work, env=env_for(world), text=True, encoding="utf-8", timeout=timeout)
+    r = proctree.run(cmd, cwd=work, env=env_for(world), text=True, encoding="utf-8", timeout=timeout, hidden=True)
     lines = r.stdout.splitlines()
     result = next((json.loads(l) for l in reversed(lines) if '"type":"result"' in l.replace(" ", "")), {})
     init = next((json.loads(l) for l in lines if '"subtype":"init"' in l.replace(" ", "")), {})
@@ -67,13 +96,14 @@ def run_claude(model: str, work: Path, prompt: str, world: str, timeout=1800) ->
 
 
 def run_codex(model: str, effort: str, work: Path, prompt: str, world: str, timeout=1800) -> dict:
-    home = prepare_codex_home(model, effort, world)
-    env = env_for(world) | {"CODEX_HOME": str(home)}
-    cmd = [shutil.which("codex") or "codex", "exec", "--json", "--ephemeral", "--skip-git-repo-check",
-           "--disable", "plugins", "-s", "workspace-write", "-"]
+    env = env_for(world) | {"CODEX_HOME": str(prepare_codex_home())}
     # Prompt goes via stdin ("-"): codex is a .CMD shim on Windows and cmd.exe truncates argv at the first newline.
     # input= also gives EOF after the prompt, so stdin stays isolated.
-    r = proctree.run(cmd, cwd=work, env=env, text=True, encoding="utf-8", timeout=timeout, input=prompt)
+    try:
+        r = proctree.run(codex_cmd(model, effort), cwd=work, env=env, text=True, encoding="utf-8", timeout=timeout,
+                         input=prompt, hidden=True)
+    finally:
+        sync_sandbox_users()  # if this run re-created the users, hand the new passwords to the user's Codex
     lines = r.stdout.splitlines()
     usage = next((json.loads(l).get("usage") for l in reversed(lines) if "turn.completed" in l), None)
     return {"events": lines, "resolved_model": model, "stop": "done" if r.returncode == 0 else f"exit {r.returncode}",

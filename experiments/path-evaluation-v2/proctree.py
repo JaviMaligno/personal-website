@@ -9,8 +9,12 @@ from __future__ import annotations
 import subprocess
 
 
-def run(cmd, timeout: float, input: str | None = None, **kw) -> subprocess.CompletedProcess:
+def run(cmd, timeout: float, input: str | None = None, hidden: bool = False, **kw) -> subprocess.CompletedProcess:
+    """hidden: give the tree a console with no window. Started from a process without a console,
+    every console program the agent spawns (Codex's sandbox setup before each command) pops up its own."""
     stdin = subprocess.PIPE if input is not None else kw.pop("stdin", subprocess.DEVNULL)
+    if hidden:
+        kw["creationflags"] = kw.get("creationflags", 0) | subprocess.CREATE_NO_WINDOW
     with subprocess.Popen(cmd, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kw) as p:
         try:
             out, err = p.communicate(input, timeout=timeout)
