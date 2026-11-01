@@ -1901,3 +1901,34 @@ At right, an integrated results panel shows a clean grid of fifteen small cells,
 
 No headline or article title in the image. Readable generic text is welcome only in the specified small interface labels. No text-heavy poster, no logos, no brand names, no people, no humanoid robots, no sports equipment, no purple gradient blobs, no bokeh, no decorative floating neural-network metaphor, no watermark. Keep every essential object inside the frame.
 ```
+
+## More Than One Way to Prove It (more-than-one-way-to-prove-it) — 2026-11-01
+- Article: `src/content/blog/en/more-than-one-way-to-prove-it.md`
+- Image: `public/blog/more-than-one-way-to-prove-it.png`
+- Generated: 2026-11-01, built-in image_gen; checklist labels corrected with image_gen; resized to 1020x510. Pending review by Javier.
+
+Initial generation prompt:
+Create a 1020x510 pixel blog hero image, wide 2:1 composition, for the technical article "More Than One Way to Prove It". Do not print the article title.
+Style: refined technical editorial bitmap illustration, dark but not monochrome. Show a concrete proof-development workstation as a working system: an integrated editor, proof-route visualizer, compiler terminal and automated path grader. Shallow dimensional depth, matte graphite panels, crisp edges, carefully spaced connectors, subtle surface texture, high contrast and strong hierarchy readable at thumbnail size. Balanced teal, amber, graphite and warm off-white accents, with restrained green verification marks.
+Make the proof-route visualizer the dominant central element. A single starting theorem branches into two clearly different sequences of rectangular proof-step tiles. The upper route uses induction; the lower route uses case splits and recursion. Both travel left to right and converge on exactly the same final theorem tile. Put a distinct green check on each route immediately before the merge, and another green verification mark on the shared result. The upper route is highlighted by a narrow off-white reference outline and the small label "REFERENCE". The alternate route is teal. Both routes must visibly remain complete and connected to the verified result.
+At the left, integrate a compact editor window containing only these short readable monospace fragments, in two separated code groups:
+"induction k with"
+"omega"
+"match n with"
+"omega"
+At the right, integrate a smaller panel labelled "PATH GRADER". Show two slim comparison bars: "1.00" for the reference route and "0.63" for the alternate route. An aligned vertical threshold marker is labelled "0.80". A fine amber connector from this grader points to a crisp amber cross badge and the short stamp "FAIL" beside the alternate route. Keep this rejection clearly separate from the green compiler checks: the grader rejects the route despite its verified endpoint, never a broken or unfinished proof.
+Below the shared result, a small compiler terminal reads "exit 0". Include a discreet four-row checklist labelled "E0", "E1", "E2", "E3", with green checks beside E0, E1 and E2 and an amber cross beside E3, associated with the alternate proof.
+
+Use sparse, legible generic interface lettering, with the branching routes and contradictory verdict as the main visual story. Generous outer margins. No headline, paragraphs, text-heavy poster, logos, brand names, people, robots, watermarks, purple gradient blobs, bokeh or decorative neon haze.
+
+Correction prompt (applied to the generated draft):
+
+```text
+Edit this generated technical editorial illustration. Preserve its composition, proof routes, editor, colors, green endpoint checks, path-grader comparison bars, amber FAIL badge and compiler terminal. Change only the four descriptive labels in the bottom-right E0/E1/E2/E3 checklist to accurately represent the article's graders. Use exactly these rows:
+"E0"  "final state"       green check
+"E1"  "forbidden acts"    green check
+"E2"  "obligations"       green check
+"E3"  "reference path"    amber cross
+Keep the checklist header and typography consistent with the existing image. Remove the old descriptions "termination", "coverage", "type correctness" and "approved strategy". Do not add any other text or change anything else. Keep the wide 2:1 aspect ratio for a final 1020x510 blog hero.
+```
+
