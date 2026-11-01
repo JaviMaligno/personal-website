@@ -7,7 +7,17 @@ lang: es
 translationKey: more-than-one-way-to-prove-it
 heroImage: "/blog/more-than-one-way-to-prove-it.png"
 ---
-Estas son dos demostraciones de que el Fibonacci $n$ es como mucho $2^n$, escritas por dos agentes distintos.
+Hay dos formas de evaluar a un agente de IA que acaba de terminar una tarea: mirar lo que ha dejado o mirar cómo ha llegado hasta ahí. *CORE: Full-Path Evaluation of LLM Agents Beyond Final State* ([Michelakis, Hadjiyiannis y Stamoulis, 2025](https://arxiv.org/abs/2509.20998)) defiende la segunda. Si solo miras el estado final, agentes que se comportaron de forma muy distinta parecen iguales. Así que CORE codifica cada tarea como un conjunto de caminos válidos de llamadas a herramientas y puntúa cuánto se acerca el camino del agente a alguno de ellos.
+
+El problema aparece con un teorema pequeño: el Fibonacci $n$ es como mucho $2^n$, es decir, $F_n \le 2^n$. Dos agentes lo demostraron, por dos rutas distintas.
+
+- **`gpt-6.1-sol` demostró algo más fuerte.** Probó que la cota se cumple para dos números seguidos a la vez, $F_k \le 2^k$ y $F_{k+1} \le 2^{k+1}$, porque así basta una inducción simple sobre $k$.
+- **Claude Sonnet hizo que el teorema se llamara a sí mismo.** Distinguió casos en $n$ y usó la cota para los dos números anteriores: $F_{n+2} = F_n + F_{n+1} \le 2^n + 2^{n+1} \le 2^{n+2}$. Lean comprueba que esa recursión termina.
+
+El núcleo de Lean acepta las dos. Comparadas con los caminos de referencia, la primera obtiene una corrección de camino de 1,0 y la segunda de 0,63. Con el umbral habitual, la primera aprueba y la segunda suspende.
+
+<details style="margin:0 0 1.75rem">
+<summary>Las dos demostraciones en Lean (pulsa para desplegar)</summary>
 
 ```lean
 -- gpt-6.1-sol: demostrar algo más fuerte, por inducción
@@ -34,11 +44,9 @@ match n with
   omega
 ```
 
-Las dos son correctas: el núcleo de Lean las acepta. Y son rutas distintas. La primera refuerza el enunciado para que cubra dos números seguidos a la vez, de modo que basta una inducción simple. La segunda distingue casos en $n$ y usa el propio teorema para los dos números anteriores, una recursión cuya terminación comprueba Lean. Comparadas con los caminos de referencia, la primera obtiene una corrección de camino de 1,0 y la segunda de 0,63. Con el umbral habitual, la primera aprueba y la segunda suspende.
+</details>
 
-Esa es la evaluación que propone *CORE: Full-Path Evaluation of LLM Agents Beyond Final State* ([Michelakis, Hadjiyiannis y Stamoulis, 2025](https://arxiv.org/abs/2509.20998)). Su argumento es correcto hasta donde llega: si solo miras el estado final, agentes que se comportaron de forma muy distinta parecen iguales. CORE codifica cada tarea como un conjunto de caminos válidos de llamadas a herramientas y mide cuánto se acerca el camino del agente a alguno de ellos.
-
-Mi duda estaba en las tareas donde no se sabe de antemano cuál es el siguiente paso útil. Una demostración, o una sesión de depuración, es exploratoria: no sabes qué lema o qué `print` la va a desbloquear. Fijar el camino podría exigir algo que la tarea nunca necesitó. Fijar lo obligatorio y lo prohibido podría bastar. Así que medí las dos cosas, en tareas donde existen de verdad varias rutas válidas.
+El argumento de CORE es correcto hasta donde llega. Mi duda estaba en las tareas donde no se sabe de antemano cuál es el siguiente paso útil. Una demostración, o una sesión de depuración, es exploratoria: no sabes qué lema o qué `print` la va a desbloquear. Fijar el camino podría exigir algo que la tarea nunca necesitó. Fijar lo obligatorio y lo prohibido podría bastar. Así que medí las dos cosas, en tareas donde existen de verdad varias rutas válidas.
 
 <style>
 .path-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}

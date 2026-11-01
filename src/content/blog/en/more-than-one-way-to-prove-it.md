@@ -7,7 +7,17 @@ lang: en
 translationKey: more-than-one-way-to-prove-it
 heroImage: "/blog/more-than-one-way-to-prove-it.png"
 ---
-Here are two proofs that the $n$-th Fibonacci number is at most $2^n$, written by two different agents.
+There are two ways to grade an AI agent that has just finished a task: look at what it left behind, or look at how it got there. *CORE: Full-Path Evaluation of LLM Agents Beyond Final State* ([Michelakis, Hadjiyiannis and Stamoulis, 2025](https://arxiv.org/abs/2509.20998)) makes the case for the second. If you only check the final state, agents that behaved very differently look the same. So CORE encodes each task as a set of valid tool-use paths and scores how close the agent's path comes to one of them.
+
+The catch shows up on a small theorem: the $n$-th Fibonacci number is at most $2^n$, that is, $F_n \le 2^n$. Two agents proved it, by two different routes.
+
+- **`gpt-6.1-sol` proved something stronger.** It showed that the bound holds for two consecutive numbers at once, $F_k \le 2^k$ and $F_{k+1} \le 2^{k+1}$, because then a plain induction on $k$ goes through.
+- **Claude Sonnet let the theorem call itself.** It split on $n$ and used the bound for the two previous numbers: $F_{n+2} = F_n + F_{n+1} \le 2^n + 2^{n+1} \le 2^{n+2}$. Lean checks that this recursion terminates.
+
+Lean's kernel accepts both. Scored against reference paths, the first gets a path correctness of 1.0 and the second 0.63. With the usual threshold, the first passes and the second fails.
+
+<details style="margin:0 0 1.75rem">
+<summary>The two proofs in Lean (click to expand)</summary>
 
 ```lean
 -- gpt-6.1-sol: prove something stronger, by induction
@@ -34,11 +44,9 @@ match n with
   omega
 ```
 
-Both are correct; Lean's kernel accepts them. They are different routes. The first strengthens the claim to two consecutive numbers at once, so that a plain induction goes through. The second splits on $n$ and uses the theorem itself for the two previous numbers, a recursion Lean checks terminates. Scored against reference paths, the first gets a path correctness of 1.0 and the second 0.63. With the usual threshold, the first passes and the second fails.
+</details>
 
-That is the kind of grading proposed by *CORE: Full-Path Evaluation of LLM Agents Beyond Final State* ([Michelakis, Hadjiyiannis and Stamoulis, 2025](https://arxiv.org/abs/2509.20998)). Its argument is sound as far as it goes: if you only check the final state, agents that behaved very differently look the same. CORE encodes each task as a set of valid tool-use paths and measures how close the agent's path is to one of them.
-
-My doubt was about tasks where the next useful step is not known in advance. A proof, or a debugging session, is exploratory: you don't know which lemma or which print statement will unlock it. Writing down the path might demand something the task never needed. Writing down what is required and what is forbidden might be enough. So I measured both, on tasks where several valid routes really exist.
+CORE's argument is sound as far as it goes. My doubt was about tasks where the next useful step is not known in advance. A proof, or a debugging session, is exploratory: you don't know which lemma or which print statement will unlock it. Writing down the path might demand something the task never needed. Writing down what is required and what is forbidden might be enough. So I measured both, on tasks where several valid routes really exist.
 
 <style>
 .path-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
