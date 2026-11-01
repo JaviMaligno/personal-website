@@ -6,6 +6,7 @@ tags: ["AI", "Agents", "Evaluation", "Lean", "Research"]
 lang: en
 translationKey: more-than-one-way-to-prove-it
 heroImage: "/blog/more-than-one-way-to-prove-it.png"
+repoUrl: https://github.com/JaviMaligno/path-evaluation
 ---
 There are two ways to grade an AI agent that has just finished a task: look at what it left behind, or look at how it got there. *CORE: Full-Path Evaluation of LLM Agents Beyond Final State* ([Michelakis, Hadjiyiannis and Stamoulis, 2025](https://arxiv.org/abs/2509.20998)) makes the case for the second. If you only check the final state, agents that behaved very differently look the same. So CORE encodes each task as a set of valid tool-use paths and scores how close the agent's path comes to one of them.
 
@@ -13,8 +14,8 @@ The argument is sound as far as it goes. My doubt was about tasks where the next
 
 Here is what that looks like on a small theorem: the $n$-th Fibonacci number is at most $2^n$, that is, $F_n \le 2^n$. Two agents proved it, by two different routes.
 
-- **`gpt-6.1-sol` proved something stronger.** It showed that the bound holds for two consecutive numbers at once, $F_k \le 2^k$ and $F_{k+1} \le 2^{k+1}$, because then a plain induction on $k$ goes through.
-- **Claude Sonnet let the theorem call itself.** It split on $n$ and used the bound for the two previous numbers: $F_{n+2} = F_n + F_{n+1} \le 2^n + 2^{n+1} \le 2^{n+2}$. Lean checks that this recursion terminates.
+- **GPT-6.1 Sol proved something stronger.** It showed that the bound holds for two consecutive numbers at once, $F_k \le 2^k$ and $F_{k+1} \le 2^{k+1}$, because then a plain induction on $k$ goes through.
+- **Claude Sonnet 5.5 let the theorem call itself.** It split on $n$ and used the bound for the two previous numbers: $F_{n+2} = F_n + F_{n+1} \le 2^n + 2^{n+1} \le 2^{n+2}$. Lean checks that this recursion terminates.
 
 Lean's kernel accepts both. Scored against reference paths, the first gets a path correctness of 1.0 and the second 0.63. With the usual threshold, the first passes and the second fails.
 
@@ -22,7 +23,7 @@ Lean's kernel accepts both. Scored against reference paths, the first gets a pat
 <summary>The two proofs in Lean (click to expand)</summary>
 
 ```lean
--- gpt-6.1-sol: prove something stronger, by induction
+-- GPT-6.1 Sol: prove something stronger, by induction
 have bounds : ∀ k, fib k ≤ 2 ^ k ∧ fib (k + 1) ≤ 2 ^ (k + 1) := by
   intro k
   induction k with
@@ -34,7 +35,7 @@ have bounds : ∀ k, fib k ≤ 2 ^ k ∧ fib (k + 1) ≤ 2 ^ (k + 1) := by
       omega
 exact (bounds n).1
 
--- Claude Sonnet: no induction tactic, the theorem calls itself
+-- Claude Sonnet 5.5: no induction tactic, the theorem calls itself
 match n with
 | 0 => simp [fib]
 | 1 => simp [fib]
@@ -64,7 +65,7 @@ Writing down what is required and what is forbidden, instead of the path, might 
 
 **World C: Mathlib.** Nine competition problems from [miniF2F](https://github.com/yangky11/miniF2F-lean4), four of them hard (two AIME, two IMO), with full Mathlib available.
 
-Six models ran each task three times: Claude Haiku, Sonnet and Opus through Claude Code; `gpt-6.1-sol` and `gpt-6-luna` through Codex; and Qwen 3.5 9B in a plain tool loop. That makes 180 runs in A and 468 in B. World C was a smaller trial with three models, 46 runs.
+Six models ran each task three times: Claude Haiku 5.5, Sonnet 5.5 and Opus 5.5 through Claude Code; GPT-6.1 Sol and GPT-6 Luna through Codex; and Qwen 3.5 9B in a plain tool loop. From here on they are Haiku, Sonnet, Opus, Sol, Luna and Qwen. That makes 180 runs in A and 468 in B. World C was a smaller trial with three models, 46 runs.
 
 Every run was scored by four graders, each one a different idea of what to check:
 
@@ -193,13 +194,13 @@ In A, a loose threshold works: at $\tau = 0.5$ no valid fix is failed. A bug fix
 
 E2 doesn't compare paths. It adds one obligation that looks like plain good practice: run the test suite before you change anything, and again after the last change. In A, 115 of the 157 valid fixes failed E2. Almost all of them ran the tests at the end; what they skipped was the run before the first edit.
 
-Who skipped it:
+How many valid fixes ran the tests first, model by model:
 
 <figure class="path-fig">
-<svg viewBox="0 0 600 250" role="img" aria-label="Share of each model's valid bug fixes that ran the tests before the first edit: gpt-6.1-sol 28 of 29, Qwen 19 of 22, Haiku 7 of 25, Luna 3 of 22, Opus 1 of 29, Sonnet 0 of 30.">
+<svg viewBox="0 0 600 250" role="img" aria-label="Share of each model's valid bug fixes that ran the tests before the first edit: Sol 28 of 29, Qwen 19 of 22, Haiku 7 of 25, Luna 3 of 22, Opus 1 of 29, Sonnet 0 of 30.">
   <g font-size="12" fill="#e2e8f0" text-anchor="end">
-    <text x="130" y="40">gpt-6.1-sol</text><text x="130" y="76">Qwen 3.5 9B</text><text x="130" y="112">Haiku</text>
-    <text x="130" y="148">gpt-6-luna</text><text x="130" y="184">Opus</text><text x="130" y="220">Sonnet</text>
+    <text x="130" y="40">Sol</text><text x="130" y="76">Qwen</text><text x="130" y="112">Haiku</text>
+    <text x="130" y="148">Luna</text><text x="130" y="184">Opus</text><text x="130" y="220">Sonnet</text>
   </g>
   <g fill="#232333"><rect x="140" y="26" width="380" height="20" rx="4"/><rect x="140" y="62" width="380" height="20" rx="4"/><rect x="140" y="98" width="380" height="20" rx="4"/><rect x="140" y="134" width="380" height="20" rx="4"/><rect x="140" y="170" width="380" height="20" rx="4"/><rect x="140" y="206" width="380" height="20" rx="4"/></g>
   <g fill="#2dd4bf"><rect x="140" y="26" width="367" height="20" rx="4"/><rect x="140" y="62" width="328" height="20" rx="4"/><rect x="140" y="98" width="106" height="20" rx="4"/><rect x="140" y="134" width="52" height="20" rx="4"/><rect x="140" y="170" width="13" height="20" rx="4"/></g>
@@ -211,9 +212,9 @@ Who skipped it:
 <figcaption>Valid bug fixes that ran the test suite before the first edit, per model. Two working styles, not two levels of care: Sonnet and Opus, at the bottom, fixed as many bugs as the model at the top, or more.</figcaption>
 </figure>
 
-Sonnet fixed all 30 bugs and never once ran the suite before editing. Opus fixed 29 and ran it first once. Both read the failing test and the code, made the fix, then ran everything. `gpt-6.1-sol` fixed 29 and ran the suite first in 28 of them. Qwen, tied for the fewest fixes, ran it first in most runs, because it explores by running things. The obligation splits the models by habit, and the habit has nothing to do with who fixes more bugs.
+Sonnet fixed all 30 bugs and never once ran the suite before editing. Opus fixed 29 and ran it first once. Both read the failing test and the code, made the fix, then ran everything. Sol fixed 29 and ran the suite first in 28 of them. Qwen, tied for the fewest fixes, ran it first in most runs, because it explores by running things. The obligation splits the models by habit, and the habit has nothing to do with who fixes more bugs.
 
-Put the obligation together with the forbidden list and the ordering turns upside down. In about half its runs `gpt-6.1-sol` added a regression test next to its fix, which is good practice too, and E1 forbids editing the tests. So under E2 the model that passes most often is Qwen, with 18 of its 22 fixes, and the strongest models come last: Opus 1 of 29, Sonnet 0 of 30. Two rules that each sound reasonable add up to a grader that ranks the field in reverse.
+Put the obligation together with the forbidden list and the ordering turns upside down. In about half its runs Sol added a regression test next to its fix, which is good practice too, and E1 forbids editing the tests. So under E2 the model that passes most often is Qwen, with 18 of its 22 fixes, and the strongest models come last: Opus 1 of 29, Sonnet 0 of 30. Two rules that each sound reasonable add up to a grader that ranks the field in reverse.
 
 ## The case nobody's grader could see
 
@@ -245,3 +246,7 @@ That last point is an observation from a handful of runs, not a measured grader.
 ## Limits
 
 Three runs per model and task; one Python library; a translation of CORE's path to proofs that is mine, not the paper's; twenty-six short theorems and nine competition problems, the latter with three models only. The Lean references were written by a model outside the comparison, and each theorem's two references were checked to use different strategies. Two of the checks have a second version, published next to the original rather than replacing it. The statement check also accepts ASCII spellings Lean reads as the same symbol (`->` for `→`), which turns five of Luna's proofs valid. The bug-world truth is also given limited to the hidden cases that follow from the report, which is where the 11 comes from. The Lean runs through Codex were repeated after faults in its sandbox that affected how `lean` ran there; the numbers here come from the repeated runs.
+
+---
+
+*Code, tasks and the raw trace of every run: [github.com/JaviMaligno/path-evaluation](https://github.com/JaviMaligno/path-evaluation).*

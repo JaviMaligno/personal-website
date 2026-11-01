@@ -6,6 +6,7 @@ tags: ["IA", "Agentes", "Evaluación", "Lean", "Investigación"]
 lang: es
 translationKey: more-than-one-way-to-prove-it
 heroImage: "/blog/more-than-one-way-to-prove-it.png"
+repoUrl: https://github.com/JaviMaligno/path-evaluation
 ---
 Hay dos formas de evaluar a un agente de IA que acaba de terminar una tarea: mirar lo que ha dejado o mirar cómo ha llegado hasta ahí. *CORE: Full-Path Evaluation of LLM Agents Beyond Final State* ([Michelakis, Hadjiyiannis y Stamoulis, 2025](https://arxiv.org/abs/2509.20998)) defiende la segunda. Si solo miras el estado final, agentes que se comportaron de forma muy distinta parecen iguales. Así que CORE codifica cada tarea como un conjunto de caminos válidos de llamadas a herramientas y puntúa cuánto se acerca el camino del agente a alguno de ellos.
 
@@ -13,8 +14,8 @@ El argumento es correcto hasta donde llega. Mi duda estaba en las tareas donde n
 
 Así se ve con un teorema pequeño: el Fibonacci $n$ es como mucho $2^n$, es decir, $F_n \le 2^n$. Dos agentes lo demostraron, por dos rutas distintas.
 
-- **`gpt-6.1-sol` demostró algo más fuerte.** Probó que la cota se cumple para dos números seguidos a la vez, $F_k \le 2^k$ y $F_{k+1} \le 2^{k+1}$, porque así basta una inducción simple sobre $k$.
-- **Claude Sonnet hizo que el teorema se llamara a sí mismo.** Distinguió casos en $n$ y usó la cota para los dos números anteriores: $F_{n+2} = F_n + F_{n+1} \le 2^n + 2^{n+1} \le 2^{n+2}$. Lean comprueba que esa recursión termina.
+- **GPT-6.1 Sol demostró algo más fuerte.** Probó que la cota se cumple para dos números seguidos a la vez, $F_k \le 2^k$ y $F_{k+1} \le 2^{k+1}$, porque así basta una inducción simple sobre $k$.
+- **Claude Sonnet 5.5 hizo que el teorema se llamara a sí mismo.** Distinguió casos en $n$ y usó la cota para los dos números anteriores: $F_{n+2} = F_n + F_{n+1} \le 2^n + 2^{n+1} \le 2^{n+2}$. Lean comprueba que esa recursión termina.
 
 El núcleo de Lean acepta las dos. Comparadas con los caminos de referencia, la primera obtiene una corrección de camino de 1,0 y la segunda de 0,63. Con el umbral habitual, la primera aprueba y la segunda suspende.
 
@@ -22,7 +23,7 @@ El núcleo de Lean acepta las dos. Comparadas con los caminos de referencia, la 
 <summary>Las dos demostraciones en Lean (pulsa para desplegar)</summary>
 
 ```lean
--- gpt-6.1-sol: demostrar algo más fuerte, por inducción
+-- GPT-6.1 Sol: demostrar algo más fuerte, por inducción
 have bounds : ∀ k, fib k ≤ 2 ^ k ∧ fib (k + 1) ≤ 2 ^ (k + 1) := by
   intro k
   induction k with
@@ -34,7 +35,7 @@ have bounds : ∀ k, fib k ≤ 2 ^ k ∧ fib (k + 1) ≤ 2 ^ (k + 1) := by
       omega
 exact (bounds n).1
 
--- Claude Sonnet: sin táctica de inducción, el teorema se llama a sí mismo
+-- Claude Sonnet 5.5: sin táctica de inducción, el teorema se llama a sí mismo
 match n with
 | 0 => simp [fib]
 | 1 => simp [fib]
@@ -64,7 +65,7 @@ Fijar lo obligatorio y lo prohibido, en lugar del camino, podría bastar. Así q
 
 **Mundo C: Mathlib.** Nueve problemas de competición de [miniF2F](https://github.com/yangky11/miniF2F-lean4), cuatro de ellos difíciles (dos de la AIME y dos de la IMO), con todo Mathlib disponible.
 
-Seis modelos hicieron cada tarea tres veces: Claude Haiku, Sonnet y Opus con Claude Code; `gpt-6.1-sol` y `gpt-6-luna` con Codex; y Qwen 3.5 9B en un bucle de herramientas sencillo. Eso da 180 ejecuciones en A y 468 en B. El mundo C fue una prueba más pequeña, con tres modelos y 46 ejecuciones.
+Seis modelos hicieron cada tarea tres veces: Claude Haiku 5.5, Sonnet 5.5 y Opus 5.5 con Claude Code; GPT-6.1 Sol y GPT-6 Luna con Codex; y Qwen 3.5 9B en un bucle de herramientas sencillo. A partir de aquí, Haiku, Sonnet, Opus, Sol, Luna y Qwen. Eso da 180 ejecuciones en A y 468 en B. El mundo C fue una prueba más pequeña, con tres modelos y 46 ejecuciones.
 
 Cada ejecución la puntuaron cuatro evaluadores, cada uno una idea distinta de qué comprobar:
 
@@ -193,13 +194,13 @@ En A, un umbral laxo funciona: con $\tau = 0{,}5$ no se suspende ningún arreglo
 
 E2 no compara caminos. Solo añade una obligación que parece buena práctica sin más: ejecutar la suite de tests antes de cambiar nada y otra vez después del último cambio. En A, 115 de los 157 arreglos válidos suspendieron E2. Casi todos ejecutaron los tests al final; lo que se saltaron fue la ejecución antes de la primera edición.
 
-Quién se la saltó:
+Cuántos arreglos válidos ejecutaron primero los tests, modelo a modelo:
 
 <figure class="path-fig">
-<svg viewBox="0 0 600 250" role="img" aria-label="Proporción de arreglos válidos de cada modelo que ejecutaron los tests antes de la primera edición: gpt-6.1-sol 28 de 29, Qwen 19 de 22, Haiku 7 de 25, Luna 3 de 22, Opus 1 de 29, Sonnet 0 de 30.">
+<svg viewBox="0 0 600 250" role="img" aria-label="Proporción de arreglos válidos de cada modelo que ejecutaron los tests antes de la primera edición: Sol 28 de 29, Qwen 19 de 22, Haiku 7 de 25, Luna 3 de 22, Opus 1 de 29, Sonnet 0 de 30.">
   <g font-size="12" fill="#e2e8f0" text-anchor="end">
-    <text x="130" y="40">gpt-6.1-sol</text><text x="130" y="76">Qwen 3.5 9B</text><text x="130" y="112">Haiku</text>
-    <text x="130" y="148">gpt-6-luna</text><text x="130" y="184">Opus</text><text x="130" y="220">Sonnet</text>
+    <text x="130" y="40">Sol</text><text x="130" y="76">Qwen</text><text x="130" y="112">Haiku</text>
+    <text x="130" y="148">Luna</text><text x="130" y="184">Opus</text><text x="130" y="220">Sonnet</text>
   </g>
   <g fill="#232333"><rect x="140" y="26" width="380" height="20" rx="4"/><rect x="140" y="62" width="380" height="20" rx="4"/><rect x="140" y="98" width="380" height="20" rx="4"/><rect x="140" y="134" width="380" height="20" rx="4"/><rect x="140" y="170" width="380" height="20" rx="4"/><rect x="140" y="206" width="380" height="20" rx="4"/></g>
   <g fill="#2dd4bf"><rect x="140" y="26" width="367" height="20" rx="4"/><rect x="140" y="62" width="328" height="20" rx="4"/><rect x="140" y="98" width="106" height="20" rx="4"/><rect x="140" y="134" width="52" height="20" rx="4"/><rect x="140" y="170" width="13" height="20" rx="4"/></g>
@@ -211,9 +212,9 @@ Quién se la saltó:
 <figcaption>Arreglos válidos que ejecutaron la suite de tests antes de la primera edición, por modelo. Son dos estilos de trabajo, no dos niveles de cuidado: Sonnet y Opus, abajo del todo, arreglaron tantos bugs como el modelo de arriba, o más.</figcaption>
 </figure>
 
-Sonnet arregló los 30 bugs y ni una sola vez ejecutó la suite antes de editar. Opus arregló 29 y la ejecutó primero una vez. Los dos leyeron el test que fallaba y el código, hicieron el arreglo y luego lo ejecutaron todo. `gpt-6.1-sol` arregló 29 y ejecutó la suite primero en 28. Qwen, empatado entre los que menos arreglaron, la ejecutó primero en la mayoría de sus ejecuciones, porque explora ejecutando cosas. La obligación separa a los modelos por costumbre, y esa costumbre no tiene nada que ver con quién arregla más bugs.
+Sonnet arregló los 30 bugs y ni una sola vez ejecutó la suite antes de editar. Opus arregló 29 y la ejecutó primero una vez. Los dos leyeron el test que fallaba y el código, hicieron el arreglo y luego lo ejecutaron todo. Sol arregló 29 y ejecutó la suite primero en 28. Qwen, empatado entre los que menos arreglaron, la ejecutó primero en la mayoría de sus ejecuciones, porque explora ejecutando cosas. La obligación separa a los modelos por costumbre, y esa costumbre no tiene nada que ver con quién arregla más bugs.
 
-Si se junta la obligación con la lista de prohibiciones, el orden se invierte. En cerca de la mitad de sus ejecuciones, `gpt-6.1-sol` añadió un test de regresión junto a su arreglo, que también es buena práctica, y E1 prohíbe tocar los tests. Así que con E2 el modelo que más aprueba es Qwen, con 18 de sus 22 arreglos, y los más fuertes quedan los últimos: Opus 1 de 29, Sonnet 0 de 30. Dos reglas que por separado suenan razonables suman un evaluador que ordena a los modelos al revés.
+Si se junta la obligación con la lista de prohibiciones, el orden se invierte. En cerca de la mitad de sus ejecuciones, Sol añadió un test de regresión junto a su arreglo, que también es buena práctica, y E1 prohíbe tocar los tests. Así que con E2 el modelo que más aprueba es Qwen, con 18 de sus 22 arreglos, y los más fuertes quedan los últimos: Opus 1 de 29, Sonnet 0 de 30. Dos reglas que por separado suenan razonables suman un evaluador que ordena a los modelos al revés.
 
 ## El caso que ningún evaluador podía ver
 
@@ -245,3 +246,7 @@ Esto último es una observación sobre un puñado de ejecuciones, no un evaluado
 ## Límites
 
 Tres ejecuciones por modelo y tarea; una sola librería de Python; una traducción del camino de CORE a demostraciones que es mía, no del paper; veintiséis teoremas cortos y nueve problemas de competición, estos con solo tres modelos. Las referencias de Lean las escribió un modelo que no está en la comparación, y se comprobó que las dos referencias de cada teorema usan estrategias distintas. Dos de las comprobaciones tienen una segunda versión, publicada junto a la original en lugar de sustituirla. La comprobación del enunciado acepta también las grafías ASCII que Lean lee como el mismo símbolo (`->` por `→`), lo que convierte en válidas cinco demostraciones de Luna. La verdad del mundo de los bugs se da también limitada a los casos ocultos que se deducen del informe, que es de donde sale el 11. Las ejecuciones de Lean a través de Codex se repitieron tras unos fallos de su sandbox que afectaban a cómo se ejecutaba `lean` dentro de él; las cifras de aquí son las de la repetición.
+
+---
+
+*Código, tareas y la traza en bruto de cada ejecución: [github.com/JaviMaligno/path-evaluation](https://github.com/JaviMaligno/path-evaluation).*
