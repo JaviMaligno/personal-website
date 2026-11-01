@@ -130,13 +130,16 @@ def preflight_codex(cfg: dict, world: str) -> None:
     home up with a trivial command and refuse to start if no command actually ran."""
     work = TMP / f"preflight-{world}"
     work.mkdir(parents=True, exist_ok=True)
+    # Lean worlds: the command must be lean itself, so a toolchain the sandbox cannot reach stops the run
+    # (it went unnoticed through all of world B: "couldn't find value of ELAN_HOME", 2026-11-01).
+    command, expect = ("lean --version", "Lean (version") if world in ("b", "c") else ("echo ok", "")
     for attempt in range(2):
         try:
-            res = agents.run_codex(cfg["model"], cfg["effort"], work, "Run the shell command `echo ok` and reply with its output.", world, timeout=180)
+            res = agents.run_codex(cfg["model"], cfg["effort"], work, f"Run the shell command `{command}` and reply with its output.", world, timeout=180)
         except subprocess.TimeoutExpired:
             print(f"preflight {cfg['model']} ({world}): attempt {attempt + 1} timed out", flush=True)
             continue
-        if any('"command_execution"' in l and '"item.completed"' in l for l in res["events"]):
+        if any('"command_execution"' in l and '"item.completed"' in l and expect in l for l in res["events"]):
             print(f"preflight {cfg['model']} ({world}): ok", flush=True)
             return
     raise SystemExit(f"preflight {cfg['model']} ({world}): no command ran after 2 attempts; not starting")

@@ -31,6 +31,11 @@ MATHLIB_LEAN_PATH = Path.home() / "lean" / "pe2math-LEAN_PATH.txt"
 
 def env_for(world: str) -> dict:
     env = dict(os.environ)
+    if world in ("b", "c"):
+        # elan finds its home through the user profile, which the Codex sandbox user does not share:
+        # without this, `lean` in Codex's sandbox fails with "couldn't find value of ELAN_HOME"
+        # (found 2026-11-01; Luna never got one compile through in 27 of 78 world-B episodes).
+        env["ELAN_HOME"] = str(Path.home() / ".elan")
     if world == "c":  # Mathlib trial: plain `lean` finds Mathlib through the project's LEAN_PATH
         env["LEAN_PATH"] = MATHLIB_LEAN_PATH.read_text(encoding="utf-8").strip()
     if world == "a":
