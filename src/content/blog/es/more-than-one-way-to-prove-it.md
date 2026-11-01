@@ -9,7 +9,9 @@ heroImage: "/blog/more-than-one-way-to-prove-it.png"
 ---
 Hay dos formas de evaluar a un agente de IA que acaba de terminar una tarea: mirar lo que ha dejado o mirar cómo ha llegado hasta ahí. *CORE: Full-Path Evaluation of LLM Agents Beyond Final State* ([Michelakis, Hadjiyiannis y Stamoulis, 2025](https://arxiv.org/abs/2509.20998)) defiende la segunda. Si solo miras el estado final, agentes que se comportaron de forma muy distinta parecen iguales. Así que CORE codifica cada tarea como un conjunto de caminos válidos de llamadas a herramientas y puntúa cuánto se acerca el camino del agente a alguno de ellos.
 
-El problema aparece con un teorema pequeño: el Fibonacci $n$ es como mucho $2^n$, es decir, $F_n \le 2^n$. Dos agentes lo demostraron, por dos rutas distintas.
+El argumento es correcto hasta donde llega. Mi duda estaba en las tareas donde no se sabe de antemano cuál es el siguiente paso útil. Una demostración, o una sesión de depuración, es exploratoria: no sabes qué lema o qué `print` la va a desbloquear. Fijar el camino podría exigir algo que la tarea nunca necesitó.
+
+Así se ve con un teorema pequeño: el Fibonacci $n$ es como mucho $2^n$, es decir, $F_n \le 2^n$. Dos agentes lo demostraron, por dos rutas distintas.
 
 - **`gpt-6.1-sol` demostró algo más fuerte.** Probó que la cota se cumple para dos números seguidos a la vez, $F_k \le 2^k$ y $F_{k+1} \le 2^{k+1}$, porque así basta una inducción simple sobre $k$.
 - **Claude Sonnet hizo que el teorema se llamara a sí mismo.** Distinguió casos en $n$ y usó la cota para los dos números anteriores: $F_{n+2} = F_n + F_{n+1} \le 2^n + 2^{n+1} \le 2^{n+2}$. Lean comprueba que esa recursión termina.
@@ -46,7 +48,7 @@ match n with
 
 </details>
 
-El argumento de CORE es correcto hasta donde llega. Mi duda estaba en las tareas donde no se sabe de antemano cuál es el siguiente paso útil. Una demostración, o una sesión de depuración, es exploratoria: no sabes qué lema o qué `print` la va a desbloquear. Fijar el camino podría exigir algo que la tarea nunca necesitó. Fijar lo obligatorio y lo prohibido podría bastar. Así que medí las dos cosas, en tareas donde existen de verdad varias rutas válidas.
+Fijar lo obligatorio y lo prohibido, en lugar del camino, podría bastar. Así que medí las dos cosas, en tareas donde existen de verdad varias rutas válidas.
 
 <style>
 .path-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -156,7 +158,7 @@ Python es distinto. De las 180 ejecuciones de A, 21 dejaron un arreglo que pasa 
 
 En A, el evaluador de camino sí cazó algo: 7 de las 21 ejecuciones que dejaba pasar el estado final. Lo hizo suspendiendo todo lo que se salía de lo habitual, lo que también supuso suspender 25 de los 157 arreglos válidos. En Lean el balance es mucho peor. E3 suspendió 136 de las 400 demostraciones válidas de B, un tercio, y 18 de las 19 demostraciones válidas de los problemas difíciles de Mathlib. A cambio, cazó dos de las tres demostraciones inválidas de B, que E1 también había cazado.
 
-La causa es la del ejemplo del principio, a gran escala. Las demostraciones válidas de un mismo teorema siguen rutas distintas, y no solo de estilo. Tomemos la clasificación más gruesa posible, que solo mira sobre qué hace inducción una demostración, si generaliza y si se apoya en un lema auxiliar propio. Aun así, 11 de los 26 teoremas de B se demostraron por dos o más rutas distintas, hasta seis en un mismo teorema. Y 113 de las 400 demostraciones válidas hicieron inducción sobre algo, o generalizaron de una forma, que no usaba ninguna de las dos referencias. Dos referencias, por bien elegidas que estén, no cubren eso.
+La causa es la del ejemplo del principio, a gran escala. Las demostraciones válidas de un mismo teorema siguen rutas distintas, y no solo de estilo. Tomemos la clasificación más gruesa posible, que solo mira sobre qué hace inducción una demostración, si generaliza y si se apoya en un lema auxiliar propio. Aun así, 11 de los 26 teoremas de B se demostraron por dos o más rutas distintas, hasta cinco en un mismo teorema. Y 100 de las 400 demostraciones válidas hicieron inducción sobre algo, o generalizaron de una forma, que no usaba ninguna de las dos referencias. Dos referencias, por bien elegidas que estén, no cubren eso.
 
 Bajar el umbral no lo arregla:
 

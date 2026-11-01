@@ -17,9 +17,20 @@ import world_b
 INDUCT = re.compile(r"\b(induction|fun_induction|induction_on|Nat\.rec|strongRecOn|rec_on)\b\s*([^\s,]*)")
 
 
+def statement_args(t: dict) -> set[str]:
+    """Names bound in the theorem's own binders: inducting on one of them is a real choice; any
+    other name is a variable the model introduced itself (in a `have` or helper), named at will."""
+    names = set()
+    for group in re.findall(r"[({]([^:(){}]+):", t["statement"]):
+        names.update(group.split())
+    return names
+
+
 def coarse(t: dict, text: str | None, body: str | None = None) -> tuple:
     body = body if body is not None else world_b.proof_body(t, text)
-    targets = tuple(sorted({(m.group(1).split(".")[-1], m.group(2)) for m in INDUCT.finditer(body)}))
+    args = statement_args(t)
+    targets = tuple(sorted({(m.group(1).split(".")[-1], m.group(2).rstrip(",") if m.group(2).rstrip(",") in args else "local")
+                            for m in INDUCT.finditer(body)}))
     generalizing = "generalizing" in body or "revert" in body
     helper = False
     if text is not None:

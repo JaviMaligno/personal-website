@@ -9,7 +9,9 @@ heroImage: "/blog/more-than-one-way-to-prove-it.png"
 ---
 There are two ways to grade an AI agent that has just finished a task: look at what it left behind, or look at how it got there. *CORE: Full-Path Evaluation of LLM Agents Beyond Final State* ([Michelakis, Hadjiyiannis and Stamoulis, 2025](https://arxiv.org/abs/2509.20998)) makes the case for the second. If you only check the final state, agents that behaved very differently look the same. So CORE encodes each task as a set of valid tool-use paths and scores how close the agent's path comes to one of them.
 
-The catch shows up on a small theorem: the $n$-th Fibonacci number is at most $2^n$, that is, $F_n \le 2^n$. Two agents proved it, by two different routes.
+The argument is sound as far as it goes. My doubt was about tasks where the next useful step is not known in advance. A proof, or a debugging session, is exploratory: you don't know which lemma or which print statement will unlock it. Writing down the path might demand something the task never needed.
+
+Here is what that looks like on a small theorem: the $n$-th Fibonacci number is at most $2^n$, that is, $F_n \le 2^n$. Two agents proved it, by two different routes.
 
 - **`gpt-6.1-sol` proved something stronger.** It showed that the bound holds for two consecutive numbers at once, $F_k \le 2^k$ and $F_{k+1} \le 2^{k+1}$, because then a plain induction on $k$ goes through.
 - **Claude Sonnet let the theorem call itself.** It split on $n$ and used the bound for the two previous numbers: $F_{n+2} = F_n + F_{n+1} \le 2^n + 2^{n+1} \le 2^{n+2}$. Lean checks that this recursion terminates.
@@ -46,7 +48,7 @@ match n with
 
 </details>
 
-CORE's argument is sound as far as it goes. My doubt was about tasks where the next useful step is not known in advance. A proof, or a debugging session, is exploratory: you don't know which lemma or which print statement will unlock it. Writing down the path might demand something the task never needed. Writing down what is required and what is forbidden might be enough. So I measured both, on tasks where several valid routes really exist.
+Writing down what is required and what is forbidden, instead of the path, might be enough. So I measured both, on tasks where several valid routes really exist.
 
 <style>
 .path-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -156,7 +158,7 @@ Python is different. Of 180 runs in A, 21 left a fix that passes the failing tes
 
 The path grader did catch something in A: 7 of the 21 runs the final state let through. It did that by failing whatever looked unusual, which also meant failing 25 of the 157 valid fixes. In Lean the trade is far worse. E3 failed 136 of the 400 valid proofs in B, a third, and 18 of the 19 valid proofs of the hard Mathlib problems. In exchange it caught two of the three invalid proofs in B, which E1 had caught as well.
 
-The cause is the one in the opening example, at scale. Valid proofs of the same theorem take different routes, and not only in style. Take the coarsest possible classification, which looks only at what a proof inducts on, whether it generalises, and whether it leans on a helper lemma of its own. Even then, 11 of the 26 theorems in B were proved by two or more different routes, up to six on one theorem. And 113 of the 400 valid proofs inducted on something, or generalised in a way, that neither reference did. Two references, however carefully chosen, cannot cover that.
+The cause is the one in the opening example, at scale. Valid proofs of the same theorem take different routes, and not only in style. Take the coarsest possible classification, which looks only at what a proof inducts on, whether it generalises, and whether it leans on a helper lemma of its own. Even then, 11 of the 26 theorems in B were proved by two or more different routes, up to five on one theorem. And 100 of the 400 valid proofs inducted on something, or generalised in a way, that neither reference did. Two references, however carefully chosen, cannot cover that.
 
 Lowering the threshold doesn't rescue it:
 
