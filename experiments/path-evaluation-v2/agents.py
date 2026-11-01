@@ -27,6 +27,8 @@ CLAUDE_ALLOWED = "Bash,Read,Grep,Glob,Edit(./**),Write(./**)"
 
 
 MATHLIB_LEAN_PATH = Path.home() / "lean" / "pe2math-LEAN_PATH.txt"
+# elan's default toolchain on this machine, the one worlds B and C were built and checked with
+LEAN_TOOLCHAIN_BIN = Path.home() / ".elan" / "toolchains" / "leanprover--lean4---v4.35.0" / "bin"
 
 
 def env_for(world: str) -> dict:
@@ -36,6 +38,9 @@ def env_for(world: str) -> dict:
         # without this, `lean` in Codex's sandbox fails with "couldn't find value of ELAN_HOME"
         # (found 2026-11-01; Luna never got one compile through in 27 of 78 world-B episodes).
         env["ELAN_HOME"] = str(Path.home() / ".elan")
+        # and the elan proxy is extremely slow there (a Mathlib compile: 9.5 min through `lean`,
+        # 30 s through the toolchain's lean.exe, 2026-11-01): put the real binary first on PATH.
+        env["PATH"] = str(LEAN_TOOLCHAIN_BIN) + os.pathsep + env["PATH"]
     if world == "c":  # Mathlib trial: plain `lean` finds Mathlib through the project's LEAN_PATH
         env["LEAN_PATH"] = MATHLIB_LEAN_PATH.read_text(encoding="utf-8").strip()
     if world == "a":
