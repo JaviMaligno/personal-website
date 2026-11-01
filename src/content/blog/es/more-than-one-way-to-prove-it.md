@@ -198,7 +198,7 @@ Quién se la saltó:
     <text x="530" y="148">3 / 22</text><text x="530" y="184">1 / 29</text><text x="530" y="220">0 / 30</text>
   </g>
 </svg>
-<figcaption>Arreglos válidos que ejecutaron la suite de tests antes de la primera edición, por modelo. Son dos estilos de trabajo, no dos niveles de cuidado: los modelos de abajo arreglaron tantos bugs como el de arriba, o más.</figcaption>
+<figcaption>Arreglos válidos que ejecutaron la suite de tests antes de la primera edición, por modelo. Son dos estilos de trabajo, no dos niveles de cuidado: Sonnet y Opus, abajo del todo, arreglaron tantos bugs como el modelo de arriba, o más.</figcaption>
 </figure>
 
 Sonnet arregló los 30 bugs y ni una sola vez ejecutó la suite antes de editar. Opus arregló 29 y la ejecutó primero una vez. Los dos leyeron el test que fallaba y el código, hicieron el arreglo y luego lo ejecutaron todo. `gpt-6.1-sol` arregló 29 y ejecutó la suite primero en 28. Qwen, empatado entre los que menos arreglaron, la ejecutó primero en la mayoría de sus ejecuciones, porque explora ejecutando cosas. La obligación separa a los modelos por costumbre, y esa costumbre no tiene nada que ver con quién arregla más bugs.

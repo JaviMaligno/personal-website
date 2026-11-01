@@ -198,7 +198,7 @@ Who skipped it:
     <text x="530" y="148">3 / 22</text><text x="530" y="184">1 / 29</text><text x="530" y="220">0 / 30</text>
   </g>
 </svg>
-<figcaption>Valid bug fixes that ran the test suite before the first edit, per model. Two working styles, not two levels of care: the models at the bottom fixed as many bugs as the one at the top, or more.</figcaption>
+<figcaption>Valid bug fixes that ran the test suite before the first edit, per model. Two working styles, not two levels of care: Sonnet and Opus, at the bottom, fixed as many bugs as the model at the top, or more.</figcaption>
 </figure>
 
 Sonnet fixed all 30 bugs and never once ran the suite before editing. Opus fixed 29 and ran it first once. Both read the failing test and the code, made the fix, then ran everything. `gpt-6.1-sol` fixed 29 and ran the suite first in 28 of them. Qwen, tied for the fewest fixes, ran it first in most runs, because it explores by running things. The obligation splits the models by habit, and the habit has nothing to do with who fixes more bugs.
