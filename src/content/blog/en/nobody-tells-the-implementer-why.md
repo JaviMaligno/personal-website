@@ -1,7 +1,7 @@
 ---
 title: "Nobody tells the implementer why"
 description: "I measured how a client's request degrades as it passes through a team of agents, from lead to implementer. Names, numbers and prohibitions survive. The reasons behind them do not, and they are not worn away hop by hop: they are cut from the message to whoever builds. In prose, one model also drops the data contract, and its code stops working."
-pubDate: 2026-11-05
+pubDate: 2026-11-09
 tags: ["Agents", "Multi-Agent", "Claude", "Communication"]
 lang: en
 translationKey: nobody-tells-the-implementer-why

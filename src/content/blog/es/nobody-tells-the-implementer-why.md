@@ -1,7 +1,7 @@
 ---
 title: "Nadie le cuenta el porqué al que implementa"
 description: "Medí cómo se degrada el encargo de un cliente al pasar por un equipo de agentes, del lead al implementador. Los nombres, los números y las prohibiciones sobreviven. Los motivos que los justifican no, y no se desgastan salto a salto: se recortan en el mensaje a quien construye. En prosa, además, un modelo pierde el contrato de datos y su código deja de funcionar."
-pubDate: 2026-11-05
+pubDate: 2026-11-09
 tags: ["Agentes", "Multiagente", "Claude", "Comunicación"]
 lang: es
 translationKey: nobody-tells-the-implementer-why
