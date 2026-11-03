@@ -31,9 +31,14 @@ def ad(*args, timeout=120):
         return {"ok": False, "error": {"code": type(e).__name__}}
 
 
-def running(app):
-    j = ad("list-apps", "--app", app)
-    return bool(j.get("ok") and j.get("data"))
+def running(app, tries=3):
+    """True/False when list-apps answers; None when it can't tell (then the app is never closed)."""
+    for _ in range(tries):
+        j = ad("list-apps", "--app", app)
+        if j.get("ok"):
+            return bool((j.get("data") or {}).get("apps"))
+        time.sleep(2)
+    return None
 
 
 def main_window(app):
@@ -89,9 +94,9 @@ def load_apps(path):
 
 def close(app):
     ad("close-app", app, timeout=60); time.sleep(3)
-    if running(app):
+    if running(app) is not False:
         ad("close-app", app, "--force", timeout=60); time.sleep(2)
-    return not running(app)
+    return running(app) is False
 
 
 def main():
@@ -116,8 +121,8 @@ def main():
         w = csv.DictWriter(f, fieldnames=cols)
         if new: w.writeheader()
         for launch, ax, wait, kit in apps:
-            was = running(ax)
-            if not was:
+            was = running(ax)  # None = unknown -> measure but never close
+            if was is not True:
                 j = ad("launch", launch, "--activate", "--timeout", "60000", timeout=90)
                 if not j.get("ok"):
                     code = j.get("error", {}).get("code", "LAUNCH_FAILED")
@@ -134,8 +139,10 @@ def main():
                 w.writerow(row); f.flush()
                 print(f"{ax:30s} run{r} nodes={row.get('nodes','-'):>5} named={row.get('named_ratio','-')} "
                       f"inter={row.get('interactive','-')} {ms}ms {err}", file=sys.stderr)
-            if not was:
+            if was is False:
                 print(f"{ax:30s} closed={close(ax)}", file=sys.stderr)
+            elif was is None:
+                print(f"{ax:30s} left open: couldn't tell if it was running before", file=sys.stderr)
 
 
 if __name__ == "__main__":
