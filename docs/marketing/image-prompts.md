@@ -1930,3 +1930,23 @@ Style: sophisticated technical editorial illustration, crisp bitmap with precise
 
 Only text allowed: "astronaut + horse", "astronaut", "horse", "far point", "qorth", "vel-ix", "tram;;", "nul". No title, paragraphs, extra captions, legends, numbers, logos, brand names, real people, purple gradient blobs, bokeh, watermarks or decorative starfield. Do not print this brief.
 ```
+## An Agent Sees What a Screen Reader Sees — 2026-11-02
+
+- Article: `src/content/blog/en/an-agent-sees-what-a-screen-reader-sees.md`
+- Image: `public/blog/an-agent-sees-what-a-screen-reader-sees.png`
+- Generator: built-in `image_gen` via Codex; resized to 1020x510 with `sips`.
+
+```text
+Create a 1020x510 blog hero image, landscape 2:1, for a technical article titled "An Agent Sees What a Screen Reader Sees". Do not print the title.
+
+Style: refined technical editorial illustration, dark but not monochrome. Crisp bitmap illustration with precise edges, subtle tactile shading and restrained dimensional depth. High contrast, professional AI/developer blog aesthetic, balanced teal, amber, graphite and off-white accents.
+
+Show a concrete working scene on a dark desk: an unbranded open laptop, its desktop displaying a photo-grid app with eight small beach-photo thumbnails and an overlapping chat window with a send panel, collage preview, caption field and Send button. Make these recognizable working interfaces, using only minimal generic UI labels. Beside the laptop, a large clean accessibility-tree diagram mirrors those app windows: connected rectangular role boxes labelled "window", "menuitem", "textfield" and "button". Thin precise arrows lead from specific laptop window elements to corresponding tree nodes. One button node is highlighted in amber with a dashed outline and the short label 'name: ""', making the unnamed-control gap immediately visible.
+
+The SAME central tree branches to two readers: at the left foreground a distinct screen-reader speaker icon with sound waves and a pair of headphones resting on the desk; at the right foreground a small graphite terminal window running an agent. Both readers visibly connect to the single shared tree, including its amber unnamed node. Do not create separate trees for the two readers. The terminal has just three readable generic monospace lines: "$ agent inspect", "role: button", 'name: ""'. The visual argument is one shared interface and one shared blind spot, not an agent interpreting a screenshot.
+
+Compose a cohesive wide scene with the laptop in the upper-left/centre, the role-box tree across the centre-right, headphones/speaker below-left and the small agent terminal below-right. Keep connectors orderly, avoid crossings, leave generous safe margins, and keep all key objects and labels fully inside the frame. Several distinct working zones, clean geometric composition, strong hierarchy legible at thumbnail size. Opaque graphite background with teal structure, off-white labels and warm amber emphasis; enough color variation to avoid monochrome.
+
+No logos, no brand names, no people, no robots, no text-heavy poster, no headline, no paragraphs, no purple gradient blobs, no bokeh, no watermarks.
+```
+
