@@ -70,6 +70,8 @@ A few things stood out:
 
 Two caveats. These are counts from one machine on one day, of whatever window each app opened with, and a bigger tree is not automatically a more usable one. The share of named elements says more than the size. But the extremes are not subtle: between "one element" and "1,493 named elements" there is no measurement error that changes the conclusion.
 
+I later repeated the census on a Windows 11 machine, where agent-desktop reads the UI Automation tree instead, and the picture held. The same app reads about the same on both systems: Telegram exposes 1,509 elements there against 1,493 here, Slack 483 against 616. The cold first read happens there too: Spotify gave 183 elements, then 1,651. Of the rules further down, the one about the current desktop held; the other two didn't, because on Windows a background app's menu reads as enabled and the save dialog belongs to the app's own process.
+
 ## Exposed is not the same as operable
 
 The collage run taught me the second half, and it's the part a census doesn't show. Telegram, the most legible app in the chart, was also where the agent struggled most.

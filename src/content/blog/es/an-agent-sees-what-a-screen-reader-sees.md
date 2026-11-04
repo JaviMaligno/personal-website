@@ -70,6 +70,8 @@ Algunas cosas llaman la atención:
 
 Dos matices. Son recuentos de un ordenador en un día, de la ventana con la que abrió cada app, y un árbol más grande no es por fuerza más usable: la proporción de elementos con nombre dice más que el tamaño. Pero los extremos no son sutiles: entre «un elemento» y «1.493 elementos con nombre» no hay error de medida que cambie la conclusión.
 
+Después repetí el censo en un ordenador con Windows 11, donde agent-desktop lee el árbol de UI Automation, y el panorama se mantuvo. La misma app se lee más o menos igual en los dos sistemas: Telegram expone allí 1.509 elementos frente a 1.493 aquí, Slack 483 frente a 616. La primera lectura en frío también pasa allí: Spotify dio 183 elementos y luego 1.651. De las reglas que vienen más abajo, la del escritorio actual se cumplió; las otras dos no, porque en Windows el menú de una app en segundo plano se lee activo y el diálogo de guardar pertenece al propio proceso de la app.
+
 ## Expuesto no es lo mismo que operable
 
 La segunda mitad me la enseñó el propio collage, y es la parte que un censo no muestra. Telegram, la app más legible del gráfico, fue también donde el agente más sufrió.
