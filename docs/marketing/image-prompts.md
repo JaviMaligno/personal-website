@@ -1930,3 +1930,24 @@ Style: sophisticated technical editorial illustration, crisp bitmap with precise
 
 Only text allowed: "astronaut + horse", "astronaut", "horse", "far point", "qorth", "vel-ix", "tram;;", "nul". No title, paragraphs, extra captions, legends, numbers, logos, brand names, real people, purple gradient blobs, bokeh, watermarks or decorative starfield. Do not print this brief.
 ```
+## Seven Models on My Own Work: The Task Mattered More Than the Model — 2026-11-04
+
+- Article: `src/content/blog/en/the-task-not-the-model.md`
+- Image: `public/blog/the-task-not-the-model.png` (1020x510)
+- Generator: built-in `image_gen` via Codex, resized with `sips`.
+
+```text
+Create a 1020x510 blog hero image, a wide 2:1 composition, for the technical article "Seven Models on My Own Work: The Task Mattered More Than the Model". Do not print the article title in the image.
+
+Style: refined technical editorial bitmap illustration, dark but not monochrome, crisp detailed edges, high contrast, professional AI/developer blog aesthetic. Balanced teal, amber, graphite and off-white accents, with restrained red correction marks. Rich but carefully organized working scene, not a schematic icon or a text-heavy poster.
+
+Scene and composition: a developer desk seen without people, viewed nearly front-on with a slight elevated angle so the desktop and papers are visible. Three clear layers: a large wall-mounted heatmap behind, exactly seven identical terminal windows in one uninterrupted horizontal row across a wide desktop monitor in the middle, and a physical review board lying on the desk immediately below. All seven terminal windows are equal size, equally spaced, fully visible and side by side, never overlapping or wrapping to another row. Each runs the same coding request. Short readable generic monospaced text, repeated consistently: "Go ahead, do it.", "git diff --stat", "tests: 3 failed". Use only a few lines per window, with subtle code strokes for secondary details.
+
+Review board: exactly seven distinct piles of reviewer correction notes, each directly aligned under its corresponding terminal. Six piles have roughly equal heights, about three layered off-white and muted amber sticky notes each; the seventh pile is visibly taller, about five layers, still part of the same ordinary workflow. The notes sit on printed code diffs with red pen circles, crossed-out lines, small arrows and ticks. A few readable note labels say "correction 2/3". Include a red pen resting on the review board and a discreet keyboard at the desk edge. The note stacks should feel tangible, not like a bar chart.
+
+Background heatmap: large and clearly visible above and behind the terminals, exactly seven columns and nineteen compact rows. Cells vary strongly from row to row: some entire rows are cool teal, others pale muted teal, others amber, with similar colors across all seven cells within each row and only small column-to-column differences. Strong horizontal bands express that the same tasks are easy or hard across all seven anonymous runs. Keep the heatmap unlabeled and without numeric claims. It is supporting evidence within a real working scene, not a floating infographic.
+
+Lighting and materials: controlled teal monitor light and warm amber desk highlights, graphite hardware, matte paper with subtle grain, restrained shadows, legible silhouettes and polished editorial detail. Keep important objects comfortably inside the frame and readable at blog-thumbnail scale.
+
+Constraints: no people, hands, faces, robots, model names, company names, brands, logos or watermarks. No podium, trophies or winner imagery. No headline typography, no dense explanatory copy, no purple gradient blobs, no bokeh.
+```
