@@ -137,4 +137,4 @@ If an app is accessible, it's a tool. If it isn't, for an agent it barely exists
 
 ---
 
-*Measured on macOS 15.7 with [agent-desktop](https://github.com/vercel-labs/agent-desktop) 1.0.2: main window of each app, three reads, counts only. Figma and Cursor didn't launch from the command line on this machine and aren't in the chart.*
+*Measured on macOS 15.7 with [agent-desktop](https://github.com/vercel-labs/agent-desktop) 1.0.2: main window of each app, three reads, counts only. Figma and Cursor didn't launch from the command line on this machine and aren't in the chart. The Windows comparison was measured on Windows 11 with the same method; the chart shows the macOS run.*

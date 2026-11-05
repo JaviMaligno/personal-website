@@ -137,4 +137,4 @@ Si una app es accesible, es una herramienta. Si no lo es, para un agente casi no
 
 ---
 
-*Medido en macOS 15.7 con [agent-desktop](https://github.com/vercel-labs/agent-desktop) 1.0.2: ventana principal de cada app, tres lecturas, solo recuentos. Figma y Cursor no arrancaron desde la línea de comandos en este ordenador y no están en el gráfico.*
+*Medido en macOS 15.7 con [agent-desktop](https://github.com/vercel-labs/agent-desktop) 1.0.2: ventana principal de cada app, tres lecturas, solo recuentos. Figma y Cursor no arrancaron desde la línea de comandos en este ordenador y no están en el gráfico. La comparación con Windows se midió en Windows 11 con el mismo método; el gráfico muestra la tanda de macOS.*
