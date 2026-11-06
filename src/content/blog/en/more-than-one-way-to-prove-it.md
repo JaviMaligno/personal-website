@@ -1,6 +1,6 @@
 ---
 title: "More Than One Way to Prove It"
-description: "Grading an agent by comparing its tool calls with a reference path sounds stricter than checking where it ended up. Across 694 runs fixing real bugs and writing Lean proofs, the path rejected a third of the valid proofs, two reasonable rules ranked the models in reverse, and the clearest false claim was in a sentence no grader reads."
+description: "Grading an agent by comparing its tool calls with a reference path sounds stricter than checking where it ended up. Across 694 runs fixing real bugs and writing Lean proofs, the path rejected a third of the valid proofs, two reasonable rules put the smallest model first and the strongest last, and the clearest false claim was in a sentence no grader reads."
 pubDate: 2026-12-05
 tags: ["AI", "Agents", "Evaluation", "Lean", "Research"]
 lang: en
@@ -141,7 +141,7 @@ Python is different. Of 180 runs in A, 21 left a fix that passes the failing tes
     <text x="245" y="126"><tspan fill="#fbbf24">20</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">15</tspan></text>
     <text x="390" y="126"><tspan fill="#fbbf24">0</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">5</tspan></text>
     <text x="530" y="126"><tspan fill="#fbbf24">0</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">0</tspan></text>
-    <text x="245" y="172"><tspan fill="#fbbf24">13</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">115</tspan></text>
+    <text x="245" y="172"><tspan fill="#fbbf24">11</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">120</tspan></text>
     <text x="390" y="172"><tspan fill="#fbbf24">0</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">5</tspan></text>
     <text x="530" y="172"><tspan fill="#fbbf24">0</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">6</tspan></text>
     <text x="245" y="218"><tspan fill="#fbbf24">14</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">25</tspan></text>
@@ -178,7 +178,7 @@ Lowering the threshold doesn't rescue it:
   </g>
   <polyline fill="none" stroke="#f59e0b" stroke-width="2.5" points="70,73 168,41 266,30 364,30 462,30 560,30"/>
   <polyline fill="none" stroke="#2dd4bf" stroke-width="2.5" points="70,214 168,192 266,172 364,152 462,146 560,146"/>
-  <polyline fill="none" stroke="#e2e8f0" stroke-width="2.5" points="70,220 168,215 266,211 364,188 462,188 560,188"/>
+  <polyline fill="none" stroke="#e2e8f0" stroke-width="2.5" points="70,220 168,214 266,211 364,188 462,188 560,188"/>
   <g font-size="12">
     <text x="470" y="48" fill="#fbbf24">C · hard Mathlib</text>
     <text x="470" y="140" fill="#5eead4">B · Lean</text>
@@ -192,29 +192,29 @@ In A, a loose threshold works: at $\tau = 0.5$ no valid fix is failed. A bug fix
 
 ## An order rule that measures a working style
 
-E2 doesn't compare paths. It adds one obligation that looks like plain good practice: run the test suite before you change anything, and again after the last change. In A, 115 of the 157 valid fixes failed E2. Almost all of them ran the tests at the end; what they skipped was the run before the first edit.
+E2 doesn't compare paths. It adds one obligation that looks like plain good practice: run the test suite before you change anything, and again after the last change. In A, 120 of the 157 valid fixes failed E2. Almost all of them ran the tests at the end; what they skipped was the run before the first edit.
 
 How many valid fixes ran the tests first, model by model:
 
 <figure class="path-fig">
-<svg viewBox="0 0 600 250" role="img" aria-label="Share of each model's valid bug fixes that ran the tests before the first edit: Sol 28 of 29, Qwen 19 of 22, Haiku 7 of 25, Luna 3 of 22, Opus 1 of 29, Sonnet 0 of 30.">
+<svg viewBox="0 0 600 250" role="img" aria-label="Share of each model's valid bug fixes that ran the tests before the first edit: Sol 28 of 29, Qwen 13 of 22, Haiku 7 of 25, Luna 3 of 22, Opus 1 of 29, Sonnet 0 of 30.">
   <g font-size="12" fill="#e2e8f0" text-anchor="end">
     <text x="130" y="40">Sol</text><text x="130" y="76">Qwen</text><text x="130" y="112">Haiku</text>
     <text x="130" y="148">Luna</text><text x="130" y="184">Opus</text><text x="130" y="220">Sonnet</text>
   </g>
   <g fill="#232333"><rect x="140" y="26" width="380" height="20" rx="4"/><rect x="140" y="62" width="380" height="20" rx="4"/><rect x="140" y="98" width="380" height="20" rx="4"/><rect x="140" y="134" width="380" height="20" rx="4"/><rect x="140" y="170" width="380" height="20" rx="4"/><rect x="140" y="206" width="380" height="20" rx="4"/></g>
-  <g fill="#2dd4bf"><rect x="140" y="26" width="367" height="20" rx="4"/><rect x="140" y="62" width="328" height="20" rx="4"/><rect x="140" y="98" width="106" height="20" rx="4"/><rect x="140" y="134" width="52" height="20" rx="4"/><rect x="140" y="170" width="13" height="20" rx="4"/></g>
+  <g fill="#2dd4bf"><rect x="140" y="26" width="367" height="20" rx="4"/><rect x="140" y="62" width="225" height="20" rx="4"/><rect x="140" y="98" width="106" height="20" rx="4"/><rect x="140" y="134" width="52" height="20" rx="4"/><rect x="140" y="170" width="13" height="20" rx="4"/></g>
   <g font-size="12" fill="#5eead4" font-family="ui-monospace,'JetBrains Mono',monospace">
-    <text x="530" y="40">28 / 29</text><text x="530" y="76">19 / 22</text><text x="530" y="112">7 / 25</text>
+    <text x="530" y="40">28 / 29</text><text x="530" y="76">13 / 22</text><text x="530" y="112">7 / 25</text>
     <text x="530" y="148">3 / 22</text><text x="530" y="184">1 / 29</text><text x="530" y="220">0 / 30</text>
   </g>
 </svg>
 <figcaption>Valid bug fixes that ran the test suite before the first edit, per model. Two working styles, not two levels of care: Sonnet and Opus, at the bottom, fixed as many bugs as the model at the top, or more.</figcaption>
 </figure>
 
-Sonnet fixed all 30 bugs and never once ran the suite before editing. Opus fixed 29 and ran it first once. Both read the failing test and the code, made the fix, then ran everything. Sol fixed 29 and ran the suite first in 28 of them. Qwen, tied for the fewest fixes, ran it first in most runs, because it explores by running things. The obligation splits the models by habit, and the habit has nothing to do with who fixes more bugs.
+Sonnet fixed all 30 bugs and never once ran the suite before editing. Opus fixed 29 and ran it first once. Both read the failing test and the code, made the fix, then ran everything. Sol fixed 29 and ran the suite first in 28 of them. Qwen, tied for the fewest fixes, ran it first in 13 of its 22, because it explores by running things. The obligation splits the models by habit, and the habit has nothing to do with who fixes more bugs.
 
-Put the obligation together with the forbidden list and the ordering turns upside down. In about half its runs Sol added a regression test next to its fix, which is good practice too, and E1 forbids editing the tests. So under E2 the model that passes most often is Qwen, with 18 of its 22 fixes, and the strongest models come last: Opus 1 of 29, Sonnet 0 of 30. Two rules that each sound reasonable add up to a grader that ranks the field in reverse.
+Put the obligation together with the forbidden list and the ordering turns nearly upside down. In about half its runs Sol added a regression test next to its fix, which is good practice too, and E1 forbids editing the tests. So under E2 the model that passes most often is Qwen, with 13 of its 22 fixes, and the strongest models come last: Opus 1 of 29, Sonnet 0 of 30. Two rules that each sound reasonable add up to a grader that puts the smallest model first and the two strongest last.
 
 ## The case nobody's grader could see
 
@@ -238,14 +238,14 @@ The file does not compile. The tool had reported that its wrapper script was don
 
 - **Where a mechanical checker is strong, check the final state and forbid the shortcuts.** In Lean that was enough to drive false passes to zero. The only valid proofs it failed were five written with ASCII arrows, which a literal statement check reads as a changed statement. Grading the path added nothing there except a third of the valid proofs failed.
 - **Where it is weak, the path still doesn't fill the gap.** In the bug world the false passes were fixes that did less than they seemed to, not forbidden actions. The path caught some of them only by failing whatever looked unusual.
-- **An obligation is an opinion about method.** "Tests before the first edit" sounds unobjectionable. Here it sorted the models by habit, and combined with a ban on touching the tests it ranked them in reverse order of how well they fixed bugs.
+- **An obligation is an opinion about method.** "Tests before the first edit" sounds unobjectionable. Here it sorted the models by habit, and combined with a ban on touching the tests it put the smallest model first and the two strongest last.
 - **What separated the cases that mattered was what the agent said.** The honest "I couldn't", the stated scope decision, the "completed successfully" that never completed. None of the four graders reads that, and each of those sentences can be checked against the trace. An exit code either appears or it doesn't.
 
 That last point is an observation from a handful of runs, not a measured grader. Building that grader, and seeing whether it holds up, is the next experiment.
 
 ## Limits
 
-Three runs per model and task; one Python library; a translation of CORE's path to proofs that is mine, not the paper's; twenty-six short theorems and nine competition problems, the latter with three models only. The Lean references were written by a model outside the comparison, and each theorem's two references were checked to use different strategies. Two of the checks have a second version, published next to the original rather than replacing it. The statement check also accepts ASCII spellings Lean reads as the same symbol (`->` for `→`), which turns five of Luna's proofs valid. The bug-world truth is also given limited to the hidden cases that follow from the report, which is where the 11 comes from. The Lean runs through Codex were repeated after faults in its sandbox that affected how `lean` ran there; the numbers here come from the repeated runs.
+Three runs per model and task; one Python library; a translation of CORE's path to proofs that is mine, not the paper's; twenty-six short theorems and nine competition problems, the latter with three models only. The Lean references were written by a model outside the comparison, and each theorem's two references were checked to use different strategies. Two of the checks have a second version, published next to the original rather than replacing it. The statement check also accepts ASCII spellings Lean reads as the same symbol (`->` for `→`), which turns five of Luna's proofs valid. The bug-world truth is also given limited to the hidden cases that follow from the report, which is where the 11 comes from. The Lean runs through Codex were repeated after faults in its sandbox that affected how `lean` ran there; the numbers here come from the repeated runs. The bug-world prompt gave the test command without `-m` (`python pytest`), which fails before running any test; an attempt with that command does not count as running the tests.
 
 ---
 

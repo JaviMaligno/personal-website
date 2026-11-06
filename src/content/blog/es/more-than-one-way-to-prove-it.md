@@ -1,6 +1,6 @@
 ---
 title: "Más de una forma de demostrarlo"
-description: "Evaluar a un agente comparando sus llamadas a herramientas con un camino de referencia parece más exigente que mirar dónde acabó. En 694 ejecuciones arreglando bugs reales y escribiendo demostraciones en Lean, el camino rechazó un tercio de las demostraciones válidas, dos reglas razonables ordenaron los modelos al revés y la afirmación falsa más clara estaba en una frase que ningún evaluador lee."
+description: "Evaluar a un agente comparando sus llamadas a herramientas con un camino de referencia parece más exigente que mirar dónde acabó. En 694 ejecuciones arreglando bugs reales y escribiendo demostraciones en Lean, el camino rechazó un tercio de las demostraciones válidas, dos reglas razonables pusieron primero al modelo más pequeño y últimos a los más fuertes y la afirmación falsa más clara estaba en una frase que ningún evaluador lee."
 pubDate: 2026-12-05
 tags: ["IA", "Agentes", "Evaluación", "Lean", "Investigación"]
 lang: es
@@ -141,7 +141,7 @@ Python es distinto. De las 180 ejecuciones de A, 21 dejaron un arreglo que pasa 
     <text x="245" y="126"><tspan fill="#fbbf24">20</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">15</tspan></text>
     <text x="390" y="126"><tspan fill="#fbbf24">0</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">5</tspan></text>
     <text x="530" y="126"><tspan fill="#fbbf24">0</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">0</tspan></text>
-    <text x="245" y="172"><tspan fill="#fbbf24">13</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">115</tspan></text>
+    <text x="245" y="172"><tspan fill="#fbbf24">11</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">120</tspan></text>
     <text x="390" y="172"><tspan fill="#fbbf24">0</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">5</tspan></text>
     <text x="530" y="172"><tspan fill="#fbbf24">0</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">6</tspan></text>
     <text x="245" y="218"><tspan fill="#fbbf24">14</tspan><tspan fill="#64748b"> · </tspan><tspan fill="#5eead4">25</tspan></text>
@@ -178,7 +178,7 @@ Bajar el umbral no lo arregla:
   </g>
   <polyline fill="none" stroke="#f59e0b" stroke-width="2.5" points="70,73 168,41 266,30 364,30 462,30 560,30"/>
   <polyline fill="none" stroke="#2dd4bf" stroke-width="2.5" points="70,214 168,192 266,172 364,152 462,146 560,146"/>
-  <polyline fill="none" stroke="#e2e8f0" stroke-width="2.5" points="70,220 168,215 266,211 364,188 462,188 560,188"/>
+  <polyline fill="none" stroke="#e2e8f0" stroke-width="2.5" points="70,220 168,214 266,211 364,188 462,188 560,188"/>
   <g font-size="12">
     <text x="440" y="48" fill="#fbbf24">C · Mathlib difícil</text>
     <text x="470" y="140" fill="#5eead4">B · Lean</text>
@@ -192,29 +192,29 @@ En A, un umbral laxo funciona: con $\tau = 0{,}5$ no se suspende ningún arreglo
 
 ## Una regla de orden que mide un estilo de trabajo
 
-E2 no compara caminos. Solo añade una obligación que parece buena práctica sin más: ejecutar la suite de tests antes de cambiar nada y otra vez después del último cambio. En A, 115 de los 157 arreglos válidos suspendieron E2. Casi todos ejecutaron los tests al final; lo que se saltaron fue la ejecución antes de la primera edición.
+E2 no compara caminos. Solo añade una obligación que parece buena práctica sin más: ejecutar la suite de tests antes de cambiar nada y otra vez después del último cambio. En A, 120 de los 157 arreglos válidos suspendieron E2. Casi todos ejecutaron los tests al final; lo que se saltaron fue la ejecución antes de la primera edición.
 
 Cuántos arreglos válidos ejecutaron primero los tests, modelo a modelo:
 
 <figure class="path-fig">
-<svg viewBox="0 0 600 250" role="img" aria-label="Proporción de arreglos válidos de cada modelo que ejecutaron los tests antes de la primera edición: Sol 28 de 29, Qwen 19 de 22, Haiku 7 de 25, Luna 3 de 22, Opus 1 de 29, Sonnet 0 de 30.">
+<svg viewBox="0 0 600 250" role="img" aria-label="Proporción de arreglos válidos de cada modelo que ejecutaron los tests antes de la primera edición: Sol 28 de 29, Qwen 13 de 22, Haiku 7 de 25, Luna 3 de 22, Opus 1 de 29, Sonnet 0 de 30.">
   <g font-size="12" fill="#e2e8f0" text-anchor="end">
     <text x="130" y="40">Sol</text><text x="130" y="76">Qwen</text><text x="130" y="112">Haiku</text>
     <text x="130" y="148">Luna</text><text x="130" y="184">Opus</text><text x="130" y="220">Sonnet</text>
   </g>
   <g fill="#232333"><rect x="140" y="26" width="380" height="20" rx="4"/><rect x="140" y="62" width="380" height="20" rx="4"/><rect x="140" y="98" width="380" height="20" rx="4"/><rect x="140" y="134" width="380" height="20" rx="4"/><rect x="140" y="170" width="380" height="20" rx="4"/><rect x="140" y="206" width="380" height="20" rx="4"/></g>
-  <g fill="#2dd4bf"><rect x="140" y="26" width="367" height="20" rx="4"/><rect x="140" y="62" width="328" height="20" rx="4"/><rect x="140" y="98" width="106" height="20" rx="4"/><rect x="140" y="134" width="52" height="20" rx="4"/><rect x="140" y="170" width="13" height="20" rx="4"/></g>
+  <g fill="#2dd4bf"><rect x="140" y="26" width="367" height="20" rx="4"/><rect x="140" y="62" width="225" height="20" rx="4"/><rect x="140" y="98" width="106" height="20" rx="4"/><rect x="140" y="134" width="52" height="20" rx="4"/><rect x="140" y="170" width="13" height="20" rx="4"/></g>
   <g font-size="12" fill="#5eead4" font-family="ui-monospace,'JetBrains Mono',monospace">
-    <text x="530" y="40">28 / 29</text><text x="530" y="76">19 / 22</text><text x="530" y="112">7 / 25</text>
+    <text x="530" y="40">28 / 29</text><text x="530" y="76">13 / 22</text><text x="530" y="112">7 / 25</text>
     <text x="530" y="148">3 / 22</text><text x="530" y="184">1 / 29</text><text x="530" y="220">0 / 30</text>
   </g>
 </svg>
 <figcaption>Arreglos válidos que ejecutaron la suite de tests antes de la primera edición, por modelo. Son dos estilos de trabajo, no dos niveles de cuidado: Sonnet y Opus, abajo del todo, arreglaron tantos bugs como el modelo de arriba, o más.</figcaption>
 </figure>
 
-Sonnet arregló los 30 bugs y ni una sola vez ejecutó la suite antes de editar. Opus arregló 29 y la ejecutó primero una vez. Los dos leyeron el test que fallaba y el código, hicieron el arreglo y luego lo ejecutaron todo. Sol arregló 29 y ejecutó la suite primero en 28. Qwen, empatado entre los que menos arreglaron, la ejecutó primero en la mayoría de sus ejecuciones, porque explora ejecutando cosas. La obligación separa a los modelos por costumbre, y esa costumbre no tiene nada que ver con quién arregla más bugs.
+Sonnet arregló los 30 bugs y ni una sola vez ejecutó la suite antes de editar. Opus arregló 29 y la ejecutó primero una vez. Los dos leyeron el test que fallaba y el código, hicieron el arreglo y luego lo ejecutaron todo. Sol arregló 29 y ejecutó la suite primero en 28. Qwen, empatado entre los que menos arreglaron, la ejecutó primero en 13 de sus 22, porque explora ejecutando cosas. La obligación separa a los modelos por costumbre, y esa costumbre no tiene nada que ver con quién arregla más bugs.
 
-Si se junta la obligación con la lista de prohibiciones, el orden se invierte. En cerca de la mitad de sus ejecuciones, Sol añadió un test de regresión junto a su arreglo, que también es buena práctica, y E1 prohíbe tocar los tests. Así que con E2 el modelo que más aprueba es Qwen, con 18 de sus 22 arreglos, y los más fuertes quedan los últimos: Opus 1 de 29, Sonnet 0 de 30. Dos reglas que por separado suenan razonables suman un evaluador que ordena a los modelos al revés.
+Si se junta la obligación con la lista de prohibiciones, el orden casi se invierte. En cerca de la mitad de sus ejecuciones, Sol añadió un test de regresión junto a su arreglo, que también es buena práctica, y E1 prohíbe tocar los tests. Así que con E2 el modelo que más aprueba es Qwen, con 13 de sus 22 arreglos, y los más fuertes quedan los últimos: Opus 1 de 29, Sonnet 0 de 30. Dos reglas que por separado suenan razonables suman un evaluador que pone primero al modelo más pequeño y últimos a los dos más fuertes.
 
 ## El caso que ningún evaluador podía ver
 
@@ -238,14 +238,14 @@ El fichero no compila. La herramienta había informado de que su script envoltor
 
 - **Donde hay un comprobador mecánico fuerte, mira el estado final y prohíbe los atajos.** En Lean eso bastó para dejar los aprobados indebidos en cero. Las únicas demostraciones válidas que suspendió fueron cinco escritas con flechas ASCII, que una comprobación literal del enunciado lee como un enunciado cambiado. Evaluar el camino no añadió nada, salvo un tercio de demostraciones válidas suspendidas.
 - **Donde el comprobador es débil, el camino tampoco tapa el hueco.** En el mundo de los bugs, los aprobados indebidos eran arreglos que hacían menos de lo que parecía, no acciones prohibidas. El camino cazó algunos solo porque suspendía todo lo que se salía de lo habitual.
-- **Una obligación es una opinión sobre el método.** «Tests antes de la primera edición» suena indiscutible. Aquí separó a los modelos por costumbre y, combinada con la prohibición de tocar los tests, los ordenó al revés de lo bien que arreglaban los bugs.
+- **Una obligación es una opinión sobre el método.** «Tests antes de la primera edición» suena indiscutible. Aquí separó a los modelos por costumbre y, combinada con la prohibición de tocar los tests, puso primero al modelo más pequeño y últimos a los dos más fuertes.
 - **Lo que separó los casos importantes fue lo que dijo el agente.** El «no he podido» honesto, la decisión de alcance explicada, el «completed successfully» que nunca se completó. Ninguno de los cuatro evaluadores lo lee, y cada una de esas frases se puede contrastar con la traza: un código de salida aparece o no aparece.
 
 Esto último es una observación sobre un puñado de ejecuciones, no un evaluador medido. Construir ese evaluador y ver si se sostiene es el siguiente experimento.
 
 ## Límites
 
-Tres ejecuciones por modelo y tarea; una sola librería de Python; una traducción del camino de CORE a demostraciones que es mía, no del paper; veintiséis teoremas cortos y nueve problemas de competición, estos con solo tres modelos. Las referencias de Lean las escribió un modelo que no está en la comparación, y se comprobó que las dos referencias de cada teorema usan estrategias distintas. Dos de las comprobaciones tienen una segunda versión, publicada junto a la original en lugar de sustituirla. La comprobación del enunciado acepta también las grafías ASCII que Lean lee como el mismo símbolo (`->` por `→`), lo que convierte en válidas cinco demostraciones de Luna. La verdad del mundo de los bugs se da también limitada a los casos ocultos que se deducen del informe, que es de donde sale el 11. Las ejecuciones de Lean a través de Codex se repitieron tras unos fallos de su sandbox que afectaban a cómo se ejecutaba `lean` dentro de él; las cifras de aquí son las de la repetición.
+Tres ejecuciones por modelo y tarea; una sola librería de Python; una traducción del camino de CORE a demostraciones que es mía, no del paper; veintiséis teoremas cortos y nueve problemas de competición, estos con solo tres modelos. Las referencias de Lean las escribió un modelo que no está en la comparación, y se comprobó que las dos referencias de cada teorema usan estrategias distintas. Dos de las comprobaciones tienen una segunda versión, publicada junto a la original en lugar de sustituirla. La comprobación del enunciado acepta también las grafías ASCII que Lean lee como el mismo símbolo (`->` por `→`), lo que convierte en válidas cinco demostraciones de Luna. La verdad del mundo de los bugs se da también limitada a los casos ocultos que se deducen del informe, que es de donde sale el 11. Las ejecuciones de Lean a través de Codex se repitieron tras unos fallos de su sandbox que afectaban a cómo se ejecutaba `lean` dentro de él; las cifras de aquí son las de la repetición. En el mundo de los bugs, la orden daba el comando de tests sin `-m` (`python pytest`), que falla antes de ejecutar ningún test; un intento con ese comando no cuenta como ejecutar los tests.
 
 ---
 
