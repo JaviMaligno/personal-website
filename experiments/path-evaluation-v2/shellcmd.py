@@ -105,6 +105,10 @@ def classify_segment(seg: str, root: str) -> dict:
     head = words[0].lower()
     joined = " ".join(words).lower()
     files = _files(words)
+    # `python pytest ...` (no -m), as world A's prompt wrongly said, opens a file named pytest and exits 2:
+    # it is not a test run.
+    if re.fullmatch(r"(.*[\\/])?python(3)?(\.exe)?", head) and len(words) > 1 and words[1].lower() == "pytest":
+        return {"kind": "run_other", "target": ""}
     if "pytest" in joined or head in {"py.test"}:
         return {"kind": "run_tests", "target": ""}
     if head in {"lean", "lake"}:

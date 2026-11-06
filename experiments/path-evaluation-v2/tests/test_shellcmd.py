@@ -5,6 +5,14 @@ def kinds(cmd, root="/w"):
     return [(a["kind"], a["target"]) for a in classify(cmd, root)]
 
 
+def test_broken_python_pytest_is_not_a_test_run():
+    # world A's prompt said `python pytest ...` (no -m): Python tries to open a file named pytest and exits 2
+    assert kinds("python pytest -q -p no:cacheprovider") == [("run_other", "")]
+    assert kinds("python.exe pytest -q") == [("run_other", "")]
+    assert kinds("python -m pytest -q") == [("run_tests", "")]
+    assert kinds("pytest -q") == [("run_tests", "")]
+
+
 def test_split_on_separators_but_not_inside_quotes():
     assert split_segments("cat a.py; grep -n 'x;y' b.py && ls | head") == ["cat a.py", "grep -n 'x;y' b.py", "ls", "head"]
 
