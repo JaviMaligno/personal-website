@@ -2,6 +2,30 @@
 
 Exact prompts used to generate blog hero images (via Codex `image_gen`), for reproducibility and iteration. Newest first.
 
+## oracle-or-tool
+
+- **Article:** `src/content/blog/en/oracle-or-tool.md`
+- **Image:** `public/blog/oracle-or-tool.png`
+- **Generated:** 2026-10-16, built-in `image_gen`; resized to 1020x510.
+
+```text
+Create a 1020x510 pixel, 2:1 landscape blog hero image for an article titled "Oracle or tool". Do not put the article title in the image.
+
+Use case: illustration-story. Style: refined technical editorial illustration, crisp bitmap rendering, dark but not monochrome, high contrast, professional AI blog aesthetic. Concrete physical workspace, subtle material texture, precise edges and restrained depth.
+
+Compose one continuous graphite desk split into two equally weighted halves, viewed from a slightly elevated front angle. Both laptop screens must be large, almost front-facing and readable. Use matching unbranded laptops and the same generic chat interface on both sides, showing two ways of using the same tool. A quiet central seam and the lighting distinguish the halves; no floating infographic panels.
+
+Left half: one laptop showing a small question bubble and exactly one prominent confident answer card reading "The answer". Only a couple of short muted placeholder lines beneath it. The card casts a concentrated amber glow onto the keyboard and desk, giving the ordinary screen an oracle-like authority without mystical objects. An empty chair is pulled back in front of this half, clearly visible without obscuring the laptop. The left desktop is spare.
+
+Right half: the matching laptop shows that same chat interface used for research. Within its screen, two clean side-by-side columns titled "Option A" and "Option B", with compact source cards beneath them labelled "Sources" and small citation tags "[1]", "[2]", "[3]". A distinct compact checklist within the window is headed "Evidence type" and has three readable rows: "Trial", "Observational", "Expert opinion". Use sparse short lines and tidy spacing, not paragraphs. Teal accents organize the comparisons; off-white cards and text remain legible. On the desk beside this laptop, a small open paper notebook has the handwritten heading "Criteria" and a short three-item list: "Goals", "Evidence", "Trade-offs". Include a simple pen resting alongside the notebook. Keep the notebook visibly physical and separate from the screen.
+
+The visual story is accepting a single confident answer versus comparing alternatives and sources using one's own written criteria. Neither option is marked as a winner. Balance amber on the left with teal on the right, graphite structure and off-white highlights throughout. Keep every essential object comfortably inside the frame, with enough breathing room for a clean blog thumbnail. Text is limited to the short generic interface and notebook labels specified above.
+
+No logos, brand names, people, faces, hands, robots, food focus, specific diet foods, mystical symbols, crystal balls, abstract floating nodes, text-heavy poster, oversized headings, purple gradient blobs, bokeh or watermarks. Opaque background.
+```
+
+---
+
 ## dont-just-say-ignore-it
 
 - **Article:** `src/content/blog/{en,es}/dont-just-say-ignore-it.md`
