@@ -1,0 +1,1 @@
+Please resolve the `optout_sms_v2` conflict before I implement channel selection: does `true` mean the customer opted out of SMS, or should they receive a text?
