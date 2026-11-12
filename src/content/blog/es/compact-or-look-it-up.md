@@ -100,7 +100,7 @@ También corrí la sonda C con GPT-6 Luna, por Codex. No escribe razonamiento vi
 
 ## Qué me llevaría de esto
 
-- **No tires el contexto entero.** Una sesión limpia con el transcript consultable fue el único brazo que falló en todas las condiciones, con los dos modelos. Conserva un resumen, o las líneas del propio agente, y añade la consulta encima si la quieres; los dos híbridos lo hicieron igual de bien que no compactar nunca.
+- **No tires el contexto entero, al menos no con una búsqueda simple.** Una sesión limpia con el transcript consultable fue el único brazo que falló en todas las condiciones, con los dos modelos. Su búsqueda era deliberadamente simple: palabras exactas, como mucho ocho líneas de vuelta y dos búsquedas por paso. La consulta de Woolford delega la búsqueda en un subagente que lee la historia entera, y quizá encuentre la corrección sin que nadie se la pida; eso no lo probé. Conserva un resumen, o las líneas del propio agente, y añade la consulta encima si la quieres; los dos híbridos lo hicieron igual de bien que no compactar nunca.
 - **Un modelo que resume bien cambia el equilibrio.** Con Haiku 5.5, el resumen conservó un detalle literal cuarenta pasos y dos compactaciones después. Los modelos ligeros de Woolford perdían detalles que su método transparente conservaba; la distancia entre los dos depende de lo bueno que sea quien resume.
 - **Dale instrucciones a la consulta.** Una guía breve de cuándo buscar ayudó a los brazos que tenían algo que recuperar, y no hizo nada por el que no sabía qué buscar.
 - **Comprueba que tu sonda es coherente desde el lado del agente.** Una corrección que contradice lo que el agente vio mide si te cree, no qué recuerda.

@@ -100,7 +100,7 @@ I ran probe C on GPT-6 Luna as well, through Codex. It writes no visible reasoni
 
 ## What I would take from this
 
-- **Don't drop the context entirely.** A clean session with a searchable transcript was the only arm that failed in every condition, with both models. Keep a summary, or the agent's own lines, and add the search on top if you want it; both hybrids did as well as never compacting.
+- **Don't drop the context entirely — at least not with a plain search.** A clean session with a searchable transcript was the only arm that failed in every condition, with both models. Its search was deliberately simple: exact words, at most eight lines back, two searches per step. Woolford's lookup hands the search to a subagent that reads the whole history, which may find the correction without being asked for it; I did not test that. Keep a summary, or the agent's own lines, and add the search on top if you want it; both hybrids did as well as never compacting.
 - **A model good at summarising changes the trade-off.** With Haiku 5.5 the summary kept a literal detail forty steps and two compactions out. Woolford's lightweight models lost details that his transparent method kept; the gap between the two depends on how good the summariser is.
 - **Give the search instructions.** A short guide on when to look something up helped the arms that had something to recover, and did nothing for the one that did not know what to look for.
 - **Check that your probe is coherent from the agent's side.** A correction that contradicts what the agent saw measures whether it believes you, not what it remembers.
