@@ -28,6 +28,8 @@ linkedinSummary: |
 .wfs-fig figcaption { margin-top: 0.6rem; font-size: 0.9rem; color: #94a3b8; line-height: 1.5; }
 </style>
 
+> **Update (November 2026).** A later experiment found a flaw in the correction probe used here: the notice corrected a put-away whose pallet had already been shipped, so it contradicted what the agent with the transcript had seen. Rerun on Haiku 4.5 with a coherent notice, the full transcript applies the correction in **10 of 12** episodes against 12 of 12 for explicit state (with the original notice, 3 of 12 against 12 of 12). The direction holds; most of the gap came from the probe. Details in an upcoming article.
+
 > **Correction.** The headline count of this article — Haiku at 3/44 against 44/44, and "93 of 93 dependent steps" with explicit state — came from an instrument that could not register every miss: it read its dependent steps off a simulated trajectory instead of the agent's real one, and applied the correct action whenever a runtime returned none. Re-measured per episode on the real trajectory, across three models, explicit state applies the correction in **70 of 72 episodes** and the full transcript in **10 of 72** (Haiku alone: 24/24 against 1/24). The direction stands; the perfection does not. The re-measurement is in the [replication paper](https://github.com/JaviMaligno/delayed-relevance/blob/main/docs/paper-draft.md).
 
 > **A replication of *SKILL.state: Scalable Long-Horizon Agent Skills* (Badhe, Tiwari and Chung, accepted at EMNLP) across two models and 500+ episodes**, plus a third model in the corrected count of the retroactive correction. Every headline number here is a count of decisions, not an average of episodes.

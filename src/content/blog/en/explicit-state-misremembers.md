@@ -22,6 +22,8 @@ linkedinLinks:
 .esm-fig .h { fill: #f8fafc; font: 600 14px system-ui, sans-serif; }
 </style>
 
+> **Update (November 2026).** A later experiment found a flaw in the correction probe used here: the notice corrected a put-away whose pallet had already been shipped, so it contradicted what the agent with the transcript had seen. Rerun on Haiku 4.5 with a coherent notice, the full transcript applies the correction in **10 of 12** episodes against 12 of 12 for explicit state (with the original notice, 3 of 12 against 12 of 12). The direction holds; most of the gap came from the probe. Details in an upcoming article.
+
 In the [first half of this replication](/en/blog/when-the-fact-stops-being-true) I ran
 [SKILL.state](https://arxiv.org/abs/2608.26263) on Claude and found that its headline
 degradation did not appear there. The obvious objection is that the paper runs on
