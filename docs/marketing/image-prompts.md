@@ -2013,3 +2013,26 @@ Keep the amber explanation strips visibly intact at the lead, product manager an
 
 Balanced teal, amber, graphite and off-white accents, dark charcoal background, high contrast, professional AI/developer blog aesthetic. Layered technical detail without clutter or a text-heavy poster. No logos, no brand names, no people, no humanoid robots, no purple gradient blobs, no bokeh, no watermark.
 ```
+
+
+## Compact or Look It Up — 2026-11-12
+
+- Article: `src/content/blog/en/compact-or-look-it-up.md`
+- Image: `public/blog/compact-or-look-it-up.png`
+- Generator: built-in `image_gen` via Codex; resized to 1020x510 with System.Drawing.
+
+```text
+Create a 1020x510 blog hero image, landscape 2:1, for a technical article titled "Compact or Look It Up". Do not print the title.
+
+Style: refined technical editorial illustration, dark but not monochrome, crisp bitmap artwork with precise edges, subtle tactile shading and restrained dimensional depth. High contrast, professional AI/developer blog aesthetic. Balanced teal, amber, graphite and off-white accents.
+
+Show the article's core idea as a concrete working system. Across the upper centre, an AI agent's context-window terminal is almost full: dense short log lines and a segmented capacity bar with its final segments amber. Include one clearly readable amber line, "step 14  correction_notice". Two orderly arrows branch from this same full context into two side-by-side routes below, separated by generous negative space.
+
+Left route, labelled "COMPACT": a long folded conversation log visibly funnels down into one small off-white summary card. The card has the short heading "Summary" and the single readable retained fact "shelf 0: corrected", followed by two short graphical text rules. Make the reduction from many transcript lines to a small useful card immediately apparent.
+
+Right route, labelled "LOOK IT UP": a clean, nearly empty dark workspace with only a cursor sits beside an external archive of three stacked literal-transcript pages. Give the archive visible step numbers and short log rules, with the same amber "step 14  correction_notice" preserved on one page among ordinary teal entries. Above the archive is a crisp search field with a magnifying-glass icon and exact text "Lookup: shelf 0". A thin bidirectional connector links the empty workspace and the archive. Preserve the contrast between a fact actively retained in the summary and a fact still present in the archive that must be deliberately searched for; do not depict automatic perfect recall.
+
+A small warehouse shelf grid anchors the lower centre as a secondary domain detail, with one empty shelf cell outlined in amber and a tiny "corrected" tag. Keep it subordinate to the context and the two memory routes. Use clean geometric composition with several distinct zones, orderly connectors without crossings, comfortably legible sparse monospace interface text, generous outer margins and strong hierarchy at thumbnail size. Integrate the components into one polished editorial scene rather than a text-heavy slide.
+
+Opaque graphite background, teal structural elements, warm amber correction highlights and off-white cards and lettering. No logos, no brand names, no people, no humanoid robots, no headline, no paragraphs, no purple gradient blobs, no bokeh, no watermark.
+```
