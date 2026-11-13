@@ -18,7 +18,7 @@ linkedinLinks:
 .cl-fig svg { width: 100%; height: auto; background: #1a1a24; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; }
 .cl-fig figcaption { margin-top: 0.6rem; font-size: 0.9rem; color: #94a3b8; line-height: 1.5; }
 table td:first-child, table td:first-child code { white-space: nowrap; word-break: keep-all; }
-table td:not(:first-child), table th:not(:first-child) { white-space: normal; }
+table td:not(:first-child), table th:not(:first-child) { white-space: normal !important; }
 </style>
 
 Un agente de programación lleva dos horas trabajando. Al principio leyó que esta semana la base de datos de staging es de solo lectura. Desde entonces ha ejecutado cien comandos y tiene la ventana de contexto llena. Algo tiene que salir.
