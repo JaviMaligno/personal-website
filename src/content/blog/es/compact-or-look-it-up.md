@@ -108,7 +108,7 @@ También corrí la sonda C con GPT-6 Luna, por Codex. No escribe razonamiento vi
 - **Dale instrucciones a la consulta.** Una guía breve de cuándo buscar ayudó a los brazos que tenían algo que recuperar, y no hizo nada por el que no sabía qué buscar.
 - **Comprueba que tu sonda es coherente desde el lado del agente.** Una corrección que contradice lo que el agente vio mide si te cree, no qué recuerda.
 
-Son seis o doce episodios por brazo, un solo entorno y dos modelos Haiku. La dirección se repite en todas las variantes; las tasas exactas no son para citarlas.
+Son seis o doce episodios por brazo y un solo entorno: Haiku 5.5 y GPT-6 Luna en los brazos de compactación, Haiku 4.5 y Sonnet 5 en la repetición. La dirección se repite en todas las variantes; las tasas exactas no son para citarlas.
 
 ---
 

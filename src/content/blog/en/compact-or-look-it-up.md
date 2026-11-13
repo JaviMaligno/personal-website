@@ -108,7 +108,7 @@ I ran probe C on GPT-6 Luna as well, through Codex. It writes no visible reasoni
 - **Give the search instructions.** A short guide on when to look something up helped the arms that had something to recover, and did nothing for the one that did not know what to look for.
 - **Check that your probe is coherent from the agent's side.** A correction that contradicts what the agent saw measures whether it believes you, not what it remembers.
 
-These are six or twelve episodes per arm, one environment and two Haiku models. The direction is consistent across every variant; the exact rates are not something to quote.
+These are six or twelve episodes per arm and a single environment: Haiku 5.5 and GPT-6 Luna on the compaction arms, Haiku 4.5 and Sonnet 5 on the rerun. The direction is consistent across every variant; the exact rates are not something to quote.
 
 ---
 
