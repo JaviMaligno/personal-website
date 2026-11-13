@@ -6,6 +6,7 @@ tags: ["AI", "Agents", "Context Engineering", "Memory", "Evaluation"]
 lang: en
 translationKey: compact-or-look-it-up
 heroImage: "/blog/compact-or-look-it-up.png"
+linkedinImage: /blog/compact-or-look-it-up-fig-3.png
 repoUrl: https://github.com/JaviMaligno/delayed-relevance/tree/exp/compaction-vs-transcript
 linkedinLinks:
   - label: "Woolford, Maximising Transparency in Context Compaction (arXiv)"
