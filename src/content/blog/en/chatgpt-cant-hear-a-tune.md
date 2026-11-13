@@ -1,7 +1,7 @@
 ---
 title: "ChatGPT Reads the Lyrics, Not the Tune"
 description: "I hummed Happy Birthday to ChatGPT and it could not name it; with the words it answered at once. Then I ran 150 wordless recordings through OpenAI's voice models: they name a song from its lyrics and are at chance without them, while a tiny contour model got my three hums right."
-pubDate: 2026-12-17
+pubDate: 2026-11-21
 tags: ["AI", "Voice", "Evaluation", "Multimodal", "Machine Learning"]
 lang: en
 translationKey: chatgpt-cant-hear-a-tune

@@ -1,7 +1,7 @@
 ---
 title: "ChatGPT lee la letra, no oye la melodía"
 description: "Le tarareé Cumpleaños feliz a ChatGPT y no supo decir qué era; con la letra contestó al instante. Después pasé 150 grabaciones sin palabras por los modelos de voz de OpenAI: nombran una canción por su letra y sin ella quedan en el azar, mientras un modelo diminuto de contorno acertó mis tres tarareos."
-pubDate: 2026-12-17
+pubDate: 2026-11-21
 tags: ["IA", "Voz", "Evaluación", "Multimodal", "Machine Learning"]
 lang: es
 translationKey: chatgpt-cant-hear-a-tune
