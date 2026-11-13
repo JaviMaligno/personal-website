@@ -162,4 +162,6 @@ The limits here matter. Whisper is OpenAI's open encoder, not necessarily the on
 
 I would reach for the same pattern before assuming a voice model hears anything else that is not words: how fast someone speaks, whether they hesitate, whether the line dropped. Measure it first, and if it is not there, a small specialised listener next to the model is cheap.
 
+Two things stay open, and each deserves its own piece. The first is what 46 % means. I do not know how a person would score on these same hums, and I suspect the answer turns on familiarity more than on hearing: whether you know the song at all, whether you know it but not its name, which passage was hummed. A Beatles melody I would probably get; one I have heard a handful of times, maybe not. The second is the search tool itself. Eight songs is a toy. Finding a contour among millions of tracks, quickly, with a notion of similarity that survives a bad singer, is a field of its own.
+
 Everything here is on one corpus of eight songs, with one voice model per company and my own minimal search. It shows where to look, not how large the gap is in general.

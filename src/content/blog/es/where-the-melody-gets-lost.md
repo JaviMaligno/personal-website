@@ -162,4 +162,6 @@ Los límites aquí importan. Whisper es el codificador abierto de OpenAI, no nec
 
 Aplicaría el mismo patrón antes de dar por hecho que un modelo de voz oye cualquier otra cosa que no sean palabras: lo rápido que habla alguien, si duda, si se cortó la línea. Primero medirlo y, si no está, un pequeño oyente especializado junto al modelo sale barato.
 
+Quedan abiertas dos cosas, y cada una merece su propia entrega. La primera es qué significa ese 46 %. No sé cuánto acertaría una persona con estos mismos tarareos, y sospecho que la respuesta depende más de la familiaridad que del oído: de si conoces la canción, de si la conoces pero no sabes cómo se llama, de qué pasaje se tarareó. Una melodía de los Beatles seguramente la reconocería; una que he oído unas pocas veces, quizá no. La segunda es la propia herramienta de búsqueda. Ocho canciones son un juguete. Encontrar un contorno entre millones de pistas, deprisa y con una noción de similitud que aguante a alguien que canta mal, es un campo entero.
+
 Todo esto es sobre un solo corpus de ocho canciones, con un modelo de voz por empresa y mi búsqueda mínima. Enseña dónde mirar, no cómo de grande es la distancia en general.
