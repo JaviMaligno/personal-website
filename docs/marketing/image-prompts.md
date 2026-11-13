@@ -2013,3 +2013,20 @@ Keep the amber explanation strips visibly intact at the lead, product manager an
 
 Balanced teal, amber, graphite and off-white accents, dark charcoal background, high contrast, professional AI/developer blog aesthetic. Layered technical detail without clutter or a text-heavy poster. No logos, no brand names, no people, no humanoid robots, no purple gradient blobs, no bokeh, no watermark.
 ```
+
+## chatgpt-cant-hear-a-tune
+
+- Article: `src/content/blog/en/chatgpt-cant-hear-a-tune.md`
+- Image: `public/blog/chatgpt-cant-hear-a-tune.png`
+- Generated: 2026-11-13 (Codex, image_gen)
+
+```text
+Create a 1020x510 pixel blog hero image, wide 2:1 composition.
+Style: refined technical editorial illustration, dark but not monochrome, crisp bitmap illustration with high contrast and a professional AI/developer blog aesthetic. Balanced teal, amber, graphite and off-white accents.
+Show a concrete scene of sound travelling towards a smartphone running a generic voice assistant on a dark graphite desk. The core idea is selective perception: the assistant can extract words but fails to follow a hummed melody.
+Composition: on the left, a visible sound waveform travels rightward, with two distinct interwoven components: thin off-white lines of spoken text and an amber pitch contour rising and falling with a few clear musical notes. At center-right stands the phone, angled only slightly so its screen remains legible, with a softly glowing teal voice orb. The off-white word stream passes through the phone's receiving boundary and becomes a small neat transcript panel on its screen. The amber melody contour bends away at the boundary and the musical notes bounce off or fall down towards the desk; a few small directional arrowheads make the divergence clear. Keep these paths visually distinct and easy to understand. This is an editorial depiction of a measured limitation, not a literal claim about internal model architecture.
+On the phone screen, a compact transcript panel has the readable generic heading "Transcript" and just one short line: "Can you name this song?" Beneath it, a separate outlined text entry box is visibly empty, with no placeholder or writing, suggesting that humming produces no transcript. Use no other text anywhere in the image.
+A tiny off-white birthday cake with two amber candles sits near the lower-left edge as a secondary prop, understated and geometric. The waveform originates off-frame: no singer or person is shown.
+Clean geometric composition with carefully layered depth, precise edges, restrained surface texture and subtle local illumination. Generous breathing room around the main sound path; all important elements inside safe margins. The phone, waveform, pitch contour, falling notes and small transcript panel are the main visual motifs. The voice orb must look generic, with no recognizable product interface.
+No logos, no brand names, no people, no hands, no headline, no text-heavy poster, no purple gradient blobs, no bokeh.
+```
