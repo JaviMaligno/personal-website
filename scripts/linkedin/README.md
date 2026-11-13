@@ -308,3 +308,21 @@ scripts/linkedin/
 **Creado por**: Javier Aguilar (AI Agent Architect)
 **LinkedIn**: https://linkedin.com/in/javier-aguilar-ai
 **Website**: https://javieraguilar.ai
+
+## Instagram link in video captions
+
+Every LinkedIn video caption should include a short invitation to follow the Instagram account configured in `src/config.ts`, before the hashtags:
+
+```text
+Follow AGILabs on Instagram for more AI videos: https://www.instagram.com/agilabs_ai/
+```
+
+For Spanish captions:
+
+```text
+Sigue a AGILabs en Instagram para ver más vídeos sobre IA: https://www.instagram.com/agilabs_ai/
+```
+
+Keep the article and source links. Include the invitation in the post text, so it is visible with the video. Check the final text with `--dry-run` against the 3,000-character limit. This is an authoring convention; the publisher does not insert it automatically.
+
+Updating a caption file only affects future publication. Already-published posts must be edited separately in LinkedIn; do not re-publish them or rerun their scheduled job to update the text.
