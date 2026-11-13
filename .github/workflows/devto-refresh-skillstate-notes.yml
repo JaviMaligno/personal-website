@@ -1,0 +1,37 @@
+name: Dev.to refresh — SKILL.state notes link (one-shot)
+
+# De un solo uso. Las notas de when-the-fact-stops-being-true y
+# explicit-state-misremembers ganan el enlace a compact-or-look-it-up con el
+# merge programado del 2026-12-11. devto-post.yml ignora ficheros modificados
+# (solo publica los nuevos), asi que aqui se relanza a mano para esos dos.
+# Corre el 11, 12 y 13 de diciembre por si la publicacion se retrasa; no hace
+# nada hasta que el articulo esta en main. publish-to-devto.js es idempotente
+# (PUT sobre el existente), asi que repetirlo no duplica. Borrar despues.
+
+on:
+  schedule:
+    - cron: '30 19 11-13 12 *'   # 19:30 UTC, despues del ultimo cron de publicacion
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dispatch devto-post for both notes once the article is live
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(date -u +%Y)" != "2026" ]; then echo "fuera de 2026, nada que hacer"; exit 0; fi
+          if [ ! -f src/content/blog/en/compact-or-look-it-up.md ]; then
+            echo "compact-or-look-it-up aun no esta en main; se reintenta en la siguiente salida"; exit 0
+          fi
+          for f in src/content/blog/en/when-the-fact-stops-being-true.md src/content/blog/en/explicit-state-misremembers.md; do
+            grep -q "/en/blog/compact-or-look-it-up" "$f" || { echo "::error::$f no tiene el enlace"; exit 1; }
+            gh workflow run devto-post.yml --ref main -f post_path="$f"
+            echo "lanzado devto-post para $f"
+          done
