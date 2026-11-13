@@ -53,7 +53,7 @@ La primera sorpresa es que la sonda A apenas separa los brazos. Haiku 5.5 escrib
 <figcaption>Sonda A, una celda por episodio. Con este modelo, resumir no pierde el detalle. El brazo que lo pierde es la sesión limpia que puede consultar.</figcaption>
 </figure>
 
-El estado explícito saca 1 de 12 por un motivo que conté en [El estado explícito no olvida. Recuerda mal.](/es/blog/explicit-state-misremembers): su esquema tiene un campo para el contenido de las estanterías y otro para el último evento, ninguno para una cuarentena, así que el modelo la apunta en el último evento y el siguiente evento la sobrescribe.
+El estado explícito saca 1 de 12, y eso dice más del esquema que del agente. SKILL.state le da al agente un conjunto fijo de campos, aquí uno para el contenido de las estanterías y otro para el último evento, y rechaza cualquier actualización que añada otro. No hay campo para una cuarentena, así que el modelo la apunta en el último evento y el siguiente evento la sobrescribe. Con un campo que nombra el dato, la misma sonda dio 24 de 24 con Haiku 4.5 en [El estado explícito no olvida. Recuerda mal.](/es/blog/explicit-state-misremembers): el estado explícito protege lo que su diseñador previó, que es la limitación que declara el propio paper.
 
 En esta misma sonda, Haiku 4.5 con el transcript entero delante acertaba el 0 % de las veces. El modelo ha mejorado en darse cuenta de qué va a importar después, y la sonda que se construyó para romper los resúmenes ya no los rompe.
 
@@ -82,7 +82,7 @@ La misma guía que no hizo nada por la sesión limpia sí ayudó donde había al
 
 ## Qué le pasa al resultado del estado explícito
 
-Ese aviso roto no es nuevo. Es el mismo sobre el que se construyeron mis dos artículos anteriores sobre SKILL.state, [Cuando el dato deja de ser cierto](/es/blog/when-the-fact-stops-being-true) y *El estado explícito no olvida. Recuerda mal.* Su cifra más fuerte era que el estado explícito aplica una corrección en 70 de 72 episodios y el transcript completo en 10 de 72. El mecanismo que di era que un solo sitio que sobrescribir gana a un transcript que contiene a la vez una afirmación y su retractación.
+Ese aviso roto no es nuevo. Es el mismo sobre el que se construyeron mis dos artículos anteriores sobre SKILL.state, [Cuando el dato deja de ser cierto](/es/blog/when-the-fact-stops-being-true) y [El estado explícito no olvida. Recuerda mal.](/es/blog/explicit-state-misremembers). Su cifra más fuerte era que el estado explícito aplica una corrección en 70 de 72 episodios y el transcript completo en 10 de 72. El mecanismo que di era que un solo sitio que sobrescribir gana a un transcript que contiene a la vez una afirmación y su retractación.
 
 El aviso incoherente sugiere otro mecanismo. El agente con el transcript podía ver que el palé corregido ya se había enviado, así que el aviso contradecía lo que había visto pasar. El agente con solo un objeto de estado no podía verlo, así que no tenía nada que objetar. Así que volví a correr el experimento original, con dos de sus modelos (Haiku 4.5 y Sonnet 5), las mismas seeds y la misma medida, una vez con el aviso viejo y otra con el coherente:
 

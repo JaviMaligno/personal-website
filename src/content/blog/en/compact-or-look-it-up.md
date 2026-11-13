@@ -53,7 +53,7 @@ The first surprise is that probe A barely separates the arms. Haiku 5.5 writes t
 <figcaption>Probe A, one cell per episode. Writing a summary does not lose the detail with this model. The clean session that can search is the arm that loses it.</figcaption>
 </figure>
 
-Explicit state gets 1 of 12 for a reason I described in [Explicit State Doesn't Forget. It Misremembers.](/en/blog/explicit-state-misremembers): its schema has a field for shelf contents and one for the last event, nothing for a quarantine, so the model writes it into the last event and the next event overwrites it.
+Explicit state gets 1 of 12, and that says more about the schema than about the agent. SKILL.state gives the agent a fixed set of fields, here one for shelf contents and one for the last event, and rejects any update that adds another. There is no field for a quarantine, so the model writes it into the last event and the next event overwrites it. With a field that names the fact, the same probe gave 24 of 24 on Haiku 4.5 in [Explicit State Doesn't Forget. It Misremembers.](/en/blog/explicit-state-misremembers): explicit state protects what its designer anticipated, which is the limitation the paper itself declares.
 
 On the same probe, Haiku 4.5 with the entire transcript in front of it used to get this right 0% of the time. The model got better at noticing what will matter later, and the probe that was built to break summaries no longer does.
 
@@ -82,7 +82,7 @@ The same guide that did nothing for the clean session did help where there was s
 
 ## What this does to the explicit-state result
 
-That broken notice is not new. It is the same one my two earlier articles on SKILL.state were built on, [When the Fact Stops Being True](/en/blog/when-the-fact-stops-being-true) and *Explicit State Doesn't Forget. It Misremembers.* Their strongest number was that explicit state applies a correction in 70 of 72 episodes and the full transcript in 10 of 72. The mechanism I gave was that one location to overwrite beats a transcript holding both a claim and its retraction.
+That broken notice is not new. It is the same one my two earlier articles on SKILL.state were built on, [When the Fact Stops Being True](/en/blog/when-the-fact-stops-being-true) and [Explicit State Doesn't Forget. It Misremembers.](/en/blog/explicit-state-misremembers). Their strongest number was that explicit state applies a correction in 70 of 72 episodes and the full transcript in 10 of 72. The mechanism I gave was that one location to overwrite beats a transcript holding both a claim and its retraction.
 
 The incoherent notice suggests a different mechanism. The agent with the transcript could see that the corrected pallet had already shipped, so the notice contradicted what it had watched happen. The agent with only a state object could not see that, so it had nothing to object to. So I ran the original experiment again, with two of its models (Haiku 4.5 and Sonnet 5), the same seeds and the same measure, once with the old notice and once with the coherent one:
 
