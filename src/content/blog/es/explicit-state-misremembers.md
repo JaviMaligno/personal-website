@@ -22,7 +22,7 @@ linkedinLinks:
 .esm-fig .h { fill: #f8fafc; font: 600 14px system-ui, sans-serif; }
 </style>
 
-> **Actualización (noviembre de 2026).** Un experimento posterior encontró un fallo en la sonda de corrección de este artículo: el aviso corregía una colocación cuyo palé ya se había enviado, así que contradecía lo que había visto el agente con el transcript. Repetido con un aviso coherente, el transcript completo aplica la corrección en **10 de 12** episodios con Haiku 4.5 y en **12 de 12** con Sonnet 5, frente a 12 de 12 con estado explícito en los dos (con el aviso original: 3 y 5 de 12 frente a 12 de 12). La mayor parte de la distancia venía de la sonda, no del estado explícito. Los detalles, en un próximo artículo.
+> **Actualización (noviembre de 2026).** Un experimento posterior encontró un fallo en la sonda de corrección de este artículo: el aviso corregía una colocación cuyo palé ya se había enviado, así que contradecía lo que había visto el agente con el transcript. Repetido con un aviso coherente, el transcript completo aplica la corrección en **10 de 12** episodios con Haiku 4.5 y en **12 de 12** con Sonnet 5, frente a 12 de 12 con estado explícito en los dos (con el aviso original: 3 y 5 de 12 frente a 12 de 12). La mayor parte de la distancia venía de la sonda, no del estado explícito. Los detalles, en [Resumir o consultar](/es/blog/compact-or-look-it-up).
 
 En la [primera mitad de esta réplica](/es/blog/when-the-fact-stops-being-true) corrí
 [SKILL.state](https://arxiv.org/abs/2608.26263) sobre Claude y la degradación que el paper
