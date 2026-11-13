@@ -17,6 +17,7 @@ linkedinLinks:
 .cl-fig { margin: 2rem 0; }
 .cl-fig svg { width: 100%; height: auto; background: #1a1a24; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; }
 .cl-fig figcaption { margin-top: 0.6rem; font-size: 0.9rem; color: #94a3b8; line-height: 1.5; }
+table td:first-child, table td:first-child code { white-space: nowrap; word-break: keep-all; }
 </style>
 
 A coding agent has been working for two hours. Early on it read that the staging database is read-only this week. Since then it has run a hundred commands, and its context window is full. Something has to go.
