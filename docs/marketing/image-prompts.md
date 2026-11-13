@@ -2013,3 +2013,23 @@ Keep the amber explanation strips visibly intact at the lead, product manager an
 
 Balanced teal, amber, graphite and off-white accents, dark charcoal background, high contrast, professional AI/developer blog aesthetic. Layered technical detail without clutter or a text-heavy poster. No logos, no brand names, no people, no humanoid robots, no purple gradient blobs, no bokeh, no watermark.
 ```
+
+## where-the-melody-gets-lost
+
+- **Article:** `src/content/blog/en/where-the-melody-gets-lost.md`
+- **Image:** `public/blog/where-the-melody-gets-lost.png`
+- **Generated:** 2026-11-13, Codex built-in `image_gen`.
+
+```text
+Create a 1020x510 pixel blog hero image, a wide 2:1 composition, for a technical article about why speech encoders lose hummed melodies and how a 1990s pitch-contour search recovers them.
+
+Style: refined technical editorial bitmap illustration, crisp edges, high contrast, rich but disciplined detail, dark but not monochrome, professional AI/developer blog aesthetic. Balanced teal, amber, graphite and off-white accents. A concrete working system on a graphite laboratory desktop, viewed in a restrained three-quarter perspective, with clean geometric composition and generous breathing room.
+
+Scene: On the left half, a clear bright amber pitch contour representing a hummed melody enters a stack of translucent teal glass encoder panels from the left. Give this contour a distinctive stepped up-and-down tune shape, with short horizontal held notes connected by slopes, rather than a generic sine wave. Its first layers are bright and sharp; through successive panels it becomes progressively dimmer and less complete. Coming out the far side, it remains partly visible as faded, broken amber fragments: information is weakened, not completely erased. The panels have fine etched circuit-like details, subtle thickness and crisp teal edges.
+
+Beside the encoder, on the right half, a small unbranded vintage 1990s off-white desktop computer with a compact CRT monitor and simple keyboard receives a separate intact copy of the original amber contour. The monitor traces that exact same distinctive tune shape perfectly and clearly. Next to it is a shallow open catalogue drawer holding orderly off-white melody index cards with small varied contour drawings. One selected card is pulled forward; its amber contour visibly matches the intact contour on the monitor. A thin teal connection between screen and selected card communicates comparison and retrieval. This is a small specialised melody-search tool, not a futuristic supercomputer.
+
+Supporting motifs: a small subtle audio waveform at the input and two tiny musical notes nearby, layered glass panels, precise pitch lines, tactile index-card edges. Keep the melody comparison and the gradual loss immediately legible at thumbnail size. Use warm amber as the melody signal, teal for system structure, off-white for the retro hardware and cards, and graphite for the background. Controlled local illumination, subtle material shading, sharp focus throughout.
+
+Constraints: no people, no logos, no brand names, no article title, no text-heavy poster, no watermarks. Use no written labels. No purple gradient blobs, no bokeh, no decorative floating cubes, no excessive neon bloom. Keep every important object inside the frame with comfortable margins. Output a finished opaque PNG hero illustration.
+```
