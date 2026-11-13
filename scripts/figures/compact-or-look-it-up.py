@@ -2,7 +2,7 @@
 
 Datos de github.com/JaviMaligno/delayed-relevance, rama exp/compaction-vs-transcript:
 results/compaction/{A-haiku55,C-haiku55,C-haiku55-coh}/reporte.txt (columna «1er dep.»
-en C, «metrica» en A) y results/bloque1-coherente/*.json (caja del primer dependiente).
+en C, «metrica» en A) y results/bloque1-coherente/*.json (caja del primer dependiente, Haiku 4.5 y Sonnet 5).
 Escribe los SVG en stdout separados por una línea `=====`, para pegarlos en EN y ES.
 
 Uso: python scripts/figures/compact-or-look-it-up.py en|es
@@ -84,21 +84,25 @@ cuerpo += leyenda(46 + 6 * 26 + 10)
 fig2 = svg(234, t("Probe C, Haiku 5.5, decisive step per episode: with a notice that contradicts the history most arms miss; with a coherent notice every arm but the fresh session applies it in 5 or 6 of 6.",
                   "Sonda C, Haiku 5.5, paso decisivo por episodio: con un aviso que contradice la historia casi todos los brazos fallan; con un aviso coherente todos menos la sesión limpia lo aplican en 5 o 6 de 6."), cuerpo)
 
-# Figura 3: el bloque 1 repetido con Haiku 4.5, 12 episodios por celda.
-R = {("skillstate", 0): 12, ("react", 0): 3, ("skillstate", 1): 12, ("react", 1): 10}
-cuerpo = (f'<text x="150" y="28" class="h">{t("Notice contradicts history", "El aviso contradice la historia")}</text>'
-          f'<text x="150" y="122" class="h">{t("Coherent notice", "Aviso coherente")}</text>')
+# Figura 3: el bloque 1 repetido con Haiku 4.5 y Sonnet 5, 12 episodios por celda.
+R = {("haiku", "skillstate", 0): 12, ("haiku", "react", 0): 3, ("haiku", "skillstate", 1): 12,
+     ("haiku", "react", 1): 10, ("sonnet", "skillstate", 0): 12, ("sonnet", "react", 0): 5,
+     ("sonnet", "skillstate", 1): 12, ("sonnet", "react", 1): 12}
+cuerpo = ""
+FILAS = [("haiku", "skillstate"), ("haiku", "react"), ("sonnet", "skillstate"), ("sonnet", "react")]
 for c in (0, 1):
-    for j, b in enumerate(("skillstate", "react")):
-        y = 44 + c * 94 + j * 28
-        etiqueta = "explicit state" if b == "skillstate" else "full transcript"
-        if ES:
-            etiqueta = "estado explícito" if b == "skillstate" else "transcript completo"
-        cuerpo += f'<text x="140" y="{y + 11}" class="t" text-anchor="end">{etiqueta}</text>'
-        cuerpo += celdas(150, y, R[(b, c)], 12 - R[(b, c)])
-        cuerpo += f'<text x="{150 + 12 * 18 + 8}" y="{y + 11}" class="m">{R[(b, c)]}/12</text>'
-cuerpo += leyenda(214)
-fig3 = svg(240, t("The earlier replication rerun on Haiku 4.5: explicit state 12 of 12 against the full transcript 3 of 12 when the notice contradicts history; 12 of 12 against 10 of 12 when it does not.",
-                  "La réplica anterior repetida con Haiku 4.5: estado explícito 12 de 12 frente a transcript completo 3 de 12 cuando el aviso contradice la historia; 12 de 12 frente a 10 de 12 cuando no."), cuerpo)
+    y0 = 28 + c * 150
+    cuerpo += f'<text x="262" y="{y0}" class="h">{t("Notice contradicts history", "El aviso contradice la historia") if c == 0 else t("Coherent notice", "Aviso coherente")}</text>'
+    for j2, (m, b) in enumerate(FILAS):
+        y = y0 + 16 + j2 * 28 + (8 if j2 >= 2 else 0)
+        modelo = "Haiku 4.5" if m == "haiku" else "Sonnet 5"
+        brazo = (t("explicit state", "estado explícito") if b == "skillstate"
+                 else t("full transcript", "transcript completo"))
+        cuerpo += f'<text x="252" y="{y + 11}" class="t" text-anchor="end">{modelo} · {brazo}</text>'
+        cuerpo += celdas(262, y, R[(m, b, c)], 12 - R[(m, b, c)])
+        cuerpo += f'<text x="{262 + 12 * 18 + 8}" y="{y + 11}" class="m">{R[(m, b, c)]}/12</text>'
+cuerpo += leyenda(318).replace('x="150"', 'x="262"').replace('x="168"', 'x="280"').replace('x="321"', 'x="433"').replace('x="338"', 'x="450"')
+fig3 = svg(344, t("The earlier replication rerun: with a notice that contradicts history, explicit state gets 12 of 12 and the full transcript 3 of 12 (Haiku 4.5) and 5 of 12 (Sonnet 5); with a coherent notice, 12 against 10 and 12 against 12.",
+                  "La réplica anterior repetida: con un aviso que contradice la historia, estado explícito 12 de 12 y transcript completo 3 de 12 (Haiku 4.5) y 5 de 12 (Sonnet 5); con un aviso coherente, 12 frente a 10 y 12 frente a 12."), cuerpo)
 
 print(fig1, fig2, fig3, sep="\n=====\n")
