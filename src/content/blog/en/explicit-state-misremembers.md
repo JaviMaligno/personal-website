@@ -22,7 +22,7 @@ linkedinLinks:
 .esm-fig .h { fill: #f8fafc; font: 600 14px system-ui, sans-serif; }
 </style>
 
-> **Update (November 2026).** A later experiment found a flaw in the correction probe used here: the notice corrected a put-away whose pallet had already been shipped, so it contradicted what the agent with the transcript had seen. Rerun on Haiku 4.5 with a coherent notice, the full transcript applies the correction in **10 of 12** episodes against 12 of 12 for explicit state (with the original notice, 3 of 12 against 12 of 12). The direction holds; most of the gap came from the probe. Details in an upcoming article.
+> **Update (November 2026).** A later experiment found a flaw in the correction probe used here: the notice corrected a put-away whose pallet had already been shipped, so it contradicted what the agent with the transcript had seen. Rerun with a coherent notice, the full transcript applies the correction in **10 of 12** episodes on Haiku 4.5 and **12 of 12** on Sonnet 5, against 12 of 12 for explicit state on both (with the original notice: 3 and 5 of 12 against 12 of 12). Most of the gap came from the probe, not from explicit state. Details in an upcoming article.
 
 In the [first half of this replication](/en/blog/when-the-fact-stops-being-true) I ran
 [SKILL.state](https://arxiv.org/abs/2608.26263) on Claude and found that its headline
