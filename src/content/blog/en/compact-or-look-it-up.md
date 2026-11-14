@@ -11,6 +11,22 @@ repoUrl: https://github.com/JaviMaligno/delayed-relevance/tree/exp/compaction-vs
 linkedinLinks:
   - label: "Woolford, Maximising Transparency in Context Compaction (arXiv)"
     url: "https://arxiv.org/abs/2610.20116"
+  - label: "When the Fact Stops Being True"
+    url: "https://javieraguilar.ai/en/blog/when-the-fact-stops-being-true"
+  - label: "Explicit State Doesn't Forget. It Misremembers."
+    url: "https://javieraguilar.ai/en/blog/explicit-state-misremembers"
+linkedinSummary: |
+  When an agent's context fills up, something has to go. The question is what you keep.
+
+  Claude Code and Codex write a summary and start again from it. The alternative that keeps coming up is to drop the conversation and let the agent search the full transcript on disk, so nothing is decided in advance.
+
+  I tested both in a simulation where the agent needs a detail forty steps later, after two compactions. A good summariser kept it: with Haiku 5.5, about as often as an agent that never compacts.
+
+  The setup that failed every time was the clean session with only search. Searching only works if the agent still knows there's something to look for. Out of 87 searches, five brought back the line it needed.
+
+  Keeping a summary, or the agent's own words, and adding search on top did as well as never compacting.
+
+  One more lesson from the same test: a correction that contradicts what the agent saw measures whether it believes you, not what it remembers. Check your tests from the agent's side.
 ---
 
 <style>
