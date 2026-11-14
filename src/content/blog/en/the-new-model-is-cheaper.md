@@ -6,6 +6,16 @@ tags: ["AI", "Evaluation", "LLM", "Engineering", "Economics"]
 lang: en
 translationKey: the-new-model-is-cheaper
 heroImage: "/blog/the-new-model-is-cheaper.png"
+linkedinSummary: |
+  A cheaper new model doesn't make the swap cheap. Your system was tuned to the old one.
+
+  What you ship isn't a model. It's prompts, tool descriptions, parsing, budgets and deadlines, each shaped against how the old model behaved. A newer model reads the same instructions differently: more literally, with more searches, handling ambiguity its own way. Drop it in unchanged and you measure how well it imitates the old one.
+
+  So testing a swap properly takes work: paired runs, repeated, compared against how much the system disagrees with itself, with the decision rules written before the first call.
+
+  In one of my services the new model cost almost half as much per classification. Testing it cost between 47 and 65 dollars of tokens. At about 500 classifications a month, the saving pays that back in roughly two years. The model it replaced had been out for 75 days.
+
+  At low volume, cost can't justify a swap; only fewer errors can. You don't have to take every release. And below a few thousand runs a month, each swap you test pays the provider more in evaluation than the new model earns in production before the next one arrives.
 ---
 
 <style>
