@@ -10,6 +10,18 @@ repoUrl: https://github.com/JaviMaligno/benchmaxing-probes
 linkedinLinks:
   - label: "GSM1k (Zhang et al., 2024)"
     url: "https://arxiv.org/abs/2405.00332"
+  - label: "Benchmaxing: Winning the Exam Is Not Doing Better Work"
+    url: "https://javieraguilar.ai/en/blog/benchmaxing"
+linkedinSummary: |
+  Benchmarks are good at ruling things out. They can't tell you which model to work with.
+
+  I went looking for benchmaxing: models that score well because they've been tuned on the exam's own questions. The test is simple to state: swap public benchmark problems for fresh ones of the same kind and see whether any model drops more than the rest. Across seven models and two banks of math problems, none did. Gemini, the one that draws the most suspicion, was again the most accurate.
+
+  I also tested where my own doubts about Opus 5 live: managing work through subagents. A vendor review across fifteen folders, with traps built so delegation can fail. Six of seven got every field and every trap right.
+
+  So no benchmaxing on anything I could measure. But every one of those tests has an answer key, and an answer key removes exactly the hard part of real work: the open-ended, underspecified bit where you steer.
+
+  A sustained impression from many real sessions is biased and easy to fool. It also carries information no bounded test can. Use benchmarks to rule things out, and keep paying attention to what working with the model feels like.
 ---
 
 <style>
