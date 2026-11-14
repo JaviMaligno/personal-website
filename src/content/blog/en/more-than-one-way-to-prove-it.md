@@ -7,6 +7,18 @@ lang: en
 translationKey: more-than-one-way-to-prove-it
 heroImage: "/blog/more-than-one-way-to-prove-it.png"
 repoUrl: https://github.com/JaviMaligno/path-evaluation
+linkedinSummary: |
+  If you grade an AI agent by whether it followed the expected steps, you'll punish it for finding another valid way.
+
+  It sounds stricter than checking the result. On exploratory work, where nobody knows the next useful step in advance, it isn't. Two agents proved the same theorem by two different routes, and the proof checker accepted both. Scored against reference paths, one passed and the other failed.
+
+  I ran six models on real bugs and on formal proofs, 694 runs graded four different ways. Where a mechanical check is strong, checking the final state and forbidding the shortcuts was enough: false passes went to zero. Grading the path only failed a third of the valid proofs.
+
+  Rules about method are opinions too. "Run the tests before your first edit", plus a ban on touching the tests, ranked the smallest model first and the two strongest last.
+
+  And the cases that mattered were told apart by what the agent said: the honest "I couldn't", or the "completed successfully" that never completed. None of the graders read that.
+
+  If you evaluate agents: check where they ended up, close the shortcuts, and read what they claim against what they did.
 ---
 There are two ways to grade an AI agent that has just finished a task: look at what it left behind, or look at how it got there. *CORE: Full-Path Evaluation of LLM Agents Beyond Final State* ([Michelakis, Hadjiyiannis and Stamoulis, 2025](https://arxiv.org/abs/2509.20998)) makes the case for the second. If you only check the final state, agents that behaved very differently look the same. So CORE encodes each task as a set of valid tool-use paths and scores how close the agent's path comes to one of them.
 
