@@ -7,15 +7,20 @@ lang: en
 translationKey: the-caveat-that-became-the-pitch
 heroImage: "/blog/the-caveat-that-became-the-pitch.png"
 linkedinSummary: |
-  A caveat about one bad evaluation set ended up as the headline of the decks an agent wrote about our product.
+  The most repeated sentence in the documents my agent writes for people wasn't the most important one. It was the best documented one.
 
-  A client had scored our industry classifier at 54% against a set whose labels came from company names. The useful conclusion was narrow: don't score against that set, and don't guess from names when labelling by hand.
+  A caveat about one bad evaluation set (don't grade our classifier against labels derived from company names) ended up as the headline of a CEO deck and a demo guide: "it doesn't classify by name". That's selling a car because it has wheels, and nobody asked for it.
 
-  Weeks later I was cutting the same sentence from a CEO deck, a demo guide and promo videos: "it doesn't classify by name". That's selling a car because it has wheels. I never asked for it.
+  The transcripts showed how it travelled, and none of the steps is a bug on its own. To write a new document, the agent starts from the one that already exists. Each rewrite compresses, and the most quotable line moves up. And the audience doesn't travel with the sentence: a rule written for reviewers reached a prospect and a CEO.
 
-  The agent's transcripts showed how it travelled. To write a guide, it starts from the guide that already exists. Each rewrite compresses, and the quotable line moves up. And the audience doesn't travel with the sentence: a rule written for reviewers reached a prospect and a CEO.
+  If you let agents draft what people read, the documents they copy from are part of your instructions, whether you meant them to be or not.
 
-  I tested three fixes on fresh sessions. A prohibition removed the sentence, and once leaked into a guide as "don't say it doesn't classify by name". A role plus a short product story fixed the message, but copying from the old runbook still carried the line in 3 of 5 guides. Correcting the source document removed it, without naming it anywhere.
+  The tempting fix is a prohibition. It worked on the one sentence it named, and once leaked into a guide as "don't say it doesn't classify by name". What worked better was giving the agent the reader and the product story, and correcting the source document it copies from. That removed the line without naming it anywhere.
+linkedinLinks:
+  - label: "A Role, Not a Rule"
+    url: "https://javieraguilar.ai/en/blog/a-role-not-a-rule"
+  - label: "The memory that was true"
+    url: "https://javieraguilar.ai/en/blog/the-memory-that-was-true"
 ---
 
 <style>
