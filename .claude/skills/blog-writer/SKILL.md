@@ -162,10 +162,10 @@ heroImage: "/blog/article-slug.png"
 | `lang` | Yes | Must be `en` or `es` |
 | `translationKey` | Yes | Same value for EN/ES pair (kebab-case) |
 | `heroImage` | Yes | Path to thumbnail (e.g., `/blog/my-article.png`). See `references/images.md`. |
-| `linkedinSummary` | Yes (EN) | The LinkedIn feed post, verbatim (YAML `|` block). No generated fallback: publishing fails without it. Lead with the article's point in context a cold reader can follow; first line under ~200 characters; no URLs or hashtags (added automatically). Show it to Javier with the preview. |
+| `linkedinSummary` | Yes (EN) | The LinkedIn feed post, verbatim (YAML `|` block). No generated fallback: publishing fails without it. Written for people who want to know about AI, not about this project: the general lesson first, the case as evidence. See [references/linkedin-post.md](references/linkedin-post.md). Show it to Javier with the preview. |
 | `linkedinImage` | No | Image for the LinkedIn auto-post; falls back to `heroImage`. See `references/images.md`. |
 | `repoUrl` | For code | Adds `💻 Code: <url>` to the LinkedIn post (`buildPostText` in `scripts/linkedin/utils.js`), only when present. |
-| `linkedinLinks` | No | `[{ label, url }]`, one `🔗 <label>: <url>` line each, for papers and preprints. |
+| `linkedinLinks` | No | `[{ label, url }]`, one `🔗 <label>: <url>` line each, for papers, preprints and related articles of mine that make the same argument. |
 
 Tag translations: AI → IA, Automation → Automatización, Development → Desarrollo,
 Architecture → Arquitectura; Machine Learning stays.
