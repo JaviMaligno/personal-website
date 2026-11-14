@@ -8,6 +8,21 @@ translationKey: the-task-not-the-model
 heroImage: "/blog/the-task-not-the-model.png"
 linkedinImage: /blog/the-task-not-the-model-fig-1.png
 repoUrl: https://github.com/JaviMaligno/benchmaxing-probes
+linkedinSummary: |
+  Which model you pick matters less than you'd think. Which task you give it matters far more.
+
+  I took nineteen things I had really asked an agent to do, each with the repo at that point and the change I finally accepted, and gave them to seven models. The measure was how many of my own corrections each would still need, counting only what a careful engineer could have deduced from the request.
+
+  Six of the seven landed in one band, about three corrections per task. One needed more. Inside the band the order depended on who judged, and no gap held up.
+
+  The task explained at least ten times more of the variation than the model did. The same tasks were easy or hard for everyone.
+
+  And none of them was ready to merge on its own: out of 266 verdicts, a result would have been accepted as it was 8 times.
+
+  If you're agonising over which frontier model to use for everyday engineering, the bigger lever is probably how you hand it the task, and the review that comes after.
+linkedinLinks:
+  - label: "No Benchmaxing Found, and the Vibes Still Count"
+    url: "https://javieraguilar.ai/en/blog/no-benchmaxing-found"
 ---
 
 <style>
