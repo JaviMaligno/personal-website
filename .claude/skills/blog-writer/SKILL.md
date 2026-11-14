@@ -162,6 +162,7 @@ heroImage: "/blog/article-slug.png"
 | `lang` | Yes | Must be `en` or `es` |
 | `translationKey` | Yes | Same value for EN/ES pair (kebab-case) |
 | `heroImage` | Yes | Path to thumbnail (e.g., `/blog/my-article.png`). See `references/images.md`. |
+| `linkedinSummary` | Yes (EN) | The LinkedIn feed post, verbatim (YAML `|` block). No generated fallback: publishing fails without it. Lead with the article's point in context a cold reader can follow; first line under ~200 characters; no URLs or hashtags (added automatically). Show it to Javier with the preview. |
 | `linkedinImage` | No | Image for the LinkedIn auto-post; falls back to `heroImage`. See `references/images.md`. |
 | `repoUrl` | For code | Adds `💻 Code: <url>` to the LinkedIn post (`buildPostText` in `scripts/linkedin/utils.js`), only when present. |
 | `linkedinLinks` | No | `[{ label, url }]`, one `🔗 <label>: <url>` line each, for papers and preprints. |
@@ -181,6 +182,7 @@ Architecture → Arquitectura; Machine Learning stays.
 - [ ] Both EN and ES files, matching `translationKey`, same `pubDate`, `lang` matching the folder, tags translated
 - [ ] **`pubDate` matches the website publication schedule** (`.github/publish-schedule.json`, or today if merging manually)
 - [ ] Hero image generated, shown to Javier, in `public/blog/`, set in both frontmatters, prompt recorded in `docs/marketing/image-prompts.md`
+- [ ] **`linkedinSummary` written in the EN frontmatter and shown to Javier** (the scheduled publish refuses to merge without it)
 - [ ] **`linkedinImage` decided before publishing** (see `references/images.md`)
 - [ ] **`repoUrl:` set in both EN and ES** when the article involves code
 - [ ] **Every mention of Javier's own work is a link** with language-matched paths, and every real thing cited links to its source

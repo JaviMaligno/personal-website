@@ -116,6 +116,23 @@ jobs:
           fi
           echo "Marcador resuelto — se puede publicar."
 
+      # El post de LinkedIn es el linkedinSummary del articulo, tal cual: ya no
+      # hay resumen generado (2026-11-14). Sin el, publicar sacaria el articulo
+      # sin post; mejor no publicar, abrir la issue y recuperarlo en la
+      # siguiente salida del cron en cuanto el texto este en la rama.
+      - name: Guarda del post de LinkedIn
+        if: steps.select.outputs.action == 'publish'
+        env:
+          BRANCH: ${{ steps.select.outputs.branch }}
+          ARTICLE: ${{ steps.select.outputs.article }}
+        run: |
+          set -euo pipefail
+          if ! git show "origin/$BRANCH:$ARTICLE" | node scripts/publish/linkedin-summary.mjs; then
+            echo "::error::$ARTICLE en $BRANCH no tiene linkedinSummary en el frontmatter."
+            echo "::error::Escribe el post de LinkedIn ahi; el cron lo publica en la siguiente salida."
+            exit 1
+          fi
+
       - name: Mergear y publicar
         id: merge
         if: steps.select.outputs.action == 'publish'

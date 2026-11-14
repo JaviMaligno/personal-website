@@ -1,10 +1,9 @@
 import { readFileSync, existsSync } from 'fs';
 import matter from 'gray-matter';
-import { generateSummary } from './generate-summary.js';
 import { uploadImageToLinkedIn, uploadVideoToLinkedIn, createLinkedInPost, buildPostText } from './utils.js';
 
 /**
- * Main orchestrator: Generate summary, upload image (if exists), publish to LinkedIn
+ * Main orchestrator: read the hand-written post, upload media (if any), publish to LinkedIn
  */
 async function publishToLinkedIn() {
   try {
@@ -36,22 +35,16 @@ async function publishToLinkedIn() {
     console.log(`  Tags: ${frontmatter.tags?.join(', ')}`);
     console.log(`  LinkedIn Image: ${frontmatter.linkedinImage || 'None'}\n`);
 
-    // A hand-written `linkedinSummary` wins over generation: some posts need the
-    // body to state a scoped claim or a number with its unit, which a summariser
-    // smooths away.
-    let summary;
-    if (frontmatter.linkedinSummary?.trim()) {
-      console.log('✍️  Using the hand-written linkedinSummary from frontmatter\n');
-      summary = frontmatter.linkedinSummary.trim();
-    } else {
-      console.log('🤖 Generating LinkedIn summary with Gemini...\n');
-      summary = await generateSummary({
-        title: frontmatter.title,
-        description: frontmatter.description,
-        content: markdown,
-        tags: frontmatter.tags || [],
-      });
+    // The post is the hand-written `linkedinSummary`, verbatim. No generated
+    // fallback: on 2026-11-14 the Gemini summary of a-role-not-a-rule opened with
+    // a sentence nobody could parse, and nothing checked it before it went out.
+    // scheduled-publish.yml refuses to merge an article without one, so reaching
+    // this point without it means a manual merge skipped that check.
+    const summary = frontmatter.linkedinSummary?.trim();
+    if (!summary) {
+      throw new Error(`${postPath} has no linkedinSummary in its frontmatter; nothing was posted.`);
     }
+    console.log('✍️  Using the hand-written linkedinSummary from frontmatter\n');
 
     // Prepare post text with hashtags
     const hashtags = frontmatter.tags
