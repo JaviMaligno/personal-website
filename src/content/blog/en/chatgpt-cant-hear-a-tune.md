@@ -6,6 +6,18 @@ tags: ["AI", "Voice", "Evaluation", "Multimodal", "Machine Learning"]
 lang: en
 translationKey: chatgpt-cant-hear-a-tune
 heroImage: "/blog/chatgpt-cant-hear-a-tune.png"
+linkedinSummary: |
+  I hummed Happy Birthday to ChatGPT and it couldn't name it. With the words, it answered at once.
+
+  Dictation turns your voice into text, and a hum has no text. Voice mode told me up front that it can't identify songs from humming.
+
+  So I asked OpenAI's voice models directly, on research recordings of people singing and humming. With lyrics, a route that only reads a transcript named 71 of 76 songs, the same as the model that receives the audio. Without words, every route named 0 or 1 of 30. Given eight film themes to choose from, the realtime model did no better than chance. And when I sang the words of Happy Birthday to the tune of Jingle Bells, every answer said the tune was Happy Birthday.
+
+  The melody is in the recording: a small open model that only looks at the pitch contour ranked my three hums correctly, on my laptop.
+
+  Some sound does get through: a rough emotion, or which of two notes an octave apart is higher. Not enough to follow a melody.
+
+  If you're building a voice agent: if the words are the same, assume the model got the same message.
 ---
 
 When you talk to ChatGPT it feels like it is listening. I wanted to know what actually arrives on the other side, so I picked the simplest thing a voice carries besides words: a melody. I hummed Happy Birthday to ChatGPT, in every way the app lets me speak to it, and then ran the same question at scale through the voice models OpenAI sells to developers.
