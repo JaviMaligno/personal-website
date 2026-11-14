@@ -11,6 +11,18 @@ repoUrl: "https://github.com/JaviMaligno/code-world-models"
 linkedinLinks:
   - label: "Mathias Strasser's post"
     url: "https://www.linkedin.com/posts/mathias-strasser-6990594_today-i-have-something-interesting-to-share-share-7505892928104570880-nI6R/"
+  - label: "Nobody tells the implementer why"
+    url: "https://javieraguilar.ai/en/blog/nobody-tells-the-implementer-why"
+linkedinSummary: |
+  When one agent explains code to another, a good explanation can quietly become the specification.
+
+  An agent summarised part of one of my projects for a reviewer agent. It defined a flag clearly: errors remain, none of them in the sample the model may see, so repair stops. The note passed through two more handoffs intact, and with it two models reviewed 16 proposed changes correctly.
+
+  But in the code the flag can only be set inside the repair loop. With zero iterations it stays false. The note had turned a step inside a procedure into a general rule. When I built a case that separated the two, the reviewer accepted wrong behaviour and justified it with that same definition.
+
+  The explanation didn't decay along the way: the first one already covered more than the code did. And renaming the term didn't fix it.
+
+  Names and definitions travel well. Conditions that live in the structure of the code don't. If you pass explanations between agents, say not only what something means but when it can happen: "this flag can only be set inside the repair loop."
 ---
 <style>
 .meaning-fig { margin: 2rem 0; }
