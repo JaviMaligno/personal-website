@@ -6,6 +6,21 @@ tags: ["AI", "Voice", "Evaluation", "Multimodal", "Machine Learning"]
 lang: en
 translationKey: where-the-melody-gets-lost
 heroImage: "/blog/where-the-melody-gets-lost.png"
+linkedinSummary: |
+  A voice model mostly reads what you say. Ask it to recognise a melody, and that shows.
+
+  Two voice models, from OpenAI and Alibaba, were at chance naming a hummed song from a list of eight. A pitch-contour search from the 1990s (track the pitch, ignore the key, compare the shape of the melody) got 46%. No neural network.
+
+  It's the same principle behind Google's hum to search: reduce the recording to its melody and compare it against a catalogue of songs. I hummed Happy Birthday and La Marseillaise to it from my phone, and it found both.
+
+  Wrapped as a tool that returns its five closest matches, the old search let a text model that never hears the audio name 56 of 120 hums. The whole run cost two cents.
+
+  Looking inside Whisper's encoder layer by layer shows why the voice models miss it: part of the melody wears away inside the encoder, and what's left isn't picked up afterwards. A speech model keeps what it was trained to keep.
+
+  So before assuming a voice model hears something that isn't words (speaking speed, hesitation, a dropped line), measure it. If it doesn't, a specialised listener next to it is cheap.
+linkedinLinks:
+  - label: "ChatGPT Reads the Lyrics, Not the Tune"
+    url: "https://javieraguilar.ai/en/blog/chatgpt-cant-hear-a-tune"
 ---
 
 In [the previous article](/en/blog/chatgpt-cant-hear-a-tune) I hummed songs to ChatGPT and to OpenAI's voice models and found that they name a song from its lyrics and are lost without them. That left the question I actually cared about: why, and what it would take to fix it. I kept the same 120 recordings and changed what listens to them.
