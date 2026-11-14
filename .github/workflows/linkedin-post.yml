@@ -28,7 +28,7 @@ jobs:
           node-version: '22.23.4'
 
       - name: Install dependencies
-        run: npm install @google/generative-ai gray-matter
+        run: npm install gray-matter
 
       - name: Detect new posts
         id: detect
@@ -37,12 +37,10 @@ jobs:
           GITHUB_BEFORE: ${{ github.event.before }}
           GITHUB_AFTER: ${{ github.event.after }}
 
-      - name: Generate summary and publish
+      - name: Publish the hand-written post
         if: steps.detect.outputs.has_new_posts == 'true'
         run: node scripts/linkedin/publish-to-linkedin.js
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
           LINKEDIN_PERSON_URN: ${{ secrets.LINKEDIN_PERSON_URN }}
           NEW_POST_PATH: ${{ steps.detect.outputs.post_path }}
@@ -77,7 +75,7 @@ jobs:
             Post by hand, or re-run the failed run once the cause is fixed.
 
             Usual causes: an expired `LINKEDIN_ACCESS_TOKEN` (see the `linkedin-token-check` workflow),
-            or a `GEMINI_API_KEY` problem while generating the summary.
+            or an article merged by hand without a `linkedinSummary` in its frontmatter.
         run: |
           gh issue create \
             --title "❌ LinkedIn cross-post FAILED" \

@@ -204,11 +204,14 @@ before scheduling, moving or fixing an article. Key rules:
 
 Use the API tooling in the repo, not browser automation, for posting:
 
-- `linkedin-post.yml` publishes new articles. Text = Gemini summary
-  (`scripts/linkedin/generate-summary.js`, prompt in the dependency-free module
-  `scripts/linkedin/prompt.js`, shared with the experiment bench) + `buildPostText` in
-  `scripts/linkedin/utils.js` (tested by `utils.test.mjs`). Keep the first line short:
-  LinkedIn truncates with "see more" at ~200 characters.
+- `linkedin-post.yml` publishes new articles. Text = the article's hand-written
+  `linkedinSummary` frontmatter field, verbatim, + `buildPostText` in
+  `scripts/linkedin/utils.js` (tested by `utils.test.mjs`). There is no generated
+  fallback since 2026-11-14 (a Gemini summary went out unreadable): `scheduled-publish.yml`
+  refuses to merge an article without it, and the publisher fails if it is missing. Write
+  it in the article PR, where it gets reviewed. Lead with the article's point, in context
+  a cold reader can follow. Keep the first line short: LinkedIn truncates with "see more"
+  at ~200 characters.
 - Frontmatter controls links: `repoUrl` adds `💻 Code: <url>`; optional
   `linkedinLinks: [{ label, url }]` (declared in `src/content/config.ts`) adds one
   `🔗 <label>: <url>` line each. Every article with code should set `repoUrl` in EN and ES.
