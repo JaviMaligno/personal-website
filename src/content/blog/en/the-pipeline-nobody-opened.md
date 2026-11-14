@@ -6,6 +6,23 @@ tags: ["AI Agents", "Claude Code", "Developer Tools", "Product"]
 lang: en
 translationKey: the-pipeline-nobody-opened
 heroImage: "/blog/the-pipeline-nobody-opened.png"
+linkedinSummary: |
+  If the people you're building for already work inside an AI agent, your tool probably belongs inside that agent, not next to it.
+
+  I learned it with a pipeline that worked. Give it a public registry, and a chain of agents would research it, write the requirements, generate the service, deploy it and verify it. The developers it was built for didn't want to use it. Not because of quality, but because of friction: leave Claude Code or Codex, go to another app, wait, review. And when something came out wrong, they fixed it back in their own agent anyway.
+
+  Against a terminal where you watch what the agent reads, interrupt it and correct it in the next message, a platform that takes the task away and hands back a result is a step back, even when the result is good.
+
+  So it's becoming a plugin. The valuable part was never the framework; it was the knowledge of how to do the job, and that fits in skills the agent follows. What goes is the orchestration, the UI and the backend, plumbing the agent already has. And it runs on the subscription they already pay for.
+
+  It's the argument I made in Bring Your App to the Agent, learned the hard way, and it applies even more to developers than to consumers.
+
+  Before building an AI tool for people who already use AI every day, ask: does it compete with the agent they have, or plug into it?
+linkedinLinks:
+  - label: "Bring Your App to the Agent"
+    url: "https://javieraguilar.ai/en/blog/bring-your-app-to-the-agent"
+  - label: "The Interface Moved Up"
+    url: "https://javieraguilar.ai/en/blog/the-interface-moved-up"
 ---
 
 There is a case study on this site called [Data Source Automator](/en/projects/data-source-automator). You give it a public registry, and a chain of agents researches the source, writes the requirements, designs the API contract, generates the microservice, deploys it and verifies it. I still stand behind that page. The pipeline did what it says.
