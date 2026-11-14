@@ -8,17 +8,20 @@ translationKey: the-rule-was-on-the-other-branch
 heroImage: "/blog/the-rule-was-on-the-other-branch.png"
 repoUrl: "https://github.com/JaviMaligno/delivery-loop"
 linkedinSummary: |
-  Every team keeps its practices in a dozen places: the PR checklist in one repo, who promotes to production on an org wiki, the integration branch as a project convention, and half of it in the heads of whoever has been there longest.
+  An agent starts every session knowing nothing about how your team works.
 
-  People absorb that over months. An agent starts every session without any of it.
+  People absorb it over months: who promotes to production, which branch a project integrates into, what the PR checklist asks for. Most of it lives in a wiki, a README, a convention, or the head of whoever has been there longest. The usual fix is to paste it into a prompt, and that copy goes stale the week after.
 
-  So I built delivery-loop, a plugin for Claude Code and Codex that takes a task from its ticket to a change verified in a test environment. The loop itself isn't the point. What makes it work in more than one place is where it gets each practice from.
+  What worked for me is writing each practice once, at the level where it is true. Who promotes is true for the whole organisation, so it lives in one shared place. The integration branch is true for one repo, so it lives in the repo. A new person, or a new agent session, gets exactly the levels that apply, and nobody has to re-learn the organisation.
 
-  Each practice is written once, at the level where it is true. "Promotion to production belongs to the platform team" lives in the organisation profile; "this repo integrates into develop" lives in the repo. A new person installs the plugin, runs one script, and gets the organisation's profile plus the projects they actually work on. What's left for them is their own accounts and machine.
+  The second half matters just as much: a practice that was right when written goes stale on its own. So the agent re-checks it against what the repo shows before relying on it, and fixes it where it lives.
 
-  A profile that was right when written goes stale on its own, so the loop re-checks it against the repo at the start of every task and fixes it at its level when they disagree.
+  I built this into delivery-loop, a plugin for Claude Code and Codex that takes a task from ticket to verified change. I run it in two organisations that work very differently: same core, and every difference is a line at its level.
 
-  I run it in two organisations that work very differently. Same core in both; every difference is a line in a profile.
+  If your agents keep forgetting how your team works, the answer isn't a longer prompt. It's where each rule lives, and who keeps it true.
+linkedinLinks:
+  - label: "The memory that was true"
+    url: "https://javieraguilar.ai/en/blog/the-memory-that-was-true"
 ---
 
 <style>
