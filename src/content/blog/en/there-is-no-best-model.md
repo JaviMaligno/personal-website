@@ -6,6 +6,19 @@ tags: ["AI", "LLM", "Economics", "Evaluation", "Engineering"]
 lang: en
 translationKey: there-is-no-best-model
 heroImage: "/blog/there-is-no-best-model.png"
+linkedinSummary: |
+  Which model is best? Sometimes there's a clear answer. If one model is at least as good as another on quality, cost and speed, and better on at least one of them, the other is dominated: there's no reason to pick it, whatever you care about.
+
+  More often each model is better at something. The ones nobody dominates form the frontier, and between two points on it no measurement decides. Whether a second of waiting is worth a cent is a business preference, not a technical fact.
+
+  Two things change the picture once you measure it in your own system. Price per token isn't what you pay: a newer model I tested cost ten times more per token and only 23% more per task, because it took fewer turns and the model was about 4% of the cost; most of it was web search. And quality works best as a gate: set a floor, drop what doesn't reach it, and trade cost against speed among what's left.
+
+  In my case the faster model saved 27 seconds for 2.2 cents, about $3 an hour of waiting. Nobody waits on those seconds today, so I didn't switch.
+
+  Keep the measurement cheap and repeatable rather than the conclusion fixed. The frontier moves with every release.
+linkedinLinks:
+  - label: "The New Model Is Cheaper. Testing It Isn't."
+    url: "https://javieraguilar.ai/en/blog/the-new-model-is-cheaper"
 ---
 
 <style>
