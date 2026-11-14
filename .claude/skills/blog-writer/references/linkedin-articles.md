@@ -135,6 +135,23 @@ like a domain: `<a href=".../en/blog/slug/">javieraguilar.ai</a>` was saved as
 any that the source article does not contain. The link dialog cannot remove a
 link, so point it at the correct target instead.
 
+**Captions baked into the PNGs.** The Dev.to figure PNGs (`<slug>-fig-N.png`)
+already carry the website caption inside the image. Leave LinkedIn's caption
+empty for those, or the caption appears twice. Put the website's `aria-label` in
+the ALT field.
+
+**Editing a scheduled article.** The article body can only be edited after
+"Move to drafts", which also clears the introductory feed text; reschedule it
+afterwards and rewrite the intro. The intro alone does not need that: open the
+post composer, the clock, "Scheduled", then "Edit post" on the entry. Replace the
+text and press Schedule ("Post schedule updated"). Leaving the editor with Back
+asks to discard changes; with no changes made, discarding keeps the entry. The
+"View scheduled posts" link in the toast reopens the list.
+
+**The intro is a feed post.** Write it with the same rule as the
+`linkedinSummary` (see `linkedin-post.md`): the general lesson first, the case
+as evidence, then what the article adds. Two or three sentences.
+
 **Scheduling.** Set the date and time before writing the introductory feed text,
 because returning from the schedule dialog clears it. Scheduling reached about
 three months ahead (the calendar stopped at 20 December from 22 September). The
