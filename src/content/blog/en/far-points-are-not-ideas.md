@@ -412,4 +412,6 @@ The other half of the question remains, the one the arXiv result leaves open: ca
 
 ---
 
+*The paper, with three more tests of the recipe against what was published later, is on arXiv: [arXiv:2611.21408](https://arxiv.org/abs/2611.21408).*
+
 *The code, pre-registrations and Lean proofs are at [github.com/JaviMaligno/latent-gap-ideas](https://github.com/JaviMaligno/latent-gap-ideas).*
