@@ -1,0 +1,51 @@
+name: Notify workflow failures on Telegram
+
+# WHY THIS EXISTS
+# Failures used to surface only as GitHub issues, buried among dozens of
+# "✅ published" notices. The publish canary stayed red for 19 days
+# (2026-10-30 → 2026-11-17) and nobody noticed. This workflow watches the others
+# and pings Telegram once per failed run, in one place, so no workflow has to
+# remember to notify.
+#
+# Pull-request runs are ignored: a red preview shows up on the PR itself.
+# workflow_run only fires for the copy of this file on the default branch.
+on:
+  workflow_run:
+    workflows:
+      - Deploy to Vercel
+      - Publish to LinkedIn
+      - Edit a published LinkedIn post
+      - LinkedIn Scheduled Posts
+      - Publish to Dev.to
+      - Dev.to refresh — SKILL.state notes link (one-shot)
+      - LinkedIn Token Expiry Check
+      - Publish canary — dry-run every pending article merge
+      - Scheduled publish — blog articles
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/notify
+
+      - name: Send Telegram message
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WF_NAME: ${{ github.event.workflow_run.name }}
+          WF_EVENT: ${{ github.event.workflow_run.event }}
+          WF_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          WF_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          bash scripts/notify/telegram.sh "❌ personal-website: «${WF_NAME}» ha fallado
+          (${WF_EVENT} en ${WF_BRANCH})
+          ${WF_URL}"

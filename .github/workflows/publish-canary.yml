@@ -50,10 +50,17 @@ jobs:
           git config user.email "canary@localhost"
           git config merge.schedule.driver 'node scripts/publish/merge-schedule.mjs %O %A %B'
 
-      - name: Set up Node for schedule merging
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22.23.4'
+          cache: npm
+
+      # The unit tests import npm packages (gray-matter, katex, …). Without this
+      # install every test file with a dependency fails to load, and the canary
+      # stays red without ever rehearsing a merge (2026-10-30 → 2026-11-17).
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
 
       - name: Run unit tests before rehearsing the queue
         run: node --test scripts/*/*.test.mjs
@@ -206,13 +213,7 @@ jobs:
 
       # Only meaningful when every entry merged: this is the site as it will
       # exist once the whole queue has published.
-      - name: Set up Node
-        if: steps.rehearse.outputs.failed == '0'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.23.4'
-          cache: npm
-
+      # Re-install: the merged branches may have changed package-lock.json.
       - name: Build the fully-merged site
         if: steps.rehearse.outputs.failed == '0'
         run: |
