@@ -39,6 +39,8 @@ jobs:
           DAYS_LEFT: ${{ steps.check.outputs.days_left }}
           EXPIRES_ON: ${{ steps.check.outputs.expires_on }}
           TOKEN_STATUS: ${{ steps.check.outputs.status }}
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           # Deduplicate: skip if an open token issue already exists
           existing=$(gh issue list --label "linkedin-token" --state open --json number --jq 'length')
@@ -75,3 +77,6 @@ jobs:
             --body-file issue-body.md
 
           echo "Opened renewal issue."
+          TELEGRAM_BOT_TOKEN="$TG_TOKEN" TELEGRAM_CHAT_ID="$TG_CHAT" bash scripts/notify/telegram.sh \
+            "🔑 personal-website: el token de LinkedIn caduca en ${DAYS_LEFT} días (${EXPIRES_ON}). Renovar con node scripts/linkedin-oauth-setup.js + gh secret set LINKEDIN_ACCESS_TOKEN.
+          https://github.com/${{ github.repository }}/issues?q=is%3Aopen+label%3Alinkedin-token"
