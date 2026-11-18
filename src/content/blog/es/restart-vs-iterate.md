@@ -1,6 +1,6 @@
 ---
 title: "Deja que el loop itere: reiniciar solo compensa si sabes qué tirar"
-description: "Karpathy sugirió dejar que un agente atascado reinicie en vez de insistir. Construí un loop con tests visibles y lo medí: iterar sobre el feedback gana a los reinicios limpios a igual cómputo — y darle al agente un botón de reinicio con alcance revela que saber *qué* descartar es lo que separa a los tiers."
+description: "Una regla viral para loops de agentes, atribuida a Andrej Karpathy, dice que un agente atascado reinicie en vez de insistir. Construí un loop con tests visibles y lo medí: iterar sobre el feedback gana a los reinicios limpios a igual cómputo — y darle al agente un botón de reinicio con alcance revela que saber *qué* descartar es lo que separa a los tiers."
 pubDate: 2026-07-17
 tags: ["IA", "Agentes", "Evaluación"]
 lang: es
@@ -10,7 +10,7 @@ heroImage: "/blog/restart-vs-iterate.png"
 
 > **Un estudio completo: 3 seeds × 3 políticas × 2 tiers de modelo sobre una porción de 29 features, con el harness de evaluación auditado antes de fiarse de un solo número.** El mismo protocolo de rigor que [el artículo de coordinación](https://www.javieraguilar.ai/es/blog/coding-agents-structure) — este experimento es su secuela directa.
 
-Hay una pieza de folclore de agentes, cristalizada por Andrej Karpathy como *"let the loop restart"* (deja que el loop reinicie): cuando el intento de un agente de código va mal, no sigas parcheando el barco que se hunde — tira el intento y deja que empiece de cero. Tiene atractivo intuitivo. Cualquiera que haya visto a un agente cavar más hondo en un enfoque roto lo ha sentido.
+Hay una pieza de folclore de agentes que se hizo viral como *"let the loop restart"* (deja que el loop reinicie), una de las reglas de un fichero `LOOPS.md` que circula como si fuera de Andrej Karpathy (no lo encontré en ninguna publicación ni repositorio suyo, así que la atribución queda sin verificar; lo que pongo a prueba aquí es la regla): cuando el intento de un agente de código va mal, no sigas parcheando el barco que se hunde — tira el intento y deja que empiece de cero. Tiene atractivo intuitivo. Cualquiera que haya visto a un agente cavar más hondo en un enfoque roto lo ha sentido.
 
 ¿Pero es verdad? En [mi experimento anterior](https://www.javieraguilar.ai/es/blog/coding-agents-structure) ni siquiera pude probarlo: los agentes de CooperBench hacen una sola pasada y nunca ven los resultados de sus tests, así que la señal de fallo que motivaría un reinicio jamás les llega. Miné las 1.806 trayectorias y encontré exactamente **cero** reinicios voluntarios — un artefacto del montaje, no un hallazgo. Medir reiniciar-vs-iterar de verdad necesitaba otro harness.
 
@@ -23,7 +23,7 @@ Sobre el mismo stack derivado de CooperBench (29 tareas de una-sola-feature en 5
 Todas las políticas reciben el mismo K, los mismos topes de cómputo por ronda y el *mismo formato de feedback* — así que la única variable es qué pasa **entre** rondas:
 
 - **ITERATE** — el loop clásico: código y contexto se acumulan; el agente parchea su propio trabajo con los resultados de los tests delante.
-- **RESTART-FRESH** — la lectura literal de Karpathy: cada ronda arranca de un checkout limpio con contexto fresco. Sin memoria de intentos previos. Esto es deliberadamente muestreo best-of-K — esa *es* la afirmación, probada a igual cómputo, sin pedir disculpas.
+- **RESTART-FRESH** — la lectura literal de la regla: cada ronda arranca de un checkout limpio con contexto fresco. Sin memoria de intentos previos. Esto es deliberadamente muestreo best-of-K — esa *es* la afirmación, probada a igual cómputo, sin pedir disculpas.
 - **RESTART-INFORMED** — checkout limpio, pero el contexto lleva un resumen breve de qué falló, construido por el harness a partir de artefactos (nunca escrito por el propio agente que falló). Esto separa el mecanismo: si informed gana a fresh, la *lección* ayuda; si fresh iguala a informed, el problema era el contexto contaminado.
 - **AGENT-DECIDES** — el interesante: un loop estilo iterate donde el agente tiene un **botón de reinicio explícito con alcance** — `restart(fichero | directorio | todo-mi-trabajo)` — presentado como una opción legítima y sin coste. Él elige cuándo descartar y *cuánto*.
 
@@ -64,7 +64,7 @@ Cuatro hallazgos, en orden de cuánto aguantan la estadística:
 
 ## Lo que dice y lo que no
 
-**No** dice que Karpathy se equivoque en general. Dice: *en el régimen que medí* — tareas de tamaño feature sobre código existente, cuatro rondas, tests visibles — el reinicio-como-remuestreo pierde contra la iteración, y el reinicio que *sí* compensa es acotado, informado y raro. Regímenes donde esperaría que la balanza se incline hacia reiniciar: tareas greenfield (donde "empezar de cero" significa de verdad una página en blanco y los primeros intentos anclan fuerte), horizontes mucho más largos (donde el contexto sí se pudre), y modelos por debajo de cierto suelo de competencia (donde cada intento es una tirada de dados de todas formas — aunque nota que incluso nuestro tier débil iteró mejor de lo que reinició).
+**No** dice que la regla esté equivocada en general. Dice: *en el régimen que medí* — tareas de tamaño feature sobre código existente, cuatro rondas, tests visibles — el reinicio-como-remuestreo pierde contra la iteración, y el reinicio que *sí* compensa es acotado, informado y raro. Regímenes donde esperaría que la balanza se incline hacia reiniciar: tareas greenfield (donde "empezar de cero" significa de verdad una página en blanco y los primeros intentos anclan fuerte), horizontes mucho más largos (donde el contexto sí se pudre), y modelos por debajo de cierto suelo de competencia (donde cada intento es una tirada de dados de todas formas — aunque nota que incluso nuestro tier débil iteró mejor de lo que reinició).
 
 El eco con el [artículo de coordinación](https://www.javieraguilar.ai/es/blog/coding-agents-structure) es difícil de ignorar. Allí, la palanca que funcionaba era estructural (un agente dueño de la integración) y el modelo fuerte era el que sabía explotar una regla. Aquí, la palanca que funciona es *conservar tu trabajo y leer el feedback*, y el modelo fuerte es el que sabe manejar el bisturí. Los dos experimentos aterrizan en la misma forma: **la capacidad no solo sube los pass rates — cambia qué proceso ayuda.** Dale a un agente débil una herramienta potente (un protocolo de coordinación, un botón de reinicio) y manotea con ella; dale un problema más pequeño o un loop más ceñido y mejora. Dale a un agente fuerte la misma herramienta y la usa como esperabas.
 
@@ -85,4 +85,6 @@ Todo es reproducible: el harness del loop, las cuatro políticas, las métricas 
 
 ---
 
-*Motivado por la observación "let the loop restart" de Andrej Karpathy. Secuela de [Agentes de código y trabajo en equipo: ¿habilidades sociales o estructura?](https://www.javieraguilar.ai/es/blog/coding-agents-structure)*
+*Motivado por la regla "let the loop restart" del fichero `LOOPS.md` atribuido a Andrej Karpathy. Secuela de [Agentes de código y trabajo en equipo: ¿habilidades sociales o estructura?](https://www.javieraguilar.ai/es/blog/coding-agents-structure)*
+
+*Corrección (18 de noviembre de 2026): versiones anteriores de este artículo atribuían "let the loop restart" directamente a Andrej Karpathy. La frase viene de un fichero `LOOPS.md` que circula con su nombre, y no encontré ninguna publicación ni repositorio suyo que la contenga, así que ahora la atribución figura como no verificada. El experimento y sus resultados no cambian.*
