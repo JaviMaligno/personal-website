@@ -33,10 +33,12 @@ npm run test:pages     # build + rendered-page checks (scripts/publications/rend
 npm run test:linkedin  # LinkedIn script checks (also test:detect, test:summary, test:gemini)
 ```
 
-Visual/CSS changes (layout, styling, KaTeX formula rendering) must be verified in a
-real browser before committing: `npm run dev` → open the page → screenshot → confirm.
-A clean build or grepping the HTML is not enough — broken KaTeX rendering has reached
-production that way.
+On this machine none of the commands above is used for QA: no dev server, no local
+build. Visual/CSS changes (layout, styling, KaTeX formula rendering) are verified on the
+Vercel preview of the PR: open it in draft, wait for the `Vercel` check of that sha, then
+`node scripts/blog/check-preview.mjs <preview-url> <slug>` (full-page screenshots at
+1440/1180/390 px plus render checks) and read the screenshots. A clean build or grepping
+the HTML is not enough — broken KaTeX rendering has reached production that way.
 
 ## Architecture
 

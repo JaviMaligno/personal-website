@@ -100,20 +100,39 @@ Generate these with the draft and show them with it:
 
 ### 5. Render and hand over
 
-```bash
-npm run build   # validates frontmatter against the content schema and catches broken pages
-npm run dev     # run in background; serves on http://localhost:4321
-```
+This machine does not run `npm run dev`, `npm run build` or any local server: the review happens
+on the Vercel preview of the PR, which is also the only page Javier looks at.
 
-Give Javier both URLs, with the trailing slash (`astro.config` sets `trailingSlash: 'always'`, so
-the bare path is a 404):
+1. **Open the PR in draft** (`gh pr create --draft`). Vercel's Git integration builds every push,
+   draft included; a build that fails (frontmatter schema, broken page) shows as a failed `Vercel`
+   check.
+2. **Wait for the `Vercel` check of that sha** to be `pass` ("Deployment has completed"): capture
+   the sha after the push (`git rev-parse HEAD`) and query once a minute
+   (`gh pr checks <n>`, or `gh api repos/JaviMaligno/personal-website/commits/<sha>/check-runs`).
+   The preview URL is in the Vercel bot comment of the PR (`gh pr view <n> --json comments`, link
+   "Preview"): `https://personal-website-git-<branch>-….vercel.app`.
+3. **Run the check** against that preview:
 
-- `http://localhost:4321/en/blog/<slug>/`
-- `http://localhost:4321/es/blog/<slug>/`
+   ```bash
+   node scripts/blog/check-preview.mjs <preview-url> <slug>
+   ```
 
-Check `ls dist/en/blog/ | grep <slug>` (and `es`) after the build, and show the hero inline (Read
-the PNG), calling out any mangled text in it. The hand-off is the URLs, the hero, and "Decisions I
-took". The article is done once he has reviewed the rendered pages.
+   It takes full-page screenshots of EN and ES at 1440, 1180 and 390 px, prints their paths, and
+   exits 1 on page-level horizontal scroll, squashed table cells, `.katex-error`, broken inline
+   SVG or math outside KaTeX. It also lists literal mentions of other posts' titles that are not
+   links. Previews are behind Vercel's login: the script sends the bypass token in
+   `~/.config/vercel/personal-website-bypass`; without it, it reports the login wall.
+4. **Read every screenshot** (Read the PNGs) and fix what you see or what the script reports, push,
+   and repeat from step 2 for the new sha. The checks cover only defects with a mechanical
+   signature; the screenshots are the review.
+5. **Hand over the preview URLs**, EN and ES, with the trailing slash (`astro.config` sets
+   `trailingSlash: 'always'`, so the bare path is a 404):
+   - `<preview-url>/en/blog/<slug>/`
+   - `<preview-url>/es/blog/<slug>/`
+
+Show the hero inline (Read the PNG), calling out any mangled text in it. The hand-off is the
+preview URLs, the hero, and "Decisions I took". The article is done once he has reviewed the
+preview.
 
 When he sends corrections, change exactly what he points at and keep the rest as approved.
 
@@ -173,8 +192,9 @@ Architecture → Arquitectura; Machine Learning stays.
 ## Checklist Before Publishing
 
 - [ ] Brief list from `session_brief.py` reflected in the draft
-- [ ] `npm run build` passes and both pages appear in `dist/en/blog/` and `dist/es/blog/`
-- [ ] **Rendered pages reviewed by Javier** at `localhost:4321` (both languages, trailing slash)
+- [ ] Draft PR open and its `Vercel` check `pass` for the last pushed sha
+- [ ] `node scripts/blog/check-preview.mjs <preview-url> <slug>` exits 0 and every screenshot read (EN and ES, 1440/1180/390)
+- [ ] **Preview reviewed by Javier** at the Vercel preview URLs (both languages, trailing slash)
 - [ ] Every number recomputed from the data; every arm, model and judge of the inventory present
 - [ ] **Figure sweep run against the outline** (see `references/figures.md`): every case of the trigger test has a figure or a one-sentence reason
 - [ ] **Each figure pre-rendered to `public/blog/<slug>-fig-<n>.png`** (EN order) and the Dev.to swap dry-run shows no surviving `<svg`/`<style`
