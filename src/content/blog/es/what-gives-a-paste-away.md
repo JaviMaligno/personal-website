@@ -9,6 +9,8 @@ heroImage: "/blog/what-gives-a-paste-away.png"
 repoUrl: "https://github.com/JaviMaligno/llm-wrong-paste"
 ---
 
+*Corrección (19 de noviembre de 2026): una versión anterior decía que negar una premisa era la reacción más frecuente de toda la tanda. El 45 % sale de una muestra rejuzgada de 150 conversaciones repartida por categorías, así que no refleja las proporciones de la tanda; ahora el texto lo dice.*
+
 <style>
 .pg-fig { margin: 2rem 0; }
 .pg-fig svg { width: 100%; height: auto; background: #1a1a24; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; }
@@ -190,7 +192,7 @@ cincuenta. Lo que faltaba era una casilla entera que no había nombrado nadie.
 <text x="30" y="232" fill="#e2e8f0" font-size="12">Sopesa y descarta</text>
 <rect x="250" y="221" width="40" height="14" rx="2" fill="#2dd4bf" opacity="0.8"/><text x="340" y="232" fill="#5eead4" font-size="12" font-family="ui-monospace,monospace">8</text>
 </svg>
-<figcaption>Una sola conducta, repartida entre las siete categorías de la taxonomía. Es la reacción más frecuente de todas y la rúbrica no la nombraba.</figcaption>
+<figcaption>Una sola conducta, repartida entre las siete categorías de la taxonomía. Es la reacción más frecuente de la muestra rejuzgada y la rúbrica no la nombraba.</figcaption>
 </figure>
 
 La conducta que faltaba es **negar una premisa del pegote**: «no tengo constancia
@@ -199,7 +201,10 @@ No es señalar que el tema ha cambiado. No es dudar de que quisieras mandarlo.
 Es una tercera cosa: **el modelo no te corrige a ti, corrige el mundo que el
 pegote da por hecho**.
 
-Y es la reacción más frecuente de la tanda: cuarenta y cinco de cada cien. La taxonomía
+Y en las ciento cincuenta conversaciones que rejuzgué es la reacción más frecuente:
+cuarenta y cinco de cada cien. Esa muestra se eligió repartida por categorías, no en las
+proporciones de la tanda, así que no dice con qué frecuencia aparece en la tanda entera,
+donde plantearse un error es mucho más habitual. Lo que sí dice es que es frecuente. La taxonomía
 del artículo anterior no la vio porque salió de veinticuatro conversaciones, y en
 veinticuatro apenas asoma cuatro veces.
 
@@ -208,7 +213,7 @@ veinticuatro apenas asoma cuatro veces.
 **Sobre los modelos.** Lo que hace que se planteen tu error no es que el texto
 choque con la conversación, sino que lleve dentro señales de haberse escrito para
 otro sitio. Contradecirte no te delata: te obedece. Y hay una forma de reaccionar
-—negar lo que el pegote da por supuesto— que es la más común de todas y que ni
+—negar lo que el pegote da por supuesto— que es frecuente y que ni
 siquiera estaba en el mapa.
 
 **Sobre medir con jueces automáticos.** Delegar la clasificación en un modelo es

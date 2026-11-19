@@ -9,6 +9,8 @@ heroImage: "/blog/what-gives-a-paste-away.png"
 repoUrl: "https://github.com/JaviMaligno/llm-wrong-paste"
 ---
 
+*Correction (19 November 2026): an earlier version said denying a premise was the most frequent reaction in the whole run. The 45% comes from a re-judged sample of 150 conversations stratified by category, so it can't be read as the run's mix; the text now says so.*
+
 <style>
 .pg-fig { margin: 2rem 0; }
 .pg-fig svg { width: 100%; height: auto; background: #1a1a24; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; }
@@ -193,7 +195,7 @@ named.
 <text x="30" y="232" fill="#e2e8f0" font-size="12">Weighs and dismisses</text>
 <rect x="250" y="221" width="40" height="14" rx="2" fill="#2dd4bf" opacity="0.8"/><text x="340" y="232" fill="#5eead4" font-size="12" font-family="ui-monospace,monospace">8</text>
 </svg>
-<figcaption>One behaviour, scattered across all seven categories of the taxonomy. It's the most frequent reaction of all, and the rubric had no name for it.</figcaption>
+<figcaption>One behaviour, scattered across all seven categories of the taxonomy. It's the most frequent reaction in the re-judged sample, and the rubric had no name for it.</figcaption>
 </figure>
 
 The missing behaviour is **denying a premise of the paste**: "I have no record of
@@ -202,7 +204,10 @@ thread". It isn't flagging that the topic changed. It isn't doubting that you
 meant to send it. It's a third thing: **the model doesn't correct you, it
 corrects the world the paste takes for granted**.
 
-And it's the most frequent reaction in the run: forty-five out of every hundred. The
+And in the hundred and fifty conversations I re-judged it's the most frequent reaction:
+forty-five out of every hundred. That sample was stratified by category, not drawn in the
+run's proportions, so it doesn't say how often it happens across the whole run, where
+considering a mistake is far more common. What it does say is that it's frequent. The
 taxonomy in the previous article missed it because it came from twenty-four
 conversations, and in twenty-four it barely shows up four times.
 
@@ -211,8 +216,8 @@ conversations, and in twenty-four it barely shows up four times.
 **About the models.** What makes them consider your mistake isn't that the text
 clashes with the conversation, but that it carries signals of having been written
 for somewhere else. Contradicting you doesn't give you away: it obeys you. And
-there's a way of reacting — denying what the paste assumes — that is the most
-common of all and wasn't even on the map.
+there's a way of reacting — denying what the paste assumes — that is frequent
+and wasn't even on the map.
 
 **About measuring with automated judges.** Delegating the classification to a
 model is the only thing that makes a thousand-conversation run feasible, and it's
