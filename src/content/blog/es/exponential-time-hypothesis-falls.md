@@ -309,7 +309,7 @@ Parte de la misma fórmula para $\#F$. Ahora introduce un parámetro $T$ y susti
   <text x="128" y="128" font-size="10.5" fill="#94a3b8" text-anchor="middle">interpolar</text>
   <text x="128" y="141" font-size="10.5" fill="#94a3b8" text-anchor="middle">de vuelta (exacto)</text>
 </svg>
-<figcaption>La estrategia de OpenAI: deformar el problema de contar en un polinomio H(T) de grado conocido. En T = 0 es la cuenta; en T = 1…Q se separa en grupos independientes. Unos pocos coeficientes de Taylor en cada punto fácil fijan el polinomio, y con él la cuenta.</figcaption>
+<figcaption>La estrategia de OpenAI: deformar el problema de contar en un polinomio <var>H</var>(<var>T</var>) de grado conocido. En <var>T</var> = 0 es la cuenta; en <var>T</var> = 1…<var>Q</var> se separa en grupos independientes. Unos pocos coeficientes de Taylor en cada punto fácil fijan el polinomio, y con él la cuenta.</figcaption>
 </figure>
 
 Como $H$ es un polinomio de grado conocido, sus valores y unas pocas derivadas en los puntos fáciles lo determinan por completo, y de ahí se lee $H(0)$. Aquí interpolar no es aproximar: es aritmética racional exacta. Toda la dificultad está en la tensión entre dos costes. Las sustituciones tienen que tener grado bajo en $T$, o necesitas demasiados coeficientes de Taylor por punto. Y tienen que respetar una agrupación *distinta* en cada uno de los $Q$ puntos, lo que, hecho a lo ingenuo, cuesta grado $Q$.

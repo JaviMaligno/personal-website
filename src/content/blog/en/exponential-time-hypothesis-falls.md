@@ -309,7 +309,7 @@ Start from the same formula for $\#F$. Now introduce a parameter $T$ and replace
   <text x="128" y="128" font-size="10.5" fill="#94a3b8" text-anchor="middle">interpolate</text>
   <text x="128" y="141" font-size="10.5" fill="#94a3b8" text-anchor="middle">back (exact)</text>
 </svg>
-<figcaption>OpenAI's strategy: deform the counting problem into a polynomial H(T) of known degree. At T = 0 it is the count; at T = 1…Q it splits into independent groups. A few Taylor coefficients at each easy point pin down the polynomial, and with it the count.</figcaption>
+<figcaption>OpenAI's strategy: deform the counting problem into a polynomial <var>H</var>(<var>T</var>) of known degree. At <var>T</var> = 0 it is the count; at <var>T</var> = 1…<var>Q</var> it splits into independent groups. A few Taylor coefficients at each easy point pin down the polynomial, and with it the count.</figcaption>
 </figure>
 
 Because $H$ is a polynomial of known degree, its values and a few derivatives at the easy points determine it completely, and you read off $H(0)$. Interpolation here is not an approximation: it is exact rational arithmetic. The whole difficulty is in a tension between two costs. The replacements must have low degree in $T$, or you need too many Taylor coefficients per point. And they must respect a *different* grouping at each of the $Q$ points, which naively costs degree $Q$.
