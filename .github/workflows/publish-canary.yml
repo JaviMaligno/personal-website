@@ -21,7 +21,7 @@ name: Publish canary — dry-run every pending article merge
 # scheduled-publish.yml. A blog/* branch that no manifest entry points at cannot
 # be published by anything, so it is reported as an orphan, never as a failure.
 #
-# It NEVER pushes anything. Worst case it opens/updates one issue.
+# It NEVER pushes anything. Worst case it opens one issue (closing the previous one).
 on:
   schedule:
     - cron: '0 6 * * *'   # 06:00 UTC — comfortably before the publish slot
@@ -220,7 +220,7 @@ jobs:
           npm ci --no-audit --no-fund
           npm run build
 
-      - name: Open or update the canary issue
+      - name: Open a fresh canary issue
         if: failure() || steps.rehearse.outputs.failed != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -237,12 +237,14 @@ jobs:
           Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
           Fix on the article branch, not on main. This issue auto-closes once a run passes."
-          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' 2>/dev/null || true)
-          if [ -n "$EXISTING" ]; then
-            gh issue comment "$EXISTING" --body "$BODY" || echo "comment failed (non-fatal)"
-          else
-            gh issue create --title "$TITLE" --body "$BODY" || echo "issue creation failed (non-fatal)"
-          fi
+          # One fresh issue per failure: the cloud auto-fix routine fires on
+          # issues.opened, so commenting on a still-open issue would not wake it.
+          # Older open canary issues are closed as superseded by the new one.
+          OLD=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[].number' 2>/dev/null || true)
+          NEW_URL=$(gh issue create --title "$TITLE" --body "$BODY") || { echo "issue creation failed (non-fatal)"; exit 0; }
+          for n in $OLD; do
+            gh issue close "$n" --comment "Superseded by $NEW_URL (the queue failed again)." || echo "close #$n failed (non-fatal)"
+          done
 
       - name: Close the canary issue once the queue is clean again
         if: success() && steps.rehearse.outputs.failed == '0'
