@@ -1,6 +1,6 @@
 ---
 title: "Let the Loop Iterate: Restarting Only Pays If You Know What to Throw Away"
-description: "Karpathy suggested letting a stuck agent restart instead of grinding on. I built a loop with visible tests and measured it: iterating on feedback beats clean restarts at equal compute — and handing the agent a scoped restart button reveals that knowing *what* to discard is what separates the tiers."
+description: "A viral rule for agent loops, widely attributed to Andrej Karpathy, says to let a stuck agent restart instead of grinding on. I built a loop with visible tests and measured it: iterating on feedback beats clean restarts at equal compute — and handing the agent a scoped restart button reveals that knowing *what* to discard is what separates the tiers."
 pubDate: 2026-07-17
 tags: ["AI", "Agents", "Evaluation"]
 lang: en
@@ -10,7 +10,7 @@ heroImage: "/blog/restart-vs-iterate.png"
 
 > **A complete study: 3 seeds × 3 policies × 2 model tiers on a 29-feature slice, with the eval harness audited before trusting a single number.** Same rigor protocol as [the coordination article](https://www.javieraguilar.ai/en/blog/coding-agents-structure) — this experiment is its direct sequel.
 
-There's a piece of agent folklore, crystallized by Andrej Karpathy as *"let the loop restart"*: when a coding agent's attempt is going badly, don't keep patching the sinking ship — throw the attempt away and let it start fresh. It has intuitive appeal. Anyone who has watched an agent dig itself deeper into a broken approach has felt it.
+There's a piece of agent folklore that went viral as *"let the loop restart"*, one of the rules in a `LOOPS.md` file widely shared as Andrej Karpathy's (I couldn't find it in any of his own posts or repositories, so take the attribution as unverified; the rule itself is what I test here): when a coding agent's attempt is going badly, don't keep patching the sinking ship — throw the attempt away and let it start fresh. It has intuitive appeal. Anyone who has watched an agent dig itself deeper into a broken approach has felt it.
 
 But is it true? In [my previous experiment](https://www.javieraguilar.ai/en/blog/coding-agents-structure) I couldn't even test it: CooperBench agents make a single pass and never see their test results, so the failure signal that would prompt a restart never reaches them. I mined all 1,806 trajectories and found exactly **zero** voluntary restarts — an artifact of the setup, not a finding. Measuring restart-vs-iterate properly needed a different harness.
 
@@ -23,7 +23,7 @@ On top of the same CooperBench-derived stack (29 single-feature tasks across 5 r
 Every policy gets the same K, the same per-round compute caps, and the *same feedback format* — so the only variable is what happens **between** rounds:
 
 - **ITERATE** — the classic loop: code and context accumulate; the agent patches its own work with the test results in hand.
-- **RESTART-FRESH** — the literal Karpathy reading: each round starts from a clean checkout with a fresh context. No memory of prior attempts. This is deliberately best-of-K sampling — that *is* the claim, tested at equal compute, not apologized for.
+- **RESTART-FRESH** — the literal reading of the rule: each round starts from a clean checkout with a fresh context. No memory of prior attempts. This is deliberately best-of-K sampling — that *is* the claim, tested at equal compute, not apologized for.
 - **RESTART-INFORMED** — clean checkout, but the context carries a short summary of what failed, built by the harness from artifacts (never written by the failing agent itself). This separates the mechanism: if informed beats fresh, the *lesson* helps; if fresh matches informed, the contaminated context was the problem.
 - **AGENT-DECIDES** — the interesting one: an iterate-style loop where the agent holds an explicit **restart tool with scope** — `restart(file | directory | all-my-work)` — presented as a legitimate, cost-free option. It chooses when to discard and *how much*.
 
@@ -64,7 +64,7 @@ Four findings, in order of how well they survive the statistics:
 
 ## What this does and doesn't say
 
-It does **not** say Karpathy is wrong in general. It says: *in the regime I measured* — feature-sized tasks on existing codebases, four rounds, tests visible — restart-as-resampling loses to iteration, and the restart that *does* pay is scoped, informed, and rare. Regimes where I'd expect the balance to shift toward restarting: greenfield tasks (where "start over" genuinely means a blank page and first attempts anchor hard), much longer horizons (where context genuinely rots), and models below some competence floor (where every attempt is a fresh dice roll anyway — though note that even our weak tier did better iterating).
+It does **not** say the rule is wrong in general. It says: *in the regime I measured* — feature-sized tasks on existing codebases, four rounds, tests visible — restart-as-resampling loses to iteration, and the restart that *does* pay is scoped, informed, and rare. Regimes where I'd expect the balance to shift toward restarting: greenfield tasks (where "start over" genuinely means a blank page and first attempts anchor hard), much longer horizons (where context genuinely rots), and models below some competence floor (where every attempt is a fresh dice roll anyway — though note that even our weak tier did better iterating).
 
 The echo with the [coordination article](https://www.javieraguilar.ai/en/blog/coding-agents-structure) is hard to miss. There, the lever that worked was structural (one agent owning the integration) and the strong model was the one that could exploit a rule. Here, the lever that works is *keeping your work and reading the feedback*, and the strong model is the one that can wield a scalpel. Both experiments land on the same shape: **capability doesn't just raise pass rates — it changes which process helps.** Give a weak agent a powerful affordance (a coordination protocol, a restart button) and it flails with it; give it a smaller problem or a tighter loop and it improves. Give a strong agent the same affordance and it uses it the way you hoped.
 
@@ -85,4 +85,6 @@ Everything is reproducible: the loop harness, all four policies, the metrics, an
 
 ---
 
-*Prompted by Andrej Karpathy's "let the loop restart" observation. Sequel to [Coding Agents and Teamwork: Social Skills, or Structure?](https://www.javieraguilar.ai/en/blog/coding-agents-structure)*
+*Prompted by the "let the loop restart" rule from the `LOOPS.md` file attributed to Andrej Karpathy. Sequel to [Coding Agents and Teamwork: Social Skills, or Structure?](https://www.javieraguilar.ai/en/blog/coding-agents-structure)*
+
+*Correction (18 November 2026): earlier versions of this article credited "let the loop restart" directly to Andrej Karpathy. The phrase comes from a `LOOPS.md` file that circulates under his name, and I found no post or repository of his that contains it, so the attribution is now marked as unverified. The experiment and its results are unchanged.*
