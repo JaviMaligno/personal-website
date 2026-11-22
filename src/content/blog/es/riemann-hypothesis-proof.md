@@ -65,7 +65,7 @@ Los primos escasean de una forma regular: cerca de un número grande x, más o m
     <text x="392" y="184" fill="#94a3b8">menos regulares.</text>
     <text x="392" y="204" fill="#94a3b8">La hipótesis: no hay ninguno.</text>
   </g>
-  <text x="140" y="165" font-size="10" fill="#64748b" text-anchor="middle" transform="rotate(-90 140 165)">altura (parte imaginaria de s)</text>
+  <text x="218" y="215" font-size="9.5" fill="#64748b" text-anchor="middle" transform="rotate(-90 218 215)">altura (parte imaginaria de s)</text>
 </svg>
 <figcaption>Calcular ceros, por muchos que sean, no puede demostrar la hipótesis: una prueba tiene que excluir cualquier cero fuera de la recta, a cualquier altura.</figcaption>
 </figure>
@@ -268,7 +268,7 @@ El camino de la idea al teorema, tal como lo exponen las guías de lectura:
     <text x="105" y="188" fill="#fbbf24">Teoría de Iwasawa</text>
     <text x="301" y="54">Cadena de ~√x theta lifts</text>
     <text x="301" y="188">Promedio sobre caracteres</text>
-    <text x="496" y="54" fill="#5eead4">Teorema de Landau localizado</text>
+    <text x="496" y="54" fill="#5eead4">Landau, localizado</text>
     <text x="496" y="188" fill="#5eead4">RH y GRH de Dirichlet</text>
   </g>
   <g font-size="9.5" fill="#94a3b8" text-anchor="middle">
@@ -299,7 +299,7 @@ El camino de la idea al teorema, tal como lo exponen las guías de lectura:
     <path d="M388,203 L399,203 L399,69 L409,69"/>
     <line x1="496" y1="108" x2="496" y2="163"/>
   </g>
-  <text x="300" y="272" text-anchor="middle" font-size="10" fill="#94a3b8">Todo desde «promedio» en adelante se ha comprobado también por máquina aislado, como implicación a partir de premisas explícitas.</text>
+  <text x="300" y="272" text-anchor="middle" font-size="10" fill="#94a3b8">Desde «promedio» en adelante, también comprobado por máquina de forma aislada, a partir de premisas explícitas.</text>
   <text x="300" y="288" text-anchor="middle" font-size="10" fill="#64748b">Reconstruido a partir de la guía pública de lectura; en las cajas ámbar vive la maquinaria pesada.</text>
 </svg>
 <figcaption>Una estimación difícil en el centro, análisis clásico a su derecha y, a su izquierda, la parte que hace que a los expertos se les abran los ojos.</figcaption>

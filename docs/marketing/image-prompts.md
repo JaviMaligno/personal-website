@@ -2110,3 +2110,13 @@ A tiny off-white birthday cake with two amber candles sits near the lower-left e
 Clean geometric composition with carefully layered depth, precise edges, restrained surface texture and subtle local illumination. Generous breathing room around the main sound path; all important elements inside safe margins. The phone, waveform, pitch contour, falling notes and small transcript panel are the main visual motifs. The voice orb must look generic, with no recognizable product interface.
 No logos, no brand names, no people, no hands, no headline, no text-heavy poster, no purple gradient blobs, no bokeh.
 ```
+
+## riemann-hypothesis-proof
+
+- Article: `src/content/blog/en/riemann-hypothesis-proof.md`
+- Image: `public/blog/riemann-hypothesis-proof.png`
+- Generated: 2026-11-22
+- Not a Codex image: Codex was not available in the cloud session, so this hero is an SVG
+  composition rendered with Playwright (critical strip with the first twenty zeros, an
+  illustrative wave inside a band, three status lines). Placeholder until a Codex hero is
+  generated with the usual constraints.

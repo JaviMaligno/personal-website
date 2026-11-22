@@ -8,7 +8,7 @@ translationKey: riemann-hypothesis-proof
 heroImage: "/blog/riemann-hypothesis-proof.png"
 linkedinImage: /blog/riemann-hypothesis-proof-prime-sum.png
 linkedinSummary: |
-  This week a proof of the Riemann hypothesis was published that no human has read, including, by his own account, the person who published it.
+  A proof of the Riemann hypothesis has been published that no human has read in full, and the person who published it says he has not yet mastered it.
 
   It is 175,187 files of Lean, the language in which a small program checks every step of a proof. Within hours, people with no connection to the author had compiled it, checked that the statement is the standard one, and run it through a second checker written independently. All of them accepted it. Nobody has refereed the mathematics, and no version for people exists yet.
 
@@ -84,7 +84,7 @@ The primes thin out in a regular way: near a large number x, about one number in
     <text x="392" y="184" fill="#94a3b8">primes less regular.</text>
     <text x="392" y="204" fill="#94a3b8">The hypothesis: there is none.</text>
   </g>
-  <text x="140" y="165" font-size="10" fill="#64748b" text-anchor="middle" transform="rotate(-90 140 165)">height (imaginary part of s)</text>
+  <text x="218" y="215" font-size="9.5" fill="#64748b" text-anchor="middle" transform="rotate(-90 218 215)">height (imaginary part of s)</text>
 </svg>
 <figcaption>Computing zeros, however many, can never prove the hypothesis: a proof has to exclude every zero off the line, at every height.</figcaption>
 </figure>
