@@ -2115,8 +2115,13 @@ No logos, no brand names, no people, no hands, no headline, no text-heavy poster
 
 - Article: `src/content/blog/en/riemann-hypothesis-proof.md`
 - Image: `public/blog/riemann-hypothesis-proof.png`
-- Generated: 2026-11-22
-- Not a Codex image: Codex was not available in the cloud session, so this hero is an SVG
-  composition rendered with Playwright (critical strip with the first twenty zeros, an
-  illustrative wave inside a band, three status lines). Placeholder until a Codex hero is
-  generated with the usual constraints.
+- Generated: 2026-11-22, with Codex (run by the author; the image was sent to the session)
+- The final prompt Codex wrote was not captured. These are the constraints it was given:
+
+```
+Create a 1020x510 blog hero image for a technical article titled "The Riemann Hypothesis Has a Proof Nobody Has Read. Its Core Idea Fits in a Sentence".
+Style: refined technical editorial illustration, dark but not monochrome, showing a concrete scene: a tall archive of thousands of small code files being scanned and ticked by a small checking machine, next to an empty reading desk with an unopened, absurdly thick printed volume.
+Visual motifs: a vertical strip with a bright teal line and dots sitting exactly on it (the zeros on the critical line); a jagged amber curve staying inside a dashed band; a terminal window with readable but generic lines such as "theorem riemannHypothesis" and "175,187 modules: ok"; a chain of links with a marker at its balance point; a checklist with ticks for the machine checks and one empty box labelled "understood". Clean geometric composition with several distinct zones.
+No logos, no brand names, no people, no text-heavy poster.
+Use crisp bitmap illustration, high contrast, professional AI/developer blog aesthetic, balanced teal, amber, graphite and off-white accents, no purple gradient blobs, no bokeh.
+```
