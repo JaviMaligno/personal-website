@@ -32,7 +32,7 @@ On Friday 20 November, Levent Alpöge, a number theorist who works at Anthropic,
 
 The Riemann hypothesis is the best-known open problem in mathematics. It is 167 years old, it is one of the seven Millennium Prize problems, and it says, in one line, that the prime numbers are spread as evenly as they possibly could be. By the end of that Friday, people who had nothing to do with the author had compiled the archive, and the checkers had accepted it.
 
-The coverage has been about the machine beating the mathematicians, and about a second, all-human proof that appeared the same afternoon. Both are real stories. This is the third time since September that I write one of these, after [Navier–Stokes](/en/blog/navier-stokes-blows-up) in September and the [Exponential Time Hypothesis](/en/blog/exponential-time-hypothesis-falls) in October, and as with those, the parts I find most interesting do not fit in a headline: what exactly was proved, what it means that nobody has read it, why the central idea is one you can explain at a blackboard, who did what, and which theorems changed status overnight.
+The coverage has been about the machine beating the mathematicians, and about a second, all-human proof that appeared the same afternoon. Both are real stories. This is the third time since September that I write one of these, after [Navier–Stokes](/en/blog/navier-stokes-blows-up) in September and the [Exponential Time Hypothesis](/en/blog/exponential-time-hypothesis-falls) in October, and as with those, the parts I find most interesting do not fit in a headline: what exactly was proved, why this claim was not dismissed like all the earlier ones, what it means that nobody has read it, why the central idea is one you can explain at a blackboard, who did what, and which theorems changed status overnight.
 
 <style>
 .rh-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -94,6 +94,16 @@ Mathlib, the community library of mathematics formalized in Lean, already contai
 The other four statements go further. They say the same about a whole family of related functions, the Dirichlet L-functions, which control the primes inside arithmetic progressions (primes ending in 7, say). That is the Generalized Riemann Hypothesis for Dirichlet L-functions, for every modulus and every character.
 
 The scope has an edge, and it is worth knowing where it is. "GRH" is used for several statements of increasing reach. What the checkers accepted concerns Dirichlet L-functions only. The versions for the zeta functions of number fields and for automorphic L-functions in general are not among the five theorems. Alpöge writes that he expects the method to reach further "with more time"; [Andrew Sutherland's verification page](https://math.mit.edu/~drew/grh/) at MIT says plainly that those were not checked, because they are not there.
+
+## It has been "proved" many times before
+
+**Announced proofs of the Riemann hypothesis are a genre, and almost none of them is taken seriously for more than a day.**
+
+The oldest goes back to 1885, when Thomas Stieltjes published a note claiming a bound that would have implied the hypothesis. He never produced the proof, and the bound itself was shown to be false a century later. In 1945 Hans Rademacher, a respected number theorist, announced a *disproof*; Time magazine reported it, and then an error was found and it was withdrawn. Louis de Branges, who really did prove a famous conjecture in 1984 after years of not being believed, has announced proofs of this one several times since, and none has been accepted. And the preprint servers receive a steady supply of short papers titled some variant of "A proof of the Riemann hypothesis".
+
+The one I remember personally is Michael Atiyah's. In September 2018 one of the most decorated mathematicians alive, a Fields medallist and Abel laureate, then 89, announced at a public lecture in Heidelberg that he had a simple proof, and posted five pages. I was studying mathematics at university at the time, and what I remember is that nobody around me took it seriously, not even for an afternoon. Nobody was unkind about it. Everyone simply knew that a claim of this size, resting on a few pages and a great name, was not something you had to stop and check.
+
+That is the background against which to read last Friday. Every earlier claim asked the community to spend scarce expert time on the author's word, and the community had learned to say no. This one did not ask anyone to believe anything. It came with an object that anyone with a large enough computer could test, against a statement the author had not written. That changed the default response from "probably wrong, who has the time" to "run it", and the answer came back within hours. The reputation of the author mattered for how quickly people started, and not at all for what they found.
 
 ## A proof nobody has read
 
@@ -412,6 +422,18 @@ On the million dollars, the same answer as in September. The Clay Mathematics In
 
 In September I ended the Navier–Stokes article with a ladder whose top rung was empty: the unforced equations, the question most people actually mean. Tao's note of 20 November lists, above the Riemann item and as better digested, two more announcements involving Alpöge and Tristan Buckmaster of NYU: a human-readable proof, with Matei Coiculescu, of finite-time blow-up for the *unforced* three-dimensional Euler equations, and a proof of finite-time blow-up for the *unforced* three-dimensional Navier–Stokes equations, both with Lean formalizations. Of the second, Tao says the strategy is "broadly clear" and follows an expected path, but that "more work needs to be done to create a proper, professionally written proof". I have not read either, and they deserve their own piece. I note it here because that top rung now has a claimant, and it is the pair whose route OpenAI finished first in September.
 
+## "Math is dead"
+
+**I have read that sentence a lot this week, and I think it is the opposite of what happened. My view is that mathematics is more alive than it has ever been.** Three reasons, in increasing order of importance.
+
+The first is simply how many people are looking. A problem about the zeros of a function was front-page news, and people who had not thought about prime numbers since school spent a weekend asking what a critical line is. Even if that were the only effect, a subject that the whole world stops to watch is not a dead one.
+
+The second is that the capacity to solve problems went up, and so did the capacity to *understand* them. Much of this week's commentary takes for granted that we now have answers without understanding, and that the understanding is lost. Look at what actually happened. Within a day of the announcement there was a public map of the proof's architecture, a guide to its seven steps and a list of which parts had been checked in isolation, all produced with AI assistance. The problems in the human draft were found by people working with AI models. The author's plan for understanding his own proof is to work through it with the same tool that helped find it. Understanding is the part that is behind, and AI is the main reason it will not stay behind for long. I do not see how anyone digests seventeen million lines without it.
+
+The third is what it opens. This proof connects a 1969 argument about curves over finite fields, a classical construction with theta functions, Iwasawa theory and the Langlands programme, in a combination nobody had tried, partly because trying it by hand would have cost a career. When exploring a route costs weeks, far more routes, tools and connections get explored. The questions do not run out: the wider forms of the hypothesis are still open, the proof is waiting to be simplified, and every theorem that used to say "assuming RH" is now a starting point. Alpöge, who by his own account has just lost the problem that guided his life, calls it a dawn. Sutherland calls it "a human triumph, and a day for celebration". Masullo, with twelve years of work overtaken in an afternoon, writes "we are still here".
+
+What has ended is something narrower: the idea that being the first to find a proof is the main thing a mathematician is for. Choosing what is worth proving, recognising that a toy case hides the real one, and explaining why something is true were always most of the job. They are now the scarce part.
+
 ## What to take from it
 
 - **What was proved is the Riemann hypothesis and its generalization to Dirichlet L-functions**, in Mathlib's own wording. The wider versions of GRH are not in the archive.
@@ -420,6 +442,7 @@ In September I ended the Navier–Stokes article with a ladder whose top rung wa
 - **The idea is simple; what holds it up is not.** It rests on a formal reconstruction of a large part of the Langlands programme, which is where most of the seventeen million lines go.
 - **A human chose the route and the model finished it.** That is the author's own description. He also says he cannot yet explain the last stretch, and that understanding it is the work that starts now.
 - **The model is not one you can use, and the numbers behind the run are not public.**
+- **Mathematics is not dead.** More people are watching it than ever, the tools that found the proof are the ones that will explain it, and far more routes can now be explored.
 
 For anyone building with agents, the part of this that transfers is not the mathematics. It is that the result was accepted in a day because a small, independent, well-understood checker existed, and because the statement to be checked had been written down by someone else beforehand. Where your work has both of those, you can let a model run a long way ahead of you. Where it has neither, the 250,000 pages are all you get.
 

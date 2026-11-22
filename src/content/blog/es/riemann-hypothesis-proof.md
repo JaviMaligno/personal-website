@@ -13,7 +13,7 @@ El viernes 20 de noviembre, Levent Alpöge, un especialista en teoría de númer
 
 La hipótesis de Riemann es el problema abierto más conocido de las matemáticas. Tiene 167 años, es uno de los siete problemas del Milenio y dice, en una línea, que los números primos están repartidos de la forma más regular posible. Antes de que acabara ese viernes, gente sin ninguna relación con el autor había compilado el archivo y los verificadores lo habían aceptado.
 
-La cobertura ha ido sobre la máquina que gana a los matemáticos y sobre una segunda prueba, hecha solo por humanos, que apareció esa misma tarde. Las dos historias son reales. Es la tercera vez desde septiembre que escribo uno de estos artículos, después de [Navier–Stokes](/es/blog/navier-stokes-blows-up) y de la [hipótesis del tiempo exponencial](/es/blog/exponential-time-hypothesis-falls) en octubre, y como entonces lo que más me interesa no cabe en un titular: qué se ha probado exactamente, qué significa que nadie lo haya leído, por qué la idea central se puede explicar en una pizarra, quién hizo qué y qué teoremas cambiaron de estatus de un día para otro.
+La cobertura ha ido sobre la máquina que gana a los matemáticos y sobre una segunda prueba, hecha solo por humanos, que apareció esa misma tarde. Las dos historias son reales. Es la tercera vez desde septiembre que escribo uno de estos artículos, después de [Navier–Stokes](/es/blog/navier-stokes-blows-up) y de la [hipótesis del tiempo exponencial](/es/blog/exponential-time-hypothesis-falls) en octubre, y como entonces lo que más me interesa no cabe en un titular: qué se ha probado exactamente, por qué este anuncio no se descartó como todos los anteriores, qué significa que nadie lo haya leído, por qué la idea central se puede explicar en una pizarra, quién hizo qué y qué teoremas cambiaron de estatus de un día para otro.
 
 <style>
 .rh-fig{background:#1a1a24;border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem 1.25rem .5rem;margin:2rem 0}
@@ -75,6 +75,16 @@ Mathlib, la biblioteca comunitaria de matemáticas formalizadas en Lean, ya cont
 Los otros cuatro enunciados van más lejos. Dicen lo mismo de toda una familia de funciones emparentadas, las funciones L de Dirichlet, que controlan los primos dentro de las progresiones aritméticas (los primos que acaban en 7, por ejemplo). Eso es la hipótesis generalizada de Riemann para funciones L de Dirichlet, para todo módulo y todo carácter.
 
 El alcance tiene un borde y conviene saber dónde está. «GRH» se usa para varios enunciados de alcance creciente. Lo que los verificadores aceptaron se refiere solo a funciones L de Dirichlet. Las versiones para las funciones zeta de cuerpos de números y para funciones L automorfas en general no están entre los cinco teoremas. Alpöge escribe que espera que el método llegue más lejos «con más tiempo»; la [página de verificación de Andrew Sutherland](https://math.mit.edu/~drew/grh/), del MIT, dice sin rodeos que eso no se ha comprobado, porque no está.
+
+## Ya se había «demostrado» muchas veces
+
+**Las pruebas anunciadas de la hipótesis de Riemann son un género, y casi ninguna se toma en serio más de un día.**
+
+La más antigua es de 1885, cuando Thomas Stieltjes publicó una nota en la que afirmaba una cota que habría implicado la hipótesis. Nunca presentó la demostración, y un siglo después se demostró que la propia cota era falsa. En 1945 Hans Rademacher, un especialista respetado en teoría de números, anunció una *refutación*; la revista Time lo publicó, luego se encontró un error y se retiró. Louis de Branges, que en 1984 sí demostró una conjetura famosa tras años sin que le creyeran, ha anunciado desde entonces varias pruebas de esta, y ninguna ha sido aceptada. Y los servidores de preprints reciben un goteo constante de artículos cortos titulados con alguna variante de «Una prueba de la hipótesis de Riemann».
+
+La que yo recuerdo personalmente es la de Michael Atiyah. En septiembre de 2018 uno de los matemáticos vivos más premiados, medalla Fields y premio Abel, entonces con 89 años, anunció en una conferencia pública en Heidelberg que tenía una prueba sencilla, y colgó cinco páginas. Yo estudiaba matemáticas en la universidad, y lo que recuerdo es que nadie a mi alrededor se lo tomó en serio, ni siquiera una tarde. No hubo crueldad. Simplemente todo el mundo sabía que una afirmación de ese tamaño, apoyada en unas pocas páginas y un gran nombre, no era algo que hubiera que pararse a comprobar.
+
+Ese es el fondo sobre el que hay que leer lo del viernes. Todos los anuncios anteriores pedían a la comunidad que gastara tiempo escaso de expertos fiándose de la palabra del autor, y la comunidad había aprendido a decir que no. Este no pedía a nadie que creyera nada. Venía con un objeto que cualquiera con un ordenador lo bastante grande podía poner a prueba, contra un enunciado que el autor no había escrito. Eso cambió la respuesta por defecto de «seguramente está mal, quién tiene tiempo» a «ejecútalo», y la respuesta llegó en horas. La reputación del autor influyó en lo rápido que la gente se puso a ello, y nada en lo que encontró.
 
 ## Una prueba que nadie ha leído
 
@@ -393,6 +403,18 @@ Sobre el millón de dólares, la misma respuesta que en septiembre. El Instituto
 
 En septiembre acabé el artículo de Navier–Stokes con una escalera cuyo peldaño superior estaba vacío: las ecuaciones sin fuerza, la pregunta que casi todo el mundo tiene en la cabeza. La nota de Tao del 20 de noviembre lista, por encima del punto de Riemann y como mejor digeridos, otros dos anuncios en los que participan Alpöge y Tristan Buckmaster, de la NYU: una prueba legible, con Matei Coiculescu, de la explosión en tiempo finito para las ecuaciones de Euler tridimensionales *sin fuerza*, y una prueba de la explosión en tiempo finito para las ecuaciones de Navier–Stokes tridimensionales *sin fuerza*, ambas con formalización en Lean. De la segunda, Tao dice que la estrategia está clara a grandes rasgos y sigue uno de los caminos esperados, pero que hace falta más trabajo para tener una prueba escrita de forma profesional. No he leído ninguna de las dos y merecen su propio artículo. Lo anoto aquí porque ese peldaño superior tiene ya quien lo reclama, y es la pareja cuya ruta OpenAI terminó primero en septiembre.
 
+## «Las matemáticas han muerto»
+
+**He leído esa frase muchas veces esta semana, y creo que es lo contrario de lo que ha pasado. Yo pienso que las matemáticas están más vivas que nunca.** Tres razones, de menor a mayor importancia.
+
+La primera es, sencillamente, cuánta gente está mirando. Un problema sobre los ceros de una función ha sido noticia de portada, y gente que no pensaba en números primos desde el colegio se ha pasado un fin de semana preguntando qué es una recta crítica. Aunque ese fuera el único efecto, una disciplina que el mundo entero se para a mirar no está muerta.
+
+La segunda es que ha aumentado la capacidad de resolver problemas, y también la de *entenderlos*. Buena parte de lo que se ha escrito esta semana da por hecho que ahora tenemos respuestas sin comprensión, y que la comprensión se ha perdido. Hay que mirar lo que ha ocurrido de verdad. Un día después del anuncio había un mapa público de la arquitectura de la prueba, una guía de sus siete pasos y una lista de qué partes se habían comprobado por separado, todo hecho con ayuda de IA. Los problemas del borrador humano los encontró gente trabajando con modelos de IA. El plan del autor para entender su propia prueba es recorrerla con la misma herramienta que ayudó a encontrarla. La comprensión es la parte que va por detrás, y la IA es el motivo principal de que no vaya a seguir por detrás mucho tiempo. No veo cómo alguien digiere diecisiete millones de líneas sin ella.
+
+La tercera es lo que abre. Esta prueba conecta un argumento de 1969 sobre curvas en cuerpos finitos, una construcción clásica con funciones theta, la teoría de Iwasawa y el programa de Langlands, en una combinación que nadie había probado, en parte porque probarla a mano habría costado una carrera entera. Cuando explorar un camino cuesta semanas, se exploran muchos más caminos, herramientas y conexiones. Las preguntas no se acaban: las formas más amplias de la hipótesis siguen abiertas, la prueba está esperando a que alguien la simplifique, y cada teorema que decía «suponiendo RH» es ahora un punto de partida. Alpöge, que según cuenta acaba de perder el problema que guio su vida, lo llama un amanecer. Sutherland lo llama un triunfo humano y un día para celebrar. Masullo, con doce años de trabajo adelantados en una tarde, escribe que seguimos aquí.
+
+Lo que ha terminado es algo más estrecho: la idea de que ser el primero en encontrar una demostración es lo principal para lo que sirve un matemático. Elegir qué merece la pena demostrar, reconocer que un caso de juguete esconde el caso real y explicar por qué algo es cierto siempre fueron la mayor parte del oficio. Ahora son la parte escasa.
+
 ## Con qué quedarse
 
 - **Lo que se ha probado es la hipótesis de Riemann y su generalización a funciones L de Dirichlet**, con la redacción de Mathlib. Las versiones más amplias de la GRH no están en el archivo.
@@ -401,6 +423,7 @@ En septiembre acabé el artículo de Navier–Stokes con una escalera cuyo pelda
 - **La idea es sencilla; lo que la sostiene, no.** Descansa sobre una reconstrucción formal de una parte grande del programa de Langlands, que es adonde va la mayoría de los diecisiete millones de líneas.
 - **Un humano eligió la ruta y el modelo la terminó.** Es la descripción del propio autor. También dice que todavía no sabe explicar el último tramo, y que entenderlo es el trabajo que empieza ahora.
 - **El modelo no es uno que se pueda usar, y las cifras de la ejecución no son públicas.**
+- **Las matemáticas no han muerto.** Las mira más gente que nunca, las herramientas que encontraron la prueba son las que la van a explicar, y ahora se pueden explorar muchos más caminos.
 
 Para quien construye con agentes, lo que se traslada de todo esto no son las matemáticas. Es que el resultado se aceptó en un día porque existía un verificador pequeño, independiente y bien entendido, y porque el enunciado que había que comprobar lo había escrito otra persona de antemano. Donde tu trabajo tiene las dos cosas, puedes dejar que un modelo vaya muy por delante de ti. Donde no tiene ninguna, lo único que te queda son las 250.000 páginas.
 
