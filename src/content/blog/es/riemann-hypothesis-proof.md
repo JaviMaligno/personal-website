@@ -158,7 +158,7 @@ Empiezo por qué lo que hace falta es una *cota superior*. La fórmula de Rieman
 Esto se puede ver sin más que una lista de primos. Se toma un recuento ponderado de los primos hasta y, se le resta lo que uno espera y se divide por √y:
 
 <figure class="rh-fig">
-<img src="https://www.javieraguilar.ai/blog/riemann-hypothesis-proof-prime-sum.png" alt="El recuento ponderado de primos G(y), restado su valor esperado y dividido por la raíz cuadrada de y, calculado para y entre diez y diez millones. La curva oscila de forma irregular pero nunca supera 0,023 en valor absoluto, bien dentro de la banda de más o menos 0,0462 que predice la hipótesis de Riemann" aria-label="El recuento ponderado de primos G(y), restado su valor esperado y dividido por la raíz cuadrada de y, calculado para y entre diez y diez millones. La curva oscila de forma irregular pero nunca supera 0,023 en valor absoluto, bien dentro de la banda de más o menos 0,0462 que predice la hipótesis de Riemann" />
+<img src="/blog/riemann-hypothesis-proof-prime-sum.png" alt="El recuento ponderado de primos G(y), restado su valor esperado y dividido por la raíz cuadrada de y, calculado para y entre diez y diez millones. La curva oscila de forma irregular pero nunca supera 0,023 en valor absoluto, bien dentro de la banda de más o menos 0,0462 que predice la hipótesis de Riemann" aria-label="El recuento ponderado de primos G(y), restado su valor esperado y dividido por la raíz cuadrada de y, calculado para y entre diez y diez millones. La curva oscila de forma irregular pero nunca supera 0,023 en valor absoluto, bien dentro de la banda de más o menos 0,0462 que predice la hipótesis de Riemann" />
 <figcaption>Calculado con los primos hasta diez millones: la curva nunca pasa de 0,023, la mitad del ancho de la banda que permite la hipótesis. Un dibujo así es un indicio, no una prueba; la prueba tiene que valer para todo y. <a href="https://github.com/JaviMaligno/personal-website/blob/main/scripts/figures/riemann-centred-prime-sum.py">Script</a>.</figcaption>
 </figure>
 
@@ -171,6 +171,8 @@ De la divisibilidad. Tómese un entero positivo N. Cada potencia de primo que di
 No es un truco nuevo. Es el más viejo. En 1850 Chebyshev lo aplicó al factorial: a! es divisible por cada primo p unas a/p + a/p² + … veces, y su tamaño lo da la fórmula de Stirling. De ahí salió la primera demostración de que el número de primos hasta x tiene el orden de magnitud de x/log x. El factorial no es lo bastante divisible para dar más. La prueba anunciada aplica el mismo principio a un número mucho más divisible. La cronología de Alpöge recoge el punto de partida, fechado el 9 de octubre: una cantidad construida con las derivadas de una función theta sobre una curva elíptica con simetría extra, que es divisible por cada primo adecuado p unas a/p + a/p³ + … veces. Se comporta como un factorial al que solo dividen ciertos primos, y su tamaño se puede calcular exactamente.
 
 Eso, por sí solo, no da la raíz cuadrada. La da la segunda idea, que es la que Alpöge eligió como la única línea que haría que sus colegas matemáticos «se cayeran de la silla».
+
+*Si solo quieres la idea, ya la tienes: un número divisible por muchos primos no puede ser pequeño, y eso se convierte en un techo para lo irregulares que pueden ser los primos. Las dos secciones siguientes cuentan de dónde sale la raíz cuadrada y sobre qué se apoya el argumento, con algo más de matemáticas; puedes saltar a [Quién hizo qué](#quién-hizo-qué) sin perder el hilo.*
 
 ## De dónde sale la raíz cuadrada
 
@@ -376,7 +378,7 @@ Una pieza de contexto ayuda a situar la velocidad. En agosto, Anthropic [contó]
 
 ## ¿Es una continuación del resultado de OpenAI de octubre?
 
-**No del resultado que la gente recuerda, pero según el propio autor salió de un artículo más discreto de esa misma publicación.**
+**No del resultado que la gente recuerda, pero según el propio autor salió de un artículo más discreto de esa misma publicación.** Esa frase es toda la respuesta; el resto de la sección es el detalle, y puedes ir directamente a [la otra prueba](#la-otra-prueba-esa-misma-tarde).
 
 En octubre, OpenAI publicó varios cientos de manuscritos escritos por máquina, de los que hablé [en su momento](/es/blog/when-ai-chooses-the-questions). Uno de ellos es [*The Quasi-Riemann Hypothesis*](https://github.com/openai/math/blob/main/preprints/The-Quasi-Riemann-Hypothesis-September-30-2026/paper.pdf): ningún cero de ζ, ni de ninguna función L de Dirichlet, tiene parte real mayor que 7/8. Hasta entonces nadie podía excluir ceros de ninguna franja a la izquierda de la parte real 1, así que fue la primera aproximación de verdad a la hipótesis: los ceros quedan confinados en una banda, y la hipótesis dice que la banda tiene anchura cero.
 

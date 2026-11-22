@@ -8,17 +8,17 @@ translationKey: riemann-hypothesis-proof
 heroImage: "/blog/riemann-hypothesis-proof.png"
 linkedinImage: /blog/riemann-hypothesis-proof-prime-sum.png
 linkedinSummary: |
-  A proof of the Riemann hypothesis has been published that no human has read in full, and the person who published it says he has not yet mastered it.
+  "Math is dead." I have read that a lot since a proof of the Riemann hypothesis, found by a mathematician working with Claude, was published and checked by machine in about a day. I think it is the opposite.
 
-  It is 175,187 files of Lean, the language in which a small program checks every step of a proof. Within hours, people with no connection to the author had compiled it, checked that the statement is the standard one, and run it through a second checker written independently. All of them accepted it. Nobody has refereed the mathematics, and no version for people exists yet.
+  Look at what the humans did. The author, Levent Alpöge, had planned his career around this problem. He chose the route, and he says the thread that mattered came from a paper almost nobody discussed: a minor result in a pile a rival lab had published, which he recognised as the skeleton of an old argument. That is taste, and it is the part no one automated.
 
-  That is a new situation, and it is not only about mathematics. We are getting used to work whose correctness can be checked by machine long before anyone understands it. "Is it right?" and "do we understand why?" used to arrive together. Now they come apart, sometimes by years.
+  Then the model went somewhere he could not follow. He writes that the decisive stretch uses an area where he is "out of my element", that Claude "far outpaced" him near the end, and that his job now is to understand his own proof and write it properly. I find that honesty more interesting than the result.
 
-  What surprised me when I read the material is that the core idea is not exotic. A whole number that is divisible by many primes cannot be small. Chebyshev used that in 1850 with factorials to get the first real estimates of how many primes there are. The proof uses the same principle with a far more divisible number, and the square root in the hypothesis comes out of balancing two costs.
+  The same afternoon, a mathematician who had spent twelve years on the problem, with no AI, published his own draft. His message: "we are still here."
 
-  The author, Levent Alpöge, says Claude suggested that balance, and that Claude "far outpaced" him near the end. He also says he will now do the slow part: understand it and write it properly.
+  And within a day there was a public map of a proof nobody had read, drawn with AI. Understanding is the part that is behind, and AI is how it catches up.
 
-  If you work with agents, the question to carry over is the one mathematicians are facing this week: for the output you accept, what plays the role of the checker, and who is doing the understanding?
+  More people are watching mathematics than ever, more routes can be explored, and choosing what is worth proving and explaining why it is true are now the scarce skills. That holds well beyond mathematics: in your own work with agents, which part is the taste, and who is doing the understanding?
 linkedinLinks:
   - label: "Alpöge's announcement"
     url: "https://alpo.ge/remark.pdf"
@@ -177,7 +177,7 @@ Start with why an *upper bound* is what you need. Riemann's formula says that ea
 You can watch this with nothing but a list of primes. Take a weighted count of the primes up to y, subtract the amount you expect, and divide by √y:
 
 <figure class="rh-fig">
-<img src="https://www.javieraguilar.ai/blog/riemann-hypothesis-proof-prime-sum.png" alt="The weighted prime count G(y), with its expected value subtracted and divided by the square root of y, computed for y from ten to ten million. The curve oscillates irregularly but never exceeds 0.023 in absolute value, well inside the band of plus or minus 0.0462 that the Riemann hypothesis predicts" aria-label="The weighted prime count G(y), with its expected value subtracted and divided by the square root of y, computed for y from ten to ten million. The curve oscillates irregularly but never exceeds 0.023 in absolute value, well inside the band of plus or minus 0.0462 that the Riemann hypothesis predicts" />
+<img src="/blog/riemann-hypothesis-proof-prime-sum.png" alt="The weighted prime count G(y), with its expected value subtracted and divided by the square root of y, computed for y from ten to ten million. The curve oscillates irregularly but never exceeds 0.023 in absolute value, well inside the band of plus or minus 0.0462 that the Riemann hypothesis predicts" aria-label="The weighted prime count G(y), with its expected value subtracted and divided by the square root of y, computed for y from ten to ten million. The curve oscillates irregularly but never exceeds 0.023 in absolute value, well inside the band of plus or minus 0.0462 that the Riemann hypothesis predicts" />
 <figcaption>Computed from the primes up to ten million: the curve never exceeds 0.023, half the width of the band the hypothesis allows. A picture like this is evidence, not proof; the proof has to hold for every y. <a href="https://github.com/JaviMaligno/personal-website/blob/main/scripts/figures/riemann-centred-prime-sum.py">Script</a>.</figcaption>
 </figure>
 
@@ -190,6 +190,8 @@ From divisibility. Take a positive whole number N. Every prime power dividing N 
 This is not a new trick. It is the oldest one. In 1850 Chebyshev applied it to the factorial: a! is divisible by each prime p about a/p + a/p² + … times, and its size is given by Stirling's formula. Out came the first proof that the number of primes up to x has the order of magnitude x/log x. The factorial is not divisible enough to give more than that. The announced proof runs the same principle with a much more divisible number. Alpöge's timeline records the starting point, dated 9 October: a quantity built from the derivatives of a theta function on an elliptic curve with extra symmetry, which is divisible by each suitable prime p about a/p + a/p³ + … times. It behaves like a factorial that only certain primes divide, and its size can be computed exactly.
 
 That, alone, does not give the square root. The second idea does, and it is the one Alpöge chose as the single line that would make "fellow mathematicians fall out of their chairs".
+
+*If you only want the idea, you have it: a number divisible by many primes cannot be small, and that turns into a ceiling on how irregular the primes can be. The next two sections show where the square root comes from and what the argument rests on, with a bit more mathematics; you can skip to [Who did what](#who-did-what) without losing the thread.*
 
 ## Where the square root comes from
 
@@ -395,7 +397,7 @@ One piece of context makes the speed easier to place. In August, Anthropic [repo
 
 ## Is this a continuation of OpenAI's October result?
 
-**Not of the result people remember, but by the author's own account it grew out of a quieter paper in the same release.**
+**Not of the result people remember, but by the author's own account it grew out of a quieter paper in the same release.** That sentence is the whole answer; the rest of this section is the detail, and you can go straight to [the other proof](#the-other-proof-the-same-afternoon).
 
 In October, OpenAI published several hundred machine-written manuscripts, which I covered [at the time](/en/blog/when-ai-chooses-the-questions). One of them is [*The Quasi-Riemann Hypothesis*](https://github.com/openai/math/blob/main/preprints/The-Quasi-Riemann-Hypothesis-September-30-2026/paper.pdf): no zero of ζ, or of any Dirichlet L-function, has real part above 7/8. Until then nobody could exclude zeros from any strip at all to the left of real part 1, so this was the first real approximation to the hypothesis: the zeros are confined to a band, and the hypothesis says the band has zero width.
 
