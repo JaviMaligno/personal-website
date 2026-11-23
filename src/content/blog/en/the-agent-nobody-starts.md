@@ -5,7 +5,7 @@ pubDate: 2026-12-20
 tags: ["AI Agents", "Automation", "Claude Code", "Agent Orchestration"]
 lang: en
 translationKey: the-agent-nobody-starts
-heroImage: "/blog/the-agent-nobody-starts.png"
+heroImage: "/blog/the-agent-nobody-starts-hero.png"
 linkedinSummary: |
   Most "automation" with AI agents still needs you to be there: you see the email, you open the laptop, you start a session, you wait.
 

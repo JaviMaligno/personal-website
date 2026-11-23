@@ -5,7 +5,7 @@ pubDate: 2026-12-20
 tags: ["Agentes de IA", "Automatización", "Claude Code", "Orquestación de agentes"]
 lang: es
 translationKey: the-agent-nobody-starts
-heroImage: "/blog/the-agent-nobody-starts.png"
+heroImage: "/blog/the-agent-nobody-starts-hero.png"
 ---
 
 <style>

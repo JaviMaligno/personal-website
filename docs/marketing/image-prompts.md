@@ -2113,7 +2113,7 @@ No logos, no brand names, no people, no hands, no headline, no text-heavy poster
 ## Automating for Real: The Agent Nobody Starts
 
 - Article: `src/content/blog/en/the-agent-nobody-starts.md`
-- Image: `public/blog/the-agent-nobody-starts.png`
+- Image: `public/blog/the-agent-nobody-starts-hero.png`
 - Generated: 2026-11-23 (built-in `image_gen`; resized to 1020x510 with `sips`)
 
 ```text
