@@ -2138,3 +2138,27 @@ A short physical cable with a distinct plug/connector joins a small six-segment 
 
 Use graphite surfaces and dark blue-green shadows, balanced teal, warm amber, and off-white accents. Favor precise edges, subtle matte texture, controlled screen light, modest dimensional depth, and strong visual hierarchy. Keep both screens front-facing enough for their sparse text to read at hero size. Leave comfortable margins around the devices and all essential content. No people, hands, logos, brand names, article headline, watermark, text-heavy poster, purple gradient blobs, bokeh, or excessive glow. Opaque background. Final asset: 1020x510 PNG.
 ```
+## Automating for Real: The Agent Nobody Starts
+
+- Article: `src/content/blog/en/the-agent-nobody-starts.md`
+- Image: `public/blog/the-agent-nobody-starts-hero.png`
+- Generated: 2026-11-23 (built-in `image_gen`; resized to 1020x510 with `sips`)
+
+```text
+Create a 1020x510 pixel blog hero image, wide 2:1 composition, for the technical article titled "Automating for Real: The Agent Nobody Starts". The title is context only; do not print it in the image.
+
+Style: refined technical editorial bitmap illustration, rich and precise, dark but not monochrome. Depict the article's core concept as a concrete working system: unattended event-driven automation with explicit permissions and clear outcomes.
+
+Compose six coherent visual groups across several distinct zones:
+1. At the left, an empty desk with a fully closed graphite laptop and a phone lying face down. Both are idle; nobody is starting a session. Keep this zone quiet and clearly separate from the running system beside it.
+2. An event module with three small generic event cards: a calendar tick, an issue card, and a merged pull-request branch symbol. One amber event pulse visibly enters a small switch labelled "trigger".
+3. A checkpoint labelled "guard", with a precondition checklist and a clear check mark. The main flow continues through this checkpoint; a short secondary route terminates at a small stop marker, suggesting that obsolete work stops here.
+4. A prepared cloud workspace, represented by a cutaway cloud-hosted compute enclosure containing an active terminal panel labelled "agent", a few generic code lines, and completed verification check marks. Represent the agent as working software, with no humanoid character.
+5. Attached to that workspace, one key ring holding exactly four modest keys with readable tags: "repo", "tracker", "chat", "read-only cluster". The cluster access tag should have a tiny lock symbol to emphasize restricted access.
+6. At the right, three distinct output trays connected to the agent by branching rails, labelled exactly "summary", "escalation", and "alert". A completed evidence card arrives in summary; escalation carries a small decision symbol; alert carries an amber warning symbol. These are alternative outcomes, not three simultaneous emergencies.
+
+Make the direction unmistakable: event -> trigger -> guard -> cloud agent -> three output trays. Use thin precise connectors, a few crisp activity pulses and physical-looking cards; keep the inactive desk independent of those connectors. Clean geometric composition with thoughtful spacing, restrained depth, subtle material texture, crisp edges and carefully rendered technical details. The result should feel like an editorial scene of functioning infrastructure, not a slide deck or a simplistic block diagram. Make the main objects legible at blog thumbnail size. Small generic labels in clean off-white sans-serif type, no paragraphs.
+
+Palette: deep graphite background, balanced teal and amber working components, off-white labels and paper highlights. High contrast, professional AI/developer blog aesthetic. No logos, no brand names, no people, no hands, no open laptop, no giant headline, no text-heavy poster, no purple gradient blobs, no bokeh, no excessive neon glow, no watermark. Keep all important elements within generous safe margins. Opaque background.
+```
+
