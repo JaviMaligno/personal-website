@@ -2109,4 +2109,32 @@ On the phone screen, a compact transcript panel has the readable generic heading
 A tiny off-white birthday cake with two amber candles sits near the lower-left edge as a secondary prop, understated and geometric. The waveform originates off-frame: no singer or person is shown.
 Clean geometric composition with carefully layered depth, precise edges, restrained surface texture and subtle local illumination. Generous breathing room around the main sound path; all important elements inside safe margins. The phone, waveform, pitch contour, falling notes and small transcript panel are the main visual motifs. The voice orb must look generic, with no recognizable product interface.
 No logos, no brand names, no people, no hands, no headline, no text-heavy poster, no purple gradient blobs, no bokeh.
+## The Pipeline Nobody Opened
+
+- Article: `src/content/blog/en/the-pipeline-nobody-opened.md`
+- Image: `public/blog/the-pipeline-nobody-opened.png`
+- Generated: 2026-10-27, Codex CLI (`codex exec -s workspace-write`), built-in image_gen. Pending review by Javier.
+
+```text
+Create a 1020x510 blog hero image for the technical article "The Pipeline Nobody Opened". Do not render the article title.
+
+Use case: illustration-story.
+Style: refined technical editorial illustration, crisp bitmap artwork, dark but not monochrome, professional AI/developer blog aesthetic. Show a concrete developer workspace in a clean geometric wide 2:1 composition, with two clearly distinct zones.
+
+On the left, a separate browser dashboard sits unused and dimmed on a desktop monitor: a small empty queue labeled "Queue: 0", an untouched "Submit source" form with a blank input and an inactive submit button. Make it recognizably functional software that nobody opened, understated and low-luminance but still legible.
+
+On the right, the dominant focal point is an open laptop displaying an active terminal coding-agent session. Inside the terminal, a compact panel labeled "plugin" contains the pipeline phases as a readable vertical checklist, verbatim and in this order:
+"[x] research"
+"[x] requirements"
+"[x] contract"
+"[>] implement"
+"[ ] verify"
+"[ ] publish"
+Below the checklist, show a short amber-highlighted correction entered mid-run, verbatim: "> Use the public registry."
+Then a short teal response, verbatim: "Updating source..."
+Use restrained, readable monospace typography, generous line spacing, and only these few generic interface lines.
+
+A short physical cable with a distinct plug/connector joins a small six-segment pipeline module at the laptop's side into the terminal laptop. The plug is visibly seated and picks up a restrained teal accent. The pipeline is now part of the developer's existing working environment; the separate dashboard remains idle. Keep the connection concrete and easy to read, without floating abstract nodes or a sprawling flowchart.
+
+Use graphite surfaces and dark blue-green shadows, balanced teal, warm amber, and off-white accents. Favor precise edges, subtle matte texture, controlled screen light, modest dimensional depth, and strong visual hierarchy. Keep both screens front-facing enough for their sparse text to read at hero size. Leave comfortable margins around the devices and all essential content. No people, hands, logos, brand names, article headline, watermark, text-heavy poster, purple gradient blobs, bokeh, or excessive glow. Opaque background. Final asset: 1020x510 PNG.
 ```
