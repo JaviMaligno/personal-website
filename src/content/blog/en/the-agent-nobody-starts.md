@@ -57,17 +57,16 @@ The list will be out of date in three months. What it takes to make any of them 
   <defs><marker id="anb-arrow-en" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#94a3b8"/></marker></defs>
   <rect x="20" y="30" width="160" height="70" rx="10" fill="#203237" stroke="#2dd4bf"/>
   <text x="100" y="58" text-anchor="middle" fill="#5eead4" font-size="15" font-weight="600">Event</text>
-  <text x="100" y="80" text-anchor="middle" fill="#e2e8f0" font-size="12">schedule · issue · merge · email</text>
+  <text x="100" y="78" text-anchor="middle" fill="#e2e8f0" font-size="12">schedule · issue</text>
+  <text x="100" y="93" text-anchor="middle" fill="#e2e8f0" font-size="12">merge · email</text>
   <path d="M184 65H216" stroke="#94a3b8" stroke-width="2" marker-end="url(#anb-arrow-en)"/>
   <rect x="220" y="30" width="160" height="70" rx="10" fill="#362e23" stroke="#f59e0b"/>
   <text x="300" y="58" text-anchor="middle" fill="#fbbf24" font-size="15" font-weight="600">Guard</text>
-  <text x="300" y="80" text-anchor="middle" fill="#e2e8f0" font-size="12">does this still apply?</text>
+  <text x="300" y="80" text-anchor="middle" fill="#e2e8f0" font-size="12">still applies? if not, stop</text>
   <path d="M384 65H416" stroke="#94a3b8" stroke-width="2" marker-end="url(#anb-arrow-en)"/>
   <rect x="420" y="30" width="160" height="70" rx="10" fill="#283240" stroke="#94a3b8"/>
   <text x="500" y="58" text-anchor="middle" fill="#f8fafc" font-size="15" font-weight="600">Agent</text>
   <text x="500" y="80" text-anchor="middle" fill="#e2e8f0" font-size="12">does the job, checks it</text>
-  <path d="M300 104V126" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#anb-arrow-en)"/>
-  <text x="310" y="120" fill="#94a3b8" font-size="12">stop, say why</text>
   <rect x="20" y="140" width="560" height="78" rx="10" fill="#1f2937" stroke="#475569"/>
   <text x="300" y="166" text-anchor="middle" fill="#cbd5e1" font-size="14" font-weight="600">Prepared environment</text>
   <text x="300" y="190" text-anchor="middle" fill="#e2e8f0" font-size="12">connectors · repository access · tools the job needs</text>
