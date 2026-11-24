@@ -2138,3 +2138,18 @@ A short physical cable with a distinct plug/connector joins a small six-segment 
 
 Use graphite surfaces and dark blue-green shadows, balanced teal, warm amber, and off-white accents. Favor precise edges, subtle matte texture, controlled screen light, modest dimensional depth, and strong visual hierarchy. Keep both screens front-facing enough for their sparse text to read at hero size. Leave comfortable margins around the devices and all essential content. No people, hands, logos, brand names, article headline, watermark, text-heavy poster, purple gradient blobs, bokeh, or excessive glow. Opaque background. Final asset: 1020x510 PNG.
 ```
+
+## riemann-hypothesis-proof
+
+- Article: `src/content/blog/en/riemann-hypothesis-proof.md`
+- Image: `public/blog/riemann-hypothesis-proof.png`
+- Generated: 2026-11-22, with Codex (run by the author; the image was sent to the session)
+- The final prompt Codex wrote was not captured. These are the constraints it was given:
+
+```
+Create a 1020x510 blog hero image for a technical article titled "The Riemann Hypothesis Has a Proof Nobody Has Read. Its Core Idea Fits in a Sentence".
+Style: refined technical editorial illustration, dark but not monochrome, showing a concrete scene: a tall archive of thousands of small code files being scanned and ticked by a small checking machine, next to an empty reading desk with an unopened, absurdly thick printed volume.
+Visual motifs: a vertical strip with a bright teal line and dots sitting exactly on it (the zeros on the critical line); a jagged amber curve staying inside a dashed band; a terminal window with readable but generic lines such as "theorem riemannHypothesis" and "175,187 modules: ok"; a chain of links with a marker at its balance point; a checklist with ticks for the machine checks and one empty box labelled "understood". Clean geometric composition with several distinct zones.
+No logos, no brand names, no people, no text-heavy poster.
+Use crisp bitmap illustration, high contrast, professional AI/developer blog aesthetic, balanced teal, amber, graphite and off-white accents, no purple gradient blobs, no bokeh.
+```
