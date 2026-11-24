@@ -92,7 +92,9 @@ Branch from an up-to-date `main` (`blog/<slug>`), then write EN and ES following
 
 Generate these with the draft and show them with it:
 
-- the hero image through Codex, and the LinkedIn image choice
+- the hero image through Codex, **before the first push**, with the PNG and the `heroImage` line
+  in the same commit (a path without its file is a broken image in the preview; the CI step "Blog
+  images exist" fails it), and the LinkedIn image choice
   ([references/images.md](references/images.md));
 - the figure PNGs for Dev.to;
 - `repoUrl` for any article with code, proposing to publish the repo when it is still private;
@@ -180,7 +182,7 @@ heroImage: "/blog/article-slug.png"
 | `tags` | Yes | Translated (e.g., "AI" → "IA") |
 | `lang` | Yes | Must be `en` or `es` |
 | `translationKey` | Yes | Same value for EN/ES pair (kebab-case) |
-| `heroImage` | Yes | Path to thumbnail (e.g., `/blog/my-article.png`). See `references/images.md`. |
+| `heroImage` | Yes | Path to thumbnail (e.g., `/blog/my-article.png`). Add it only in the commit that adds the PNG. See `references/images.md`. |
 | `linkedinSummary` | Yes (EN) | The LinkedIn feed post, verbatim (YAML `|` block). No generated fallback: publishing fails without it. Written for people who want to know about AI, not about this project: the general lesson first, the case as evidence. See [references/linkedin-post.md](references/linkedin-post.md). Show it to Javier with the preview. |
 | `linkedinImage` | No | Image for the LinkedIn auto-post; falls back to `heroImage`. See `references/images.md`. |
 | `repoUrl` | For code | Adds `💻 Code: <url>` to the LinkedIn post (`buildPostText` in `scripts/linkedin/utils.js`), only when present. |
