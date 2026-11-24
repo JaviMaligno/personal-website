@@ -1,7 +1,7 @@
 ---
 title: "The Law of the Useless Galactic Constant"
 description: "This autumn the exponential time hypothesis fell, forced Navier–Stokes blew up and the Riemann hypothesis was proved, and the world works exactly as before. I propose a law to explain it: a problem open long enough that touches the real world is resolved consistently with what we observe, or its inconsistency lives where nobody can observe it."
-pubDate: 2027-01-10
+pubDate: 2026-12-23
 tags: ["Mathematics", "Philosophy of Science", "AI"]
 lang: en
 translationKey: law-of-the-useless-galactic-constant
@@ -102,6 +102,8 @@ ETH shows it well. That nobody found a practical algorithm for 3-SAT in 27 years
 
 **It does not say mathematics doesn't matter; it says a resolution does not change what had already been measured.** In all three articles the "what changes" section was not empty. Whole shelves of theorems changed status: what had been proved "assuming ETH" lost its hypothesis, what began "assuming the Riemann hypothesis" gained it, and the study of what happens after a singularity got a concrete object. Those changes happen inside mathematics, which is where the problems live.
 
+**And mathematics is not just results, nor just what it gives the real world.** In the [Riemann article](/en/blog/riemann-hypothesis-proof), in the section "Math is dead", I argued that the discipline is more alive than ever. This law reaches the same place from another side. If proving the most famous conjecture in number theory changes nothing outside it, the value of proving it was never out there. It is in understanding why the primes are distributed the way they are, in the connections between fields the proof forces you to make, and in the questions it leaves open. Usefulness does arrive sometimes, often decades later and by routes nobody planned: in 1940 G. H. Hardy boasted that number theory was good for nothing, and today it holds up the internet's cryptography. But measuring mathematics by what it changes in the world is measuring it with the wrong ruler, and the law explains why that ruler reads almost zero precisely when a great problem falls.
+
 **Nor does it forbid inventions.** The law is about what a resolution says about past observations, not about new capabilities it might bring. A practical algorithm for factoring large integers would really change the world. But look at what the law predicts for that case: factoring has been open for a long time, half the internet depends on it, and decades of cryptanalysts have not found a fast classical algorithm. If factoring is ever shown to be easy, my bet, following the law, is that it will come with a galactic constant. Shor's algorithm is not a counterexample: it runs on a different machine, a quantum computer, and whether a large one can be built is precisely one of the questions still in the unobserved.
 
 **And it can be refuted.** All it takes is a problem open for decades, with real-world consequences, whose resolution contradicts something measurable: the empty box in the figure. A practical algorithm for a problem that had resisted professionals for thirty years, or a real fluid behaving the way the singularity says. I don't know of one.
@@ -116,7 +118,7 @@ I will keep adding cases to this article as problems fall. If you know one that 
 
 - **Open problems that touch the world get resolved without contradicting the world.** Either the resolution matches what was observed (Riemann), or it disagrees only where nobody can look (ETH, forced Navier–Stokes).
 - **"Long enough" is what gives the law content.** Without it, "unobserved" is trivial and "unobservable" is overstated; with decades of unintended testing, one becomes the other.
-- **What changes, changes inside mathematics**: the status of conditional theorems, the methods, the new questions.
+- **What changes, changes inside mathematics**: the status of conditional theorems, the methods, the new questions. And its value was never measured by what it gives the real world.
 - **The law makes predictions and can be refuted.** Easy factoring would come with a galactic constant; unforced Navier–Stokes blow-up, if confirmed, would live below the molecular scale.
 
 ---

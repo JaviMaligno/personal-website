@@ -1,7 +1,7 @@
 ---
 title: "La ley de la constante galáctica inservible"
 description: "Este otoño han caído la hipótesis del tiempo exponencial, Navier–Stokes en su versión forzada y la hipótesis de Riemann, y el mundo funciona exactamente igual. Propongo una ley para explicarlo: un problema abierto durante tiempo suficiente que afecta al mundo real se resuelve de forma coherente con lo observado, o su incoherencia vive donde no se puede observar."
-pubDate: 2027-01-10
+pubDate: 2026-12-23
 tags: ["Matemáticas", "Filosofía de la ciencia", "IA"]
 lang: es
 translationKey: law-of-the-useless-galactic-constant
@@ -90,6 +90,8 @@ La ETH lo ilustra bien. Que nadie encontrase en 27 años un algoritmo práctico 
 
 **No dice que las matemáticas no importen; dice que una resolución no cambia lo que ya se había medido.** En los tres artículos, la sección de "qué cambia" no estaba vacía. Estanterías enteras de teoremas cambiaron de estatus: lo que se había probado "suponiendo ETH" perdió su hipótesis, lo que empezaba con "suponiendo la hipótesis de Riemann" la ganó, y el estudio de qué ocurre después de una singularidad pasó a tener un objeto concreto. Esos cambios ocurren dentro de las matemáticas, que es donde viven los problemas.
 
+**Y las matemáticas no son solo resultados, ni solo lo que le dan al mundo real.** En el [artículo sobre Riemann](/es/blog/riemann-hypothesis-proof), en la sección «Las matemáticas han muerto», defendía que la disciplina está más viva que nunca. Esta ley llega a lo mismo por otro lado. Si demostrar la conjetura más famosa de la teoría de números no cambia nada fuera de ella, el valor de demostrarla nunca estuvo ahí fuera. Está en entender por qué los primos se reparten como se reparten, en las conexiones entre áreas que la prueba obliga a hacer y en las preguntas que deja abiertas. La utilidad llega a veces, a menudo décadas después y por caminos que nadie planeó: G. H. Hardy presumía en 1940 de que la teoría de números no servía para nada, y hoy sostiene la criptografía de internet. Pero medir las matemáticas por lo que cambian en el mundo es medirlas con la vara equivocada, y la ley explica por qué esa vara marca casi siempre cero justo cuando cae un gran problema.
+
 **Tampoco prohíbe los inventos.** La ley habla de lo que una resolución dice sobre observaciones pasadas, no de las capacidades nuevas que pueda traer. Un algoritmo práctico para factorizar enteros grandes cambiaría el mundo de verdad. Pero fíjate en lo que la ley predice para ese caso: la factorización es un problema abierto desde hace mucho y del que depende medio internet, y décadas de criptoanalistas no han encontrado un algoritmo clásico rápido. Si algún día se demuestra que la factorización es fácil, mi apuesta, según la ley, es que lo será con una constante galáctica. El algoritmo de Shor no es un contraejemplo: corre en otra máquina, un ordenador cuántico, y la pregunta de si se puede construir uno grande es justo de las que todavía están en lo no observado.
 
 **Y se puede refutar.** Basta con un problema abierto durante décadas, con consecuencias en el mundo real, cuya resolución contradiga algo que se pueda medir: la casilla vacía de la figura. Un algoritmo práctico para un problema que llevaba treinta años resistiéndose a los profesionales, o un fluido real que se comporte como la singularidad dice. No conozco ninguno.
@@ -104,7 +106,7 @@ Seguiré añadiendo casos a este artículo a medida que caigan problemas. Si con
 
 - **Los problemas abiertos que tocan el mundo se resuelven sin contradecir el mundo.** O la resolución coincide con lo observado (Riemann), o discrepa solo donde no se puede mirar (ETH, Navier–Stokes forzado).
 - **"Tiempo suficiente" es lo que da contenido a la ley.** Sin él, "no observado" es trivial e "inobservable" es exagerado; con décadas de pruebas involuntarias, uno se convierte en el otro.
-- **Lo que cambia, cambia dentro de las matemáticas**: el estatus de los teoremas condicionales, los métodos, las preguntas nuevas.
+- **Lo que cambia, cambia dentro de las matemáticas**: el estatus de los teoremas condicionales, los métodos, las preguntas nuevas. Y su valor nunca se midió por lo que le dan al mundo real.
 - **La ley hace predicciones y se puede refutar.** Una factorización fácil vendría con constante galáctica; la explosión de Navier–Stokes sin fuerza, si se confirma, viviría por debajo de la escala molecular.
 
 ---
