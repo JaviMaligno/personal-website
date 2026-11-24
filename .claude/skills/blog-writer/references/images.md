@@ -40,10 +40,19 @@ Key learnings vs the old template:
 
 ### Workflow
 
-1. Together with the draft (workflow step 4), run Codex with the article path + style constraints (command above)
-2. **Show the generated image to the user for review** (use Read tool on the PNG)
-3. If approved, add `heroImage: "/blog/article-slug.png"` to **both** EN and ES frontmatter
-4. If not approved, adjust the constraints and regenerate
+**The PNG and the `heroImage` line travel in the same commit, and that commit comes before the
+first push.** A `heroImage` pointing at a file that is not there still builds, and the preview
+shows a broken image: it happened on the first push of 22 articles. The CI step "Blog images exist"
+(`scripts/publish/blog-images.test.mjs`) now fails the PR when any referenced image is missing.
+
+1. As soon as the EN draft exists, and before the first push, run Codex with the article path +
+   style constraints (command above). Write the draft without the `heroImage` line until then.
+2. Check the PNG exists, then add `heroImage: "/blog/article-slug.png"` to **both** EN and ES
+   frontmatter and commit it together with the PNG.
+3. If Codex is not available in this session (e.g. a cloud session), push the draft **without**
+   `heroImage` and list the hero as pending in the PR body. Never push the path alone.
+4. **Show the generated image to the user for review** (use Read tool on the PNG); if not approved,
+   adjust the constraints and regenerate over the same path
 5. **Record the exact prompt used** in `docs/marketing/image-prompts.md` (article path, image path, generation date, prompt in a code block — follow the existing entries' format; create the file if missing)
 6. Codex image quality is trusted — no need for comparison with other generators
 
