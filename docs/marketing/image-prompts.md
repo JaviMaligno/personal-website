@@ -2153,3 +2153,17 @@ Visual motifs: a vertical strip with a bright teal line and dots sitting exactly
 No logos, no brand names, no people, no text-heavy poster.
 Use crisp bitmap illustration, high contrast, professional AI/developer blog aesthetic, balanced teal, amber, graphite and off-white accents, no purple gradient blobs, no bokeh.
 ```
+
+## law-of-the-useless-galactic-constant
+
+- Article: `src/content/blog/en/law-of-the-useless-galactic-constant.md`
+- Image: `public/blog/law-of-the-useless-galactic-constant.png`
+- Generated: 2026-11-24 with Codex image_gen
+
+```text
+Create a 1020x510 landscape blog hero for “The Law of the Useless Galactic Constant”. Leave the title outside the artwork. Draw a single scientific recording instrument in a refined technical editorial style. A graphite housing holds three aligned recordings under glass. A physical ruler spans the calibrated area and stops at the brass lip of the housing. To its right, the drawing continues onto bare drafting paper. This edge is the limit of measurement.
+
+Across the upper strip, two rising runtime curves traverse the glass. The amber algorithm stays above the teal brute-force curve throughout the measured range. Beyond the brass lip, leave a wide double-slash axis break before a tiny extrapolated section where amber finally crosses below teal. In the middle, make a cutaway fluid vortex the visual focus. Engraved teal streamlines wind into a narrowing horizontal funnel. At the tip, just a few widely spaced air molecules give the eye a scale: the fine amber thread of the mathematical vortex slips through the gap between two molecules. Below, a small complex-plane plot shows the zeta zeros as irregularly spaced off-white points exactly on one straight vertical teal critical line. Pair it with a quiet inset proof readout bearing only “theorem verified”. The measured points stay exactly where they were.
+
+Use crisp bitmap illustration, precise etched linework, matte graphite, deep teal, warm amber and off-white paper. Restrained directional light picks out the brass edge. Give the vortex room to breathe and keep the smaller recordings legible at thumbnail size. No people, logos, brands, headline, decorative equations, text-heavy poster, purple gradient blobs or bokeh.
+```
