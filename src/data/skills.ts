@@ -9,6 +9,7 @@ export interface Skill {
   repoUrl: string | null;  // public → deep-link to repo subdir; internal → null
   tags: string[];
   featured?: boolean;      // shown in the home teaser
+  credit?: string;         // collaborator's name, rendered as "In collaboration with …"
 }
 
 const REPO = 'https://github.com/JaviMaligno/agilabs-skills/tree/main';
@@ -42,6 +43,7 @@ export const skills: Skill[] = [
   { slug: 'render-development', key: 'renderDevelopment', category: 'ops', visibility: 'public', repoUrl: `${REPO}/ops/render-development`, tags: ['Render', 'Postgres', 'Deploy'] },
   // Productivity
   { slug: 'email-cleanup', key: 'emailCleanup', category: 'productivity', visibility: 'public', repoUrl: `${REPO}/productivity/email-cleanup`, tags: ['Gmail', 'Automation', 'Triage'] },
+  { slug: 'agent-multiplier', key: 'agentMultiplier', category: 'productivity', visibility: 'public', repoUrl: `${REPO}/productivity/agent-multiplier`, tags: ['Claude Code', 'Codex', 'Analytics'], credit: 'Juan Iglesias' },
 ];
 
 export function getSkillsByCategory(): { category: SkillCategory; skills: Skill[] }[] {
