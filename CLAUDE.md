@@ -223,6 +223,8 @@ Use the API tooling in the repo, not browser automation, for posting:
   `scripts/linkedin/post-standalone.js` (supports `--dry-run`, multi-image, mentions as
   `@[Name](urn:li:organization:ID)`, and media at the repo root: `video-linkedin.*` or
   `image.png`). It uses the legacy v2 `ugcPosts` API.
+  It can be dispatched by hand safely: a run that posts leaves a `linkedin-posted-<date>`
+  artifact and later runs that day skip; an entry with `"posted": true` is never posted.
 - LinkedIn messaging/chat is not available through the API for independent apps; replies
   to messages have to be done by hand in the browser.
 - To preview generated posts without publishing, dispatch the
